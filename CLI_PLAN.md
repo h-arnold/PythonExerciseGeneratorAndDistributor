@@ -74,18 +74,23 @@ exercises/
 2. Corresponding test files
 3. Exercise metadata (README.md from exercises/)
 4. Repository infrastructure:
-   - `pyproject.toml` - Python project configuration
+   - `pyproject.toml` - Python project configuration (micropip-compatible for VS Code web)
    - `pytest.ini` - Test configuration
    - `.gitignore` - Git ignore patterns
    - `README.md` - Customized for the template
-   - `.github/workflows/` - CI/CD workflows for autograding
-   - `tests/notebook_grader.py` - Core grading framework
-   - `LICENSE` - License file
+   - `.vscode/` - VS Code configuration (settings.json, extensions.json)
+   - `tests/notebook_grader.py` - Core grading framework (required for test execution)
 
 **Template Repo Folder** (to be created):
 - Location: `/template_repo_files/` at repository root
 - Contains: Base files copied to every template repository
 - Purpose: Ensures consistent setup across all generated templates
+
+**Notes on GitHub Classroom Integration**:
+- GitHub Classroom **does not** automatically create CI workflows for template repositories
+- Users must manually configure autograding tests in the Classroom UI or include workflow files
+- Since this is a known pain point, we include `.github/workflows/tests.yml` in the template
+- This provides immediate CI/CD functionality when students accept assignments
 
 ## Proposed Architecture
 
@@ -107,14 +112,17 @@ scripts/
       validation.py     # Input validation
       filesystem.py     # File operations
       config.py         # Configuration management
-    tests/
-      __init__.py
-      test_selector.py
-      test_collector.py
-      test_packager.py
-      test_github.py
-      test_integration.py
+tests/
+  template_repo_cli/
+    __init__.py
+    test_selector.py
+    test_collector.py
+    test_packager.py
+    test_github.py
+    test_integration.py
 ```
+
+**Note**: Tests are placed in `tests/template_repo_cli/` to maintain consistency with the repository's existing pattern of keeping all tests in the top-level `tests/` directory.
 
 ### Module Responsibilities
 
@@ -144,16 +152,22 @@ scripts/
 #### 4. **packager.py** - Template Assembly
 - Create temporary directory structure
 - Copy selected files to appropriate locations
-- Copy base files from `template_repo_files/`
+- Copy base files from `template_repo_files/`:
+  - pyproject.toml (micropip-compatible)
+  - .vscode/ configuration (settings.json, extensions.json)
+  - .github/workflows/ for CI
+  - pytest.ini, .gitignore
+  - tests/notebook_grader.py
 - Generate custom README.md with exercise list
-- Create `.gitignore` excluding unnecessary files
 - Validate package integrity
 
 #### 5. **github.py** - GitHub Operations
 - Wrapper around `gh` CLI commands
+- Check `gh` CLI is installed and prompt user to install if missing
+- Verify `gh` authentication status before operations
 - Create repository: `gh repo create`
 - Push initial commit
-- Set repository as template
+- Set repository as template (default behavior)
 - Handle authentication errors
 - Support dry-run mode (command building without execution)
 
@@ -253,12 +267,21 @@ python -m scripts.template_repo_cli validate \
 5. Write unit tests for selector and collector
 
 ### Phase 2: Packaging & GitHub Integration (Week 2)
-1. Create `template_repo_files/` directory with base files
+1. Create `template_repo_files/` directory with base files:
+   - pyproject.toml (micropip-compatible)
+   - .vscode/settings.json
+   - .vscode/extensions.json
+   - .github/workflows/tests.yml
+   - README.md template
+   - pytest.ini
+   - .gitignore
 2. Implement `packager.py`:
    - Directory assembly
    - File copying
    - README generation
 3. Implement `github.py`:
+   - Check `gh` CLI is installed (fail early with installation instructions)
+   - Verify authentication status
    - `gh` CLI wrapper
    - Command building
    - Dry-run support
@@ -469,12 +492,27 @@ Run all tests: `pytest -q`
 Run specific test: `pytest tests/test_exNNN_slug.py -v`
 ```
 
-2. **pyproject.toml** (identical to main repo)
+2. **pyproject.toml** (micropip-compatible for VS Code web)
+   - Must only include dependencies available via micropip
+   - Enables students to use VS Code for the Web
+   - Core dependencies: pytest, ipykernel, jupyterlab
 3. **pytest.ini** (identical to main repo)
 4. **.gitignore** (standard Python gitignore)
-5. **LICENSE** (copy from main repo)
-6. **.github/workflows/tests.yml** (GitHub Classroom autograding)
-7. **INSTRUCTIONS.md** (student instructions)
+5. **.vscode/settings.json** (VS Code configuration)
+   - Python interpreter path
+   - Pytest configuration
+   - Type checking settings
+   - Format on save settings
+6. **.vscode/extensions.json** (recommended VS Code extensions)
+   - Python extension
+   - Pylance
+   - Ruff (linter)
+   - GitHub Copilot (optional)
+7. **.github/workflows/tests.yml** (GitHub Actions CI for autograding)
+   - Runs pytest on push/PR
+   - Required because GitHub Classroom does not auto-create workflows
+8. **tests/notebook_grader.py** (core grading framework - required)
+9. **INSTRUCTIONS.md** (student-facing setup and usage instructions)
 
 ## Extensibility Points
 
@@ -483,12 +521,13 @@ The modular design allows easy extension:
 ### Future Features
 1. **Export to Zip**: `--export zip` instead of GitHub
 2. **Custom Templates**: `--template-dir PATH` for custom base files
-3. **Blackboard/Moodle Export**: Different packaging formats
-4. **Student Progress Tracking**: Add analytics notebooks
-5. **Difficulty Filtering**: `--difficulty beginner` option
-6. **Tag-Based Selection**: `--tags loops,strings` option
-7. **Batch Creation**: Create multiple templates from config file
-8. **Update Existing**: Update existing template repo with new exercises
+3. **Multiple .vscode Configurations**: Templates folder with different configs (web-only, local dev, minimal)
+4. **Blackboard/Moodle Export**: Different packaging formats
+5. **Student Progress Tracking**: Add analytics notebooks
+6. **Difficulty Filtering**: `--difficulty beginner` option
+7. **Tag-Based Selection**: `--tags loops,strings` option
+8. **Batch Creation**: Create multiple templates from config file
+9. **Update Existing**: Update existing template repo with new exercises
 
 ### Extension Points in Code
 ```python
@@ -544,6 +583,12 @@ class GitHubClient:
    - Mitigation: Use existing notebook_grader.py patterns
    - No external dependencies on nbformat
 
+6. **micropip Compatibility (VS Code Web)**
+   - Risk: Dependencies in pyproject.toml may not work in VS Code for the Web
+   - Mitigation: Validate all dependencies are micropip-compatible
+   - Solution: Document micropip constraints in template README
+   - Future: Add `--validate-micropip` flag to check dependencies
+
 ## Dependencies
 
 **Runtime Dependencies**:
@@ -559,6 +604,13 @@ class GitHubClient:
 - GitHub account
 - `gh` CLI installed and authenticated (`gh auth login`)
 - Repository permissions to create repos in target org/user
+
+**Template Repository Constraints**:
+- **pyproject.toml** must only include micropip-compatible packages
+- This ensures compatibility with VS Code for the Web
+- All dependencies must be installable without system-level compilation
+- Common micropip packages: pytest, ipykernel, jupyterlab, numpy, pandas
+- Verify compatibility at: https://pyodide.org/en/stable/usage/packages-in-pyodide.html
 
 ## Success Criteria
 
