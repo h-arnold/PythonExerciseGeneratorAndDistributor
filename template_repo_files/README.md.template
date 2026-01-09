@@ -1,0 +1,83 @@
+# {TEMPLATE_NAME}
+
+Python exercises for learning programming concepts.
+
+## Exercises Included
+
+{EXERCISE_LIST}
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.11 or higher
+- pip package manager
+
+### Installation
+
+1. Clone this repository:
+   ```bash
+   git clone <your-repo-url>
+   cd <repo-name>
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -e ".[dev]"
+   ```
+
+3. Open Jupyter Lab:
+   ```bash
+   jupyter lab
+   ```
+
+## Working on Exercises
+
+1. Navigate to the `notebooks/` directory
+2. Open the exercise notebook you want to work on
+3. Complete the exercises by writing code in the tagged cells
+4. Run the tests to check your work
+
+## Testing Your Solutions
+
+Run all tests:
+```bash
+pytest -q
+```
+
+Run tests for a specific exercise:
+```bash
+pytest tests/test_ex001_exercise_name.py -v
+```
+
+## Project Structure
+
+```
+notebooks/               # Exercise notebooks (student version)
+  ex001_exercise_name.ipynb
+  solutions/            # Solution notebooks (instructor reference)
+    ex001_exercise_name.ipynb
+tests/                  # Automated tests
+  test_ex001_exercise_name.py
+  notebook_grader.py    # Grading framework
+```
+
+## Testing Framework
+
+This repository uses a custom testing framework based on pytest that extracts and tests code from specific cells in your notebooks. Make sure to:
+
+- Write your solutions in cells tagged with `exercise1`, `exercise2`, etc.
+- Don't modify the test files
+- Run tests frequently to check your progress
+
+## Getting Help
+
+If you're stuck:
+1. Read the exercise instructions carefully
+2. Check the test output for hints
+3. Review Python documentation
+4. Ask your instructor for help
+
+## License
+
+See LICENSE file for details.
