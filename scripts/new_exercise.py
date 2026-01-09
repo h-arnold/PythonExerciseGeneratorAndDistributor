@@ -68,7 +68,7 @@ def _make_notebook_with_parts(title: str, *, parts: int) -> dict:
     ]
 
     if parts == 1:
-        tag = "student"
+        tag = "exercise1"
         cells.append(
             {
                 "cell_type": "code",
@@ -76,7 +76,7 @@ def _make_notebook_with_parts(title: str, *, parts: int) -> dict:
                 "execution_count": None,
                 "outputs": [],
                 "source": [
-                    "# STUDENT\n",
+                    "# Exercise 1\n",
                     "# The tests will execute the code in this cell.\n",
                     "\n",
                     "def solve() -> object:\n",
@@ -105,7 +105,7 @@ def _make_notebook_with_parts(title: str, *, parts: int) -> dict:
                     "execution_count": None,
                     "outputs": [],
                     "source": [
-                        f"# STUDENT {tag}\n",
+                        f"# Exercise {i}\n",
                         "# The tests will execute the code in this cell.\n",
                         "def solve() -> object:\n",
                         "    \"\"\"Return the correct result for this exercise.\"\"\"\n",
@@ -194,7 +194,7 @@ def main() -> int:
                 "",
                 "## Student prompt",
                 "- Open the matching notebook in `notebooks/`.",
-                "- Write your solution in the notebook cell tagged `student` (or `exercise1`, `exercise2`, …).",
+                "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
                 "- Run `pytest -q` until all tests pass.",
                 "",
                 "## Teacher notes",
@@ -228,7 +228,7 @@ def main() -> int:
     if args.parts == 1:
         test_lines += [
             "def test_student_cell_runs() -> None:",
-            "    _run('student')",
+            "    _run('exercise1')",
             "",
         ]
     else:

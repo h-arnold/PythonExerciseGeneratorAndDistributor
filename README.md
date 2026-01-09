@@ -6,7 +6,7 @@ Notebook-based Python exercises with automated grading via `pytest` (GitHub Clas
 
 - `notebooks/`
 	- One notebook per exercise: `notebooks/exNNN_slug.ipynb`
-	- Students write code **inline** in a dedicated exercise cell (tagged, e.g. `student` or `exercise1`, or starting with `# STUDENT` / `# STUDENT exercise1`)
+	- Students write code **inline** in a dedicated exercise cell that **must** be tagged with `exerciseN` in the cell metadata (e.g., `exercise1`, `exercise2`). Marker comments like `# STUDENT` or `# STUDENT exercise1` are deprecated and will **not** be accepted by the autograder.
 - `tests/`
 	- `tests/test_exNNN_slug.py` contains automated tests
 	- Tests extract + execute the student cell (see `tests/notebook_grader.py`)

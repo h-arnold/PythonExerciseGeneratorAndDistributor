@@ -9,12 +9,7 @@ You are helping a teacher create new Python exercises in this repository.
 
 ## Core idea (how grading works)
 - Students write solutions **inline in Jupyter notebooks** under `notebooks/`.
-- Each graded solution lives in a dedicated code cell identified deterministically by either:
-  - a tag in `cell.metadata.tags`, e.g. `student`, `exercise1`, `exercise2`, …
-  - or a marker comment on the first non-empty line:
-    - `# STUDENT` (default cell)
-    - `# STUDENT exercise1`
-    - `# EXERCISE exercise1`
+- Each graded solution must live in a dedicated code cell identified by a metadata tag of the form `exerciseN` (e.g., `exercise1`, `exercise2`).
 - Tests run with `pytest` and grade by extracting + executing the target cell using `tests/notebook_grader.py`.
 
 ## When asked to create an exercise
@@ -42,7 +37,7 @@ This creates:
   - Optional self-check / exploration cell
 
 Graded cell rules
-- Must begin with a marker line (`# STUDENT` or `# STUDENT exerciseK`) OR include tags.
+- Must include an `exerciseN` tag in cell metadata (e.g., `exercise1`, `exercise2`).
 - Must define the required callable(s). Default scaffold expects `solve()`.
 - Avoid `input()` in graded code.
 - Prefer pure functions, deterministic results.

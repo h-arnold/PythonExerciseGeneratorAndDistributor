@@ -10,25 +10,6 @@ class NotebookGradingError(RuntimeError):
     pass
 
 
-def _marker_tokens(line: str) -> list[str]:
-    """Parse '# ...' marker line into uppercased tokens.
-
-    Examples:
-      '# STUDENT' -> ['STUDENT']
-      '# STUDENT exercise1 (graded)' -> ['STUDENT', 'EXERCISE1', '(GRADED)']
-      '# EXERCISE exercise2' -> ['EXERCISE', 'EXERCISE2']
-    """
-
-    # Remove leading whitespace and optional leading '#'
-    stripped = line.lstrip()
-    if not stripped.startswith("#"):
-        return []
-    stripped = stripped[1:].strip()
-    if not stripped:
-        return []
-    return [tok.upper() for tok in stripped.split()]
-
-
 def _read_notebook(notebook_path: str | Path) -> dict[str, Any]:
     path = Path(notebook_path)
     if not path.exists():
@@ -59,37 +40,6 @@ def _cell_source_text(cell: dict[str, Any]) -> str:
     return ""
 
 
-def _looks_like_tagged_student_cell(cell: dict[str, Any], *, tag: str) -> bool:
-    if tag in _cell_tags(cell):
-        return True
-
-    # Fallback: detect a marker comment in the first non-empty line.
-    text = _cell_source_text(cell)
-    for line in text.splitlines():
-        if not line.strip():
-            continue
-
-        tokens = _marker_tokens(line)
-        if not tokens:
-            return False
-
-        kind = tokens[0]
-        requested = tag.upper()
-
-        # '# STUDENT ...' always marks the default student cell unless a matching explicit tag is present.
-        if kind == "STUDENT":
-            if len(tokens) >= 2 and tokens[1] == requested:
-                return True
-            return tag == "student"
-
-        # '# EXERCISE <tag>' requires a tag token.
-        if kind == "EXERCISE" and len(tokens) >= 2:
-            return tokens[1] == requested
-
-        return False
-    return False
-
-
 def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> str:
     """Return the concatenated source of all code cells tagged with `tag`.
 
@@ -113,7 +63,7 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
             continue
         if cell.get("cell_type") != "code":
             continue
-        if not _looks_like_tagged_student_cell(cell, tag=tag):
+        if tag not in _cell_tags(cell):
             continue
 
         tagged_sources.append(_cell_source_text(cell))
