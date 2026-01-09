@@ -1,78 +1,96 @@
 # Bassaleg Python Tutor Exercises
 
-Notebook-based Python exercises with automated grading via `pytest` (GitHub Classroom friendly).
+Notebook-based Python exercises with automated grading via pytest, designed for secondary school students learning Python.
 
-## Repo layout
+## What is This?
 
-- `notebooks/`
-	- One notebook per exercise: `notebooks/exNNN_slug.ipynb`
-	- Students write code **inline** in a dedicated exercise cell that **must** be tagged with `exerciseN` in the cell metadata (e.g., `exercise1`, `exercise2`). Marker comments like `# STUDENT` or `# STUDENT exercise1` are deprecated and will **not** be accepted by the autograder.
-	- Teacher/CI solution mirrors (optional): `notebooks/solutions/exNNN_slug.ipynb`
-- `tests/`
-	- `tests/test_exNNN_slug.py` contains automated tests
-	- Tests extract + execute the student cell (see `tests/notebook_grader.py`)
-- `scripts/new_exercise.py`
-	- Scaffolds a new exercise skeleton
+A collection of Jupyter notebook exercises where:
+- **Students** write code in tagged notebook cells
+- **pytest** automatically grades their work
+- **GitHub Classroom** integration provides instant feedback
 
-Optional (teacher notes / materials):
-- `exercises/`
-	- One folder per exercise: `exercises/exNNN_slug/README.md`
+## For Students
 
-## Quickstart
+### Getting Started
 
-Create a virtualenv and install dev dependencies:
+1. **Clone the repository** or accept the GitHub Classroom assignment
+2. **Install dependencies**:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   pip install -e ".[dev]"
+   ```
+3. **Open a notebook** in Jupyter Lab:
+   ```bash
+   jupyter lab
+   ```
+4. **Complete the exercises** in cells tagged `exercise1`, `exercise2`, etc.
+5. **Test your work**:
+   ```bash
+   pytest -q
+   ```
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip
-python -m pip install -e ".[dev]"
-```
+See the [Setup Guide](docs/setup.md) for detailed instructions.
 
-Run all tests:
+## For Teachers
 
-```bash
-pytest -q
-```
+Use the [exercise generation custom agent](https://github.com/features/copilot) to create new exercises. Simply describe the exercise you want and the agent will generate the notebook, tests, and supporting materials.
 
-Run the same tests against solution notebooks:
+For manual scaffolding or to understand the structure, see the [Exercise Generation Guide](docs/exercise-generation.md).
 
-```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
-```
-
-Shortcut helper:
+### Verifying Solutions
 
 ```bash
+# Test solution notebooks
 scripts/verify_solutions.sh -q
 ```
 
-## Create a new exercise
+## Documentation
 
-```bash
-python scripts/new_exercise.py ex001 "Variables and Types" --slug variables_and_types
+- **[Project Structure](docs/project-structure.md)** - Repository organisation and file layout
+- **[Testing Framework](docs/testing-framework.md)** - How the automated grading works
+- **[Exercise Generation](docs/exercise-generation.md)** - Creating new exercises
+- **[Setup Guide](docs/setup.md)** - Installation and configuration
+- **[Development Guide](docs/development.md)** - Contributing and maintenance
+
+## Quick Reference
+
+### Repository Structure
+
+```
+notebooks/          # Student exercise notebooks
+tests/              # Automated grading tests
+exercises/          # Teacher materials (organised by construct/type)
+scripts/            # Utilities (exercise generator, solution verifier)
+docs/               # Documentation
 ```
 
-Multiple exercises in one notebook:
+### Common Commands
 
 ```bash
-python scripts/new_exercise.py ex010 "Week 1" --slug week1 --parts 3
+pytest -q                               # Run tests
+pytest tests/test_ex001_sanity.py -v   # Test specific exercise
+jupyter lab                             # Open Jupyter interface
+ruff check .                            # Lint code
+scripts/verify_solutions.sh -q          # Test solutions
 ```
 
-This creates:
-- `notebooks/ex001_variables_and_types.ipynb`
-- `notebooks/solutions/ex001_variables_and_types.ipynb`
-- `tests/test_ex001_variables_and_types.py`
+## How It Works
 
-And (optional):
-- `exercises/ex001_variables_and_types/README.md`
+1. Students write code in **tagged cells** (`exercise1`, `exercise2`, etc.) in Jupyter notebooks
+2. Tests use `exec_tagged_code()` to extract and execute these cells
+3. Assertions verify correctness
+4. GitHub Actions runs tests automatically on push/PR
 
-## Notes
+See [Testing Framework](docs/testing-framework.md) for technical details.
 
-- The notebook is for explanation and scratch work.
-- Grading is driven by `pytest` (see `.github/workflows/tests.yml`).
+## GitHub Classroom Integration
 
-## Copilot authoring mode
+This repository is designed for GitHub Classroom:
+- Autograding runs via `.github/workflows/tests.yml`
+- Students get immediate feedback on test results
+- Teachers can track progress through GitHub Classroom dashboard
 
-- See `.github/prompts/exercise_generation.chatmode.md` for a “chat mode” style guide you can use while generating new exercises.
+## License
 
+See [LICENSE](LICENSE) file for details.
