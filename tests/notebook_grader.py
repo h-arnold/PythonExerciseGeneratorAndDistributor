@@ -84,6 +84,18 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
     if not isinstance(cells, list):
         raise NotebookGradingError("Notebook has no 'cells' list")
 
+    tagged_sources = _collect_tagged_sources(cells, tag)
+
+    if not tagged_sources:
+        raise NotebookGradingError(
+            f"No code cells tagged '{tag}' found in notebook: {Path(notebook_path)}"
+        )
+
+    return "\n\n".join(tagged_sources).strip() + "\n"
+
+
+def _collect_tagged_sources(cells: list, tag: str) -> list[str]:
+    """Collect source text from code cells tagged with the given tag."""
     tagged_sources: list[str] = []
 
     for cell in cells:
@@ -96,12 +108,7 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
 
         tagged_sources.append(_cell_source_text(cell))
 
-    if not tagged_sources:
-        raise NotebookGradingError(
-            f"No code cells tagged '{tag}' found in notebook: {Path(notebook_path)}"
-        )
-
-    return "\n\n".join(tagged_sources).strip() + "\n"
+    return tagged_sources
 
 
 def exec_tagged_code(

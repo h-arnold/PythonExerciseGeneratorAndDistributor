@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import math
 import sys
 
 import pytest
@@ -101,7 +102,7 @@ def test_exercise5_prints_5_point_0():
 def test_exercise5_is_division():
     output = _run_and_capture('exercise5')
     value = float(output.strip())
-    assert value == 5.0, "10 / 2 should equal 5.0"
+    assert math.isclose(value, 5.0), "10 / 2 should equal 5.0"
 
 
 def test_exercise5_is_float():

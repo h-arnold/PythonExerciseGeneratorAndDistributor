@@ -19,6 +19,7 @@ import json
 import re
 import uuid
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -32,24 +33,17 @@ def _slugify(text: str) -> str:
     return text
 
 
-def _make_notebook(title: str) -> dict:
-    """Return a minimal .ipynb JSON object."""
-
-    # NOTE: This intentionally includes per-cell metadata.language to match repo conventions.
-    return _make_notebook_with_parts(title, parts=1)
-
-
-def _make_notebook_with_parts(title: str, *, parts: int) -> dict:
+def _make_notebook_with_parts(title: str, *, parts: int) -> dict[str, Any]:
     if parts < 1:
         raise ValueError("parts must be >= 1")
 
-    def _meta(language: str, *, tags: list[str] | None = None) -> dict:
+    def _meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
         meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
         if tags:
             meta["tags"] = tags
         return meta
 
-    cells: list[dict] = [
+    cells: list[dict[str, Any]] = [
         {
             "cell_type": "markdown",
             "metadata": _meta("markdown"),
@@ -141,7 +135,8 @@ def _make_notebook_with_parts(title: str, *, parts: int) -> dict:
     }
 
 
-def main() -> int:
+def _validate_and_parse_args() -> argparse.Namespace:
+    """Parse and validate command-line arguments."""
     parser = argparse.ArgumentParser(description="Create a new exercise skeleton")
     parser.add_argument("id", help='Exercise id like "ex001"')
     parser.add_argument("title", help="Human title for the exercise")
@@ -171,8 +166,11 @@ def main() -> int:
     if not re.fullmatch(r"[a-z0-9]+(?:_[a-z0-9]+)*", slug):
         raise SystemExit("Slug must be snake_case containing only a-z, 0-9, and underscores.")
 
-    exercise_key = f"{ex_id}_{slug}"
+    return args
 
+
+def _check_exercise_not_exists(exercise_key: str) -> None:
+    """Raise SystemExit if exercise already exists."""
     ex_dir = ROOT / "exercises" / exercise_key
     nb_path = ROOT / "notebooks" / f"{exercise_key}.ipynb"
     nb_solution_path = ROOT / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
@@ -181,8 +179,21 @@ def main() -> int:
     if ex_dir.exists() or nb_path.exists() or nb_solution_path.exists() or test_path.exists():
         raise SystemExit(f"Exercise already exists: {exercise_key}")
 
-    ex_dir.mkdir(parents=True)
 
+def main() -> int:
+    args = _validate_and_parse_args()
+
+    slug = args.slug.strip().lower() if args.slug else _slugify(args.title)
+    exercise_key = f"{args.id.strip().lower()}_{slug}"
+
+    _check_exercise_not_exists(exercise_key)
+
+    ex_dir = ROOT / "exercises" / exercise_key
+    nb_path = ROOT / "notebooks" / f"{exercise_key}.ipynb"
+    nb_solution_path = ROOT / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
+    test_path = ROOT / "tests" / f"test_{exercise_key}.py"
+
+    ex_dir.mkdir(parents=True)
     (ex_dir / "__init__.py").write_text("\n", encoding="utf-8")
 
     today = _dt.date.today().isoformat()
@@ -245,9 +256,6 @@ def main() -> int:
     notebook = _make_notebook_with_parts(args.title, parts=args.parts)
     nb_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
 
-    # Create a mirrored notebook for teacher solutions.
-    # By default it's identical to the student notebook; teachers can fill in
-    # the tagged exercise cell(s) to verify tests pass against known-good code.
     nb_solution_path.parent.mkdir(parents=True, exist_ok=True)
     nb_solution_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
 
