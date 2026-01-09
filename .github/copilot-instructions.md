@@ -1,62 +1,140 @@
 # Copilot Custom Instructions — PythonTutorExercises
 
-You are assisting in a classroom repo of Python exercises.
-The repo is organized so students work in Jupyter notebooks, but **grading is done via pytest**.
+You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
-## Goals
-- Create new exercises quickly and consistently.
-- Put student code **inline in notebooks** (in a tagged cell).
-- Keep grading deterministic via `pytest`.
-- Put checks in **tests/**.
+## Project Overview
 
-## Authoring help
-- Use the repository chat mode prompt in `.github/prompts/exercise_generation.chatmode.md` to generate consistent notebook + tests.
+This repository provides notebook-based Python exercises with automated grading via pytest, designed for GitHub Classroom integration.
 
-## Repository layout (must follow)
-- `notebooks/`
-  - One notebook per exercise: `notebooks/exNNN_slug.ipynb`
-  - Students write their solution in a dedicated code cell that **must** be tagged with `exerciseN` (e.g., `exercise1`, `exercise2`). Tests and tooling will look only for `exerciseN` tags; marker comments are deprecated.
-- `tests/`
-  - `tests/test_exNNN_slug.py` contains automated tests.
-- `scripts/new_exercise.py` generates skeletons.
-- `exercises/`
-  - Folder structure: `exercises/CONSTRUCT/{debug,modify,make}/exNNN_slug/README.md`
-  - Where CONSTRUCT is one of: sequence, selection, iteration, data_types, lists, dictionaries, functions, file_handling, exceptions, libraries, oop
+**Core concept**: Students work in Jupyter notebooks, writing code in metadata-tagged cells. The grading system extracts and executes these tagged cells using pytest, enabling automated feedback.
 
-## When asked to "create a new exercise"
-1. Choose the next ID (ex001, ex002, …) and a short snake-case slug.
-2. Use / extend `scripts/new_exercise.py` output rather than ad-hoc files.
-3. Ensure the notebook includes a **single** code cell tagged `student`.
-4. Tests should read `notebooks/exNNN_slug.ipynb`, extract the target cell by metadata tag (e.g. `exercise1`), execute it, and assert on the defined functions/variables.
-5. Update `README.md` index table with the new exercise.
+## Quick Reference
 
-## Exercise design rules
-- Student cell must expose **small pure functions** where possible.
-- Include clear docstrings + type hints.
-- Prefer deterministic behavior.
-- Avoid requiring user input (`input()`) in graded functions.
-- Avoid printing in graded functions unless explicitly required; return values instead.
+**For exercise creation**: Use the exercise generation custom agent (`.github/agents/exercise_generation.md.agent.md`)
 
-## Testing rules
-- Use `pytest`.
-- Tests must be fast (< 1s each) and deterministic.
-- Include:
-  - at least 3 positive tests
-  - at least 2 edge cases
-  - one "wrong type" or "invalid value" case if appropriate
-- Grading: extract + `exec()` cells tagged `exercise1`, `exercise2`, etc. (see `tests/notebook_grader.py`).
-- Avoid executing entire notebooks in CI unless explicitly requested.
+**Documentation**:
+- [Project Structure](../docs/project-structure.md) - Repository organisation and file layout
+- [Testing Framework](../docs/testing-framework.md) - How the grading system works
+- [Exercise Generation](../docs/exercise-generation.md) - Creating new exercises
+- [Setup Guide](../docs/setup.md) - Installation and configuration
+- [Development Guide](../docs/development.md) - Contributing and maintenance
 
-## Notebook rules
-- Notebook should:
-  - explain the goal
-  - show 1–2 examples
-  - include cells tagged `exercise1`, `exercise2`, etc. where students write their solutions
-  - optionally include a non-graded self-check cell
-- Keep notebook outputs minimal.
-- Multi-part notebooks (e.g., 10 exercises) should have all parts in ONE notebook with multiple tagged cells (`exercise1` through `exercise10`).
+## Repository Structure
 
-## Do not do
-- Do not include full solutions in student repos.
-- Do not depend on network access.
-- Do not add heavy dependencies.
+```
+notebooks/              # Student exercise notebooks
+  exNNN_slug.ipynb     # One notebook per exercise
+  solutions/           # Instructor solution mirrors
+tests/                 # pytest-based automated grading
+  notebook_grader.py   # Core grading framework
+  test_exNNN_*.py      # Tests for each exercise
+exercises/             # Teacher materials and metadata
+  CONSTRUCT/TYPE/exNNN_slug/
+scripts/               # Automation utilities
+  new_exercise.py      # Exercise scaffolding tool
+docs/                  # Project documentation
+```
+
+## Key Concepts
+
+### Tagged Cells
+
+Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1`, `exercise2`) in the cell metadata. Tests extract these cells using `exec_tagged_code()` from `tests/notebook_grader.py`.
+
+**Important**: Marker comments (e.g., `# STUDENT`) are deprecated. Only metadata tags are used.
+
+### Parallel Notebook Sets
+
+- **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
+- **Solution notebooks** (`notebooks/solutions/`): Completed versions
+
+The same tests run against both sets:
+- Default: `pytest` (tests student notebooks)
+- Solutions: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest`
+
+### Exercise Organisation
+
+Exercises are organised by construct and type:
+- **Constructs**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
+- **Types**: `debug` (fix errors), `modify` (change working code), `make` (create from scratch)
+
+### Pedagogical Progression
+
+Students learn constructs in order. Exercises must only use constructs students have already learned. See the exercise generation agent for detailed pedagogical guidelines.
+
+## Coding Standards
+
+### Python Style
+
+- **Language**: Python 3.11+
+- **Linting**: Ruff (configured in `pyproject.toml`)
+- **Type hints**: Use modern syntax (e.g., `list[str]` not `List[str]`)
+- **Docstrings**: Required for public functions in infrastructure code
+
+### Testing Standards
+
+- **Fast**: Each test should complete in < 1s
+- **Deterministic**: No randomness, time-based checks, or network calls
+- **Coverage**: At least 3 positive tests, 2 edge cases per exercise
+- **Isolation**: Each tagged cell executes independently
+
+### Notebook Standards
+
+- **Format**: Standard `.ipynb` JSON
+- **Cell metadata**: Must include `metadata.language` ("python" or "markdown")
+- **Tags**: Exact match required (e.g., `exercise1`, not `Exercise1` or `exercise_1`)
+- **Function names**: Prefer `solve()` for consistency
+
+## Common Commands
+
+```bash
+# Create new exercise
+python scripts/new_exercise.py ex042 "Title" --slug slug_name
+
+# Run tests
+pytest -q
+
+# Test solutions
+scripts/verify_solutions.sh -q
+
+# Lint code
+ruff check .
+
+# Start Jupyter
+jupyter lab
+```
+
+## When Asked to Create Exercises
+
+**Delegate to the exercise generation custom agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
+
+Do not create exercises manually. Use:
+1. The exercise generation agent for authoring
+2. `scripts/new_exercise.py` for scaffolding
+3. The testing framework for grading
+
+## Working with the Grading System
+
+The grading system (`tests/notebook_grader.py`) provides:
+
+- `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
+- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace
+- `resolve_notebook_path(notebook_path)` - Handle `PYTUTOR_NOTEBOOKS_DIR` redirection
+
+See [Testing Framework](../docs/testing-framework.md) for details.
+
+## Constraints
+
+**Do not**:
+- Include full solutions in student-facing notebooks
+- Add heavy dependencies (keep installation simple for students)
+- Use network access in exercises or tests
+- Create exercises that require constructs students haven't learned
+- Use generic best practices that aren't specific to this codebase
+
+**Do**:
+- Keep instructions clear and age-appropriate (14-18 year olds)
+- Write concise, accurate documentation
+- Use the scaffolding tools for consistency
+- Test both student and solution notebooks
+- Follow the existing patterns in the codebase
