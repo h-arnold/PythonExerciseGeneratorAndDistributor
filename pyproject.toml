@@ -7,7 +7,12 @@ requires-python = ">=3.11"
 license = { file = "LICENSE" }
 authors = [{ name = "Bassaleg School" }]
 
-dependencies = []
+dependencies = [
+  "pytest>=8.0",
+  "ruff>=0.6",
+  "ipykernel>=6.0",
+  "jupyterlab>=4.0",
+]
 
 [project.optional-dependencies]
 dev = [

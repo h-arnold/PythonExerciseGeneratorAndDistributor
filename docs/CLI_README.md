@@ -10,7 +10,7 @@ The CLI is part of this repository. Make sure you have the development dependenc
 pip install -e ".[dev]"
 ```
 
-Note: Installing the package with the `.[dev]` extras also provides a console script named `template-repo-cli` (exposed via `pyproject.toml`) so you can run `template-repo-cli --help` after installation.
+Note: Installing the package with the `.[dev]` extras also provides a console script named `template_repo_cli` (exposed via `pyproject.toml`) so you can run `template_repo_cli --help` after installation.
 
 ## Prerequisites
 
@@ -39,31 +39,24 @@ The CLI provides three main commands:
 ### List Available Exercises
 
 ```bash
-# List all exercises (module form)
-python -m scripts.template_repo_cli list
-
-# Or use the top-level convenience script in the repository
-python main.py list
-./main.py list
-
-# Or, after installing dev extras, use the installed console script
-template-repo-cli list
+# List all exercises
+template_repo_cli list
 
 # List exercises in a specific construct
-python -m scripts.template_repo_cli list --construct sequence
+template_repo_cli list --construct sequence
 
 # Output as JSON
-python -m scripts.template_repo_cli list --format json
+template_repo_cli list --format json
 ```
 
 ### Validate Selection
 
 ```bash
 # Validate exercises by construct
-python -m scripts.template_repo_cli validate --construct sequence
+template_repo_cli validate --construct sequence
 
 # Validate by construct and type
-python -m scripts.template_repo_cli validate --construct sequence --type modify
+template_repo_cli validate --construct sequence --type modify
 ```
 
 ### Create Template Repository
@@ -72,12 +65,12 @@ python -m scripts.template_repo_cli validate --construct sequence --type modify
 
 ```bash
 # Create template with all sequence exercises
-python -m scripts.template_repo_cli create \
+template_repo_cli create \
   --construct sequence \
   --repo-name sequence-exercises
 
 # Create template with multiple constructs
-python -m scripts.template_repo_cli create \
+template_repo_cli create \
   --construct sequence selection iteration \
   --repo-name week1-exercises \
   --name "Week 1: Control Flow Exercises"
@@ -87,7 +80,7 @@ python -m scripts.template_repo_cli create \
 
 ```bash
 # Create template with only modify exercises from sequence
-python -m scripts.template_repo_cli create \
+template_repo_cli create \
   --construct sequence \
   --type modify \
   --repo-name sequence-modify \
@@ -98,13 +91,13 @@ python -m scripts.template_repo_cli create \
 
 ```bash
 # Create template with specific exercises
-python -m scripts.template_repo_cli create \
+template_repo_cli create \
   --notebooks ex001_sanity ex002_sequence_modify_basics \
   --repo-name getting-started \
   --name "Getting Started with Python"
 
 # Create template with pattern matching
-python -m scripts.template_repo_cli create \
+template_repo_cli create \
   --notebooks "ex00*" \
   --repo-name first-ten \
   --name "First Ten Exercises"
@@ -114,19 +107,19 @@ python -m scripts.template_repo_cli create \
 
 ```bash
 # Create private repository in an organization
-python -m scripts.template_repo_cli create \
+template_repo_cli create \
   --construct sequence \
   --repo-name sequence-exercises \
   --private \
   --org my-organization
 
 # Test without creating the repository (dry-run)
-python -m scripts.template_repo_cli --dry-run create \
+template_repo_cli --dry-run create \
   --construct sequence \
   --repo-name test-repo
 
 # Save to local directory instead of creating repository
-python -m scripts.template_repo_cli \
+template_repo_cli \
   --output-dir ./my-template \
   --dry-run \
   create \
@@ -138,7 +131,7 @@ python -m scripts.template_repo_cli \
 
 ```bash
 # Show detailed progress
-python -m scripts.template_repo_cli --verbose create \
+template_repo_cli --verbose create \
   --construct sequence \
   --repo-name sequence-exercises
 ```
@@ -231,7 +224,7 @@ Make sure:
 Run the `validate` command to check for missing files:
 
 ```bash
-python -m scripts.template_repo_cli validate --construct sequence
+template_repo_cli validate --construct sequence
 ```
 
 ## Development
