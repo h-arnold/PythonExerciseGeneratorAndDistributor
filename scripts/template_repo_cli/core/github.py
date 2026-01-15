@@ -23,7 +23,7 @@ class GitHubClient:
         self,
         repo_name: str,
         public: bool = True,
-        template: bool = True,
+        template_repo: str | None = None,
         org: str | None = None,
         description: str | None = None,
     ) -> list[str]:
@@ -32,7 +32,8 @@ class GitHubClient:
         Args:
             repo_name: Repository name.
             public: Whether repository should be public.
-            template: Whether to mark as template repository.
+            template_repo: Optional template repository (owner/name) to use as argument
+                to the --template flag used to clone from an existing template.
             org: Organization name (if creating in org).
             description: Repository description.
             
@@ -53,9 +54,9 @@ class GitHubClient:
         else:
             cmd.append("--private")
         
-        # Add template flag
-        if template:
-            cmd.append("--template")
+        # Add template flag only when a source template repository is specified
+        if template_repo:
+            cmd.extend(["--template", template_repo])
         
         # Add description if provided
         if description:
@@ -138,6 +139,7 @@ class GitHubClient:
         *,
         public: bool = True,
         template: bool = True,
+        template_repo: str | None = None,
         org: str | None = None,
         description: str | None = None,
         push: bool = False,
@@ -147,6 +149,11 @@ class GitHubClient:
         Args:
             repo_name: Repository name.
             workspace: Workspace directory.
+            public: Whether repository should be public.
+            template: Whether to mark the repository as a template after creation.
+            template_repo: Optional template repository to base the new repository on.
+            org: Organization name to create the repository in.
+            description: Repository description used for gh command.
             push: Whether to push initial commit.
             
         Returns:
@@ -163,7 +170,7 @@ class GitHubClient:
         cmd = self.build_create_command(
             repo_name,
             public=public,
-            template=template,
+            template_repo=template_repo,
             org=org,
             description=description,
         )
@@ -171,6 +178,17 @@ class GitHubClient:
         # Execute command
         result = self.execute_command(cmd)
         
+        # Mark repository as a template if requested
+        if result["success"] and template:
+            template_result = self.mark_repository_as_template(repo_name, org)
+            if not template_result["success"]:
+                return {
+                    "success": False,
+                    "error": template_result.get("error", "Failed to mark repository as template"),
+                    "output": template_result.get("output"),
+                    "returncode": template_result.get("returncode"),
+                }
+
         # If push requested and creation successful
         if push and result["success"]:
             # Initialize git, commit, and push
@@ -179,6 +197,15 @@ class GitHubClient:
             # Push would require knowing the remote URL
         
         return result
+
+    def mark_repository_as_template(
+        self, repo_name: str, org: str | None = None
+    ) -> dict[str, Any]:
+        """Mark an existing repository as a template."""
+
+        repo_ref = f"{org}/{repo_name}" if org else repo_name
+        cmd = ["gh", "repo", "edit", repo_ref, "--template"]
+        return self.execute_command(cmd)
 
     def init_git_repo(self, workspace: Path) -> None:
         """Initialize git repository.

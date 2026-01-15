@@ -16,14 +16,15 @@ class TestBuildCreateRepoCommand:
     def test_build_create_repo_command_basic(self, repo_root: Path) -> None:
         """Test building basic gh repo create command."""
         client = GitHubClient()
-        cmd = client.build_create_command("test-repo", public=True, template=True)
+        cmd = client.build_create_command("test-repo", public=True)
 
         assert "gh" in cmd
         assert "repo" in cmd
         assert "create" in cmd
         assert "test-repo" in cmd
         assert "--public" in cmd
-        assert "--template" in cmd
+        # No --template flag when no template repo is provided
+        assert "--template" not in cmd
 
     def test_build_create_with_org(self, repo_root: Path) -> None:
         """Test building command with organization option."""
@@ -39,19 +40,22 @@ class TestBuildCreateRepoCommand:
 
         assert "--private" in cmd
 
-    def test_build_create_template(self, repo_root: Path) -> None:
-        """Test building command with template repository flag."""
-        client = GitHubClient()
-        cmd = client.build_create_command("test-repo", template=True)
-
-        assert "--template" in cmd
-
     def test_build_create_with_description(self, repo_root: Path) -> None:
         """Test building command with description."""
         client = GitHubClient()
         cmd = client.build_create_command("test-repo", description="Test description")
 
         assert "--description" in cmd or "-d" in cmd
+
+    def test_build_create_with_template_repo_argument(self, repo_root: Path) -> None:
+        """Test passing explicit template repository argument."""
+        client = GitHubClient()
+        cmd = client.build_create_command(
+            "test-repo", template_repo="owner/template-repo"
+        )
+
+        assert "--template" in cmd
+        assert "owner/template-repo" in cmd
 
 
 class TestExecuteGhCommand:
@@ -217,6 +221,22 @@ class TestCreateRepository:
         assert result["success"] is True
 
     @patch("subprocess.run")
+    def test_create_repository_marks_template(self, mock_run: MagicMock, temp_dir: Path) -> None:
+        """Ensure repositories are marked as templates when requested."""
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="{}", stderr=""),
+            MagicMock(returncode=0, stdout="", stderr=""),
+        ]
+
+        client = GitHubClient()
+        result = client.create_repository("test-repo", temp_dir)
+
+        assert result["success"] is True
+        assert mock_run.call_count == 2
+        second_call_cmd = mock_run.call_args_list[1][0][0]
+        assert second_call_cmd == ["gh", "repo", "edit", "test-repo", "--template"]
+
+    @patch("subprocess.run")
     def test_create_repository_with_push(self, mock_run: MagicMock, temp_dir: Path) -> None:
         """Test repository creation with initial push."""
         mock_run.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
@@ -229,6 +249,26 @@ class TestCreateRepository:
 
         # Should have called git commands
         assert mock_run.call_count >= 1
+
+
+class TestMarkRepositoryAsTemplate:
+    """Tests for marking repositories as templates."""
+
+    @patch("subprocess.run")
+    def test_mark_repository_as_template(self, mock_run: MagicMock) -> None:
+        """Ensure gh repo edit is invoked to set template flag."""
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+
+        client = GitHubClient()
+        result = client.mark_repository_as_template("test-repo", org="my-org")
+
+        assert result["success"] is True
+        mock_run.assert_called_with(
+            ["gh", "repo", "edit", "my-org/test-repo", "--template"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
 
 class TestGitOperations:

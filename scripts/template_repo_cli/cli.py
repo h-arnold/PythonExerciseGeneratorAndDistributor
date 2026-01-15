@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import subprocess
 import shutil
 import sys
 import traceback
@@ -87,6 +89,77 @@ def _check_github_prerequisites(github: GitHubClient) -> str | None:
     return None
 
 
+def _detect_auth_token_env() -> str | None:
+    """Return which GitHub auth-related environment variable is set, if any."""
+
+    for key in ("GITHUB_TOKEN", "GH_TOKEN"):
+        if os.getenv(key):
+            return key
+    return None
+
+
+def _github_permission_hint(error: str | None) -> str | None:
+    """Return actionable hint for permission-related GitHub errors."""
+
+    if not error:
+        return None
+
+    message = error.lower()
+    if "resource not accessible by integration" in message and "createrepository" in message:
+        env_key = _detect_auth_token_env()
+        base = (
+            "The current GitHub authentication token cannot create repositories. "
+            "Run `gh auth login` with a user account/token that has the `repo` scope "
+            "or provide a personal access token via GH_TOKEN."
+        )
+
+        if env_key == "GITHUB_TOKEN":
+            base += (
+                " It looks like GITHUB_TOKEN is set (e.g., from GitHub Apps or CI). "
+                "Unset GITHUB_TOKEN before running `gh auth login` so you can authenticate "
+                "as a user with repo permissions."
+            )
+        elif env_key == "GH_TOKEN":
+            base += " Ensure GH_TOKEN references a personal access token with the `repo` scope."
+
+        return base
+
+    return None
+
+
+def _is_integration_permission_error(error: str | None) -> bool:
+    """Return True if createRepository permissions error is reported."""
+
+    if not error:
+        return False
+
+    message = error.lower()
+    return (
+        "resource not accessible by integration" in message
+        and "createrepository" in message
+    )
+
+
+def _offer_unset_token_and_reauth(env_key: str) -> bool:
+    """Prompt user to unset token env var and re-run `gh auth login`."""
+
+    prompt = input(
+        f"Detected {env_key} which can block user authentication. "
+        "Unset it and run `gh auth login` now? [y/N] "
+    ).strip().lower()
+    if prompt not in {"y", "yes"}:
+        return False
+
+    os.environ.pop(env_key, None)
+    subprocess.run(["gh", "auth", "logout"], capture_output=True, check=False)
+    result = subprocess.run(["gh", "auth", "login"], check=False)
+    if result.returncode != 0:
+        print("gh auth login failed; please rerun manually.", file=sys.stderr)
+        return False
+
+    return True
+
+
 def _handle_output_directory(workspace: Path, output_dir: str, packager: TemplatePackager) -> int:
     """Handle copying workspace to output directory.
     
@@ -163,25 +236,47 @@ def _create_github_repo(
     Returns:
         Tuple of (success, error_message).
     """
-    error_msg = _check_github_prerequisites(github)
-    if error_msg:
+    template_flag = not getattr(args, "no_template", False)
+    env_key = _detect_auth_token_env()
+    already_reauthenticated = False
+
+    while True:
+        error_msg = _check_github_prerequisites(github)
+        if error_msg:
+            return False, error_msg
+
+        result = github.create_repository(
+            args.repo_name,
+            workspace,
+            public=not args.private,
+            template=template_flag,
+            template_repo=getattr(args, "template_repo", None),
+            org=args.org,
+            description=args.name,
+            push=False,
+        )
+
+        if result["success"]:
+            print(f"✓ Created repository: {args.repo_name}")
+            return True, None
+
+        error_msg = result.get("error") or "Unknown error"
+        hint = _github_permission_hint(error_msg)
+
+        if (
+            env_key
+            and not already_reauthenticated
+            and _is_integration_permission_error(error_msg)
+            and _offer_unset_token_and_reauth(env_key)
+        ):
+            already_reauthenticated = True
+            env_key = _detect_auth_token_env()
+            continue
+
+        if hint:
+            error_msg = f"{error_msg} {hint}"
+
         return False, error_msg
-    
-    result = github.create_repository(
-        args.repo_name,
-        workspace,
-        public=not args.private,
-        template=True,
-        org=args.org,
-        description=args.name,
-        push=False,
-    )
-    
-    if result["success"]:
-        print(f"✓ Created repository: {args.repo_name}")
-        return True, None
-    else:
-        return False, result.get("error", "Unknown error")
 
 
 def _prepare_exercises(
@@ -535,6 +630,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     create_parser.add_argument(
         "--org", type=str, help="Create in organization (default: user account)"
+    )
+    create_parser.add_argument(
+        "--no-template",
+        action="store_true",
+        help="Do not mark the new repository as a template (default: create as template)",
+    )
+    create_parser.add_argument(
+        "--template-repo",
+        type=str,
+        help=(
+            "Template repository to base the new repository on (owner/name). "
+            "If not supplied, the repo name (prefixed with org if given) is used."
+        ),
     )
     
     # List command

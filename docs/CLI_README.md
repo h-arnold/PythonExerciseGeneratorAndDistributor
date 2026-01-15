@@ -125,6 +125,18 @@ template_repo_cli \
   create \
   --construct sequence \
   --repo-name sequence-exercises
+
+# Create a repository but do NOT mark it as a template (opposite of the default)
+template_repo_cli create \
+  --construct sequence \
+  --repo-name sequence-exercises \
+  --no-template
+
+# Create a repository based on an existing GitHub template repository
+template_repo_cli create \
+  --construct sequence \
+  --repo-name sequence-exercises \
+  --template-repo "owner/template-repo"
 ```
 
 #### Verbose Mode

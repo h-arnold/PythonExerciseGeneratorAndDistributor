@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -240,6 +241,192 @@ class TestCliCreateCommand:
         )
         
         assert result == 0
+
+    @patch("subprocess.run")
+    def test_cli_create_defaults_to_template(self, mock_run, repo_root: Path) -> None:
+        """Create should mark repository as a template by default."""
+        from scripts.template_repo_cli.cli import main
+        from scripts.template_repo_cli.core.github import GitHubClient
+
+        called = {}
+
+        def fake_create(self, repo_name, workspace, **kwargs):
+            called.update(kwargs)
+            return {"success": True, "dry_run": True}
+
+        with patch.object(GitHubClient, "create_repository", new=fake_create), \
+            patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+            patch.object(GitHubClient, "check_authentication", return_value=True):
+            result = main(
+                ["create", "--construct", "sequence", "--repo-name", "test-repo"]
+            )
+
+        assert result == 0
+        # By default the CLI should set template=True
+        assert called.get("template") is True
+        assert called.get("template_repo") is None
+
+    @patch("subprocess.run")
+    def test_cli_create_with_no_template_flag(self, mock_run, repo_root: Path) -> None:
+        """Passing --no-template should disable template creation."""
+        from scripts.template_repo_cli.cli import main
+        from scripts.template_repo_cli.core.github import GitHubClient
+
+        called = {}
+
+        def fake_create(self, repo_name, workspace, **kwargs):
+            called.update(kwargs)
+            return {"success": True, "dry_run": True}
+
+        with patch.object(GitHubClient, "create_repository", new=fake_create), \
+            patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+            patch.object(GitHubClient, "check_authentication", return_value=True):
+            result = main(
+                [
+                    "create",
+                    "--construct",
+                    "sequence",
+                    "--repo-name",
+                    "test-repo",
+                    "--no-template",
+                ]
+            )
+
+        assert result == 0
+        assert called.get("template") is False
+
+    @patch("subprocess.run")
+    def test_cli_create_with_template_repo_argument(self, mock_run, repo_root: Path) -> None:
+        """Passing --template-repo should forward the value."""
+        from scripts.template_repo_cli.cli import main
+        from scripts.template_repo_cli.core.github import GitHubClient
+
+        called = {}
+
+        def fake_create(self, repo_name, workspace, **kwargs):
+            called.update(kwargs)
+            return {"success": True, "dry_run": True}
+
+        with patch.object(GitHubClient, "create_repository", new=fake_create), \
+            patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+            patch.object(GitHubClient, "check_authentication", return_value=True):
+            result = main(
+                [
+                    "create",
+                    "--construct",
+                    "sequence",
+                    "--repo-name",
+                    "test-repo",
+                    "--template-repo",
+                    "owner/template-repo",
+                ]
+            )
+
+        assert result == 0
+        assert called.get("template") is True
+        assert called.get("template_repo") == "owner/template-repo"
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_create, repo_root: Path, capsys) -> None:
+        """Display guidance when GitHub rejects repo creation for integrations."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_create.return_value = {
+            "success": False,
+            "error": "GraphQL: Resource not accessible by integration (createRepository)",
+        }
+
+        with patch.dict(os.environ, {}, clear=True):
+            result = main(
+                [
+                    "create",
+                    "--construct",
+                    "sequence",
+                    "--repo-name",
+                    "test-repo",
+                ]
+            )
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "GitHub authentication token cannot create repositories" in captured.err
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_permission_hint_unset_env_token(
+        self, mock_installed, mock_auth, mock_create, repo_root: Path, capsys
+    ) -> None:
+        """Hint to unset GITHUB_TOKEN when it blocks login."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_create.return_value = {
+            "success": False,
+            "error": "GraphQL: Resource not accessible by integration (createRepository)",
+        }
+
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "ghu_fake"}, clear=True), \
+            patch("builtins.input", return_value="n"):
+            result = main(
+                [
+                    "create",
+                    "--construct",
+                    "sequence",
+                    "--repo-name",
+                    "test-repo",
+                ]
+            )
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "unset github_token" in captured.err.lower()
+
+    @patch("builtins.input", return_value="y")
+    @patch("scripts.template_repo_cli.cli.subprocess.run")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_permission_hint_reauth_flow(
+        self,
+        mock_installed,
+        mock_auth,
+        mock_create,
+        mock_subprocess_run,
+        mock_input,
+        repo_root: Path,
+    ) -> None:
+        """Offer to unset token and rerun `gh auth login`."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_create.side_effect = [
+            {
+                "success": False,
+                "error": "GraphQL: Resource not accessible by integration (createRepository)",
+            },
+            {"success": True, "html_url": "https://github.com/user/test-repo"},
+        ]
+
+        def fake_subprocess_run(cmd, **kwargs):
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_subprocess_run.side_effect = fake_subprocess_run
+
+        with patch.dict(os.environ, {"GITHUB_TOKEN": "ghu_fake"}, clear=True):
+            result = main(
+                [
+                    "create",
+                    "--construct",
+                    "sequence",
+                    "--repo-name",
+                    "test-repo",
+                ]
+            )
+
+        assert result == 0
+        assert mock_create.call_count == 2
+        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(self, mock_run, repo_root: Path) -> None:
