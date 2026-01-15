@@ -10,6 +10,8 @@ The CLI is part of this repository. Make sure you have the development dependenc
 pip install -e ".[dev]"
 ```
 
+Note: Installing the package with the `.[dev]` extras also provides a console script named `template-repo-cli` (exposed via `pyproject.toml`) so you can run `template-repo-cli --help` after installation.
+
 ## Prerequisites
 
 - Python 3.11 or higher
@@ -37,8 +39,15 @@ The CLI provides three main commands:
 ### List Available Exercises
 
 ```bash
-# List all exercises
+# List all exercises (module form)
 python -m scripts.template_repo_cli list
+
+# Or use the top-level convenience script in the repository
+python main.py list
+./main.py list
+
+# Or, after installing dev extras, use the installed console script
+template-repo-cli list
 
 # List exercises in a specific construct
 python -m scripts.template_repo_cli list --construct sequence
