@@ -1,6 +1,6 @@
-# Bassaleg Python Tutor Exercises
+# Python Exercise Generator
 
-Notebook-based Python exercises with automated grading via pytest, designed for secondary school students learning Python.
+As with anything, practise makes perfect. 
 
 ## Repo layout
 
@@ -78,6 +78,13 @@ pytest tests/test_ex001_sanity.py -v   # Test specific exercise
 jupyter lab                             # Open Jupyter interface
 ruff check .                            # Lint code
 scripts/verify_solutions.sh -q          # Test solutions
+
+# CLI: convenience entrypoints for the template repository CLI
+python main.py list                      # Run CLI via top-level script (no -m required)
+./main.py list                           # Run directly if executable
+
+# Installed console script (after `pip install -e ".[dev]"`)
+template-repo-cli list                   # Run CLI via installed console entry point
 ```
 
 ## How It Works

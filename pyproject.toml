@@ -17,6 +17,11 @@ dev = [
   "jupyterlab>=4.0",
 ]
 
+[project.scripts]
+# Console entrypoint for the template repository CLI. Installs as `template-repo-cli` when the package is
+# installed (e.g., `pip install -e ".[dev]"`).
+template-repo-cli = "scripts.template_repo_cli.cli:main"
+
 [tool.setuptools]
 packages = ["scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
 
