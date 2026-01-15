@@ -256,6 +256,7 @@ class TestCliCreateCommand:
 
         with patch.object(GitHubClient, "create_repository", new=fake_create), \
             patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+            patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
             patch.object(GitHubClient, "check_authentication", return_value=True):
             result = main(
                 ["create", "--construct", "sequence", "--repo-name", "test-repo"]
@@ -280,6 +281,7 @@ class TestCliCreateCommand:
 
         with patch.object(GitHubClient, "create_repository", new=fake_create), \
             patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+            patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
             patch.object(GitHubClient, "check_authentication", return_value=True):
             result = main(
                 [
@@ -309,6 +311,7 @@ class TestCliCreateCommand:
 
         with patch.object(GitHubClient, "create_repository", new=fake_create), \
             patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+            patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
             patch.object(GitHubClient, "check_authentication", return_value=True):
             result = main(
                 [
@@ -327,12 +330,14 @@ class TestCliCreateCommand:
         assert called.get("template_repo") == "owner/template-repo"
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_create, repo_root: Path, capsys) -> None:
+    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys) -> None:
         """Display guidance when GitHub rejects repo creation for integrations."""
         from scripts.template_repo_cli.cli import main
 
+        mock_scopes.return_value = {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}
         mock_create.return_value = {
             "success": False,
             "error": "GraphQL: Resource not accessible by integration (createRepository)",
@@ -354,14 +359,16 @@ class TestCliCreateCommand:
         assert "GitHub authentication token cannot create repositories" in captured.err
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
     def test_cli_permission_hint_unset_env_token(
-        self, mock_installed, mock_auth, mock_create, repo_root: Path, capsys
+        self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys
     ) -> None:
         """Hint to unset GITHUB_TOKEN when it blocks login."""
         from scripts.template_repo_cli.cli import main
 
+        mock_scopes.return_value = {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}
         mock_create.return_value = {
             "success": False,
             "error": "GraphQL: Resource not accessible by integration (createRepository)",
@@ -386,12 +393,14 @@ class TestCliCreateCommand:
     @patch("builtins.input", return_value="y")
     @patch("scripts.template_repo_cli.cli.subprocess.run")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
     def test_cli_permission_hint_reauth_flow(
         self,
         mock_installed,
         mock_auth,
+        mock_scopes,
         mock_create,
         mock_subprocess_run,
         mock_input,
@@ -400,6 +409,14 @@ class TestCliCreateCommand:
         """Offer to unset token and rerun `gh auth login`."""
         from scripts.template_repo_cli.cli import main
 
+        # First prerequisite check: scopes present
+        # After error: check scopes again (missing)
+        # Second prerequisite check: scopes present
+        mock_scopes.side_effect = [
+            {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []},  # First prereq check
+            {"authenticated": True, "has_scopes": False, "scopes": [], "missing_scopes": ["repo"]},  # After first create error
+            {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []},  # Second prereq check
+        ]
         mock_create.side_effect = [
             {
                 "success": False,

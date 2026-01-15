@@ -183,7 +183,7 @@ class GitHubClient:
             
             return result
             
-        except (FileNotFoundError, OSError):
+        except OSError:
             return result
 
     def parse_json_output(self, output: str) -> dict[str, Any]:
