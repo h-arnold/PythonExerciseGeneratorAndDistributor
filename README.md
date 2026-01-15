@@ -2,33 +2,38 @@
 
 Notebook-based Python exercises with automated grading via pytest, designed for secondary school students learning Python.
 
-## What is This?
+## Repo layout
 
-A collection of Jupyter notebook exercises where:
-- **Students** write code in tagged notebook cells
-- **pytest** automatically grades their work
-- **GitHub Classroom** integration provides instant feedback
+- `notebooks/`
+	- One notebook per exercise: `notebooks/exNNN_slug.ipynb`
+	- Students write code **inline** in a dedicated exercise cell that **must** be tagged with `exerciseN` in the cell metadata (e.g., `exercise1`, `exercise2`). 
+	- Teacher/CI solution mirrors (optional): `notebooks/solutions/exNNN_slug.ipynb`
+- `tests/`
+	- `tests/test_exNNN_slug.py` contains automated tests
+	- Tests extract + execute the student cell (see `tests/notebook_grader.py`)
+- `scripts/new_exercise.py`
+	- Scaffolds a new exercise skeleton
 
-## For Students
+Optional (teacher notes / materials):
+- `exercises/`
+	- One folder per exercise: `exercises/exNNN_slug/README.md`
 
-### Getting Started
+## Quickstart
 
-1. **Clone the repository** or accept the GitHub Classroom assignment
-2. **Install dependencies**:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   pip install -e ".[dev]"
-   ```
-3. **Open a notebook** in Jupyter Lab:
-   ```bash
-   jupyter lab
-   ```
-4. **Complete the exercises** in cells tagged `exercise1`, `exercise2`, etc.
-5. **Test your work**:
-   ```bash
-   pytest -q
-   ```
+Create a virtualenv and install dev dependencies:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -e ".[dev]"
+```
+
+Run all tests:
+
+```bash
+pytest -q
+```
 
 See the [Setup Guide](docs/setup.md) for detailed instructions.
 
