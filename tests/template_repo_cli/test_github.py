@@ -466,3 +466,88 @@ class TestGitOperations:
 
         # Should call git push
         assert any("push" in str(call) for call in mock_run.call_args_list)
+
+
+class TestScopeChecking:
+    """Tests for GitHub authentication scope checking."""
+
+    @patch("subprocess.run")
+    def test_check_scopes_with_required_scopes(self, mock_run: MagicMock) -> None:
+        """Test scope checking when required scopes are present."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="",
+            stderr="  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'"
+        )
+
+        client = GitHubClient()
+        result = client.check_scopes(["repo"])
+
+        assert result["authenticated"] is True
+        assert result["has_scopes"] is True
+        assert "repo" in result["scopes"]
+        assert result["missing_scopes"] == []
+
+    @patch("subprocess.run")
+    def test_check_scopes_with_missing_scopes(self, mock_run: MagicMock) -> None:
+        """Test scope checking when required scopes are missing."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="",
+            stderr="  - Token scopes: 'read:org'"
+        )
+
+        client = GitHubClient()
+        result = client.check_scopes(["repo", "workflow"])
+
+        assert result["authenticated"] is True
+        assert result["has_scopes"] is False
+        assert "read:org" in result["scopes"]
+        assert "repo" in result["missing_scopes"]
+        assert "workflow" in result["missing_scopes"]
+
+    @patch("subprocess.run")
+    def test_check_scopes_not_authenticated(self, mock_run: MagicMock) -> None:
+        """Test scope checking when not authenticated."""
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="")
+
+        client = GitHubClient()
+        result = client.check_scopes(["repo"])
+
+        assert result["authenticated"] is False
+        assert result["has_scopes"] is False
+        assert result["scopes"] == []
+        assert "repo" in result["missing_scopes"]
+
+    @patch("subprocess.run")
+    def test_check_scopes_default_repo_scope(self, mock_run: MagicMock) -> None:
+        """Test scope checking defaults to 'repo' scope."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="",
+            stderr="  - Token scopes: 'repo'"
+        )
+
+        client = GitHubClient()
+        result = client.check_scopes()  # No scopes specified
+
+        assert result["authenticated"] is True
+        assert result["has_scopes"] is True
+        assert "repo" in result["scopes"]
+
+    @patch("subprocess.run")
+    def test_check_scopes_parses_multiple_formats(self, mock_run: MagicMock) -> None:
+        """Test scope parsing handles different quote styles."""
+        mock_run.return_value = MagicMock(
+            returncode=0,
+            stdout="  - Token scopes: 'gist', \"read:org\", repo",
+            stderr=""
+        )
+
+        client = GitHubClient()
+        result = client.check_scopes(["repo"])
+
+        assert result["authenticated"] is True
+        assert "repo" in result["scopes"]
+        assert "gist" in result["scopes"]
+        assert "read:org" in result["scopes"]

@@ -121,6 +121,71 @@ class GitHubClient:
         except FileNotFoundError:
             return False
 
+    def check_scopes(self, required_scopes: list[str] | None = None) -> dict[str, Any]:
+        """Check if current authentication has required scopes.
+        
+        Args:
+            required_scopes: List of required scopes (e.g., ['repo']). 
+                If None, defaults to ['repo'].
+        
+        Returns:
+            Dictionary with:
+                - 'authenticated': bool, whether authenticated at all
+                - 'has_scopes': bool, whether all required scopes are present
+                - 'scopes': list of strings, current scopes (empty if not authenticated)
+                - 'missing_scopes': list of strings, scopes that are missing
+        """
+        if required_scopes is None:
+            required_scopes = ["repo"]
+        
+        result = {
+            "authenticated": False,
+            "has_scopes": False,
+            "scopes": [],
+            "missing_scopes": required_scopes.copy(),
+        }
+        
+        try:
+            # Run gh auth status and capture stderr (where scopes are printed)
+            auth_result = subprocess.run(
+                ["gh", "auth", "status"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            
+            # Check if authenticated
+            if auth_result.returncode != 0:
+                return result
+            
+            result["authenticated"] = True
+            
+            # Parse stderr to extract scopes
+            # Format: "  - Token scopes: 'scope1', 'scope2', 'scope3'"
+            output = auth_result.stderr + auth_result.stdout
+            for line in output.split("\n"):
+                if "Token scopes:" in line:
+                    # Extract the scopes part after "Token scopes:"
+                    scopes_part = line.split("Token scopes:", 1)[1].strip()
+                    # Remove quotes and split by comma
+                    scopes = [
+                        s.strip().strip("'").strip('"')
+                        for s in scopes_part.split(",")
+                        if s.strip()
+                    ]
+                    result["scopes"] = scopes
+                    break
+            
+            # Check if all required scopes are present
+            missing = [s for s in required_scopes if s not in result["scopes"]]
+            result["missing_scopes"] = missing
+            result["has_scopes"] = len(missing) == 0
+            
+            return result
+            
+        except (FileNotFoundError, OSError):
+            return result
+
     def parse_json_output(self, output: str) -> dict[str, Any]:
         """Parse JSON output from gh.
         

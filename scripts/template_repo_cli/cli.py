@@ -83,8 +83,18 @@ def _check_github_prerequisites(github: GitHubClient) -> str | None:
     if not github.check_gh_installed():
         return "gh CLI not installed. Please install it from https://cli.github.com/"
     
-    if not github.check_authentication():
+    # Check authentication and scopes
+    scope_check = github.check_scopes(["repo"])
+    
+    if not scope_check["authenticated"]:
         return "Not authenticated with GitHub. Run 'gh auth login' first."
+    
+    if not scope_check["has_scopes"]:
+        missing = ", ".join(scope_check["missing_scopes"])
+        return (
+            f"Current GitHub authentication is missing required scopes: {missing}. "
+            f"Run 'gh auth refresh -s repo' to add the required scopes."
+        )
     
     return None
 
@@ -287,15 +297,19 @@ def _create_github_repo(
         # Check for "already exists" errors
         exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
 
+        # Only offer reauthentication if we have a permission error AND
+        # the current authentication is missing required scopes
         if (
             env_key
             and not already_reauthenticated
             and _is_integration_permission_error(error_msg)
-            and _offer_unset_token_and_reauth(env_key)
         ):
-            already_reauthenticated = True
-            env_key = _detect_auth_token_env()
-            continue
+            # Check if scopes are actually missing
+            scope_check = github.check_scopes(["repo"])
+            if not scope_check["has_scopes"] and _offer_unset_token_and_reauth(env_key):
+                already_reauthenticated = True
+                env_key = _detect_auth_token_env()
+                continue
 
         # Add hints to error message
         if permission_hint:
