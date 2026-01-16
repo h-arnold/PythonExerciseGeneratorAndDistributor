@@ -1,7 +1,7 @@
 ---
 name: Exercise Generation
 description: Generate notebook-first Python exercises (tagged cells + pytest grading)
-tools: ['vscode/getProjectSetupInfo', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'vscode/vscodeAPI', 'execute', 'read', 'edit', 'search', 'web', 'todo']
+tools: ['vscode/getProjectSetupInfo', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'vscode/vscodeAPI', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo']
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
 
@@ -81,9 +81,11 @@ Policy: When generating exercises the agent **MUST** open **THE ENTIRE FILE** an
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
 ## When asked to create an exercise
-1) Pick identifiers
+1) Create a TODO using your `todo` to help you organise your work.
 
-2) Scaffold files with the generator
+2) Pick identifiers
+
+3) Scaffold files with the generator
   - `python scripts/new_exercise.py exNNN "Title" --slug your_slug`
   - or multi-part:
     - `python scripts/new_exercise.py exNNN "Title" --slug your_slug --parts N`
@@ -147,7 +149,7 @@ Metadata tips:
 - Do not place multiple independent student solutions in the same tagged cell; the grader executes only the tagged cell's content.
 
 ### Quality gate (run the verifier — BEFORE tests)
-After scaffolding + authoring the notebooks (student + solutions mirror), run the **Exercise Verifier** agent once to check:
+After scaffolding + authoring the notebooks (student + solutions mirror), use your runSubAgent tool to run the **Exercise Verifier** sub-agent to check:
 - exercise-type compliance (debug/modify/make format rules)
 - concept sequencing (no later constructs accidentally introduced in prompts/starter code)
 - notebook structure/tags are correct
@@ -183,7 +185,7 @@ Also verify the tests pass against the solution mirror:
 If tests fail locally, update only the tests or notebook relevant to the exercise — do not modify unrelated exercises or global test configuration.
 
 ### Quality gate (run the verifier — AFTER tests)
-After tests pass on the solution notebooks, run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
+After tests pass on the solution notebooks, user your runSubAgent tool run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
 - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q` (or the relevant single test file)
 - confirm student notebooks still *fail* until students do the work
 
@@ -347,10 +349,9 @@ def test_lists_basics_examples():
 ## Quick Reference Card
 
 - **Always read the necessary instructions**: Always open and read the entire set of instructions for a given coding exercise type.
+- **Always use your `todo` tool** to plan and track your progress through a task.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
-- **Exercise Types**: Debug (1-3 bugs) -> Modify (alter logic) -> Make (build from scratch).
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
 - **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.
-- **Testing**: Minimum 3 positive tests + 2 edge cases. No randomness or IO.
-- **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass.
+- **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass using the verifier subagent.
 - **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).

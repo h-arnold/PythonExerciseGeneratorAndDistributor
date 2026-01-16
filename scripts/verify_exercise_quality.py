@@ -388,6 +388,38 @@ def _scan_for_progression_violations(
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
+            # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
+            if construct == "functions":
+                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                # If there are any named functions other than `solve`, report as before
+                other_funcs = [m for m in func_defs if m.group(1) != "solve"]
+                if other_funcs:
+                    findings.append(
+                        Finding(
+                            "WARN",
+                            f"Possible progression violation: found {construct} pattern {pat.pattern!r}",
+                            path=path,
+                        )
+                    )
+                    break
+                # If pattern is the def pattern and only `solve` exists, skip warning
+                if pat.pattern == r"^\s*def\s+":
+                    if func_defs:
+                        continue
+                # If pattern is the return pattern, ensure all returns are inside solve()
+                if pat.pattern == r"\breturn\b":
+                    if func_defs:
+                        # Build solve() regions and ensure every 'return' is inside some solve() region
+                        regions: list[tuple[int, int]] = []
+                        for idx, m in enumerate(func_defs):
+                            s = m.start()
+                            e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
+                            regions.append((s, e))
+                        return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
+                        if return_positions and all(any(s <= pos < e for s, e in regions) for pos in return_positions):
+                            continue
+                # otherwise fallthrough to regular warning
+
             if pat.search(text):
                 findings.append(
                     Finding(

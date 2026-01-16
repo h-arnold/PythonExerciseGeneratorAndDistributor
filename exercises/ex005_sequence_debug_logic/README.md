@@ -17,4 +17,3 @@ Students will practise diagnosing and fixing common *logical* errors involving s
 ## Teacher notes
 - Created: 2026-01-16
 - Target concepts: string values, concatenation, variable assignment, formatting, attention to exact wording
-- Note: Each graded cell uses a small `solve()` function as a test wrapper (this is intentional). Students should modify the function body as instructed, not the test harness.

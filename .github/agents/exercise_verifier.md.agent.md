@@ -31,7 +31,7 @@ Also keep these repo rules in mind:
 An exercise is acceptable only if it passes all gates below.
 
 ### Gate A — Fit for purpose (exercise-type compliance)
-Verify the student notebook matches the required format for its type:
+Verify the student notebook matches the required format for its type. Make sure you open the docs associated with the exercise:
 
 **Debug exercises** (see `docs/exercise-types/debug.md`):
 - Each part has *actual buggy code* in the tagged `exerciseN` code cell.
@@ -160,14 +160,15 @@ For FAIL:
 - include which file(s) to change.
 
 ## Recommended workflow
-1) Identify exercise type + construct from folder path under `exercises/`.
-2) Open the appropriate exercise-type guide in full.
-3) Run the quick script checks (Gates B/C + teacher file presence):
+1) Create a comprehensive TODO list using the `todo` tool to help you track your progress. **You MUST do this**
+2) Identify exercise type + construct from folder path under `exercises/`.
+3) Open the appropriate exercise-type guide in full.
+4) Run the quick script checks (Gates B/C + teacher file presence):
   - `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
-4) Inspect manually:
+5) Inspect manually:
    - student notebook
    - solution notebook
    - test file
    - exercise README/OVERVIEW/solutions
-5) Run tests (Gate D).
-6) Produce verdict.
+6) Run tests (Gate D).
+7) Produce verdict.
