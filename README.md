@@ -1,108 +1,115 @@
-# Python Exercise Generator
+# Python Tutor Exercises (prototype)
 
-As with anything, practise makes perfect. 
+A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside notebooks, run code inline, and get autograding feedback. Teachers can generate new exercises quickly and bundle selected exercises into GitHub Classroom template repos.
 
-## Repo layout
+This is a working prototype. The core workflow exists, but several pieces are incomplete (see Status below).
 
-- `notebooks/`
-	- One notebook per exercise: `notebooks/exNNN_slug.ipynb`
-	- Students write code **inline** in a dedicated exercise cell that **must** be tagged with `exerciseN` in the cell metadata (e.g., `exercise1`, `exercise2`). 
-	- Teacher/CI solution mirrors (optional): `notebooks/solutions/exNNN_slug.ipynb`
-- `tests/`
-	- `tests/test_exNNN_slug.py` contains automated tests
-	- Tests extract + execute the student cell (see `tests/notebook_grader.py`)
-- `scripts/new_exercise.py`
-	- Scaffolds a new exercise skeleton
+## What this project does
 
-Optional (teacher notes / materials):
-- `exercises/`
-	- One folder per exercise: `exercises/exNNN_slug/README.md`
+A teacher‑first toolchain that turns lesson plans into ready‑to‑run Python exercises—designed for secondary classrooms and low‑friction delivery.
 
-## Quickstart
+For teachers:
+- Generate complete, pedagogy‑aligned exercises in seconds (student notebook, solution mirror, and tests).
+- Ship browser‑ready assignments your students can run inline (Codespaces now; Pyodide client‑side execution planned).
+- Autograde student work with pytest so learners get immediate, actionable feedback.
+- Create GitHub Classroom template repos with a CLI and consistent VS Code/devcontainer configs.
 
-Create a virtualenv and install dev dependencies:
+For students:
+- Work inside a single, inline notebook cell with task, code, and debugger together.
+- Get fast feedback from tests and clear, scaffolded prompts.
+- No local installs required (when using Codespaces or the planned Pyodide runtime).
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install -U pip
-python -m pip install -e ".[dev]"
-```
+Why teachers will care:
+- Slash setup time and eliminate “it works on my machine” problems ✅
+- Spend classroom time teaching, not troubleshooting environments ✅
+- Designed to be age‑appropriate and easy to adopt ✅
 
-Run all tests:
+## How it works (plain‑English overview)
 
-```bash
-pytest -q
-```
+<figure style="display:inline-block;">
+  <img src="docs/images/exercise-print-message.png" alt="Notebook editor showing a tagged exercise cell with expected output and a syntax error" style="transform:scale(0.75); transform-origin:top left; display:block;">
+  <figcaption>Figure: Example student activity — a tagged cell with inline feedback.</figcaption>
+</figure>
 
-See the [Setup Guide](docs/setup.md) for detailed instructions.
+1. Each exercise is a notebook in [notebooks/](notebooks/), with a tagged cell like exercise1.
+2. Tests in [tests/](tests/) extract that tagged cell and run it automatically.
+3. Solution notebooks live in [notebooks/solutions/](notebooks/solutions/) and are used to verify the tests.
+4. A CLI can bundle selected exercises into a GitHub Classroom template repo.
 
-## For Teachers
+## Status
 
-Use the [exercise generation custom agent](https://github.com/features/copilot) to create new exercises. Simply describe the exercise you want and the agent will generate the notebook, tests, and supporting materials.
+What works (mostly):
+- Exercise scaffolding and tests via the generation workflow
+- Tagged‑cell autograding ([tests/notebook_grader.py](tests/notebook_grader.py))
+- Template repo creation with notebooks, tests, and VS Code settings
+- GitHub Classroom workflow (template repo + autograding)
 
-For manual scaffolding or to understand the structure, see the [Exercise Generation Guide](docs/exercise-generation.md).
+Known gaps / not fully working yet:
+- The template repo currently includes solution notebooks (not suitable for students)
+- Parts of the template‑repo population flow are untested
+- Full VS Code for Web support needs a Pyodide‑based Python kernel integration
 
-### Verifying Solutions
+Where help is needed:
+- Excluding solutions from student template repos
+- Hardening the template‑repo CLI and improving test coverage
+- VS Code for Web: building a Pyodide‑backed kernel that works with the official Jupyter extension
 
-```bash
-# Test solution notebooks
-scripts/verify_solutions.sh -q
-```
+## Quickstart (exercise generation via Copilot Chat)
+
+This repo includes a custom Copilot Chat mode for generating exercises.
+
+1. Open this repository in VS Code.
+2. Open Copilot Chat and pick the Exercise Generation mode (defined in [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md)).
+3. Describe the exercise (topic, difficulty, examples, and number of parts).
+   <figure style="display:inline-block;">
+     <img src="docs/images/exercise-generation-prompt.png" alt="Screenshot showing the Copilot Chat exercise generation prompt for creating an exercise" style="transform:scale(0.75); transform-origin:top left; display:block;">
+     <figcaption>Figure: Copilot Chat prompt used to generate a new exercise.</figcaption>
+   </figure>
+4. Review the generated notebook, tests, and metadata for accuracy.
+5. Verify the solution notebook passes tests:
+   - [scripts/verify_solutions.sh](scripts/verify_solutions.sh) -q
+
+More detail and expected structure: [docs/exercise-generation.md](docs/exercise-generation.md)
+
+## Quickstart (create a GitHub Classroom template repo)
+
+The template‑repo CLI packages selected exercises into a ready‑to‑use GitHub Classroom template.
+
+1. Create and activate a virtual environment (recommended):
+   - Linux / macOS:
+     - `python -m venv .venv`
+     - `source .venv/bin/activate`
+   - Windows (PowerShell):
+     - `python -m venv .venv`
+     - `.\.venv\Scripts\Activate.ps1`
+2. Install dependencies:
+   - `python -m pip install -U pip`
+   - `python -m pip install -e ".[dev]"`
+3. Authenticate GitHub CLI:
+   - `gh auth login`
+4. Create a template repo (example: all sequence exercises):
+   - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
+5. In GitHub Classroom, create a new assignment and select the template repo.`
+
+Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
+
+## Repository layout (high level)
+
+- [notebooks/](notebooks/) — student exercise notebooks (tagged cells)
+- [notebooks/solutions/](notebooks/solutions/) — instructor solutions
+- [tests/](tests/) — pytest‑based autograding
+- [scripts/](scripts/) — exercise generator + template‑repo CLI
+- [exercises/](exercises/) — teacher materials
+- [docs/](docs/) — documentation
 
 ## Documentation
 
-- **[Project Structure](docs/project-structure.md)** - Repository organisation and file layout
-- **[Testing Framework](docs/testing-framework.md)** - How the automated grading works
-- **[Exercise Generation](docs/exercise-generation.md)** - Creating new exercises
-- **[Setup Guide](docs/setup.md)** - Installation and configuration
-- **[Development Guide](docs/development.md)** - Contributing and maintenance
-
-## Quick Reference
-
-### Repository Structure
-
-```
-notebooks/          # Student exercise notebooks
-tests/              # Automated grading tests
-exercises/          # Teacher materials (organised by construct/type)
-scripts/            # Utilities (exercise generator, solution verifier)
-docs/               # Documentation
-```
-
-### Common Commands
-
-```bash
-pytest -q                               # Run tests
-pytest tests/test_ex001_sanity.py -v   # Test specific exercise
-jupyter lab                             # Open Jupyter interface
-ruff check .                            # Lint code
-scripts/verify_solutions.sh -q          # Test solutions
-
-# CLI: convenience entrypoints for the template repository CLI
-python main.py list                      # Run CLI via top-level script (no -m required)
-./main.py list                           # Run directly if executable
-
-# Installed console script (after `pip install -e ".[dev]"`)
-template-repo-cli list                   # Run CLI via installed console entry point
-```
-
-## How It Works
-
-1. Students write code in **tagged cells** (`exercise1`, `exercise2`, etc.) in Jupyter notebooks
-2. Tests use `exec_tagged_code()` to extract and execute these cells
-3. Assertions verify correctness
-4. GitHub Actions runs tests automatically on push/PR
-
-See [Testing Framework](docs/testing-framework.md) for technical details.
-
-## GitHub Classroom Integration
-
-This repository is designed for GitHub Classroom:
-- Autograding runs via `.github/workflows/tests.yml`
-- Students get immediate feedback on test results
-- Teachers can track progress through GitHub Classroom dashboard
+- [docs/project-structure.md](docs/project-structure.md)
+- [docs/testing-framework.md](docs/testing-framework.md)
+- [docs/exercise-generation.md](docs/exercise-generation.md)
+- [docs/setup.md](docs/setup.md)
+- [docs/CLI_README.md](docs/CLI_README.md)
 
 ## License
 
-See [LICENSE](LICENSE) file for details.
+See [LICENSE](LICENSE) for details.
