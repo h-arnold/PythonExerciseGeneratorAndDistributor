@@ -50,7 +50,7 @@ The intention is to keep each exercise tightly scoped so learners can focus on t
 
 ### Exercise Types
 
-To achieve the best possible understanding, students are given exercises the follow the following process:
+To achieve the best possible understanding, students are given exercises that follow the following process:
 
  - Debug existing code
  - Modfiy existing code to achieve something different
@@ -174,6 +174,18 @@ Debugging exercises should be presented to students as a small notebook. The gra
     }
   ]
 }
+```
+
+##### Important: Debugging Exercise Cell Comments
+
+**Do NOT** include explanatory comments in the student `exercise` cells that reveal what the bug is. For example:
+
+❌ **Bad** (reveals the bug):
+
+``` python
+    # Bug: apostrophe inside single quotes
+    phrase = 'It's nice'
+    return phrase
 ```
 
 ### Modification Exercise Formats
@@ -481,4 +493,14 @@ def test_lists_basics_examples():
 - Keep tasks bite-sized and focused on a single construct.
 - Avoid external dependencies or network access in exercises and tests.
 - Include teacher notes (optional) in `exercises/exNNN_slug/README.md` when special explanation is needed.
-- Always write in British English
+.
+
+## Quick Reference Card
+
+- **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
+- **Exercise Types**: Debug (1-3 bugs) -> Modify (alter logic) -> Make (build from scratch).
+- **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
+- **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.
+- **Testing**: Minimum 3 positive tests + 2 edge cases. No randomness or IO.
+- **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass.
+- **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).
