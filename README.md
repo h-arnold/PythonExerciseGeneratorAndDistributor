@@ -10,6 +10,7 @@ A teacher‑first toolchain that turns lesson plans into ready‑to‑run Python
 
 For teachers:
 - Generate complete, pedagogy‑aligned exercises in seconds (student notebook, solution mirror, and tests).
+- Create exercises fast using the built-in Exercise Generation assistant (see [docs/exercise-generation.md](docs/exercise-generation.md)).
 - Ship browser‑ready assignments your students can run inline (Codespaces now; Pyodide client‑side execution planned).
 - Autograde student work with pytest so learners get immediate, actionable feedback.
 - Create GitHub Classroom template repos with a CLI and consistent VS Code/devcontainer configs.
@@ -106,6 +107,7 @@ Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
 - [docs/project-structure.md](docs/project-structure.md)
 - [docs/testing-framework.md](docs/testing-framework.md)
+- [docs/exercise-generation.md](docs/exercise-generation.md) — Guide to using the Exercise Generation assistant (Copilot) to create exercises quickly.
 - [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises.
 - [docs/setup.md](docs/setup.md)
 - [docs/CLI_README.md](docs/CLI_README.md)
