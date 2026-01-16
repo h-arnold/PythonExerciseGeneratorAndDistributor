@@ -16,7 +16,7 @@ PythonTutorExercises/
 │   └── CONSTRUCT/TYPE/exNNN_slug/
 │       ├── README.md      # Exercise metadata
 │       ├── OVERVIEW.md    # Teaching notes
-│       └── solutions.md   # Instructor solutions
+│       # Instructor reference solutions live in notebooks/solutions/
 ├── scripts/               # Automation and utilities
 │   ├── new_exercise.py    # Exercise scaffolding tool
 │   └── verify_solutions.sh # Solution verification script
@@ -56,7 +56,8 @@ Where:
 Each exercise folder contains:
 - `README.md`: Exercise metadata (title, construct, difficulty, links)
 - `OVERVIEW.md`: Pedagogical notes for teachers
-- `solutions.md`: Instructor solutions and teaching points
+
+Instructor reference solutions live in the solution notebook mirror under `notebooks/solutions/`.
 - `OrderOfTeaching.md`: (at construct level) recommended exercise sequence
 
 ### `scripts/`

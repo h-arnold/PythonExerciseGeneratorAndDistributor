@@ -66,7 +66,8 @@ Initially created at `exercises/exNNN_slug/` - you should move it to the appropr
 Contains:
 - `README.md`: Metadata (title, construct, difficulty)
 - (You should add) `OVERVIEW.md`: Teaching notes
-- (You should add) `solutions.md`: Instructor solutions
+
+Instructor reference solutions live in the solution notebook mirror under `notebooks/solutions/`.
 
 #### 2. Student Notebook
 
@@ -221,25 +222,10 @@ One sentence describing what students will learn.
 [Optional: step-by-step solution walkthrough]
 ```
 
-**`solutions.md`** (create new):
-```markdown
-# Instructor Solutions: Exercise Title
 
-## Exercise 1
-
-### Correct Solution
-\`\`\`python
-def solve(x):
-    return x * 2
-\`\`\`
-
-### Explanation
-Students should...
-
-### Common Wrong Answers
-- `x + x` - Also correct, mention this is equivalent
-- `x * 3` - Off by one error, misread the prompt
-```
+If you need extra teacher-only notes beyond the solution notebook:
+- add them to `OVERVIEW.md` (recommended), or
+- add teacher-only markdown cells in the solution notebook mirror.
 
 ## Exercise Types
 

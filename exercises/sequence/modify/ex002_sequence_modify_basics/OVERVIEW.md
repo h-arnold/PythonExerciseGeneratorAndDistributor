@@ -27,7 +27,6 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
 
 - **Exercise folder**: [exercises/sequence/modify/ex002_sequence_modify_basics/](exercises/sequence/modify/ex002_sequence_modify_basics/)
   - README.md with student/teacher notes
-  - solutions.md with reference solutions
   - Properly placed in `sequence/modify/` hierarchy
 
 ## Test Status
@@ -66,6 +65,6 @@ Students:
 5. Run `pytest tests/test_ex002_sequence_modify_basics.py` to verify
 
 Teachers:
-- Reference solutions in `exercises/sequence/modify/ex002_sequence_modify_basics/solutions.md`
+- Reference solutions in [notebooks/solutions/ex002_sequence_modify_basics.ipynb](notebooks/solutions/ex002_sequence_modify_basics.ipynb)
 - Tests are deterministic and fast (< 1s total)
 - Can be used with GitHub Classroom autograding

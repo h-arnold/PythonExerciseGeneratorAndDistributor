@@ -120,8 +120,8 @@ Do not create exercises manually. Use:
 The grading system (`tests/notebook_grader.py`) provides:
 
 - `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
-- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace
-- `resolve_notebook_path(notebook_path)` - Handle `PYTUTOR_NOTEBOOKS_DIR` redirection
+- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace. When developing or running tests, run these against the solutions notebook by default (use `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` or call `resolve_notebook_path()` so tests validate the instructor solution first).
+- `resolve_notebook_path(notebook_path)` - Handle `PYTUTOR_NOTEBOOKS_DIR` redirection; by convention the agent should default this to `notebooks/solutions` when running tests during development.
 
 See [Testing Framework](../docs/testing-framework.md) for details.
 

@@ -107,7 +107,6 @@ In addition to the notebook and tests, each exercise should include a small set 
   - **Notebook path** and **tests path** (relative links)
 
 - `exercises/CONSTRUCT/TYPE/exNNN_slug/OVERVIEW.md` (hand-authored): a short pedagogical overview for teachers. Include prerequisites, expected student misconceptions, suggested worked examples, and teaching notes (how many hints, how to demo the solution). This complements the student-facing notebook by explaining why the exercise exists and how to teach it.
-- `exercises/CONSTRUCT/TYPE/exNNN_slug/solutions.md` (instructor-only, optional but encouraged): full instructor solutions or talking points for each exercise, including short annotated code and explanation of common wrong answers.
 
 Why these files matter:
 - `OrderOfTeaching.md` lets teachers see the recommended progression for a construct at a glance.
@@ -152,7 +151,7 @@ After scaffolding + authoring the notebooks (student + solutions mirror), run th
 - exercise-type compliance (debug/modify/make format rules)
 - concept sequencing (no later constructs accidentally introduced in prompts/starter code)
 - notebook structure/tags are correct
-- teacher materials (`README.md`, `OVERVIEW.md`, `solutions.md`) exist and are appropriate
+- teacher materials (`README.md`, `OVERVIEW.md`) exist and are appropriate
 
 Only once the verifier is happy should you start writing/refining the pytest tests.
 
@@ -187,6 +186,17 @@ If tests fail locally, update only the tests or notebook relevant to the exercis
 After tests pass on the solution notebooks, run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
 - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q` (or the relevant single test file)
 - confirm student notebooks still *fail* until students do the work
+
+### Required final step: update teaching order
+Once the exercise is complete (notebook authored, tests written, and solution verified), you **must** update the construct-level teaching order file:
+
+- `exercises/CONSTRUCT/OrderOfTeaching.md`
+
+Add the new exercise in the appropriate place in the sequence and include:
+- a link to the supporting docs folder under `exercises/CONSTRUCT/TYPE/exNNN_slug/`
+- a link to the canonical student notebook under `notebooks/exNNN_slug.ipynb`
+
+This is required for maintainability; the verifier will check that the new exercise is listed.
 
 ## If the user wants multiple exercises in one notebook
 - Use `--parts N` to scaffold `exercise1..exerciseN`.

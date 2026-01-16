@@ -129,14 +129,22 @@ Verify teacher materials exist and are useful:
   - prerequisites
   - common misconceptions
   - suggested teaching approach / hints
-- `exercises/CONSTRUCT/TYPE/exNNN_slug/solutions.md` exists (recommended) and includes:
-  - the correct solution(s)
-  - explanation(s)
-  - at least 2 “common wrong answers” notes
+
+Also verify the solution notebook mirror (`notebooks/solutions/...`) is accurate and is a good teacher reference.
 
 Also check the solution notebook:
 - For debug: it’s OK (and encouraged) to include extra teacher-facing markdown explaining the bug(s) and correct fix.
 - For modify/make: solution cells should be clean and not use unnecessary advanced tricks.
+
+### Gate F — Order of teaching updated
+The exercise must be listed in the construct-level teaching order file:
+
+- `exercises/CONSTRUCT/OrderOfTeaching.md`
+
+This ensures maintainers can see the intended progression and find notebooks quickly.
+
+**Automation helper (recommended):** the repo script checks this automatically when the exercise lives under `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
+- `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
 
 ## Output format (what you report back)
 Return a concise verdict:

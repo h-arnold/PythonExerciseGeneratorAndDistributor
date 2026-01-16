@@ -163,7 +163,7 @@ Before submitting an exercise:
 - [ ] Tests pass on solution notebook
 - [ ] Tests fail on student notebook (until completed)
 - [ ] Solution is pedagogically appropriate (no advanced features)
-- [ ] Supporting documentation exists (README.md, OVERVIEW.md, solutions.md)
+- [ ] Supporting documentation exists (README.md, OVERVIEW.md)
 - [ ] Exercise fits the construct progression
 
 ### Pull Request Process

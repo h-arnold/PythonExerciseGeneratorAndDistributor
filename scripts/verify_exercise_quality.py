@@ -6,7 +6,8 @@ agent by performing fast, objective checks:
 - Notebook structure: metadata.language, code-vs-tag consistency
 - Presence of expected tags (exerciseN, explanationN)
 - Basic concept progression scanning (heuristic keyword checks)
-- Presence of teacher-facing files (README/OVERVIEW/solutions) under exercises/
+- Presence of teacher-facing files (README/OVERVIEW) under exercises/
+- Construct teaching order updated (exercises/<construct>/OrderOfTeaching.md)
 
 It is not a replacement for reading the exercise prompts.
 """
@@ -108,18 +109,58 @@ def _infer_construct_and_type(ex_dir: Path) -> tuple[str | None, str | None]:
 def _check_teacher_files(ex_dir: Path) -> list[Finding]:
     findings: list[Finding] = []
 
-    required = ["README.md", "OVERVIEW.md", "solutions.md"]
+    required = ["README.md", "OVERVIEW.md"]
     for filename in required:
         p = ex_dir / filename
         if not p.exists():
-            severity = "ERROR" if filename in {"README.md", "OVERVIEW.md"} else "WARN"
             findings.append(
                 Finding(
-                    severity,
+                    "ERROR",
                     f"Missing teacher file: {p.relative_to(ex_dir)}",
                     path=p,
                 )
             )
+
+    return findings
+
+
+def _check_order_of_teaching(ex_dir: Path, *, repo_root: Path, notebook_name: str) -> list[Finding]:
+    findings: list[Finding] = []
+
+    construct, _ex_type = _infer_construct_and_type(ex_dir)
+    if construct is None:
+        findings.append(
+            Finding(
+                "WARN",
+                "Could not infer construct for OrderOfTeaching.md check",
+                path=ex_dir,
+            )
+        )
+        return findings
+
+    order_path = repo_root / "exercises" / construct / "OrderOfTeaching.md"
+    if not order_path.exists():
+        findings.append(
+            Finding(
+                "ERROR",
+                f"Missing construct teaching order file: exercises/{construct}/OrderOfTeaching.md",
+                path=order_path,
+            )
+        )
+        return findings
+
+    text = order_path.read_text(encoding="utf-8")
+    slug = ex_dir.name
+    notebook_rel = f"notebooks/{notebook_name}"
+
+    if slug not in text and notebook_rel not in text:
+        findings.append(
+            Finding(
+                "ERROR",
+                "OrderOfTeaching.md does not mention this exercise (add the exercise folder name or notebook path)",
+                path=order_path,
+            )
+        )
 
     return findings
 
@@ -433,6 +474,9 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
         )
     else:
         findings.extend(_check_teacher_files(ex_dir))
+        findings.extend(
+            _check_order_of_teaching(ex_dir, repo_root=repo_root, notebook_name=nb_path.name)
+        )
 
     # Notebook structure (student)
     nb_student = _load_notebook(nb_path)
