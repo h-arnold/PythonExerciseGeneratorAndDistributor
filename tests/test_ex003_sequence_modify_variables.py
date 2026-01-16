@@ -4,6 +4,8 @@ import builtins
 import io
 import sys
 
+import pytest
+
 from tests.notebook_grader import exec_tagged_code
 
 
@@ -94,3 +96,53 @@ def test_exercise9_prints_good_evening_message() -> None:
 def test_exercise10_prints_combined_message() -> None:
     output = _run_and_capture('exercise10')
     assert output.strip() == "Variables and strings make a message!", f"Unexpected output: {output!r}"
+
+
+# Additional tests to increase coverage: positive cases, edge cases and invalid-input reasoning
+
+@pytest.mark.parametrize("fruit", ["mango", "banana", "kiwi"])
+def test_exercise4_various_fruits(fruit: str) -> None:
+    """Positive cases: typical fruit names are echoed correctly."""
+    output = _run_and_capture('exercise4', inputs=[fruit])
+    lines = output.strip().splitlines()
+    assert lines == [
+        "Type the name of your favourite fruit:",
+        f"I like {fruit}",
+    ], f"Unexpected lines for {fruit!r}: {lines!r}"
+
+
+def test_exercise4_empty_input() -> None:
+    """Edge case: empty input should still produce the prompt and the message with empty value."""
+    output = _run_and_capture('exercise4', inputs=[""])
+    lines = output.splitlines()
+    # Do not strip here; we expect the second line to include the trailing space after the phrase
+    assert lines == [
+        "Type the name of your favourite fruit:",
+        "I like ",
+    ], f"Unexpected lines for empty input: {lines!r}"
+
+
+def test_exercise4_whitespace_input() -> None:
+    """Edge case: whitespace-only input is preserved in the concatenation."""
+    output = _run_and_capture('exercise4', inputs=["   "])
+    lines = output.splitlines()
+    assert lines == [
+        "Type the name of your favourite fruit:",
+        "I like    ",
+    ], f"Unexpected lines for whitespace input: {lines!r}"
+
+
+def test_exercise6_long_name() -> None:
+    """Invalid/robustness case: very long input should be handled (no crash) and echoed correctly."""
+    long_name = "A" * 5000
+    output = _run_and_capture('exercise6', inputs=[long_name])
+    lines = output.strip().splitlines()
+    assert lines[0] == "Please enter your name:", "Missing prompt"
+    assert lines[1] == f"Welcome, {long_name}!"
+
+
+def test_input_non_string_not_applicable() -> None:
+    """Explains why non-string inputs are not applicable: input() returns str; test with numeric-like string instead."""
+    output = _run_and_capture('exercise6', inputs=["12345"])
+    lines = output.strip().splitlines()
+    assert lines == ["Please enter your name:", "Welcome, 12345!"], f"Unexpected behaviour for numeric-like input: {lines!r}"
