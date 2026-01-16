@@ -1,5 +1,10 @@
 # Sequence Modification Basics
 
+**ID:** ex002
+**Construct:** sequence
+**Type:** modify
+**Difficulty:** very easy
+
 ## Student prompt
 - Open the matching notebook in `notebooks/ex002_sequence_modify_basics.ipynb`.
 - Each exercise shows you working code. Your task is to **modify** it to meet the new requirements.
