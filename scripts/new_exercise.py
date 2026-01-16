@@ -33,22 +33,131 @@ def _slugify(text: str) -> str:
     return text
 
 
+def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
+    """Create cell metadata dictionary."""
+    meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
+    if tags:
+        meta["tags"] = tags
+    return meta
+
+
+def _make_debug_cells(parts: int) -> list[dict[str, Any]]:
+    """Create debug exercise cells (expected output, buggy code, explanation)."""
+    cells: list[dict[str, Any]] = []
+    for i in range(1, parts + 1):
+        ex_tag = f"exercise{i}"
+        expl_tag = f"explanation{i}"
+
+        # Expected behaviour / expected output cell
+        cells.append(
+            {
+                "cell_type": "markdown",
+                "metadata": _make_meta("markdown"),
+                "source": [
+                    f"# Exercise {i} — Expected behaviour\n",
+                    "Describe what the corrected program should output.\n",
+                    "### Expected output\n",
+                    "```\n",
+                    "(put example output here)\n",
+                    "```\n",
+                ],
+            }
+        )
+
+        # Buggy implementation (tagged for students to edit)
+        cells.append(
+            {
+                "cell_type": "code",
+                "metadata": _make_meta("python", tags=[ex_tag]),
+                "execution_count": None,
+                "outputs": [],
+                "source": [
+                    "# BUGGY IMPLEMENTATION (students edit this tagged cell)\n",
+                    "def solve() -> object:\n",
+                    '    """Return the correct result for this exercise."""\n',
+                    "    return 'TODO'\n",
+                ],
+            }
+        )
+
+        # What actually happened — explanation cell (tagged)
+        cells.append(
+            {
+                "cell_type": "markdown",
+                "metadata": _make_meta("markdown", tags=[expl_tag]),
+                "source": [
+                    "### What actually happened\n",
+                    "Describe briefly what happened when you ran the code (include any error messages or incorrect output).\n",
+                ],
+            }
+        )
+
+    return cells
+
+
+def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
+    """Create standard (non-debug) exercise cells."""
+    cells: list[dict[str, Any]] = []
+    if parts == 1:
+        tag = "exercise1"
+        cells.append(
+            {
+                "cell_type": "code",
+                "metadata": _make_meta("python", tags=[tag]),
+                "execution_count": None,
+                "outputs": [],
+                "source": [
+                    "# Exercise 1\n",
+                    "# The tests will execute the code in this cell.\n",
+                    "\n",
+                    "def solve() -> object:\n",
+                    '    """Return the correct result for the exercise."""\n',
+                    "    return 'TODO'\n",
+                ],
+            }
+        )
+    else:
+        for i in range(1, parts + 1):
+            tag = f"exercise{i}"
+            cells.append(
+                {
+                    "cell_type": "markdown",
+                    "metadata": _make_meta("markdown"),
+                    "source": [
+                        f"## Exercise {i}\n",
+                        "(Write the prompt here.)\n",
+                    ],
+                }
+            )
+            cells.append(
+                {
+                    "cell_type": "code",
+                    "metadata": _make_meta("python", tags=[tag]),
+                    "execution_count": None,
+                    "outputs": [],
+                    "source": [
+                        f"# Exercise {i}\n",
+                        "# The tests will execute the code in this cell.\n",
+                        "def solve() -> object:\n",
+                        '    """Return the correct result for this exercise."""\n',
+                        "    return 'TODO'\n",
+                    ],
+                }
+            )
+
+    return cells
+
+
 def _make_notebook_with_parts(
     title: str, *, parts: int, exercise_type: str | None = None
 ) -> dict[str, Any]:
     if parts < 1:
         raise ValueError("parts must be >= 1")
 
-    def _meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
-        meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
-        if tags:
-            meta["tags"] = tags
-        return meta
-
     cells: list[dict[str, Any]] = [
         {
             "cell_type": "markdown",
-            "metadata": _meta("markdown"),
+            "metadata": _make_meta("markdown"),
             "source": [
                 f"# {title}\n",
                 "\n",
@@ -62,111 +171,16 @@ def _make_notebook_with_parts(
         }
     ]
 
-    # For debug exercises we scaffold a short expected-output cell, the buggy
-    # tagged student cell, and an explanation cell for each part. For other
-    # exercise types we keep the existing simple layout.
+    # Add exercise cells based on type
     if exercise_type == "debug":
-        for i in range(1, parts + 1):
-            ex_tag = f"exercise{i}"
-            expl_tag = f"explanation{i}"
-
-            # Expected behaviour / expected output cell
-            cells.append(
-                {
-                    "cell_type": "markdown",
-                    "metadata": _meta("markdown"),
-                    "source": [
-                        f"# Exercise {i} — Expected behaviour\n",
-                        "Describe what the corrected program should output.\n",
-                        "### Expected output\n",
-                        "```\n",
-                        "(put example output here)\n",
-                        "```\n",
-                    ],
-                }
-            )
-
-            # Buggy implementation (tagged for students to edit)
-            cells.append(
-                {
-                    "cell_type": "code",
-                    "metadata": _meta("python", tags=[ex_tag]),
-                    "execution_count": None,
-                    "outputs": [],
-                    "source": [
-                        "# BUGGY IMPLEMENTATION (students edit this tagged cell)\n",
-                        "def solve() -> object:\n",
-                        '    """Return the correct result for this exercise."""\n',
-                        "    return 'TODO'\n",
-                    ],
-                }
-            )
-
-            # What actually happened — explanation cell (tagged)
-            cells.append(
-                {
-                    "cell_type": "markdown",
-                    "metadata": _meta("markdown", tags=[expl_tag]),
-                    "source": [
-                        "### What actually happened\n",
-                        "Describe briefly what happened when you ran the code (include any error messages or incorrect output).\n",
-                    ],
-                }
-            )
-
+        cells.extend(_make_debug_cells(parts))
     else:
-        # Non-debug behaviour: keep existing single/multi-part layout
-        if parts == 1:
-            tag = "exercise1"
-            cells.append(
-                {
-                    "cell_type": "code",
-                    "metadata": _meta("python", tags=[tag]),
-                    "execution_count": None,
-                    "outputs": [],
-                    "source": [
-                        "# Exercise 1\n",
-                        "# The tests will execute the code in this cell.\n",
-                        "\n",
-                        "def solve() -> object:\n",
-                        '    """Return the correct result for the exercise."""\n',
-                        "    return 'TODO'\n",
-                    ],
-                }
-            )
-        else:
-            for i in range(1, parts + 1):
-                tag = f"exercise{i}"
-                cells.append(
-                    {
-                        "cell_type": "markdown",
-                        "metadata": _meta("markdown"),
-                        "source": [
-                            f"## Exercise {i}\n",
-                            "(Write the prompt here.)\n",
-                        ],
-                    }
-                )
-                cells.append(
-                    {
-                        "cell_type": "code",
-                        "metadata": _meta("python", tags=[tag]),
-                        "execution_count": None,
-                        "outputs": [],
-                        "source": [
-                            f"# Exercise {i}\n",
-                            "# The tests will execute the code in this cell.\n",
-                            "def solve() -> object:\n",
-                            '    """Return the correct result for this exercise."""\n',
-                            "    return 'TODO'\n",
-                        ],
-                    }
-                )
+        cells.extend(_make_standard_cells(parts))
 
     cells.append(
         {
             "cell_type": "code",
-            "metadata": _meta("python"),
+            "metadata": _make_meta("python"),
             "execution_count": None,
             "outputs": [],
             "source": [

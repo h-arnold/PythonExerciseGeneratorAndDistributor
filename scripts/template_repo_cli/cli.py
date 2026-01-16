@@ -274,6 +274,57 @@ def _should_retry_with_reauth(
     return not scope_check["has_scopes"] and _offer_unset_token_and_reauth(env_key)
 
 
+def _attempt_github_repo_creation(
+    github: GitHubClient,
+    args: argparse.Namespace,
+    workspace: Path,
+    first_attempt: bool,
+    template_flag: bool,
+) -> tuple[bool, str | None]:
+    """Attempt to create a GitHub repository.
+    
+    Returns:
+        Tuple of (success, error_message).
+    """
+    result = github.create_repository(
+        args.repo_name,
+        workspace,
+        public=not args.private,
+        template=template_flag,
+        template_repo=getattr(args, "template_repo", None),
+        org=args.org,
+        description=args.name,
+        skip_git_operations=not first_attempt,
+    )
+
+    if result["success"]:
+        print(f"✓ Created repository: {args.repo_name}")
+        return True, None
+
+    return False, result.get("error") or "Unknown error"
+
+
+def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
+    """Add helpful hints to GitHub error messages.
+    
+    Args:
+        error_msg: The original error message.
+        args: Parsed command-line arguments.
+        
+    Returns:
+        Enhanced error message with hints.
+    """
+    permission_hint = _github_permission_hint(error_msg)
+    if permission_hint:
+        return f"{error_msg}\n\n{permission_hint}"
+    
+    exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
+    if exists_hint:
+        return f"{error_msg}\n\n{exists_hint}"
+    
+    return error_msg
+
+
 def _create_github_repo(
     args: argparse.Namespace,
     github: GitHubClient,
@@ -299,25 +350,14 @@ def _create_github_repo(
         if error_msg:
             return False, error_msg
 
-        result = github.create_repository(
-            args.repo_name,
-            workspace,
-            public=not args.private,
-            template=template_flag,
-            template_repo=getattr(args, "template_repo", None),
-            org=args.org,
-            description=args.name,
-            skip_git_operations=not first_attempt,
+        success, error_msg = _attempt_github_repo_creation(
+            github, args, workspace, first_attempt, template_flag
         )
-        
         first_attempt = False
 
-        if result["success"]:
-            print(f"✓ Created repository: {args.repo_name}")
+        if success:
             return True, None
 
-        error_msg = result.get("error") or "Unknown error"
-        
         # Check if we should retry with reauthentication
         if _should_retry_with_reauth(github, error_msg, env_key, already_reauthenticated):
             already_reauthenticated = True
@@ -325,14 +365,7 @@ def _create_github_repo(
             continue
 
         # Add hints to error message
-        permission_hint = _github_permission_hint(error_msg)
-        exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
-        
-        if permission_hint:
-            error_msg = f"{error_msg}\n\n{permission_hint}"
-        elif exists_hint:
-            error_msg = f"{error_msg}\n\n{exists_hint}"
-
+        error_msg = _handle_github_error_hints(error_msg, args)
         return False, error_msg
 
 
@@ -528,6 +561,44 @@ def create_command(args: argparse.Namespace) -> int:
     return _execute_template_creation(args, workspace, packager, github, files, exercises)
 
 
+def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
+    """Get list of exercises based on filter arguments.
+    
+    Args:
+        args: Parsed command-line arguments.
+        selector: ExerciseSelector instance.
+        
+    Returns:
+        List of exercise IDs.
+    """
+    if args.construct and args.type:
+        return selector.select_by_construct_and_type([args.construct], [args.type])
+    if args.construct:
+        return selector.select_by_construct([args.construct])
+    if args.type:
+        return selector.select_by_type([args.type])
+    return selector.get_all_notebooks()
+
+
+def _print_exercises(exercises: list[str], args: argparse.Namespace) -> None:
+    """Print exercises in the requested format.
+    
+    Args:
+        exercises: List of exercise IDs.
+        args: Parsed command-line arguments with format preference.
+    """
+    if args.format == "json":
+        print(json.dumps(exercises, indent=2))
+    elif args.format == "table":
+        print(f"{'Exercise ID':<40}")
+        print("-" * 40)
+        for ex in exercises:
+            print(f"{ex:<40}")
+    else:  # list format
+        for ex in exercises:
+            print(ex)
+
+
 def list_command(args: argparse.Namespace) -> int:
     """Handle list command.
     
@@ -540,29 +611,8 @@ def list_command(args: argparse.Namespace) -> int:
     repo_root = get_repo_root()
     selector = ExerciseSelector(repo_root)
     
-    # Get exercises based on filters
-    if args.construct and args.type:
-        exercises = selector.select_by_construct_and_type(
-            [args.construct], [args.type]
-        )
-    elif args.construct:
-        exercises = selector.select_by_construct([args.construct])
-    elif args.type:
-        exercises = selector.select_by_type([args.type])
-    else:
-        exercises = selector.get_all_notebooks()
-    
-    # Print exercises
-    if args.format == "json":
-        print(json.dumps(exercises, indent=2))
-    elif args.format == "table":
-        print(f"{'Exercise ID':<40}")
-        print("-" * 40)
-        for ex in exercises:
-            print(f"{ex:<40}")
-    else:  # list format
-        for ex in exercises:
-            print(ex)
+    exercises = _get_exercises_for_list(args, selector)
+    _print_exercises(exercises, args)
     
     return 0
 

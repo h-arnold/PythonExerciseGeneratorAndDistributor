@@ -18,6 +18,5 @@ import sys
 
 from scripts.template_repo_cli.cli import main
 
-
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
