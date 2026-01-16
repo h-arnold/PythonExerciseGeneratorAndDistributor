@@ -62,16 +62,6 @@ To achieve the best possible understanding, students are given exercises that fo
 
  A standard notebook consisting of 10 exercises will usually only contain one type of activity (debug, modify or make), with all 10 exercises in ONE notebook with 10 tagged cells (`exercise1` through `exercise10`).
 
-Policy: When generating exercises the agent **MUST** open and follow the corresponding exercise-type guide before generating any content for that type:
-
-- For a debug exercise: open and follow `docs/exercise-types/debug.md`.
-- For a modify exercise: open and follow `docs/exercise-types/modify.md`.
-- For a make exercise: open and follow `docs/exercise-types/make.md`.
-
-If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
-
- 
-
 #### Notes on crafting exercises for all problem types.
 - The graded cell must include the tag `exercise1` (or `exercise2`, etc.) in `metadata.tags`.
 - Each cell object includes `metadata.language` set to `python` or `markdown` to match our validator.
@@ -81,6 +71,14 @@ If the required guide is missing or cannot be read, the agent must stop and ask 
 - **Namespace isolation**: By default, each tagged cell is executed in isolation. If an exercise explicitly builds on previous exercises (e.g., exercise2 extends exercise1), state this clearly in the notebook instructions and design tests accordingly.
 
 ## Creating exercises - the process
+
+Policy: When generating exercises the agent **MUST** open **THE ENTIRE FILE** and follow the corresponding exercise-type guide before generating any content for that type:
+
+- For a debug exercise: open and follow `docs/exercise-types/debug.md`.
+- For a modify exercise: open and follow `docs/exercise-types/modify.md`.
+- For a make exercise: open and follow `docs/exercise-types/make.md`.
+
+If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
 ## When asked to create an exercise
 1) Pick identifiers
@@ -266,6 +264,7 @@ def test_lists_basics_examples():
 
 ## Quick Reference Card
 
+- **Always read the necessary instructions**: Always open and read the entire set of instructions for a given coding exercise type.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
 - **Exercise Types**: Debug (1-3 bugs) -> Modify (alter logic) -> Make (build from scratch).
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
