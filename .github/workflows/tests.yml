@@ -24,4 +24,4 @@ jobs:
         env:
           PYTUTOR_NOTEBOOKS_DIR: notebooks/solutions
         run: |
-          uv run pytest
+          uv run pytest -q

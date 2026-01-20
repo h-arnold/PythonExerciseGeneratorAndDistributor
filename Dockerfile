@@ -13,6 +13,8 @@ COPY pyproject.toml uv.lock /workspace/
 
 # Install dependencies through uv for reproducible builds
 # uv sync also seeds the shared virtual environment and installs the package
+# Use copy link mode to avoid hardlink errors across filesystems
+ENV UV_LINK_MODE=copy
 RUN python -m pip install --upgrade pip uv && \
     uv sync
 

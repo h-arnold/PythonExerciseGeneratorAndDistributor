@@ -77,7 +77,7 @@ More detail and expected structure: [docs/exercise-generation-cli.md](docs/exerc
 The template‑repo CLI packages selected exercises into a ready‑to‑use GitHub Classroom template.
 
 1. Install uv and sync the project dependencies:
-   - `python -m pip install -U pip uv`
+   - `python -m pip install --upgrade pip uv`
    - `uv sync`
 2. Authenticate GitHub CLI:
    - `gh auth login`
