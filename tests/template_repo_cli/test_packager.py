@@ -36,7 +36,6 @@ class TestCopyFiles:
         files = {
             "ex001_sanity": {
                 "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
                 "test": repo_root / "tests/test_ex001_sanity.py",
             }
         }
@@ -44,7 +43,6 @@ class TestCopyFiles:
         packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
     def test_copy_tests(self, repo_root: Path, temp_dir: Path) -> None:
         """Test copying test files to temp directory."""
@@ -52,7 +50,6 @@ class TestCopyFiles:
         files = {
             "ex001_sanity": {
                 "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
                 "test": repo_root / "tests/test_ex001_sanity.py",
             }
         }
@@ -77,7 +74,6 @@ class TestCopyFiles:
         files = {
             "ex001_sanity": {
                 "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
                 "test": repo_root / "tests/test_ex001_sanity.py",
             }
         }
@@ -86,7 +82,6 @@ class TestCopyFiles:
 
         # Structure should be preserved
         assert (temp_dir / "notebooks").exists()
-        assert (temp_dir / "notebooks/solutions").exists()
         assert (temp_dir / "tests").exists()
 
 
@@ -134,7 +129,6 @@ class TestPackageIntegrity:
         files = {
             "ex001_sanity": {
                 "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
                 "test": repo_root / "tests/test_ex001_sanity.py",
             }
         }
@@ -156,12 +150,12 @@ class TestPackageIntegrity:
         assert is_valid is False
 
     def test_package_has_notebook_grader(self, repo_root: Path, temp_dir: Path) -> None:
-        """Test that notebook_grader.py is included."""
+        """Test that notebook_grader.py is not added implicitly."""
         packager = TemplatePackager(repo_root)
         packager.copy_template_base_files(temp_dir)
 
         grader = temp_dir / "tests/notebook_grader.py"
-        assert grader.exists()
+        assert not grader.exists()
 
 
 class TestPackageCleanup:
@@ -182,40 +176,20 @@ class TestPackageCleanup:
 class TestPackageOptions:
     """Tests for package options."""
 
-    def test_package_excludes_solutions_option(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Test optional solution exclusion."""
+    def test_package_does_not_include_solutions(self, repo_root: Path, temp_dir: Path) -> None:
+        """Test solutions are not included in the package."""
         packager = TemplatePackager(repo_root)
         files = {
             "ex001_sanity": {
                 "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
-                "test": repo_root / "tests/test_ex001_sanity.py",
-            }
-        }
-
-        packager.copy_exercise_files(temp_dir, files, include_solutions=False)
-
-        assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
-
-    def test_package_includes_solutions_by_default(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Test solutions are included by default."""
-        packager = TemplatePackager(repo_root)
-        files = {
-            "ex001_sanity": {
-                "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
                 "test": repo_root / "tests/test_ex001_sanity.py",
             }
         }
 
         packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
+        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
 
 class TestPackageMultipleExercises:
@@ -227,13 +201,10 @@ class TestPackageMultipleExercises:
         files = {
             "ex001_sanity": {
                 "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-                "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
                 "test": repo_root / "tests/test_ex001_sanity.py",
             },
             "ex002_sequence_modify_basics": {
                 "notebook": repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
-                "solution": repo_root
-                / "notebooks/solutions/ex002_sequence_modify_basics.ipynb",
                 "test": repo_root / "tests/test_ex002_sequence_modify_basics.py",
             },
         }

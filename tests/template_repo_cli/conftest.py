@@ -22,16 +22,11 @@ def sample_exercises(repo_root: Path) -> dict[str, dict[str, Path]]:
     return {
         "ex001_sanity": {
             "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-            "solution": repo_root / "notebooks/solutions/ex001_sanity.ipynb",
             "test": repo_root / "tests/test_ex001_sanity.py",
-            "metadata": repo_root / "exercises/ex001_sanity/README.md",
         },
         "ex002_sequence_modify_basics": {
             "notebook": repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
-            "solution": repo_root / "notebooks/solutions/ex002_sequence_modify_basics.ipynb",
             "test": repo_root / "tests/test_ex002_sequence_modify_basics.py",
-            "metadata": repo_root
-            / "exercises/sequence/modify/ex002_sequence_modify_basics/README.md",
         },
     }
 
@@ -47,9 +42,7 @@ def temp_dir() -> Generator[Path, None, None]:
 def mock_gh_success() -> MagicMock:
     """Mock successful gh CLI execution."""
     mock = MagicMock()
-    mock.return_value = MagicMock(
-        returncode=0, stdout='{"name": "test-repo"}', stderr=""
-    )
+    mock.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
     return mock
 
 

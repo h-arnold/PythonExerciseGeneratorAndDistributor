@@ -17,7 +17,7 @@ class TemplatePackager:
 
     def __init__(self, repo_root: Path):
         """Initialize packager.
-        
+
         Args:
             repo_root: Root directory of the repository.
         """
@@ -26,7 +26,7 @@ class TemplatePackager:
 
     def create_workspace(self) -> Path:
         """Create temporary workspace.
-        
+
         Returns:
             Path to temporary workspace directory.
         """
@@ -38,41 +38,27 @@ class TemplatePackager:
         self,
         workspace: Path,
         files: dict[str, dict[str, Path]],
-        include_solutions: bool = True,
     ) -> None:
         """Copy exercise files to workspace.
-        
+
         Args:
             workspace: Workspace directory.
             files: Dictionary mapping exercise ID to file paths.
-            include_solutions: Whether to include solution notebooks.
         """
         for exercise_id, file_dict in files.items():
             # Copy student notebook
             if file_dict.get("notebook"):
                 dest = workspace / "notebooks" / f"{exercise_id}.ipynb"
                 safe_copy_file(file_dict["notebook"], dest)
-            
-            # Copy solution notebook if requested
-            if include_solutions and "solution" in file_dict and file_dict["solution"]:
-                dest = workspace / "notebooks" / "solutions" / f"{exercise_id}.ipynb"
-                safe_copy_file(file_dict["solution"], dest)
-            
+
             # Copy test file
             if file_dict.get("test"):
                 dest = workspace / "tests" / f"test_{exercise_id}.py"
                 safe_copy_file(file_dict["test"], dest)
-            
-            # Copy metadata if it exists
-            if file_dict.get("metadata"):
-                # Preserve structure: exercises/construct/type/exercise_id/README.md
-                # But for template, we can simplify to exercises/exercise_id/README.md
-                dest = workspace / "exercises" / exercise_id / "README.md"
-                safe_copy_file(file_dict["metadata"], dest)
 
     def _copy_single_file(self, filename: str, workspace: Path) -> None:
         """Copy a single template file if it exists.
-        
+
         Args:
             filename: Name of the file to copy.
             workspace: Destination workspace directory.
@@ -83,7 +69,7 @@ class TemplatePackager:
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
-        
+
         Args:
             dirname: Name of the directory to copy.
             workspace: Destination workspace directory.
@@ -94,7 +80,7 @@ class TemplatePackager:
 
     def copy_template_base_files(self, workspace: Path) -> None:
         """Copy base template files.
-        
+
         Args:
             workspace: Workspace directory.
         """
@@ -102,31 +88,20 @@ class TemplatePackager:
             raise FileNotFoundError(
                 f"Template files directory not found: {self.template_files_dir}"
             )
-        
+
         # Copy individual files
         self._copy_single_file("pyproject.toml", workspace)
         self._copy_single_file("pytest.ini", workspace)
         self._copy_single_file(".gitignore", workspace)
         self._copy_single_file("INSTRUCTIONS.md", workspace)
-        
+
         # Copy directories
         self._copy_directory(".vscode", workspace)
         self._copy_directory(".github", workspace)
-        
-        # Copy notebook_grader.py to tests/
-        src = self.repo_root / "tests" / "notebook_grader.py"
-        if src.exists():
-            dest = workspace / "tests" / "notebook_grader.py"
-            safe_copy_file(src, dest)
-        
-        # Create tests/__init__.py
-        (workspace / "tests" / "__init__.py").touch()
 
-    def generate_readme(
-        self, workspace: Path, template_name: str, exercises: list[str]
-    ) -> None:
+    def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
         """Generate README file.
-        
+
         Args:
             workspace: Workspace directory.
             template_name: Name of the template.
@@ -139,24 +114,24 @@ class TemplatePackager:
         else:
             # Fallback template
             template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
-        
+
         # Generate exercise list
         exercise_list = "\n".join([f"- {ex}" for ex in sorted(exercises)])
-        
+
         # Replace placeholders
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
         content = content.replace("{EXERCISE_LIST}", exercise_list)
-        
+
         # Write README
         readme_path = workspace / "README.md"
         readme_path.write_text(content)
 
     def validate_package(self, workspace: Path) -> bool:
         """Validate package integrity.
-        
+
         Args:
             workspace: Workspace directory.
-            
+
         Returns:
             True if package is valid, False otherwise.
         """
@@ -165,28 +140,27 @@ class TemplatePackager:
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
-            workspace / "tests" / "notebook_grader.py",
         ]
-        
+
         for required_file in required_files:
             if not required_file.exists():
                 return False
-        
+
         # Check required directories exist
         required_dirs = [
             workspace / "notebooks",
             workspace / "tests",
         ]
-        
+
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():
                 return False
-        
+
         return True
 
     def _is_safe_workspace(self, workspace: Path) -> bool:
         """Check whether the given path looks like a valid temporary workspace.
-        
+
         A safe workspace is:
         - Located inside the system temporary directory, and
         - Has the expected prefix used by create_workspace(), and
@@ -209,7 +183,7 @@ class TemplatePackager:
 
     def cleanup(self, workspace: Path) -> None:
         """Clean up workspace.
-        
+
         Args:
             workspace: Workspace directory to remove.
         """

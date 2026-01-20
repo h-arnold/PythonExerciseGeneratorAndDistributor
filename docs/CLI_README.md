@@ -153,12 +153,12 @@ template_repo_cli --verbose create \
 Each generated template repository includes:
 
 ### Exercise Files
+
 - Student notebooks (`notebooks/exNNN_slug.ipynb`)
-- Solution notebooks (`notebooks/solutions/exNNN_slug.ipynb`)
 - Test files (`tests/test_exNNN_slug.py`)
-- Exercise metadata (if available)
 
 ### Infrastructure Files
+
 - `pyproject.toml` - Project configuration (micropip-compatible for VS Code web)
 - `pytest.ini` - Test configuration
 - `.gitignore` - Git ignore patterns
@@ -166,13 +166,14 @@ Each generated template repository includes:
 - `INSTRUCTIONS.md` - Student setup guide
 
 ### Development Setup
+
 - `.vscode/settings.json` - VS Code configuration
 - `.vscode/extensions.json` - Recommended extensions
 - `.github/workflows/tests.yml` - CI/CD for autograding
 
 ### Testing Framework
-- `tests/notebook_grader.py` - Core grading framework
-- `tests/__init__.py` - Package initialization
+
+The template includes only the selected test files for the exercises. The full grading framework (for example, `tests/notebook_grader.py` and other infrastructure) is **not** included by default. If you want the complete grading framework to be present in generated templates, add the required files to the `template_repo_files` directory before creating the template. See `template_repo_files/README.md.template` for guidance on what to include.
 
 ## Available Constructs
 
@@ -216,9 +217,10 @@ Templates created by this tool are designed to work seamlessly with GitHub Class
 ### `gh` CLI Not Found
 
 Install the GitHub CLI:
+
 - macOS: `brew install gh`
 - Windows: `winget install GitHub.cli`
-- Linux: See https://github.com/cli/cli#installation
+- Linux: See <https://github.com/cli/cli#installation>
 
 ### Authentication Required
 
@@ -227,6 +229,7 @@ Run `gh auth login` and follow the prompts to authenticate.
 ### No Exercises Found
 
 Make sure:
+
 - The construct name is spelled correctly (lowercase)
 - The exercise type is valid (`debug`, `modify`, or `make`)
 - Exercises exist for the specified criteria
@@ -285,11 +288,13 @@ scripts/template_repo_cli/
 ## Contributing
 
 This tool was built following Test-Driven Development (TDD):
+
 - 138 comprehensive tests
 - All tests passing
 - Modular, maintainable architecture
 
 When adding features:
+
 1. Write tests first
 2. Implement functionality
 3. Ensure all tests pass
