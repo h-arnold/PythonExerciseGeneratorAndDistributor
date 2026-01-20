@@ -8,18 +8,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Set working directory
 WORKDIR /workspace
 
-# Copy requirements files for reference (not used for installation in base image)
-# The base image pre-installs common dependencies; student repos install their
-# specific project dependencies via devcontainer postCreateCommand
+# Copy the dependency manifests so uv can install the same stack
+COPY pyproject.toml uv.lock /workspace/
 
-# Install Python dependencies
-# Use --no-cache-dir to reduce image size
-# Install in a single RUN command to reduce layers
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir \
-    pytest>=8.0 \
-    ipykernel>=6.0 \
-    jupyterlab>=4.0
+# Install dependencies through uv for reproducible builds
+# uv sync also seeds the shared virtual environment and installs the package
+RUN python -m pip install --upgrade pip uv && \
+    uv sync
 
 # Set environment variables for better Python behavior in containers
 ENV PYTHONUNBUFFERED=1 \

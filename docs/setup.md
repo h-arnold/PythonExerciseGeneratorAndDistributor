@@ -5,7 +5,7 @@ This guide covers setting up the PythonTutorExercises repository for development
 ## Prerequisites
 
 - Python 3.11 or later
-- pip (Python package installer)
+- uv (Python package manager)
 - Git
 
 ## Installation
@@ -17,30 +17,19 @@ git clone https://github.com/Bassaleg-School/PythonTutorExercises.git
 cd PythonTutorExercises
 ```
 
-### 2. Create a Virtual Environment
+### 2. Install uv (if not already available)
 
 ```bash
-python -m venv .venv
+python -m pip install --upgrade pip uv
 ```
 
-### 3. Activate the Virtual Environment
-
-**On Linux/macOS**:
-```bash
-source .venv/bin/activate
-```
-
-**On Windows**:
-```bash
-.venv\Scripts\activate
-```
-
-### 4. Install Dependencies
+### 3. Sync Dependencies with uv
 
 ```bash
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+uv sync
 ```
+
+`uv sync` creates the `.venv` folder, installs every dependency from `pyproject.toml`, and makes the console scripts (like `template_repo_cli`) available via `uv run` or `uv shell`.
 
 This installs:
 - `pytest` (testing framework)
@@ -53,7 +42,7 @@ This installs:
 ### Run Tests
 
 ```bash
-pytest -q
+uv run pytest -q
 ```
 
 All tests should pass (or fail for incomplete student exercises, which is expected).
@@ -61,13 +50,13 @@ All tests should pass (or fail for incomplete student exercises, which is expect
 ### Run Tests Against Solutions
 
 ```bash
-scripts/verify_solutions.sh -q
+uv run ./scripts/verify_solutions.sh -q
 ```
 
 or:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
 ```
 
 All solution tests should pass.
@@ -75,7 +64,7 @@ All solution tests should pass.
 ### Start Jupyter Lab
 
 ```bash
-jupyter lab
+uv run jupyter lab
 ```
 
 This opens the Jupyter interface in your browser where you can work on notebooks.
@@ -85,7 +74,7 @@ This opens the Jupyter interface in your browser where you can work on notebooks
 If you're a student working on exercises:
 
 1. **Clone the repository** (or accept the GitHub Classroom assignment)
-2. **Install dependencies** as described above
+2. **Install dependencies** as described above (run `uv sync` to create `.venv` and install dev tools)
 3. **Open a notebook** in Jupyter Lab:
    ```bash
    jupyter lab notebooks/ex001_sanity.ipynb
@@ -93,7 +82,7 @@ If you're a student working on exercises:
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)
 5. **Run tests** to check your work:
    ```bash
-   pytest tests/test_ex001_sanity.py -v
+   uv run pytest tests/test_ex001_sanity.py -v
    ```
 6. **Repeat** until all tests pass
 
@@ -113,7 +102,7 @@ If you're creating or modifying exercises:
 4. **Author the exercise** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md), which documents how to use the exercise generation CLI tool to scaffold new Python exercises.
 5. **Verify solutions** pass tests:
    ```bash
-   scripts/verify_solutions.sh tests/test_ex042_your_slug.py
+   uv run ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
    ```
 
 ## Linting and Code Quality
@@ -121,13 +110,13 @@ If you're creating or modifying exercises:
 ### Run Ruff Linter
 
 ```bash
-ruff check .
+uv run ruff check .
 ```
 
 ### Auto-Fix Issues
 
 ```bash
-ruff check --fix .
+uv run ruff check --fix .
 ```
 
 Configuration is in `pyproject.toml`.
@@ -176,10 +165,10 @@ $EDITOR tests/test_ex042_variables_and_types.py
 jupyter lab notebooks/solutions/ex042_variables_and_types.ipynb
 
 # 7. Verify tests pass on solution
-scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
+uv run ./scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
 
 # 8. Verify tests fail on student notebook
-pytest tests/test_ex042_variables_and_types.py -v
+uv run pytest tests/test_ex042_variables_and_types.py -v
 
 # 9. Commit and push
 git add exercises/ notebooks/ tests/
@@ -193,10 +182,11 @@ git push origin add-ex042-variables
 
 ### Tests Fail with "No module named 'tests'"
 
-Ensure you're running pytest from the repository root and that you've installed the package in editable mode:
+
+Ensure you're running pytest from the repository root and that your uv-managed environment is up to date:
 
 ```bash
-python -m pip install -e ".[dev]"
+uv sync
 ```
 
 ### Notebook Not Found Error
@@ -230,7 +220,7 @@ Redirects notebook lookups to a different directory.
 **Usage**:
 ```bash
 export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-pytest
+uv run pytest
 ```
 
 **Purpose**: Run the same tests against solution notebooks to verify they're correct.

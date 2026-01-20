@@ -4,11 +4,14 @@ A command-line tool for creating GitHub template repositories from subsets of Py
 
 ## Installation
 
-The CLI is part of this repository. Make sure you have the development dependencies installed:
+The CLI is part of this repository. Make sure you have the development dependencies installed via uv:
 
 ```bash
-pip install -e ".[dev]"
+python -m pip install --upgrade pip uv
+uv sync
 ```
+
+After syncing, you can run `uv run template_repo_cli --help` to confirm the console script is available.
 
 Note: Installing the package with the `.[dev]` extras also provides a console script named `template_repo_cli` (exposed via `pyproject.toml`) so you can run `template_repo_cli --help` after installation.
 

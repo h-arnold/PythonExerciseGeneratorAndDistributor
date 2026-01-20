@@ -48,10 +48,8 @@ When you open the cloned repository in VS Code you may see a few helpful prompts
 - **Python interpreter / virtual environment prompt**: VS Code will try to use the interpreter at `${workspaceFolder}/.venv/bin/python` (configured in the workspace settings). If `.venv` doesn't exist yet, you'll be prompted to select an interpreter or create a virtual environment. Recommended quick setup:
 
   ```bash
-  python -m venv .venv
-  source .venv/bin/activate
-  python -m pip install --upgrade pip
-  python -m pip install -e ".[dev]"
+  python -m pip install --upgrade pip uv
+  uv sync
   ```
 
 - **Test discovery prompt**: Because the workspace enables pytest in the workspace settings, VS Code may ask to enable test discovery; allow this if you want to run tests from the Test sidebar.

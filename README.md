@@ -76,21 +76,14 @@ More detail and expected structure: [docs/exercise-generation-cli.md](docs/exerc
 
 The template‑repo CLI packages selected exercises into a ready‑to‑use GitHub Classroom template.
 
-1. Create and activate a virtual environment (recommended):
-   - Linux / macOS:
-     - `python -m venv .venv`
-     - `source .venv/bin/activate`
-   - Windows (PowerShell):
-     - `python -m venv .venv`
-     - `.\.venv\Scripts\Activate.ps1`
-2. Install dependencies:
-   - `python -m pip install -U pip`
-   - `python -m pip install -e ".[dev]"`
-3. Authenticate GitHub CLI:
+1. Install uv and sync the project dependencies:
+   - `python -m pip install -U pip uv`
+   - `uv sync`
+2. Authenticate GitHub CLI:
    - `gh auth login`
-4. Create a template repo (example: all sequence exercises):
-   - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
-5. In GitHub Classroom, create a new assignment and select the template repo.`
+3. Create a template repo (example: all sequence exercises):
+   - `uv run template_repo_cli create --construct sequence --repo-name sequence-exercises`
+4. In GitHub Classroom, create a new assignment and select the template repo.
 
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
