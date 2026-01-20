@@ -1,7 +1,20 @@
 ---
 name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, and safe cleanups; report remaining issues back to main agent
-tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute', 'read', 'edit/editFiles', 'search', 'pylance-mcp-server/*', 'todo', 'sonarsource.sonarlint-vscode/sonarqube_getPotentialSecurityIssues', 'sonarsource.sonarlint-vscode/sonarqube_excludeFiles', 'sonarsource.sonarlint-vscode/sonarqube_setUpConnectedMode', 'sonarsource.sonarlint-vscode/sonarqube_analyzeFile']
+tools: [
+    'vscode/getProjectSetupInfo',
+    'vscode/vscodeAPI',
+    'execute',
+    'read',
+    'edit/editFiles',
+    'search',
+    'pylance-mcp-server/*',
+    'todo',
+    'sonarsource.sonarlint-vscode/sonarqube_getPotentialSecurityIssues',
+    'sonarsource.sonarlint-vscode/sonarqube_excludeFiles',
+    'sonarsource.sonarlint-vscode/sonarqube_setUpConnectedMode',
+    'sonarsource.sonarlint-vscode/sonarqube_analyzeFile'
+]
 ---
 # Tidy Code Review Sub-Agent
 
