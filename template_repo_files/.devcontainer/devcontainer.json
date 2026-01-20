@@ -43,8 +43,8 @@
   // Forward Jupyter Lab port
   "forwardPorts": [8888],
   
-  // Post-create command to install the exercise package
-  "postCreateCommand": "pip install --no-cache-dir -e .",
+  // Post-create command to install the exercise package if pyproject.toml exists
+  "postCreateCommand": "[ -f pyproject.toml ] && pip install --no-cache-dir -e . || echo 'No pyproject.toml found, skipping installation'",
   
   // Use the 'vscode' user which already exists in the base image
   "remoteUser": "vscode",
