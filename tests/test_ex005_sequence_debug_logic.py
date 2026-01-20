@@ -37,6 +37,7 @@ def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
             return "".join(cell.get("source", []))
     raise AssertionError(f"No explanation cell with tag {tag}")
 
+
 PLACEHOLDER = "### What actually happened\nDescribe briefly what happened when you ran the code (include any error messages or incorrect output)."
 TAGS = [f"explanation{i}" for i in range(1, 10 + 1)]
 
