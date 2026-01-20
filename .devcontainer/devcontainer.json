@@ -1,0 +1,10 @@
+{
+  "name": "Python Exercise Generator",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "postCreateCommand": "pip install --upgrade pip && pip install -e '.[dev]'"
+}
