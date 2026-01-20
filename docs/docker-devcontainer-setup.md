@@ -25,7 +25,6 @@ The Dockerfile creates a minimal student environment based on Microsoft's offici
 - Runs as non-root user for security
 
 **Best practices implemented:**
-- Multi-stage caching for faster builds
 - Minimal layer count
 - No unnecessary packages
 - Non-root user execution
