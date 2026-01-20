@@ -37,12 +37,15 @@ def run_subprocess(
         output_mode: How to handle output:
             - "capture": Capture both stdout and stderr (default).
             - "stream": Stream stdout to console, capture stderr only.
+              Note: result.stdout will be None in this mode.
             - "silent": Suppress all output (capture_output=False, no pipes).
+              Note: Both result.stdout and result.stderr will be None in this mode.
         check: If True, raise CalledProcessError on non-zero exit.
         text: If True, decode output as text (default True).
 
     Returns:
         CompletedProcess instance with returncode, stdout, stderr.
+        Note: stdout/stderr may be None depending on output_mode.
 
     Raises:
         subprocess.CalledProcessError: If check=True and command fails.
@@ -51,9 +54,11 @@ def run_subprocess(
         return subprocess.run(cmd, cwd=cwd, capture_output=True, text=text, check=check)
     elif output_mode == "stream":
         # Stream stdout to user for visibility, capture stderr for error handling
+        # Note: stdout will be None in the returned CompletedProcess
         return subprocess.run(cmd, cwd=cwd, capture_output=False, stderr=subprocess.PIPE, text=text, check=check)
     elif output_mode == "silent":
         # Don't capture or stream anything
+        # Note: Both stdout and stderr will be None in the returned CompletedProcess
         return subprocess.run(cmd, cwd=cwd, capture_output=False, text=text, check=check)
     else:
         raise ValueError(f"Invalid output_mode: {output_mode}")
