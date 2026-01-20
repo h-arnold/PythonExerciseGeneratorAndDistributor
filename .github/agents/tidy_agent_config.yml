@@ -11,9 +11,10 @@ ignore_globs:
   - "**/vendor/**"
   - "**/tests/**"
   - "**/python_tutor_exercises.egg-info/**"
+allow_auto_edit: true
 # Enable/disable checks
 checks:
   kiss: true
   dry: true
   lint: true
-  sonar_duplication: false
+  sonar_duplication: true
