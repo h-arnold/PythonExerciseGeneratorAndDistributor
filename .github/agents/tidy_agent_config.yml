@@ -1,0 +1,19 @@
+# Configuration for Tidy Code Reviewer agent (KISS/DRY checks)
+# Maintainers can override values in a repo-specific config.
+cyclomatic_complexity: 8
+max_function_length: 120
+max_nesting_depth: 3
+duplication_min_lines: 5
+duplication_min_files: 2
+ignore_globs:
+  - "**/notebooks/**"
+  - "**/templates/**"
+  - "**/vendor/**"
+  - "**/tests/**"
+  - "**/python_tutor_exercises.egg-info/**"
+# Enable/disable checks
+checks:
+  kiss: true
+  dry: true
+  lint: true
+  sonar_duplication: false
