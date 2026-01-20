@@ -30,7 +30,6 @@ build/
 # Documentation
 docs/
 *.md
-!README.md
 
 # Exercises and solutions (not needed for base image - each student repo has its own)
 notebooks/
