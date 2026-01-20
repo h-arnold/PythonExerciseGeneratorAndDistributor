@@ -362,13 +362,14 @@ def _create_github_repo(
             return True, None
 
         # Check if we should retry with reauthentication
-        if _should_retry_with_reauth(github, error_msg, env_key, already_reauthenticated):
+        normalized_error = error_msg or "Unknown error"
+        if _should_retry_with_reauth(github, normalized_error, env_key, already_reauthenticated):
             already_reauthenticated = True
             env_key = _detect_auth_token_env()
             continue
 
         # Add hints to error message
-        error_msg = _handle_github_error_hints(error_msg, args)
+        error_msg = _handle_github_error_hints(normalized_error, args)
         return False, error_msg
 
 

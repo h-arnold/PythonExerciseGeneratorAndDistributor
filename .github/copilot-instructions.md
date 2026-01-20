@@ -140,4 +140,13 @@ See [Testing Framework](../docs/testing-framework.md) for details.
 - Use the scaffolding tools for consistency
 - Test both student and solution notebooks
 - Follow the existing patterns in the codebase
-- Update documentation when code changes
+## Code Review & Tidy Checks
+
+After making changes to code that **IS NOT** student notebooks, call the 'Tidy Code Reviewer' sub-agent.
+
+- Purpose: verify claimed changes, run lint/type diagnostics, apply safe cleanups (formatting, remove unused imports, small refactors), and report remaining issues.
+- Typical workflow:
+  1. Run tests and ruff locally (pytest -q; ruff check .).
+  2. Give the agent a summary of all the changes you've made, ensuring you list all files touched in your coding session.
+  3. Review the agent's report, address any remaining issues, re-run tests, and commit.
+

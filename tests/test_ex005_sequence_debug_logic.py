@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
-from tests.notebook_grader import exec_tagged_code
+from tests.notebook_grader import exec_tagged_code, resolve_notebook_path
 
 EXPECTED = {
     "exercise1": "Hi there!",
@@ -26,11 +28,6 @@ def test_exercise_cells_run(tag: str) -> None:
 
 
 # Explanation cell checks for debug exercises
-import json
-
-from tests.notebook_grader import resolve_notebook_path
-
-
 def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
     path = resolve_notebook_path(notebook_path)
     nb = json.load(open(path, encoding="utf-8"))
@@ -39,9 +36,6 @@ def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
         if tag in tags:
             return "".join(cell.get("source", []))
     raise AssertionError(f"No explanation cell with tag {tag}")
-
-
-import pytest
 
 PLACEHOLDER = "### What actually happened\nDescribe briefly what happened when you ran the code (include any error messages or incorrect output)."
 TAGS = [f"explanation{i}" for i in range(1, 10 + 1)]

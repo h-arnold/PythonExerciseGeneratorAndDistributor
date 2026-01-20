@@ -169,8 +169,7 @@ Each generated template repository includes:
 - `.github/workflows/tests.yml` - CI/CD for autograding
 
 ### Testing Framework
-The template only includes the selected tests. The rest of the testing
-framework must come from `template_repo_files`.
+The template includes only the selected test files for the exercises. The full grading framework (for example, `tests/notebook_grader.py` and other infrastructure) is **not** included by default. If you want the complete grading framework to be present in generated templates, add the required files to the `template_repo_files` directory before creating the template. See `template_repo_files/README.md.template` for guidance on what to include.
 
 ## Available Constructs
 

@@ -59,7 +59,7 @@ notebooks/               # Exercise notebooks (student version)
     ex001_exercise_name.ipynb
 tests/                  # Automated tests
   test_ex001_exercise_name.py
-  notebook_grader.py    # Grading framework
+  notebook_grader.py    # (optional) Grading framework — include this file in `template_repo_files` if you want the full grading infrastructure to be present in generated templates.
 ```
 
 ## Testing Framework

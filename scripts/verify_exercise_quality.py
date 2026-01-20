@@ -364,7 +364,7 @@ def _index_of_construct(construct: str) -> int:
         return -1
 
 
-def _scan_for_progression_violations(
+def _scan_for_progression_violations(  # noqa: C901
     *,
     text: str,
     allowed_construct: str,
