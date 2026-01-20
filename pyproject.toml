@@ -5,7 +5,7 @@ description = "Notebook-based Python exercises with automated tests (GitHub Clas
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Bassaleg School" }]
+authors = [{ name = "Hamish Arnold" }]
 
 dependencies = [
   "pytest>=8.0",
