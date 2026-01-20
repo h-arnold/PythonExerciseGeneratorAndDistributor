@@ -16,12 +16,11 @@ This guide explains how to use the **Exercise Generation** assistant in GitHub C
     - [Recommended models — cost vs. quality 💡](#recommended-models--cost-vs-quality-)
   - [Best Practices](#best-practices)
 
-
 ## First Time Setup
 
 If you are new to Visual Studio Code (VS Code) or GitHub Copilot, follow these steps to get ready:
 
-1. **Create a GitHub account**: You will need a GitHub account so you can clone the repository and sign in to Copilot. If you don't have an account, sign up at https://github.com. Note: your organisation may require a Copilot subscription.
+1. **Create a GitHub account**: You will need a GitHub account so you can clone the repository and sign in to Copilot. If you don't have an account, sign up at <https://github.com>. Note: your organisation may require a Copilot subscription.
 
 2. **Clone the repository**: In VS Code use **Source Control** → **Clone Repository**, or open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Git: Clone**. Paste this URL: `https://github.com/h-arnold/PythonTutorExercises.git`. (If you already have a local copy, you can instead use **File > Open Folder...** and select the `PythonTutorExercises` folder.) After opening the workspace, see the [What to expect after cloning (prompts & tips)](#what-to-expect-after-cloning-prompts--tips) section below for guidance on common VS Code prompts and recommended actions.
 
@@ -65,55 +64,68 @@ If any prompt looks unfamiliar, you can safely decline and follow the manual set
 This repository includes a specialized helper called the **Exercise Generation** agent. It knows how our grading system works and how to structure exercises for our students.
 
 ### 1. Select the Agent
+
 In the Chat panel you just opened:
+
 - Look for the model/agent selector (usually at the top or bottom of the chat window).
 - Select **Exercise Generation** (you might see it in a dropdown list or by typing `@Exercise Generation`).
 - *Note: If you don't see it, ensure you have the repository folder open as your workspace root.*
 
 ### 2. Crafting Your Prompt
-The most important step is asking the right question. The agent works best when you give it **teaching context**. 
+
+The most important step is asking the right question. The agent works best when you give it **teaching context**.
 
 Instead of asking "Write a loop exercise", explains what the students need to practice.
 
 #### Example Scenario A: Reinforcing Recent Lessons
+
 *You want to solidify knowledge after a specific exercise.*
 
 > **Prompt to copy:**  
 > "Please create a set of logical error debug tasks that build on the most common logical errors you might find when writing code similar to those in ex003"
 
-**Why this works:** 
+**Why this works:**
+
 - It references `ex003`, so the agent knows the difficulty level.
 - It asks for "logical error debug tasks" (code that runs but gives the wrong answer), which forces students to read code carefully.
 
 #### Example Scenario B: Targeting Misconceptions
+
 *You want to address common mistakes you see in class.*
 
 > **Prompt to copy:**  
 > "Please create me a set of debug exercises around the most common syntax errors that would crop up when attempting the tasks in the previous two modify activities."
 
 **Why this works:**
+
 - It asks for "syntax errors" (code that breaks/crashes).
 - It contextualizes it to the "previous two modify activities", creating a realistic follow-up to their recent work.
 
 ### 3. Iterating on Content
-The agent will generate a response, often including a plan or code snippets. 
+
+The agent will generate a response, often including a plan or code snippets.
+
 - **Too hard?** Reply: "Simplify the second task for a beginner."
 - **Wrong focus?** Reply: "Less focus on math, more on string manipulation."
 - **Need files?** Reply: "What command should I run to create these files?"
 
 ### 4. Saving Your Work
+
 Once the agent gives you the exercise content (the "solution" code and the "student" instructions):
 
 1. **Create the file structure**:
    Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests:
+
    ```bash
    python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic
    ```
+
 2. **Add the Content**:
    - Open `notebooks/solutions/ex050_my_topic.ipynb`.
    - Paste the code provided by the agent into the appropriate cells.
 3. **Verify**:
    Run the tests to make sure everything works:
+
    ```bash
    pytest tests/test_ex050_my_topic.py
    ```
@@ -123,19 +135,23 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
 The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards (structure, tags, sequencing, tests, teacher guidance, and order-of-teaching). It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
 
 How to run it manually:
+
 - **From Copilot Chat**: Select the **Exercise Verifier** chatmode and ask something like:
   - "Verify exercise ex050_my_topic" or
   - "Please verify notebooks/ex050_my_topic.ipynb — construct: sequence, type: modify"
 - **Locally (command line)**:
+
   ```bash
   python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
   ```
 
 What it checks:
+
 - Gate A–F (see repo guidelines): exercise-type compliance, construct sequencing, tags & notebook structure, tests, teacher docs, and inclusion in `OrderOfTeaching.md`.
 - It follows the rules in `docs/exercise-types/` and the verifier agent spec (`.github/agents/exercise_verifier.md.agent.md`).
 
 Output:
+
 - The verifier returns a concise verdict: **PASS**, **PASS WITH NITS**, or **FAIL**, plus specific, minimal fixes (file(s) and suggestions).
 
 **Tip:** Provide the exercise id/slug (e.g., `ex050_my_topic`) or the notebook path when asking — the verifier needs one of these to run targeted checks.
@@ -147,14 +163,16 @@ Output:
 - **Sonnet 4.5 / Codex 5.2** — More powerful models that tend to produce higher-quality and faster outputs, especially for complex or subtle tasks. They are, however, more costly; use them for large batches, complex exercises, or when you need higher confidence in a single pass.
 
 Practical tips:
+
 - For most classroom work, start with **Raptor-mini** and **always** run the Exercise Verifier afterwards.
 - If you repeatedly need the generator to hit edge cases in one run, consider using **Sonnet 4.5** or **Codex 5.2** for that run, then run the verifier as usual.
 - You can select the model in Copilot Chat using the model/agent selector; choose the preferred model or let the agent default to the recommended model for the workspace.
 
 ## Best Practices
+
 - **Small Batches:** Generate 1 exercises at a time rather than a whole chapter.
-- **Fresh Context**: Start a new chat for each exercise for best results. 
-- **Be Specific about Type:** 
+- **Fresh Context**: Start a new chat for each exercise for best results.
+- **Be Specific about Type:**
   - **Debug**: Students fix broken code.
   - **Modify**: Students change working code.
   - **Make**: Students write from scratch.
