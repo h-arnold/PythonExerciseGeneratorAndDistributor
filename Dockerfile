@@ -11,7 +11,6 @@ WORKDIR /workspace
 # Copy requirements files for reference (not used for installation in base image)
 # The base image pre-installs common dependencies; student repos install their
 # specific project dependencies via devcontainer postCreateCommand
-COPY pyproject.toml pytest.ini ./
 
 # Install Python dependencies
 # Use --no-cache-dir to reduce image size
