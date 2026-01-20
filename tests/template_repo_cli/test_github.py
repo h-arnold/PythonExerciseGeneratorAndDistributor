@@ -369,6 +369,7 @@ class TestMarkRepositoryAsTemplate:
         assert result["success"] is True
         mock_run.assert_called_with(
             ["gh", "repo", "edit", "my-org/test-repo", "--template"],
+            cwd=None,
             capture_output=False,
             stderr=subprocess.PIPE,
             text=True,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 INTEGRATION_PERMISSION_ERROR_MARKERS = (
     "resource not accessible by integration",
@@ -16,6 +16,47 @@ AUTH_TOKEN_HINT_MARKERS = (
     "current github authentication token cannot create repositories",
     "unset github_token before running gh auth login",
 )
+
+
+def run_subprocess(
+    cmd: list[str],
+    *,
+    cwd: Path | str | None = None,
+    output_mode: Literal["capture", "stream", "silent"] = "capture",
+    check: bool = False,
+    text: bool = True,
+) -> subprocess.CompletedProcess:
+    """Run a subprocess command with consistent handling.
+
+    This wrapper provides a DRY way to execute subprocess commands with different
+    output handling modes.
+
+    Args:
+        cmd: Command as list of strings.
+        cwd: Working directory for the command.
+        output_mode: How to handle output:
+            - "capture": Capture both stdout and stderr (default).
+            - "stream": Stream stdout to console, capture stderr only.
+            - "silent": Suppress all output (capture_output=False, no pipes).
+        check: If True, raise CalledProcessError on non-zero exit.
+        text: If True, decode output as text (default True).
+
+    Returns:
+        CompletedProcess instance with returncode, stdout, stderr.
+
+    Raises:
+        subprocess.CalledProcessError: If check=True and command fails.
+    """
+    if output_mode == "capture":
+        return subprocess.run(cmd, cwd=cwd, capture_output=True, text=text, check=check)
+    elif output_mode == "stream":
+        # Stream stdout to user for visibility, capture stderr for error handling
+        return subprocess.run(cmd, cwd=cwd, capture_output=False, stderr=subprocess.PIPE, text=text, check=check)
+    elif output_mode == "silent":
+        # Don't capture or stream anything
+        return subprocess.run(cmd, cwd=cwd, capture_output=False, text=text, check=check)
+    else:
+        raise ValueError(f"Invalid output_mode: {output_mode}")
 
 
 class GitHubClient:
@@ -90,11 +131,8 @@ class GitHubClient:
             Dictionary with 'success' and optional 'output', 'error'.
         """
         try:
-            # Stream stdout directly to user for visibility and interactive prompts
-            # Capture stderr separately so we can report errors
-            result = subprocess.run(
-                cmd, capture_output=False, stderr=subprocess.PIPE, text=True, check=False
-            )
+            # Stream stdout to user for visibility and interactive prompts
+            result = run_subprocess(cmd, output_mode="stream", check=False)
 
             return {
                 "success": result.returncode == 0,
@@ -112,7 +150,7 @@ class GitHubClient:
             True if installed, False otherwise.
         """
         try:
-            result = subprocess.run(["gh", "--version"], capture_output=True, check=False)
+            result = run_subprocess(["gh", "--version"], check=False)
             return result.returncode == 0
         except FileNotFoundError:
             return False
@@ -124,7 +162,7 @@ class GitHubClient:
             True if authenticated, False otherwise.
         """
         try:
-            result = subprocess.run(["gh", "auth", "status"], capture_output=True, check=False)
+            result = run_subprocess(["gh", "auth", "status"], check=False)
             return result.returncode == 0
         except FileNotFoundError:
             return False
@@ -155,12 +193,7 @@ class GitHubClient:
 
         try:
             # Run gh auth status and capture stderr (where scopes are printed)
-            auth_result = subprocess.run(
-                ["gh", "auth", "status"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            auth_result = run_subprocess(["gh", "auth", "status"], check=False)
 
             # Check if authenticated
             if auth_result.returncode != 0:
@@ -309,10 +342,8 @@ class GitHubClient:
             repo_ref = f"{org}/{repo_name}"
         else:
             # Get authenticated user
-            user_result = subprocess.run(
+            user_result = run_subprocess(
                 ["gh", "api", "user", "--jq", ".login"],
-                capture_output=True,
-                text=True,
                 check=False,
             )
             if user_result.returncode != 0:
@@ -332,7 +363,7 @@ class GitHubClient:
         Args:
             workspace: Workspace directory.
         """
-        subprocess.run(["git", "init"], cwd=workspace, capture_output=True, check=True)
+        run_subprocess(["git", "init"], cwd=workspace, check=True)
 
     def commit_files(self, workspace: Path, message: str) -> None:
         """Commit files.
@@ -345,53 +376,43 @@ class GitHubClient:
             RuntimeError: If git user configuration is missing or commit fails.
         """
         # Check if git is configured globally
-        user_name = subprocess.run(
+        user_name = run_subprocess(
             ["git", "config", "--global", "user.name"],
-            capture_output=True,
-            text=True,
             check=False,
         )
-        user_email = subprocess.run(
+        user_email = run_subprocess(
             ["git", "config", "--global", "user.email"],
-            capture_output=True,
-            text=True,
             check=False,
         )
 
         # If global config is missing, set local config in workspace
         if not user_name.stdout.strip():
-            subprocess.run(
+            run_subprocess(
                 ["git", "config", "user.name", "Template CLI"],
                 cwd=workspace,
-                capture_output=True,
                 check=True,
             )
 
         if not user_email.stdout.strip():
-            subprocess.run(
+            run_subprocess(
                 ["git", "config", "user.email", "template-cli@example.com"],
                 cwd=workspace,
-                capture_output=True,
                 check=True,
             )
 
         # Add all files
-        add_result = subprocess.run(
+        add_result = run_subprocess(
             ["git", "add", "."],
             cwd=workspace,
-            capture_output=True,
-            text=True,
             check=False,
         )
         if add_result.returncode != 0:
             raise RuntimeError(f"git add failed:\n{add_result.stderr}")
 
         # Commit
-        commit_result = subprocess.run(
+        commit_result = run_subprocess(
             ["git", "commit", "-m", message],
             cwd=workspace,
-            capture_output=True,
-            text=True,
             check=False,
         )
         if commit_result.returncode != 0:
@@ -407,18 +428,16 @@ class GitHubClient:
             remote_url: Remote repository URL.
         """
         # Add remote
-        subprocess.run(
+        run_subprocess(
             ["git", "remote", "add", "origin", remote_url],
             cwd=workspace,
-            capture_output=True,
             check=True,
         )
 
         # Push
-        subprocess.run(
+        run_subprocess(
             ["git", "push", "-u", "origin", "main"],
             cwd=workspace,
-            capture_output=True,
             check=True,
         )
 
