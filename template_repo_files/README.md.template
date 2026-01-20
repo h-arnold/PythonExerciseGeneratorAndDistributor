@@ -28,7 +28,7 @@ Python exercises for learning programming concepts.
 
 3. Open Jupyter Lab:
    ```bash
-   uv run jupyter lab
+   jupyter lab
    ```
 
 ## Working on Exercises
@@ -42,12 +42,12 @@ Python exercises for learning programming concepts.
 
 Run all tests:
 ```bash
-uv run pytest -q
+pytest -q
 ```
 
 Run tests for a specific exercise:
 ```bash
-uv run pytest tests/test_ex001_exercise_name.py -v
+pytest tests/test_ex001_exercise_name.py -v
 ```
 
 ## Project Structure

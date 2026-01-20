@@ -50,10 +50,10 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 
 The same tests run against both sets. When you are developing or validating tests, prefer running them against the solution notebooks by default so you can verify the tests and instructor solutions:
 
-- Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`  (or `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`)
+- Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
 - Student grading: run `pytest -q` (tests the student notebooks)
 
-> Note: Use `uv run pytest -q` when working inside the `uv`-managed environment to ensure the correct dependencies are used.
+> Note: When using the `uv`-managed environment, running `pytest -q` will use the virtual environment created by `uv sync`.
 
 ## Coding Standards
 

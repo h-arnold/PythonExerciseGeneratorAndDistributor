@@ -33,7 +33,7 @@
 4. **Start Jupyter Lab**:
 
    ```bash
-   uv run jupyter lab
+   jupyter lab
    ```
 
 ## How to Complete Exercises
@@ -70,13 +70,13 @@ The testing system uses cell metadata tags to identify which cells contain your 
 ### Run All Tests
 
 ```bash
-uv run pytest -q
+pytest -q
 ```
 
 ### Run Tests for One Exercise
 
 ```bash
-uv run pytest tests/test_ex001_sanity.py -v
+pytest tests/test_ex001_sanity.py -v
 ```
 
 ### Understanding Test Output
@@ -106,12 +106,12 @@ The error message tells you what went wrong!
 ### Tests won't run
 
 - Check you're in the repository root directory
-- Verify pytest is installed: `uv run pytest --version`
+- Verify pytest is installed: `pytest --version`
 
 ### Can't start Jupyter
 
 - Make sure you installed the dev dependencies (`uv sync`)
-- Try: `uv run jupyter lab`
+- Try: `jupyter lab`
 
 ### My code works in Jupyter but tests fail
 

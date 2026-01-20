@@ -29,7 +29,7 @@ python -m pip install --upgrade pip uv
 uv sync
 ```
 
-`uv sync` creates the `.venv` folder, installs every dependency from `pyproject.toml`, and makes the console scripts (like `template_repo_cli`) available via `uv run` or `uv shell`.
+`uv sync` creates the `.venv` folder, installs every dependency from `pyproject.toml`, and makes the console scripts (like `template_repo_cli`) available on your PATH when the virtual environment is activated (so you can call them directly as `template_repo_cli` or use `python -m template_repo_cli`).
 
 This installs:
 
@@ -43,7 +43,7 @@ This installs:
 ### Run Tests
 
 ```bash
-uv run pytest -q
+pytest -q
 ```
 
 All tests should pass (or fail for incomplete student exercises, which is expected).
@@ -51,13 +51,13 @@ All tests should pass (or fail for incomplete student exercises, which is expect
 ### Run Tests Against Solutions
 
 ```bash
-uv run ./scripts/verify_solutions.sh -q
+./scripts/verify_solutions.sh -q
 ```
 
 or:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
 ```
 
 All solution tests should pass.
@@ -65,7 +65,7 @@ All solution tests should pass.
 ### Start Jupyter Lab
 
 ```bash
-uv run jupyter lab
+jupyter lab
 ```
 
 This opens the Jupyter interface in your browser where you can work on notebooks.
@@ -86,7 +86,7 @@ If you're a student working on exercises:
 5. **Run tests** to check your work:
 
    ```bash
-   uv run pytest tests/test_ex001_sanity.py -v
+   pytest tests/test_ex001_sanity.py -v
    ```
 
 6. **Repeat** until all tests pass
@@ -110,7 +110,7 @@ If you're creating or modifying exercises:
 5. **Verify solutions** pass tests:
 
    ```bash
-   uv run ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
+   ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
    ```
 
 ## Linting and Code Quality
@@ -118,13 +118,13 @@ If you're creating or modifying exercises:
 ### Run Ruff Linter
 
 ```bash
-uv run ruff check .
+ruff check .
 ```
 
 ### Auto-Fix Issues
 
 ```bash
-uv run ruff check --fix .
+ruff check --fix .
 ```
 
 Configuration is in `pyproject.toml`.
@@ -174,10 +174,10 @@ $EDITOR tests/test_ex042_variables_and_types.py
 jupyter lab notebooks/solutions/ex042_variables_and_types.ipynb
 
 # 7. Verify tests pass on solution
-uv run ./scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
+./scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
 
 # 8. Verify tests fail on student notebook
-uv run pytest tests/test_ex042_variables_and_types.py -v
+pytest tests/test_ex042_variables_and_types.py -v
 
 # 9. Commit and push
 git add exercises/ notebooks/ tests/
@@ -232,7 +232,7 @@ Redirects notebook lookups to a different directory.
 
 ```bash
 export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-uv run pytest
+pytest
 ```
 
 **Purpose**: Run the same tests against solution notebooks to verify they're correct.

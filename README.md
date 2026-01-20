@@ -88,13 +88,13 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
 2. Authenticate GitHub CLI:
    - `gh auth login`
 3. Create a template repo (example: all sequence exercises):
-   - `uv run template_repo_cli create --construct sequence --repo-name sequence-exercises`
+   - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
 
 > Note: Running `pytest` without setting `PYTUTOR_NOTEBOOKS_DIR` will test the student notebooks (and will usually fail until exercises are completed). To verify instructor solutions locally, run:
 >
 > ```bash
-> PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
+> PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
 > ```
 
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
