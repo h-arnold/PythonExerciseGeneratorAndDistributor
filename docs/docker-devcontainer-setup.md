@@ -5,6 +5,7 @@ This repository includes a pre-built Docker image and devcontainer configuration
 ## Overview
 
 The student environment provides a minimal, pre-configured setup with:
+
 - Python 3.11
 - Jupyter Lab for running notebooks
 - pytest for automated testing
@@ -19,12 +20,14 @@ All unnecessary features are disabled to provide students with a focused learnin
 Location: `/Dockerfile`
 
 The Dockerfile creates a minimal student environment based on Microsoft's official Python devcontainer image. It:
+
 - Uses Python 3.11 on Debian Bullseye
 - Installs only required packages (pytest, ipykernel, jupyterlab)
 - Optimizes build time with layer caching
 - Runs as non-root user for security
 
 **Best practices implemented:**
+
 - Minimal layer count
 - No unnecessary packages
 - Non-root user execution
@@ -35,11 +38,13 @@ The Dockerfile creates a minimal student environment based on Microsoft's offici
 Location: `/.github/workflows/docker-build.yml`
 
 Automatically builds and pushes the Docker image to GitHub Container Registry (GHCR) when:
+
 - Changes are pushed to the main branch
 - Dockerfile or related files are modified
 - Manually triggered via workflow_dispatch
 
 The workflow:
+
 - Builds for both AMD64 and ARM64 platforms
 - Uses GitHub Actions cache for faster builds
 - Tags images with branch name, SHA, and 'latest'
@@ -50,6 +55,7 @@ The workflow:
 Location: `/template_repo_files/.devcontainer/devcontainer.json`
 
 Configures the student environment for GitHub Codespaces and VS Code Remote - Containers:
+
 - Uses the pre-built image from GHCR
 - Installs only essential VS Code extensions
 - Disables welcome screens and tips
@@ -57,6 +63,7 @@ Configures the student environment for GitHub Codespaces and VS Code Remote - Co
 - Hides build artifacts and cache files
 
 **Minimal UI features:**
+
 - No startup editor
 - No welcome walkthroughs
 - No tips
@@ -70,7 +77,7 @@ When a student opens their assignment repository in GitHub Codespaces or VS Code
 
 1. The devcontainer automatically pulls the pre-built image
 2. VS Code installs only the three required extensions
-3. Dependencies are installed via `pip install -e .`
+3. Dependencies are installed via `uv sync`
 4. Students can immediately start working on exercises
 
 **No manual setup required!**
@@ -84,6 +91,7 @@ template_repo_cli create --construct sequence --repo-name my-exercises
 ```
 
 The generated repository will include:
+
 - `.devcontainer/devcontainer.json` pointing to the pre-built image
 - All necessary VS Code settings
 - Jupyter and pytest configuration
@@ -98,6 +106,7 @@ To use the devcontainer locally:
 4. Click "Reopen in Container" when prompted
 
 Or use the Command Palette (Ctrl+Shift+P):
+
 ```
 Dev Containers: Reopen in Container
 ```
@@ -109,6 +118,8 @@ The Docker image is automatically rebuilt when changes are pushed to main. To fo
 1. Go to Actions tab in GitHub
 2. Select "Build and Push Student Environment Docker Image"
 3. Click "Run workflow"
+
+**Tip:** To speed repeated builds and CI runs, consider adding a cache step for pip's wheel cache (e.g., `~/.cache/pip`) and use `uv.lock` as the cache key in your workflow. This reduces network bandwidth and speeds up repeated `uv sync` operations.
 
 The new image will be available within a few minutes.
 
@@ -137,6 +148,7 @@ To change student VS Code settings:
 ### Image Pull Failures
 
 If students experience image pull failures:
+
 1. Check that the repository is public or students have access
 2. Verify the image exists at `ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment:latest`
 3. Try using a specific tag instead of `latest`
@@ -144,6 +156,7 @@ If students experience image pull failures:
 ### Build Failures
 
 If the GitHub Actions workflow fails:
+
 1. Check the Actions tab for error logs
 2. Verify Dockerfile syntax
 3. Ensure all required files exist
@@ -152,6 +165,7 @@ If the GitHub Actions workflow fails:
 ### Students Can't Install Extensions
 
 Extensions are pre-configured in devcontainer.json. If students try to install additional extensions:
+
 - They can install them in their codespace
 - Extensions won't persist if devcontainer is rebuilt
 - Consider if the extension should be added to devcontainer.json
@@ -161,6 +175,7 @@ Extensions are pre-configured in devcontainer.json. If students try to install a
 ### Why Pre-built Images?
 
 Pre-built images provide:
+
 - Faster startup time for students (no build required)
 - Consistent environment across all students
 - Reduced Codespaces usage time
@@ -169,6 +184,7 @@ Pre-built images provide:
 ### Why Minimal Extensions?
 
 Only Python, Pylance, and Jupyter are included to:
+
 - Reduce cognitive load for students
 - Minimize distractions
 - Focus on learning Python
@@ -177,6 +193,7 @@ Only Python, Pylance, and Jupyter are included to:
 ### Why GHCR?
 
 GitHub Container Registry provides:
+
 - Free hosting for public repositories
 - Seamless integration with GitHub Actions
 - No separate authentication required
@@ -185,6 +202,7 @@ GitHub Container Registry provides:
 ## Future Improvements
 
 Potential enhancements:
+
 - Add support for Pyodide (browser-based Python)
 - Create exercise-specific images
 - Add pre-installed linting tools

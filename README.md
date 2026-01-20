@@ -9,6 +9,7 @@ This is a working prototype. The core workflow exists, but several pieces are in
 A teacher‑first toolchain that turns lesson plans into ready‑to‑run Python exercises—designed for secondary classrooms and low‑friction delivery.
 
 For teachers:
+
 - Generate complete, pedagogy‑aligned exercises in seconds (student notebook, solution mirror, and tests).
 - Create exercises fast using the built-in Exercise Generation assistant (see [docs/exercise-generation.md](docs/exercise-generation.md)).
 - Ship browser‑ready assignments your students can run inline (Codespaces now; Pyodide client‑side execution planned).
@@ -16,11 +17,13 @@ For teachers:
 - Create GitHub Classroom template repos with a CLI and consistent VS Code/devcontainer configs.
 
 For students:
+
 - Work inside a single, inline notebook cell with task, code, and debugger together.
 - Get fast feedback from tests and clear, scaffolded prompts.
 - No local installs required (when using Codespaces or the planned Pyodide runtime).
 
 Why teachers will care:
+
 - Slash setup time and eliminate “it works on my machine” problems ✅
 - Spend classroom time teaching, not troubleshooting environments ✅
 - Designed to be age‑appropriate and easy to adopt ✅
@@ -40,17 +43,20 @@ Why teachers will care:
 ## Status
 
 What works (mostly):
+
 - Exercise scaffolding and tests via the generation workflow
 - Tagged‑cell autograding ([tests/notebook_grader.py](tests/notebook_grader.py))
 - Template repo creation with notebooks, tests, and VS Code settings
 - GitHub Classroom workflow (template repo + autograding)
 
 Known gaps / not fully working yet:
+
 - The template repo currently includes solution notebooks (not suitable for students)
 - Parts of the template‑repo population flow are untested
 - Full VS Code for Web support needs a Pyodide‑based Python kernel integration
 
 Where help is needed:
+
 - Excluding solutions from student template repos
 - Hardening the template‑repo CLI and improving test coverage
 - VS Code for Web: building a Pyodide‑backed kernel that works with the official Jupyter extension
@@ -76,21 +82,20 @@ More detail and expected structure: [docs/exercise-generation-cli.md](docs/exerc
 
 The template‑repo CLI packages selected exercises into a ready‑to‑use GitHub Classroom template.
 
-1. Create and activate a virtual environment (recommended):
-   - Linux / macOS:
-     - `python -m venv .venv`
-     - `source .venv/bin/activate`
-   - Windows (PowerShell):
-     - `python -m venv .venv`
-     - `.\.venv\Scripts\Activate.ps1`
-2. Install dependencies:
-   - `python -m pip install -U pip`
-   - `python -m pip install -e ".[dev]"`
-3. Authenticate GitHub CLI:
+1. Install uv and sync the project dependencies:
+   - `python -m pip install --upgrade pip uv`
+   - `uv sync`
+2. Authenticate GitHub CLI:
    - `gh auth login`
-4. Create a template repo (example: all sequence exercises):
+3. Create a template repo (example: all sequence exercises):
    - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
-5. In GitHub Classroom, create a new assignment and select the template repo.`
+4. In GitHub Classroom, create a new assignment and select the template repo.
+
+> Note: Running `pytest` without setting `PYTUTOR_NOTEBOOKS_DIR` will test the student notebooks (and will usually fail until exercises are completed). To verify instructor solutions locally, run:
+>
+> ```bash
+> PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
+> ```
 
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 

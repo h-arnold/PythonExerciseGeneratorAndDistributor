@@ -48,19 +48,12 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
 
-The same tests run against both sets:
-- Default: `pytest` (tests student notebooks)
-- Solutions: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest`
+The same tests run against both sets. When you are developing or validating tests, prefer running them against the solution notebooks by default so you can verify the tests and instructor solutions:
 
-### Exercise Organisation
+- Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
+- Student grading: run `pytest -q` (tests the student notebooks)
 
-Exercises are organised by construct and type:
-- **Constructs**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
-- **Types**: `debug` (fix errors), `modify` (change working code), `make` (create from scratch)
-
-### Pedagogical Progression
-
-Students learn constructs in order. Exercises must only use constructs students have already learned. See the exercise generation agent for detailed pedagogical guidelines.
+> Note: When using the `uv`-managed environment, running `pytest -q` will use the virtual environment created by `uv sync`.
 
 ## Coding Standards
 
@@ -140,9 +133,10 @@ See [Testing Framework](../docs/testing-framework.md) for details.
 - Use the scaffolding tools for consistency
 - Test both student and solution notebooks
 - Follow the existing patterns in the codebase
+
 ## Code Review & Tidy Checks
 
-After making changes to code that **IS NOT** student notebooks, call the 'Tidy Code Reviewer' sub-agent.
+After making changes to code that **IS NOT** student notebooks, **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
 
 - Purpose: verify claimed changes, run lint/type diagnostics, apply safe cleanups (formatting, remove unused imports, small refactors), and report remaining issues.
 - Typical workflow:

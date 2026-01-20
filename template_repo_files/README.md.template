@@ -11,7 +11,7 @@ Python exercises for learning programming concepts.
 ### Prerequisites
 
 - Python 3.11 or higher
-- pip package manager
+- uv package manager (install with `python -m pip install --upgrade pip uv` if it is not already available)
 
 ### Installation
 
@@ -23,7 +23,7 @@ Python exercises for learning programming concepts.
 
 2. Install dependencies:
    ```bash
-   pip install -e ".[dev]"
+   uv sync
    ```
 
 3. Open Jupyter Lab:

@@ -44,7 +44,7 @@
   "forwardPorts": [8888],
   
   // Post-create command to install the exercise package if pyproject.toml exists
-  "postCreateCommand": "[ -f pyproject.toml ] && pip install --no-cache-dir -e . || echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'",
+  "postCreateCommand": "[ -f pyproject.toml ] && (uv sync && . .venv/bin/activate) || echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'",
   
   // Use the 'vscode' user which already exists in the base image
   "remoteUser": "vscode",

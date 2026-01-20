@@ -5,7 +5,7 @@ description = "Notebook-based Python exercises with automated tests (GitHub Clas
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Bassaleg School" }]
+authors = [{ name = "Hamish Arnold" }]
 
 dependencies = [
   "pytest>=8.0",
@@ -14,22 +14,30 @@ dependencies = [
   "jupyterlab>=4.0",
 ]
 
+[build-system]
+requires = ["setuptools>=71.0.0", "wheel>=0.40.0"]
+build-backend = "setuptools.build_meta"
+
 [project.optional-dependencies]
 dev = [
   "pytest>=8.0",
   "ruff>=0.6",
   "ipykernel>=6.0",
   "jupyterlab>=4.0",
+  "radon>=5.1",
 ]
 
 [project.scripts]
 # Console entrypoint for the template repository CLI. Installs as `template-repo-cli` when the package is
-# installed (e.g., `pip install -e ".[dev]"`).
+# installed (e.g., via `uv sync` once the project is packaged).
 template-repo-cli = "scripts.template_repo_cli.cli:main"
 template_repo_cli = "scripts.template_repo_cli.cli:main"
 
 [tool.setuptools]
 packages = ["scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
+
+[tool.uv]
+package = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"

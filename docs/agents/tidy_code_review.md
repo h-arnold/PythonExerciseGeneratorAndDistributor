@@ -38,7 +38,7 @@ If you require the agent to perform automated safe edits, set `allow_auto_edit: 
 
 ## Running the checks locally (developer guidance)
 
-- Install required tools: `pip install radon ruff jscpd` (or use your preferred package manager)
+- Install required tools: run `uv sync` (radon/ruff are part of the dev dependencies) and install the Node-based `jscpd` binary (`npm install -g jscpd` or use `npx jscpd ...`)
 - Run complexity checks: `radon cc -s -n <threshold> <path>`
 - Run duplication: `jscpd --min-lines 5 --reporters json <path>`
 

@@ -3,8 +3,24 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.11",
   
   "features": {
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {}
   },
 
-  "postCreateCommand": "pip install --upgrade pip && pip install -e '.[dev]'"
+  "postCreateCommand": "uv sync && . .venv/bin/activate",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "ms-toolsai.vscode-jupyter-slideshow",
+        "DavidAnson.vscode-markdownlint",
+        "yzhang.markdown-all-in-one"
+      ]
+    }
+  }
 }
