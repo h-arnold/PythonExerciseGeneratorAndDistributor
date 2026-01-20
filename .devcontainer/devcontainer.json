@@ -7,7 +7,7 @@
     "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {}
   },
 
-  "postCreateCommand": "python -m pip install --upgrade pip uv && uv sync",
+  "postCreateCommand": "uv sync",
   "customizations": {
     "vscode": {
       "extensions": [
