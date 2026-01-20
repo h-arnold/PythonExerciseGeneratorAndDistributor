@@ -119,6 +119,8 @@ The Docker image is automatically rebuilt when changes are pushed to main. To fo
 2. Select "Build and Push Student Environment Docker Image"
 3. Click "Run workflow"
 
+**Tip:** To speed repeated builds and CI runs, consider adding a cache step for pip's wheel cache (e.g., `~/.cache/pip`) and use `uv.lock` as the cache key in your workflow. This reduces network bandwidth and speeds up repeated `uv sync` operations.
+
 The new image will be available within a few minutes.
 
 ## Customization
