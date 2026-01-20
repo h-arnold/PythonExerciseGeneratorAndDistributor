@@ -5,6 +5,7 @@
 ### First Time Setup
 
 1. **Clone the repository** (if you haven't already):
+
    ```bash
    git clone <repository-url>
    cd <repository-name>
@@ -16,13 +17,20 @@
    - Verify installation: `python --version` (should show 3.11 or higher)
 
 3. **Install dependencies**:
-   ```bash
-   pip install -e ".[dev]"
-   ```
+
+   - If `uv` is not already installed locally, run:
+     ```bash
+     python -m pip install --upgrade pip uv
+     ```
+   - Sync the repository stack with `uv`:
+     ```bash
+     uv sync
+     ```
 
 4. **Start Jupyter Lab**:
+
    ```bash
-   jupyter lab
+   uv run jupyter lab
    ```
 
 ## How to Complete Exercises
@@ -30,6 +38,7 @@
 ### Understanding the Notebook Structure
 
 Each exercise notebook contains:
+
 - **Instructions**: What you need to do
 - **Code cells**: Where you write your solution
 - **Metadata tags**: Special markers (like `exercise1`) that tell the testing system which cells to test
@@ -46,6 +55,7 @@ Each exercise notebook contains:
 ### Cell Metadata Tags
 
 The testing system uses cell metadata tags to identify which cells contain your solutions:
+
 - `exercise1` - Your solution for exercise 1
 - `exercise2` - Your solution for exercise 2
 - etc.
@@ -55,23 +65,27 @@ The testing system uses cell metadata tags to identify which cells contain your 
 ## Testing Your Work
 
 ### Run All Tests
+
 ```bash
-pytest -q
+uv run pytest -q
 ```
 
 ### Run Tests for One Exercise
+
 ```bash
-pytest tests/test_ex001_sanity.py -v
+uv run pytest tests/test_ex001_sanity.py -v
 ```
 
 ### Understanding Test Output
 
 **Passing test**:
+
 ```
 test_example_returns_string PASSED
 ```
 
 **Failing test**:
+
 ```
 test_example_returns_string FAILED
 AssertionError: Expected 'hello' but got 'hi'
@@ -82,18 +96,22 @@ The error message tells you what went wrong!
 ## Common Issues
 
 ### "Module not found" error
-- Make sure you installed dependencies: `pip install -e ".[dev]"`
-- Try reinstalling: `pip install --force-reinstall -e ".[dev]"`
+
+- Make sure you installed dependencies: `uv sync`
+- Try reinstalling the stack by running `uv sync` again
 
 ### Tests won't run
+
 - Check you're in the repository root directory
-- Verify pytest is installed: `pytest --version`
+- Verify pytest is installed: `uv run pytest --version`
 
 ### Can't start Jupyter
-- Make sure you installed the dev dependencies
-- Try: `python -m jupyter lab`
+
+- Make sure you installed the dev dependencies (`uv sync`)
+- Try: `uv run jupyter lab`
 
 ### My code works in Jupyter but tests fail
+
 - Check you're modifying the correct cell (check the tag!)
 - Make sure your cell output matches what the test expects
 - Read the test error message carefully
@@ -110,6 +128,7 @@ The error message tells you what went wrong!
 ## VS Code for the Web
 
 This repository is compatible with VS Code for the Web! You can work on exercises directly in your browser:
+
 1. Go to github.dev and open your repository
 2. Install recommended extensions
 3. Start coding!
