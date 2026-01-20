@@ -32,6 +32,7 @@ uv sync
 `uv sync` creates the `.venv` folder, installs every dependency from `pyproject.toml`, and makes the console scripts (like `template_repo_cli`) available via `uv run` or `uv shell`.
 
 This installs:
+
 - `pytest` (testing framework)
 - `ruff` (linter)
 - `ipykernel` (Jupyter kernel)
@@ -76,14 +77,18 @@ If you're a student working on exercises:
 1. **Clone the repository** (or accept the GitHub Classroom assignment)
 2. **Install dependencies** as described above (run `uv sync` to create `.venv` and install dev tools)
 3. **Open a notebook** in Jupyter Lab:
+
    ```bash
    jupyter lab notebooks/ex001_sanity.ipynb
    ```
+
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)
 5. **Run tests** to check your work:
+
    ```bash
    uv run pytest tests/test_ex001_sanity.py -v
    ```
+
 6. **Repeat** until all tests pass
 
 ## For Teachers
@@ -96,11 +101,14 @@ If you're creating or modifying exercises:
    - [Testing Framework](testing-framework.md)
    - [Exercise Generation CLI](exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises
 3. **Create exercises** using the scaffolding script:
+
    ```bash
    python scripts/new_exercise.py ex042 "Your Title" --slug your_slug
    ```
+
 4. **Author the exercise** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md), which documents how to use the exercise generation CLI tool to scaffold new Python exercises.
 5. **Verify solutions** pass tests:
+
    ```bash
    uv run ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
    ```
@@ -134,6 +142,7 @@ This repository is designed to work with GitHub Classroom:
 ### Autograding Configuration
 
 The `.github/workflows/tests.yml` workflow:
+
 - Triggers on every push and pull request
 - Sets up Python 3.11
 - Installs dependencies
@@ -182,7 +191,6 @@ git push origin add-ex042-variables
 
 ### Tests Fail with "No module named 'tests'"
 
-
 Ensure you're running pytest from the repository root and that your uv-managed environment is up to date:
 
 ```bash
@@ -192,6 +200,7 @@ uv sync
 ### Notebook Not Found Error
 
 Check that:
+
 - The notebook exists at the expected path
 - The path in the test file matches the actual notebook location
 - If using `PYTUTOR_NOTEBOOKS_DIR`, the solution notebook exists
@@ -199,6 +208,7 @@ Check that:
 ### Cell Tag Not Found
 
 Verify the cell metadata in Jupyter:
+
 1. Open the notebook in Jupyter Lab
 2. Select the code cell
 3. Click the gear icon (property inspector) in the right sidebar
@@ -207,6 +217,7 @@ Verify the cell metadata in Jupyter:
 ### Import Errors in Student Code
 
 Students sometimes forget imports. Remind them that:
+
 - Each tagged cell is executed in isolation
 - All necessary imports must be in the tagged cell
 - They cannot rely on imports from other cells
@@ -218,6 +229,7 @@ Students sometimes forget imports. Remind them that:
 Redirects notebook lookups to a different directory.
 
 **Usage**:
+
 ```bash
 export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
 uv run pytest
@@ -230,6 +242,7 @@ uv run pytest
 ### `tests.yml`
 
 Runs on every push and pull request:
+
 - Installs dependencies
 - Runs pytest against student notebooks
 - Reports pass/fail status
@@ -237,6 +250,7 @@ Runs on every push and pull request:
 ### `tests-solutions.yml`
 
 Manual workflow (workflow_dispatch) to verify solution notebooks:
+
 - Sets `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`
 - Runs pytest against solution notebooks
 - Useful for verifying solutions are correct before releasing exercises

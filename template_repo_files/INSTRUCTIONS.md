@@ -19,10 +19,13 @@
 3. **Install dependencies**:
 
    - If `uv` is not already installed locally, run:
+
      ```bash
      python -m pip install --upgrade pip uv
      ```
+
    - Sync the repository stack with `uv`:
+
      ```bash
      uv sync
      ```

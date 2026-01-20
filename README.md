@@ -97,7 +97,6 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
 > PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
 > ```
 
-
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
 ## Repository layout (high level)
