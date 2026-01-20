@@ -48,19 +48,12 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
 
-The same tests run against both sets:
-- Default: `pytest` (tests student notebooks)
-- Solutions: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest`
+The same tests run against both sets. When you are developing or validating tests, prefer running them against the solution notebooks by default so you can verify the tests and instructor solutions:
 
-### Exercise Organisation
+- Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`  (or `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`)
+- Student grading: run `pytest -q` (tests the student notebooks)
 
-Exercises are organised by construct and type:
-- **Constructs**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
-- **Types**: `debug` (fix errors), `modify` (change working code), `make` (create from scratch)
-
-### Pedagogical Progression
-
-Students learn constructs in order. Exercises must only use constructs students have already learned. See the exercise generation agent for detailed pedagogical guidelines.
+> Note: Use `uv run pytest -q` when working inside the `uv`-managed environment to ensure the correct dependencies are used.
 
 ## Coding Standards
 
