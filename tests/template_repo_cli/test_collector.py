@@ -20,10 +20,8 @@ class TestCollectAllFiles:
         files = collector.collect_files("ex001_sanity")
 
         assert "notebook" in files
-        assert "solution" in files
         assert "test" in files
         assert files["notebook"].exists()
-        assert files["solution"].exists()
         assert files["test"].exists()
 
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
@@ -57,14 +55,15 @@ class TestCollectMissingFiles:
             collector.collect_files("ex999_nonexistent")
 
     def test_collect_missing_solution(self, repo_root: Path, temp_dir: Path) -> None:
-        """Test handling missing solution notebook."""
-        # This test assumes we can create a scenario where solution is missing
-        # For now, we'll test that the collector checks for solutions
+        """Test handling missing solution notebook.
+
+        Solutions are not collected for template repos, so no check is required.
+        """
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex001_sanity")
 
-        # Solution should exist for ex001_sanity
-        assert files["solution"].exists()
+        assert "notebook" in files
+        assert "test" in files
 
     def test_collect_missing_test(self, repo_root: Path) -> None:
         """Test handling missing test file."""
@@ -79,9 +78,8 @@ class TestCollectMissingFiles:
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex001_sanity")
 
-        # Metadata might be None if missing, but shouldn't raise error
-        # This depends on implementation - metadata might be optional
-        assert "metadata" in files
+        assert "notebook" in files
+        assert "test" in files
 
 
 class TestCollectFileStructure:
@@ -101,9 +99,8 @@ class TestCollectFileStructure:
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex002_sequence_modify_basics")
 
-        # Metadata should be in construct/type/exercise structure
-        if files.get("metadata"):
-            assert "sequence" in str(files["metadata"])
+        assert "notebook" in files
+        assert "test" in files
 
 
 class TestCollectValidation:
@@ -121,7 +118,7 @@ class TestCollectValidation:
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex001_sanity")
 
-        required_keys = ["notebook", "solution", "test"]
+        required_keys = ["notebook", "test"]
         for key in required_keys:
             assert key in files
 

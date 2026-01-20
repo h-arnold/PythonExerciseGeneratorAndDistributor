@@ -237,7 +237,7 @@ def _build_template_package(
     Returns:
         True if successful, False otherwise.
     """
-    packager.copy_exercise_files(workspace, files, include_solutions=True)
+    packager.copy_exercise_files(workspace, files)
     packager.copy_template_base_files(workspace)
     packager.generate_readme(workspace, template_name, exercises)
 

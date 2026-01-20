@@ -154,9 +154,7 @@ Each generated template repository includes:
 
 ### Exercise Files
 - Student notebooks (`notebooks/exNNN_slug.ipynb`)
-- Solution notebooks (`notebooks/solutions/exNNN_slug.ipynb`)
 - Test files (`tests/test_exNNN_slug.py`)
-- Exercise metadata (if available)
 
 ### Infrastructure Files
 - `pyproject.toml` - Project configuration (micropip-compatible for VS Code web)
@@ -171,8 +169,8 @@ Each generated template repository includes:
 - `.github/workflows/tests.yml` - CI/CD for autograding
 
 ### Testing Framework
-- `tests/notebook_grader.py` - Core grading framework
-- `tests/__init__.py` - Package initialization
+The template only includes the selected tests. The rest of the testing
+framework must come from `template_repo_files`.
 
 ## Available Constructs
 
