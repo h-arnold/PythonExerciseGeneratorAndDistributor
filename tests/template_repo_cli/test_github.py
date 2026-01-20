@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -51,9 +53,7 @@ class TestBuildCreateRepoCommand:
     def test_build_create_with_template_repo_argument(self, repo_root: Path) -> None:
         """Test passing explicit template repository argument."""
         client = GitHubClient()
-        cmd = client.build_create_command(
-            "test-repo", template_repo="owner/template-repo"
-        )
+        cmd = client.build_create_command("test-repo", template_repo="owner/template-repo")
 
         assert "--template" in cmd
         assert "owner/template-repo" in cmd
@@ -61,9 +61,7 @@ class TestBuildCreateRepoCommand:
     def test_build_create_with_source_path(self, repo_root: Path) -> None:
         """Test building command with source path for pushing files."""
         client = GitHubClient()
-        cmd = client.build_create_command(
-            "test-repo", source_path="/tmp/workspace"
-        )
+        cmd = client.build_create_command("test-repo", source_path="/tmp/workspace")
 
         assert "--source" in cmd
         assert "/tmp/workspace" in cmd
@@ -84,9 +82,7 @@ class TestExecuteGhCommand:
     @patch("subprocess.run")
     def test_execute_gh_command_success(self, mock_run: MagicMock) -> None:
         """Test successful execution of gh command."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"name": "test-repo"}', stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
 
         client = GitHubClient()
         result = client.execute_command(["gh", "repo", "create", "test-repo"])
@@ -97,9 +93,7 @@ class TestExecuteGhCommand:
     @patch("subprocess.run")
     def test_execute_gh_command_failure(self, mock_run: MagicMock) -> None:
         """Test failed execution of gh command."""
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="Error occurred"
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error occurred")
 
         client = GitHubClient()
         result = client.execute_command(["gh", "repo", "create", "test-repo"])
@@ -109,9 +103,7 @@ class TestExecuteGhCommand:
     @patch("subprocess.run")
     def test_execute_gh_command_auth_error(self, mock_run: MagicMock) -> None:
         """Test handling authentication failure."""
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="authentication required"
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="authentication required")
 
         client = GitHubClient()
         result = client.execute_command(["gh", "auth", "status"])
@@ -122,9 +114,7 @@ class TestExecuteGhCommand:
     @patch("subprocess.run")
     def test_execute_gh_command_rate_limit(self, mock_run: MagicMock) -> None:
         """Test handling rate limit error."""
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="API rate limit exceeded"
-        )
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="API rate limit exceeded")
 
         client = GitHubClient()
         result = client.execute_command(["gh", "api", "user"])
@@ -181,9 +171,7 @@ class TestValidateGh:
     @patch("subprocess.run")
     def test_validate_gh_authenticated(self, mock_run: MagicMock) -> None:
         """Test checking gh authentication status."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="Logged in to github.com"
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="Logged in to github.com")
 
         client = GitHubClient()
         is_authenticated = client.check_authentication()
@@ -257,7 +245,9 @@ class TestCreateRepository:
         assert len(git_commit_call) > 0
 
     @patch("subprocess.run")
-    def test_create_repository_skips_git_on_retry(self, mock_run: MagicMock, temp_dir: Path) -> None:
+    def test_create_repository_skips_git_on_retry(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
         """Test that create_repository skips git operations when skip_git_operations=True."""
         mock_run.side_effect = [
             MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr=""),  # gh repo create
@@ -287,7 +277,9 @@ class TestCreateRepository:
         assert len(template_call) > 0
 
     @patch("subprocess.run")
-    def test_create_repository_includes_source_and_push_flags(self, mock_run: MagicMock, temp_dir: Path) -> None:
+    def test_create_repository_includes_source_and_push_flags(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
         """Test that gh repo create includes --source and --push flags."""
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
 
@@ -296,7 +288,9 @@ class TestCreateRepository:
 
         assert result["success"] is True
         # Find the gh repo create call
-        gh_create_calls = [c for c in mock_run.call_args_list if "gh" in str(c) and "create" in str(c)]
+        gh_create_calls = [
+            c for c in mock_run.call_args_list if "gh" in str(c) and "create" in str(c)
+        ]
         assert len(gh_create_calls) > 0
         # Verify it includes --source and --push
         create_call_args = str(gh_create_calls[0])
@@ -317,6 +311,49 @@ class TestCreateRepository:
         # Should have called git commands
         assert mock_run.call_count >= 1
 
+    @patch("subprocess.run")
+    def test_create_repository_handles_token_auth_error(
+        self,
+        mock_run: MagicMock,
+        temp_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that repo creation returns helpful error on auth failure."""
+        monkeypatch.setenv("GITHUB_TOKEN", "existing-token")
+
+        error_message = "Error creating repository: GraphQL: Resource not accessible by integration (createRepository)"
+
+        def make_result(returncode: int = 0, stdout: str = "", stderr: str = "") -> MagicMock:
+            return MagicMock(returncode=returncode, stdout=stdout, stderr=stderr)
+
+        mock_run.side_effect = [
+            make_result(),  # git init
+            make_result(stdout="Test User\n"),  # git config --global user.name
+            make_result(stdout="test@example.com\n"),  # git config --global user.email
+            make_result(),  # git add
+            make_result(),  # git commit
+            make_result(returncode=1, stderr=error_message),  # gh repo create fails
+        ]
+
+        client = GitHubClient()
+        result = client.create_repository("test-repo", temp_dir)
+
+        assert result["success"] is False
+        # Verify token is NOT unset (we don't modify the environment)
+        assert "GITHUB_TOKEN" in os.environ
+        assert "GH_TOKEN" not in os.environ
+        # Verify error message instructs user on resolution
+        assert "unset GITHUB_TOKEN" in result["error"]
+        assert "gh auth login" in result["error"]
+        assert "try again" in result["error"].lower()
+
+        gh_repo_create_calls = [
+            call
+            for call in mock_run.call_args_list
+            if call.args and tuple(call.args[0][:3]) == ("gh", "repo", "create")
+        ]
+        assert len(gh_repo_create_calls) == 1
+
 
 class TestMarkRepositoryAsTemplate:
     """Tests for marking repositories as templates."""
@@ -332,7 +369,8 @@ class TestMarkRepositoryAsTemplate:
         assert result["success"] is True
         mock_run.assert_called_with(
             ["gh", "repo", "edit", "my-org/test-repo", "--template"],
-            capture_output=True,
+            capture_output=False,
+            stderr=subprocess.PIPE,
             text=True,
             check=False,
         )
@@ -352,7 +390,13 @@ class TestMarkRepositoryAsTemplate:
         # Verify gh api user was called
         assert mock_run.call_args_list[0][0][0] == ["gh", "api", "user", "--jq", ".login"]
         # Verify gh repo edit was called with username/repo
-        assert mock_run.call_args_list[1][0][0] == ["gh", "repo", "edit", "testuser/test-repo", "--template"]
+        assert mock_run.call_args_list[1][0][0] == [
+            "gh",
+            "repo",
+            "edit",
+            "testuser/test-repo",
+            "--template",
+        ]
 
     @patch("subprocess.run")
     def test_mark_repository_as_template_user_api_failure(self, mock_run: MagicMock) -> None:
@@ -384,8 +428,12 @@ class TestGitOperations:
     def test_commit_files_with_global_config(self, mock_run: MagicMock, temp_dir: Path) -> None:
         """Test committing files with global git config."""
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="Test User\n", stderr=""),  # git config --global user.name
-            MagicMock(returncode=0, stdout="test@example.com\n", stderr=""),  # git config --global user.email
+            MagicMock(
+                returncode=0, stdout="Test User\n", stderr=""
+            ),  # git config --global user.name
+            MagicMock(
+                returncode=0, stdout="test@example.com\n", stderr=""
+            ),  # git config --global user.email
             MagicMock(returncode=0, stdout="", stderr=""),  # git add
             MagicMock(returncode=0, stdout="", stderr=""),  # git commit
         ]
@@ -399,7 +447,9 @@ class TestGitOperations:
         assert mock_run.call_count == 4
 
     @patch("subprocess.run")
-    def test_commit_files_sets_local_config_when_global_missing(self, mock_run: MagicMock, temp_dir: Path) -> None:
+    def test_commit_files_sets_local_config_when_global_missing(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
         """Test that commit_files sets local config when global config is missing."""
         mock_run.side_effect = [
             MagicMock(returncode=0, stdout="", stderr=""),  # git config --global user.name (empty)
@@ -416,17 +466,27 @@ class TestGitOperations:
         client.commit_files(temp_dir, "Initial commit")
 
         # Verify local git config was set
-        local_config_calls = [c for c in mock_run.call_args_list if "git" in str(c) and "config" in str(c) and "user.name" in str(c)]
+        local_config_calls = [
+            c
+            for c in mock_run.call_args_list
+            if "git" in str(c) and "config" in str(c) and "user.name" in str(c)
+        ]
         assert len(local_config_calls) >= 2  # One global check, one local set
 
     @patch("subprocess.run")
-    def test_commit_files_provides_detailed_error(self, mock_run: MagicMock, temp_dir: Path) -> None:
+    def test_commit_files_provides_detailed_error(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
         """Test that commit_files provides detailed error messages on failure."""
         mock_run.side_effect = [
             MagicMock(returncode=0, stdout="Test User\n", stderr=""),  # git config user.name
-            MagicMock(returncode=0, stdout="test@example.com\n", stderr=""),  # git config user.email
+            MagicMock(
+                returncode=0, stdout="test@example.com\n", stderr=""
+            ),  # git config user.email
             MagicMock(returncode=0, stdout="", stderr=""),  # git add
-            MagicMock(returncode=1, stdout="nothing to commit", stderr="fatal: no changes"), # git commit fails
+            MagicMock(
+                returncode=1, stdout="nothing to commit", stderr="fatal: no changes"
+            ),  # git commit fails
         ]
 
         (temp_dir / "test.txt").write_text("test")
@@ -434,7 +494,7 @@ class TestGitOperations:
         client = GitHubClient()
         with pytest.raises(RuntimeError) as exc_info:
             client.commit_files(temp_dir, "Initial commit")
-        
+
         assert "git commit failed" in str(exc_info.value)
         assert "nothing to commit" in str(exc_info.value)
 
@@ -477,7 +537,7 @@ class TestScopeChecking:
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout="",
-            stderr="  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'"
+            stderr="  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'",
         )
 
         client = GitHubClient()
@@ -492,9 +552,7 @@ class TestScopeChecking:
     def test_check_scopes_with_missing_scopes(self, mock_run: MagicMock) -> None:
         """Test scope checking when required scopes are missing."""
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr="  - Token scopes: 'read:org'"
+            returncode=0, stdout="", stderr="  - Token scopes: 'read:org'"
         )
 
         client = GitHubClient()
@@ -523,9 +581,7 @@ class TestScopeChecking:
     def test_check_scopes_default_repo_scope(self, mock_run: MagicMock) -> None:
         """Test scope checking defaults to 'repo' scope."""
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr="  - Token scopes: 'repo'"
+            returncode=0, stdout="", stderr="  - Token scopes: 'repo'"
         )
 
         client = GitHubClient()
@@ -539,9 +595,7 @@ class TestScopeChecking:
     def test_check_scopes_parses_multiple_formats(self, mock_run: MagicMock) -> None:
         """Test scope parsing handles different quote styles."""
         mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="  - Token scopes: 'gist', \"read:org\", repo",
-            stderr=""
+            returncode=0, stdout="  - Token scopes: 'gist', \"read:org\", repo", stderr=""
         )
 
         client = GitHubClient()
@@ -551,3 +605,57 @@ class TestScopeChecking:
         assert "repo" in result["scopes"]
         assert "gist" in result["scopes"]
         assert "read:org" in result["scopes"]
+
+
+class TestAuthRetryDetection:
+    """Tests for auth error detection."""
+
+    def test_should_retry_with_integration_permission_error(self) -> None:
+        """Test detection of integration permission errors."""
+        client = GitHubClient()
+        result = {
+            "success": False,
+            "error": "Error creating repository: GraphQL: Resource not accessible by integration (createRepository)",
+        }
+
+        assert client._should_retry_with_fresh_auth(result) is True
+
+    def test_should_retry_with_token_auth_error(self) -> None:
+        """Test detection of token auth errors."""
+        client = GitHubClient()
+        result = {
+            "success": False,
+            "error": "Error: the current GitHub authentication token cannot create repositories",
+        }
+
+        assert client._should_retry_with_fresh_auth(result) is True
+
+    def test_should_retry_with_unset_token_hint_error(self) -> None:
+        """Test detection of unset token hint errors."""
+        client = GitHubClient()
+        result = {
+            "success": False,
+            "error": "Error: unset GITHUB_TOKEN before running gh auth login",
+        }
+
+        assert client._should_retry_with_fresh_auth(result) is True
+
+    def test_should_not_retry_with_unrelated_error(self) -> None:
+        """Test that unrelated errors are not detected as auth errors."""
+        client = GitHubClient()
+        result = {
+            "success": False,
+            "error": "Error: repository already exists",
+        }
+
+        assert client._should_retry_with_fresh_auth(result) is False
+
+    def test_should_retry_case_insensitive(self) -> None:
+        """Test that error detection is case-insensitive."""
+        client = GitHubClient()
+        result = {
+            "success": False,
+            "error": "ERROR CREATING REPOSITORY: GRAPHQL: RESOURCE NOT ACCESSIBLE BY INTEGRATION (CREATEREPOSITORY)",
+        }
+
+        assert client._should_retry_with_fresh_auth(result) is True
