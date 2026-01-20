@@ -7,7 +7,6 @@ on:
     paths:
       - 'Dockerfile'
       - '.dockerignore'
-      - 'pyproject.toml'
       - '.github/workflows/docker-build.yml'
   workflow_dispatch:
 
