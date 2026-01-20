@@ -35,11 +35,13 @@ The grading system has three main functions:
 3. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
 
 **Design principles**:
+
 - Pure stdlib (no external notebook libraries)
 - Simple error messages for students
 - Fast execution (no unnecessary processing)
 
 **Testing changes**:
+
 ```bash
 # Test the grading system itself
 pytest tests/ -v
@@ -65,11 +67,13 @@ When modifying `notebook_grader.py`:
 The generator scaffolds new exercises with consistent structure.
 
 **Key functions**:
+
 - `_make_notebook_with_parts()`: Creates notebook JSON structure
 - `_validate_and_parse_args()`: Validates command-line arguments
 - `main()`: Orchestrates file creation
 
 **Testing changes**:
+
 ```bash
 # Test in a temporary directory
 cd /tmp
@@ -100,11 +104,13 @@ When adding features:
 ### Linting
 
 All code must pass Ruff checks:
+
 ```bash
 ruff check .
 ```
 
 Auto-fix where possible:
+
 ```bash
 ruff check --fix .
 ```
@@ -112,6 +118,7 @@ ruff check --fix .
 ### Type Hints
 
 Use type hints for function signatures (Python 3.11+ style):
+
 ```python
 def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> str:
     ...
@@ -120,6 +127,7 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
 ### Docstrings
 
 Public functions must have docstrings:
+
 ```python
 def exec_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> dict[str, Any]:
     """Execute tagged code cells and return the resulting namespace.
@@ -139,6 +147,7 @@ def exec_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> dict
 ### Testing
 
 All new features must include tests:
+
 ```python
 def test_new_feature():
     # Arrange
@@ -181,11 +190,13 @@ Before submitting an exercise:
 ### GitHub Actions Workflows
 
 **`tests.yml`**:
+
 - Runs on push/PR
 - Tests student notebooks
 - Fast feedback for contributors
 
 **`tests-solutions.yml`**:
+
 - Manual trigger
 - Tests solution notebooks
 - Validates instructor answers
@@ -215,12 +226,14 @@ If an exercise needs to be removed:
 `.github/copilot-instructions.md` provides repo-wide context to Copilot.
 
 **What to include**:
+
 - Project structure overview
 - Coding standards specific to this repo
 - Links to detailed documentation
 - Common patterns and conventions
 
 **What NOT to include**:
+
 - Generic best practices
 - Content that duplicates custom agent instructions
 - Overly verbose explanations
@@ -230,6 +243,7 @@ If an exercise needs to be removed:
 `.github/agents/exercise_generation.md.agent.md` is a custom agent for creating exercises.
 
 **Maintenance**:
+
 - Keep aligned with actual exercise patterns
 - Update when pedagogical approach changes
 - Test by generating sample exercises
@@ -239,6 +253,7 @@ If an exercise needs to be removed:
 ### Tests Pass Locally But Fail in CI
 
 Check:
+
 - Python version matches CI (see `.github/workflows/tests.yml`)
 - Dependencies are pinned or have minimum versions
 - No reliance on local files or environment variables
@@ -247,6 +262,7 @@ Check:
 ### Notebook Won't Load in Jupyter
 
 Validate JSON:
+
 ```bash
 python -c "import json; json.load(open('notebooks/exNNN_slug.ipynb'))"
 ```
@@ -256,6 +272,7 @@ If invalid, fix manually or regenerate with the scaffolder.
 ### Generator Creates Wrong File Paths
 
 Check:
+
 - Running from repository root
 - Exercise ID format is correct (exNNN)
 - Slug is valid snake_case
@@ -278,6 +295,7 @@ When updating documentation:
 5. **Test instructions**: Verify commands actually work
 
 Documentation structure:
+
 - `docs/project-structure.md`: Repository organisation
 - `docs/testing-framework.md`: How grading works
 - `docs/exercise-generation-cli.md`: Instructions for using the exercise generation CLI tool to scaffold new Python exercises
