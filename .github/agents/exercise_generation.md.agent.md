@@ -74,6 +74,8 @@ To achieve the best possible understanding, students are given exercises that fo
 
 Policy: When generating exercises the agent **MUST** open **THE ENTIRE FILE** and follow the corresponding exercise-type guide before generating any content for that type:
 
+Use `read_file` to fetch the exact file needed
+
 - For a debug exercise: open and follow `docs/exercise-types/debug.md`.
 - For a modify exercise: open and follow `docs/exercise-types/modify.md`.
 - For a make exercise: open and follow `docs/exercise-types/make.md`.
