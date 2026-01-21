@@ -83,11 +83,17 @@ Use `read_file` to fetch the exact file needed
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
 ## When asked to create an exercise
+
+Refer to these key docs:
+
+[Exercise Generation CLI](/docs/exercise-generation-cli.md)
+[Exercise Generation](/docs/exercise-generation.md)
+
 1) Create a TODO using your `manage_todo_list` to help you organise your work.
 
 2) Pick identifiers
 
-3) Scaffold files with the generator. Use `read_file` to check `docs/exercise-generation-cli.md`.
+3) Scaffold files with the generator. 
   - `python scripts/new_exercise.py exNNN "Title" --slug your_slug`
   - or multi-part:
     - `python scripts/new_exercise.py exNNN "Title" --slug your_slug --parts N`
