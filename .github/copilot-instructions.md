@@ -59,6 +59,17 @@ The same tests run against both sets.
 
 ## Coding Standards
 
+### Concise Standards (derived from lint + tidy review)
+
+- Python 3.11+; use modern type hints (e.g., `list[str]`).
+- Docstrings required for public functions.
+- Keep logic simple (KISS): low complexity, shallow nesting, short functions.
+- Avoid duplication (DRY): extract shared helpers when logic repeats.
+- No dead code: remove unused imports/vars; no commented-out code.
+- Deterministic, fast tests: no randomness, time, or network.
+- Prefer stdlib; avoid new deps unless necessary and justified.
+- Match Ruff rules in `pyproject.toml` (E/F/W/I/UP/B/C90/LOG/PIE/RUF/SIM/PLR).
+
 ### Python Style (for infrastructure code, not student exercises)
 
 - **Language**: Python 3.11+
