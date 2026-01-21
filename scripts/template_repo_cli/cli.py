@@ -217,7 +217,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
     return 0
 
 
-def _build_template_package(
+def _build_template_package(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
     files: dict,
@@ -568,7 +568,7 @@ def _finalize_workspace(
         return _handle_output_directory(workspace, args.output_dir, packager)
 
 
-def _execute_template_creation(
+def _execute_template_creation(  # noqa: PLR0913
     args: argparse.Namespace,
     workspace: Path,
     packager: TemplatePackager,
@@ -624,7 +624,7 @@ def _execute_template_creation(
         return 1
 
 
-def _execute_template_update(
+def _execute_template_update(  # noqa: PLR0913
     args: argparse.Namespace,
     workspace: Path,
     packager: TemplatePackager,

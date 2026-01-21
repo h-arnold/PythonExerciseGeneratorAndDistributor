@@ -19,10 +19,13 @@ EXPECTED = {
     "exercise10": "Variables and strings make a message!",
 }
 
+MIN_EXPLANATION_LENGTH = 10
+
 
 @pytest.mark.parametrize("tag", list(EXPECTED.keys()))
 def test_exercise_cells_run(tag: str) -> None:
-    ns = exec_tagged_code("notebooks/ex005_sequence_debug_logic.ipynb", tag=tag)
+    ns = exec_tagged_code(
+        "notebooks/ex005_sequence_debug_logic.ipynb", tag=tag)
     assert "solve" in ns, "Student cell must define solve()"
     assert ns["solve"]() == EXPECTED[tag]
 
@@ -30,7 +33,8 @@ def test_exercise_cells_run(tag: str) -> None:
 # Explanation cell checks for debug exercises
 def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
     path = resolve_notebook_path(notebook_path)
-    nb = json.load(open(path, encoding="utf-8"))
+    with open(path, encoding="utf-8") as f:
+        nb = json.load(f)
     for cell in nb.get("cells", []):
         tags = cell.get("metadata", {}).get("tags", [])
         if tag in tags:
@@ -44,8 +48,10 @@ TAGS = [f"explanation{i}" for i in range(1, 10 + 1)]
 
 @pytest.mark.parametrize("tag", TAGS)
 def test_explanations_have_content(tag: str) -> None:
-    explanation = _get_explanation("notebooks/ex005_sequence_debug_logic.ipynb", tag=tag)
-    assert len(explanation.strip()) > 10, "Explanation must be more than 10 characters"
+    explanation = _get_explanation(
+        "notebooks/ex005_sequence_debug_logic.ipynb", tag=tag)
+    assert len(explanation.strip(
+    )) > MIN_EXPLANATION_LENGTH, f"Explanation must be more than {MIN_EXPLANATION_LENGTH} characters"
     assert explanation.strip() != PLACEHOLDER, (
         "Explanation must be replaced by student with a brief description"
     )

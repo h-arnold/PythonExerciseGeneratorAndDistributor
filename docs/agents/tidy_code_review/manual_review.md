@@ -64,7 +64,8 @@ Defaults and thresholds are configurable via `agent-config.yml`.
 2) Check for code duplication and opportunities to consolidate logic.
 3) Verify separation of concerns and adherence to coding standards.
 4) If changes are extensive (many files or complex interactions): prioritise critical paths first and note areas needing follow-up review.
-5) Generate report with findings and suggested patches for non-trivial refactors.
+5) Check the total length of files. If a file exceeds 500 lines, suggest splitting into smaller modules, if appropriate.
+6) Generate report with findings and suggested patches for non-trivial refactors.
 
 ## Output to calling agent (expanded)
 

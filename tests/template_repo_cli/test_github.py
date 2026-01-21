@@ -472,7 +472,8 @@ class TestGitOperations:
         client.commit_files(temp_dir, "Initial commit")
 
         # Should call git add and git commit
-        assert mock_run.call_count == 4
+        EXPECT_CALL_COUNT_FOR_COMMIT = 4
+        assert mock_run.call_count == EXPECT_CALL_COUNT_FOR_COMMIT
 
     @patch("subprocess.run")
     def test_commit_files_sets_local_config_when_global_missing(
@@ -503,7 +504,8 @@ class TestGitOperations:
             for c in mock_run.call_args_list
             if "git" in str(c) and "config" in str(c) and "user.name" in str(c)
         ]
-        assert len(local_config_calls) >= 2  # One global check, one local set
+        MIN_LOCAL_CONFIG_CALLS = 2  # One global check, one local set
+        assert len(local_config_calls) >= MIN_LOCAL_CONFIG_CALLS
 
     @patch("subprocess.run")
     def test_commit_files_provides_detailed_error(
@@ -547,7 +549,8 @@ class TestGitOperations:
         client.commit_files(temp_dir, "Initial commit")
 
         # Should call git add and git commit
-        assert mock_run.call_count >= 2
+        MIN_COMMIT_CALLS = 2
+        assert mock_run.call_count >= MIN_COMMIT_CALLS
 
     @patch("subprocess.run")
     def test_push_to_remote(self, mock_run: MagicMock, temp_dir: Path) -> None:

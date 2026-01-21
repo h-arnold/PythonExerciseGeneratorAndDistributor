@@ -8,10 +8,13 @@ import pytest
 
 from tests.notebook_grader import exec_tagged_code
 
+MIN_EXPLANATION_LENGTH = 10
+
 
 def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
     """Extract explanation cell by tag."""
-    nb = json.load(open(notebook_path, encoding="utf-8"))
+    with open(notebook_path, encoding="utf-8") as f:
+        nb = json.load(f)
     for cell in nb.get("cells", []):
         tags = cell.get("metadata", {}).get("tags", [])
         if tag in tags:
@@ -48,7 +51,8 @@ def _capture_output(code: str) -> str:
 )
 def test_exercise_output(tag: str, input_val: str, expected: str) -> None:
     """Test that corrected exercises produce the expected output."""
-    nb = json.load(open("notebooks/ex004_sequence_debug_syntax.ipynb", encoding="utf-8"))
+    with open("notebooks/ex004_sequence_debug_syntax.ipynb", encoding="utf-8") as f:
+        nb = json.load(f)
 
     # Extract the buggy code
     for cell in nb.get("cells", []):
@@ -91,7 +95,8 @@ def test_solution_output(tag: str, expected: str) -> None:
         # Capture stdout
         f = StringIO()
         with contextlib.redirect_stdout(f):
-            exec_tagged_code("notebooks/solutions/ex004_sequence_debug_syntax.ipynb", tag=tag)
+            exec_tagged_code(
+                "notebooks/solutions/ex004_sequence_debug_syntax.ipynb", tag=tag)
 
         if tag == "exercise7":
             sys.stdin = old_stdin
@@ -114,20 +119,24 @@ TAGS = [f"explanation{i}" for i in range(1, 11)]
 @pytest.mark.parametrize("tag", TAGS)
 def test_explanations_have_content(tag: str) -> None:
     """Test that students filled in explanation cells."""
-    explanation = _get_explanation("notebooks/ex004_sequence_debug_syntax.ipynb", tag=tag)
-    assert len(explanation.strip()) > 10, f"Explanation {tag} must be more than 10 characters"
+    explanation = _get_explanation(
+        "notebooks/ex004_sequence_debug_syntax.ipynb", tag=tag)
+    assert len(explanation.strip(
+    )) > MIN_EXPLANATION_LENGTH, f"Explanation {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
 
 
 # Test that all exercise cells are tagged
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_exercise_cells_tagged(tag: str) -> None:
     """Test that all exercise cells are properly tagged."""
-    nb = json.load(open("notebooks/ex004_sequence_debug_syntax.ipynb", encoding="utf-8"))
+    with open("notebooks/ex004_sequence_debug_syntax.ipynb", encoding="utf-8") as f:
+        nb = json.load(f)
 
     for cell in nb.get("cells", []):
         tags = cell.get("metadata", {}).get("tags", [])
         if tag in tags:
-            assert cell.get("cell_type") == "code", f"Cell {tag} must be a code cell"
+            assert cell.get(
+                "cell_type") == "code", f"Cell {tag} must be a code cell"
             code = "".join(cell.get("source", []))
             assert code.strip() != "", f"Cell {tag} must not be empty"
             return
@@ -139,12 +148,14 @@ def test_exercise_cells_tagged(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_solution_cells_tagged(tag: str) -> None:
     """Test that solution notebook has all exercise cells."""
-    nb = json.load(open("notebooks/solutions/ex004_sequence_debug_syntax.ipynb", encoding="utf-8"))
+    with open("notebooks/solutions/ex004_sequence_debug_syntax.ipynb", encoding="utf-8") as f:
+        nb = json.load(f)
 
     for cell in nb.get("cells", []):
         tags = cell.get("metadata", {}).get("tags", [])
         if tag in tags:
-            assert cell.get("cell_type") == "code", f"Solution cell {tag} must be a code cell"
+            assert cell.get(
+                "cell_type") == "code", f"Solution cell {tag} must be a code cell"
             code = "".join(cell.get("source", []))
             assert code.strip() != "", f"Solution cell {tag} must not be empty"
             # For solution, verify no placeholder "TODO"

@@ -121,6 +121,4 @@ def validate_notebook_pattern(pattern: str) -> bool:
     if not pattern:
         return False
     # Reject patterns with path separators
-    if "/" in pattern or "\\" in pattern:
-        return False
-    return True
+    return not ("/" in pattern or "\\" in pattern)

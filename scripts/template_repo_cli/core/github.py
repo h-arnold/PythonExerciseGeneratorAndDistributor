@@ -75,7 +75,7 @@ class GitHubClient:
         """
         self.dry_run = dry_run
 
-    def build_create_command(
+    def build_create_command(  # noqa: PLR0913
         self,
         repo_name: str,
         public: bool = True,
@@ -269,7 +269,7 @@ class GitHubClient:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON: {e}") from e
 
-    def create_repository(
+    def create_repository(  # noqa: PLR0913
         self,
         repo_name: str,
         workspace: Path,
@@ -353,68 +353,6 @@ class GitHubClient:
                 }
 
         return result
-
-    def force_update_repository(
-        self,
-        repo_name: str,
-        workspace: Path,
-        *,
-        public: bool = True,
-        template: bool = True,
-        template_repo: str | None = None,
-        org: str | None = None,
-        description: str | None = None,
-    ) -> dict[str, Any]:
-        """Force update a repository by deleting and recreating it.
-
-        Args:
-            repo_name: Repository name.
-            workspace: Workspace directory containing files to push.
-            public: Whether repository should be public.
-            template: Whether to mark the repository as a template after creation.
-            template_repo: Optional template repository to base the new repository on.
-            org: Organization name to create the repository in.
-            description: Repository description used for gh command.
-
-        Returns:
-            Result dictionary.
-        """
-        if self.dry_run:
-            return {
-                "success": True,
-                "dry_run": True,
-                "message": "Dry run - repository would be deleted and recreated",
-            }
-
-        # Build repository reference
-        if org:
-            repo_ref = f"{org}/{repo_name}"
-        else:
-            repo_ref = repo_name
-
-        # Delete the existing repository
-        delete_cmd = ["gh", "repo", "delete", repo_ref, "--yes"]
-        delete_result = self.execute_command(delete_cmd)
-
-        if not delete_result["success"]:
-            return {
-                "success": False,
-                "error": f"Failed to delete existing repository: {delete_result.get('error', 'Unknown error')}",
-                "output": delete_result.get("output"),
-                "returncode": delete_result.get("returncode"),
-            }
-
-        # Create the repository with new content
-        return self.create_repository(
-            repo_name,
-            workspace,
-            public=public,
-            template=template,
-            template_repo=template_repo,
-            org=org,
-            description=description,
-            skip_git_operations=False,
-        )
 
     def mark_repository_as_template(self, repo_name: str, org: str | None = None) -> dict[str, Any]:
         """Mark an existing repository as a template.
@@ -544,7 +482,7 @@ class GitHubClient:
 
         run_subprocess(push_cmd, cwd=workspace, check=True)
 
-    def push_to_existing_repository(
+    def push_to_existing_repository(  # noqa: PLR0913
         self,
         repo_name: str,
         workspace: Path,

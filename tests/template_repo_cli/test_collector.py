@@ -27,9 +27,11 @@ class TestCollectAllFiles:
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
         collector = FileCollector(repo_root)
-        all_files = collector.collect_multiple(["ex001_sanity", "ex002_sequence_modify_basics"])
+        all_files = collector.collect_multiple(
+            ["ex001_sanity", "ex002_sequence_modify_basics"])
 
-        assert len(all_files) == 2
+        EXPECTED_MULTIPLE_COUNT = 2
+        assert len(all_files) == EXPECTED_MULTIPLE_COUNT
         assert "ex001_sanity" in all_files
         assert "ex002_sequence_modify_basics" in all_files
 
@@ -41,7 +43,8 @@ class TestCollectAllFiles:
         # All collected paths should exist
         for file_type, file_path in files.items():
             if file_path is not None:
-                assert file_path.exists(), f"{file_type} does not exist: {file_path}"
+                assert file_path.exists(
+                ), f"{file_type} does not exist: {file_path}"
 
 
 class TestCollectMissingFiles:

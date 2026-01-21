@@ -334,7 +334,7 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys) -> None:
+    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys) -> None:  # noqa: PLR0913
         """Display guidance when GitHub rejects repo creation for integrations."""
         from scripts.template_repo_cli.cli import main
 
@@ -364,7 +364,7 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint_unset_env_token(
+    def test_cli_permission_hint_unset_env_token(  # noqa: PLR0913
         self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys
     ) -> None:
         """Hint to unset GITHUB_TOKEN when it blocks login."""
@@ -399,7 +399,7 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint_reauth_flow(
+    def test_cli_permission_hint_reauth_flow(  # noqa: PLR0913
         self,
         mock_installed,
         mock_auth,
@@ -448,7 +448,8 @@ class TestCliCreateCommand:
             )
 
         assert result == 0
-        assert mock_create.call_count == 2
+        EXPECT_CREATE_CALLS = 2
+        assert mock_create.call_count == EXPECT_CREATE_CALLS
         mock_subprocess_run.assert_any_call(
             ["gh", "auth", "login"], check=False)
 
@@ -563,7 +564,7 @@ class TestCliUpdateRepo:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_update_calls_push_when_repo_exists(
+    def test_cli_update_calls_push_when_repo_exists(  # noqa: PLR0913
         self,
         mock_installed,
         mock_auth,
@@ -602,7 +603,7 @@ class TestCliUpdateRepo:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_update_fails_when_repo_missing(
+    def test_cli_update_fails_when_repo_missing(  # noqa: PLR0913
         self,
         mock_installed,
         mock_auth,
