@@ -1,7 +1,7 @@
 ---
 name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent
-tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/testFailure', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'sonarsource.sonarlint-vscode/sonarqube_getPotentialSecurityIssues', 'sonarsource.sonarlint-vscode/sonarqube_excludeFiles', 'sonarsource.sonarlint-vscode/sonarqube_setUpConnectedMode', 'sonarsource.sonarlint-vscode/sonarqube_analyzeFile', 'todo']
+tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/testFailure', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runInTerminal', 'execute/runTests', 'read/problems', 'read/readFile', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
 ---
 # Tidy Code Review Sub-Agent (with KISS & DRY checks)
 
@@ -16,7 +16,7 @@ You will be given a **summary of all files touched**, and you must:
 4) Review any related documentation and confirm it accurately reflects the code changes.
 5) Run linting diagnostics and report errors/warnings.
 
-## New checks: KISS & DRY (overview)
+## KISS & DRY (overview)
 - KISS (Simplicity checks):
   - Cyclomatic complexity per function (radon or mccabe) — flag when CC > 8 (configurable).
   - Function length (flag when > 120 lines).
@@ -28,7 +28,30 @@ You will be given a **summary of all files touched**, and you must:
   - Detect exact and near-duplicate code blocks using `jscpd` or simple semantic search.
   - Flag duplicated blocks >= 5 LOC present in >= 2 files by default.
   - Suggest extraction targets (e.g., new utility in `scripts/` or `tests/helpers.py`).
+  ## Tidy code principles (prompt for reviewer)
 
+  - KISS (Keep It Simple): prefer simple, explicit logic. Check CC, nesting depth, and long functions; flag complex functions for refactor.
+  - DRY (Don't Repeat Yourself): detect duplicated blocks (>= duplication_min_lines); suggest extraction to utils/helpers.
+  - Readability & naming: meaningful names, consistent formatting, short expressions. Flag unclear/one-letter names and long inline expressions.
+  - Single Responsibility: functions/classes should do one thing. Flag multi-responsibility functions for extraction.
+  - Small functions & modules: prefer short functions (< max_function_length) and small modules; suggest splitting where appropriate.
+  - Explicit error handling: no silent excepts; ensure clear exceptions and helpful messages.
+  - Deterministic, fast tests: require unit tests for changed code, cover edge cases, avoid randomness/time/network in tests.
+  - No dead code or commented-out code: remove unused imports, variables, and unreachable statements.
+  - No magic numbers/strings: replace with named constants or enums with clear names.
+  - Minimise side effects & global state: prefer pure functions or clearly documented side effects; flag implicit global mutation.
+  - Minimal/explicit dependencies: avoid unnecessary third-party libs; prefer stdlib or documented, pinned dependencies.
+  - Documentation & docstrings: public APIs documented; update docs and README when behaviour or CLI/options change.
+  - Security & input validation: validate external inputs, sanitize data, avoid insecure patterns.
+  - Performance when measured: don't preoptimize; add micro-benchmarks for hotspots and document trade-offs.
+  - Consistent style & linting: run and fix ruff/formatting rules; ensure CI lints pass.
+  - Type hints for public APIs: prefer modern annotations; check mismatches with tests or usage.
+  - Backwards compatibility & deprecation: document breaking changes, provide migration notes or deprecation warnings.
+  - Commit quality & scope: small, focused commits with clear messages and tests; include CHANGELOG or PR description for notable changes.
+  - Testability & observability: code should be easily unit-testable; include logs/metrics where helpful for debugging.
+  - Respect licences & third-party code: do not modify vendored/third-party code; check license compatibility.
+
+  For each principle: note a concise rationale, an automated detection heuristic (tool/metric), and an actionable suggestion (fix, refactor, or docs).
 Defaults and thresholds are configurable via `agent-config.yml` (see "Agent configuration" below).
 
 ## Inputs you should expect
