@@ -127,7 +127,7 @@ The grading system (`tests/notebook_grader.py`) provides:
 - `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace. When developing or running tests, run these against the solutions notebook by default (use `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` or call `resolve_notebook_path()` so tests validate the instructor solution first).
 - `resolve_notebook_path(notebook_path)` - Handle `PYTUTOR_NOTEBOOKS_DIR` redirection; by convention the agent should default this to `notebooks/solutions` when running tests during development.
 
-See [Testing Framework](../docs/testing-framework.md) for details.
+See Testing Framework: `docs/testing-framework.md` for details.
 
 ## Constraints
 
@@ -144,6 +144,7 @@ See [Testing Framework](../docs/testing-framework.md) for details.
 - Use the scaffolding tools for consistency
 - Test both student and solution notebooks
 - Follow the existing patterns in the codebase
+- Always write in British English
 
 ## Code Review & Tidy Checks
 
