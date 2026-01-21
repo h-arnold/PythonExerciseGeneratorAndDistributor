@@ -660,3 +660,117 @@ class TestAuthRetryDetection:
         }
 
         assert client._should_retry_with_fresh_auth(result) is True
+
+
+class TestCheckRepositoryExists:
+    """Tests for checking if a repository exists."""
+
+    @patch("subprocess.run")
+    def test_check_repository_exists_returns_true_when_repo_exists(
+        self, mock_run: MagicMock
+    ) -> None:
+        """Test check_repository_exists returns True when repository exists."""
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
+
+        client = GitHubClient()
+        result = client.check_repository_exists("test-repo")
+
+        assert result is True
+        # Verify gh repo view was called
+        mock_run.assert_called_once()
+        call_args = mock_run.call_args[0][0]
+        assert "gh" in call_args
+        assert "repo" in call_args
+        assert "view" in call_args
+        assert "test-repo" in call_args
+
+    @patch("subprocess.run")
+    def test_check_repository_exists_returns_false_when_repo_not_found(
+        self, mock_run: MagicMock
+    ) -> None:
+        """Test check_repository_exists returns False when repository not found."""
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="repository not found"
+        )
+
+        client = GitHubClient()
+        result = client.check_repository_exists("test-repo")
+
+        assert result is False
+
+    @patch("subprocess.run")
+    def test_check_repository_exists_with_org(self, mock_run: MagicMock) -> None:
+        """Test check_repository_exists with organization."""
+        mock_run.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
+
+        client = GitHubClient()
+        result = client.check_repository_exists("test-repo", org="my-org")
+
+        assert result is True
+        call_args = mock_run.call_args[0][0]
+        assert "my-org/test-repo" in call_args
+
+    @patch("subprocess.run")
+    def test_check_repository_exists_handles_subprocess_error(
+        self, mock_run: MagicMock
+    ) -> None:
+        """Test check_repository_exists handles subprocess errors gracefully."""
+        mock_run.side_effect = OSError("Command failed")
+
+        client = GitHubClient()
+        result = client.check_repository_exists("test-repo")
+
+        assert result is False
+
+
+class TestForceUpdateRepository:
+    """Tests for force updating an existing repository."""
+
+    @patch("subprocess.run")
+    def test_force_update_repository_deletes_and_recreates(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
+        """Test force_update_repository deletes and recreates repository."""
+        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+
+        client = GitHubClient()
+        result = client.force_update_repository("test-repo", temp_dir)
+
+        assert result["success"] is True
+        # Verify gh repo delete was called
+        delete_calls = [
+            c for c in mock_run.call_args_list if "delete" in str(c) and "gh" in str(c)
+        ]
+        assert len(delete_calls) > 0
+
+    @patch("subprocess.run")
+    def test_force_update_repository_with_org(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
+        """Test force_update_repository with organization."""
+        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+
+        client = GitHubClient()
+        result = client.force_update_repository("test-repo", temp_dir, org="my-org")
+
+        assert result["success"] is True
+        # Verify delete was called with org prefix
+        delete_calls = [
+            c for c in mock_run.call_args_list if "delete" in str(c) and "my-org/test-repo" in str(c)
+        ]
+        assert len(delete_calls) > 0
+
+    @patch("subprocess.run")
+    def test_force_update_repository_handles_delete_failure(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
+        """Test force_update_repository handles delete failures."""
+        mock_run.side_effect = [
+            MagicMock(returncode=1, stdout="", stderr="Failed to delete repository"),
+        ]
+
+        client = GitHubClient()
+        result = client.force_update_repository("test-repo", temp_dir)
+
+        assert result["success"] is False
+        assert "error" in result
