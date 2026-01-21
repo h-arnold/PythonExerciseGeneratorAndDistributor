@@ -73,15 +73,15 @@ Default thresholds used by automated checks:
 2. Run `source .venv/bin/activate`.
 3. Validate `change_summary`. If missing, reconstruct from git diff.
 4. Confirm the affected files by inspecting the diff or change list.
-5. Run automated checks first:
+5. Run tests:
    - Run `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q` to verfiy all tests pass.
    - Run  `pytest -q` to verify that **only** tests for student notebooks fail as expected.
-   - `ruff check` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
-   - Lightweight heuristics: function length/nesting scan, semantic search for obvious duplication.
+6. Run `ruff check --fix` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
+7. Run Pylance diagnostics:
    - For each changed file:
-      - Open the file in the editor to ensure Pylance indexes it.
+      - Open the file in the editor, one at a time to ensure Pylance indexes it. **You must do this. This task will fail if you don't open the file first.**
       - Run Pylance diagnostics for that file and capture issues via `problems` and `pylance-mcp-server`.
-6. Decide next action based on the issues found (see Decision tree).
+8. Decide next action based on the issues found (see Decision tree).
 
 ## Decision tree (automated)
 
