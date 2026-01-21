@@ -689,9 +689,9 @@ class TestCliForceFlag:
         mock_force_update.assert_not_called()
         # Verify create_repository was also NOT called
         mock_create.assert_not_called()
-        # Verify error message
+        # Verify error message contains expected text
         captured = capsys.readouterr()
-        assert "operation cancelled" in captured.err.lower() or "aborted" in captured.err.lower()
+        assert "operation cancelled" in captured.err.lower()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")

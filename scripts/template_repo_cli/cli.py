@@ -397,27 +397,6 @@ def _check_and_handle_existing_repo(
     return False, result.get("error") or "Unknown error"
 
 
-def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
-    """Add helpful hints to GitHub error messages.
-
-    Args:
-        error_msg: The original error message.
-        args: Parsed command-line arguments.
-
-    Returns:
-        Enhanced error message with hints.
-    """
-    permission_hint = _github_permission_hint(error_msg)
-    if permission_hint:
-        return f"{error_msg}\n\n{permission_hint}"
-
-    exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
-    if exists_hint:
-        return f"{error_msg}\n\n{exists_hint}"
-
-    return error_msg
-
-
 def _create_github_repo(
     args: argparse.Namespace,
     github: GitHubClient,
