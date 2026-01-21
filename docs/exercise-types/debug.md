@@ -2,14 +2,14 @@
 
 Students should be presented with a mixture of syntactic and logical errors. Where possible, the bugs should be common or typical errors that beginners make when learning this structure.
 
-**Error count progression**: 
+**Error count progression**:
 - Exercises 1-5: Each should contain exactly **one error** to help students build confidence and focus on a single issue at a time.
 - Exercises 6-10: Gradually increase the number of errors where possible and appropriate to the task (e.g., exercise 6 might have 1-2 errors, exercise 10 might have 2-3).
 - Errors should be **realistic** (what students would actually write) whenever possible. If realistic errors aren't appropriate for the learning objective, then use contrived errors that serve the pedagogical goal.
 
 **CRITICAL: Every Exercise Must Contain an Actual Bug**
 
-There should be no "working code" exercises disguised as debug tasks. If the code runs without error and produces the correct output, it is not a debugging exercise. 
+There should be no "working code" exercises disguised as debug tasks. If the code runs without error and produces the correct output, it is not a debugging exercise.
 
 **Common syntactic and logical errors (examples)**
 

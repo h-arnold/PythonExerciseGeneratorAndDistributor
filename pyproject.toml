@@ -52,8 +52,8 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "C90", "LOG", "PIE", "RUF"]
+select = ["E", "F", "W", "I", "UP", "B", "C90", "LOG", "PIE", "RUF", "SIM", "PLR"]
 ignore = ["E501"]
 
 [tool.ruff.lint.mccabe]
-max-complexity = 6
+max-complexity = 8

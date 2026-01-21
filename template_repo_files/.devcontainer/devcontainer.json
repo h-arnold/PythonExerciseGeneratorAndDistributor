@@ -1,7 +1,7 @@
 {
   "name": "Python Tutor Student Environment",
   "image": "ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment:latest",
-  
+
   // Configure VS Code settings
   "customizations": {
     "vscode": {
@@ -11,7 +11,7 @@
         "ms-python.vscode-pylance",
         "ms-toolsai.jupyter"
       ],
-      
+
       // VS Code settings
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
@@ -24,12 +24,12 @@
         "python.analysis.typeCheckingMode": "basic",
         "editor.formatOnSave": false,
         "jupyter.notebookFileRoot": "${workspaceFolder}",
-        
+
         // Disable features to keep environment simple
         "workbench.startupEditor": "none",
         "workbench.tips.enabled": false,
         "workbench.welcomePage.walkthroughs.openOnInstall": false,
-        
+
         // Hide unnecessary files
         "files.exclude": {
           "**/__pycache__": true,
@@ -39,21 +39,21 @@
       }
     }
   },
-  
+
   // Forward Jupyter Lab port
   "forwardPorts": [8888],
-  
+
   // Post-create command to install the exercise package if pyproject.toml exists
   "postCreateCommand": "[ -f pyproject.toml ] && (uv sync && . .venv/bin/activate) || echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'",
-  
+
   // Use the 'vscode' user which already exists in the base image
   "remoteUser": "vscode",
-  
+
   // Environment variables
   "remoteEnv": {
     "PYTHONUNBUFFERED": "1"
   },
-  
+
   // Features to disable (keep minimal)
   "features": {}
 }

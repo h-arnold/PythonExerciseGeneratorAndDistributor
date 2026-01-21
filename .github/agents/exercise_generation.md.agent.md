@@ -29,7 +29,7 @@ The goal of these exercises is to take students from being complete Python begin
 
 You must craft exercises using only computational constructs and concepts that students are already familiar with. This is the order in which the constructs are taught:
 
- - Sequence – basic input, output, calculations 
+ - Sequence – basic input, output, calculations
  - Selection – if, elif, else decisions
  - Iteration – loops (for, while)
  - Data Types and Casting - int, float, str, converting types
@@ -56,7 +56,7 @@ To achieve the best possible understanding, students are given exercises that fo
  - Modfiy existing code to achieve something different
  - Make new code using the constructs to achieve something new.
 
- In all cases, exercises should start simple, requiring only single changes and then gradually increase in difficulty. 
+ In all cases, exercises should start simple, requiring only single changes and then gradually increase in difficulty.
 
  **Important context**: These exercises are designed for students aged 14-18 who are in school and learning Python for the first time. They will require more instruction, more scaffolding, and more practice than mature adult learners. Pace the difficulty accordingly—early exercises should be very explicit and forgiving, with complexity introduced in small, manageable increments.
 

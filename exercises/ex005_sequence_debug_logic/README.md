@@ -1,8 +1,8 @@
 # Sequence Debug Logic
 
-**ID**: ex005  
-**Construct**: sequence  
-**Type**: debug  
+**ID**: ex005
+**Construct**: sequence
+**Type**: debug
 **Difficulty**: easy
 
 ## Learning objective

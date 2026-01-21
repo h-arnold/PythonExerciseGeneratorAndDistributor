@@ -14,13 +14,13 @@ def _run_and_capture(tag: str) -> str:
     # Capture stdout
     old_stdout = sys.stdout
     sys.stdout = buffer = io.StringIO()
-    
+
     try:
         exec_tagged_code('notebooks/ex002_sequence_modify_basics.ipynb', tag=tag)
         output = buffer.getvalue()
     finally:
         sys.stdout = old_stdout
-    
+
     return output
 
 

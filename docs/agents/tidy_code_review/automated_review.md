@@ -70,7 +70,7 @@ Default thresholds used by automated checks:
 ## Automated Workflow (MUST do — automated steps)
 
 1. Create a TODO entry via `manage_todo_list`; mark one item `in-progress`.
-2. Run `source .venv/bin/activate`.
+2. Run `source .venv/bin/activate`. **YOU MUST DO THIS OR THE CHECKS WILL FAIL**.
 3. Validate `change_summary`. If missing, reconstruct from git diff.
 4. Confirm the affected files by inspecting the diff or change list.
 5. Run tests:

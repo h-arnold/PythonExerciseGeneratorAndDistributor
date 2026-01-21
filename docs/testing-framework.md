@@ -69,10 +69,10 @@ from tests.notebook_grader import exec_tagged_code
 def test_exercise_functionality():
     # Extract and execute the tagged cell
     ns = exec_tagged_code("notebooks/ex001_example.ipynb", tag="exercise1")
-    
+
     # Verify expected function exists
     assert "solve" in ns, "Student cell must define solve()"
-    
+
     # Test the function
     result = ns["solve"](input_value)
     assert result == expected_value
@@ -215,7 +215,7 @@ def test_exercise_defines_functions():
     ns = exec_tagged_code("notebooks/ex001_example.ipynb", tag="exercise1")
     assert "add" in ns, "Missing add() function"
     assert "multiply" in ns, "Missing multiply() function"
-    
+
     assert ns["add"](2, 3) == 5
     assert ns["multiply"](2, 3) == 6
 ```

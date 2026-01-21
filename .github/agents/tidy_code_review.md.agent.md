@@ -24,7 +24,7 @@ Ignore files in the following locations:
    - Run deterministic tools (ruff, Pylance, heuristics)
    - Apply safe, semantics-preserving edits
    - Report initial diagnostics
-   
+
 2. **Manual review second** (conditional): [`docs/agents/tidy_code_review/manual_review.md`](../../docs/agents/tidy_code_review/manual_review.md)
    - Perform code execution tracing and reuse checks
    - Identify KISS/DRY issues requiring human judgement
@@ -140,11 +140,11 @@ Be strict but practical. Keep feedback actionable and focused on tidy-code princ
 - **Entry point**: Always start with Phase 1 (automated review)
 - **Inputs**: change_summary (recommended), test_results (recommended). Fallback: reconstruct from git diff.
 - **Guardrails**: No notebook/vendor/generated file edits; only safe fixes in Phase 1.
-- **Phase 1 workflow**: 
+- **Phase 1 workflow**:
   - Create TODO (in-progress)
   - Open `docs/agents/tidy_code_review/automated_review.md` and follow instructions
   - Count issues
-- **Phase 2 decision**: 
+- **Phase 2 decision**:
   - ≤15 issues → Open `docs/agents/tidy_code_review/manual_review.md` for full trace & refactor suggestions
   - >15 issues → Skip Phase 2, flag follow-up needed
 - **Report**: Combine both phases' findings; include verification, edits made, trace status, KISS/DRY findings, DRY findings, suggested patches/PRs, remaining issues, docs checked, lint results.

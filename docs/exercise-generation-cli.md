@@ -1,6 +1,6 @@
 # Exercise Generation CLI tool
 
-This document describes how to use the CLI tool to scaffold new Python exercises in the repository. 
+This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
 
 ## Quick Start
 
@@ -115,7 +115,7 @@ mv exercises/ex042_variables_and_types exercises/sequence/modify/
 Edit `notebooks/exNNN_slug.ipynb`:
 
 - **Add context**: Explain the goal and provide 1-2 examples
-- **Update exercise cells**: 
+- **Update exercise cells**:
   - Keep the cell tagged correctly (`exercise1`, `exercise2`, etc.)
   - Provide a clear function signature (typically `solve()`)
   - Add docstrings (after Functions construct is taught)
@@ -188,10 +188,10 @@ Add to `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
 ```markdown
 # Exercise Title
 
-**ID**: exNNN  
-**Construct**: sequence | selection | iteration | ...  
-**Type**: debug | modify | make  
-**Difficulty**: very easy | easy | medium | hard  
+**ID**: exNNN
+**Construct**: sequence | selection | iteration | ...
+**Type**: debug | modify | make
+**Difficulty**: very easy | easy | medium | hard
 
 ## Learning Objective
 One sentence describing what students will learn.

@@ -30,7 +30,7 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
   - Properly placed in `sequence/modify/` hierarchy
 
 ## Test Status
-✅ All 10 exercise cells execute without errors  
+✅ All 10 exercise cells execute without errors
 ❌ 24/40 behavioral tests fail (expected - students haven't modified code yet)
 
 This is the correct behavior for modification exercises:

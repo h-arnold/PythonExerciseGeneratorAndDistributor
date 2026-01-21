@@ -81,7 +81,7 @@ Instead of asking "Write a loop exercise", explains what the students need to pr
 
 *You want to solidify knowledge after a specific exercise.*
 
-> **Prompt to copy:**  
+> **Prompt to copy:**
 > "Please create a set of logical error debug tasks that build on the most common logical errors you might find when writing code similar to those in ex003"
 
 **Why this works:**
@@ -93,7 +93,7 @@ Instead of asking "Write a loop exercise", explains what the students need to pr
 
 *You want to address common mistakes you see in class.*
 
-> **Prompt to copy:**  
+> **Prompt to copy:**
 > "Please create me a set of debug exercises around the most common syntax errors that would crop up when attempting the tasks in the previous two modify activities."
 
 **Why this works:**
