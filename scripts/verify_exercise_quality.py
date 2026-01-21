@@ -454,7 +454,7 @@ def _print_findings(findings: list[Finding]) -> None:
         print(f"{f.severity}: {f.message}{loc}")
 
 
-def main(argv: list[str] | None = None) -> int:  # noqa: C901
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "notebook",
