@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scripts.template_repo_cli.core.github import GitHubClient
+from scripts.template_repo_cli.core.github import ExecResult, GitHubClient
 
 
 class TestBuildCreateRepoCommand:
@@ -367,9 +367,10 @@ class TestCreateRepository:
         assert "GITHUB_TOKEN" in os.environ
         assert "GH_TOKEN" not in os.environ
         # Verify error message instructs user on resolution
-        assert "unset GITHUB_TOKEN" in result["error"]
-        assert "gh auth login" in result["error"]
-        assert "try again" in result["error"].lower()
+        err = result.get("error") or ""
+        assert "unset GITHUB_TOKEN" in err
+        assert "gh auth login" in err
+        assert "try again" in err.lower()
 
         gh_repo_create_calls = [
             call
@@ -435,7 +436,8 @@ class TestMarkRepositoryAsTemplate:
         result = client.mark_repository_as_template("test-repo")
 
         assert result["success"] is False
-        assert "Failed to get authenticated user" in result["error"]
+        assert "Failed to get authenticated user" in (
+            result.get("error") or "")
 
 
 class TestGitOperations:
@@ -649,52 +651,52 @@ class TestAuthRetryDetection:
     def test_should_retry_with_integration_permission_error(self) -> None:
         """Test detection of integration permission errors."""
         client = GitHubClient()
-        result = {
+        result: ExecResult = {
             "success": False,
             "error": "Error creating repository: GraphQL: Resource not accessible by integration (createRepository)",
         }
 
-        assert client._should_retry_with_fresh_auth(result) is True
+        assert client.should_retry_with_fresh_auth(result) is True
 
     def test_should_retry_with_token_auth_error(self) -> None:
         """Test detection of token auth errors."""
         client = GitHubClient()
-        result = {
+        result: ExecResult = {
             "success": False,
             "error": "Error: the current GitHub authentication token cannot create repositories",
         }
 
-        assert client._should_retry_with_fresh_auth(result) is True
+        assert client.should_retry_with_fresh_auth(result) is True
 
     def test_should_retry_with_unset_token_hint_error(self) -> None:
         """Test detection of unset token hint errors."""
         client = GitHubClient()
-        result = {
+        result: ExecResult = {
             "success": False,
             "error": "Error: unset GITHUB_TOKEN before running gh auth login",
         }
 
-        assert client._should_retry_with_fresh_auth(result) is True
+        assert client.should_retry_with_fresh_auth(result) is True
 
     def test_should_not_retry_with_unrelated_error(self) -> None:
         """Test that unrelated errors are not detected as auth errors."""
         client = GitHubClient()
-        result = {
+        result: ExecResult = {
             "success": False,
             "error": "Error: repository already exists",
         }
 
-        assert client._should_retry_with_fresh_auth(result) is False
+        assert client.should_retry_with_fresh_auth(result) is False
 
     def test_should_retry_case_insensitive(self) -> None:
         """Test that error detection is case-insensitive."""
         client = GitHubClient()
-        result = {
+        result: ExecResult = {
             "success": False,
             "error": "ERROR CREATING REPOSITORY: GRAPHQL: RESOURCE NOT ACCESSIBLE BY INTEGRATION (CREATEREPOSITORY)",
         }
 
-        assert client._should_retry_with_fresh_auth(result) is True
+        assert client.should_retry_with_fresh_auth(result) is True
 
 
 class TestCheckRepositoryExists:

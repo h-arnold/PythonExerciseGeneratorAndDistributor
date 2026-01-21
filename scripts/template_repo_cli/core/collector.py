@@ -3,22 +3,30 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TypedDict
+
+
+class ExerciseFiles(TypedDict):
+    """Typed mapping returned by FileCollector.collect_files()."""
+
+    notebook: Path
+    test: Path
 
 
 class FileCollector:
     """Collect files for exercises."""
 
-    def __init__(self, repo_root: Path):
+    def __init__(self, repo_root: Path) -> None:
         """Initialize collector.
 
         Args:
             repo_root: Root directory of the repository.
         """
-        self.repo_root = repo_root
-        self.notebooks_dir = repo_root / "notebooks"
-        self.tests_dir = repo_root / "tests"
+        self.repo_root: Path = repo_root
+        self.notebooks_dir: Path = repo_root / "notebooks"
+        self.tests_dir: Path = repo_root / "tests"
 
-    def collect_files(self, exercise_id: str) -> dict[str, Path]:
+    def collect_files(self, exercise_id: str) -> ExerciseFiles:
         """Collect all files for an exercise.
 
         Args:
@@ -37,20 +45,21 @@ class FileCollector:
         files = {}
 
         # Student notebook (required)
-        notebook_path = self.notebooks_dir / f"{exercise_id}.ipynb"
+        notebook_path: Path = self.notebooks_dir / f"{exercise_id}.ipynb"
         if not notebook_path.exists():
-            raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
+            raise FileNotFoundError(
+                f"Student notebook not found: {exercise_id}")
         files["notebook"] = notebook_path
 
         # Test file (required)
-        test_path = self.tests_dir / f"test_{exercise_id}.py"
+        test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
         if not test_path.exists():
             raise FileNotFoundError(f"Test file not found: {exercise_id}")
         files["test"] = test_path
 
         return files
 
-    def collect_multiple(self, exercise_ids: list[str]) -> dict[str, dict[str, Path]]:
+    def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:
         """Collect files for multiple exercises.
 
         Args:
@@ -63,7 +72,8 @@ class FileCollector:
             return {}
 
         all_files = {}
-        for exercise_id in exercise_ids:
+        for exercise_id:
+            str in exercise_ids:
             all_files[exercise_id] = self.collect_files(exercise_id)
 
         return all_files

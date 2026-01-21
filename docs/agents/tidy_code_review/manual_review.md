@@ -46,26 +46,20 @@ Defaults and thresholds are configurable via `agent-config.yml`.
 
 ### MUST do (manual steps)
 
-1. **Trace code execution**: For each changed file, manually trace inputs → outputs. Identify assumptions, edge cases, and data flow. Check for simpler implementations or reuse of existing helpers.
-2. **Validate no re-implementation**: Ensure changes do not duplicate existing functionality elsewhere in the codebase. Flag opportunities to consolidate or reuse.
-3. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.
-4. **Review code duplication**: Manually scan for repeated logic patterns, especially across module boundaries. Suggest extraction to shared utilities.
-5. **Verify adherence to standards**: Check that changed code follows the repo's coding conventions, naming patterns, and architectural principles outlined in the docs.
-6. **Prepare findings report**: Document control/data flow observations, suggested refactors requiring human judgement, and patches for non-trivial changes.
-7. **Suggest patches or PRs**: For refactors that would alter runtime behaviour or cross-module logic, create draft PRs with clear rationale for human review.
+1. Create a TODO using `manage_todo_list`; with the tasks you need to complete. Mark one item `in-progress`.
+2. **Trace code execution**: For each changed file, manually trace inputs → outputs. Identify assumptions, edge cases, and data flow. Check for simpler implementations or reuse of existing helpers.
+3. **Validate no re-implementation**: Ensure changes do not duplicate existing functionality elsewhere in the codebase. Flag opportunities to consolidate or reuse.
+4. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.
+5. **Review code duplication**: Manually scan for repeated logic patterns, especially across module boundaries. Suggest extraction to shared utilities.
+6. **Verify adherence to standards**: Check that changed code follows the repo's coding conventions, naming patterns, and architectural principles outlined in the docs.
+7. **Compare docs against the code**: Ensure any behavioural changes are reflected in documentation, README, or docstrings. Flag discrepancies for update.
+8. **Check the total length of files**: If a file exceeds 500 lines, suggest splitting into smaller modules, if appropriate.
+9. **Prepare findings report**: Document control/data flow observations, suggested refactors requiring human judgement, and patches for non-trivial changes.
+10. **Suggest patches or PRs**: For refactors that would alter runtime behaviour or cross-module logic, create draft PRs with clear rationale for human review.
 
 ### OPTIONAL (manual)
 
 - If a manual trace was deferred due to many changes, suggest a scoped follow-up review focusing solely on control/data flow and code duplication patterns.
-
-## Decision tree (manual view)
-
-1) Perform full manual trace of all changed files: follow data/control flow, identify assumptions and edge cases.
-2) Check for code duplication and opportunities to consolidate logic.
-3) Verify separation of concerns and adherence to coding standards.
-4) If changes are extensive (many files or complex interactions): prioritise critical paths first and note areas needing follow-up review.
-5) Check the total length of files. If a file exceeds 500 lines, suggest splitting into smaller modules, if appropriate.
-6) Generate report with findings and suggested patches for non-trivial refactors.
 
 ## Output to calling agent (expanded)
 
@@ -77,6 +71,7 @@ Return a concise summary containing:
 - **Trace status**: state whether the manual trace was performed or deferred; if deferred, note that a follow-up pass is required.
 - **KISS findings**: list of functions flagged with CC, MI, length, nesting, and suggested refactors.
 - **DRY findings**: list of duplicated regions with file ranges and suggested extraction/merge locations.
+- **Docs findings**: which docs were checked and any discrepancies found.
 - **Suggested patches/PRs**: list of non-automated refactors with a short diff or PR URL (if created).
 - **Remaining issues**: anything you did not fix (reason + suggestion).
 - **Docs review**: which docs were checked and any discrepancies found.
