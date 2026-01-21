@@ -44,7 +44,7 @@ def test_solution_output(tag: str, expected: str) -> None:
         f = StringIO()
         with contextlib.redirect_stdout(f):
             exec_tagged_code(
-                "notebooks/solutions/ex005_sequence_debug_logic.ipynb", tag=tag
+                "notebooks/ex005_sequence_debug_logic.ipynb", tag=tag
             )
 
         output = f.getvalue().strip()
@@ -59,45 +59,45 @@ def test_solution_output(tag: str, expected: str) -> None:
 # Test exercise 5 with input
 def test_solution_exercise5_with_input() -> None:
     """Test exercise 5 which requires user input."""
+    old_stdin = sys.stdin
     try:
-        old_stdin = sys.stdin
         sys.stdin = StringIO("7\n3\n")
 
         f = StringIO()
         with contextlib.redirect_stdout(f):
             exec_tagged_code(
-                "notebooks/solutions/ex005_sequence_debug_logic.ipynb", tag="exercise5"
+                "notebooks/ex005_sequence_debug_logic.ipynb", tag="exercise5"
             )
-
-        sys.stdin = old_stdin
 
         output = f.getvalue().strip()
         assert "10" in output, f"Expected '10' in output, got: {output}"
 
     except Exception as e:
         pytest.fail(f"Solution notebook exercise5 failed to execute: {e}")
+    finally:
+        sys.stdin = old_stdin
 
 
 # Test exercise 10 with input
 def test_solution_exercise10_with_input() -> None:
     """Test exercise 10 which requires user input."""
+    old_stdin = sys.stdin
     try:
-        old_stdin = sys.stdin
         sys.stdin = StringIO("100\n")
 
         f = StringIO()
         with contextlib.redirect_stdout(f):
             exec_tagged_code(
-                "notebooks/solutions/ex005_sequence_debug_logic.ipynb", tag="exercise10"
+                "notebooks/ex005_sequence_debug_logic.ipynb", tag="exercise10"
             )
-
-        sys.stdin = old_stdin
 
         output = f.getvalue().strip()
         assert "212" in output, f"Expected '212' in output, got: {output}"
 
     except Exception as e:
         pytest.fail(f"Solution notebook exercise10 failed to execute: {e}")
+    finally:
+        sys.stdin = old_stdin
 
 
 # Test that explanation cells have content
