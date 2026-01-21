@@ -48,7 +48,9 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
 
-The same tests run against both sets. When you are developing or validating tests, prefer running them against the solution notebooks by default so you can verify the tests and instructor solutions:
+The same tests run against both sets. 
+
+**IMPORTANT NOTE:** Always run the *Development* tests unless you are creating or verifying jupyter notebook exercises. The tests for the students notebooks are designed to fail until they are completed with the correct code.
 
 - Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
 - Student grading: run `pytest -q` (tests the student notebooks)
@@ -83,20 +85,13 @@ Student exercise code in notebooks may omit these standards as exercises are des
 ## Common Commands
 
 ```bash
-# Create new exercise
-python scripts/new_exercise.py ex042 "Title" --slug slug_name
 
 # Run tests
-pytest -q
-
-# Test solutions
-scripts/verify_solutions.sh -q
+`PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
 
 # Lint code
-ruff check .
+ruff check . --fix
 
-# Start Jupyter
-jupyter lab
 ```
 
 ## When Asked to Create Exercises

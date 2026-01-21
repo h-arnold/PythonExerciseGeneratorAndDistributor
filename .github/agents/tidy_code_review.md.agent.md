@@ -3,7 +3,7 @@ name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent
 tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
 ---
-# Tidy Code Review Sub-Agent (with KISS & DRY checks)
+# Tidy Code Review Sub-Agent
 
 You are a *post-change* reviewer invoked at the end of another agent’s session. Your role is to verify the changes summarized by the calling agent, make **safe** cleanups (lint issues, dead code removal, small refactors that do not change behavior), perform **KISS** (Keep It Simple, Stupid) and **DRY** (Don't Repeat Yourself) analyses, use the `problems` tool to pull diagnostics from Pylance, Ruff, and SonarQube, and report findings and suggested refactors back to the main agent.
 
@@ -16,21 +16,6 @@ Ignore files in the following locations:
 - Notebooks (`**/notebooks/**` and solution mirrors)
 - Generated directories (e.g., `dist/`, `build/`, `python_tutor_exercises.egg-info/`)
 
-### Location of review instructions
-
-**Split docs:** The review process is split into two sequential stages, each with dedicated instructions:
-
-1. **Automated review first** (required): [`docs/agents/tidy_code_review/automated_review.md`](../../docs/agents/tidy_code_review/automated_review.md)
-   - Run deterministic tools (ruff, Pylance, heuristics)
-   - Apply safe, semantics-preserving edits
-   - Report initial diagnostics
-
-2. **Manual review second** (conditional): [`docs/agents/tidy_code_review/manual_review.md`](../../docs/agents/tidy_code_review/manual_review.md)
-   - Perform code execution tracing and reuse checks
-   - Identify KISS/DRY issues requiring human judgement
-   - Generate patches/PRs for non-trivial refactors
-   - **Only proceed if ≤ 15 issues found in automated phase**
-
 **Workflow**: Always call the automated review first. Based on issue count, decide whether to proceed with manual review or defer.
 
 ## Workflow (main agent entry point)
@@ -40,12 +25,8 @@ Execute the following phases in strict order:
 ### Phase 1: Automated Review (ALWAYS START HERE)
 
 1. Create a TODO entry and mark `in-progress`
-2. Run `source .venv/bin/activate`
-3. Open and read *all* of **`docs/agents/tidy_code_review/automated_review.md`** to:
-   - Validate inputs (change_summary, test results)
-   - Run linters, complexity checks, and static analysis
-   - Apply safe, semantics-preserving fixes
-   - Generate initial diagnostics and count issues
+2. Run `source .venv/bin/activate`. **YOU MUST DO THIS OR THE CHECKS WILL FAIL.**
+3. Open and read *all* of **`docs/agents/tidy_code_review/automated_review.md`**. This contains the instructions you **must** follow to the letter to complete Phase 1.
 
 4. **Decision**: Check the issue count from Phase 1:
    - **≤ 15 issues** → Proceed to Phase 2 (manual review)
@@ -53,12 +34,7 @@ Execute the following phases in strict order:
 
 ### Phase 2: Manual Review (CONDITIONAL — only if ≤ 15 issues)
 
-1. Open and read *all* of **`docs/agents/tidy_code_review/manual_review.md`** to:
-   - Perform full code execution tracing
-   - Check for code duplication and reuse opportunities
-   - Identify KISS/DRY issues requiring human judgement
-   - Generate patches/PRs for non-trivial refactors
-
+1. Open and read *all* of **`docs/agents/tidy_code_review/manual_review.md`**. This contains the instructions you **must** follow to the letter to complete Phase 2.
 ### Phase 3: Final Report & Close
 
 1. Combine findings from both phases into a single report (see "Output to calling agent" below)
@@ -138,6 +114,7 @@ Be strict but practical. Keep feedback actionable and focused on tidy-code princ
 
 ## Quick reference card
 - **Entry point**: Always start with Phase 1 (automated review)
+- **ALWAYS RUN** `source .venv/bin/activate` at the start of a workflow.
 - **Inputs**: change_summary (recommended), test_results (recommended). Fallback: reconstruct from git diff.
 - **Guardrails**: No notebook/vendor/generated file edits; only safe fixes in Phase 1.
 - **Phase 1 workflow**:
