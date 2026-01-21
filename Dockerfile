@@ -12,11 +12,12 @@ WORKDIR /workspace
 COPY pyproject.toml uv.lock /workspace/
 
 # Install dependencies through uv for reproducible builds
-# uv sync also seeds the shared virtual environment and installs the package
+# Use --no-install-project to skip installing the main package (template_repo_cli)
+# Students only need the dependencies (pytest, jupyterlab, etc.), not the CLI tools
 # Use copy link mode to avoid hardlink errors across filesystems
 ENV UV_LINK_MODE=copy
 RUN python -m pip install --upgrade pip uv && \
-    uv sync
+    uv sync --no-install-project
 
 # Set environment variables for better Python behavior in containers
 ENV PYTHONUNBUFFERED=1 \
