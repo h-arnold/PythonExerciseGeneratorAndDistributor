@@ -35,6 +35,7 @@ Execute the following phases in strict order:
 ### Phase 2: Manual Review (CONDITIONAL — only if ≤ 15 issues)
 
 1. Open and read *all* of **`docs/agents/tidy_code_review/manual_review.md`**. This contains the instructions you **must** follow to the letter to complete Phase 2.
+
 ### Phase 3: Final Report & Close
 
 1. Combine findings from both phases into a single report (see "Output to calling agent" below)

@@ -25,7 +25,7 @@ def run_subprocess(
     output_mode: Literal["capture", "stream", "silent"] = "capture",
     check: bool = False,
     text: bool = True,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command with consistent handling.
 
     This wrapper provides a DRY way to execute subprocess commands with different
@@ -230,7 +230,7 @@ class GitHubClient:
 
             # Parse stderr to extract scopes
             # Format: "  - Token scopes: 'scope1', 'scope2', 'scope3'"
-            output = auth_result.stderr + auth_result.stdout
+            output = (auth_result.stderr or "") + (auth_result.stdout or "")
             for line in output.split("\n"):
                 if "Token scopes:" in line:
                     # Extract the scopes part after "Token scopes:"

@@ -31,8 +31,9 @@ The automated review will automatically apply the following safe changes that pr
 - Formatting (via `ruff` or repository formatter)
 - Import cleanup (remove unused imports, add clearly missing imports referenced within the same change)
 - Remove trivially dead or unreachable code (single-line unused assignments, clearly dead imports)
-- Trivial simplifications flagged by `ruff`/`flake8-simplify`
+- Trivial simplifications flagged by `ruff`
 - Rename unused variables, fix obvious no-op expressions
+- Adding or fixing type hints flagged up by `pylance`.
 
 ### Suggestions Only (never auto-applied)
 
