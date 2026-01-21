@@ -3,6 +3,7 @@
 Students should be presented with a mixture of syntactic and logical errors. Where possible, the bugs should be common or typical errors that beginners make when learning this structure.
 
 **Error count progression**:
+
 - Exercises 1-5: Each should contain exactly **one error** to help students build confidence and focus on a single issue at a time.
 - Exercises 6-10: Gradually increase the number of errors where possible and appropriate to the task (e.g., exercise 6 might have 1-2 errors, exercise 10 might have 2-3).
 - Errors should be **realistic** (what students would actually write) whenever possible. If realistic errors aren't appropriate for the learning objective, then use contrived errors that serve the pedagogical goal.
@@ -47,7 +48,6 @@ There should be no "working code" exercises disguised as debug tasks. If the cod
 - **Exception handling:**
   - Logical: overly broad `except:` hides unrelated bugs — prefer explicit exceptions like `except ValueError:`.
   - Logical: catching and ignoring exceptions (`except: pass`) masks failures that tests should detect.
-
 
 Debugging exercises should be presented to students as a small notebook with a clear, student-facing structure. The grader will execute only the single code cell tagged `exercise1` (or `exerciseN` for multi-part notebooks). The recommended layout for a single-part debug exercise is:
 
@@ -129,11 +129,13 @@ def test_explanation_has_content():
 Students must discover the bug themselves. Telling them what to fix defeats the learning objective.
 
 ❌ **Bad** (reveals the bug):
+
 - "Exercise 1 — Missing closing parenthesis"
 - "Exercise 3 — Typo in variable name"
 - "Exercise 5 — Missing quotes around string"
 
 ✅ **Good** (neutral, student discovers the bug):
+
 - "Exercise 1 — Print a message"
 - "Exercise 3 — Print a greeting"
 - "Exercise 5 — Use a variable"
@@ -141,6 +143,7 @@ Students must discover the bug themselves. Telling them what to fix defeats the 
 ### 2. **NEVER Explain What the Bug Is in the Prompt or Code**
 
 The buggy code cell should NOT include hints or descriptions of what's wrong. Only show:
+
 - What the program should do (briefly, neutral)
 - What the expected output is
 - The buggy code itself (clean, no hint comments)
@@ -156,6 +159,7 @@ The buggy code cell should NOT include hints or descriptions of what's wrong. On
 ```python
 print(I like Python)
 ```
+
 ```
 
 ✅ **Good** (neutral, requires investigation):
@@ -165,13 +169,16 @@ print(I like Python)
 
 **Expected output:**
 ```
+
 I like Python
+
 ```
 
 **Buggy code:**
 ```python
 print(I like Python)
 ```
+
 ```
 
 ### 3. **EVERY Exercise Must Contain an Actual Bug**
@@ -185,13 +192,16 @@ Each exercise should fail to run (syntax error, runtime error) or produce incorr
 
 **Expected output:**
 ```
+
 Hello world
+
 ```
 
 **Buggy code:**
 ```python
 print("Hello world")
 ```
+
 ```
 
 This code runs without error and produces the correct output—it's not a debugging exercise!
@@ -226,18 +236,22 @@ Describe what error you got or what incorrect output appeared.
 Example comparison:
 
 **Student notebook:**
+
 ```markdown
 ## Exercise 4 — Multiply two numbers
 
 **Expected output:**
 ```
+
 50
+
 ```
 
 **Buggy code:**
 ```python
 print(5 + 10)
 ```
+
 ```
 
 **Solutions notebook (for teacher reference):**
@@ -246,7 +260,9 @@ print(5 + 10)
 
 **Expected output:**
 ```
+
 50
+
 ```
 
 **Buggy code:**
@@ -267,10 +283,12 @@ print(5 * 10)
 ### Teaching notes
 
 Common misconceptions:
+
 - Students may try `/` (division) instead
 - Some may not understand why Python doesn't infer the correct operator
 
 Reinforce: Python requires explicit operator choice; it cannot guess your intent from context.
+
 ```
 
 ### 6. **Do NOT Include Hint Comments in Student Buggy Code**

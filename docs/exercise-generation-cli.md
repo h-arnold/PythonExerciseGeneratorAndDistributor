@@ -17,6 +17,7 @@ python scripts/new_exercise.py ex004 "Debug Syntax" --slug sequence_debug_syntax
 ```
 
 This creates:
+
 - `exercises/CONSTRUCT/TYPE/ex042_variables_and_types/README.md`
 - `notebooks/ex042_variables_and_types.ipynb`
 - `notebooks/solutions/ex042_variables_and_types.ipynb`
@@ -43,10 +44,12 @@ python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TY
 ```
 
 **Required**:
+
 - `id`: Exercise identifier (format: `exNNN`, e.g., `ex001`, `ex042`)
 - `title`: Human-readable title (e.g., "Variables and Types")
 
 **Optional**:
+
 - `--slug`: Snake-case slug for filenames (default: auto-generated from title)
 - `--parts`: Number of exercise parts in one notebook (default: 1, max: 20)
 - `--type`: Optional exercise type (one of `debug`, `modify`, `make`). When `--type debug` is used the scaffolder will include an "Expected output" markdown cell and an `explanationN` markdown cell for each exercise part.
@@ -58,12 +61,14 @@ python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TY
 `exercises/CONSTRUCT/TYPE/exNNN_slug/`
 
 Where you must manually place the folder based on:
+
 - **CONSTRUCT**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
 - **TYPE**: `debug`, `modify`, `make`
 
 Initially created at `exercises/exNNN_slug/` - you should move it to the appropriate construct/type subdirectory.
 
 Contains:
+
 - `README.md`: Metadata (title, construct, difficulty)
 - (You should add) `OVERVIEW.md`: Teaching notes
 
@@ -74,6 +79,7 @@ Instructor reference solutions live in the solution notebook mirror under `noteb
 `notebooks/exNNN_slug.ipynb`
 
 Contains:
+
 - Markdown cell with title and instructions
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - Optional self-check cell (not graded)
@@ -85,6 +91,7 @@ For `--parts N`, creates N tagged exercise cells.
 `notebooks/solutions/exNNN_slug.ipynb`
 
 Initially identical to the student notebook. You should:
+
 - Fill in the exercise cells with correct solutions
 - Verify tests pass: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest`
 
@@ -93,6 +100,7 @@ Initially identical to the student notebook. You should:
 `tests/test_exNNN_slug.py`
 
 Contains:
+
 - Imports for `exec_tagged_code` and pytest
 - Placeholder test(s) that verify the exercise cell exists and runs
 - For multi-part exercises: parametrized test over all tags
@@ -123,6 +131,7 @@ Edit `notebooks/exNNN_slug.ipynb`:
 - **Keep it focused**: Each exercise cell should target a single learning objective
 
 **Notebook structure**:
+
 ```
 1. Markdown: Title and goal
 2. Markdown/Code: Examples or context
@@ -151,6 +160,7 @@ def test_edge_case_zero():
 ```
 
 **Test requirements**:
+
 - At least 3 positive tests
 - At least 2 edge cases
 - 1 invalid input test (where appropriate)
@@ -185,6 +195,7 @@ scripts/verify_solutions.sh tests/test_exNNN_slug.py -v
 Add to `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
 
 **`README.md`** (update the generated template):
+
 ```markdown
 # Exercise Title
 
@@ -202,6 +213,7 @@ One sentence describing what students will learn.
 ```
 
 **`OVERVIEW.md`** (create new):
+
 ```markdown
 # Teaching Notes: Exercise Title
 
@@ -222,8 +234,8 @@ One sentence describing what students will learn.
 [Optional: step-by-step solution walkthrough]
 ```
 
-
 If you need extra teacher-only notes beyond the solution notebook:
+
 - add them to `OVERVIEW.md` (recommended), or
 - add teacher-only markdown cells in the solution notebook mirror.
 
@@ -234,12 +246,14 @@ If you need extra teacher-only notes beyond the solution notebook:
 Students fix broken code.
 
 **Key points**:
+
 - Early exercises (1-5): one error each
 - Later exercises (6-10): 2-3 errors
 - Use realistic errors beginners make
 - Mix syntactic and logical errors
 
 **Notebook structure**:
+
 1. Show the buggy code in a non-graded cell
 2. Student fixes it in a tagged cell
 3. Tests verify the fix
@@ -249,11 +263,13 @@ Students fix broken code.
 Students change working code to meet new requirements.
 
 **Key points**:
+
 - Start with simple modifications (change a value, swap operators)
 - Progress to structural changes (add conditions, loops)
 - Clearly state what should change
 
 **Notebook structure**:
+
 1. Show working code
 2. Explain the modification task
 3. Student modifies in tagged cell
@@ -264,12 +280,14 @@ Students change working code to meet new requirements.
 Students write code from scratch.
 
 **Key points**:
+
 - Typically 3-5 exercises per notebook (more challenging)
 - Provide a clear function signature and docstring
 - Give 1-2 example inputs/outputs
 - Use consistent function names (`solve()` is conventional)
 
 **Notebook structure**:
+
 1. Explain the problem
 2. Show example inputs/outputs
 3. Student implements in tagged cell (with skeleton)
@@ -280,11 +298,13 @@ Students write code from scratch.
 When creating a notebook with `--parts 10`:
 
 ### Consistent Structure
+
 - Use the same function name across parts (typically `solve()`)
 - Each part in its own tagged cell: `exercise1`, `exercise2`, ..., `exercise10`
 - Progressive difficulty: exercises 1-3 trivial, 4-7 moderate, 8-10 challenging
 
 ### Testing Pattern
+
 ```python
 import pytest
 from tests.notebook_grader import exec_tagged_code
