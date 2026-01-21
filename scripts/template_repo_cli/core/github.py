@@ -176,7 +176,6 @@ class GitHubClient:
                 "returncode": result.returncode,
             }
         except (OSError, subprocess.SubprocessError) as e:
-            OSError | subprocess.SubprocessError:
             return {"success": False, "error": str(e)}
 
     def check_gh_installed(self) -> bool:
@@ -266,21 +265,20 @@ class GitHubClient:
             # Format: "  - Token scopes: 'scope1', 'scope2', 'scope3'"
             output: str = (auth_result.stderr or "") + \
                 (auth_result.stdout or "")
-            for line:
-                str in output.split("\n"):
+            for line in output.split("\n"):
                 if "Token scopes:" in line:
                     # Extract the scopes part after "Token scopes:"
                     scopes_part: str = line.split(
                         "Token scopes:", 1)[1].strip()
                     # Remove quotes and split by comma
                     scopes: list[str] = [
-                        s.strip().strip("'").strip('"') for s: str in scopes_part.split(",") if s.strip()
+                        s.strip().strip("'").strip('"') for s in scopes_part.split(",") if s.strip()
                     ]
                     result["scopes"] = scopes
                     break
 
             # Check if all required scopes are present
-            missing: list[str] = [s for s: str in required_scopes if s not in result["scopes"]]
+            missing: list[str] = [s for s in required_scopes if s not in result["scopes"]]
             result["missing_scopes"] = missing
             result["has_scopes"] = len(missing) == 0
 
@@ -304,7 +302,6 @@ class GitHubClient:
         try:
             return json.loads(output)
         except json.JSONDecodeError as e:
-            json.JSONDecodeError:
             raise ValueError(f"Invalid JSON: {e}") from e
 
     def create_repository(  # noqa: PLR0913
@@ -568,7 +565,6 @@ class GitHubClient:
             )
             return {"success": True}
         except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
-            OSError | subprocess.SubprocessError | RuntimeError:
             return {
                 "success": False,
                 "error": str(exc),
@@ -584,12 +580,12 @@ class GitHubClient:
             (result.get("error") or "").lower(),
             (result.get("output") or "").lower(),
         )
-        combined_message: str = " ".join(part for part: str in message_parts if part)
+        combined_message: str = " ".join(part for part in message_parts if part)
 
-        if all(marker in combined_message for marker: str in INTEGRATION_PERMISSION_ERROR_MARKERS):
+        if all(marker in combined_message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS):
             return True
 
-        return any(marker in combined_message for marker: str in AUTH_TOKEN_HINT_MARKERS)
+        return any(marker in combined_message for marker in AUTH_TOKEN_HINT_MARKERS)
 
     def should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
         """Public wrapper around the internal auth-retry detection logic."""

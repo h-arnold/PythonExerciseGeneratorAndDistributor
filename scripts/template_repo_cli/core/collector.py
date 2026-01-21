@@ -72,8 +72,7 @@ class FileCollector:
             return {}
 
         all_files = {}
-        for exercise_id:
-            str in exercise_ids:
+        for exercise_id in exercise_ids:
             all_files[exercise_id] = self.collect_files(exercise_id)
 
         return all_files
