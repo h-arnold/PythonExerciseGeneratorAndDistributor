@@ -323,6 +323,96 @@ def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
 
     exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
     if exists_hint:
+        # Add --force flag suggestion to the hint
+        return f"{error_msg}\n\n{exists_hint}\nTo force update, use the --force flag."
+
+    return error_msg
+
+
+def _prompt_force_update(repo_name: str) -> bool:
+    """Prompt user to confirm force update of existing repository.
+
+    Args:
+        repo_name: Name of the repository.
+
+    Returns:
+        True if user confirms, False otherwise.
+    """
+    prompt = input(
+        f"Repository '{repo_name}' already exists. "
+        "Delete and recreate it? [y/N] "
+    ).strip().lower()
+    return prompt in {"y", "yes"}
+
+
+def _check_and_handle_existing_repo(
+    args: argparse.Namespace,
+    github: GitHubClient,
+    workspace: Path,
+    template_flag: bool,
+) -> tuple[bool, str | None]:
+    """Check if repository exists and handle accordingly.
+
+    Args:
+        args: Parsed command-line arguments.
+        github: GitHubClient instance.
+        workspace: Workspace directory.
+        template_flag: Whether to mark as template.
+
+    Returns:
+        Tuple of (success, error_message).
+    """
+    # Check if repository already exists
+    repo_exists = github.check_repository_exists(args.repo_name, org=args.org)
+
+    if not repo_exists:
+        # Repository doesn't exist, proceed with normal creation
+        return _attempt_github_repo_creation(
+            github, args, workspace, first_attempt=True, template_flag=template_flag
+        )
+
+    # Repository exists - check if we should force update
+    force_update = getattr(args, "force", False)
+
+    if not force_update:
+        # Ask user if they want to force update
+        if not _prompt_force_update(args.repo_name):
+            return False, "Operation cancelled by user"
+
+    # Perform force update
+    result = github.force_update_repository(
+        args.repo_name,
+        workspace,
+        public=not args.private,
+        template=template_flag,
+        template_repo=getattr(args, "template_repo", None),
+        org=args.org,
+        description=args.name,
+    )
+
+    if result["success"]:
+        print(f"✓ Force updated repository: {args.repo_name}")
+        return True, None
+
+    return False, result.get("error") or "Unknown error"
+
+
+def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
+    """Add helpful hints to GitHub error messages.
+
+    Args:
+        error_msg: The original error message.
+        args: Parsed command-line arguments.
+
+    Returns:
+        Enhanced error message with hints.
+    """
+    permission_hint = _github_permission_hint(error_msg)
+    if permission_hint:
+        return f"{error_msg}\n\n{permission_hint}"
+
+    exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
+    if exists_hint:
         return f"{error_msg}\n\n{exists_hint}"
 
     return error_msg
@@ -346,17 +436,16 @@ def _create_github_repo(
     template_flag = not getattr(args, "no_template", False)
     env_key = _detect_auth_token_env()
     already_reauthenticated = False
-    first_attempt = True
 
     while True:
         error_msg = _check_github_prerequisites(github)
         if error_msg:
             return False, error_msg
 
-        success, error_msg = _attempt_github_repo_creation(
-            github, args, workspace, first_attempt, template_flag
+        # Check if repo exists and handle accordingly
+        success, error_msg = _check_and_handle_existing_repo(
+            args, github, workspace, template_flag
         )
-        first_attempt = False
 
         if success:
             return True, None
@@ -744,6 +833,11 @@ def main(argv: list[str] | None = None) -> int:
             "Template repository to base the new repository on (owner/name). "
             "If not supplied, the repo name (prefixed with org if given) is used."
         ),
+    )
+    create_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force update if repository already exists (deletes and recreates)",
     )
 
     # List command

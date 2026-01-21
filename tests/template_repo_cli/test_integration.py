@@ -529,3 +529,211 @@ class TestCliOutputDir:
         assert result == 0
         # Output directory should have been created with content
         assert temp_dir.exists()
+
+
+class TestCliForceFlag:
+    """Tests for --force flag."""
+
+    @patch("subprocess.run")
+    def test_cli_create_with_force_flag_dry_run(self, mock_run, repo_root: Path) -> None:
+        """Test create command with --force flag in dry-run mode."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
+
+        result = main(
+            [
+                "--dry-run",
+                "create",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+                "--force",
+            ]
+        )
+
+        assert result == 0
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.force_update_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_force_flag_calls_force_update_when_repo_exists(
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_force_update,
+        mock_check_exists,
+        repo_root: Path,
+    ) -> None:
+        """Test --force flag calls force_update_repository when repo exists."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_force_update.return_value = {"success": True}
+
+        result = main(
+            [
+                "create",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+                "--force",
+            ]
+        )
+
+        assert result == 0
+        # Verify check_repository_exists was called
+        mock_check_exists.assert_called_once()
+        # Verify force_update_repository was called since repo exists
+        mock_force_update.assert_called_once()
+
+    @patch("builtins.input", return_value="y")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.force_update_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_prompts_when_repo_exists_without_force(
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_force_update,
+        mock_check_exists,
+        mock_input,
+        repo_root: Path,
+    ) -> None:
+        """Test CLI prompts user when repo exists and --force not provided."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_force_update.return_value = {"success": True}
+
+        result = main(
+            [
+                "create",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        # Verify input was called (user was prompted)
+        mock_input.assert_called_once()
+        # Verify force_update_repository was called since user said yes
+        mock_force_update.assert_called_once()
+
+    @patch("builtins.input", return_value="n")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.force_update_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_aborts_when_user_declines_force_update(
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_create,
+        mock_force_update,
+        mock_check_exists,
+        mock_input,
+        repo_root: Path,
+        capsys,
+    ) -> None:
+        """Test CLI aborts when user declines force update."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+
+        result = main(
+            [
+                "create",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 1
+        # Verify input was called (user was prompted)
+        mock_input.assert_called_once()
+        # Verify force_update_repository was NOT called since user said no
+        mock_force_update.assert_not_called()
+        # Verify create_repository was also NOT called
+        mock_create.assert_not_called()
+        # Verify error message
+        captured = capsys.readouterr()
+        assert "operation cancelled" in captured.err.lower() or "aborted" in captured.err.lower()
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.force_update_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_calls_create_when_repo_does_not_exist(
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_force_update,
+        mock_create,
+        mock_check_exists,
+        repo_root: Path,
+    ) -> None:
+        """Test CLI calls create_repository when repo doesn't exist."""
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = False
+        mock_create.return_value = {"success": True}
+
+        result = main(
+            [
+                "create",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+                "--force",  # Force flag should be ignored if repo doesn't exist
+            ]
+        )
+
+        assert result == 0
+        # Verify create_repository was called since repo doesn't exist
+        mock_create.assert_called_once()
+        # Verify force_update_repository was NOT called
+        mock_force_update.assert_not_called()
