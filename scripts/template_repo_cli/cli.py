@@ -482,6 +482,27 @@ def _handle_repository_creation(
     return 0
 
 
+def _remote_url_missing_owner(remote_url: str | None) -> bool:
+    """Return True when a Git remote URL is missing the owner segment."""
+
+    if not remote_url:
+        return False
+
+    path = remote_url
+
+    if "github.com/" in path:
+        path = path.split("github.com/", 1)[1]
+    elif ":" in path:
+        # Handle git@github.com:owner/repo.git style remotes
+        path = path.split(":", 1)[-1]
+
+    path = path.removesuffix(".git").strip("/")
+    if not path:
+        return True
+
+    return "/" not in path
+
+
 def _handle_repository_update(
     args: argparse.Namespace,
     github: GitHubClient,
@@ -506,10 +527,7 @@ def _handle_repository_update(
         print(f"[DRY RUN] Workspace: {workspace}")
         print(f"[DRY RUN] Exercises: {', '.join(exercises)}")
         print(f"[DRY RUN] Branch: {args.branch}")
-        print(
-            "[DRY RUN] Push mode: "
-            + ("--force-with-lease" if args.force_with_lease else "--force" if args.force else "normal push")
-        )
+        print("[DRY RUN] Push mode: force push (default)")
         return 0
 
     prereq_error = _check_github_prerequisites(github)
@@ -532,13 +550,26 @@ def _handle_repository_update(
         workspace,
         org=args.org,
         branch=args.branch,
-        force=args.force,
-        force_with_lease=args.force_with_lease,
+        force=True,  # Always force push for template updates
     )
 
     if not result.get("success"):
         error = result.get("error", "Unknown error")
-        print(f"Error updating repository: {error}", file=sys.stderr)
+        lines = [f"Error updating repository: {error}"]
+
+        remote_url = result.get("remote_url")
+        missing_owner = _remote_url_missing_owner(remote_url)
+        if remote_url:
+            lines.append(f"Push target: {remote_url} (branch: {args.branch})")
+
+        # Only show owner/repo hint if that's actually the problem
+        if missing_owner:
+            lines.append(
+                "The push URL does not include an owner segment. Re-run with --repo-name in the "
+                "form owner/repo (e.g., h-arnold/your-repo) or provide --org to target an organization."
+            )
+
+        print("\n".join(lines), file=sys.stderr)
         packager.cleanup(workspace)
         return 1
 
@@ -670,11 +701,24 @@ def create_command(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
-    if not validate_repo_name(args.repo_name):
-        suggestion = sanitize_repo_name(args.repo_name)
-        message = f"Invalid repo name: {args.repo_name!r}."
-        if suggestion:
-            message += f" Suggested: {suggestion!r}."
+    if not validate_repo_name(args.repo_name, allow_owner_prefix=True):
+        if "/" in args.repo_name:
+            owner, _, name = args.repo_name.partition("/")
+            if not owner or not name:
+                message = (
+                    f"Invalid repo name: {args.repo_name!r}. Provide it in the form owner/repo "
+                    "using lowercase letters, numbers, hyphens, or underscores."
+                )
+            else:
+                message = (
+                    f"Invalid repo name: {args.repo_name!r}. When specifying owner/repo, both parts must "
+                    "be lowercase and may only contain numbers, hyphens, or underscores."
+                )
+        else:
+            suggestion = sanitize_repo_name(args.repo_name)
+            message = f"Invalid repo name: {args.repo_name!r}."
+            if suggestion:
+                message += f" Suggested: {suggestion!r}."
         print(message, file=sys.stderr)
         return 1
 
@@ -696,11 +740,7 @@ def create_command(args: argparse.Namespace) -> int:
 def update_repo_command(args: argparse.Namespace) -> int:
     """Handle update-repo command to push new contents to an existing repository."""
 
-    if args.force and args.force_with_lease:
-        print("Error: --force and --force-with-lease cannot be used together.", file=sys.stderr)
-        return 1
-
-    if not validate_repo_name(args.repo_name):
+    if not validate_repo_name(args.repo_name, allow_owner_prefix=True):
         suggestion = sanitize_repo_name(args.repo_name)
         message = f"Invalid repo name: {args.repo_name!r}."
         if suggestion:
@@ -946,23 +986,16 @@ def main(argv: list[str] | None = None) -> int:
     update_parser.add_argument(
         "--name", type=str, help="Template repository name/description")
     update_parser.add_argument(
-        "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
+        "--repo-name",
+        type=str,
+        required=True,
+        help="GitHub repository name (slug or owner/repo)",
     )
     update_parser.add_argument(
         "--org", type=str, help="Target organization (default: user account)"
     )
     update_parser.add_argument(
         "--branch", type=str, default="main", help="Branch to push updates to (default: main)"
-    )
-    update_parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Force push updates (destructive). Use with caution.",
-    )
-    update_parser.add_argument(
-        "--force-with-lease",
-        action="store_true",
-        help="Force-with-lease push updates (safer than --force)",
     )
 
     # Parse arguments

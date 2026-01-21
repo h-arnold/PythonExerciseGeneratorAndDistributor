@@ -112,6 +112,20 @@ class TestValidateRepoName:
         # GitHub allows repo names starting with numbers
         assert validate_repo_name("123-repo") is True
 
+    def test_validate_repo_name_owner_prefix_rejected_by_default(self) -> None:
+        """Owner-prefixed names should be rejected unless explicitly allowed."""
+        assert validate_repo_name("owner/my-repo") is False
+
+    def test_validate_repo_name_owner_prefix_allowed(self) -> None:
+        """Owner-prefixed names are permitted when opted in."""
+        assert validate_repo_name(
+            "owner/my-repo", allow_owner_prefix=True) is True
+
+    def test_validate_repo_name_owner_prefix_invalid_parts(self) -> None:
+        """Owner-prefixed names must follow the same lowercase rules."""
+        assert validate_repo_name(
+            "Owner/MyRepo", allow_owner_prefix=True) is False
+
 
 class TestSanitizeRepoName:
     """Tests for repository name sanitization."""

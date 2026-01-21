@@ -436,7 +436,7 @@ class TestMarkRepositoryAsTemplate:
         result = client.mark_repository_as_template("test-repo")
 
         assert result["success"] is False
-        assert "Failed to get authenticated user" in (
+        assert "Unable to determine authenticated GitHub username" in (
             result.get("error") or "")
 
 
@@ -707,29 +707,36 @@ class TestCheckRepositoryExists:
         self, mock_run: MagicMock
     ) -> None:
         """Test check_repository_exists returns True when repository exists."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout='{"name": "test-repo"}', stderr="")
+        # Mock both gh api user (for username) and gh repo view (for existence check)
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="testuser\n", stderr=""),  # gh api user
+            MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr=""),  # gh repo view
+        ]
 
         client = GitHubClient()
         result = client.check_repository_exists("test-repo")
 
         assert result is True
-        # Verify gh repo view was called
-        mock_run.assert_called_once()
-        call_args = mock_run.call_args[0][0]
-        assert "gh" in call_args
-        assert "repo" in call_args
-        assert "view" in call_args
-        assert "test-repo" in call_args
+        # Verify gh repo view was called with the resolved repo ref
+        # First call: gh api user, second call: gh repo view
+        expected_calls = 2
+        assert len(mock_run.call_args_list) == expected_calls
+        repo_view_call = mock_run.call_args_list[1][0][0]
+        assert "gh" in repo_view_call
+        assert "repo" in repo_view_call
+        assert "view" in repo_view_call
+        assert "testuser/test-repo" in repo_view_call
 
     @patch("subprocess.run")
     def test_check_repository_exists_returns_false_when_repo_not_found(
         self, mock_run: MagicMock
     ) -> None:
         """Test check_repository_exists returns False when repository not found."""
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="repository not found"
-        )
+        # Mock both gh api user and gh repo view (which fails)
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout="testuser\n", stderr=""),  # gh api user
+            MagicMock(returncode=1, stdout="", stderr="repository not found"),  # gh repo view fails
+        ]
 
         client = GitHubClient()
         result = client.check_repository_exists("test-repo")
@@ -739,6 +746,7 @@ class TestCheckRepositoryExists:
     @patch("subprocess.run")
     def test_check_repository_exists_with_org(self, mock_run: MagicMock) -> None:
         """Test check_repository_exists with organization."""
+        # When org is provided, no username lookup is needed
         mock_run.return_value = MagicMock(
             returncode=0, stdout='{"name": "test-repo"}', stderr="")
 
@@ -746,6 +754,8 @@ class TestCheckRepositoryExists:
         result = client.check_repository_exists("test-repo", org="my-org")
 
         assert result is True
+        # Should only call gh repo view, not gh api user
+        mock_run.assert_called_once()
         call_args = mock_run.call_args[0][0]
         assert "my-org/test-repo" in call_args
 
@@ -754,6 +764,8 @@ class TestCheckRepositoryExists:
         self, mock_run: MagicMock
     ) -> None:
         """Test check_repository_exists handles subprocess errors gracefully."""
+        # The OSError will be raised when trying to get the username
+        # and should be caught, returning False
         mock_run.side_effect = OSError("Command failed")
 
         client = GitHubClient()
@@ -809,19 +821,20 @@ class TestPushToExistingRepository:
         assert "dev" in calls
 
     @patch("subprocess.run")
-    def test_push_to_existing_repository_force_with_lease(
+    def test_push_to_existing_repository_force_is_default(
         self, mock_run: MagicMock, temp_dir: Path
     ) -> None:
-        """Force-with-lease push should include the appropriate flag."""
+        """Force push should be the default behavior."""
 
         mock_run.return_value = MagicMock(
             returncode=0, stdout="testuser\n", stderr="")
 
         client = GitHubClient()
         result = client.push_to_existing_repository(
-            "test-repo", temp_dir, force_with_lease=True
+            "test-repo", temp_dir
         )
 
         assert result["success"] is True
+        # Verify --force flag is included in push command
         calls = " ".join(str(c) for c in mock_run.call_args_list)
-        assert "--force-with-lease" in calls
+        assert "--force" in calls

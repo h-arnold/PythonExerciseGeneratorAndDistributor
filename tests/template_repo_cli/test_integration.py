@@ -638,8 +638,73 @@ class TestCliUpdateRepo:
         captured = capsys.readouterr()
         assert "does not exist" in captured.err.lower()
 
-    def test_cli_update_rejects_conflicting_force_flags(self, repo_root: Path, capsys) -> None:
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_update_allows_owner_prefixed_repo_name(  # noqa: PLR0913
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_push,
+        mock_check_exists,
+        repo_root: Path,
+    ) -> None:
         from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_push.return_value = {"success": True}
+
+        result = main(
+            [
+                "update-repo",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "owner/test-repo",
+            ]
+        )
+
+        assert result == 0
+        mock_push.assert_called_once()
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_update_prompts_for_owner_when_remote_missing(  # noqa: PLR0913
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_push,
+        mock_check_exists,
+        repo_root: Path,
+        capsys,
+    ) -> None:
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_push.return_value = {
+            "success": False,
+            "error": "push failed",
+            "remote_url": "https://github.com/test-repo.git",
+        }
 
         result = main(
             [
@@ -648,11 +713,12 @@ class TestCliUpdateRepo:
                 "sequence",
                 "--repo-name",
                 "test-repo",
-                "--force",
-                "--force-with-lease",
             ]
         )
 
         assert result == 1
         captured = capsys.readouterr()
-        assert "cannot be used together" in captured.err.lower()
+        assert "owner" in captured.err.lower()
+        assert "owner/repo" in captured.err.lower()
+
+

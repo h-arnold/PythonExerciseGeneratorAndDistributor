@@ -27,6 +27,7 @@ class ExecResult(ExecBase, total=False):
     returncode: int
     dry_run: bool
     message: str
+    remote_url: str
 
 
 class CheckScopesResult(TypedDict):
@@ -103,6 +104,63 @@ class GitHubClient:
             dry_run: If True, don't execute commands.
         """
         self.dry_run: bool = dry_run
+
+    def _get_authenticated_username(self) -> str | None:
+        """Return the authenticated GitHub username via gh API.
+
+        Returns:
+            Username string if available, otherwise None.
+        """
+
+        user_result: subprocess.CompletedProcess[str] = run_subprocess(
+            ["gh", "api", "user", "--jq", ".login"],
+            check=False,
+        )
+        if user_result.returncode != 0:
+            return None
+
+        username: str = (user_result.stdout or "").strip()
+        return username or None
+
+    def _resolve_repo_ref(
+        self,
+        repo_name: str,
+        org: str | None,
+        *,
+        require_owner: bool = False,
+    ) -> tuple[str, str | None]:
+        """Resolve the fully-qualified repository reference.
+
+        Args:
+            repo_name: Repository name (may already include owner).
+            org: Organization name.
+            require_owner: If True, return an error when owner cannot be determined.
+
+        Returns:
+            Tuple of (repo_ref, error_message). repo_ref always returned; error_message
+            is None when resolution succeeded, otherwise contains a hint for callers.
+        """
+
+        if "/" in repo_name:
+            return repo_name, None
+
+        if org:
+            return f"{org}/{repo_name}", None
+
+        username: str | None = self._get_authenticated_username()
+        if username:
+            return f"{username}/{repo_name}", None
+
+        hint = (
+            "Unable to determine authenticated GitHub username. Provide the full "
+            "owner/repo in --repo-name (e.g., owner-name/your-repo) or supply --org "
+            "to target an organization."
+        )
+
+        if require_owner:
+            return repo_name, hint
+
+        return repo_name, hint
 
     def build_create_command(  # noqa: PLR0913
         self,
@@ -219,7 +277,8 @@ class GitHubClient:
             return False
 
         try:
-            repo_ref: str = f"{org}/{repo_name}" if org else repo_name
+            repo_ref, _ = self._resolve_repo_ref(repo_name, org)
+
             result: subprocess.CompletedProcess[str] = run_subprocess(
                 ["gh", "repo", "view", repo_ref], check=False)
             return result.returncode == 0
@@ -279,7 +338,8 @@ class GitHubClient:
                     break
 
             # Check if all required scopes are present
-            missing: list[str] = [s for s in required_scopes if s not in result["scopes"]]
+            missing: list[str] = [
+                s for s in required_scopes if s not in result["scopes"]]
             result["missing_scopes"] = missing
             result["has_scopes"] = len(missing) == 0
 
@@ -401,23 +461,13 @@ class GitHubClient:
         Returns:
             Result dictionary.
         """
-        # Build repository reference
-        repo_ref: str
-        if org:
-            repo_ref = f"{org}/{repo_name}"
-        else:
-            # Get authenticated user
-            user_result: subprocess.CompletedProcess[str] = run_subprocess(
-                ["gh", "api", "user", "--jq", ".login"],
-                check=False,
-            )
-            if user_result.returncode != 0:
-                return {
-                    "success": False,
-                    "error": f"Failed to get authenticated user: {user_result.stderr}",
-                }
-            username: str = user_result.stdout.strip()
-            repo_ref = f"{username}/{repo_name}"
+        repo_ref, ref_error = self._resolve_repo_ref(
+            repo_name, org, require_owner=True)
+        if ref_error:
+            return {
+                "success": False,
+                "error": ref_error,
+            }
 
         cmd: list[str] = ["gh", "repo", "edit", repo_ref, "--template"]
         return self.execute_command(cmd)
@@ -491,8 +541,7 @@ class GitHubClient:
         remote_url: str,
         *,
         branch: str = "main",
-        force: bool = False,
-        force_with_lease: bool = False,
+        force: bool = True,
     ) -> None:
         """Push local workspace to a remote.
 
@@ -500,9 +549,24 @@ class GitHubClient:
             workspace: Workspace directory.
             remote_url: Remote repository URL.
             branch: Branch name to push.
-            force: Whether to force push (destructive).
-            force_with_lease: Whether to force-with-lease push (safer than force).
+            force: Whether to force push (default: True for template updates).
         """
+        # Ensure the local branch is named correctly (rename current branch if needed)
+        current_branch_result = run_subprocess(
+            ["git", "branch", "--show-current"],
+            cwd=workspace,
+            check=False,
+        )
+        current_branch = (current_branch_result.stdout or "").strip()
+
+        if current_branch and current_branch != branch:
+            # Rename the current branch to the target branch
+            run_subprocess(
+                ["git", "branch", "-M", branch],
+                cwd=workspace,
+                check=True,
+            )
+
         # Ensure we replace any existing origin to avoid failures
         run_subprocess(["git", "remote", "remove", "origin"],
                        cwd=workspace, check=False)
@@ -513,22 +577,19 @@ class GitHubClient:
         )
 
         push_cmd: list[str] = ["git", "push", "-u", "origin", branch]
-        if force_with_lease:
-            push_cmd.append("--force-with-lease")
-        elif force:
+        if force:
             push_cmd.append("--force")
 
         run_subprocess(push_cmd, cwd=workspace, check=True)
 
-    def push_to_existing_repository(  # noqa: PLR0913
+    def push_to_existing_repository(
         self,
         repo_name: str,
         workspace: Path,
         *,
         org: str | None = None,
         branch: str = "main",
-        force: bool = False,
-        force_with_lease: bool = False,
+        force: bool = True,
     ) -> ExecResult:
         """Push updated contents into an existing repository.
 
@@ -537,8 +598,7 @@ class GitHubClient:
             workspace: Workspace directory containing files to push.
             org: Organization name (if None, uses user account).
             branch: Branch name to push.
-            force: Whether to force push (destructive).
-            force_with_lease: Whether to force-with-lease push.
+            force: Whether to force push (default: True for template updates).
 
         Returns:
             Result dictionary.
@@ -552,7 +612,23 @@ class GitHubClient:
                 ),
             }
 
-        repo_ref: str = f"{org}/{repo_name}" if org else repo_name
+        repo_ref, ref_error = self._resolve_repo_ref(
+            repo_name, org, require_owner=True)
+        if ref_error:
+            return {
+                "success": False,
+                "error": ref_error,
+            }
+
+        if "/" not in repo_ref:
+            return {
+                "success": False,
+                "error": (
+                    f"Unable to determine the owner for repository '{repo_ref}'. Provide --repo-name as owner/repo "
+                    "or specify --org to target an organization."
+                ),
+            }
+
         remote_url: str = f"https://github.com/{repo_ref}.git"
 
         try:
@@ -563,14 +639,38 @@ class GitHubClient:
                 remote_url,
                 branch=branch,
                 force=force,
-                force_with_lease=force_with_lease,
             )
-            return {"success": True}
+            return {"success": True, "remote_url": remote_url}
+        except subprocess.CalledProcessError as exc:
+            # Provide stdout/stderr so callers can see the underlying failure
+            return {
+                "success": False,
+                "error": self._format_called_process_error(exc),
+                "remote_url": remote_url,
+            }
         except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
             return {
                 "success": False,
                 "error": str(exc),
+                "remote_url": remote_url,
             }
+
+    @staticmethod
+    def _format_called_process_error(exc: subprocess.CalledProcessError) -> str:
+        """Return a verbose error message for subprocess failures.
+
+        Includes stdout/stderr to help users diagnose why the command failed
+        (e.g., authentication issues, permission problems, or branch conflicts).
+        """
+
+        sections: list[str] = [str(exc)]
+
+        if exc.stdout:
+            sections.append(f"stdout:\n{exc.stdout.strip()}")
+        if exc.stderr:
+            sections.append(f"stderr:\n{exc.stderr.strip()}")
+
+        return "\n\n".join(sections)
 
     def _should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
         """Determine if an authentication error was encountered (internal).
@@ -582,7 +682,8 @@ class GitHubClient:
             (result.get("error") or "").lower(),
             (result.get("output") or "").lower(),
         )
-        combined_message: str = " ".join(part for part in message_parts if part)
+        combined_message: str = " ".join(
+            part for part in message_parts if part)
 
         if all(marker in combined_message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS):
             return True
