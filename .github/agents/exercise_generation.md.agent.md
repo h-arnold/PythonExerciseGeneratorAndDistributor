@@ -81,7 +81,7 @@ Policy: When generating exercises the agent **MUST** open **THE ENTIRE FILE** an
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
 ## When asked to create an exercise
-1) Create a TODO using your `todo` to help you organise your work.
+1) Create a TODO using your `manage_todo_list` to help you organise your work.
 
 2) Pick identifiers
 
@@ -349,7 +349,7 @@ def test_lists_basics_examples():
 ## Quick Reference Card
 
 - **Always read the necessary instructions**: Always open and read the entire set of instructions for a given coding exercise type.
-- **Always use your `todo` tool** to plan and track your progress through a task.
+- **Always use your `manage_todo_list` tool** to plan and track your progress through a task.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
 - **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.

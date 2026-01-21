@@ -160,7 +160,7 @@ For FAIL:
 - include which file(s) to change.
 
 ## Recommended workflow
-1) Create a comprehensive TODO list using the `todo` tool to help you track your progress. **You MUST do this**
+1) Create a comprehensive TODO list using the `manage_todo_list` tool to help you track your progress. **You MUST do this**
 2) Identify exercise type + construct from folder path under `exercises/`.
 3) Open the appropriate exercise-type guide in full.
 4) Run the quick script checks (Gates B/C + teacher file presence):
