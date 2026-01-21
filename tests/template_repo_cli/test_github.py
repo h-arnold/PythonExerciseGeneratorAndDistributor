@@ -709,8 +709,10 @@ class TestCheckRepositoryExists:
         """Test check_repository_exists returns True when repository exists."""
         # Mock both gh api user (for username) and gh repo view (for existence check)
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="testuser\n", stderr=""),  # gh api user
-            MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr=""),  # gh repo view
+            MagicMock(returncode=0, stdout="testuser\n",
+                      stderr=""),  # gh api user
+            # gh repo view
+            MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr=""),
         ]
 
         client = GitHubClient()
@@ -734,8 +736,10 @@ class TestCheckRepositoryExists:
         """Test check_repository_exists returns False when repository not found."""
         # Mock both gh api user and gh repo view (which fails)
         mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="testuser\n", stderr=""),  # gh api user
-            MagicMock(returncode=1, stdout="", stderr="repository not found"),  # gh repo view fails
+            MagicMock(returncode=0, stdout="testuser\n",
+                      stderr=""),  # gh api user
+            # gh repo view fails
+            MagicMock(returncode=1, stdout="", stderr="repository not found"),
         ]
 
         client = GitHubClient()

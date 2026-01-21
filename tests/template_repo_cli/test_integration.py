@@ -720,5 +720,3 @@ class TestCliUpdateRepo:
         captured = capsys.readouterr()
         assert "owner" in captured.err.lower()
         assert "owner/repo" in captured.err.lower()
-
-
