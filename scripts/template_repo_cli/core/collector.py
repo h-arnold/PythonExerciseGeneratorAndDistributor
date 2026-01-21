@@ -42,22 +42,18 @@ class FileCollector:
         if not exercise_id:
             raise ValueError("Exercise ID cannot be empty")
 
-        files = {}
-
         # Student notebook (required)
         notebook_path: Path = self.notebooks_dir / f"{exercise_id}.ipynb"
         if not notebook_path.exists():
             raise FileNotFoundError(
                 f"Student notebook not found: {exercise_id}")
-        files["notebook"] = notebook_path
 
         # Test file (required)
         test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
         if not test_path.exists():
             raise FileNotFoundError(f"Test file not found: {exercise_id}")
-        files["test"] = test_path
 
-        return files
+        return ExerciseFiles(notebook=notebook_path, test=test_path)
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:
         """Collect files for multiple exercises.

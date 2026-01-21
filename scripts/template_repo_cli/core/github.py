@@ -270,9 +270,10 @@ class GitHubClient:
                     # Extract the scopes part after "Token scopes:"
                     scopes_part: str = line.split(
                         "Token scopes:", 1)[1].strip()
-                    # Remove quotes and split by comma
+                    # Remove quotes and split by comma, filtering empty strings
                     scopes: list[str] = [
-                        s.strip().strip("'").strip('"') for s in scopes_part.split(",") if s.strip()
+                        stripped for s in scopes_part.split(",")
+                        if (stripped := s.strip().strip("'").strip('"'))
                     ]
                     result["scopes"] = scopes
                     break
@@ -400,9 +401,10 @@ class GitHubClient:
         Returns:
             Result dictionary.
         """
-        # If no org specified, get the authenticated user
+        # Build repository reference
+        repo_ref: str
         if org:
-            repo_ref: str = f"{org}/{repo_name}"
+            repo_ref = f"{org}/{repo_name}"
         else:
             # Get authenticated user
             user_result: subprocess.CompletedProcess[str] = run_subprocess(
@@ -415,7 +417,7 @@ class GitHubClient:
                     "error": f"Failed to get authenticated user: {user_result.stderr}",
                 }
             username: str = user_result.stdout.strip()
-            repo_ref: str = f"{username}/{repo_name}"
+            repo_ref = f"{username}/{repo_name}"
 
         cmd: list[str] = ["gh", "repo", "edit", repo_ref, "--template"]
         return self.execute_command(cmd)
