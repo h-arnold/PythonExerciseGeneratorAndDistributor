@@ -722,55 +722,65 @@ class TestCheckRepositoryExists:
 
         assert result is False
 
+    @patch("subprocess.run")
+    def test_check_repository_exists_respects_dry_run(
+        self, mock_run: MagicMock
+    ) -> None:
+        """Dry-run should not issue subprocess calls."""
 
-class TestForceUpdateRepository:
-    """Tests for force updating an existing repository."""
+        client = GitHubClient(dry_run=True)
+        result = client.check_repository_exists("test-repo")
+
+        assert result is False
+        mock_run.assert_not_called()
+
+
+class TestPushToExistingRepository:
+    """Tests for pushing updates into an existing repository."""
 
     @patch("subprocess.run")
-    def test_force_update_repository_deletes_and_recreates(
+    def test_push_to_existing_repository_dry_run(self, mock_run: MagicMock, temp_dir: Path) -> None:
+        """Dry run should not perform git operations."""
+
+        client = GitHubClient(dry_run=True)
+        result = client.push_to_existing_repository("test-repo", temp_dir)
+
+        assert result["success"] is True
+        assert result.get("dry_run") is True
+        mock_run.assert_not_called()
+
+    @patch("subprocess.run")
+    def test_push_to_existing_repository_force(self, mock_run: MagicMock, temp_dir: Path) -> None:
+        """Force push should include --force flag."""
+
+        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+
+        (temp_dir / "README.md").write_text("Test")
+
+        client = GitHubClient()
+        result = client.push_to_existing_repository(
+            "test-repo", temp_dir, branch="dev", force=True
+        )
+
+        assert result["success"] is True
+        calls = " ".join(str(c) for c in mock_run.call_args_list)
+        assert "push" in calls
+        assert "--force" in calls
+        assert "dev" in calls
+
+    @patch("subprocess.run")
+    def test_push_to_existing_repository_force_with_lease(
         self, mock_run: MagicMock, temp_dir: Path
     ) -> None:
-        """Test force_update_repository deletes and recreates repository."""
+        """Force-with-lease push should include the appropriate flag."""
+
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
 
         client = GitHubClient()
-        result = client.force_update_repository("test-repo", temp_dir)
+        result = client.push_to_existing_repository(
+            "test-repo", temp_dir, force_with_lease=True
+        )
 
         assert result["success"] is True
-        # Verify gh repo delete was called
-        delete_calls = [
-            c for c in mock_run.call_args_list if "delete" in str(c) and "gh" in str(c)
-        ]
-        assert len(delete_calls) > 0
-
-    @patch("subprocess.run")
-    def test_force_update_repository_with_org(
-        self, mock_run: MagicMock, temp_dir: Path
-    ) -> None:
-        """Test force_update_repository with organization."""
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
-
-        client = GitHubClient()
-        result = client.force_update_repository("test-repo", temp_dir, org="my-org")
-
-        assert result["success"] is True
-        # Verify delete was called with org prefix
-        delete_calls = [
-            c for c in mock_run.call_args_list if "delete" in str(c) and "my-org/test-repo" in str(c)
-        ]
-        assert len(delete_calls) > 0
-
-    @patch("subprocess.run")
-    def test_force_update_repository_handles_delete_failure(
-        self, mock_run: MagicMock, temp_dir: Path
-    ) -> None:
-        """Test force_update_repository handles delete failures."""
-        mock_run.side_effect = [
-            MagicMock(returncode=1, stdout="", stderr="Failed to delete repository"),
-        ]
-
-        client = GitHubClient()
-        result = client.force_update_repository("test-repo", temp_dir)
-
-        assert result["success"] is False
-        assert "error" in result
+        calls = " ".join(str(c) for c in mock_run.call_args_list)
+        assert "--force-with-lease" in calls

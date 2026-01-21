@@ -182,15 +182,14 @@ class GitHubClient:
         Returns:
             True if repository exists, False otherwise.
         """
-        try:
-            # Build repository reference
-            if org:
-                repo_ref = f"{org}/{repo_name}"
-            else:
-                repo_ref = repo_name
+        if self.dry_run:
+            # Avoid network calls in dry-run; assume absent so callers can decide how to proceed
+            return False
 
-            # Use gh repo view to check if repository exists
-            result = run_subprocess(["gh", "repo", "view", repo_ref], check=False)
+        try:
+            repo_ref = f"{org}/{repo_name}" if org else repo_name
+            result = run_subprocess(
+                ["gh", "repo", "view", repo_ref], check=False)
             return result.returncode == 0
         except (FileNotFoundError, OSError):
             return False
@@ -510,26 +509,92 @@ class GitHubClient:
                 f"git commit failed:\nstdout: {commit_result.stdout}\nstderr: {commit_result.stderr}"
             )
 
-    def push_to_remote(self, workspace: Path, remote_url: str) -> None:
-        """Push to remote.
+    def push_to_remote(
+        self,
+        workspace: Path,
+        remote_url: str,
+        *,
+        branch: str = "main",
+        force: bool = False,
+        force_with_lease: bool = False,
+    ) -> None:
+        """Push local workspace to a remote.
 
         Args:
             workspace: Workspace directory.
             remote_url: Remote repository URL.
+            branch: Branch name to push.
+            force: Whether to force push (destructive).
+            force_with_lease: Whether to force-with-lease push (safer than force).
         """
-        # Add remote
+        # Ensure we replace any existing origin to avoid failures
+        run_subprocess(["git", "remote", "remove", "origin"],
+                       cwd=workspace, check=False)
         run_subprocess(
             ["git", "remote", "add", "origin", remote_url],
             cwd=workspace,
             check=True,
         )
 
-        # Push
-        run_subprocess(
-            ["git", "push", "-u", "origin", "main"],
-            cwd=workspace,
-            check=True,
-        )
+        push_cmd = ["git", "push", "-u", "origin", branch]
+        if force_with_lease:
+            push_cmd.append("--force-with-lease")
+        elif force:
+            push_cmd.append("--force")
+
+        run_subprocess(push_cmd, cwd=workspace, check=True)
+
+    def push_to_existing_repository(
+        self,
+        repo_name: str,
+        workspace: Path,
+        *,
+        org: str | None = None,
+        branch: str = "main",
+        force: bool = False,
+        force_with_lease: bool = False,
+    ) -> dict[str, Any]:
+        """Push updated contents into an existing repository.
+
+        Args:
+            repo_name: Repository name.
+            workspace: Workspace directory containing files to push.
+            org: Organization name (if None, uses user account).
+            branch: Branch name to push.
+            force: Whether to force push (destructive).
+            force_with_lease: Whether to force-with-lease push.
+
+        Returns:
+            Result dictionary.
+        """
+        if self.dry_run:
+            return {
+                "success": True,
+                "dry_run": True,
+                "message": (
+                    "Dry run - repository would be updated via push"
+                ),
+            }
+
+        repo_ref = f"{org}/{repo_name}" if org else repo_name
+        remote_url = f"https://github.com/{repo_ref}.git"
+
+        try:
+            self.init_git_repo(workspace)
+            self.commit_files(workspace, "Update template contents")
+            self.push_to_remote(
+                workspace,
+                remote_url,
+                branch=branch,
+                force=force,
+                force_with_lease=force_with_lease,
+            )
+            return {"success": True}
+        except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
+            return {
+                "success": False,
+                "error": str(exc),
+            }
 
     def _should_retry_with_fresh_auth(self, result: dict[str, Any]) -> bool:
         """Determine if an authentication error was encountered."""
