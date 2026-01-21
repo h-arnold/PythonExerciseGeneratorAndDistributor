@@ -13,7 +13,7 @@
 
 ## Teacher notes
 - Created: 2026-01-09
-- Target concepts: 
+- Target concepts:
   - Basic `print()` statements
   - String output
   - Simple arithmetic operations (+, -, *, /)

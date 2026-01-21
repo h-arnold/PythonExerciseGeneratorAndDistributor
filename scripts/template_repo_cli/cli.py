@@ -207,7 +207,8 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
         traceback.print_exception(
             type(copy_error), copy_error, copy_error.__traceback__, file=sys.stderr
         )
-        print(f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
+        print(
+            f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
         print(f"Workspace preserved at: {workspace}", file=sys.stderr)
         return 1
 
@@ -216,7 +217,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
     return 0
 
 
-def _build_template_package(
+def _build_template_package(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
     files: dict,
@@ -323,7 +324,10 @@ def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
 
     exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
     if exists_hint:
-        return f"{error_msg}\n\n{exists_hint}"
+        return (
+            f"{error_msg}\n\n{exists_hint}\n"
+            "Use the update-repo command to push new contents to the existing repository."
+        )
 
     return error_msg
 
@@ -412,6 +416,38 @@ def _prepare_exercises(
     return exercises, files
 
 
+def _initialize_components(
+    args: argparse.Namespace,
+) -> tuple[Path, ExerciseSelector, FileCollector, TemplatePackager, GitHubClient]:
+    """Initialize shared CLI components for packaging and GitHub interactions."""
+
+    repo_root = get_repo_root()
+    selector = ExerciseSelector(repo_root)
+    collector = FileCollector(repo_root)
+    packager = TemplatePackager(repo_root)
+    github = GitHubClient(dry_run=args.dry_run)
+    return repo_root, selector, collector, packager, github
+
+
+def _prepare_workspace(
+    args: argparse.Namespace,
+    selector: ExerciseSelector,
+    collector: FileCollector,
+    packager: TemplatePackager,
+) -> tuple[Path | None, list[str] | None, dict | None]:
+    """Select exercises, collect files, and create a workspace."""
+
+    exercises, files = _prepare_exercises(args, selector, collector)
+    if exercises is None or files is None:
+        return None, None, None
+
+    workspace = packager.create_workspace()
+    if args.verbose:
+        print(f"Created workspace: {workspace}")
+
+    return workspace, exercises, files
+
+
 def _handle_repository_creation(
     args: argparse.Namespace,
     github: GitHubClient,
@@ -446,6 +482,101 @@ def _handle_repository_creation(
     return 0
 
 
+def _remote_url_missing_owner(remote_url: str | None) -> bool:
+    """Return True when a Git remote URL is missing the owner segment."""
+
+    if not remote_url:
+        return False
+
+    path = remote_url
+
+    if "github.com/" in path:
+        path = path.split("github.com/", 1)[1]
+    elif ":" in path:
+        # Handle git@github.com:owner/repo.git style remotes
+        path = path.split(":", 1)[-1]
+
+    path = path.removesuffix(".git").strip("/")
+    if not path:
+        return True
+
+    return "/" not in path
+
+
+def _handle_repository_update(
+    args: argparse.Namespace,
+    github: GitHubClient,
+    workspace: Path,
+    packager: TemplatePackager,
+    exercises: list[str],
+) -> int:
+    """Handle updating an existing repository via push.
+
+    Args:
+        args: Parsed command-line arguments.
+        github: GitHubClient instance.
+        workspace: Workspace directory.
+        packager: TemplatePackager instance.
+        exercises: List of exercise IDs.
+
+    Returns:
+        Exit code (0 for success, 1 for failure).
+    """
+    if args.dry_run:
+        print(f"[DRY RUN] Would update repository: {args.repo_name}")
+        print(f"[DRY RUN] Workspace: {workspace}")
+        print(f"[DRY RUN] Exercises: {', '.join(exercises)}")
+        print(f"[DRY RUN] Branch: {args.branch}")
+        print("[DRY RUN] Push mode: force push (default)")
+        return 0
+
+    prereq_error = _check_github_prerequisites(github)
+    if prereq_error:
+        print(prereq_error, file=sys.stderr)
+        packager.cleanup(workspace)
+        return 1
+
+    if not github.check_repository_exists(args.repo_name, org=args.org):
+        print(
+            f"Error: Repository '{args.repo_name}' does not exist. "
+            "Run the create command first to create it.",
+            file=sys.stderr,
+        )
+        packager.cleanup(workspace)
+        return 1
+
+    result = github.push_to_existing_repository(
+        args.repo_name,
+        workspace,
+        org=args.org,
+        branch=args.branch,
+        force=True,  # Always force push for template updates
+    )
+
+    if not result.get("success"):
+        error = result.get("error", "Unknown error")
+        lines = [f"Error updating repository: {error}"]
+
+        remote_url = result.get("remote_url")
+        missing_owner = _remote_url_missing_owner(remote_url)
+        if remote_url:
+            lines.append(f"Push target: {remote_url} (branch: {args.branch})")
+
+        # Only show owner/repo hint if that's actually the problem
+        if missing_owner:
+            lines.append(
+                "The push URL does not include an owner segment. Re-run with --repo-name in the "
+                "form owner/repo (e.g., h-arnold/your-repo) or provide --org to target an organization."
+            )
+
+        print("\n".join(lines), file=sys.stderr)
+        packager.cleanup(workspace)
+        return 1
+
+    print(f"✓ Updated repository: {args.repo_name}")
+    return 0
+
+
 def _finalize_workspace(
     args: argparse.Namespace,
     workspace: Path,
@@ -468,7 +599,7 @@ def _finalize_workspace(
         return _handle_output_directory(workspace, args.output_dir, packager)
 
 
-def _execute_template_creation(
+def _execute_template_creation(  # noqa: PLR0913
     args: argparse.Namespace,
     workspace: Path,
     packager: TemplatePackager,
@@ -500,7 +631,8 @@ def _execute_template_creation(
             return 1
 
         # Create GitHub repository
-        result = _handle_repository_creation(args, github, workspace, packager, exercises)
+        result = _handle_repository_creation(
+            args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -523,6 +655,43 @@ def _execute_template_creation(
         return 1
 
 
+def _execute_template_update(  # noqa: PLR0913
+    args: argparse.Namespace,
+    workspace: Path,
+    packager: TemplatePackager,
+    github: GitHubClient,
+    files: dict,
+    exercises: list[str],
+) -> int:
+    """Execute the template update workflow (push into existing repo)."""
+    try:
+        template_name = args.name or f"{args.repo_name} Exercises"
+        if not _build_template_package(
+            workspace, packager, files, template_name, exercises, args.verbose
+        ):
+            print("Error: Package validation failed", file=sys.stderr)
+            packager.cleanup(workspace)
+            return 1
+
+        result = _handle_repository_update(
+            args, github, workspace, packager, exercises)
+        if result != 0:
+            return result
+
+        return _finalize_workspace(args, workspace, packager)
+
+    except (FileNotFoundError, ValueError, RuntimeError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        packager.cleanup(workspace)
+        return 1
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        if args.verbose:
+            traceback.print_exc()
+        packager.cleanup(workspace)
+        return 1
+
+
 def create_command(args: argparse.Namespace) -> int:
     """Handle create command.
 
@@ -532,9 +701,46 @@ def create_command(args: argparse.Namespace) -> int:
     Returns:
         Exit code (0 for success).
     """
-    repo_root = get_repo_root()
+    if not validate_repo_name(args.repo_name, allow_owner_prefix=True):
+        if "/" in args.repo_name:
+            owner, _, name = args.repo_name.partition("/")
+            if not owner or not name:
+                message = (
+                    f"Invalid repo name: {args.repo_name!r}. Provide it in the form owner/repo "
+                    "using lowercase letters, numbers, hyphens, or underscores."
+                )
+            else:
+                message = (
+                    f"Invalid repo name: {args.repo_name!r}. When specifying owner/repo, both parts must "
+                    "be lowercase and may only contain numbers, hyphens, or underscores."
+                )
+        else:
+            suggestion = sanitize_repo_name(args.repo_name)
+            message = f"Invalid repo name: {args.repo_name!r}."
+            if suggestion:
+                message += f" Suggested: {suggestion!r}."
+        print(message, file=sys.stderr)
+        return 1
 
-    if not validate_repo_name(args.repo_name):
+    repo_root, selector, collector, packager, github = _initialize_components(
+        args)
+
+    if args.verbose:
+        print(f"Repository root: {repo_root}")
+
+    workspace, exercises, files = _prepare_workspace(
+        args, selector, collector, packager)
+    if workspace is None or exercises is None or files is None:
+        return 1
+
+    # Execute template creation
+    return _execute_template_creation(args, workspace, packager, github, files, exercises)
+
+
+def update_repo_command(args: argparse.Namespace) -> int:
+    """Handle update-repo command to push new contents to an existing repository."""
+
+    if not validate_repo_name(args.repo_name, allow_owner_prefix=True):
         suggestion = sanitize_repo_name(args.repo_name)
         message = f"Invalid repo name: {args.repo_name!r}."
         if suggestion:
@@ -542,27 +748,18 @@ def create_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
+    repo_root, selector, collector, packager, github = _initialize_components(
+        args)
+
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    # Initialize components
-    selector = ExerciseSelector(repo_root)
-    collector = FileCollector(repo_root)
-    packager = TemplatePackager(repo_root)
-    github = GitHubClient(dry_run=args.dry_run)
-
-    # Prepare exercises and files
-    exercises, files = _prepare_exercises(args, selector, collector)
-    if exercises is None or files is None:
+    workspace, exercises, files = _prepare_workspace(
+        args, selector, collector, packager)
+    if workspace is None or exercises is None or files is None:
         return 1
 
-    # Create workspace
-    workspace = packager.create_workspace()
-    if args.verbose:
-        print(f"Created workspace: {workspace}")
-
-    # Execute template creation
-    return _execute_template_creation(args, workspace, packager, github, files, exercises)
+    return _execute_template_update(args, workspace, packager, github, files, exercises)
 
 
 def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
@@ -711,18 +908,26 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Build and validate without executing gh commands",
     )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
-    parser.add_argument("--output-dir", type=str, help="Local output directory (default: temp)")
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Show detailed progress")
+    parser.add_argument("--output-dir", type=str,
+                        help="Local output directory (default: temp)")
 
     # Subcommands
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+    subparsers = parser.add_subparsers(
+        dest="command", help="Command to execute")
 
     # Create command
-    create_parser = subparsers.add_parser("create", help="Create template repository")
-    create_parser.add_argument("--construct", nargs="+", help="One or more constructs")
-    create_parser.add_argument("--type", nargs="+", help="One or more exercise types")
-    create_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
-    create_parser.add_argument("--name", type=str, help="Template repository name/description")
+    create_parser = subparsers.add_parser(
+        "create", help="Create template repository")
+    create_parser.add_argument(
+        "--construct", nargs="+", help="One or more constructs")
+    create_parser.add_argument(
+        "--type", nargs="+", help="One or more exercise types")
+    create_parser.add_argument(
+        "--notebooks", nargs="+", help="Specific notebook patterns")
+    create_parser.add_argument(
+        "--name", type=str, help="Template repository name/description")
     create_parser.add_argument(
         "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
     )
@@ -747,8 +952,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # List command
-    list_parser = subparsers.add_parser("list", help="List available exercises")
-    list_parser.add_argument("--construct", type=str, help="Filter by construct")
+    list_parser = subparsers.add_parser(
+        "list", help="List available exercises")
+    list_parser.add_argument("--construct", type=str,
+                             help="Filter by construct")
     list_parser.add_argument("--type", type=str, help="Filter by type")
     list_parser.add_argument(
         "--format",
@@ -758,10 +965,38 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate selection")
-    validate_parser.add_argument("--construct", nargs="+", help="Filter by construct")
+    validate_parser = subparsers.add_parser(
+        "validate", help="Validate selection")
+    validate_parser.add_argument(
+        "--construct", nargs="+", help="Filter by construct")
     validate_parser.add_argument("--type", nargs="+", help="Filter by type")
-    validate_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    validate_parser.add_argument(
+        "--notebooks", nargs="+", help="Specific notebook patterns")
+
+    # Update command
+    update_parser = subparsers.add_parser(
+        "update-repo", help="Update an existing template repository by pushing new contents"
+    )
+    update_parser.add_argument(
+        "--construct", nargs="+", help="One or more constructs")
+    update_parser.add_argument(
+        "--type", nargs="+", help="One or more exercise types")
+    update_parser.add_argument(
+        "--notebooks", nargs="+", help="Specific notebook patterns")
+    update_parser.add_argument(
+        "--name", type=str, help="Template repository name/description")
+    update_parser.add_argument(
+        "--repo-name",
+        type=str,
+        required=True,
+        help="GitHub repository name (slug or owner/repo)",
+    )
+    update_parser.add_argument(
+        "--org", type=str, help="Target organization (default: user account)"
+    )
+    update_parser.add_argument(
+        "--branch", type=str, default="main", help="Branch to push updates to (default: main)"
+    )
 
     # Parse arguments
     args = parser.parse_args(argv)
@@ -769,6 +1004,8 @@ def main(argv: list[str] | None = None) -> int:
     # Execute command
     if args.command == "create":
         return create_command(args)
+    elif args.command == "update-repo":
+        return update_repo_command(args)
     elif args.command == "list":
         return list_command(args)
     elif args.command == "validate":

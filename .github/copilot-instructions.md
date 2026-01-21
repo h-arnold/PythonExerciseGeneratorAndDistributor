@@ -8,16 +8,19 @@ This repository provides notebook-based Python exercises with automated grading 
 
 **Core concept**: Students work in Jupyter notebooks, writing code in metadata-tagged cells. The grading system extracts and executes these tagged cells using pytest, enabling automated feedback.
 
+**Note on the Python environment**: This repository uses the `uv` tool to manage the Python environment. Use `uv sync` to create/update the project's virtual environment and run Python-related work through `uv` (or by activating the created `.venv` with `source .venv/bin/activate`). Avoid manipulating system Python or creating other virtual environments outside of `uv` so tests and tooling remain consistent.
+
 ## Quick Reference
 
 **For exercise creation**: Use the exercise generation custom agent (`.github/agents/exercise_generation.md.agent.md`)
 
-**Documentation**:
-- [Project Structure](../docs/project-structure.md) - Repository organisation and file layout
-- [Testing Framework](../docs/testing-framework.md) - How the grading system works
-- [Exercise Generation CLI](../docs/exercise-generation-cli.md) - Instructions for using the exercise generation CLI tool to scaffold new Python exercises
-- [Setup Guide](../docs/setup.md) - Installation and configuration
-- [Development Guide](../docs/development.md) - Contributing and maintenance
+**Documentation (fetch on demand)**: Only read these files when a question specifically requires detailed information. Use `read_file` to fetch the exact file needed.
+
+- `docs/project-structure.md` — project layout and file conventions
+- `docs/testing-framework.md` — how the grading and test system works
+- `docs/exercise-generation-cli.md` — CLI for scaffolding new exercises
+- `docs/setup.md` — installation and environment setup
+- `docs/development.md` — contributor and development guidelines
 
 ## Repository Structure
 
@@ -48,7 +51,9 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
 
-The same tests run against both sets. When you are developing or validating tests, prefer running them against the solution notebooks by default so you can verify the tests and instructor solutions:
+The same tests run against both sets. 
+
+**IMPORTANT NOTE:** Always run the *Development* tests unless you are creating or verifying jupyter notebook exercises. The tests for the students notebooks are designed to fail until they are completed with the correct code.
 
 - Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
 - Student grading: run `pytest -q` (tests the student notebooks)
@@ -56,6 +61,17 @@ The same tests run against both sets. When you are developing or validating test
 > Note: When using the `uv`-managed environment, running `pytest -q` will use the virtual environment created by `uv sync`.
 
 ## Coding Standards
+
+### Concise Standards (derived from lint + tidy review)
+
+- Python 3.11+; use modern type hints (e.g., `list[str]`).
+- Docstrings required for public functions.
+- Keep logic simple (KISS): low complexity, shallow nesting, short functions.
+- Avoid duplication (DRY): extract shared helpers when logic repeats.
+- No dead code: remove unused imports/vars; no commented-out code.
+- Deterministic, fast tests: no randomness, time, or network.
+- Prefer stdlib; avoid new deps unless necessary and justified.
+- Match Ruff rules in `pyproject.toml` (E/F/W/I/UP/B/C90/LOG/PIE/RUF/SIM/PLR).
 
 ### Python Style (for infrastructure code, not student exercises)
 
@@ -83,20 +99,15 @@ Student exercise code in notebooks may omit these standards as exercises are des
 ## Common Commands
 
 ```bash
-# Create new exercise
-python scripts/new_exercise.py ex042 "Title" --slug slug_name
+# Enable venv - it doesn't automatically activate in your terminal instances for some reason
+source .venv/bin/activate
 
 # Run tests
-pytest -q
-
-# Test solutions
-scripts/verify_solutions.sh -q
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
 
 # Lint code
-ruff check .
+ruff check . --fix
 
-# Start Jupyter
-jupyter lab
 ```
 
 ## When Asked to Create Exercises

@@ -131,14 +131,14 @@ Public functions must have docstrings:
 ```python
 def exec_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> dict[str, Any]:
     """Execute tagged code cells and return the resulting namespace.
-    
+
     Args:
         notebook_path: Path to the .ipynb file
         tag: Cell metadata tag to extract and execute (default: "student")
-        
+
     Returns:
         Dictionary containing the execution namespace
-        
+
     Raises:
         NotebookGradingError: If extraction or execution fails
     """
@@ -152,10 +152,10 @@ All new features must include tests:
 def test_new_feature():
     # Arrange
     input_data = ...
-    
+
     # Act
     result = function_under_test(input_data)
-    
+
     # Assert
     assert result == expected_value
 ```

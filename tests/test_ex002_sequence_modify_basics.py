@@ -8,26 +8,40 @@ import pytest
 
 from tests.notebook_grader import exec_tagged_code
 
+# Named constants to avoid magic numbers flagged by linters
+EXPECTED_15 = 15
+NOT_ADDITION_5_3 = 8
+EXPECTED_WORDS = 3
+EXPECTED_LINES = 3
+LAST_LINE_WORDS = 2
+DIV_EXPECTED = 5.0
+MULT_EXPECTED_24 = 24
+NOT_ADDITION_2_3_4 = 9
+EXPECTED_RESULT_7 = 7
+MIN_SPACES = 3
+
 
 def _run_and_capture(tag: str) -> str:
     """Execute the tagged cell and capture its print output."""
     # Capture stdout
     old_stdout = sys.stdout
     sys.stdout = buffer = io.StringIO()
-    
+
     try:
-        exec_tagged_code('notebooks/ex002_sequence_modify_basics.ipynb', tag=tag)
+        exec_tagged_code(
+            'notebooks/ex002_sequence_modify_basics.ipynb', tag=tag)
         output = buffer.getvalue()
     finally:
         sys.stdout = old_stdout
-    
+
     return output
 
 
 # Exercise 1: Change greeting from "Hello World!" to "Hello Python!"
 def test_exercise1_prints_hello_python():
     output = _run_and_capture('exercise1')
-    assert output.strip() == "Hello Python!", f"Expected 'Hello Python!' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "Hello Python!", f"Expected 'Hello Python!' but got {output.strip()!r}"
 
 
 def test_exercise1_single_line():
@@ -44,7 +58,8 @@ def test_exercise1_exact_match():
 # Exercise 2: Change school name to "Bassaleg School"
 def test_exercise2_prints_bassaleg():
     output = _run_and_capture('exercise2')
-    assert output.strip() == "I go to Bassaleg School", f"Expected 'I go to Bassaleg School' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "I go to Bassaleg School", f"Expected 'I go to Bassaleg School' but got {output.strip()!r}"
 
 
 def test_exercise2_contains_school():
@@ -61,25 +76,27 @@ def test_exercise2_single_line():
 # Exercise 3: Change addition to multiplication (5 * 3 = 15)
 def test_exercise3_prints_15():
     output = _run_and_capture('exercise3')
-    assert output.strip() == "15", f"Expected '15' but got {output.strip()!r}"
+    assert output.strip() == str(
+        EXPECTED_15), f"Expected '{EXPECTED_15}' but got {output.strip()!r}"
 
 
 def test_exercise3_is_multiplication():
     output = _run_and_capture('exercise3')
     value = int(output.strip())
-    assert value == 15, "5 * 3 should equal 15"
+    assert value == EXPECTED_15, "5 * 3 should equal 15"
 
 
 def test_exercise3_not_addition():
     output = _run_and_capture('exercise3')
     value = int(output.strip())
-    assert value != 8, "Should not be addition (5 + 3 = 8)"
+    assert value != NOT_ADDITION_5_3, "Should not be addition (5 + 3 = 8)"
 
 
 # Exercise 4: Concatenate "Good Morning Everyone"
 def test_exercise4_prints_good_morning():
     output = _run_and_capture('exercise4')
-    assert output.strip() == "Good Morning Everyone", f"Expected 'Good Morning Everyone' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "Good Morning Everyone", f"Expected 'Good Morning Everyone' but got {output.strip()!r}"
 
 
 def test_exercise4_has_spaces():
@@ -90,13 +107,14 @@ def test_exercise4_has_spaces():
 def test_exercise4_three_words():
     output = _run_and_capture('exercise4')
     words = output.strip().split()
-    assert len(words) == 3, "Should contain exactly 3 words"
+    assert len(words) == EXPECTED_WORDS, "Should contain exactly 3 words"
 
 
 # Exercise 5: Division 10 / 2 = 5.0
 def test_exercise5_prints_5_point_0():
     output = _run_and_capture('exercise5')
-    assert output.strip() == "5.0", f"Expected '5.0' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "5.0", f"Expected '5.0' but got {output.strip()!r}"
 
 
 def test_exercise5_is_division():
@@ -114,7 +132,8 @@ def test_exercise5_is_float():
 def test_exercise6_three_lines():
     output = _run_and_capture('exercise6')
     lines = [line for line in output.strip().split('\n') if line]
-    assert len(lines) == 3, f"Expected 3 lines but got {len(lines)}"
+    assert len(
+        lines) == EXPECTED_LINES, f"Expected {EXPECTED_LINES} lines but got {len(lines)}"
 
 
 def test_exercise6_correct_content():
@@ -122,20 +141,22 @@ def test_exercise6_correct_content():
     lines = [line.strip() for line in output.strip().split('\n') if line]
     assert lines[0] == "Learning", f"First line should be 'Learning' but got {lines[0]!r}"
     assert lines[1] == "to", f"Second line should be 'to' but got {lines[1]!r}"
-    assert lines[2] == "code rocks", f"Third line should be 'code rocks' but got {lines[2]!r}"
+    assert lines[
+        2] == "code rocks", f"Third line should be 'code rocks' but got {lines[2]!r}"
 
 
 def test_exercise6_last_line_two_words():
     output = _run_and_capture('exercise6')
     lines = [line.strip() for line in output.strip().split('\n') if line]
     last_words = lines[2].split()
-    assert len(last_words) == 2, "Last line should contain two words"
+    assert len(last_words) == LAST_LINE_WORDS, "Last line should contain two words"
 
 
 # Exercise 7: Concatenation "The result is 100"
 def test_exercise7_prints_result_100():
     output = _run_and_capture('exercise7')
-    assert output.strip() == "The result is 100", f"Expected 'The result is 100' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "The result is 100", f"Expected 'The result is 100' but got {output.strip()!r}"
 
 
 def test_exercise7_contains_100():
@@ -151,32 +172,36 @@ def test_exercise7_contains_result():
 # Exercise 8: Multiplication 2 * 3 * 4 = 24
 def test_exercise8_prints_24():
     output = _run_and_capture('exercise8')
-    assert output.strip() == "24", f"Expected '24' but got {output.strip()!r}"
+    assert output.strip() == str(
+        MULT_EXPECTED_24), f"Expected '{MULT_EXPECTED_24}' but got {output.strip()!r}"
 
 
 def test_exercise8_is_multiplication():
     output = _run_and_capture('exercise8')
     value = int(output.strip())
-    assert value == 24, "2 * 3 * 4 should equal 24"
+    assert value == MULT_EXPECTED_24, "2 * 3 * 4 should equal 24"
 
 
 def test_exercise8_not_addition():
     output = _run_and_capture('exercise8')
     value = int(output.strip())
-    assert value != 9, "Should not be addition (2 + 3 + 4 = 9)"
+    assert value != NOT_ADDITION_2_3_4, "Should not be addition (2 + 3 + 4 = 9)"
 
 
 # Exercise 9: Two lines - "10 minus 3 equals" and "7"
 def test_exercise9_two_lines():
     output = _run_and_capture('exercise9')
     lines = [line for line in output.strip().split('\n') if line]
-    assert len(lines) == 2, f"Expected 2 lines but got {len(lines)}"
+    EXPECTED_TWO_LINES = 2
+    assert len(
+        lines) == EXPECTED_TWO_LINES, f"Expected {EXPECTED_TWO_LINES} lines but got {len(lines)}"
 
 
 def test_exercise9_correct_content():
     output = _run_and_capture('exercise9')
     lines = [line.strip() for line in output.strip().split('\n') if line]
-    assert lines[0] == "10 minus 3 equals", f"First line should be '10 minus 3 equals' but got {lines[0]!r}"
+    assert lines[
+        0] == "10 minus 3 equals", f"First line should be '10 minus 3 equals' but got {lines[0]!r}"
     assert lines[1] == "7", f"Second line should be '7' but got {lines[1]!r}"
 
 
@@ -184,18 +209,20 @@ def test_exercise9_calculation_correct():
     output = _run_and_capture('exercise9')
     lines = [line.strip() for line in output.strip().split('\n') if line]
     result = int(lines[1])
-    assert result == 7, "10 - 3 should equal 7"
+    assert result == EXPECTED_RESULT_7, "10 - 3 should equal 7"
 
 
 # Exercise 10: Concatenation "Welcome to Python programming!"
 def test_exercise10_prints_welcome():
     output = _run_and_capture('exercise10')
-    assert output.strip() == "Welcome to Python programming!", f"Expected 'Welcome to Python programming!' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "Welcome to Python programming!", f"Expected 'Welcome to Python programming!' but got {output.strip()!r}"
 
 
 def test_exercise10_has_spaces():
     output = _run_and_capture('exercise10')
-    assert output.count(" ") >= 3, "Should have multiple spaces between words"
+    assert output.count(
+        " ") >= MIN_SPACES, "Should have multiple spaces between words"
 
 
 def test_exercise10_ends_with_exclamation():
@@ -212,4 +239,3 @@ def test_exercise_cells_execute(tag: str) -> None:
     """Verify each tagged cell executes without error."""
     output = _run_and_capture(tag)
     assert output is not None, f"{tag} should produce output"
-

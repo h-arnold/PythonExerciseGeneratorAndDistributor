@@ -117,7 +117,8 @@ class TestSelectBySpecificNotebooks:
             ["ex001_sanity", "ex002_sequence_modify_basics"]
         )
 
-        assert len(exercises) == 2
+        EXPECTED_SELECTION_COUNT = 2
+        assert len(exercises) == EXPECTED_SELECTION_COUNT
 
     def test_select_nonexistent_notebook(self, repo_root: Path) -> None:
         """Test selecting nonexistent notebook raises ValueError."""

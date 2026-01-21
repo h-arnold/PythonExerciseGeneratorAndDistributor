@@ -30,7 +30,7 @@ class TestEndToEndSingleConstruct:
                 "test-repo",
             ]
         )
-        
+
         # Should succeed in dry-run mode
         assert result == 0
 
@@ -56,7 +56,7 @@ class TestEndToEndMultipleConstructs:
                 "test-repo",
             ]
         )
-        
+
         # Should succeed (sequence construct has exercises)
         assert result == 0
 
@@ -81,7 +81,7 @@ class TestEndToEndSpecificNotebooks:
                 "test-repo",
             ]
         )
-        
+
         assert result == 0
 
 
@@ -105,7 +105,7 @@ class TestEndToEndWithPattern:
                 "test-repo",
             ]
         )
-        
+
         assert result == 0
 
 
@@ -127,7 +127,7 @@ class TestEndToEndDryRun:
                 "test-repo",
             ]
         )
-        
+
         assert result == 0
         # In dry run, subprocess should not be called for gh commands
         # (but might be called for other things like git operations in tests)
@@ -141,7 +141,8 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -154,7 +155,7 @@ class TestEndToEndErrorRecovery:
                 "test-repo",
             ]
         )
-        
+
         # Should fail with non-zero exit code
         assert result != 0
 
@@ -168,7 +169,7 @@ class TestCliHelpOutput:
 
         with pytest.raises(SystemExit) as exc_info:
             main(["--help"])
-        
+
         # --help should exit with 0
         assert exc_info.value.code == 0
 
@@ -181,9 +182,9 @@ class TestCliListCommand:
         from scripts.template_repo_cli.cli import main
 
         result = main(["list"])
-        
+
         assert result == 0
-        
+
         # Should output some exercises
         captured = capsys.readouterr()
         assert len(captured.out) > 0
@@ -193,7 +194,7 @@ class TestCliListCommand:
         from scripts.template_repo_cli.cli import main
 
         result = main(["list", "--construct", "sequence"])
-        
+
         assert result == 0
 
 
@@ -205,7 +206,7 @@ class TestCliValidateCommand:
         from scripts.template_repo_cli.cli import main
 
         result = main(["validate", "--construct", "sequence"])
-        
+
         # Should succeed if files exist
         assert result == 0
 
@@ -214,7 +215,7 @@ class TestCliValidateCommand:
         from scripts.template_repo_cli.cli import main
 
         result = main(["validate", "--construct", "invalid_construct"])
-        
+
         # Should fail
         assert result != 0
 
@@ -239,7 +240,7 @@ class TestCliCreateCommand:
                 "test-repo",
             ]
         )
-        
+
         assert result == 0
 
     @patch("subprocess.run")
@@ -255,9 +256,9 @@ class TestCliCreateCommand:
             return {"success": True, "dry_run": True}
 
         with patch.object(GitHubClient, "create_repository", new=fake_create), \
-            patch.object(GitHubClient, "check_gh_installed", return_value=True), \
-            patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
-            patch.object(GitHubClient, "check_authentication", return_value=True):
+                patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+                patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
+                patch.object(GitHubClient, "check_authentication", return_value=True):
             result = main(
                 ["create", "--construct", "sequence", "--repo-name", "test-repo"]
             )
@@ -280,9 +281,9 @@ class TestCliCreateCommand:
             return {"success": True, "dry_run": True}
 
         with patch.object(GitHubClient, "create_repository", new=fake_create), \
-            patch.object(GitHubClient, "check_gh_installed", return_value=True), \
-            patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
-            patch.object(GitHubClient, "check_authentication", return_value=True):
+                patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+                patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
+                patch.object(GitHubClient, "check_authentication", return_value=True):
             result = main(
                 [
                     "create",
@@ -310,9 +311,9 @@ class TestCliCreateCommand:
             return {"success": True, "dry_run": True}
 
         with patch.object(GitHubClient, "create_repository", new=fake_create), \
-            patch.object(GitHubClient, "check_gh_installed", return_value=True), \
-            patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
-            patch.object(GitHubClient, "check_authentication", return_value=True):
+                patch.object(GitHubClient, "check_gh_installed", return_value=True), \
+                patch.object(GitHubClient, "check_scopes", return_value={"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}), \
+                patch.object(GitHubClient, "check_authentication", return_value=True):
             result = main(
                 [
                     "create",
@@ -333,11 +334,12 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys) -> None:
+    def test_cli_permission_hint(self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys) -> None:  # noqa: PLR0913
         """Display guidance when GitHub rejects repo creation for integrations."""
         from scripts.template_repo_cli.cli import main
 
-        mock_scopes.return_value = {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}
+        mock_scopes.return_value = {
+            "authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}
         mock_create.return_value = {
             "success": False,
             "error": "GraphQL: Resource not accessible by integration (createRepository)",
@@ -362,20 +364,21 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint_unset_env_token(
+    def test_cli_permission_hint_unset_env_token(  # noqa: PLR0913
         self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys
     ) -> None:
         """Hint to unset GITHUB_TOKEN when it blocks login."""
         from scripts.template_repo_cli.cli import main
 
-        mock_scopes.return_value = {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}
+        mock_scopes.return_value = {
+            "authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []}
         mock_create.return_value = {
             "success": False,
             "error": "GraphQL: Resource not accessible by integration (createRepository)",
         }
 
         with patch.dict(os.environ, {"GITHUB_TOKEN": "ghu_fake"}, clear=True), \
-            patch("builtins.input", return_value="n"):
+                patch("builtins.input", return_value="n"):
             result = main(
                 [
                     "create",
@@ -396,7 +399,7 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
-    def test_cli_permission_hint_reauth_flow(
+    def test_cli_permission_hint_reauth_flow(  # noqa: PLR0913
         self,
         mock_installed,
         mock_auth,
@@ -413,9 +416,12 @@ class TestCliCreateCommand:
         # After error: check scopes again (missing)
         # Second prerequisite check: scopes present
         mock_scopes.side_effect = [
-            {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []},  # First prereq check
-            {"authenticated": True, "has_scopes": False, "scopes": [], "missing_scopes": ["repo"]},  # After first create error
-            {"authenticated": True, "has_scopes": True, "scopes": ["repo"], "missing_scopes": []},  # Second prereq check
+            {"authenticated": True, "has_scopes": True, "scopes": [
+                "repo"], "missing_scopes": []},  # First prereq check
+            {"authenticated": True, "has_scopes": False, "scopes": [],
+                "missing_scopes": ["repo"]},  # After first create error
+            {"authenticated": True, "has_scopes": True, "scopes": [
+                "repo"], "missing_scopes": []},  # Second prereq check
         ]
         mock_create.side_effect = [
             {
@@ -442,8 +448,10 @@ class TestCliCreateCommand:
             )
 
         assert result == 0
-        assert mock_create.call_count == 2
-        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
+        EXPECT_CREATE_CALLS = 2
+        assert mock_create.call_count == EXPECT_CREATE_CALLS
+        mock_subprocess_run.assert_any_call(
+            ["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(self, mock_run, repo_root: Path) -> None:
@@ -470,7 +478,7 @@ class TestCliCreateCommand:
                 "my-org",
             ]
         )
-        
+
         assert result == 0
 
 
@@ -495,9 +503,9 @@ class TestCliVerboseMode:
                 "test-repo",
             ]
         )
-        
+
         assert result == 0
-        
+
         # In verbose mode, should print progress
         captured = capsys.readouterr()
         assert len(captured.out) > 0
@@ -525,7 +533,190 @@ class TestCliOutputDir:
                 "test-repo",
             ]
         )
-        
+
         assert result == 0
         # Output directory should have been created with content
         assert temp_dir.exists()
+
+
+class TestCliUpdateRepo:
+    """Tests for update-repo command."""
+
+    @patch("subprocess.run")
+    def test_cli_update_dry_run(self, mock_run, repo_root: Path) -> None:
+        from scripts.template_repo_cli.cli import main
+
+        result = main(
+            [
+                "--dry-run",
+                "update-repo",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_update_calls_push_when_repo_exists(  # noqa: PLR0913
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_push,
+        mock_check_exists,
+        repo_root: Path,
+    ) -> None:
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_push.return_value = {"success": True}
+
+        result = main(
+            [
+                "update-repo",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        mock_check_exists.assert_called_once()
+        mock_push.assert_called_once()
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_update_fails_when_repo_missing(  # noqa: PLR0913
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_push,
+        mock_check_exists,
+        repo_root: Path,
+        capsys,
+    ) -> None:
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = False
+
+        result = main(
+            [
+                "update-repo",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "missing-repo",
+            ]
+        )
+
+        assert result == 1
+        mock_push.assert_not_called()
+        captured = capsys.readouterr()
+        assert "does not exist" in captured.err.lower()
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_update_allows_owner_prefixed_repo_name(  # noqa: PLR0913
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_push,
+        mock_check_exists,
+        repo_root: Path,
+    ) -> None:
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_push.return_value = {"success": True}
+
+        result = main(
+            [
+                "update-repo",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "owner/test-repo",
+            ]
+        )
+
+        assert result == 0
+        mock_push.assert_called_once()
+
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True)
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True)
+    def test_cli_update_prompts_for_owner_when_remote_missing(  # noqa: PLR0913
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_push,
+        mock_check_exists,
+        repo_root: Path,
+        capsys,
+    ) -> None:
+        from scripts.template_repo_cli.cli import main
+
+        mock_scopes.return_value = {
+            "authenticated": True,
+            "has_scopes": True,
+            "scopes": ["repo"],
+            "missing_scopes": [],
+        }
+        mock_check_exists.return_value = True
+        mock_push.return_value = {
+            "success": False,
+            "error": "push failed",
+            "remote_url": "https://github.com/test-repo.git",
+        }
+
+        result = main(
+            [
+                "update-repo",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "owner" in captured.err.lower()
+        assert "owner/repo" in captured.err.lower()

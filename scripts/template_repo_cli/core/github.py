@@ -5,7 +5,37 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, TypedDict
+
+
+# TypedDicts for well-known result shapes to improve static typing
+class ExecBase(TypedDict):
+    """Base TypedDict requiring `success` key (always present)."""
+
+    success: bool
+
+
+class ExecResult(ExecBase, total=False):
+    """Common dictionary shape returned by subprocess-related helpers.
+
+    `success` is required; other fields are optional depending on the
+    context (dry-run messages, errors, etc.).
+    """
+
+    output: str
+    error: str
+    returncode: int
+    dry_run: bool
+    message: str
+    remote_url: str
+
+
+class CheckScopesResult(TypedDict):
+    authenticated: bool
+    has_scopes: bool
+    scopes: list[str]
+    missing_scopes: list[str]
+
 
 INTEGRATION_PERMISSION_ERROR_MARKERS = (
     "resource not accessible by integration",
@@ -25,7 +55,7 @@ def run_subprocess(
     output_mode: Literal["capture", "stream", "silent"] = "capture",
     check: bool = False,
     text: bool = True,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Run a subprocess command with consistent handling.
 
     This wrapper provides a DRY way to execute subprocess commands with different
@@ -67,15 +97,72 @@ def run_subprocess(
 class GitHubClient:
     """GitHub operations client."""
 
-    def __init__(self, dry_run: bool = False):
+    def __init__(self, dry_run: bool = False) -> None:
         """Initialize GitHub client.
 
         Args:
             dry_run: If True, don't execute commands.
         """
-        self.dry_run = dry_run
+        self.dry_run: bool = dry_run
 
-    def build_create_command(
+    def _get_authenticated_username(self) -> str | None:
+        """Return the authenticated GitHub username via gh API.
+
+        Returns:
+            Username string if available, otherwise None.
+        """
+
+        user_result: subprocess.CompletedProcess[str] = run_subprocess(
+            ["gh", "api", "user", "--jq", ".login"],
+            check=False,
+        )
+        if user_result.returncode != 0:
+            return None
+
+        username: str = (user_result.stdout or "").strip()
+        return username or None
+
+    def _resolve_repo_ref(
+        self,
+        repo_name: str,
+        org: str | None,
+        *,
+        require_owner: bool = False,
+    ) -> tuple[str, str | None]:
+        """Resolve the fully-qualified repository reference.
+
+        Args:
+            repo_name: Repository name (may already include owner).
+            org: Organization name.
+            require_owner: If True, return an error when owner cannot be determined.
+
+        Returns:
+            Tuple of (repo_ref, error_message). repo_ref always returned; error_message
+            is None when resolution succeeded, otherwise contains a hint for callers.
+        """
+
+        if "/" in repo_name:
+            return repo_name, None
+
+        if org:
+            return f"{org}/{repo_name}", None
+
+        username: str | None = self._get_authenticated_username()
+        if username:
+            return f"{username}/{repo_name}", None
+
+        hint = (
+            "Unable to determine authenticated GitHub username. Provide the full "
+            "owner/repo in --repo-name (e.g., owner-name/your-repo) or supply --org "
+            "to target an organization."
+        )
+
+        if require_owner:
+            return repo_name, hint
+
+        return repo_name, hint
+
+    def build_create_command(  # noqa: PLR0913
         self,
         repo_name: str,
         public: bool = True,
@@ -98,7 +185,7 @@ class GitHubClient:
         Returns:
             Command as list of strings.
         """
-        cmd = ["gh", "repo", "create"]
+        cmd: list[str] = ["gh", "repo", "create"]
 
         # Add repo name (with org prefix if specified)
         if org:
@@ -126,7 +213,7 @@ class GitHubClient:
 
         return cmd
 
-    def execute_command(self, cmd: list[str]) -> dict[str, Any]:
+    def execute_command(self, cmd: list[str]) -> ExecResult:
         """Execute a gh command.
 
         Args:
@@ -137,7 +224,8 @@ class GitHubClient:
         """
         try:
             # Stream stdout to user for visibility and interactive prompts
-            result = run_subprocess(cmd, output_mode="stream", check=False)
+            result: subprocess.CompletedProcess[str] = run_subprocess(
+                cmd, output_mode="stream", check=False)
 
             return {
                 "success": result.returncode == 0,
@@ -155,7 +243,8 @@ class GitHubClient:
             True if installed, False otherwise.
         """
         try:
-            result = run_subprocess(["gh", "--version"], check=False)
+            result: subprocess.CompletedProcess[str] = run_subprocess(
+                ["gh", "--version"], check=False)
             return result.returncode == 0
         except FileNotFoundError:
             return False
@@ -167,12 +256,36 @@ class GitHubClient:
             True if authenticated, False otherwise.
         """
         try:
-            result = run_subprocess(["gh", "auth", "status"], check=False)
+            result: subprocess.CompletedProcess[str] = run_subprocess(
+                ["gh", "auth", "status"], check=False)
             return result.returncode == 0
         except FileNotFoundError:
             return False
 
-    def check_scopes(self, required_scopes: list[str] | None = None) -> dict[str, Any]:
+    def check_repository_exists(self, repo_name: str, org: str | None = None) -> bool:
+        """Check if a repository exists on GitHub.
+
+        Args:
+            repo_name: Repository name.
+            org: Organization name (if None, checks user's repositories).
+
+        Returns:
+            True if repository exists, False otherwise.
+        """
+        if self.dry_run:
+            # Avoid network calls in dry-run; assume absent so callers can decide how to proceed
+            return False
+
+        try:
+            repo_ref, _ = self._resolve_repo_ref(repo_name, org)
+
+            result: subprocess.CompletedProcess[str] = run_subprocess(
+                ["gh", "repo", "view", repo_ref], check=False)
+            return result.returncode == 0
+        except (FileNotFoundError, OSError):
+            return False
+
+    def check_scopes(self, required_scopes: list[str] | None = None) -> CheckScopesResult:
         """Check if current authentication has required scopes.
 
         Args:
@@ -189,7 +302,7 @@ class GitHubClient:
         if required_scopes is None:
             required_scopes = ["repo"]
 
-        result = {
+        result: CheckScopesResult = {
             "authenticated": False,
             "has_scopes": False,
             "scopes": [],
@@ -198,7 +311,8 @@ class GitHubClient:
 
         try:
             # Run gh auth status and capture stderr (where scopes are printed)
-            auth_result = run_subprocess(["gh", "auth", "status"], check=False)
+            auth_result: subprocess.CompletedProcess[str] = run_subprocess(
+                ["gh", "auth", "status"], check=False)
 
             # Check if authenticated
             if auth_result.returncode != 0:
@@ -208,20 +322,24 @@ class GitHubClient:
 
             # Parse stderr to extract scopes
             # Format: "  - Token scopes: 'scope1', 'scope2', 'scope3'"
-            output = auth_result.stderr + auth_result.stdout
+            output: str = (auth_result.stderr or "") + \
+                (auth_result.stdout or "")
             for line in output.split("\n"):
                 if "Token scopes:" in line:
                     # Extract the scopes part after "Token scopes:"
-                    scopes_part = line.split("Token scopes:", 1)[1].strip()
-                    # Remove quotes and split by comma
-                    scopes = [
-                        s.strip().strip("'").strip('"') for s in scopes_part.split(",") if s.strip()
+                    scopes_part: str = line.split(
+                        "Token scopes:", 1)[1].strip()
+                    # Remove quotes and split by comma, filtering empty strings
+                    scopes: list[str] = [
+                        stripped for s in scopes_part.split(",")
+                        if (stripped := s.strip().strip("'").strip('"'))
                     ]
                     result["scopes"] = scopes
                     break
 
             # Check if all required scopes are present
-            missing = [s for s in required_scopes if s not in result["scopes"]]
+            missing: list[str] = [
+                s for s in required_scopes if s not in result["scopes"]]
             result["missing_scopes"] = missing
             result["has_scopes"] = len(missing) == 0
 
@@ -247,7 +365,7 @@ class GitHubClient:
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON: {e}") from e
 
-    def create_repository(
+    def create_repository(  # noqa: PLR0913
         self,
         repo_name: str,
         workspace: Path,
@@ -258,7 +376,7 @@ class GitHubClient:
         org: str | None = None,
         description: str | None = None,
         skip_git_operations: bool = False,
-    ) -> dict[str, Any]:
+    ) -> ExecResult:
         """Create a GitHub repository.
 
         Args:
@@ -290,7 +408,7 @@ class GitHubClient:
             self.commit_files(workspace, "Initial commit")
 
         # Build create command with workspace as source
-        cmd = self.build_create_command(
+        cmd: list[str] = self.build_create_command(
             repo_name,
             public=public,
             template_repo=template_repo,
@@ -300,7 +418,7 @@ class GitHubClient:
         )
 
         # Execute command (this will create repo and push files)
-        result = self.execute_command(cmd)
+        result: ExecResult = self.execute_command(cmd)
 
         if not result["success"] and self._should_retry_with_fresh_auth(result):
             # Return error with instructions for the user to resolve authentication
@@ -315,24 +433,25 @@ class GitHubClient:
                     "  gh auth login\n\n"
                     "Then try again."
                 ),
-                "output": result.get("output", ""),
-                "returncode": result.get("returncode", 1),
+                "output": result.get("output") or "",
+                "returncode": int(result.get("returncode") or 1),
             }
 
         # Mark repository as a template if requested
         if result["success"] and template:
-            template_result = self.mark_repository_as_template(repo_name, org)
-            if not template_result["success"]:
+            template_result: ExecResult = self.mark_repository_as_template(
+                repo_name, org)
+            if not template_result.get("success", False):
                 return {
                     "success": False,
-                    "error": template_result.get("error", "Failed to mark repository as template"),
-                    "output": template_result.get("output"),
-                    "returncode": template_result.get("returncode"),
+                    "error": template_result.get("error") or "Failed to mark repository as template",
+                    "output": template_result.get("output") or "",
+                    "returncode": int(template_result.get("returncode") or 1),
                 }
 
         return result
 
-    def mark_repository_as_template(self, repo_name: str, org: str | None = None) -> dict[str, Any]:
+    def mark_repository_as_template(self, repo_name: str, org: str | None = None) -> ExecResult:
         """Mark an existing repository as a template.
 
         Args:
@@ -342,24 +461,15 @@ class GitHubClient:
         Returns:
             Result dictionary.
         """
-        # If no org specified, get the authenticated user
-        if org:
-            repo_ref = f"{org}/{repo_name}"
-        else:
-            # Get authenticated user
-            user_result = run_subprocess(
-                ["gh", "api", "user", "--jq", ".login"],
-                check=False,
-            )
-            if user_result.returncode != 0:
-                return {
-                    "success": False,
-                    "error": f"Failed to get authenticated user: {user_result.stderr}",
-                }
-            username = user_result.stdout.strip()
-            repo_ref = f"{username}/{repo_name}"
+        repo_ref, ref_error = self._resolve_repo_ref(
+            repo_name, org, require_owner=True)
+        if ref_error:
+            return {
+                "success": False,
+                "error": ref_error,
+            }
 
-        cmd = ["gh", "repo", "edit", repo_ref, "--template"]
+        cmd: list[str] = ["gh", "repo", "edit", repo_ref, "--template"]
         return self.execute_command(cmd)
 
     def init_git_repo(self, workspace: Path) -> None:
@@ -381,11 +491,11 @@ class GitHubClient:
             RuntimeError: If git user configuration is missing or commit fails.
         """
         # Check if git is configured globally
-        user_name = run_subprocess(
+        user_name: subprocess.CompletedProcess[str] = run_subprocess(
             ["git", "config", "--global", "user.name"],
             check=False,
         )
-        user_email = run_subprocess(
+        user_email: subprocess.CompletedProcess[str] = run_subprocess(
             ["git", "config", "--global", "user.email"],
             check=False,
         )
@@ -406,7 +516,7 @@ class GitHubClient:
             )
 
         # Add all files
-        add_result = run_subprocess(
+        add_result: subprocess.CompletedProcess[str] = run_subprocess(
             ["git", "add", "."],
             cwd=workspace,
             check=False,
@@ -415,7 +525,7 @@ class GitHubClient:
             raise RuntimeError(f"git add failed:\n{add_result.stderr}")
 
         # Commit
-        commit_result = run_subprocess(
+        commit_result: subprocess.CompletedProcess[str] = run_subprocess(
             ["git", "commit", "-m", message],
             cwd=workspace,
             check=False,
@@ -425,36 +535,161 @@ class GitHubClient:
                 f"git commit failed:\nstdout: {commit_result.stdout}\nstderr: {commit_result.stderr}"
             )
 
-    def push_to_remote(self, workspace: Path, remote_url: str) -> None:
-        """Push to remote.
+    def push_to_remote(
+        self,
+        workspace: Path,
+        remote_url: str,
+        *,
+        branch: str = "main",
+        force: bool = True,
+    ) -> None:
+        """Push local workspace to a remote.
 
         Args:
             workspace: Workspace directory.
             remote_url: Remote repository URL.
+            branch: Branch name to push.
+            force: Whether to force push (default: True for template updates).
         """
-        # Add remote
+        # Ensure the local branch is named correctly (rename current branch if needed)
+        current_branch_result = run_subprocess(
+            ["git", "branch", "--show-current"],
+            cwd=workspace,
+            check=False,
+        )
+        current_branch = (current_branch_result.stdout or "").strip()
+
+        if current_branch and current_branch != branch:
+            # Rename the current branch to the target branch
+            run_subprocess(
+                ["git", "branch", "-M", branch],
+                cwd=workspace,
+                check=True,
+            )
+
+        # Ensure we replace any existing origin to avoid failures
+        run_subprocess(["git", "remote", "remove", "origin"],
+                       cwd=workspace, check=False)
         run_subprocess(
             ["git", "remote", "add", "origin", remote_url],
             cwd=workspace,
             check=True,
         )
 
-        # Push
-        run_subprocess(
-            ["git", "push", "-u", "origin", "main"],
-            cwd=workspace,
-            check=True,
-        )
+        push_cmd: list[str] = ["git", "push", "-u", "origin", branch]
+        if force:
+            push_cmd.append("--force")
 
-    def _should_retry_with_fresh_auth(self, result: dict[str, Any]) -> bool:
-        """Determine if an authentication error was encountered."""
-        message_parts = (
+        run_subprocess(push_cmd, cwd=workspace, check=True)
+
+    def push_to_existing_repository(
+        self,
+        repo_name: str,
+        workspace: Path,
+        *,
+        org: str | None = None,
+        branch: str = "main",
+        force: bool = True,
+    ) -> ExecResult:
+        """Push updated contents into an existing repository.
+
+        Args:
+            repo_name: Repository name.
+            workspace: Workspace directory containing files to push.
+            org: Organization name (if None, uses user account).
+            branch: Branch name to push.
+            force: Whether to force push (default: True for template updates).
+
+        Returns:
+            Result dictionary.
+        """
+        if self.dry_run:
+            return {
+                "success": True,
+                "dry_run": True,
+                "message": (
+                    "Dry run - repository would be updated via push"
+                ),
+            }
+
+        repo_ref, ref_error = self._resolve_repo_ref(
+            repo_name, org, require_owner=True)
+        if ref_error:
+            return {
+                "success": False,
+                "error": ref_error,
+            }
+
+        if "/" not in repo_ref:
+            return {
+                "success": False,
+                "error": (
+                    f"Unable to determine the owner for repository '{repo_ref}'. Provide --repo-name as owner/repo "
+                    "or specify --org to target an organization."
+                ),
+            }
+
+        remote_url: str = f"https://github.com/{repo_ref}.git"
+
+        try:
+            self.init_git_repo(workspace)
+            self.commit_files(workspace, "Update template contents")
+            self.push_to_remote(
+                workspace,
+                remote_url,
+                branch=branch,
+                force=force,
+            )
+            return {"success": True, "remote_url": remote_url}
+        except subprocess.CalledProcessError as exc:
+            # Provide stdout/stderr so callers can see the underlying failure
+            return {
+                "success": False,
+                "error": self._format_called_process_error(exc),
+                "remote_url": remote_url,
+            }
+        except (OSError, subprocess.SubprocessError, RuntimeError) as exc:
+            return {
+                "success": False,
+                "error": str(exc),
+                "remote_url": remote_url,
+            }
+
+    @staticmethod
+    def _format_called_process_error(exc: subprocess.CalledProcessError) -> str:
+        """Return a verbose error message for subprocess failures.
+
+        Includes stdout/stderr to help users diagnose why the command failed
+        (e.g., authentication issues, permission problems, or branch conflicts).
+        """
+
+        sections: list[str] = [str(exc)]
+
+        if exc.stdout:
+            sections.append(f"stdout:\n{exc.stdout.strip()}")
+        if exc.stderr:
+            sections.append(f"stderr:\n{exc.stderr.strip()}")
+
+        return "\n\n".join(sections)
+
+    def _should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
+        """Determine if an authentication error was encountered (internal).
+
+        This keeps the original private behaviour but accepts a properly typed
+        result dict which aids static analyzers.
+        """
+        message_parts: tuple[str, str] = (
             (result.get("error") or "").lower(),
             (result.get("output") or "").lower(),
         )
-        combined_message = " ".join(part for part in message_parts if part)
+        combined_message: str = " ".join(
+            part for part in message_parts if part)
 
         if all(marker in combined_message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS):
             return True
 
         return any(marker in combined_message for marker in AUTH_TOKEN_HINT_MARKERS)
+
+    def should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
+        """Public wrapper around the internal auth-retry detection logic."""
+        return self._should_retry_with_fresh_auth(result)
