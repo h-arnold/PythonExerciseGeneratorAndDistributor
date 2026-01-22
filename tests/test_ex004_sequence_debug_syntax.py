@@ -67,9 +67,9 @@ def test_solution_output(tag: str, expected: str) -> None:
     try:
         # For input exercises, provide mock input
         if tag == "exercise7":
-            output = run_cell_with_input(SOLUTION_PATH, tag=tag, inputs=["5"])
+            output = run_cell_with_input(NOTEBOOK_PATH, tag=tag, inputs=["5"])
         else:
-            output = run_cell_and_capture_output(SOLUTION_PATH, tag=tag)
+            output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
 
         # For multi-line output, just check that key parts exist
         if tag == "exercise7":
