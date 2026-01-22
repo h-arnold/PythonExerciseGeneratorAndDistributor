@@ -16,7 +16,7 @@ When a student accepts the assignment, GitHub Classroom automatically copies the
 
 GitHub Classroom does not "watch" for a specific file or output. Instead, the `autograding-grading-reporter` action is responsible for communicating the final score back to the GitHub Classroom interface.
 
-The reporter achieves this by using the GitHub Actions workflow command `core.notice` to create annotations and a summary that GitHub Classroom is specifically designed to parse. This process updates the check suite associated with the commit, which is how the score and pass/fail status are displayed to both the student and the instructor [3].
+The reporter achieves this by using the GitHub Actions workflow command `core.notice` to create annotations containing the score summary and a JSON payload. GitHub Classroom parses these notices to display the score and pass/fail status to both the student and the instructor [3].
 
 ## 2. Integrating the Grading Reporter into `classroom.yml`
 
@@ -24,7 +24,7 @@ The custom workflow must consist of two main parts: the **Test Runner Steps** an
 
 ### A. Test Runner Steps
 
-Each test runner step must use an action that produces a Base64-encoded JSON string as an output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array).
+Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array).
 
 The key is to assign a unique `id` to each test step and ensure it outputs the result.
 
@@ -36,7 +36,7 @@ The `autograding-grading-reporter` action is the final step. It aggregates the r
 | :--- | :--- | :--- |
 | `uses` | `classroom-resources/autograding-grading-reporter@v1` | Specifies the action to use. |
 | `with.runners` | A comma-separated list of the `id`s from the preceding test steps. | This tells the reporter which results to look for. |
-| `env` | Environment variables mapping the test step outputs to the reporter's expected input format. | The format is `UPPERCASE_STEP_ID_RESULTS: ${{ steps.step-id.outputs.result }}`. |
+| `env` | Environment variables mapping the test step outputs to the reporter's expected input format. | The format is `UPPERCASE_STEP_ID_RESULTS: ${{ steps.step-id.outputs.result }}` with hyphens replaced by underscores in the env var name. |
 
 ### Example `classroom.yml` Workflow
 
@@ -49,7 +49,6 @@ on:
   workflow_dispatch:
 
 permissions:
-  checks: write # Required for the reporter to write the score back to Classroom
   contents: read
 
 jobs:
@@ -82,9 +81,9 @@ jobs:
         uses: classroom-resources/autograding-grading-reporter@v1
         env:
           # Map the output of the first runner (id: python-tests)
-          PYTHON-TESTS_RESULTS: ${{ steps.python-tests.outputs.result }}
+          PYTHON_TESTS_RESULTS: ${{ steps.python-tests.outputs.result }}
           # Map the output of the second runner (id: cli-test)
-          CLI-TEST_RESULTS: ${{ steps.cli-test.outputs.result }}
+          CLI_TEST_RESULTS: ${{ steps.cli-test.outputs.result }}
         with:
           # Comma-separated list of the runner IDs
           runners: python-tests,cli-test
@@ -95,7 +94,7 @@ jobs:
 | Requirement | Detail |
 | :--- | :--- |
 | **Workflow File** | Must be located at `.github/workflows/classroom.yml` in the template repository. |
-| **Permissions** | The workflow must have `permissions: checks: write` to allow the reporter to update the check suite with the final score. |
+| **Permissions** | Standard read permissions are sufficient for the reporter in most workflows; the action relies on workflow notices rather than direct checks updates [3] [4]. |
 | **Test Runner Output** | Each test step must output a Base64-encoded JSON string containing the test results, including `max_score` and the `tests` array. |
 | **Reporter Configuration** | The `runners` input must be a comma-separated list of the test step `id`s. |
 | **Environment Variables** | Environment variables must be set for each runner in the format `UPPERCASE_STEP_ID_RESULTS` to pass the Base64-encoded JSON output. |
@@ -104,5 +103,5 @@ jobs:
 
 [1] GitHub Docs. (n.d.). *Use autograding*. Retrieved from https://docs.github.com/en/education/manage-coursework-with-github-classroom/teach-with-github-classroom/use-autograding
 [2] GitHub Docs. (n.d.). *View autograding results*. Retrieved from https://docs.github.com/en/education/manage-coursework-with-github-classroom/learn-with-github-classroom/view-autograding-results
-[3] GitHub Community. (2023). *How does the Github Classroom get the results from the autograder?* Retrieved from https://github.com/orgs/community/discussions/77361
+[3] classroom-resources. (2023). *notify-classroom.js*. GitHub. Retrieved from https://github.com/classroom-resources/autograding-grading-reporter/blob/main/src/notify-classroom.js
 [4] classroom-resources. (n.d.). *autograding-grading-reporter README.md*. Retrieved from https://github.com/classroom-resources/autograding-grading-reporter/blob/main/README.md
