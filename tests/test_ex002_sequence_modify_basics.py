@@ -24,6 +24,19 @@ EXPECTED_MULTI_LINE = {
     9: ["10 minus 3 equals", "7"],
 }
 
+EXPECTED_NUMERIC = {
+    3: int(EXPECTED_SINGLE_LINE[3]),
+    5: float(EXPECTED_SINGLE_LINE[5]),
+    8: int(EXPECTED_SINGLE_LINE[8]),
+    9: int(EXPECTED_MULTI_LINE[9][1]),
+}
+
+EXPECTED_PRINT_CALLS = {
+    4: 1,
+    6: 3,
+    9: 2,
+}
+
 
 def _exercise_tag(exercise_no: int) -> str:
     return f"exercise{exercise_no}"
@@ -96,7 +109,7 @@ def test_exercise2_construct() -> None:
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
     value = int(output.strip())
-    assert value == 15
+    assert value == EXPECTED_NUMERIC[3]
 
 
 @pytest.mark.task(taskno=3)
@@ -138,14 +151,14 @@ def test_exercise4_construct() -> None:
         and isinstance(node.func, ast.Name)
         and node.func.id == "print"
     ]
-    assert len(print_calls) == 1
+    assert len(print_calls) == EXPECTED_PRINT_CALLS[4]
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
     value = float(output.strip())
-    assert value == 5.0
+    assert value == EXPECTED_NUMERIC[5]
 
 
 @pytest.mark.task(taskno=5)
@@ -188,7 +201,7 @@ def test_exercise6_construct() -> None:
         and isinstance(node.func, ast.Name)
         and node.func.id == "print"
     ]
-    assert len(print_calls) == 3
+    assert len(print_calls) == EXPECTED_PRINT_CALLS[6]
 
 
 @pytest.mark.task(taskno=7)
@@ -219,7 +232,7 @@ def test_exercise7_construct() -> None:
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
     value = int(output.strip())
-    assert value == 24
+    assert value == EXPECTED_NUMERIC[8]
 
 
 @pytest.mark.task(taskno=8)
@@ -243,7 +256,7 @@ def test_exercise9_logic() -> None:
     output = _exercise_output(9)
     lines = output.strip().splitlines()
     assert lines[0] == "10 minus 3 equals"
-    assert int(lines[1]) == 7
+    assert int(lines[1]) == EXPECTED_NUMERIC[9]
 
 
 @pytest.mark.task(taskno=9)
@@ -268,7 +281,7 @@ def test_exercise9_construct() -> None:
         and node.func.id == "print"
     ]
     assert has_subtraction
-    assert len(print_calls) == 2
+    assert len(print_calls) == EXPECTED_PRINT_CALLS[9]
 
 
 @pytest.mark.task(taskno=10)
