@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from tests.notebook_grader import (
@@ -83,8 +85,6 @@ def test_explanations_have_content(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_exercise_cells_tagged(tag: str) -> None:
     """Test that all exercise cells are properly tagged."""
-    import json
-
     with open(NOTEBOOK_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
@@ -103,8 +103,6 @@ def test_exercise_cells_tagged(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_solution_cells_tagged(tag: str) -> None:
     """Test that solution notebook has all exercise cells."""
-    import json
-
     with open(SOLUTION_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
