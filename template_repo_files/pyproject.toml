@@ -7,10 +7,8 @@ requires-python = ">=3.11"
 
 # All dependencies must be installable via micropip in VS Code for the Web
 # See: https://pyodide.org/en/stable/usage/packages-in-pyodide.html
-dependencies = []
 
-[project.optional-dependencies]
-dev = [
+dependencies = [
   "pytest>=8.0",
   "ipykernel>=6.0",
   "jupyterlab>=4.0",
