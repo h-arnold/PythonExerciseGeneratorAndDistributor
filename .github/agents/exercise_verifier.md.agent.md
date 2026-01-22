@@ -117,13 +117,44 @@ Note: existing notebooks may also include a top-level `id` field on cells; prese
 - `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
 
 ### Gate D — Tests
-- Tests must be deterministic and fast.
-- Tests must cover: ≥3 positives, ≥2 edge cases, and an invalid/wrong-type case where appropriate.
+
+**Read** `/docs/exercise-testing.md` using (`read_file`) for the complete testing framework and philosophy. **DO THIS FIRST**
+
+All tests must follow the **"Task Completion"** model: (1) code runs without errors, (2) output is correct, (3) required constructs are used.
+
+**Performance & Determinism:**
+- Tests are deterministic (no randomness, timing, or network).
+- Tests are fast (<1s per test).
+
+**Output Matching (Strictness):**
+- Default to **strict checks**: exact casing, whitespace, and punctuation.
+- Exceptions allowed only for specific task types (e.g., "Make" tasks) or when pedagogical reason is documented.
+- Rationale: Developing precise coding habits (correct formatting matters) is part of the learning objective.
+
+**Coverage Requirements:**
+Tests cases should be written that answer these questions for each of the exercises:
+
+ 1. **Does the code run?** (No syntax/runtime/logic errors)
+ 2. **Does it produce the correct outcome?** (Output matches expectation **strictly** by default)
+ 3. **Does it use the required constructs?** (e.g., If the lesson teaches `for` loops, a `for` loop is mandatory)
+
+**Test Grouping & Granularity:**
+- Every test must be marked with `@pytest.mark.task(taskno=N)`.
+- Group related criteria (logic, constructs, formatting) within the same taskno for GitHub Classroom partial credit.
+- Where possible, split logic, construct checks, and formatting into separate tests under the same taskno for better feedback.
+
+**Helper Functions:**
+- Use `run_cell_and_capture_output()` for simple output capture.
+- Use `run_cell_with_input()` for exercises with `input()` prompts.
+- Use `extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
+- Use `get_explanation_cell()` to verify reflection cells are non-empty.
+
+**Validation:**
 - Tests must pass against solution notebooks:
   - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q tests/test_exNNN_slug.py`
-- Tests should fail against student notebooks until the student does the work.
+- Tests should fail against student notebooks until the student completes the work:
   - For debug: buggy student code should fail behaviour tests.
-  - For modify/make: placeholder/unmodified code should fail behaviour tests.
+  - For modify/make: incomplete/placeholder code should fail behaviour tests.
 
 ### Gate E — Teacher guidance and solution quality
 Verify teacher materials exist and are useful:

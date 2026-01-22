@@ -166,21 +166,14 @@ After scaffolding + authoring the notebooks (student + solutions mirror), use yo
 Only once the verifier is happy should you start writing/refining the pytest tests.
 
 4) Write / refine tests
-- Tests should import `exec_tagged_code`:
-  - `from tests.notebook_grader import exec_tagged_code`
-- Pattern:
-  - `ns = exec_tagged_code("notebooks/exNNN_slug.ipynb", tag="exercise1")`
-  - Assert required function exists, then assert correctness on multiple cases.
 
-Test design checklist:
-- At least 3 positive tests covering typical cases
-- At least 2 edge cases (e.g., empty lists, zero, negative numbers, single items, boundary values)
-  - **If unsure what edge cases are appropriate**, ask the teacher for clarification
-- At least 1 invalid/wrong-type test where appropriate
-- Fast (<1s per test) and deterministic (no randomness, no time-based behavior)
-- Use `pytest.mark.parametrize` to group related input/output pairs and keep the test file concise.
-- Keep test inputs small and deterministic (no random seeds or time-based tests).
-- Avoid executing the whole notebook; use `exec_tagged_code` to extract and run the single graded cell to keep CI fast and isolated.
+Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testing philosophy and patterns. Key points:
+
+- **Philosophy**: "Task Completion" model verifies (1) code runs without errors, (2) produces correct output (strict by default), (3) uses required constructs.
+- **Strict output matching**: Enforce exact casing, whitespace, and punctuation unless there's a strong pedagogical reason not to (e.g., "Make" tasks may be looser).
+- **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
+- **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
+- **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` to mock `input()` calls.
 
 5) Verify
 - Run `pytest -q` locally.
@@ -208,66 +201,7 @@ Add the new exercise in the appropriate place in the sequence and include:
 
 This is required for maintainability; the verifier will check that the new exercise is listed.
 
-## If the user wants multiple exercises in one notebook
-- Use `--parts N` to scaffold `exercise1..exerciseN`.
-- In tests, parameterize tags:
-  - `@pytest.mark.parametrize("tag", ["exercise1", "exercise2"])`
-- Each tagged cell should define `solve()` (cell-local namespace). If you want different function names per part (e.g. `solve1`, `solve2`), update the tests accordingly.
-
-### Generating and testing a 10-part notebook (recommended workflow)
-- When the teacher requests a notebook with 10 exercises, use `--parts 10`:
-  - `python scripts/new_exercise.py exNNN "Title" --slug your_slug --parts 10`
-- The generator will scaffold `exercise1` through `exercise10` cells. Follow these rules to keep things consistent and fast:
-  - Each exercise part should live in its own single tagged cell (`exercise1`, `exercise2`, etc.).
-  - Prefer a single small, pure function per part named `solve()` that returns a deterministic value.
-  - Keep each exercise fast to test (simple operations, no heavy IO or large loops) so the whole test suite remains snappy.
-
-#### Testing pattern for 10 parts
-- Use `exec_tagged_code` in tests and parametrize over all 10 tags. Example minimal pattern:
-
-```python
-import pytest
-from tests.notebook_grader import exec_tagged_code
-
-TAGS = [f"exercise{i}" for i in range(1, 11)]
-
-@pytest.mark.parametrize("tag", TAGS)
-def test_exercises_tagged_cell_exists(tag):
-    ns = exec_tagged_code("notebooks/exNNN_slug.ipynb", tag=tag)
-    assert "solve" in ns, f"Missing solve() in {tag}"
-
-# For behaviour tests, parametrize with (tag, inputs, expected)
-@pytest.mark.parametrize(
-  "tag,input_value,expected",
-    [
-        ("exercise1", 1, 2),
-        ("exercise2", [1, 2], 3),
-        # add cases for other exercises
-    ],
-)
-def test_exercise_behaviour(tag, input_value, expected):
-    ns = exec_tagged_code("notebooks/exNNN_slug.ipynb", tag=tag)
-  solve = ns.get("solve")
-  assert solve is not None
-  result = solve(input_value)
-    assert result == expected
-```
-
-- Structure behavioural tests so each part has at least:
-  - 3 positive tests
-  - 2 edge cases
-  - 1 invalid/wrong-type case (where appropriate)
-- Keep test inputs small and deterministic. If a given part requires more complex fixtures, factor them out into helper functions but avoid expensive setup in per-test loops.
-
-Multi-part notebook tips:
-- Prefer the same function name (`solve()`) across parts to simplify grading and scaffolding.
-- If parts build on previous parts, state this explicitly in the notebook so students know the progression.
-
-#### Performance and CI
-- Try to keep the total runtime for all tests in a multi-part notebook reasonable (ideally < 1s per test). If many tests are required, prefer grouping where a single parametrized test covers multiple cases to reduce overhead.
-
 #### Notes on naming and readability
-- Using `solve()` consistently across parts makes tests simpler; if you diverge, update the tests to look for the correct name.
 - Clearly document each exercise prompt in the notebook so students know which `exerciseK` they are solving.
 
 ## Output expectations
@@ -328,38 +262,18 @@ Rules:
 
 - Never include full solutions in student-facing repos unless explicitly requested.
 
-## Small examples and quick references
-
-- Minimal command to scaffold exercise `ex002_lists`:
-
-  `python scripts/new_exercise.py ex002 "Lists Basics" --slug lists_basics`
-
-- Minimal test pattern (behavioural):
-
-```python
-from tests.notebook_grader import exec_tagged_code
-
-def test_lists_basics_examples():
-    ns = exec_tagged_code("notebooks/ex002_lists_basics.ipynb", tag="exercise1")
-    assert "solve" in ns
-  solve = ns.get("solve")
-  assert solve is not None
-  assert solve(list((1, 2, 3))) == 6
-```
-
 ## Style and scope
 
 - Keep tasks bite-sized and focused on a single construct.
 - Avoid external dependencies or network access in exercises and tests.
 - Include teacher notes (optional) in `exercises/exNNN_slug/README.md` when special explanation is needed.
-.
 
 ## Quick Reference Card
 
-- **Always read the necessary instructions**: Always open and read the entire set of instructions for a given coding exercise type.
+- **Always read the necessary instructions**: Always open and read (`read_file` tool) the entire set of instructions for a given coding exercise type.
 - **Always use your `manage_todo_list` tool** to plan and track your progress through a task.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
-- **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.
+- **Convention**: No docstrings until the Functions construct is reached.
 - **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass using the verifier subagent.
 - **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).
