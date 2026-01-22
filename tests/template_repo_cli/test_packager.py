@@ -187,11 +187,11 @@ class TestPackageIntegrity:
             # Cleanup created files
             if grader_src.exists():
                 grader_src.unlink()
-            try:
+            # Remove the temporary template tests directory if empty
+            from contextlib import suppress
+
+            with suppress(OSError):
                 template_tests_dir.rmdir()
-            except OSError:
-                # Directory not empty or already removed; ignore
-                pass
 
 
 class TestPackageCleanup:
