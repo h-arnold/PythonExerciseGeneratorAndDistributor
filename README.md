@@ -28,6 +28,8 @@ Why teachers will care:
 - Spend classroom time teaching, not troubleshooting environments ✅
 - Designed to be age‑appropriate and easy to adopt ✅
 
+[Read about the pedagogical approach here](docs/pedagogy.md).
+
 ## How it works (plain‑English overview)
 
 <figure style="display:inline-block;">
