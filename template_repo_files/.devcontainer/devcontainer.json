@@ -49,7 +49,12 @@
         "workbench.startupEditor": "none",
         "workbench.tips.enabled": false,
         "workbench.welcomePage.walkthroughs.openOnInstall": false,
-        "workbench.remoteIndicator.showExtensionRecommendations": false        
+        "workbench.remoteIndicator.showExtensionRecommendations": false,
+        "workbench.secondarySideBar.defaultVisibility": "hidden",
+        "workbench.sideBar.location": "left",
+        "workbench.panel.opensMaximized": "never",
+        "workbench.statusBar.visible": false,
+        "zenMode.silentNotifications": true
         }
     }
   },
