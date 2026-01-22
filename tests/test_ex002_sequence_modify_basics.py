@@ -27,23 +27,27 @@ def _run_and_capture(tag: str) -> str:
 
 
 # Exercise 1: Change greeting from "Hello World!" to "Hello Python!"
+@pytest.mark.task(taskno=1)
 def test_exercise1_prints_hello_python():
     output = _run_and_capture("exercise1")
     assert output.strip() == "Hello Python!", f"Expected 'Hello Python!' but got {output.strip()!r}"
 
 
+@pytest.mark.task(taskno=1)
 def test_exercise1_single_line():
     output = _run_and_capture("exercise1")
     lines = output.strip().split("\n")
     assert len(lines) == 1, "Should print exactly one line"
 
 
+@pytest.mark.task(taskno=1)
 def test_exercise1_exact_match():
     output = _run_and_capture("exercise1")
     assert "Hello Python!" in output, "Output must contain 'Hello Python!'"
 
 
 # Exercise 2: Change school name to "Bassaleg School"
+@pytest.mark.task(taskno=2)
 def test_exercise2_prints_bassaleg():
     output = _run_and_capture("exercise2")
     assert output.strip() == "I go to Bassaleg School", (
@@ -51,11 +55,13 @@ def test_exercise2_prints_bassaleg():
     )
 
 
+@pytest.mark.task(taskno=2)
 def test_exercise2_contains_school():
     output = _run_and_capture("exercise2")
     assert "Bassaleg School" in output, "Output must mention 'Bassaleg School'"
 
 
+@pytest.mark.task(taskno=2)
 def test_exercise2_single_line():
     output = _run_and_capture("exercise2")
     lines = output.strip().split("\n")
@@ -63,6 +69,7 @@ def test_exercise2_single_line():
 
 
 # Exercise 3: Change addition to multiplication (5 * 3 = 15)
+@pytest.mark.task(taskno=3)
 def test_exercise3_prints_15():
     output = _run_and_capture("exercise3")
     assert output.strip() == str(EXPECTED_15), (
@@ -70,12 +77,14 @@ def test_exercise3_prints_15():
     )
 
 
+@pytest.mark.task(taskno=3)
 def test_exercise3_is_multiplication():
     output = _run_and_capture("exercise3")
     value = int(output.strip())
     assert value == EXPECTED_15, "5 * 3 should equal 15"
 
 
+@pytest.mark.task(taskno=3)
 def test_exercise3_not_addition():
     output = _run_and_capture("exercise3")
     value = int(output.strip())
@@ -83,6 +92,7 @@ def test_exercise3_not_addition():
 
 
 # Exercise 4: Concatenate "Good Morning Everyone"
+@pytest.mark.task(taskno=4)
 def test_exercise4_prints_good_morning():
     output = _run_and_capture("exercise4")
     assert output.strip() == "Good Morning Everyone", (
@@ -90,11 +100,13 @@ def test_exercise4_prints_good_morning():
     )
 
 
+@pytest.mark.task(taskno=4)
 def test_exercise4_has_spaces():
     output = _run_and_capture("exercise4")
     assert " " in output, "Words should be separated by spaces"
 
 
+@pytest.mark.task(taskno=4)
 def test_exercise4_three_words():
     output = _run_and_capture("exercise4")
     words = output.strip().split()
@@ -102,29 +114,34 @@ def test_exercise4_three_words():
 
 
 # Exercise 5: Division 10 / 2 = 5.0
+@pytest.mark.task(taskno=5)
 def test_exercise5_prints_5_point_0():
     output = _run_and_capture("exercise5")
     assert output.strip() == "5.0", f"Expected '5.0' but got {output.strip()!r}"
 
 
+@pytest.mark.task(taskno=5)
 def test_exercise5_is_division():
     output = _run_and_capture("exercise5")
     value = float(output.strip())
     assert math.isclose(value, 5.0), "10 / 2 should equal 5.0"
 
 
+@pytest.mark.task(taskno=5)
 def test_exercise5_is_float():
     output = _run_and_capture("exercise5")
     assert ".0" in output or "." in output, "Division should produce a float (decimal number)"
 
 
 # Exercise 6: Three print statements - "Learning", "to", "code rocks"
+@pytest.mark.task(taskno=6)
 def test_exercise6_three_lines():
     output = _run_and_capture("exercise6")
     lines = [line for line in output.strip().split("\n") if line]
     assert len(lines) == EXPECTED_LINES, f"Expected {EXPECTED_LINES} lines but got {len(lines)}"
 
 
+@pytest.mark.task(taskno=6)
 def test_exercise6_correct_content():
     output = _run_and_capture("exercise6")
     lines = [line.strip() for line in output.strip().split("\n") if line]
@@ -133,6 +150,7 @@ def test_exercise6_correct_content():
     assert lines[2] == "code rocks", f"Third line should be 'code rocks' but got {lines[2]!r}"
 
 
+@pytest.mark.task(taskno=6)
 def test_exercise6_last_line_two_words():
     output = _run_and_capture("exercise6")
     lines = [line.strip() for line in output.strip().split("\n") if line]
@@ -141,6 +159,7 @@ def test_exercise6_last_line_two_words():
 
 
 # Exercise 7: Concatenation "The result is 100"
+@pytest.mark.task(taskno=7)
 def test_exercise7_prints_result_100():
     output = _run_and_capture("exercise7")
     assert output.strip() == "The result is 100", (
@@ -148,17 +167,20 @@ def test_exercise7_prints_result_100():
     )
 
 
+@pytest.mark.task(taskno=7)
 def test_exercise7_contains_100():
     output = _run_and_capture("exercise7")
     assert "100" in output, "Output must contain '100'"
 
 
+@pytest.mark.task(taskno=7)
 def test_exercise7_contains_result():
     output = _run_and_capture("exercise7")
     assert "result" in output.lower(), "Output should mention 'result'"
 
 
 # Exercise 8: Multiplication 2 * 3 * 4 = 24
+@pytest.mark.task(taskno=8)
 def test_exercise8_prints_24():
     output = _run_and_capture("exercise8")
     assert output.strip() == str(MULT_EXPECTED_24), (
@@ -166,12 +188,14 @@ def test_exercise8_prints_24():
     )
 
 
+@pytest.mark.task(taskno=8)
 def test_exercise8_is_multiplication():
     output = _run_and_capture("exercise8")
     value = int(output.strip())
     assert value == MULT_EXPECTED_24, "2 * 3 * 4 should equal 24"
 
 
+@pytest.mark.task(taskno=8)
 def test_exercise8_not_addition():
     output = _run_and_capture("exercise8")
     value = int(output.strip())
@@ -179,6 +203,7 @@ def test_exercise8_not_addition():
 
 
 # Exercise 9: Two lines - "10 minus 3 equals" and "7"
+@pytest.mark.task(taskno=9)
 def test_exercise9_two_lines():
     output = _run_and_capture("exercise9")
     lines = [line for line in output.strip().split("\n") if line]
@@ -188,6 +213,7 @@ def test_exercise9_two_lines():
     )
 
 
+@pytest.mark.task(taskno=9)
 def test_exercise9_correct_content():
     output = _run_and_capture("exercise9")
     lines = [line.strip() for line in output.strip().split("\n") if line]
@@ -197,6 +223,7 @@ def test_exercise9_correct_content():
     assert lines[1] == "7", f"Second line should be '7' but got {lines[1]!r}"
 
 
+@pytest.mark.task(taskno=9)
 def test_exercise9_calculation_correct():
     output = _run_and_capture("exercise9")
     lines = [line.strip() for line in output.strip().split("\n") if line]
@@ -205,6 +232,7 @@ def test_exercise9_calculation_correct():
 
 
 # Exercise 10: Concatenation "Welcome to Python programming!"
+@pytest.mark.task(taskno=10)
 def test_exercise10_prints_welcome():
     output = _run_and_capture("exercise10")
     assert output.strip() == "Welcome to Python programming!", (
@@ -212,11 +240,13 @@ def test_exercise10_prints_welcome():
     )
 
 
+@pytest.mark.task(taskno=10)
 def test_exercise10_has_spaces():
     output = _run_and_capture("exercise10")
     assert output.count(" ") >= MIN_SPACES, "Should have multiple spaces between words"
 
 
+@pytest.mark.task(taskno=10)
 def test_exercise10_ends_with_exclamation():
     output = _run_and_capture("exercise10")
     assert output.strip().endswith("!"), "Should end with an exclamation mark"
@@ -238,6 +268,7 @@ def test_exercise10_ends_with_exclamation():
         "exercise10",
     ],
 )
+@pytest.mark.task(taskno=0)
 def test_exercise_cells_execute(tag: str) -> None:
     """Verify each tagged cell executes without error."""
     output = _run_and_capture(tag)
