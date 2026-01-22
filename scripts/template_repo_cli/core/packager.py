@@ -56,21 +56,6 @@ class TemplatePackager:
                 dest = workspace / "tests" / f"test_{exercise_id}.py"
                 safe_copy_file(file_dict["test"], dest)
 
-    def _copy_file(self, relative_path: str, workspace: Path) -> None:
-        """Copy a file from template directory if it exists.
-
-        Supports nested paths (e.g., 'tests/notebook_grader.py').
-
-        Args:
-            relative_path: Relative path from template directory.
-            workspace: Destination workspace directory.
-        """
-        src = self.template_files_dir / relative_path
-        dest = workspace / relative_path
-        if src.exists():
-            dest.parent.mkdir(parents=True, exist_ok=True)
-            safe_copy_file(src, dest)
-
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
 
@@ -94,11 +79,15 @@ class TemplatePackager:
             )
 
         # Copy individual files
-        self._copy_file("pyproject.toml", workspace)
-        self._copy_file("pytest.ini", workspace)
-        self._copy_file(".gitignore", workspace)
-        self._copy_file("INSTRUCTIONS.md", workspace)
-        self._copy_file("tests/notebook_grader.py", workspace)
+        for filename in ["pyproject.toml", "pytest.ini", ".gitignore", "INSTRUCTIONS.md"]:
+            src = self.template_files_dir / filename
+            if src.exists():
+                safe_copy_file(src, workspace / filename)
+
+        # Copy notebook grader helper from the actual project
+        src = self.repo_root / "tests" / "notebook_grader.py"
+        if src.exists():
+            safe_copy_file(src, workspace / "tests" / "notebook_grader.py")
 
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
