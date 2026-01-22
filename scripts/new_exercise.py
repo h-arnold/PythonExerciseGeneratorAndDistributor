@@ -74,10 +74,10 @@ def _make_debug_cells(parts: int) -> list[dict[str, Any]]:
                 "execution_count": None,
                 "outputs": [],
                 "source": [
-                    "# BUGGY IMPLEMENTATION (students edit this tagged cell)\n",
-                    "def solve() -> object:\n",
-                    '    """Return the correct result for this exercise."""\n',
-                    "    return 'TODO'\n",
+                    "# BUGGY CODE (students edit this tagged cell)\n",
+                    "# Fix the code below and run the cell.\n",
+                    "\n",
+                    "print('TODO: Fix this code')\n",
                 ],
             }
         )
@@ -110,11 +110,10 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
                 "outputs": [],
                 "source": [
                     "# Exercise 1\n",
-                    "# The tests will execute the code in this cell.\n",
+                    "# The tests will execute the code in this cell and verify the output.\n",
+                    "# Write your code below.\n",
                     "\n",
-                    "def solve() -> object:\n",
-                    '    """Return the correct result for the exercise."""\n',
-                    "    return 'TODO'\n",
+                    "print('TODO: Write your solution here')\n",
                 ],
             }
         )
@@ -139,10 +138,10 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
                     "outputs": [],
                     "source": [
                         f"# Exercise {i}\n",
-                        "# The tests will execute the code in this cell.\n",
-                        "def solve() -> object:\n",
-                        '    """Return the correct result for this exercise."""\n',
-                        "    return 'TODO'\n",
+                        "# The tests will execute the code in this cell and verify the output.\n",
+                        "# Write your code below.\n",
+                        "\n",
+                        "print('TODO: Write your solution here')\n",
                     ],
                 }
             )
@@ -305,32 +304,39 @@ def main() -> int:
         "",
         "import pytest",
         "",
-        "from tests.notebook_grader import exec_tagged_code",
+        "from tests.notebook_grader import run_cell_and_capture_output",
+        "",
+        f"NOTEBOOK_PATH = 'notebooks/{exercise_key}.ipynb'",
         "",
         "",
-        "def _run(tag: str):",
-        f"    ns = exec_tagged_code('notebooks/{exercise_key}.ipynb', tag=tag)",
-        "    assert 'solve' in ns, 'Student cell must define solve()'",
-        "    result = ns['solve']()",
-        "    # Placeholder guard: student must change the scaffold",
-        "    assert result != 'TODO'",
-        "    return result",
+        "def _run_and_capture(tag: str) -> str:",
+        "    \"\"\"Execute the tagged cell and capture its print output.\"\"\"",
+        "    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)",
         "",
         "",
     ]
 
     if args.parts == 1:
         test_lines += [
-            "def test_student_cell_runs() -> None:",
-            "    _run('exercise1')",
+            "def test_exercise1_output() -> None:",
+            "    output = _run_and_capture('exercise1')",
+            "    # TODO: Add assertions to verify the output",
+            "    # Placeholder guard: ensure students replace the TODO",
+            "    assert output.strip(), 'Exercise should produce output'",
+            "    assert 'TODO' not in output, 'Replace the TODO placeholder with your solution'",
+            "    # Example: assert 'expected text' in output",
             "",
         ]
     else:
         tags = ", ".join([f"'exercise{i}'" for i in range(1, args.parts + 1)])
         test_lines += [
             f"@pytest.mark.parametrize('tag', [{tags}])",
-            "def test_exercise_cells_run(tag: str) -> None:",
-            "    _run(tag)",
+            "def test_exercise_cells_execute(tag: str) -> None:",
+            "    \"\"\"Verify each tagged cell executes without error.\"\"\"",
+            "    output = _run_and_capture(tag)",
+            "    # Placeholder guard: ensure students replace the TODO",
+            "    assert output.strip(), f'{tag} should produce output'",
+            "    assert 'TODO' not in output, f'Replace the TODO placeholder in {tag}'",
             "",
         ]
 
@@ -339,31 +345,22 @@ def main() -> int:
     if args.type == "debug":
         test_lines += [
             "# Explanation cell checks for debug exercises",
-            "import json",
-            "",
-            "def _get_explanation(notebook_path: str, tag: str = 'explanation1') -> str:",
-            "    nb = json.load(open(notebook_path, 'r', encoding='utf-8'))",
-            "    for cell in nb.get('cells', []):",
-            "        tags = cell.get('metadata', {}).get('tags', [])",
-            "        if tag in tags:",
-            "            return ''.join(cell.get('source', []))",
-            "    raise AssertionError(f'No explanation cell with tag {tag}')",
+            "from tests.notebook_grader import get_explanation_cell",
             "",
         ]
         if args.parts == 1:
             test_lines += [
                 "def test_explanation_has_content() -> None:",
-                f"    explanation = _get_explanation('notebooks/{exercise_key}.ipynb', tag='explanation1')",
+                "    explanation = get_explanation_cell(NOTEBOOK_PATH, tag='explanation1')",
                 "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
                 "",
             ]
         else:
             test_lines += [
-                "import pytest",
-                f"TAGS = [f'explanation{{i}}' for i in range(1, {args.parts} + 1)]",
-                "@pytest.mark.parametrize('tag', TAGS)",
+                f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {args.parts} + 1)]",
+                "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
                 "def test_explanations_have_content(tag: str) -> None:",
-                f"    explanation = _get_explanation('notebooks/{exercise_key}.ipynb', tag=tag)",
+                "    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)",
                 "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
                 "",
             ]

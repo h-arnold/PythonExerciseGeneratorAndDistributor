@@ -1,39 +1,17 @@
 from __future__ import annotations
 
-import builtins
-import io
-import sys
-
 import pytest
 
-from tests.notebook_grader import exec_tagged_code
+from tests.notebook_grader import run_cell_and_capture_output, run_cell_with_input
+
+NOTEBOOK_PATH = "notebooks/ex003_sequence_modify_variables.ipynb"
 
 
 def _run_and_capture(tag: str, *, inputs: list[str] | None = None) -> str:
     """Execute the tagged cell while capturing stdout and optional inputs."""
-    old_stdout = sys.stdout
-    buffer = io.StringIO()
-    sys.stdout = buffer
-
-    original_input = builtins.input
     if inputs is not None:
-        iterator = iter(inputs)
-
-        def fake_input(prompt: str | None = "") -> str:
-            try:
-                return next(iterator)
-            except StopIteration as exc:
-                raise RuntimeError("Test expected more input values") from exc
-
-        builtins.input = fake_input
-
-    try:
-        exec_tagged_code("notebooks/ex003_sequence_modify_variables.ipynb", tag=tag)
-    finally:
-        sys.stdout = old_stdout
-        builtins.input = original_input
-
-    return buffer.getvalue()
+        return run_cell_with_input(NOTEBOOK_PATH, tag=tag, inputs=inputs)
+    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
 
 
 def test_exercise1_prints_hi_there() -> None:

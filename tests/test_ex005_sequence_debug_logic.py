@@ -1,26 +1,18 @@
 from __future__ import annotations
 
-import contextlib
 import json
-import sys
-from io import StringIO
 
 import pytest
 
-from tests.notebook_grader import exec_tagged_code
+from tests.notebook_grader import (
+    get_explanation_cell,
+    resolve_notebook_path,
+    run_cell_and_capture_output,
+    run_cell_with_input,
+)
 
 MIN_EXPLANATION_LENGTH = 10
-
-
-def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
-    """Extract explanation cell by tag."""
-    with open(notebook_path, encoding="utf-8") as f:
-        nb = json.load(f)
-    for cell in nb.get("cells", []):
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags:
-            return "".join(cell.get("source", []))
-    raise AssertionError(f"No explanation cell with tag {tag}")
+NOTEBOOK_PATH = "notebooks/ex005_sequence_debug_logic.ipynb"
 
 
 # Test that solution notebook produces correct outputs
@@ -40,14 +32,7 @@ def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
 def test_solution_output(tag: str, expected: str) -> None:
     """Test that solution notebook produces correct output."""
     try:
-        # Capture stdout
-        f = StringIO()
-        with contextlib.redirect_stdout(f):
-            exec_tagged_code(
-                "notebooks/ex005_sequence_debug_logic.ipynb", tag=tag
-            )
-
-        output = f.getvalue().strip()
+        output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
         assert (
             expected in output
         ), f"Expected '{expected}' in output for {tag}, got: {output}"
@@ -59,45 +44,27 @@ def test_solution_output(tag: str, expected: str) -> None:
 # Test exercise 5 with input
 def test_solution_exercise5_with_input() -> None:
     """Test exercise 5 which requires user input."""
-    old_stdin = sys.stdin
     try:
-        sys.stdin = StringIO("Alice\nSmith\n")
-
-        f = StringIO()
-        with contextlib.redirect_stdout(f):
-            exec_tagged_code(
-                "notebooks/ex005_sequence_debug_logic.ipynb", tag="exercise5"
-            )
-
-        output = f.getvalue().strip()
+        output = run_cell_with_input(
+            NOTEBOOK_PATH, tag="exercise5", inputs=["Alice", "Smith"]
+        )
         assert "Alice Smith" in output, f"Expected 'Alice Smith' in output, got: {output}"
 
     except Exception as e:
         pytest.fail(f"Solution notebook exercise5 failed to execute: {e}")
-    finally:
-        sys.stdin = old_stdin
 
 
 # Test exercise 10 with input
 def test_solution_exercise10_with_input() -> None:
     """Test exercise 10 which requires user input."""
-    old_stdin = sys.stdin
     try:
-        sys.stdin = StringIO("15\nLondon\n")
-
-        f = StringIO()
-        with contextlib.redirect_stdout(f):
-            exec_tagged_code(
-                "notebooks/ex005_sequence_debug_logic.ipynb", tag="exercise10"
-            )
-
-        output = f.getvalue().strip()
+        output = run_cell_with_input(
+            NOTEBOOK_PATH, tag="exercise10", inputs=["15", "London"]
+        )
         assert "You are 15 years old and live in London" in output, f"Expected message in output, got: {output}"
 
     except Exception as e:
         pytest.fail(f"Solution notebook exercise10 failed to execute: {e}")
-    finally:
-        sys.stdin = old_stdin
 
 
 # Test that explanation cells have content
@@ -107,7 +74,7 @@ TAGS = [f"explanation{i}" for i in range(1, 11)]
 @pytest.mark.parametrize("tag", TAGS)
 def test_explanations_have_content(tag: str) -> None:
     """Test that explanation cells exist in student notebook."""
-    explanation = _get_explanation("notebooks/ex005_sequence_debug_logic.ipynb", tag=tag)
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)
     # In student notebook, explanations are initially just prompts
     assert (
         len(explanation.strip()) > MIN_EXPLANATION_LENGTH
@@ -118,7 +85,7 @@ def test_explanations_have_content(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_exercise_cells_tagged(tag: str) -> None:
     """Test that all exercise cells are properly tagged."""
-    with open("notebooks/ex005_sequence_debug_logic.ipynb", encoding="utf-8") as f:
+    with open(NOTEBOOK_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
     for cell in nb.get("cells", []):
@@ -136,9 +103,8 @@ def test_exercise_cells_tagged(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_solution_cells_tagged(tag: str) -> None:
     """Test that solution notebook has all exercise cells."""
-    with open(
-        "notebooks/solutions/ex005_sequence_debug_logic.ipynb", encoding="utf-8"
-    ) as f:
+    solution_path = resolve_notebook_path(NOTEBOOK_PATH)
+    with open(solution_path, encoding="utf-8") as f:
         nb = json.load(f)
 
     for cell in nb.get("cells", []):
