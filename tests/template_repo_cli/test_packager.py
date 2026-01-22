@@ -150,15 +150,20 @@ class TestPackageIntegrity:
         assert is_valid is False
 
     def test_package_has_notebook_grader(self, repo_root: Path, temp_dir: Path) -> None:
-        """Test that notebook_grader.py is not added implicitly."""
+        """Test that notebook_grader.py is copied from project tests when present."""
         packager = TemplatePackager(repo_root)
         packager.copy_template_base_files(temp_dir)
 
         grader = temp_dir / "tests/notebook_grader.py"
-        assert not grader.exists()
+        repo_grader = repo_root / "tests/notebook_grader.py"
+        if repo_grader.exists():
+            assert grader.exists()
+            assert grader.read_text() == repo_grader.read_text()
+        else:
+            assert not grader.exists()
 
     def test_copies_notebook_grader_when_present(self, repo_root: Path, temp_dir: Path) -> None:
-        """Test that notebook_grader.py is copied when present in template files."""
+        """Test that notebook_grader.py is present; project grader takes precedence over template grader."""
         template_tests_dir = repo_root / "template_repo_files" / "tests"
         template_tests_dir.mkdir(parents=True, exist_ok=True)
         grader_src = template_tests_dir / "notebook_grader.py"
@@ -171,7 +176,13 @@ class TestPackageIntegrity:
 
             grader = temp_dir / "tests/notebook_grader.py"
             assert grader.exists()
-            assert grader.read_text().startswith("# grader helper")
+            repo_grader = repo_root / "tests/notebook_grader.py"
+            if repo_grader.exists():
+                # The packager copies the project's grader, not the template one
+                assert grader.read_text() == repo_grader.read_text()
+            else:
+                # When no project grader exists, the template grader should be used
+                assert grader.read_text().startswith("# grader helper")
         finally:
             # Cleanup created files
             if grader_src.exists():
