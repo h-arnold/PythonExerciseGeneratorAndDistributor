@@ -19,11 +19,13 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+uv.lock
 
 # Virtual environments
 venv/
 ENV/
 env/
+.venv
 
 # Jupyter
 .ipynb_checkpoints
