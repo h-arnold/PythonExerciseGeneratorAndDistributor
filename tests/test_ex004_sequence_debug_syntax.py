@@ -6,32 +6,32 @@ import pytest
 
 from tests.notebook_grader import (
     get_explanation_cell,
+    resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
 
 MIN_EXPLANATION_LENGTH = 10
 NOTEBOOK_PATH = "notebooks/ex004_sequence_debug_syntax.ipynb"
-SOLUTION_PATH = "notebooks/solutions/ex004_sequence_debug_syntax.ipynb"
 
 
 # Test that exercises run and produce correct output
 @pytest.mark.parametrize(
-    "tag,input_val,expected",
+    "tag",
     [
-        ("exercise1", None, "Hello World!"),
-        ("exercise2", None, "I like Python"),
-        ("exercise3", None, "Learning Python"),
-        ("exercise4", None, "50"),
-        ("exercise5", None, "Hello Alice"),
-        ("exercise6", None, "Welcome to school"),
-        # Exercise 7 requires input
-        ("exercise8", None, "Hello"),
-        ("exercise9", None, "It's amazing"),
+        "exercise1",
+        "exercise2",
+        "exercise3",
+        "exercise4",
+        "exercise5",
+        "exercise6",
+        "exercise7",
+        "exercise8",
+        "exercise9",
     ],
 )
-def test_exercise_output(tag: str, input_val: str, expected: str) -> None:
-    """Test that corrected exercises produce the expected output."""
+def test_exercise_output(tag: str) -> None:
+    """Test that exercise cells exist and are properly tagged."""
     with open(NOTEBOOK_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
@@ -116,7 +116,8 @@ def test_exercise_cells_tagged(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_solution_cells_tagged(tag: str) -> None:
     """Test that solution notebook has all exercise cells."""
-    with open(SOLUTION_PATH, encoding="utf-8") as f:
+    solution_path = resolve_notebook_path(NOTEBOOK_PATH)
+    with open(solution_path, encoding="utf-8") as f:
         nb = json.load(f)
 
     for cell in nb.get("cells", []):

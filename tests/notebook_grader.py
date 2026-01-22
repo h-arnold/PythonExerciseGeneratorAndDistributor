@@ -187,6 +187,9 @@ def run_cell_with_input(
     iterator = iter(inputs)
 
     def fake_input(prompt: str = "") -> str:
+        # Write prompt to stdout to match real input() behavior
+        if prompt:
+            print(prompt, end="")
         try:
             return next(iterator)
         except StopIteration as exc:
@@ -226,8 +229,9 @@ def get_explanation_cell(notebook_path: str | Path, *, tag: str) -> str:
     cells = nb.get("cells", [])
 
     for cell in cells:
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags:
+        if not isinstance(cell, dict):
+            continue
+        if tag in _cell_tags(cell):
             source = cell.get("source", [])
             if isinstance(source, list):
                 return "".join(source)

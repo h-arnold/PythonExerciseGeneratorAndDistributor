@@ -6,13 +6,13 @@ import pytest
 
 from tests.notebook_grader import (
     get_explanation_cell,
+    resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
 
 MIN_EXPLANATION_LENGTH = 10
 NOTEBOOK_PATH = "notebooks/ex005_sequence_debug_logic.ipynb"
-SOLUTION_PATH = "notebooks/solutions/ex005_sequence_debug_logic.ipynb"
 
 
 # Test that solution notebook produces correct outputs
@@ -32,7 +32,7 @@ SOLUTION_PATH = "notebooks/solutions/ex005_sequence_debug_logic.ipynb"
 def test_solution_output(tag: str, expected: str) -> None:
     """Test that solution notebook produces correct output."""
     try:
-        output = run_cell_and_capture_output(SOLUTION_PATH, tag=tag)
+        output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
         assert (
             expected in output
         ), f"Expected '{expected}' in output for {tag}, got: {output}"
@@ -46,7 +46,7 @@ def test_solution_exercise5_with_input() -> None:
     """Test exercise 5 which requires user input."""
     try:
         output = run_cell_with_input(
-            SOLUTION_PATH, tag="exercise5", inputs=["Alice", "Smith"]
+            NOTEBOOK_PATH, tag="exercise5", inputs=["Alice", "Smith"]
         )
         assert "Alice Smith" in output, f"Expected 'Alice Smith' in output, got: {output}"
 
@@ -59,7 +59,7 @@ def test_solution_exercise10_with_input() -> None:
     """Test exercise 10 which requires user input."""
     try:
         output = run_cell_with_input(
-            SOLUTION_PATH, tag="exercise10", inputs=["15", "London"]
+            NOTEBOOK_PATH, tag="exercise10", inputs=["15", "London"]
         )
         assert "You are 15 years old and live in London" in output, f"Expected message in output, got: {output}"
 
@@ -103,7 +103,8 @@ def test_exercise_cells_tagged(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_solution_cells_tagged(tag: str) -> None:
     """Test that solution notebook has all exercise cells."""
-    with open(SOLUTION_PATH, encoding="utf-8") as f:
+    solution_path = resolve_notebook_path(NOTEBOOK_PATH)
+    with open(solution_path, encoding="utf-8") as f:
         nb = json.load(f)
 
     for cell in nb.get("cells", []):

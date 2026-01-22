@@ -321,7 +321,9 @@ def main() -> int:
             "def test_exercise1_output() -> None:",
             "    output = _run_and_capture('exercise1')",
             "    # TODO: Add assertions to verify the output",
-            "    assert output is not None, 'Exercise should produce output'",
+            "    # Placeholder guard: ensure students replace the TODO",
+            "    assert output.strip(), 'Exercise should produce output'",
+            "    assert 'TODO' not in output, 'Replace the TODO placeholder with your solution'",
             "    # Example: assert 'expected text' in output",
             "",
         ]
@@ -332,7 +334,9 @@ def main() -> int:
             "def test_exercise_cells_execute(tag: str) -> None:",
             "    \"\"\"Verify each tagged cell executes without error.\"\"\"",
             "    output = _run_and_capture(tag)",
-            "    assert output is not None, f'{tag} should produce output'",
+            "    # Placeholder guard: ensure students replace the TODO",
+            "    assert output.strip(), f'{tag} should produce output'",
+            "    assert 'TODO' not in output, f'Replace the TODO placeholder in {tag}'",
             "",
         ]
 
