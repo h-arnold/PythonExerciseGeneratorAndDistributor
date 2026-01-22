@@ -842,3 +842,76 @@ class TestPushToExistingRepository:
         # Verify --force flag is included in push command
         calls = " ".join(str(c) for c in mock_run.call_args_list)
         assert "--force" in calls
+
+    @patch("subprocess.run")
+    def test_push_to_existing_repository_403_error(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
+        """Test 403 permission error provides helpful instructions."""
+
+        # Mock successful calls until the push command fails with 403
+        def run_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+            cmd = args[0] if args else []
+            if "push" in cmd:
+                # Simulate 403 permission denied error
+                raise subprocess.CalledProcessError(
+                    128,
+                    cmd,
+                    stderr=(
+                        "remote: Permission to user/test-repo.git denied to user.\n"
+                        "fatal: unable to access 'https://github.com/user/test-repo.git/': "
+                        "The requested URL returned error: 403"
+                    ),
+                )
+            # Other commands succeed
+            return MagicMock(returncode=0, stdout="testuser\n", stderr="")
+
+        mock_run.side_effect = run_side_effect
+
+        (temp_dir / "README.md").write_text("Test")
+
+        client = GitHubClient()
+        result = client.push_to_existing_repository("test-repo", temp_dir)
+
+        assert result["success"] is False
+        assert "error" in result
+        error_msg = result["error"]
+        assert "403" in error_msg
+        assert "unset GITHUB_TOKEN" in error_msg
+        assert "unset GH_TOKEN" in error_msg
+        assert "gh auth login" in error_msg
+
+    @patch("subprocess.run")
+    def test_push_to_existing_repository_permission_denied_error(
+        self, mock_run: MagicMock, temp_dir: Path
+    ) -> None:
+        """Test permission denied error without 403 code also triggers helpful instructions."""
+
+        # Mock successful calls until the push command fails
+        def run_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
+            cmd = args[0] if args else []
+            if "push" in cmd:
+                # Simulate permission denied error without explicit 403
+                raise subprocess.CalledProcessError(
+                    128,
+                    cmd,
+                    stderr=(
+                        "remote: Permission denied to user/test-repo.git.\n"
+                        "fatal: unable to access repository"
+                    ),
+                )
+            # Other commands succeed
+            return MagicMock(returncode=0, stdout="testuser\n", stderr="")
+
+        mock_run.side_effect = run_side_effect
+
+        (temp_dir / "README.md").write_text("Test")
+
+        client = GitHubClient()
+        result = client.push_to_existing_repository("test-repo", temp_dir)
+
+        assert result["success"] is False
+        assert "error" in result
+        error_msg = result["error"]
+        assert "unset GITHUB_TOKEN" in error_msg
+        assert "gh auth login" in error_msg

@@ -642,6 +642,24 @@ class GitHubClient:
             )
             return {"success": True, "remote_url": remote_url}
         except subprocess.CalledProcessError as exc:
+            # Check if this is a 403 permission error that might be caused by GITHUB_TOKEN
+            if self._is_permission_denied_error(exc):
+                return {
+                    "success": False,
+                    "error": (
+                        "Authentication failed: Permission denied (403).\n\n"
+                        "This is likely caused by the GITHUB_TOKEN or GH_TOKEN environment variable "
+                        "blocking authentication with the correct scopes.\n\n"
+                        "To resolve this, run:\n"
+                        "  unset GITHUB_TOKEN\n"
+                        "  unset GH_TOKEN\n"
+                        "  gh auth login\n\n"
+                        "Then try again.\n\n"
+                        "Original error:\n"
+                        f"{self._format_called_process_error(exc)}"
+                    ),
+                    "remote_url": remote_url,
+                }
             # Provide stdout/stderr so callers can see the underlying failure
             return {
                 "success": False,
@@ -654,6 +672,25 @@ class GitHubClient:
                 "error": str(exc),
                 "remote_url": remote_url,
             }
+
+    @staticmethod
+    def _is_permission_denied_error(exc: subprocess.CalledProcessError) -> bool:
+        """Check if a subprocess error is a 403 permission denied error.
+
+        Args:
+            exc: The CalledProcessError to check.
+
+        Returns:
+            True if this is a 403 permission denied error, False otherwise.
+        """
+        error_text = (
+            (exc.stderr or "") + (exc.stdout or "")
+        ).lower()
+
+        return (
+            "403" in error_text
+            or ("permission" in error_text and "denied" in error_text)
+        )
 
     @staticmethod
     def _format_called_process_error(exc: subprocess.CalledProcessError) -> str:
