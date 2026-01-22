@@ -14,31 +14,13 @@
 
       // VS Code settings
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
-        "python.testing.pytestEnabled": true,
-        "python.testing.unittestEnabled": false,
-        "python.testing.pytestArgs": [
-          "tests",
-          "-q"
-        ],
-        "python.analysis.typeCheckingMode": "basic",
-        "editor.formatOnSave": false,
-        "jupyter.notebookFileRoot": "${workspaceFolder}",
-
         // Disable features to keep environment simple
         "workbench.startupEditor": "none",
         "workbench.tips.enabled": false,
-        "workbench.welcomePage.walkthroughs.openOnInstall": false,
-
-        // Hide unnecessary files
-        "files.exclude": {
-          "**/__pycache__": true,
-          "**/*.pyc": true,
-          "**/.pytest_cache": true
-        }
+        "workbench.welcomePage.walkthroughs.openOnInstall": false
       }
-    }
-  },
+        }
+      },
 
 
   // Post-create command to install the exercise package if pyproject.toml exists

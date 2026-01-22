@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from typing import Any, Literal, TypedDict
+from typing import Any, Literal, TypedDict, TypeGuard
 
 
 # TypedDicts for well-known result shapes to improve static typing
@@ -92,6 +92,22 @@ def run_subprocess(
         return subprocess.run(cmd, cwd=cwd, capture_output=False, text=text, check=check)
     else:
         raise ValueError(f"Invalid output_mode: {output_mode}")
+
+
+def is_command_sequence(obj: Any) -> TypeGuard[list[str] | tuple[str, ...]]:
+    """Return True if ``obj`` is a sequence of strings representing a command.
+
+    This helper narrows the type to either a `list[str]` or `tuple[str, ...]`.
+    We avoid generator expressions here so static analyzers have a concrete
+    variable to type-check (prevents 'Type of "x" is unknown' diagnostics).
+    """
+    if not isinstance(obj, (list, tuple)):
+        return False
+
+    # Treat the container as a sequence of objects; check each element's type
+    # explicitly so tools like Pylance can infer the element type safely.
+    seq: list[object] | tuple[object, ...] = obj  # type: ignore[assignment]
+    return all(isinstance(element, str) for element in seq)
 
 
 class GitHubClient:
@@ -582,7 +598,7 @@ class GitHubClient:
 
         run_subprocess(push_cmd, cwd=workspace, check=True)
 
-    def push_to_existing_repository(
+    def push_to_existing_repository(  # noqa: PLR0911
         self,
         repo_name: str,
         workspace: Path,

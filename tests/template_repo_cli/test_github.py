@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scripts.template_repo_cli.core.github import ExecResult, GitHubClient
+from scripts.template_repo_cli.core.github import ExecResult, GitHubClient, is_command_sequence
 
 
 class TestBuildCreateRepoCommand:
@@ -645,6 +645,20 @@ class TestScopeChecking:
         assert "read:org" in result["scopes"]
 
 
+class TestTypeGuards:
+    """Tests for command type guard helpers."""
+
+    def test_is_command_sequence_positive(self) -> None:
+        """Sequence of strings should be recognised as a command sequence."""
+        assert is_command_sequence(["git", "push"]) is True
+        assert is_command_sequence(("git", "push")) is True
+
+    def test_is_command_sequence_negative(self) -> None:
+        """Non-sequence or mixed-type sequences should not be recognised."""
+        assert is_command_sequence("git push") is False
+        assert is_command_sequence(["git", 1]) is False
+
+
 class TestAuthRetryDetection:
     """Tests for auth error detection."""
 
@@ -850,13 +864,14 @@ class TestPushToExistingRepository:
         """Test 403 permission error provides helpful instructions."""
 
         # Mock successful calls until the push command fails with 403
-        def run_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
-            cmd = args[0] if args else []
-            if "push" in cmd:
+        def run_side_effect(*args: object, **kwargs: object) -> MagicMock:
+            raw_cmd: object | list[str] = args[0] if args else []
+            # Narrow type for static analysis: ensure this is a sequence of strings
+            if is_command_sequence(raw_cmd) and "push" in raw_cmd:
                 # Simulate 403 permission denied error
                 raise subprocess.CalledProcessError(
                     128,
-                    cmd,
+                    raw_cmd,
                     stderr=(
                         "remote: Permission to user/test-repo.git denied to user.\n"
                         "fatal: unable to access 'https://github.com/user/test-repo.git/': "
@@ -888,13 +903,13 @@ class TestPushToExistingRepository:
         """Test permission denied error without 403 code also triggers helpful instructions."""
 
         # Mock successful calls until the push command fails
-        def run_side_effect(*args: Any, **kwargs: Any) -> MagicMock:
-            cmd = args[0] if args else []
-            if "push" in cmd:
+        def run_side_effect(*args: object, **kwargs: object) -> MagicMock:
+            raw_cmd: object | list[str] = args[0] if args else []
+            if is_command_sequence(raw_cmd) and "push" in raw_cmd:
                 # Simulate permission denied error without explicit 403
                 raise subprocess.CalledProcessError(
                     128,
-                    cmd,
+                    raw_cmd,
                     stderr=(
                         "remote: Permission denied to user/test-repo.git.\n"
                         "fatal: unable to access repository"
