@@ -1,17 +1,13 @@
 # Docker and DevContainer Setup
 
-This repository includes a pre-built Docker image and devcontainer configuration for student exercises.
+This repository ships with a shared Dockerfile and two devcontainer definitions. The maintainer setup (in this repository) uses the upstream VS Code Python image and installs tooling via `uv`. Template repositories for students consume the Docker image that is built from this Dockerfile and published to GitHub Container Registry (GHCR).
 
 ## Overview
 
-The student environment provides a minimal, pre-configured setup with:
-
-- Python 3.11
-- Jupyter Lab for running notebooks
-- pytest for automated testing
-- VS Code extensions: Python, Pylance, and Jupyter (only)
-
-All unnecessary features are disabled to provide students with a focused learning environment.
+- Python 3.11 base image (`mcr.microsoft.com/devcontainers/python:3.11`) with Debian Bullseye
+- Dependencies (pytest, jupyterlab, ruff, ipykernel, template CLI) managed by `uv` using `pyproject.toml` and `uv.lock`
+- GitHub Actions workflow builds a multi-arch image and pushes to GHCR for student use
+- VS Code devcontainer settings tailored separately for maintainers and students
 
 ## Components
 
@@ -19,191 +15,144 @@ All unnecessary features are disabled to provide students with a focused learnin
 
 Location: `/Dockerfile`
 
-The Dockerfile creates a minimal student environment based on Microsoft's official Python devcontainer image. It:
+The Dockerfile extends Microsoft's Python devcontainer image and prepares the student environment:
 
-- Uses Python 3.11 on Debian Bullseye
-- Installs only required packages (pytest, ipykernel, jupyterlab)
-- Optimizes build time with layer caching
-- Runs as non-root user for security
-
-**Best practices implemented:**
-
-- Minimal layer count
-- No unnecessary packages
-- Non-root user execution
-- Optimized .dockerignore file
+- Copies `pyproject.toml` and `uv.lock` and upgrades `pip` and `uv`
+- Runs `uv sync --no-install-project` to install the pinned dependency set without packaging the CLI
+- Sets Python-friendly environment variables and ensures the `vscode` user owns the workspace
+- Leaves the container running as the non-root `vscode` user and exposes port 8888 for Jupyter Lab
 
 ### 2. GitHub Actions Workflow
 
 Location: `/.github/workflows/docker-build.yml`
 
-Automatically builds and pushes the Docker image to GitHub Container Registry (GHCR) when:
+The workflow automatically builds and publishes the Docker image when:
 
-- Changes are pushed to the main branch
-- Dockerfile or related files are modified
-- Manually triggered via workflow_dispatch
+- Changes land on the `main` branch
+- Relevant files (`Dockerfile`, `.dockerignore`, the workflow file) change
+- A maintainer triggers the workflow manually via `workflow_dispatch`
 
-The workflow:
+Key characteristics:
 
-- Builds for both AMD64 and ARM64 platforms
-- Uses GitHub Actions cache for faster builds
-- Tags images with branch name, SHA, and 'latest'
-- Pushes to `ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment`
+- Multi-architecture builds (`linux/amd64`, `linux/arm64`) using Docker Buildx
+- Metadata-based tagging (branch, PR, semantic version, commit SHA, and `latest`)
+- Pushes to `ghcr.io/<repository>/student-environment` after authenticating with the GitHub token
+- Reuses GitHub Actions cache layers to speed up repeat builds
 
-### 3. DevContainer Configuration
+### 3. Devcontainer Configuration
+
+Two devcontainer configurations target different audiences.
+
+#### Maintainer devcontainer
+
+Location: `/.devcontainer/devcontainer.json`
+
+- Uses the published `mcr.microsoft.com/devcontainers/python:3.11` image directly
+- Installs VS Code features for GitHub CLI, Git LFS, and `uv`
+- Runs `uv sync && . .venv/bin/activate` as a post-create command to prime the virtual environment
+- Installs the maintainer extension set (Ruff, Python, Pylance, Jupyter family, Markdown linting)
+
+#### Student template devcontainer
 
 Location: `/template_repo_files/.devcontainer/devcontainer.json`
 
-Configures the student environment for GitHub Codespaces and VS Code Remote - Containers:
-
-- Uses the pre-built image from GHCR
-- Installs only essential VS Code extensions
-- Disables welcome screens and tips
-- Configures Python and Jupyter settings
-- Hides build artifacts and cache files
-
-**Minimal UI features:**
-
-- No startup editor
-- No welcome walkthroughs
-- No tips
-- Only essential extensions
+- Points to the pre-built GHCR image `ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment:latest`
+- Keeps the extension list to Python, Pylance, and Jupyter for a focused student experience
+- Applies opinionated VS Code settings (formatter, testing config, startup UX)
+- Runs a conditional `postCreateCommand` that performs `uv sync` when a `pyproject.toml` is present
+- Uses the existing `vscode` user and sets `PYTHONUNBUFFERED=1`
 
 ## Usage
 
-### For Students (GitHub Classroom)
+### Maintainers (this repository)
 
-When a student opens their assignment repository in GitHub Codespaces or VS Code with the Remote - Containers extension:
+1. Open the repository in VS Code and choose **Reopen in Container**
+2. The devcontainer uses the upstream Python image, installs helper features, and runs `uv sync`
+3. The `.venv` created by `uv` activates for subsequent terminals (`. .venv/bin/activate`)
+4. Run `uv run` commands (for example, `uv run pytest -q`) to execute tasks inside the managed environment
 
-1. The devcontainer automatically pulls the pre-built image
-2. VS Code installs only the three required extensions
-3. Dependencies are installed via `uv sync`
-4. Students can immediately start working on exercises
+### Students (GitHub Classroom template repositories)
 
-**No manual setup required!**
+1. Template repositories include `.devcontainer/devcontainer.json` pointing at the GHCR image
+2. When Codespaces or VS Code loads the repo, the pre-built image is pulled and `uv sync` installs dependencies
+3. Only the Python, Pylance, and Jupyter extensions are installed, keeping the UI minimal
+4. Students can start editing tagged notebook cells immediately; no manual setup is required
 
-### For Template Repository Creation
+### Local development outside Codespaces
 
-The CLI automatically includes the devcontainer configuration when creating template repositories:
-
-```bash
-template_repo_cli create --construct sequence --repo-name my-exercises
-```
-
-The generated repository will include:
-
-- `.devcontainer/devcontainer.json` pointing to the pre-built image
-- All necessary VS Code settings
-- Jupyter and pytest configuration
-
-### For Local Development
-
-To use the devcontainer locally:
-
-1. Install Docker Desktop
-2. Install VS Code with the "Dev Containers" extension
-3. Open the repository in VS Code
-4. Click "Reopen in Container" when prompted
-
-Or use the Command Palette (Ctrl+Shift+P):
-
-```
-Dev Containers: Reopen in Container
-```
+1. Install Docker (e.g., Docker Desktop) and VS Code with the Dev Containers extension
+2. Clone this repository locally and open it in VS Code
+3. Select **Dev Containers: Reopen in Container** from the Command Palette (Ctrl+Shift+P)
+4. The maintainer devcontainer provisions the environment, including `uv sync`
 
 ## Image Updates
 
-The Docker image is automatically rebuilt when changes are pushed to main. To force a rebuild:
+The GitHub Actions workflow rebuilds and republishes the student image whenever the Dockerfile (or related files) change on `main`. To trigger a rebuild manually:
 
-1. Go to Actions tab in GitHub
-2. Select "Build and Push Student Environment Docker Image"
-3. Click "Run workflow"
+1. Navigate to **Actions** in GitHub
+2. Select **Build and Push Student Environment Docker Image**
+3. Click **Run workflow**
 
-**Tip:** To speed repeated builds and CI runs, consider adding a cache step for pip's wheel cache (e.g., `~/.cache/pip`) and use `uv.lock` as the cache key in your workflow. This reduces network bandwidth and speeds up repeated `uv sync` operations.
+Caching tips:
 
-The new image will be available within a few minutes.
+- The workflow already uses the GitHub Actions cache backend for Docker layers
+- Inside the container, `uv` caches packages under `/root/.cache/uv`; the cache is automatically preserved between layers when the lockfile is unchanged
 
-## Customization
+## Customisation
 
-### Modifying the Image
+### Modifying the image
 
-To add packages or change configuration:
+1. Update `Dockerfile` (and `uv.lock` if dependencies change)
+2. Commit and push to `main`
+3. The workflow rebuilds and pushes a fresh image to GHCR
 
-1. Edit `Dockerfile`
-2. Commit and push to main
-3. GitHub Actions will automatically rebuild and push the new image
+### Modifying VS Code settings
 
-### Modifying VS Code Settings
-
-To change student VS Code settings:
-
-1. Edit `template_repo_files/.devcontainer/devcontainer.json`
-2. Commit changes
-3. New template repositories will use the updated configuration
-
-**Note:** Existing student repositories won't automatically update. Students would need to pull the latest devcontainer config.
+- Maintainer tweaks: edit `/.devcontainer/devcontainer.json`
+- Student experience tweaks: edit `/template_repo_files/.devcontainer/devcontainer.json`
+- Regenerate template repositories (or re-run the CLI) so new settings propagate; existing student repos need to pull changes manually
 
 ## Troubleshooting
 
-### Image Pull Failures
+### Image pull issues
 
-If students experience image pull failures:
+- Confirm the image exists at `ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment:latest`
+- Ensure the target repository (or Codespace) has access to the container registry
+- Use a specific tag (for example, a SHA tag) if `latest` appears stale
 
-1. Check that the repository is public or students have access
-2. Verify the image exists at `ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment:latest`
-3. Try using a specific tag instead of `latest`
+### Workflow build failures
 
-### Build Failures
+- Inspect the failing run under **Actions** for Docker build logs
+- Verify Dockerfile edits build locally (`docker build .`)
+- Check that dependencies specified in `pyproject.toml` are available (public packages only)
 
-If the GitHub Actions workflow fails:
+### Devcontainer boot problems
 
-1. Check the Actions tab for error logs
-2. Verify Dockerfile syntax
-3. Ensure all required files exist
-4. Check that dependencies are available on PyPI
-
-### Students Can't Install Extensions
-
-Extensions are pre-configured in devcontainer.json. If students try to install additional extensions:
-
-- They can install them in their codespace
-- Extensions won't persist if devcontainer is rebuilt
-- Consider if the extension should be added to devcontainer.json
+- Delete any existing `.venv` folder and let `uv sync` recreate it on the next container start
+- Confirm the Dev Containers extension is up to date and Docker is running locally
+- For template repositories, ensure `pyproject.toml` exists so the conditional `postCreateCommand` installs dependencies
 
 ## Architecture Decisions
 
-### Why Pre-built Images?
+### Pre-built student image
 
-Pre-built images provide:
+- Minimises Codespaces start-up time and bandwidth
+- Guarantees consistent, reproducible exercises for all students
+- Allows maintainers to ship updates centrally without rebuilding per repository
 
-- Faster startup time for students (no build required)
-- Consistent environment across all students
-- Reduced Codespaces usage time
-- Centralized updates
+### Extension split between maintainers and students
 
-### Why Minimal Extensions?
+- Maintainers need linting, Markdown tooling, and authoring extensions to create exercises efficiently
+- Students get a distraction-free environment with Python essentials only
 
-Only Python, Pylance, and Jupyter are included to:
+### GitHub Container Registry
 
-- Reduce cognitive load for students
-- Minimize distractions
-- Focus on learning Python
-- Faster extension installation
+- Free for public repositories and integrates with Actions
+- Handles authentication automatically through GitHub tokens
+- Supports multi-architecture images consumed by Codespaces
 
-### Why GHCR?
+## Future improvements
 
-GitHub Container Registry provides:
-
-- Free hosting for public repositories
-- Seamless integration with GitHub Actions
-- No separate authentication required
-- Built-in permission management
-
-## Future Improvements
-
-Potential enhancements:
-
-- Add support for Pyodide (browser-based Python)
-- Create exercise-specific images
-- Add pre-installed linting tools
-- Support for different Python versions
+- Automate smoke tests against the published GHCR image after each build
+- Document best practices for pre-warming `uv` caches in CI environments
+- Offer alternative profiles for advanced courses (e.g., linting-focused images)

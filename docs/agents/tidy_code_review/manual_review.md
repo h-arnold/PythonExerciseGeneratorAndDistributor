@@ -1,6 +1,6 @@
 # Tidy Code Reviewer — Manual Review (KISS & DRY)
 
-This document contains the manual review instructions for the Tidy Code Reviewer. It should be called when a deeper, human-like review is required after automated checks.
+This document contains the manual review instructions for the Tidy Code Reviewer. Invoke it after the automated phase finishes and a human-style reasoning pass is required.
 
 ## KISS & DRY (overview)
 
@@ -46,16 +46,16 @@ Defaults and thresholds are configurable via `agent-config.yml`.
 
 ### MUST do (manual steps)
 
-1. Create a TODO using `manage_todo_list`; with the tasks you need to complete. Mark one item `in-progress`.
-2. **Trace code execution**: For each changed file, manually trace inputs → outputs. Identify assumptions, edge cases, and data flow. Check for simpler implementations or reuse of existing helpers.
-3. **Validate no re-implementation**: Ensure changes do not duplicate existing functionality elsewhere in the codebase. Flag opportunities to consolidate or reuse.
-4. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.
-5. **Review code duplication**: Manually scan for repeated logic patterns, especially across module boundaries. Suggest extraction to shared utilities.
-6. **Verify adherence to standards**: Check that changed code follows the repo's coding conventions, naming patterns, and architectural principles outlined in the docs.
-7. **Compare docs against the code**: Ensure any behavioural changes are reflected in documentation, README, or docstrings. Flag discrepancies for update.
-8. **Check the total length of files**: If a file exceeds 500 lines, suggest splitting into smaller modules, if appropriate.
-9. **Prepare findings report**: Document control/data flow observations, suggested refactors requiring human judgement, and patches for non-trivial changes.
-10. **Suggest patches or PRs**: For refactors that would alter runtime behaviour or cross-module logic, create draft PRs with clear rationale for human review.
+1. Review the automated phase summary (change list, diagnostics, tests run). Capture follow-up actions in the calling agent's task list if available; otherwise record them in the review notes.
+2. Ensure the uv-managed environment is used for any commands that must be rerun (for example, `uv run pytest -q` with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`). Only rerun tooling if additional evidence is needed.
+3. **Trace code execution**: For each changed file, manually trace inputs → outputs. Identify assumptions, edge cases, and data flow. Check for simpler implementations or reuse of existing helpers.
+4. **Validate no re-implementation**: Ensure changes do not duplicate existing functionality elsewhere in the codebase. Flag opportunities to consolidate or reuse.
+5. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.
+6. **Review code duplication**: Manually scan for repeated logic patterns, especially across module boundaries. Suggest extraction to shared utilities.
+7. **Verify adherence to standards**: Check that changed code follows the repo's coding conventions, naming patterns, and architectural principles outlined in the docs.
+8. **Compare docs against the code**: Ensure any behavioural changes are reflected in documentation, README, or docstrings. Flag discrepancies for update.
+9. **Check the total length of files**: If a file exceeds 500 lines, suggest splitting into smaller modules when sensible.
+10. **Prepare findings report**: Document control/data flow observations, suggested refactors requiring human judgement, and patches for non-trivial changes. Recommend draft PRs where extensive follow-up work is needed.
 
 ### OPTIONAL (manual)
 
@@ -74,7 +74,6 @@ Return a concise summary containing:
 - **Docs findings**: which docs were checked and any discrepancies found.
 - **Suggested patches/PRs**: list of non-automated refactors with a short diff or PR URL (if created).
 - **Remaining issues**: anything you did not fix (reason + suggestion).
-- **Docs review**: which docs were checked and any discrepancies found.
 - **Lint results**: summary of remaining diagnostics.
 
 ### Exit criteria

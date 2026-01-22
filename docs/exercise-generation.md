@@ -114,21 +114,31 @@ The agent will generate a response, often including a plan or code snippets.
 Once the agent gives you the exercise content (the "solution" code and the "student" instructions):
 
 1. **Create the file structure**:
-   Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests:
+
+   Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests inside the managed environment:
 
    ```bash
-   python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic
+   uv run python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic --type modify
    ```
+
+   The scaffolder writes a placeholder test, notebooks, and an exercise folder at `exercises/ex050_my_topic/`. Move that folder into the right curriculum path (for example, `exercises/sequence/modify/`) so it lines up with [docs/exercise-types](exercise-types/) guidance.
 
 2. **Add the Content**:
-   - Open `notebooks/solutions/ex050_my_topic.ipynb`.
-   - Paste the code provided by the agent into the appropriate cells.
+
+   - Open both `notebooks/ex050_my_topic.ipynb` and `notebooks/solutions/ex050_my_topic.ipynb`.
+   - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-types](exercise-types/).
+   - Replace any placeholder `TODO`/`pass` code with the versions supplied by the agent (student copy in the main notebook, full answer in solutions).
+
 3. **Verify**:
-   Run the tests to make sure everything works:
+
+   Run the automated checks to confirm the notebooks and tests align:
 
    ```bash
-   pytest tests/test_ex050_my_topic.py
+   PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex050_my_topic.py -q
+   uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
    ```
+
+   The first command exercises the solutions; rerun the pytest command without `PYTUTOR_NOTEBOOKS_DIR` once you expect the student notebook to pass as well.
 
 ## Exercise Verifier — quick quality checks 🔍
 
@@ -142,7 +152,7 @@ How to run it manually:
 - **Locally (command line)**:
 
   ```bash
-  python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
+  uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
   ```
 
 What it checks:

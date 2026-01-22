@@ -1,10 +1,22 @@
 # Development Guide
 
-This guide is for contributors and maintainers working on the PythonTutorExercises repository infrastructure.
+This guide is for contributors and maintainers working on the Python Tutor Exercises infrastructure.
 
 ## Development Setup
 
 Follow the [Setup Guide](setup.md) to install dependencies and configure your environment.
+
+After cloning the repository, set up the managed virtual environment and run commands through `uv`:
+
+```bash
+uv sync
+
+# Optionally activate the virtualenv for ad-hoc work
+source .venv/bin/activate
+
+# Or prefix commands with uv run (preferred)
+uv run python -V
+```
 
 ## Repository Architecture
 
@@ -20,19 +32,24 @@ Follow the [Setup Guide](setup.md) to install dependencies and configure your en
 
 - `tests/notebook_grader.py`: Core grading logic (extract and execute tagged cells)
 - `scripts/new_exercise.py`: Exercise scaffolding tool
-- `scripts/verify_solutions.sh`: Helper to test solutions
+- `scripts/verify_solutions.sh`: Helper to test solutions (wraps `pytest` with `PYTUTOR_NOTEBOOKS_DIR`)
+- `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
 - `.github/copilot-instructions.md`: Repo-wide Copilot context
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
+- `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
 ## Working on the Grading System
 
 ### `notebook_grader.py`
 
-The grading system has three main functions:
+The grading system exposes these core helpers:
 
 1. **`resolve_notebook_path()`**: Redirects to alternative notebook directories via `PYTUTOR_NOTEBOOKS_DIR`
 2. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
 3. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
+4. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
+5. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
+6. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
 
 **Design principles**:
 
@@ -43,12 +60,15 @@ The grading system has three main functions:
 **Testing changes**:
 
 ```bash
-# Test the grading system itself
-pytest tests/ -v
+# Always test against the solution notebooks first
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
 
-# Test against various notebooks
-pytest tests/test_ex001_sanity.py -v
-pytest tests/test_ex002_sequence_modify_basics.py -v
+# Focus on a specific exercise (still targeting solutions)
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex001_sanity.py -q
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex002_sequence_modify_basics.py -q
+
+# Only switch to student notebooks when validating the classroom experience
+uv run pytest tests/test_ex001_sanity.py -q
 ```
 
 ### Adding Features to the Grader
@@ -75,19 +95,21 @@ The generator scaffolds new exercises with consistent structure.
 **Testing changes**:
 
 ```bash
-# Test in a temporary directory
-cd /tmp
-python /path/to/PythonTutorExercises/scripts/new_exercise.py ex999 "Test" --slug test_exercise
+# From the repository root
+uv run scripts/new_exercise.py ex999 "Test" --slug test_exercise
 
 # Verify created files
-ls -la exercises/ex999_test_exercise/
-ls -la notebooks/ex999_test_exercise.ipynb
-ls -la notebooks/solutions/ex999_test_exercise.ipynb
-ls -la tests/test_ex999_test_exercise.py
+ls exercises/ex999_test_exercise/
+ls notebooks/ex999_test_exercise.ipynb
+ls notebooks/solutions/ex999_test_exercise.ipynb
+ls tests/test_ex999_test_exercise.py
 
-# Clean up
+# Run static verification (fast checks for structure and metadata)
+uv run scripts/verify_exercise_quality.py notebooks/ex999_test_exercise.ipynb
+
+# Remove the scaffolding when done experimenting
 rm -rf exercises/ex999_test_exercise notebooks/ex999_test_exercise.ipynb \
-       notebooks/solutions/ex999_test_exercise.ipynb tests/test_ex999_test_exercise.py
+    notebooks/solutions/ex999_test_exercise.ipynb tests/test_ex999_test_exercise.py
 ```
 
 ### Extending the Generator
@@ -103,16 +125,22 @@ When adding features:
 
 ### Linting
 
-All code must pass Ruff checks:
+All code must pass Ruff checks (run via `uv`):
 
 ```bash
-ruff check .
+uv run ruff check .
 ```
 
 Auto-fix where possible:
 
 ```bash
-ruff check --fix .
+uv run ruff check --fix .
+```
+
+Use Ruff's formatter for Python sources:
+
+```bash
+uv run ruff format
 ```
 
 ### Type Hints
@@ -149,7 +177,7 @@ def exec_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> dict
 All new features must include tests:
 
 ```python
-def test_new_feature():
+def test_new_feature() -> None:
     # Arrange
     input_data = ...
 

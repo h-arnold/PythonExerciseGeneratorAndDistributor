@@ -25,17 +25,18 @@ Note: Installing the package with the `.[dev]` extras also provides a console sc
 
 ### Basic Commands
 
-The CLI provides three main commands:
+The CLI provides four main commands:
 
 1. **`create`** - Create a GitHub template repository
-2. **`list`** - List available exercises
-3. **`validate`** - Validate exercise selection
+2. **`update-repo`** - Push a refreshed template into an existing repository
+3. **`list`** - List available exercises
+4. **`validate`** - Validate exercise selection
 
 ### Global Options
 
-- `--dry-run` - Build and validate without creating the repository
+- `--dry-run` - Build and validate without executing `gh` commands (create and update-repo)
 - `--verbose` / `-v` - Show detailed progress information
-- `--output-dir PATH` - Save output to a local directory instead of temporary location
+- `--output-dir PATH` - Copy the packaged workspace to PATH instead of cleaning up the temp directory
 
 ## Examples
 
@@ -149,7 +150,32 @@ template_repo_cli create \
 template_repo_cli --verbose create \
   --construct sequence \
   --repo-name sequence-exercises
+
 ```
+
+### Update Existing Repository
+
+`update-repo` packages the selected exercises and force-pushes them into an existing repository. The target repository must already exist, and you should supply it as either a simple slug (for your personal account) or `owner/repo` when pushing elsewhere. The branch defaults to `main`.
+
+```bash
+# Push updated content into an existing repository
+template_repo_cli update-repo \
+  --construct sequence \
+  --repo-name organisation/sequence-exercises \
+  --branch main
+
+# Preview the update without pushing
+template_repo_cli --dry-run update-repo \
+  --notebooks ex001_sanity ex002_sequence_modify_basics \
+  --repo-name organisation/sequence-exercises
+
+# Keep a local copy of the packaged workspace after the push
+template_repo_cli --output-dir ./latest-template update-repo \
+  --construct sequence \
+  --repo-name organisation/sequence-exercises
+```
+
+The `--name` flag is optional when updating but, if provided, refreshes the README title in the generated workspace before it is pushed.
 
 ## What Gets Included in Templates
 
