@@ -61,7 +61,7 @@ def test_solution_exercise5_with_input() -> None:
     """Test exercise 5 which requires user input."""
     old_stdin = sys.stdin
     try:
-        sys.stdin = StringIO("7\n3\n")
+        sys.stdin = StringIO("Alice\nSmith\n")
 
         f = StringIO()
         with contextlib.redirect_stdout(f):
@@ -70,7 +70,7 @@ def test_solution_exercise5_with_input() -> None:
             )
 
         output = f.getvalue().strip()
-        assert "10" in output, f"Expected '10' in output, got: {output}"
+        assert "Alice Smith" in output, f"Expected 'Alice Smith' in output, got: {output}"
 
     except Exception as e:
         pytest.fail(f"Solution notebook exercise5 failed to execute: {e}")
@@ -83,7 +83,7 @@ def test_solution_exercise10_with_input() -> None:
     """Test exercise 10 which requires user input."""
     old_stdin = sys.stdin
     try:
-        sys.stdin = StringIO("100\n")
+        sys.stdin = StringIO("15\nLondon\n")
 
         f = StringIO()
         with contextlib.redirect_stdout(f):
@@ -92,7 +92,7 @@ def test_solution_exercise10_with_input() -> None:
             )
 
         output = f.getvalue().strip()
-        assert "212" in output, f"Expected '212' in output, got: {output}"
+        assert "You are 15 years old and live in London" in output, f"Expected message in output, got: {output}"
 
     except Exception as e:
         pytest.fail(f"Solution notebook exercise10 failed to execute: {e}")

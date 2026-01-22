@@ -11,9 +11,8 @@ Students should already be familiar with:
 - Variables and assignment
 - Basic arithmetic operators (+, -, *, /)
 - String concatenation with +
-- Converting strings to integers with `int()`
 
-**Constructs NOT yet taught**: selection (if/elif/else), loops, lists, functions, etc.
+**Constructs NOT yet taught**: selection (if/elif/else), loops, lists, functions, type conversion (int, float, str), etc.
 
 ## Learning Objectives
 
@@ -36,10 +35,10 @@ By completing this exercise, students will:
 - **Reality**: String concatenation is literal - spaces must be explicitly included
 - **Teaching tip**: Show that `"Hello" + "World"` produces `"HelloWorld"`, not `"Hello World"`
 
-### Exercise 5, 10: Input Returns Strings
-- **Misconception**: `input()` automatically converts numbers to integers
-- **Reality**: `input()` always returns a string, regardless of what the user types
-- **Teaching tip**: Demonstrate that `"7" + "3"` produces `"73"` (string concatenation), not `10` (arithmetic)
+### Exercise 5, 10: Missing Spaces in Concatenation
+- **Misconception**: Python adds spaces automatically when concatenating strings
+- **Reality**: String concatenation is literal - you must explicitly add spaces
+- **Teaching tip**: Show that `first_name + last_name` produces names run together without a space
 
 ### Exercise 6, 9: Variable Mix-ups
 - **Misconception**: Python will use the "right" variable based on context
@@ -58,14 +57,14 @@ By completing this exercise, students will:
   - Ex2: Wrong variable name
   - Ex3: Wrong operator (/ vs *)
   - Ex4: Missing space in concatenation
-  - Ex5: Missing int() conversion
+  - Ex5: Missing space in name concatenation
 
 - **Exercises 6-10**: Multiple errors, requires careful analysis
   - Ex6: Wrong subtraction order + wrong print variable (2 bugs)
   - Ex7: Wrong operators in formula (2 bugs)
   - Ex8: Multiple missing spaces (conceptually 1 bug but 3 fixes)
   - Ex9: Incomplete formula + wrong print variable (2 bugs)
-  - Ex10: Missing conversion + wrong formula structure (2-3 bugs)
+  - Ex10: Missing space in message concatenation
 
 ## Suggested Teaching Approach
 
