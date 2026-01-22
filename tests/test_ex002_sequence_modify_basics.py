@@ -122,8 +122,7 @@ def test_exercise3_formatting() -> None:
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
     has_multiplication = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult)
-        for node in ast.walk(tree)
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
     assert has_multiplication
 
@@ -171,8 +170,7 @@ def test_exercise5_formatting() -> None:
 def test_exercise5_construct() -> None:
     tree = _exercise_ast(5)
     has_division = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div)
-        for node in ast.walk(tree)
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div) for node in ast.walk(tree)
     )
     assert has_division
 
@@ -245,8 +243,7 @@ def test_exercise8_formatting() -> None:
 def test_exercise8_construct() -> None:
     tree = _exercise_ast(8)
     has_multiplication = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult)
-        for node in ast.walk(tree)
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
     assert has_multiplication
 
@@ -270,8 +267,7 @@ def test_exercise9_formatting() -> None:
 def test_exercise9_construct() -> None:
     tree = _exercise_ast(9)
     has_subtraction = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub)
-        for node in ast.walk(tree)
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub) for node in ast.walk(tree)
     )
     print_calls = [
         node
