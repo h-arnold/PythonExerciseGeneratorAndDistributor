@@ -173,10 +173,19 @@ def test_exercise1_greets_user() -> None:
 # Option 2: execute the cell and inspect objects
 from tests.notebook_grader import exec_tagged_code
 
+NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
+
 
 def test_solve_returns_correct_value() -> None:
-    ns = exec_tagged_code("notebooks/ex042_variables_and_types.ipynb", tag="exercise1")
+    ns = exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+    assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](5) == 10
+
+
+def test_solve_handles_edge_case() -> None:
+    ns = exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+    assert "solve" in ns, "'solve' function not found in notebook"
+    assert ns["solve"](0) == 0
 ```
 
 **Test requirements**:
