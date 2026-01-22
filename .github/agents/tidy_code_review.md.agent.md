@@ -24,7 +24,7 @@ Execute the following phases in strict order:
 
 ### Phase 1: Automated Review (ALWAYS START HERE)
 
-1. Create a TODO entry and mark `in-progress`
+1. Create a TODO entry (`manage_todo_list`) outlining **all** the steps you need to take and mark `in-progress`
 2. Run `source .venv/bin/activate`. **YOU MUST DO THIS OR THE CHECKS WILL FAIL.**
 3. Open and read *all* of **`docs/agents/tidy_code_review/automated_review.md`**. This contains the instructions you **must** follow to the letter to complete Phase 1.
 
