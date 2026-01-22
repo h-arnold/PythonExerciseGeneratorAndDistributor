@@ -77,6 +77,8 @@ Contains pytest-based automated grading and support tooling tests:
 
 Tests use `exec_tagged_code()` to extract student code from tagged cells and assert correctness.
 
+Type guard helpers (using `typing.TypeGuard`) — place TypeGuard functions close to the module they validate. For module-level guards create a sibling `_typeguards.py` or `<module>_typeguards.py` next to the module they support. For shared or test-specific guards, use a `tests/typeguards/` package. Name guards `is_<name>` and include unit tests that verify both positive and negative cases.
+
 ### `scripts/`
 
 Automation tools that help maintain the repository and publish exercises:

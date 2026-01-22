@@ -82,6 +82,38 @@ The same tests run against both sets.
 
 Student exercise code in notebooks may omit these standards as exercises are designed for learning.
 
+### TypeGuard best practices (typing and runtime checks) 🔧
+
+- Prefer using `TypeGuard` functions to narrow runtime types instead of scattering `cast(...)` calls; they are clearer and Pylance understands them.
+- Keep guards close to the code they protect: create a `_typeguards.py` or `<module>_typeguards.py` alongside the module they support (e.g., `scripts/template_repo_cli/core/_typeguards.py`). For cross-cutting types you can also create a small `types/` package or a shared `tests/typeguards/` package for test-only helpers.
+- Name guards `is_<thing>` and keep each guard small and fast; they should check only the surface-level properties required for safe narrowing.
+- Add unit tests for type guards (e.g., see `scripts/template_repo_cli/core/github.py` and its tests in `tests/template_repo_cli/test_github.py`).
+- Example TypeGuard (place in the same module or in `<module>_typeguards.py`):
+
+```py
+from typing import TypeGuard
+
+def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
+    if not isinstance(obj, dict):
+        return False
+    cell_type = obj.get("cell_type")
+    if cell_type is not None and not isinstance(cell_type, str):
+        return False
+    source = obj.get("source")
+    if source is not None and not (isinstance(source, str) or isinstance(source, list)):
+        return False
+    if isinstance(source, list):
+        for s in source:
+            if not isinstance(s, str):
+                return False
+    metadata = obj.get("metadata")
+    if metadata is not None and not isinstance(metadata, dict):
+        return False
+    return True
+```
+
+- Folder structure suggestion: for each module `module.py`, prefer a sibling `module_typeguards.py` (or `_typeguards.py`) containing guards for that module. Keep guards near code to avoid circular imports; if circular imports are possible, put small TypedDicts in a `types/` module or keep a tiny module-local guard instead.
+
 ### Testing Standards
 
 - **Fast**: Each test should complete in < 1s
@@ -155,4 +187,6 @@ After making changes to code that **IS NOT** student notebooks, **you MUST** cal
   1. Run tests and ruff locally (pytest -q; ruff check .).
   2. Give the agent a summary of all the changes you've made, ensuring you list all files touched in your coding session.
   3. Review the agent's report, address any remaining issues, re-run tests, and commit.
+
+  
 
