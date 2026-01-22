@@ -29,13 +29,11 @@ def _exercise_tag(exercise_no: int) -> str:
     return f"exercise{exercise_no}"
 
 
-
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
         NOTEBOOK_PATH,
         tag=_exercise_tag(exercise_no),
     )
-
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
