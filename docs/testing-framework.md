@@ -5,6 +5,7 @@ This document describes the notebook grading system used to automatically test s
 ## Overview
 
 The testing framework extracts code from tagged cells in Jupyter notebooks and executes it to verify correctness. Tests primarily verify **notebook cell output** (what students print), not function return values. This approach:
+
 - Keeps grading deterministic and automated
 - Works with GitHub Classroom autograding
 - Allows students to work in familiar Jupyter notebooks while being graded via pytest
@@ -21,6 +22,7 @@ The core grading module provides functions for extracting, executing, and testin
 Extracts source code from all cells tagged with the specified tag.
 
 **Parameters**:
+
 - `notebook_path`: Path to the `.ipynb` file
 - `tag`: Cell metadata tag to extract (default: `"student"`)
 
@@ -33,6 +35,7 @@ Extracts source code from all cells tagged with the specified tag.
 Extracts and executes code from tagged cells, returning the resulting namespace.
 
 **Parameters**:
+
 - `notebook_path`: Path to the `.ipynb` file
 - `tag`: Cell metadata tag to extract and execute (default: `"student"`)
 - `filename_hint`: Optional filename for error messages
@@ -48,12 +51,14 @@ Extracts and executes code from tagged cells, returning the resulting namespace.
 **Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
 
 **Parameters**:
+
 - `notebook_path`: Path to the `.ipynb` file
 - `tag`: Cell metadata tag to execute (e.g., `"exercise1"`)
 
 **Returns**: The captured stdout output as a string
 
 **Example**:
+
 ```python
 output = run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
 assert output.strip() == "Hello Python!"
@@ -64,6 +69,7 @@ assert output.strip() == "Hello Python!"
 For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
 
 **Parameters**:
+
 - `notebook_path`: Path to the `.ipynb` file
 - `tag`: Cell metadata tag to execute (e.g., `"exercise1"`)
 - `inputs`: List of strings to provide as `input()` values
@@ -73,6 +79,7 @@ For exercises requiring user input, this function mocks `input()` with predeterm
 **Raises**: `RuntimeError` if the code calls `input()` more times than provided
 
 **Example**:
+
 ```python
 output = run_cell_with_input(
     "notebooks/ex002.ipynb",
@@ -87,6 +94,7 @@ assert "Alice Smith" in output
 Extracts explanation/reflection cell content by tag. Used to verify students have filled in markdown explanation cells in debugging exercises.
 
 **Parameters**:
+
 - `notebook_path`: Path to the `.ipynb` file
 - `tag`: Cell metadata tag to extract (e.g., `"explanation1"`)
 
@@ -95,6 +103,7 @@ Extracts explanation/reflection cell content by tag. Used to verify students hav
 **Raises**: `AssertionError` if no cell with the specified tag is found
 
 **Example**:
+
 ```python
 explanation = get_explanation_cell("notebooks/ex001.ipynb", tag="explanation1")
 assert len(explanation.strip()) > 10, "Explanation must have content"
@@ -105,12 +114,14 @@ assert len(explanation.strip()) > 10, "Explanation must have content"
 Resolves notebook paths with optional redirection via the `PYTUTOR_NOTEBOOKS_DIR` environment variable.
 
 **Purpose**: Allows the same tests to run against either:
+
 - Student notebooks (default): `notebooks/exNNN_slug.ipynb`
 - Solution mirrors: `notebooks/solutions/exNNN_slug.ipynb`
 
 **Best practice**: Almost always test against the solution mirror first to ensure tests work correctly. Testing against student notebooks is primarily for GitHub Classroom autograding.
 
 **Usage**:
+
 ```bash
 # Test solution notebooks (recommended for development)
 PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest
@@ -191,6 +202,7 @@ def test_explanation1_has_content():
    - 1 invalid input test where appropriate
 
 4. **Parametrization**: Use `pytest.mark.parametrize` to test multiple inputs efficiently:
+
    ```python
    @pytest.mark.parametrize("input_val,expected", [
        ("Alice", "Hello, Alice!"),
@@ -215,6 +227,7 @@ The `new_exercise.py` script automatically tags cells when generating notebooks.
 The tag must exactly match what tests expect (e.g., `exercise1`, `exercise2`).
 
 **Manually adding tags in Jupyter** (if needed):
+
 1. Select the code cell
 2. Open the property inspector (gear icon in the right sidebar)
 3. Add the tag (e.g., `exercise1`) under "Cell Tags"
@@ -226,12 +239,14 @@ The tag must exactly match what tests expect (e.g., `exercise1`, `exercise2`).
 When set, `resolve_notebook_path()` redirects notebook lookups to the specified directory.
 
 **Use case**: Run the same tests against solution notebooks to verify they pass:
+
 ```bash
 export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
 pytest
 ```
 
 Or use the helper script:
+
 ```bash
 scripts/verify_solutions.sh -q
 ```
@@ -239,6 +254,7 @@ scripts/verify_solutions.sh -q
 ## Error Handling
 
 The framework raises `NotebookGradingError` for common issues:
+
 - Notebook file not found
 - Invalid JSON in notebook
 - No cells tagged with the specified tag
@@ -248,6 +264,7 @@ Tests can catch these to provide better error messages or skip gracefully.
 ## Notebook Format Requirements
 
 The grading system expects standard Jupyter `.ipynb` files:
+
 - Each cell has `cell_type` ("code" or "markdown")
 - Cell source is either a list of strings or a single string
 - Cell metadata may include a `tags` field (list of strings)
@@ -272,6 +289,7 @@ pytest tests/test_ex001_sanity.py -s
 ### CI/CD
 
 The repository includes GitHub Actions workflows:
+
 - `.github/workflows/tests.yml`: Runs tests on every push/PR
 - `.github/workflows/tests-solutions.yml`: Manual workflow to verify solutions
 

@@ -48,9 +48,9 @@ For these, the automated review should generate a patch file with explanation an
 
 ## Tools & Commands the automated review uses
 
-**IMPORTANT**: ALWAYS activate the python venv before running these tools `source .venv/bin/activate`.
+**IMPORTANT**: This repository uses a uv-managed virtual environment. Run `uv sync` when dependencies change and execute commands via `uv run ...` (or activate the `.venv` created by uv with `source .venv/bin/activate`) before running diagnostics. Skipping this step leads to missing tooling.
 
-- `ruff check` (with `SIM`, `PLR`, `C90x`, `E/F/W`) — primary lint, complexity, and simplification signals
+- `uv run ruff check` (with `SIM`, `PLR`, `C90x`, `E/F/W`) — primary lint, complexity, and simplification signals
 - Pylance diagnostics via the `problems` view and the `pylance-mcp-server/*` tools — surface unused code, type issues, and quick fixes. Important: **open each changed file in the editor before running Pylance diagnostics** so the language server indexes it; then invoke the `problems` tool or the Pylance tool for that specific file to capture all file-specific diagnostics. Doing a per-file check is required because Pylance may not reveal all issues unless the file is open.
 - Semantic search (`search`) for near-duplicate blocks when no dedicated duplication tool is available
 - `run_in_terminal` / `execute` to run these tools and capture machine-friendly output
@@ -71,18 +71,19 @@ Default thresholds used by automated checks:
 ## Automated Workflow (MUST do — automated steps)
 
 1. Create a TODO entry via `manage_todo_list`; mark one item `in-progress`.
-2. Run `source .venv/bin/activate`. **YOU MUST DO THIS OR THE CHECKS WILL FAIL**.
+2. Ensure the uv-managed environment is active. Run `uv sync` if dependencies changed, then either execute commands with `uv run ...` or activate the `.venv` created by uv via `source .venv/bin/activate`. **Do not run tools outside this environment.**
 3. Validate `change_summary`. If missing, reconstruct from git diff.
 4. Confirm the affected files by inspecting the diff or change list.
 5. Run tests:
-   - Run `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q` to verfiy all tests pass.
-   - Run  `pytest -q` to verify that **only** tests for student notebooks fail as expected.
-6. Run `ruff check --fix` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
-7. Run Pylance diagnostics:
+   - Set `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` and run `uv run pytest -q` to verify the solution notebooks pass.
+   - Only run `uv run pytest -q` without the environment variable when you need to inspect student notebooks; confirm any failures are the expected pre-solution failures, not regressions.
+6. Run `uv run ruff check --fix` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
+7. Run `uv run ruff format --fix` to apply formatting fixes.
+8. Run Pylance diagnostics:
    - For each changed file:
       - Open the file in the editor, one at a time to ensure Pylance indexes it. **You must do this. This task will fail if you don't open the file first.**
       - Run Pylance diagnostics for that file and capture issues via `problems` and `pylance-mcp-server`.
-8. Decide next action based on the issues found (see Decision tree).
+9. Decide next action based on the issues found (see Decision tree).
 
 ## Decision tree (automated)
 
