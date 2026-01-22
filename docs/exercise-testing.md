@@ -1,67 +1,222 @@
-# Exercise Testing Conventions (GitHub Classroom Python Runner)
+# Exercise Testing Conventions
 
-These conventions align our pytest suites with the stock GitHub Classroom Python autograder runner (version 3 results). They enable predictable grouping, scoring, and reporting without custom plugins.
+This document outlines the testing philosophy and conventions for verifying student notebook exercises.
 
-## Core rules
+## Philosophy: "Task Completion" with Good Habits
 
-- **Use @pytest.mark.task(taskno=N)** on every test for exercise N. This drives grouping and ordering in the runner output.
-- **Do not use subTest**. Convert subtests to parametrized pytest cases so they are visible at collection time and counted predictably.
-- **Prefer parametrization for variants**. Each param case becomes its own collected test item (and its own score slice).
-- **Multiple tests per exercise are allowed**. Keep the same taskno across related tests; use descriptive test names for clarity.
-- **Scoring model (stock runner)**: max-score is divided equally among all collected test items (including parametrized cases). Passing items get their share; failing/error get 0. No per-exercise weights.
+The goal of our tests is to verify that a student has **achieved the learning objective** while fostering precise coding habits.
 
-## Writing tests for an exercise
+We follow a **"Task Completion"** testing model:
 
-- **Simple exercises**: One test function with multiple assertions is acceptable, but a failing assertion stops later checks. Use this when atomicity is acceptable.
-- **Finer-grain feedback/partial credit**: Split into multiple test functions or parametrized cases, all tagged with the same taskno for that exercise.
-- **Naming**: The runner trims class names and test_and replaces underscores with spaces. Descriptive names still help maintainers (e.g. test_ex002_strings_basic, test_ex002_strings_edge_cases).
+1. **Does the code run?** (No syntax/runtime/logic errors)
+2. **Does it produce the correct outcome?** (Output matches expectation **strictly** by default)
+3. **Does it use the required constructs?** (e.g., If the lesson teaches `for` loops, a `for` loop is mandatory)
 
-### Converting subtests to parametrization (example)
+## Core Testing Rules
+
+### 1. Output Matching: Strict by Default
+
+Developing the habit of precise output (casing, whitespace, punctuation) is critical for programming.
+
+- **Default to Strict Checks**: Require exact matches (or at least `in` checks that preserve case and punctuation) unless there is a strong pedagogical reason not to.
+- **Exceptions**: For "Make" tasks or creative exercises, looser checks (case-insensitive, normalized whitespace) are acceptable.
+- **Why**: "Close enough" is often a bug in the real world.
+
+**Example:**
+*Exercise: Ask for a name and print "Hello <name>!"*
 
 ```python
-import pytest
-
-# Before (subtests – avoid)
-def test_greeter_subtests():
-    for name in ["Ada", "Bob"]:
-        with subtests.test(name=name):
-            assert greet(name) == f"Hello, {name}!"
-
-# After (parametrized – preferred)
-@pytest.mark.parametrize("name", ["Ada", "Bob"])
-@pytest.mark.task(taskno=2)
-def test_greeter(name):
-    assert greet(name) == f"Hello, {name}!"
+# PREFERRED: Strict logic
+# Teaches students that capital letters and punctuation matter.
+assert "Hello Alice!" in output
 ```
 
-## Computing max-score automatically (without subtests)
+### 2. Constraints & Construct Checking
 
-When you avoid subTest, the collected item count is stable. You can derive max-score in CI and feed it to the autograder action:
+Most exercises are designed to teach specific constructs (Sequence, Selection, Iteration, etc.).
 
-```yaml
-- name: Count pytest items
-  id: count
-  run: |
-    COUNT=$(pytest --collect-only -q 2>/dev/null | grep -E '::' | wc -l)
-    echo "max_score=$COUNT" >> "$GITHUB_OUTPUT"
+- **Enforce the Lesson Construct**: If the lesson covers **Iteration**, code that manually prints 10 times instead of looping is **incorrect**.
+- **Use AST Checks**: Verify that the required syntax (`for`, `if`, etc.) is present.
+- **Allow flexibility in "Make" tasks**: "Make" tasks are strictly about the outcome; if they achieve the result using valid code, be more permissive with implementation details.
 
-- name: Python autograder
-  uses: classroom-resources/autograding-python-grader@v1
-  with:
-    max-score: ${{ steps.count.outputs.max_score }}
-    timeout: 15
-    setup-command: 'pip install -r requirements.txt'
+### 3. Edge Cases
+
+- **Only test edge cases requested in the prompt.**
+- Do not test for defensive coding unless specifically asked for.
+
+## Grouping & Scoring (GitHub Classroom)
+
+We group tests using `@pytest.mark.task(taskno=N)` to align with the GitHub Classroom runner.
+
+### Scoring Strategy
+
+Each **exercise** (e.g., Exercise 1) often has **multiple success criteria**.
+To provide granular feedback, implement **multiple tests** for a single exercise, all tagged with the same `taskno`.
+
+**Example Criteria for Exercise 1:**
+
+1. **Logic**: Did it calculate the correct answer?
+2. **Construct**: Did it use a `for` loop?
+3. **Formatting**: Was the output message formatted correctly?
+
+If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the points for that exercise.
+
+### Simulating Input
+
+Use the helper `run_cell_with_input` to inject data into `input()` calls.
+
+```python
+from tests.notebook_grader import run_cell_with_input
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_happy_path():
+    # Simulate user typing "Alice" then "Blue"
+    output = run_cell_with_input(..., inputs=["Alice", "Blue"])
+    assert "Alice" in output
+    assert "Blue" in output
 ```
 
-Notes:
+## Template for a Good Test Suite (Exercise 1)
 
-- Parametrized cases are counted; ensure parametrization reflects intended granularity.
-- If you ever reintroduce subTest, the runtime may produce more test entries than the pre-count; avoid subTest to keep scoring consistent.
+```python
+@pytest.mark.task(taskno=1)
+def test_exercise1_logic():
+    """Criteria 1: Arithmetic logic is corect."""
+    output = run_cell_with_input(..., inputs=["5"])
+    assert "25" in output  # The answer
 
-## Checklist per exercise
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct():
+    """Criteria 2: Used the required loop."""
+    code = extract_tagged_code(..., tag="exercise1")
+    assert "for " in code and " in " in code
 
-- [ ] Tag every test with @pytest.mark.task(taskno=<exercise_number>).
-- [ ] Use parametrization for variants; avoid subTest.
-- [ ] Decide granularity (single test vs multiple/parametrized) to match desired feedback and scoring slices.
-- [ ] Keep failure messages clear; they surface in Classroom.
-- [ ] If CI computes max-score, ensure no subTest usage so counts stay accurate.
+@pytest.mark.task(taskno=1)
+def test_exercise1_formatting():
+    """Criteria 3: Output format is precise."""
+    output = run_cell_with_input(..., inputs=["5"])
+    # Strict check for casing/punctuation
+    assert "The square is: 25" in output
+```
+
+## Summary Checklist
+
+- [ ] **Strictness**: Does the test enforce correct casing/whitespace (unless explicitly checking for loose constraints)?
+- [ ] **Constructs**: If this is a `for` loop lesson, does the test fail if no loop is used?
+- [ ] **Granularity**: Are logic, constructs, and formatting tested separately (where appropriate) for better partial credit?
+- [ ] **Grouping**: Is every test marked with `@pytest.mark.task(taskno=N)`?
+
+## Technical Reference: `notebook_grader.py`
+
+This section details the helper functions available for writing tests.
+
+### Core Helpers
+
+#### `run_cell_and_capture_output(notebook_path, *, tag) -> str`
+
+**Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
+
+- **Parameters**: `notebook_path` (str/Path), `tag` (str)
+- **Returns**: Captured stdout. `input()` prompts are included.
+
+```python
+output = run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
+assert output.strip() == "Hello Python!"
+```
+
+#### `run_cell_with_input(notebook_path, *, tag, inputs) -> str`
+
+For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
+
+- **Parameters**: `notebook_path` (str/Path), `tag` (str), `inputs` (list[str])
+- **Returns**: Captured stdout (including prompts).
+- **Raises**: `RuntimeError` if code calls `input()` more times than provided.
+
+```python
+output = run_cell_with_input(
+    "notebooks/ex002.ipynb",
+    tag="exercise1",
+    inputs=["Alice", "Smith"]
+)
+assert "Alice Smith" in output
+```
+
+#### `get_explanation_cell(notebook_path, *, tag) -> str`
+
+Extracts content from markdown reflection cells.
+
+- **Parameters**: `notebook_path` (str/Path), `tag` (str)
+- **Returns**: Cell content string.
+
+```python
+expl = get_explanation_cell("notebooks/ex.ipynb", tag="explanation1")
+assert len(expl.strip()) > 10
+```
+
+### Advanced Helpers
+
+#### `extract_tagged_code(notebook_path, *, tag="student") -> str`
+
+Extracts raw source code from tagged cells. Useful for **AST checks** (verifying constructs).
+
+```python
+code = extract_tagged_code(path, tag="exercise1")
+assert "for " in code, "Must use a for loop"
+```
+
+#### `exec_tagged_code(notebook_path, *, tag="student", filename_hint=None) -> dict`
+
+Low-level executor. Returns the variable namespace (dict). Useful if you need to inspect variable values directly (rarely needed).
+
+### Environment & Paths
+
+#### `resolve_notebook_path(notebook_path) -> Path`
+
+Most tests use `NOTEBOOK_PATH` constant. This function resolves that path, strictly adhering to the `PYTUTOR_NOTEBOOKS_DIR` environment variable if set.
+
+**Usage in tests**:
+Tests generally define a constant at the top:
+
+```python
+NOTEBOOK_PATH = "notebooks/ex001_slug.ipynb"
+```
+
+The helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.
+
+#### `PYTUTOR_NOTEBOOKS_DIR`
+
+Environment variable to redirect tests to a different directory (e.g., solutions).
+
+```bash
+# Run tests against solution notebooks
+export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
+pytest -q
+```
+
+## Running Tests
+
+### Locally
+
+```bash
+# Run all tests
+uv run pytest -q
+
+# Run specific test file
+uv run pytest tests/test_ex001_sanity.py -v
+
+# Run and show output (debug prints)
+uv run pytest tests/test_ex001_sanity.py -s
+```
+
+### CI/CD
+
+- **`.github/workflows/tests.yml`**: Runs tests on every push/PR with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` (verifying the instructor solutions pass).
+- **GitHub Classroom**: Runs tests against the student's submission (default path).
+
+## Cell Tagging
+
+Students write code in cells pre-tagged by the generator.
+
+- **Tag format**: `exerciseN` (e.g., `exercise1`).
+- **Matching**: Tags must match exactly.
+- **Marker comments**: `# STUDENT` comments are **deprecated** and ignored. Only metadata tags are used.
