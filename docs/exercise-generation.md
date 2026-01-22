@@ -115,7 +115,7 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
 
 1. **Create the file structure**:
 
-   Open the **Terminal** (`Ctrl + `` or **Terminal > New Terminal**) and run the command the agent suggests inside the managed environment:
+   Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests inside the managed environment:
 
    ```bash
    uv run python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic --type modify

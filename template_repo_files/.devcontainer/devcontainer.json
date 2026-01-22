@@ -48,8 +48,9 @@
         // Workbench configuration - keep environment simple
         "workbench.startupEditor": "none",
         "workbench.tips.enabled": false,
-        "workbench.welcomePage.walkthroughs.openOnInstall": false
-      }
+        "workbench.welcomePage.walkthroughs.openOnInstall": false,
+        "workbench.remoteIndicator.showExtensionRecommendations": false        
+        }
     }
   },
 

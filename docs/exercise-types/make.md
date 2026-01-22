@@ -35,7 +35,7 @@ Below is a minimal JSON example that matches the structure consumed by the grade
         "Create `solve(nums)` that returns the sum of the squares of the integers in `nums`.",
         "",
         "### Examples",
-        "``\nsolve([1, 2, 3]) -> 14\nsolve([-2, 4]) -> 20\n```"
+        "```\nsolve([1, 2, 3]) -> 14\nsolve([-2, 4]) -> 20\n```"
       ]
     },
     {

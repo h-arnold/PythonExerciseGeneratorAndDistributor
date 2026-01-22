@@ -1,6 +1,6 @@
 # Project Structure
 
-This document describes the organisation of the PythonExerciseGeneratorAndDistributor repository.
+This document describes the organisation of the PythonExerciseGeneratorAndDistributor repository (previously named PythonTutorExercises); please verify and update any remaining references to the old name to ensure consistency across all documentation.
 
 ## Directory Layout
 
