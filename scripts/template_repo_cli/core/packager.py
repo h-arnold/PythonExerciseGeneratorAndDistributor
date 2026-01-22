@@ -95,6 +95,12 @@ class TemplatePackager:
         self._copy_single_file(".gitignore", workspace)
         self._copy_single_file("INSTRUCTIONS.md", workspace)
 
+        # Copy tests helper files (e.g., notebook_grader.py)
+        tests_notebook = self.template_files_dir / "tests" / "notebook_grader.py"
+        if tests_notebook.exists():
+            safe_copy_file(tests_notebook, workspace /
+                           "tests" / "notebook_grader.py")
+
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)

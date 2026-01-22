@@ -157,6 +157,31 @@ class TestPackageIntegrity:
         grader = temp_dir / "tests/notebook_grader.py"
         assert not grader.exists()
 
+    def test_copies_notebook_grader_when_present(self, repo_root: Path, temp_dir: Path) -> None:
+        """Test that notebook_grader.py is copied when present in template files."""
+        template_tests_dir = repo_root / "template_repo_files" / "tests"
+        template_tests_dir.mkdir(parents=True, exist_ok=True)
+        grader_src = template_tests_dir / "notebook_grader.py"
+        try:
+            # Create a dummy grader in the template files directory
+            grader_src.write_text("# grader helper")
+
+            packager = TemplatePackager(repo_root)
+            packager.copy_template_base_files(temp_dir)
+
+            grader = temp_dir / "tests/notebook_grader.py"
+            assert grader.exists()
+            assert grader.read_text().startswith("# grader helper")
+        finally:
+            # Cleanup created files
+            if grader_src.exists():
+                grader_src.unlink()
+            try:
+                template_tests_dir.rmdir()
+            except OSError:
+                # Directory not empty or already removed; ignore
+                pass
+
 
 class TestPackageCleanup:
     """Tests for cleanup on error."""
