@@ -56,16 +56,20 @@ class TemplatePackager:
                 dest = workspace / "tests" / f"test_{exercise_id}.py"
                 safe_copy_file(file_dict["test"], dest)
 
-    def _copy_single_file(self, filename: str, workspace: Path) -> None:
-        """Copy a single template file if it exists.
+    def _copy_file(self, relative_path: str, workspace: Path) -> None:
+        """Copy a file from template directory if it exists.
+
+        Supports nested paths (e.g., 'tests/notebook_grader.py').
 
         Args:
-            filename: Name of the file to copy.
+            relative_path: Relative path from template directory.
             workspace: Destination workspace directory.
         """
-        src = self.template_files_dir / filename
+        src = self.template_files_dir / relative_path
+        dest = workspace / relative_path
         if src.exists():
-            safe_copy_file(src, workspace / filename)
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            safe_copy_file(src, dest)
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -90,16 +94,11 @@ class TemplatePackager:
             )
 
         # Copy individual files
-        self._copy_single_file("pyproject.toml", workspace)
-        self._copy_single_file("pytest.ini", workspace)
-        self._copy_single_file(".gitignore", workspace)
-        self._copy_single_file("INSTRUCTIONS.md", workspace)
-
-        # Copy tests helper files (e.g., notebook_grader.py)
-        tests_notebook = self.template_files_dir / "tests" / "notebook_grader.py"
-        if tests_notebook.exists():
-            safe_copy_file(tests_notebook, workspace /
-                           "tests" / "notebook_grader.py")
+        self._copy_file("pyproject.toml", workspace)
+        self._copy_file("pytest.ini", workspace)
+        self._copy_file(".gitignore", workspace)
+        self._copy_file("INSTRUCTIONS.md", workspace)
+        self._copy_file("tests/notebook_grader.py", workspace)
 
         # Copy directories
         self._copy_directory(".devcontainer", workspace)

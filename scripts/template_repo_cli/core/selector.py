@@ -195,7 +195,8 @@ class ExerciseSelector:
         exercises = []
         for construct in constructs:
             for type_name in types:
-                exercises.extend(self._find_exercises_in_type_dir(construct, type_name))
+                exercises.extend(
+                    self._find_exercises_in_type_dir(construct, type_name))
 
         return sorted(set(exercises))
 
