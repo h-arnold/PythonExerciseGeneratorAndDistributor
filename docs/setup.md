@@ -2,11 +2,16 @@
 
 This guide covers setting up the PythonTutorExercises repository for development or use in a classroom.
 
+## Recommended environment
+
+For a consistent toolchain, open the repository in GitHub Codespaces or the supplied VS Code Dev Container (`.devcontainer/devcontainer.json`). The container image installs Python 3.11, uv, the GitHub CLI, and Git LFS, then runs `uv sync` and activates the virtual environment automatically. Wait for the post-create tasks to finish before running commands.
+
 ## Prerequisites
 
-- Python 3.11 or later
-- uv (Python package manager)
 - Git
+- uv (Python package manager)
+- Python 3.11 or later (only required when working outside the dev container)
+- VS Code Dev Containers extension or Docker Desktop (optional, only if you plan to run the dev container locally)
 
 ## Installation
 
@@ -17,13 +22,23 @@ git clone https://github.com/Bassaleg-School/PythonTutorExercises.git
 cd PythonTutorExercises
 ```
 
-### 2. Install uv (if not already available)
+### 2. Install uv (if you are not using the dev container)
+
+uv ships as a standalone binary. Install it with the official installer script (it adds uv to `~/.local/bin` on Unix-like systems):
 
 ```bash
-python -m pip install --upgrade pip uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### 3. Sync Dependencies with uv
+On Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -c "& {[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; irm https://astral.sh/uv/install.ps1 | iex}"
+```
+
+If uv is already available (e.g., in Codespaces or the dev container), you can skip this step.
+
+### 3. Sync dependencies with uv
 
 ```bash
 uv sync
@@ -38,12 +53,22 @@ This installs:
 - `ipykernel` (Jupyter kernel)
 - `jupyterlab` (notebook interface)
 
+### 4. Use the environment
+
+After syncing you can either activate the virtual environment or run commands through uv:
+
+```bash
+source .venv/bin/activate  # deactivate with "deactivate"
+```
+
+or prefix commands with `uv run`, for example `uv run pytest`. The dev container keeps the environment active automatically.
+
 ## Verification
 
 ### Run Tests
 
 ```bash
-pytest -q
+uv run pytest -q
 ```
 
 All tests should pass (or fail for incomplete student exercises, which is expected).
@@ -51,13 +76,13 @@ All tests should pass (or fail for incomplete student exercises, which is expect
 ### Run Tests Against Solutions
 
 ```bash
-./scripts/verify_solutions.sh -q
+uv run ./scripts/verify_solutions.sh -q
 ```
 
 or:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
 ```
 
 All solution tests should pass.
@@ -65,7 +90,7 @@ All solution tests should pass.
 ### Start Jupyter Lab
 
 ```bash
-jupyter lab
+uv run jupyter lab
 ```
 
 This opens the Jupyter interface in your browser where you can work on notebooks.
@@ -79,14 +104,14 @@ If you're a student working on exercises:
 3. **Open a notebook** in Jupyter Lab:
 
    ```bash
-   jupyter lab notebooks/ex001_sanity.ipynb
+   uv run jupyter lab notebooks/ex001_sanity.ipynb
    ```
 
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)
 5. **Run tests** to check your work:
 
    ```bash
-   pytest tests/test_ex001_sanity.py -v
+   uv run pytest tests/test_ex001_sanity.py -v
    ```
 
 6. **Repeat** until all tests pass
@@ -103,14 +128,14 @@ If you're creating or modifying exercises:
 3. **Create exercises** using the scaffolding script:
 
    ```bash
-   python scripts/new_exercise.py ex042 "Your Title" --slug your_slug
+   uv run python scripts/new_exercise.py ex042 "Your Title" --slug your_slug
    ```
 
 4. **Author the exercise** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md), which documents how to use the exercise generation CLI tool to scaffold new Python exercises.
 5. **Verify solutions** pass tests:
 
    ```bash
-   ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
+   uv run ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
    ```
 
 ## Linting and Code Quality
@@ -118,13 +143,13 @@ If you're creating or modifying exercises:
 ### Run Ruff Linter
 
 ```bash
-ruff check .
+uv run ruff check .
 ```
 
 ### Auto-Fix Issues
 
 ```bash
-ruff check --fix .
+uv run ruff check --fix .
 ```
 
 Configuration is in `pyproject.toml`.
@@ -159,25 +184,25 @@ Recommended workflow for creating and testing exercises:
 git checkout -b add-ex042-variables
 
 # 2. Generate the exercise
-python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
+uv run python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
 
 # 3. Organise the folder
 mv exercises/ex042_variables_and_types exercises/sequence/modify/
 
 # 4. Author the notebook
-jupyter lab notebooks/ex042_variables_and_types.ipynb
+uv run jupyter lab notebooks/ex042_variables_and_types.ipynb
 
 # 5. Write tests
 $EDITOR tests/test_ex042_variables_and_types.py
 
 # 6. Complete the solution
-jupyter lab notebooks/solutions/ex042_variables_and_types.ipynb
+uv run jupyter lab notebooks/solutions/ex042_variables_and_types.ipynb
 
 # 7. Verify tests pass on solution
-./scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
+uv run ./scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
 
 # 8. Verify tests fail on student notebook
-pytest tests/test_ex042_variables_and_types.py -v
+uv run pytest tests/test_ex042_variables_and_types.py -v
 
 # 9. Commit and push
 git add exercises/ notebooks/ tests/
@@ -232,7 +257,7 @@ Redirects notebook lookups to a different directory.
 
 ```bash
 export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-pytest
+uv run pytest
 ```
 
 **Purpose**: Run the same tests against solution notebooks to verify they're correct.
