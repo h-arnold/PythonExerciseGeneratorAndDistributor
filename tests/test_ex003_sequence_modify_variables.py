@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from tests.notebook_grader import run_cell_and_capture_output, run_cell_with_input
+from tests.helpers import run_tagged_cell_output
 
 NOTEBOOK_PATH = "notebooks/ex003_sequence_modify_variables.ipynb"
 
 
 def _run_and_capture(tag: str, *, inputs: list[str] | None = None) -> str:
     """Execute the tagged cell while capturing stdout and optional inputs."""
-    if inputs is not None:
-        return run_cell_with_input(NOTEBOOK_PATH, tag=tag, inputs=inputs)
-    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
+    return run_tagged_cell_output(NOTEBOOK_PATH, tag=tag, inputs=inputs)
 
 
 def test_exercise1_prints_hi_there() -> None:
@@ -21,12 +19,14 @@ def test_exercise1_prints_hi_there() -> None:
 
 def test_exercise2_prints_coding_message() -> None:
     output = _run_and_capture("exercise2")
-    assert output.strip() == "I enjoy coding lessons.", f"Unexpected output: {output!r}"
+    assert output.strip(
+    ) == "I enjoy coding lessons.", f"Unexpected output: {output!r}"
 
 
 def test_exercise3_prints_favourite_food() -> None:
     output = _run_and_capture("exercise3")
-    assert output.strip() == "My favourite food is sushi", f"Unexpected output: {output!r}"
+    assert output.strip(
+    ) == "My favourite food is sushi", f"Unexpected output: {output!r}"
 
 
 def test_exercise4_prompt_and_fruit_message() -> None:
@@ -58,17 +58,20 @@ def test_exercise6_prompt_and_name_message() -> None:
 
 def test_exercise7_prints_variables_matter() -> None:
     output = _run_and_capture("exercise7")
-    assert output.strip() == "Variables matter", f"Unexpected output: {output!r}"
+    assert output.strip(
+    ) == "Variables matter", f"Unexpected output: {output!r}"
 
 
 def test_exercise8_prints_keep_experimenting() -> None:
     output = _run_and_capture("exercise8")
-    assert output.strip() == "Keep experimenting", f"Unexpected output: {output!r}"
+    assert output.strip(
+    ) == "Keep experimenting", f"Unexpected output: {output!r}"
 
 
 def test_exercise9_prints_good_evening_message() -> None:
     output = _run_and_capture("exercise9")
-    assert output.strip() == "Good evening everyone!", f"Unexpected output: {output!r}"
+    assert output.strip(
+    ) == "Good evening everyone!", f"Unexpected output: {output!r}"
 
 
 def test_exercise10_prints_combined_message() -> None:

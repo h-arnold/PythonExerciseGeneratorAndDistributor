@@ -4,7 +4,7 @@ import math
 
 import pytest
 
-from tests.notebook_grader import run_cell_and_capture_output
+from tests.helpers import run_tagged_cell_output
 
 # Named constants to avoid magic numbers flagged by linters
 EXPECTED_15 = 15
@@ -23,14 +23,15 @@ NOTEBOOK_PATH = "notebooks/ex002_sequence_modify_basics.ipynb"
 
 def _run_and_capture(tag: str) -> str:
     """Execute the tagged cell and capture its print output."""
-    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
+    return run_tagged_cell_output(NOTEBOOK_PATH, tag=tag)
 
 
 # Exercise 1: Change greeting from "Hello World!" to "Hello Python!"
 @pytest.mark.task(taskno=1)
 def test_exercise1_prints_hello_python():
     output = _run_and_capture("exercise1")
-    assert output.strip() == "Hello Python!", f"Expected 'Hello Python!' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "Hello Python!", f"Expected 'Hello Python!' but got {output.strip()!r}"
 
 
 @pytest.mark.task(taskno=1)
@@ -117,7 +118,8 @@ def test_exercise4_three_words():
 @pytest.mark.task(taskno=5)
 def test_exercise5_prints_5_point_0():
     output = _run_and_capture("exercise5")
-    assert output.strip() == "5.0", f"Expected '5.0' but got {output.strip()!r}"
+    assert output.strip(
+    ) == "5.0", f"Expected '5.0' but got {output.strip()!r}"
 
 
 @pytest.mark.task(taskno=5)
@@ -138,7 +140,8 @@ def test_exercise5_is_float():
 def test_exercise6_three_lines():
     output = _run_and_capture("exercise6")
     lines = [line for line in output.strip().split("\n") if line]
-    assert len(lines) == EXPECTED_LINES, f"Expected {EXPECTED_LINES} lines but got {len(lines)}"
+    assert len(
+        lines) == EXPECTED_LINES, f"Expected {EXPECTED_LINES} lines but got {len(lines)}"
 
 
 @pytest.mark.task(taskno=6)
@@ -147,7 +150,8 @@ def test_exercise6_correct_content():
     lines = [line.strip() for line in output.strip().split("\n") if line]
     assert lines[0] == "Learning", f"First line should be 'Learning' but got {lines[0]!r}"
     assert lines[1] == "to", f"Second line should be 'to' but got {lines[1]!r}"
-    assert lines[2] == "code rocks", f"Third line should be 'code rocks' but got {lines[2]!r}"
+    assert lines[
+        2] == "code rocks", f"Third line should be 'code rocks' but got {lines[2]!r}"
 
 
 @pytest.mark.task(taskno=6)
@@ -243,7 +247,8 @@ def test_exercise10_prints_welcome():
 @pytest.mark.task(taskno=10)
 def test_exercise10_has_spaces():
     output = _run_and_capture("exercise10")
-    assert output.count(" ") >= MIN_SPACES, "Should have multiple spaces between words"
+    assert output.count(
+        " ") >= MIN_SPACES, "Should have multiple spaces between words"
 
 
 @pytest.mark.task(taskno=10)

@@ -4,9 +4,20 @@ import builtins
 import contextlib
 import json
 import os
+from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict, cast
+
+
+class NotebookCell(TypedDict, total=False):
+    """TypedDict for a notebook cell as found in an `.ipynb` JSON file.
+
+    Keys are optional since student/solution notebooks may omit some fields.
+    """
+    cell_type: str
+    source: list[str] | str
+    metadata: dict[str, Any]
 
 
 class NotebookGradingError(RuntimeError):
@@ -53,20 +64,42 @@ def _read_notebook(notebook_path: str | Path) -> dict[str, Any]:
             f"Invalid JSON in notebook: {path}") from exc
 
 
-def _cell_tags(cell: dict[str, Any]) -> set[str]:
-    metadata = cell.get("metadata") or {}
-    tags = metadata.get("tags") or []
+def _cell_tags(cell: NotebookCell | dict[str, Any]) -> set[str]:
+    """Return a set of string tags found in a cell's metadata.
+
+    This function is defensive: it validates that `metadata` is a mapping and
+    that `tags` is either a string or list of strings before using them.
+    """
+    metadata = cell.get("metadata")
+    if not isinstance(metadata, dict):
+        return set()
+
+    md = cast(dict[str, Any], metadata)
+    tags = md.get("tags")
     if isinstance(tags, str):
         return {tags}
     if isinstance(tags, list):
-        return {t for t in tags if isinstance(t, str)}
+        tags_list: list[str] = []
+        for t in cast(Sequence[object], tags):
+            if isinstance(t, str):
+                tags_list.append(t)
+        return set(tags_list)
     return set()
 
 
-def _cell_source_text(cell: dict[str, Any]) -> str:
+def _cell_source_text(cell: NotebookCell | dict[str, Any]) -> str:
+    """Return source text for a cell, joining lists into a single string.
+
+    The notebook format allows `source` to be either a `str` or `list[str]`.
+    We coerce and filter to strings for safety.
+    """
     source = cell.get("source", "")
     if isinstance(source, list):
-        return "\n".join(source)
+        source_list: list[str] = []
+        for s in cast(Sequence[object], source):
+            if isinstance(s, str):
+                source_list.append(s)
+        return "\n".join(source_list)
     if isinstance(source, str):
         return source
     return ""
@@ -88,7 +121,8 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
     if not isinstance(cells, list):
         raise NotebookGradingError("Notebook has no 'cells' list")
 
-    tagged_sources = _collect_tagged_sources(cells, tag)
+    tagged_sources = _collect_tagged_sources(
+        cast(Sequence[object], cells), tag)
 
     if not tagged_sources:
         raise NotebookGradingError(
@@ -98,19 +132,20 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
     return "\n\n".join(tagged_sources).strip() + "\n"
 
 
-def _collect_tagged_sources(cells: list, tag: str) -> list[str]:
+def _collect_tagged_sources(cells: Sequence[object], tag: str) -> list[str]:
     """Collect source text from code cells tagged with the given tag."""
     tagged_sources: list[str] = []
 
     for cell in cells:
         if not isinstance(cell, dict):
             continue
-        if cell.get("cell_type") != "code":
+        cell_dict = cast(dict[str, Any], cell)
+        if cell_dict.get("cell_type") != "code":
             continue
-        if tag not in _cell_tags(cell):
+        if tag not in _cell_tags(cell_dict):
             continue
 
-        tagged_sources.append(_cell_source_text(cell))
+        tagged_sources.append(_cell_source_text(cell_dict))
 
     return tagged_sources
 
@@ -130,8 +165,18 @@ def exec_tagged_code(
         "__file__": filename,
     }
 
-    compiled = compile(code, filename, "exec")
-    exec(compiled, ns, ns)
+    try:
+        compiled = compile(code, filename, "exec")
+    except SyntaxError as exc:  # Provide clearer error for notebook authors
+        raise NotebookGradingError(
+            f"Failed to compile code tagged {tag!r} in {filename}: {exc}") from exc
+
+    try:
+        exec(compiled, ns, ns)
+    except Exception as exc:  # Wrap runtime errors to include notebook context
+        raise NotebookGradingError(
+            f"Execution failed for code tagged {tag!r} in {filename}: {exc}") from exc
+
     return ns
 
 
@@ -225,15 +270,22 @@ def get_explanation_cell(notebook_path: str | Path, *, tag: str) -> str:
         >>> assert len(explanation.strip()) > 10, "Explanation must have content"
     """
     nb = _read_notebook(notebook_path)
-    cells = nb.get("cells", [])
+    cells = cast(Sequence[object], nb.get("cells", []))
 
     for cell in cells:
         if not isinstance(cell, dict):
             continue
-        if tag in _cell_tags(cell):
-            source = cell.get("source", [])
+        cell_dict = cast(dict[str, Any], cell)
+        if tag in _cell_tags(cell_dict):
+            source = cell_dict.get("source", [])
             if isinstance(source, list):
-                return "".join(source)
+                source_list: list[str] = []
+                for s in cast(Sequence[object], source):
+                    if isinstance(s, str):
+                        source_list.append(s)
+                return "".join(source_list)
+            if isinstance(source, str):
+                return source
             return str(source)
 
     raise AssertionError(f"No cell with tag {tag!r} found in {notebook_path}")
