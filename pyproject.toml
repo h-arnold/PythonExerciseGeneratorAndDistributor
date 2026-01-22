@@ -8,10 +8,10 @@ license = { file = "LICENSE" }
 authors = [{ name = "Hamish Arnold" }]
 
 dependencies = [
-  "pytest>=8.0",
-  "ruff>=0.6",
-  "ipykernel>=6.0",
-  "jupyterlab>=4.0",
+  "pytest>=9.0.2",
+  "ruff>=0.14.13",
+  "ipykernel>=7.1.0",
+  "jupyterlab>=4.5.2",
 ]
 
 [build-system]
@@ -20,10 +20,10 @@ build-backend = "setuptools.build_meta"
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.0",
-  "ruff>=0.6",
-  "ipykernel>=6.0",
-  "jupyterlab>=4.0",
+  "pytest>=9.0.2",
+  "ruff>=0.14.13",
+  "ipykernel>=7.1.0",
+  "jupyterlab>=4.5.2",
   "radon>=5.1",
 ]
 
