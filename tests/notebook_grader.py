@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import builtins
+import contextlib
 import json
 import os
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
@@ -129,3 +132,105 @@ def exec_tagged_code(
     compiled = compile(code, filename, "exec")
     exec(compiled, ns, ns)
     return ns
+
+
+def run_cell_and_capture_output(notebook_path: str | Path, *, tag: str) -> str:
+    """Execute a tagged cell and capture its print output.
+
+    This is the primary testing pattern for notebook exercises. Students write
+    code that prints output, and tests verify the printed results.
+
+    Args:
+        notebook_path: Path to the notebook file
+        tag: Cell metadata tag to execute (e.g., "exercise1")
+
+    Returns:
+        The captured stdout output as a string
+
+    Example:
+        >>> output = run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
+        >>> assert output.strip() == "Hello Python!"
+    """
+    with contextlib.redirect_stdout(StringIO()) as buffer:
+        exec_tagged_code(notebook_path, tag=tag)
+        return buffer.getvalue()
+
+
+def run_cell_with_input(
+    notebook_path: str | Path, *, tag: str, inputs: list[str]
+) -> str:
+    """Execute a tagged cell with mocked input() and capture stdout.
+
+    For exercises that require user input, this helper mocks the input()
+    function to provide predetermined values while capturing print output.
+
+    Args:
+        notebook_path: Path to the notebook file
+        tag: Cell metadata tag to execute (e.g., "exercise1")
+        inputs: List of strings to provide as input() values
+
+    Returns:
+        The captured stdout output as a string
+
+    Raises:
+        RuntimeError: If the code calls input() more times than provided
+
+    Example:
+        >>> output = run_cell_with_input(
+        ...     "notebooks/ex002.ipynb",
+        ...     tag="exercise1",
+        ...     inputs=["Alice"]
+        ... )
+        >>> assert "Alice" in output
+    """
+    original_input = builtins.input
+    iterator = iter(inputs)
+
+    def fake_input(prompt: str = "") -> str:
+        try:
+            return next(iterator)
+        except StopIteration as exc:
+            raise RuntimeError("Test expected more input values") from exc
+
+    builtins.input = fake_input
+
+    try:
+        with contextlib.redirect_stdout(StringIO()) as buffer:
+            exec_tagged_code(notebook_path, tag=tag)
+            return buffer.getvalue()
+    finally:
+        builtins.input = original_input
+
+
+def get_explanation_cell(notebook_path: str | Path, *, tag: str) -> str:
+    """Extract explanation cell content by tag.
+
+    Used to verify that students have filled in explanation/reflection cells
+    in debugging and problem-solving exercises.
+
+    Args:
+        notebook_path: Path to the notebook file
+        tag: Cell metadata tag to extract (e.g., "explanation1")
+
+    Returns:
+        The markdown cell content as a string
+
+    Raises:
+        AssertionError: If no cell with the specified tag is found
+
+    Example:
+        >>> explanation = get_explanation_cell("notebooks/ex001.ipynb", tag="explanation1")
+        >>> assert len(explanation.strip()) > 10, "Explanation must have content"
+    """
+    nb = _read_notebook(notebook_path)
+    cells = nb.get("cells", [])
+
+    for cell in cells:
+        tags = cell.get("metadata", {}).get("tags", [])
+        if tag in tags:
+            source = cell.get("source", [])
+            if isinstance(source, list):
+                return "".join(source)
+            return str(source)
+
+    raise AssertionError(f"No cell with tag {tag!r} found in {notebook_path}")

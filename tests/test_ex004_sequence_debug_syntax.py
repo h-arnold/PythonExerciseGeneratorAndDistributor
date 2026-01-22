@@ -1,37 +1,18 @@
 from __future__ import annotations
 
 import json
-import sys
-from io import StringIO
 
 import pytest
 
-from tests.notebook_grader import exec_tagged_code
+from tests.notebook_grader import (
+    get_explanation_cell,
+    run_cell_and_capture_output,
+    run_cell_with_input,
+)
 
 MIN_EXPLANATION_LENGTH = 10
-
-
-def _get_explanation(notebook_path: str, tag: str = "explanation1") -> str:
-    """Extract explanation cell by tag."""
-    with open(notebook_path, encoding="utf-8") as f:
-        nb = json.load(f)
-    for cell in nb.get("cells", []):
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags:
-            return "".join(cell.get("source", []))
-    raise AssertionError(f"No explanation cell with tag {tag}")
-
-
-def _capture_output(code: str) -> str:
-    """Execute code and capture print output."""
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        exec(code)
-        output = sys.stdout.getvalue()
-    finally:
-        sys.stdout = old_stdout
-    return output
+NOTEBOOK_PATH = "notebooks/ex004_sequence_debug_syntax.ipynb"
+SOLUTION_PATH = "notebooks/solutions/ex004_sequence_debug_syntax.ipynb"
 
 
 # Test that exercises run and produce correct output
@@ -51,7 +32,7 @@ def _capture_output(code: str) -> str:
 )
 def test_exercise_output(tag: str, input_val: str, expected: str) -> None:
     """Test that corrected exercises produce the expected output."""
-    with open("notebooks/ex004_sequence_debug_syntax.ipynb", encoding="utf-8") as f:
+    with open(NOTEBOOK_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
     # Extract the buggy code
@@ -84,24 +65,12 @@ def test_exercise_output(tag: str, input_val: str, expected: str) -> None:
 def test_solution_output(tag: str, expected: str) -> None:
     """Test that solution notebook produces correct output."""
     try:
-        # Capture the output by mocking input if needed
-        import contextlib
-
         # For input exercises, provide mock input
         if tag == "exercise7":
-            old_stdin = sys.stdin
-            sys.stdin = StringIO("5")
+            output = run_cell_with_input(SOLUTION_PATH, tag=tag, inputs=["5"])
+        else:
+            output = run_cell_and_capture_output(SOLUTION_PATH, tag=tag)
 
-        # Capture stdout
-        f = StringIO()
-        with contextlib.redirect_stdout(f):
-            exec_tagged_code(
-                "notebooks/solutions/ex004_sequence_debug_syntax.ipynb", tag=tag)
-
-        if tag == "exercise7":
-            sys.stdin = old_stdin
-
-        output = f.getvalue().strip()
         # For multi-line output, just check that key parts exist
         if tag == "exercise7":
             assert "10" in output, f"Expected '10' in output for {tag}, got: {output}"
@@ -119,8 +88,7 @@ TAGS = [f"explanation{i}" for i in range(1, 11)]
 @pytest.mark.parametrize("tag", TAGS)
 def test_explanations_have_content(tag: str) -> None:
     """Test that students filled in explanation cells."""
-    explanation = _get_explanation(
-        "notebooks/ex004_sequence_debug_syntax.ipynb", tag=tag)
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)
     assert len(explanation.strip(
     )) > MIN_EXPLANATION_LENGTH, f"Explanation {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
 
@@ -129,7 +97,7 @@ def test_explanations_have_content(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_exercise_cells_tagged(tag: str) -> None:
     """Test that all exercise cells are properly tagged."""
-    with open("notebooks/ex004_sequence_debug_syntax.ipynb", encoding="utf-8") as f:
+    with open(NOTEBOOK_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
     for cell in nb.get("cells", []):
@@ -148,7 +116,7 @@ def test_exercise_cells_tagged(tag: str) -> None:
 @pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
 def test_solution_cells_tagged(tag: str) -> None:
     """Test that solution notebook has all exercise cells."""
-    with open("notebooks/solutions/ex004_sequence_debug_syntax.ipynb", encoding="utf-8") as f:
+    with open(SOLUTION_PATH, encoding="utf-8") as f:
         nb = json.load(f)
 
     for cell in nb.get("cells", []):

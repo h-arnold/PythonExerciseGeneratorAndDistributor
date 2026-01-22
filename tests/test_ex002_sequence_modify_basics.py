@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import io
 import math
-import sys
 
 import pytest
 
-from tests.notebook_grader import exec_tagged_code
+from tests.notebook_grader import run_cell_and_capture_output
 
 # Named constants to avoid magic numbers flagged by linters
 EXPECTED_15 = 15
@@ -20,21 +18,12 @@ NOT_ADDITION_2_3_4 = 9
 EXPECTED_RESULT_7 = 7
 MIN_SPACES = 3
 
+NOTEBOOK_PATH = "notebooks/ex002_sequence_modify_basics.ipynb"
+
 
 def _run_and_capture(tag: str) -> str:
     """Execute the tagged cell and capture its print output."""
-    # Capture stdout
-    old_stdout = sys.stdout
-    sys.stdout = buffer = io.StringIO()
-
-    try:
-        exec_tagged_code(
-            'notebooks/ex002_sequence_modify_basics.ipynb', tag=tag)
-        output = buffer.getvalue()
-    finally:
-        sys.stdout = old_stdout
-
-    return output
+    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
 
 
 # Exercise 1: Change greeting from "Hello World!" to "Hello Python!"
