@@ -7,18 +7,19 @@ This document describes how to use the CLI tool to scaffold new Python exercises
 ### Single Exercise
 
 ```bash
-python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
+uv run python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
 ```
 
-For a debug exercise (scaffolds expected-output and explanation cells):
+For a debug exercise (scaffolds expected-output and explanation cells plus explanation tags):
 
 ```bash
-python scripts/new_exercise.py ex004 "Debug Syntax" --slug sequence_debug_syntax --type debug
+uv run python scripts/new_exercise.py ex004 "Debug Syntax" --slug sequence_debug_syntax --type debug
 ```
 
 This creates:
 
-- `exercises/CONSTRUCT/TYPE/ex042_variables_and_types/README.md`
+- `exercises/ex042_variables_and_types/__init__.py`
+- `exercises/ex042_variables_and_types/README.md`
 - `notebooks/ex042_variables_and_types.ipynb`
 - `notebooks/solutions/ex042_variables_and_types.ipynb`
 - `tests/test_ex042_variables_and_types.py`
@@ -26,7 +27,7 @@ This creates:
 ### Multi-Part Exercise (10 exercises in one notebook)
 
 ```bash
-python scripts/new_exercise.py ex043 "Week 1 Practice" --slug week1 --parts 10
+uv run python scripts/new_exercise.py ex043 "Week 1 Practice" --slug week1 --parts 10
 ```
 
 This creates the same structure but scaffolds 10 tagged cells (`exercise1` through `exercise10`) in the notebook.
@@ -42,6 +43,8 @@ Scaffolds the boilerplate for new exercises to ensure consistency across the rep
 ```
 python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TYPE]
 ```
+
+Run it through the managed environment, for example `uv run python scripts/new_exercise.py ...`, so the correct dependencies are used.
 
 **Required**:
 
@@ -60,17 +63,16 @@ python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TY
 
 `exercises/CONSTRUCT/TYPE/exNNN_slug/`
 
-Where you must manually place the folder based on:
+The script creates a temporary folder at `exercises/exNNN_slug/`. Move this directory into the correct construct/type path after scaffolding to match the curriculum structure. Suggested destinations:
 
 - **CONSTRUCT**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
 - **TYPE**: `debug`, `modify`, `make`
 
-Initially created at `exercises/exNNN_slug/` - you should move it to the appropriate construct/type subdirectory.
+Created files:
 
-Contains:
-
-- `README.md`: Metadata (title, construct, difficulty)
-- (You should add) `OVERVIEW.md`: Teaching notes
+- `__init__.py`: Keeps the package importable
+- `README.md`: Prefilled with student prompt and teacher notes placeholders (update both sections)
+- (Add manually) `OVERVIEW.md`: Detailed teaching notes
 
 Instructor reference solutions live in the solution notebook mirror under `notebooks/solutions/`.
 
@@ -82,7 +84,14 @@ Contains:
 
 - Markdown cell with title and instructions
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
+- For multi-part notebooks, a markdown prompt precedes each tagged cell
 - Optional self-check cell (not graded)
+
+Debug notebooks contain, for each part:
+
+- A markdown cell describing expected behaviour and output
+- A tagged code cell containing placeholder buggy code (`exerciseN`)
+- A tagged explanation markdown cell (`explanationN`) that students complete after fixing the bug
 
 For `--parts N`, creates N tagged exercise cells.
 
@@ -93,7 +102,7 @@ For `--parts N`, creates N tagged exercise cells.
 Initially identical to the student notebook. You should:
 
 - Fill in the exercise cells with correct solutions
-- Verify tests pass: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest`
+- Verify tests pass: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest`
 
 #### 4. Test File
 
@@ -101,9 +110,10 @@ Initially identical to the student notebook. You should:
 
 Contains:
 
-- Imports for `exec_tagged_code` and pytest
-- Placeholder test(s) that verify the exercise cell exists and runs
-- For multi-part exercises: parametrized test over all tags
+- Imports for `run_cell_and_capture_output` (and, for debug exercises, `get_explanation_cell`) alongside pytest
+- Placeholder tests that execute each tagged cell, assert output was produced, and guard against leaving the `TODO` placeholder in place
+- Debug exercises also include parametrised checks ensuring each `explanationN` cell is populated with >10 characters
+- For multi-part exercises, parametrised tests cover every exercise tag
 
 ## Post-Scaffolding Steps
 
@@ -125,9 +135,9 @@ Edit `notebooks/exNNN_slug.ipynb`:
 - **Add context**: Explain the goal and provide 1-2 examples
 - **Update exercise cells**:
   - Keep the cell tagged correctly (`exercise1`, `exercise2`, etc.)
-  - Provide a clear function signature (typically `solve()`)
+  - Provide a clear function signature (typically `solve()`), or a clear prompt for output-based tasks
   - Add docstrings (after Functions construct is taught)
-  - Include placeholder implementation (`return "TODO"` or `raise NotImplementedError()`)
+  - Replace placeholder prints with the intended starter code (`return "TODO"`, `raise NotImplementedError()`, or a buggy snippet for debug tasks)
 - **Keep it focused**: Each exercise cell should target a single learning objective
 
 **Notebook structure**:
@@ -144,19 +154,29 @@ Edit `notebooks/exNNN_slug.ipynb`:
 
 Edit `tests/test_exNNN_slug.py`:
 
-Replace the placeholder test with real assertions:
+Replace the placeholder test with real assertions. Two common patterns:
 
 ```python
+# Option 1: assert on printed output (matches the scaffold)
+from tests.notebook_grader import run_cell_and_capture_output
+
+NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
+
+
+def test_exercise1_greets_user() -> None:
+    output = run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
+    assert "Hello" in output
+    assert "TODO" not in output
+```
+
+```python
+# Option 2: execute the cell and inspect objects
 from tests.notebook_grader import exec_tagged_code
 
-def test_solve_returns_correct_value():
-    ns = exec_tagged_code("notebooks/ex042_variables_and_types.ipynb", tag="exercise1")
-    assert "solve" in ns
-    assert ns["solve"](5) == 10  # Example assertion
 
-def test_edge_case_zero():
+def test_solve_returns_correct_value() -> None:
     ns = exec_tagged_code("notebooks/ex042_variables_and_types.ipynb", tag="exercise1")
-    assert ns["solve"](0) == 0
+    assert ns["solve"](5) == 10
 ```
 
 **Test requirements**:
@@ -166,6 +186,8 @@ def test_edge_case_zero():
 - 1 invalid input test (where appropriate)
 - Fast (< 1s each)
 - Deterministic (no randomness or time-based checks)
+- Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
+- For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
 
 ### 4. Fill in the Solution Notebook
 
@@ -181,10 +203,10 @@ Run tests locally:
 
 ```bash
 # Test against student notebook (should fail until students complete it)
-pytest tests/test_exNNN_slug.py -v
+uv run pytest tests/test_exNNN_slug.py -v
 
 # Test against solution notebook (should pass)
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest tests/test_exNNN_slug.py -v
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_exNNN_slug.py -v
 
 # Or use the helper script
 scripts/verify_solutions.sh tests/test_exNNN_slug.py -v
