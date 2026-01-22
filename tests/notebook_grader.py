@@ -49,7 +49,8 @@ def _read_notebook(notebook_path: str | Path) -> dict[str, Any]:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise NotebookGradingError(f"Invalid JSON in notebook: {path}") from exc
+        raise NotebookGradingError(
+            f"Invalid JSON in notebook: {path}") from exc
 
 
 def _cell_tags(cell: dict[str, Any]) -> set[str]:
