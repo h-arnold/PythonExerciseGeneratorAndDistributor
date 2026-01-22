@@ -31,5 +31,6 @@ def test_debug_explanations_have_content() -> None:
         if nb_path.parent.name == "solutions":
             continue
         for tag, source in _find_explanation_cells(nb_path):
-            assert len(source.strip(
-            )) > MIN_EXPLANATION_LENGTH, f"{nb_path} {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
+            assert len(source.strip()) > MIN_EXPLANATION_LENGTH, (
+                f"{nb_path} {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
+            )

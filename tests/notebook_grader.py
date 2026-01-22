@@ -156,9 +156,7 @@ def run_cell_and_capture_output(notebook_path: str | Path, *, tag: str) -> str:
         return buffer.getvalue()
 
 
-def run_cell_with_input(
-    notebook_path: str | Path, *, tag: str, inputs: list[str]
-) -> str:
+def run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
     """Execute a tagged cell with mocked input() and capture stdout.
 
     For exercises that require user input, this helper mocks the input()

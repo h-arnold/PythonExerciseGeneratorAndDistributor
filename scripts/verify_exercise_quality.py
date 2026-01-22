@@ -291,8 +291,7 @@ def _check_notebook_structure(nb_path: Path, nb: dict, *, expect_debug: bool) ->
 
     for idx, cell in enumerate(cells, start=1):
         if not isinstance(cell, dict):
-            findings.append(
-                Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
+            findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
 
         findings.extend(_check_cell_language(idx, cell, nb_path))
@@ -387,14 +386,13 @@ def _scan_for_progression_violations(  # noqa: C901
         ]
 
     # If we're in construct K, then constructs strictly after K are disallowed.
-    disallowed = CONSTRUCT_ORDER[allowed_idx + 1:]
+    disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(
-                    r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -415,14 +413,9 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = (
-                            func_defs[idx + 1].start()
-                            if idx + 1 < len(func_defs)
-                            else len(text)
-                        )
+                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
                         regions.append((s, e))
-                    return_positions = [m.start()
-                                        for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
@@ -516,28 +509,24 @@ def main(argv: list[str] | None = None) -> int:
     else:
         findings.extend(_check_teacher_files(ex_dir))
         findings.extend(
-            _check_order_of_teaching(
-                ex_dir, repo_root=repo_root, notebook_name=nb_path.name)
+            _check_order_of_teaching(ex_dir, repo_root=repo_root, notebook_name=nb_path.name)
         )
 
     # Notebook structure (student)
     nb_student = _load_notebook(nb_path)
     expect_debug = ex_type == "debug"
-    findings.extend(_check_notebook_structure(
-        nb_path, nb_student, expect_debug=expect_debug))
+    findings.extend(_check_notebook_structure(nb_path, nb_student, expect_debug=expect_debug))
 
     # Notebook structure (solutions mirror) if present
     nb_solution_path = repo_root / "notebooks" / "solutions" / nb_path.name
     if nb_solution_path.exists():
         nb_solution = _load_notebook(nb_solution_path)
         findings.extend(
-            _check_notebook_structure(
-                nb_solution_path, nb_solution, expect_debug=expect_debug)
+            _check_notebook_structure(nb_solution_path, nb_solution, expect_debug=expect_debug)
         )
     else:
         findings.append(
-            Finding("WARN", "Solution mirror notebook not found",
-                    path=nb_solution_path)
+            Finding("WARN", "Solution mirror notebook not found", path=nb_solution_path)
         )
 
     # Progression scan (student + solution)
@@ -558,8 +547,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if nb_solution_path.exists():
-            solution_text = _collect_code_cell_text(
-                _load_notebook(nb_solution_path))
+            solution_text = _collect_code_cell_text(_load_notebook(nb_solution_path))
             findings.extend(
                 _scan_for_progression_violations(
                     text=solution_text,

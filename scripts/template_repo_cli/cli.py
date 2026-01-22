@@ -207,8 +207,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
         traceback.print_exception(
             type(copy_error), copy_error, copy_error.__traceback__, file=sys.stderr
         )
-        print(
-            f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
+        print(f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
         print(f"Workspace preserved at: {workspace}", file=sys.stderr)
         return 1
 
@@ -631,8 +630,7 @@ def _execute_template_creation(  # noqa: PLR0913
             return 1
 
         # Create GitHub repository
-        result = _handle_repository_creation(
-            args, github, workspace, packager, exercises)
+        result = _handle_repository_creation(args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -673,8 +671,7 @@ def _execute_template_update(  # noqa: PLR0913
             packager.cleanup(workspace)
             return 1
 
-        result = _handle_repository_update(
-            args, github, workspace, packager, exercises)
+        result = _handle_repository_update(args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -722,14 +719,12 @@ def create_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
-    repo_root, selector, collector, packager, github = _initialize_components(
-        args)
+    repo_root, selector, collector, packager, github = _initialize_components(args)
 
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(
-        args, selector, collector, packager)
+    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
@@ -748,14 +743,12 @@ def update_repo_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
-    repo_root, selector, collector, packager, github = _initialize_components(
-        args)
+    repo_root, selector, collector, packager, github = _initialize_components(args)
 
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(
-        args, selector, collector, packager)
+    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
@@ -908,26 +901,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Build and validate without executing gh commands",
     )
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Show detailed progress")
-    parser.add_argument("--output-dir", type=str,
-                        help="Local output directory (default: temp)")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
+    parser.add_argument("--output-dir", type=str, help="Local output directory (default: temp)")
 
     # Subcommands
-    subparsers = parser.add_subparsers(
-        dest="command", help="Command to execute")
+    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # Create command
-    create_parser = subparsers.add_parser(
-        "create", help="Create template repository")
-    create_parser.add_argument(
-        "--construct", nargs="+", help="One or more constructs")
-    create_parser.add_argument(
-        "--type", nargs="+", help="One or more exercise types")
-    create_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns")
-    create_parser.add_argument(
-        "--name", type=str, help="Template repository name/description")
+    create_parser = subparsers.add_parser("create", help="Create template repository")
+    create_parser.add_argument("--construct", nargs="+", help="One or more constructs")
+    create_parser.add_argument("--type", nargs="+", help="One or more exercise types")
+    create_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    create_parser.add_argument("--name", type=str, help="Template repository name/description")
     create_parser.add_argument(
         "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
     )
@@ -952,10 +937,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # List command
-    list_parser = subparsers.add_parser(
-        "list", help="List available exercises")
-    list_parser.add_argument("--construct", type=str,
-                             help="Filter by construct")
+    list_parser = subparsers.add_parser("list", help="List available exercises")
+    list_parser.add_argument("--construct", type=str, help="Filter by construct")
     list_parser.add_argument("--type", type=str, help="Filter by type")
     list_parser.add_argument(
         "--format",
@@ -965,26 +948,19 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # Validate command
-    validate_parser = subparsers.add_parser(
-        "validate", help="Validate selection")
-    validate_parser.add_argument(
-        "--construct", nargs="+", help="Filter by construct")
+    validate_parser = subparsers.add_parser("validate", help="Validate selection")
+    validate_parser.add_argument("--construct", nargs="+", help="Filter by construct")
     validate_parser.add_argument("--type", nargs="+", help="Filter by type")
-    validate_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns")
+    validate_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
 
     # Update command
     update_parser = subparsers.add_parser(
         "update-repo", help="Update an existing template repository by pushing new contents"
     )
-    update_parser.add_argument(
-        "--construct", nargs="+", help="One or more constructs")
-    update_parser.add_argument(
-        "--type", nargs="+", help="One or more exercise types")
-    update_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns")
-    update_parser.add_argument(
-        "--name", type=str, help="Template repository name/description")
+    update_parser.add_argument("--construct", nargs="+", help="One or more constructs")
+    update_parser.add_argument("--type", nargs="+", help="One or more exercise types")
+    update_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    update_parser.add_argument("--name", type=str, help="Template repository name/description")
     update_parser.add_argument(
         "--repo-name",
         type=str,

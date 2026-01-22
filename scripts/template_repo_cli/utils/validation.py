@@ -74,7 +74,12 @@ def validate_repo_name(repo_name: str, *, allow_owner_prefix: bool = False) -> b
 
     if allow_owner_prefix and "/" in repo_name:
         owner, _, name = repo_name.partition("/")
-        return bool(owner) and bool(name) and bool(re.match(pattern, owner)) and bool(re.match(pattern, name))
+        return (
+            bool(owner)
+            and bool(name)
+            and bool(re.match(pattern, owner))
+            and bool(re.match(pattern, name))
+        )
 
     return bool(re.match(pattern, repo_name))
 

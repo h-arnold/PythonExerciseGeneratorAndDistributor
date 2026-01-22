@@ -170,8 +170,7 @@ Each generated template repository includes:
 
 ### Development Setup
 
-- `.vscode/settings.json` - VS Code configuration
-- `.vscode/extensions.json` - Recommended extensions
+- `.devcontainer/devcontainer.json` - VS Code dev container configuration with all settings and extensions
 - `.github/workflows/tests.yml` - CI/CD for autograding
 
 ### Testing Framework

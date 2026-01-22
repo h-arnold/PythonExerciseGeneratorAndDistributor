@@ -89,8 +89,9 @@ TAGS = [f"explanation{i}" for i in range(1, 11)]
 def test_explanations_have_content(tag: str) -> None:
     """Test that students filled in explanation cells."""
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)
-    assert len(explanation.strip(
-    )) > MIN_EXPLANATION_LENGTH, f"Explanation {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH, (
+        f"Explanation {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
+    )
 
 
 # Test that all exercise cells are tagged
@@ -103,8 +104,7 @@ def test_exercise_cells_tagged(tag: str) -> None:
     for cell in nb.get("cells", []):
         tags = cell.get("metadata", {}).get("tags", [])
         if tag in tags:
-            assert cell.get(
-                "cell_type") == "code", f"Cell {tag} must be a code cell"
+            assert cell.get("cell_type") == "code", f"Cell {tag} must be a code cell"
             code = "".join(cell.get("source", []))
             assert code.strip() != "", f"Cell {tag} must not be empty"
             return
@@ -123,8 +123,7 @@ def test_solution_cells_tagged(tag: str) -> None:
     for cell in nb.get("cells", []):
         tags = cell.get("metadata", {}).get("tags", [])
         if tag in tags:
-            assert cell.get(
-                "cell_type") == "code", f"Solution cell {tag} must be a code cell"
+            assert cell.get("cell_type") == "code", f"Solution cell {tag} must be a code cell"
             code = "".join(cell.get("source", []))
             assert code.strip() != "", f"Solution cell {tag} must not be empty"
             # For solution, verify no placeholder "TODO"

@@ -85,7 +85,9 @@ def run_subprocess(
     elif output_mode == "stream":
         # Stream stdout to user for visibility, capture stderr for error handling
         # Note: stdout will be None in the returned CompletedProcess
-        return subprocess.run(cmd, cwd=cwd, capture_output=False, stderr=subprocess.PIPE, text=text, check=check)
+        return subprocess.run(
+            cmd, cwd=cwd, capture_output=False, stderr=subprocess.PIPE, text=text, check=check
+        )
     elif output_mode == "silent":
         # Don't capture or stream anything
         # Note: Both stdout and stderr will be None in the returned CompletedProcess
@@ -241,7 +243,8 @@ class GitHubClient:
         try:
             # Stream stdout to user for visibility and interactive prompts
             result: subprocess.CompletedProcess[str] = run_subprocess(
-                cmd, output_mode="stream", check=False)
+                cmd, output_mode="stream", check=False
+            )
 
             return {
                 "success": result.returncode == 0,
@@ -260,7 +263,8 @@ class GitHubClient:
         """
         try:
             result: subprocess.CompletedProcess[str] = run_subprocess(
-                ["gh", "--version"], check=False)
+                ["gh", "--version"], check=False
+            )
             return result.returncode == 0
         except FileNotFoundError:
             return False
@@ -273,7 +277,8 @@ class GitHubClient:
         """
         try:
             result: subprocess.CompletedProcess[str] = run_subprocess(
-                ["gh", "auth", "status"], check=False)
+                ["gh", "auth", "status"], check=False
+            )
             return result.returncode == 0
         except FileNotFoundError:
             return False
@@ -296,7 +301,8 @@ class GitHubClient:
             repo_ref, _ = self._resolve_repo_ref(repo_name, org)
 
             result: subprocess.CompletedProcess[str] = run_subprocess(
-                ["gh", "repo", "view", repo_ref], check=False)
+                ["gh", "repo", "view", repo_ref], check=False
+            )
             return result.returncode == 0
         except (FileNotFoundError, OSError):
             return False
@@ -328,7 +334,8 @@ class GitHubClient:
         try:
             # Run gh auth status and capture stderr (where scopes are printed)
             auth_result: subprocess.CompletedProcess[str] = run_subprocess(
-                ["gh", "auth", "status"], check=False)
+                ["gh", "auth", "status"], check=False
+            )
 
             # Check if authenticated
             if auth_result.returncode != 0:
@@ -338,24 +345,22 @@ class GitHubClient:
 
             # Parse stderr to extract scopes
             # Format: "  - Token scopes: 'scope1', 'scope2', 'scope3'"
-            output: str = (auth_result.stderr or "") + \
-                (auth_result.stdout or "")
+            output: str = (auth_result.stderr or "") + (auth_result.stdout or "")
             for line in output.split("\n"):
                 if "Token scopes:" in line:
                     # Extract the scopes part after "Token scopes:"
-                    scopes_part: str = line.split(
-                        "Token scopes:", 1)[1].strip()
+                    scopes_part: str = line.split("Token scopes:", 1)[1].strip()
                     # Remove quotes and split by comma, filtering empty strings
                     scopes: list[str] = [
-                        stripped for s in scopes_part.split(",")
+                        stripped
+                        for s in scopes_part.split(",")
                         if (stripped := s.strip().strip("'").strip('"'))
                     ]
                     result["scopes"] = scopes
                     break
 
             # Check if all required scopes are present
-            missing: list[str] = [
-                s for s in required_scopes if s not in result["scopes"]]
+            missing: list[str] = [s for s in required_scopes if s not in result["scopes"]]
             result["missing_scopes"] = missing
             result["has_scopes"] = len(missing) == 0
 
@@ -455,12 +460,12 @@ class GitHubClient:
 
         # Mark repository as a template if requested
         if result["success"] and template:
-            template_result: ExecResult = self.mark_repository_as_template(
-                repo_name, org)
+            template_result: ExecResult = self.mark_repository_as_template(repo_name, org)
             if not template_result.get("success", False):
                 return {
                     "success": False,
-                    "error": template_result.get("error") or "Failed to mark repository as template",
+                    "error": template_result.get("error")
+                    or "Failed to mark repository as template",
                     "output": template_result.get("output") or "",
                     "returncode": int(template_result.get("returncode") or 1),
                 }
@@ -477,8 +482,7 @@ class GitHubClient:
         Returns:
             Result dictionary.
         """
-        repo_ref, ref_error = self._resolve_repo_ref(
-            repo_name, org, require_owner=True)
+        repo_ref, ref_error = self._resolve_repo_ref(repo_name, org, require_owner=True)
         if ref_error:
             return {
                 "success": False,
@@ -584,8 +588,7 @@ class GitHubClient:
             )
 
         # Ensure we replace any existing origin to avoid failures
-        run_subprocess(["git", "remote", "remove", "origin"],
-                       cwd=workspace, check=False)
+        run_subprocess(["git", "remote", "remove", "origin"], cwd=workspace, check=False)
         run_subprocess(
             ["git", "remote", "add", "origin", remote_url],
             cwd=workspace,
@@ -623,13 +626,10 @@ class GitHubClient:
             return {
                 "success": True,
                 "dry_run": True,
-                "message": (
-                    "Dry run - repository would be updated via push"
-                ),
+                "message": ("Dry run - repository would be updated via push"),
             }
 
-        repo_ref, ref_error = self._resolve_repo_ref(
-            repo_name, org, require_owner=True)
+        repo_ref, ref_error = self._resolve_repo_ref(repo_name, org, require_owner=True)
         if ref_error:
             return {
                 "success": False,
@@ -699,14 +699,9 @@ class GitHubClient:
         Returns:
             True if this is a 403 permission denied error, False otherwise.
         """
-        error_text = (
-            (exc.stderr or "") + (exc.stdout or "")
-        ).lower()
+        error_text = ((exc.stderr or "") + (exc.stdout or "")).lower()
 
-        return (
-            "403" in error_text
-            or ("permission" in error_text and "denied" in error_text)
-        )
+        return "403" in error_text or ("permission" in error_text and "denied" in error_text)
 
     @staticmethod
     def _format_called_process_error(exc: subprocess.CalledProcessError) -> str:
@@ -735,8 +730,7 @@ class GitHubClient:
             (result.get("error") or "").lower(),
             (result.get("output") or "").lower(),
         )
-        combined_message: str = " ".join(
-            part for part in message_parts if part)
+        combined_message: str = " ".join(part for part in message_parts if part)
 
         if all(marker in combined_message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS):
             return True

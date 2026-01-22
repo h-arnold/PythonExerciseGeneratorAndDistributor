@@ -118,13 +118,11 @@ class TestValidateRepoName:
 
     def test_validate_repo_name_owner_prefix_allowed(self) -> None:
         """Owner-prefixed names are permitted when opted in."""
-        assert validate_repo_name(
-            "owner/my-repo", allow_owner_prefix=True) is True
+        assert validate_repo_name("owner/my-repo", allow_owner_prefix=True) is True
 
     def test_validate_repo_name_owner_prefix_invalid_parts(self) -> None:
         """Owner-prefixed names must follow the same lowercase rules."""
-        assert validate_repo_name(
-            "Owner/MyRepo", allow_owner_prefix=True) is False
+        assert validate_repo_name("Owner/MyRepo", allow_owner_prefix=True) is False
 
 
 class TestSanitizeRepoName:

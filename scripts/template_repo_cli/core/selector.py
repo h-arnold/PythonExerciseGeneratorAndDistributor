@@ -153,9 +153,7 @@ class ExerciseSelector:
 
         return sorted(set(exercises))
 
-    def _find_exercises_in_type_dir(
-        self, construct: str, type_name: str
-    ) -> list[str]:
+    def _find_exercises_in_type_dir(self, construct: str, type_name: str) -> list[str]:
         """Find exercises in a specific construct/type directory.
 
         Args:
@@ -181,9 +179,7 @@ class ExerciseSelector:
 
         return exercises
 
-    def select_by_construct_and_type(
-        self, constructs: list[str], types: list[str]
-    ) -> list[str]:
+    def select_by_construct_and_type(self, constructs: list[str], types: list[str]) -> list[str]:
         """Select exercises by construct AND type.
 
         Args:

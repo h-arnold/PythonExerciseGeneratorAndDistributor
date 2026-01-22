@@ -45,8 +45,7 @@ class FileCollector:
         # Student notebook (required)
         notebook_path: Path = self.notebooks_dir / f"{exercise_id}.ipynb"
         if not notebook_path.exists():
-            raise FileNotFoundError(
-                f"Student notebook not found: {exercise_id}")
+            raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
 
         # Test file (required)
         test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
