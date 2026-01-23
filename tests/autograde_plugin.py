@@ -49,7 +49,7 @@ class AutogradeState:
     start_timestamp: float | None = None
     end_timestamp: float | None = None
     results_path: Path | None = None
-    metadata: dict[str, "AutogradeTestMetadata"] = field(default_factory=dict)
+    metadata: dict[str, AutogradeTestMetadata] = field(default_factory=dict)
     reported_nodeids: set[str] = field(default_factory=set)
 
 
@@ -164,18 +164,22 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
         return
 
     for item in items:
-        marker = item.get_closest_marker("task") if hasattr(item, "get_closest_marker") else None
+        marker = item.get_closest_marker("task") if hasattr(
+            item, "get_closest_marker") else None
         marker_kwargs = marker.kwargs if marker else {}
-        task_number_raw = marker_kwargs.get("taskno") if isinstance(marker_kwargs, dict) else None
+        task_number_raw = marker_kwargs.get(
+            "taskno") if isinstance(marker_kwargs, dict) else None
         task_number: int | None
         if isinstance(task_number_raw, int):
             task_number = task_number_raw
         elif isinstance(task_number_raw, str):
-            task_number = int(task_number_raw) if task_number_raw.isdigit() else None
+            task_number = int(
+                task_number_raw) if task_number_raw.isdigit() else None
         else:
             task_number = None
 
-        marker_name = marker_kwargs.get("name") if isinstance(marker_kwargs, dict) else None
+        marker_name = marker_kwargs.get("name") if isinstance(
+            marker_kwargs, dict) else None
         doc = None
         if hasattr(item, "obj"):
             try:
@@ -224,7 +228,8 @@ def pytest_runtest_logreport(report: Any) -> None:
     if metadata is None and hasattr(report, "head_line"):
         doc = getattr(report, "head_line", None)
 
-    display_name = metadata.display_name if metadata else derive_display_name(nodeid, doc=doc, marker_name=None)
+    display_name = metadata.display_name if metadata else derive_display_name(
+        nodeid, doc=doc, marker_name=None)
     task_number = metadata.task_number if metadata else None
 
     if is_call_phase:
@@ -235,7 +240,8 @@ def pytest_runtest_logreport(report: Any) -> None:
         elif outcome == "skipped":
             status = "fail"
             score = 0.0
-            message_source = getattr(report, "longreprtext", None) or "Test skipped"
+            message_source = getattr(
+                report, "longreprtext", None) or "Test skipped"
             message = trim_failure_message(message_source)
         else:
             status = "fail"
@@ -250,7 +256,8 @@ def pytest_runtest_logreport(report: Any) -> None:
         message_source = getattr(report, "longreprtext", None)
         if not message_source and hasattr(report, "longrepr"):
             message_source = str(report.longrepr)
-        message = trim_failure_message(message_source or "Test error during setup/teardown")
+        message = trim_failure_message(
+            message_source or "Test error during setup/teardown")
 
     location = getattr(report, "location", None)
     if isinstance(location, tuple) and len(location) > 1:
@@ -302,7 +309,8 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
 
     results_path = state.results_path
     results_payload = [_result_to_dict(res) for res in state.results]
-    max_score = float(len(state.metadata)) if state.metadata else float(len(results_payload))
+    max_score = float(len(state.metadata)) if state.metadata else float(
+        len(results_payload))
     earned_score = float(sum(entry["score"] for entry in results_payload))
     overall_status = _derive_overall_status(state, results_payload)
 
@@ -330,14 +338,17 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
         with results_path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
     except Exception as exc:  # pragma: no cover - exercised in error handling tests
-        fallback = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
+        fallback = {"status": "error", "score": 0.0,
+                    "max_score": 0.0, "tests": []}
         try:
             with results_path.open("w", encoding="utf-8") as handle:
                 json.dump(fallback, handle, ensure_ascii=False, indent=2)
         except Exception:
             pass
-        state.encountered_errors.append(f"Failed to write autograde results: {exc}")
-        print(f"Autograde plugin failed to write results: {exc}", file=sys.stderr)
+        state.encountered_errors.append(
+            f"Failed to write autograde results: {exc}")
+        print(
+            f"Autograde plugin failed to write results: {exc}", file=sys.stderr)
 
 
 def pytest_terminal_summary(terminalreporter: Any) -> None:
@@ -350,13 +361,15 @@ def pytest_terminal_summary(terminalreporter: Any) -> None:
 
     total_tests = len(state.metadata) if state.metadata else len(state.results)
     passed = sum(1 for result in state.results if result.status == "pass")
-    overall_status = _derive_overall_status(state, [_result_to_dict(res) for res in state.results])
+    overall_status = _derive_overall_status(
+        state, [_result_to_dict(res) for res in state.results])
     if state.results_path:
         terminalreporter.write_line(
             f"Autograde summary: {passed}/{total_tests} passed | "
             f"Score {state.total_score}/{state.max_score} | Status {overall_status}"
         )
-        terminalreporter.write_line(f"Autograde results written to: {state.results_path}")
+        terminalreporter.write_line(
+            f"Autograde results written to: {state.results_path}")
     else:
         terminalreporter.write_line(
             "Autograde summary: no results file written (missing --autograde-results-path)"

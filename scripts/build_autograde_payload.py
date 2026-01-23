@@ -131,13 +131,15 @@ def load_results(results_path: Path) -> dict[str, Any]:
         with results_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Results JSON at {results_path} is invalid: {exc}") from exc
+        raise RuntimeError(
+            f"Results JSON at {results_path} is invalid: {exc}") from exc
 
     if not isinstance(data, dict):
         raise RuntimeError("Autograde results must be a JSON object.")
     for key in ("max_score", "status", "tests"):
         if key not in data:
-            raise RuntimeError(f"Autograde results missing required key: {key}")
+            raise RuntimeError(
+                f"Autograde results missing required key: {key}")
     if not isinstance(data["tests"], list):
         raise RuntimeError("Autograde results 'tests' entry must be a list.")
 
@@ -174,7 +176,8 @@ def _normalise_test_entry(test: Any) -> dict[str, Any]:
     entry["name"] = str(name)
     entry["status"] = str(entry.get("status", "error"))
     entry["score"] = _ensure_float(
-        entry.get("score", 0.0), f"Test entry for {entry['name']} has non-numeric score."
+        entry.get(
+            "score", 0.0), f"Test entry for {entry['name']} has non-numeric score."
     )
     entry["line_no"] = _normalise_line_number(entry.get("line_no"))
     entry.setdefault("task", entry.get("taskno"))
@@ -196,7 +199,8 @@ def _calculate_earned_score(raw_results: dict[str, Any], tests: Sequence[dict[st
 def build_payload(raw_results: dict[str, Any]) -> dict[str, Any]:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
-    max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
+    max_score = _ensure_float(
+        raw_results["max_score"], "max_score in results must be numeric.")
     status = str(raw_results["status"])
     raw_tests = raw_results.get("tests", [])
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
@@ -218,7 +222,8 @@ def build_payload(raw_results: dict[str, Any]) -> dict[str, Any]:
 def encode_payload(payload: dict[str, Any]) -> str:
     """Encode the payload as a Base64 JSON string."""
 
-    json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    json_bytes = json.dumps(payload, ensure_ascii=False,
+                            indent=2).encode("utf-8")
     encoded = base64.b64encode(json_bytes)
     return encoded.decode("ascii")
 
@@ -262,7 +267,8 @@ def print_summary(payload: dict[str, Any]) -> None:
         for test in failing_tests:
             message = test.get("message")
             message_text = "(no message)" if message is None else str(message)
-            truncated = textwrap.shorten(message_text, width=200, placeholder="...")
+            truncated = textwrap.shorten(
+                message_text, width=200, placeholder="...")
             print(f"- {test['name']}: {truncated}")
 
 
@@ -280,7 +286,8 @@ def write_outputs(
             handle.write(encoded_payload)
             handle.write("\n")
     except Exception as exc:
-        print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
         return
@@ -291,7 +298,8 @@ def write_outputs(
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
     except Exception as exc:
-        print(f"Warning: failed to write summary to {summary_path}: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write summary to {summary_path}: {exc}", file=sys.stderr)
 
 
 def write_github_outputs(encoded: str, payload: dict[str, Any]) -> None:
@@ -313,7 +321,8 @@ def write_github_outputs(encoded: str, payload: dict[str, Any]) -> None:
             for key, value in entries.items():
                 handle.write(f"{key}={value}\n")
     except Exception as exc:
-        print(f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

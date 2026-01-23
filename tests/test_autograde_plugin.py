@@ -10,6 +10,10 @@ pytest_plugins = ("pytester",)
 
 PLUGIN_PATH = Path(__file__).with_name("autograde_plugin.py")
 RESULTS_FILENAME = "results.json"
+TASK_NUMBER = 7
+TWO_TEST_MAX_SCORE = 2.0
+TRUNCATED_MESSAGE_LIMIT = 1000
+EXPECTED_ASSERT_LINE = 2
 
 
 @pytest.fixture(autouse=True)
@@ -106,7 +110,7 @@ def test_plugin_extracts_task_number(pytester: pytest.Pytester) -> None:
     )
     _, payload, _ = _run_with_results(pytester)
     test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["taskno"] == 7
+    assert test_entry["taskno"] == TASK_NUMBER
 
 
 def test_plugin_handles_missing_task_marker(pytester: pytest.Pytester) -> None:
@@ -141,11 +145,11 @@ def test_plugin_extracts_name_from_marker(pytester: pytest.Pytester) -> None:
 def test_plugin_extracts_name_from_docstring(pytester: pytest.Pytester) -> None:
     _write_test_module(
         pytester,
-        """\
+        '''\
         def test_docstring() -> None:
             """Docstring summary."""
             assert True
-        """,
+        ''',
     )
     _, payload, _ = _run_with_results(pytester)
     test_entry = payload["tests"][0]  # type: ignore[index]
@@ -198,7 +202,8 @@ def test_plugin_handles_write_errors(pytester: pytest.Pytester, monkeypatch: pyt
     original_open = Path.open
     call_count = {"count": 0}
 
-    def _fail_once(self: Path, *args: object, **kwargs: object):  # type: ignore[override]
+    # type: ignore[override]
+    def _fail_once(self: Path, *args: object, **kwargs: object):
         if self == target and call_count["count"] == 0:
             call_count["count"] += 1
             raise OSError("disk full")
@@ -215,7 +220,12 @@ def test_plugin_handles_write_errors(pytester: pytest.Pytester, monkeypatch: pyt
     )
     result, payload, _ = _run_with_results(pytester)
     result.assert_outcomes(passed=1)
-    assert payload == {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
+    assert payload == {
+        "status": "error",
+        "score": 0.0,
+        "max_score": 0.0,
+        "tests": [],
+    }
     stdout = result.stdout.str()
     assert "Autograde error: Failed to write autograde results" in stdout
 
@@ -233,7 +243,7 @@ def test_plugin_calculates_max_score(pytester: pytest.Pytester) -> None:
     )
     result, payload, _ = _run_with_results(pytester)
     result.assert_outcomes(passed=1, failed=1)
-    assert payload["max_score"] == 2.0
+    assert payload["max_score"] == TWO_TEST_MAX_SCORE
 
 
 def test_plugin_calculates_overall_status_pass(pytester: pytest.Pytester) -> None:
@@ -292,7 +302,7 @@ def test_plugin_truncates_long_messages(pytester: pytest.Pytester) -> None:
     _, payload, _ = _run_with_results(pytester)
     message = payload["tests"][0]["message"]  # type: ignore[index]
     assert isinstance(message, str)
-    assert len(message) == 1000
+    assert len(message) == TRUNCATED_MESSAGE_LIMIT
     assert message.endswith("...")
 
 
@@ -306,4 +316,4 @@ def test_plugin_extracts_line_numbers(pytester: pytest.Pytester) -> None:
     )
     _, payload, _ = _run_with_results(pytester)
     line_no = payload["tests"][0]["line_no"]  # type: ignore[index]
-    assert line_no == 2
+    assert line_no == EXPECTED_ASSERT_LINE

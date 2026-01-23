@@ -92,7 +92,8 @@ class TemplatePackager:
         # Include Classroom autograding payload builder
         src = self.repo_root / "scripts" / "build_autograde_payload.py"
         if src.exists():
-            safe_copy_file(src, workspace / "scripts" / "build_autograde_payload.py")
+            safe_copy_file(src, workspace / "scripts" /
+                           "build_autograde_payload.py")
 
         # Bundle pytest plugin for Classroom autograding
         src = self.repo_root / "tests" / "autograde_plugin.py"
