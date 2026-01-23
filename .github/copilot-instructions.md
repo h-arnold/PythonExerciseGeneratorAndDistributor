@@ -182,6 +182,16 @@ See Testing Framework: `docs/testing-framework.md` for details.
 
 **MANDATORY:** Every #runSubagent call must include agentName: "{name of subagent}". Calls that omit this parameter violate the workflow contract and should be rejected/retried.
 
+**Example (exact shape requested):**
+
+```json
+{
+  "type": "function_call",
+  "name": "runSubagent",
+  "arguments": "{\"prompt\":\"Please implement a dummy task: add CLI command 'foo' that scaffolds an exercise.\",\"description\":\"Create files: exercises/ex999_dummy/, notebooks/solutions/ex999_dummy.ipynb, tests/test_ex999_dummy.py. Ensure tests pass and linting is clean.\",\"agentName\":\"Implementer\"}",
+  "call_id": "call_000000000001"
+}
+```
 
 
 The sub-agents you can call are (first-line names are case-sensitive):
