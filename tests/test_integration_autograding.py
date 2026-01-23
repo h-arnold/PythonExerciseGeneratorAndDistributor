@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, NotRequired, TypeAlias, TypedDict, cast
 
 import pytest
+from pytest import approx  # pyright: ignore[reportUnknownVariableType]
 
 from tests.helpers import build_autograde_env
 
@@ -127,14 +128,14 @@ def _assert_payload_matches_results(
     results: AutogradeResultsDict,
 ) -> None:
     assert payload["status"] == results["status"]
-    assert pytest.approx(_normalise_score(payload["max_score"])) == pytest.approx(
+    assert approx(_normalise_score(payload["max_score"])) == approx(
         _normalise_score(results["max_score"])
     )
     assert len(payload["tests"]) == len(results["tests"])
 
     recorded_score = _normalise_score(results.get("score"))
-    assert pytest.approx(_normalise_score(
-        payload["score"])) == pytest.approx(recorded_score)
+    assert approx(_normalise_score(
+        payload["score"])) == approx(recorded_score)
 
 
 def _assert_cli_alignment(
@@ -155,10 +156,10 @@ def _expect_solution_success(
     assert manual_run.returncode == 0
     assert payload["status"] == "pass"
     assert results["status"] == "pass"
-    assert pytest.approx(_normalise_score(payload["score"])) == pytest.approx(
+    assert approx(_normalise_score(payload["score"])) == approx(
         _normalise_score(payload["max_score"])
     )
-    assert pytest.approx(_normalise_score(results.get("score"))) == pytest.approx(
+    assert approx(_normalise_score(results.get("score"))) == approx(
         _normalise_score(results["max_score"])
     )
 
@@ -191,7 +192,7 @@ def _assert_solution_vs_student(
     assert solution_payload["status"] != student_payload["status"]
     assert _normalise_score(solution_payload["score"]) > _normalise_score(
         student_payload["score"])
-    assert pytest.approx(_normalise_score(solution_payload["max_score"])) == pytest.approx(
+    assert approx(_normalise_score(solution_payload["max_score"])) == approx(
         _normalise_score(student_payload["max_score"])
     )
 
