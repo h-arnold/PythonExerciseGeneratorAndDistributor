@@ -397,21 +397,21 @@ def encode_payload(payload: AutogradePayload) -> str:
 def _coerce_task_id_to_int(task_id: Any) -> int | None:
     """Best-effort coercion for numeric task identifiers."""
 
-    result: int | None = None
-    if isinstance(task_id, bool):
-        result = None
-    elif isinstance(task_id, int):
-        result = task_id
-    elif isinstance(task_id, float) and task_id.is_integer():
-        result = int(task_id)
-    elif isinstance(task_id, str):
-        candidate = task_id.strip()
-        if candidate:
+    match task_id:
+        case bool():
+            # Booleans are instances of int in Python, so handle them first
+            return None
+        case int():
+            return task_id
+        case float() if task_id.is_integer():
+            return int(task_id)
+        case str() if candidate := task_id.strip():
             try:
-                result = int(candidate)
+                return int(candidate)
             except ValueError:
-                result = None
-    return result
+                return None
+        case _:
+            return None
 
 
 def _task_group_sort_key(
