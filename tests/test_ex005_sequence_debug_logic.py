@@ -75,9 +75,7 @@ def _names_in_node(node: ast.AST) -> list[str]:
 
 def _string_constants(node: ast.AST) -> list[str]:
     return [
-        n.value
-        for n in ast.walk(node)
-        if isinstance(n, ast.Constant) and isinstance(n.value, str)
+        n.value for n in ast.walk(node) if isinstance(n, ast.Constant) and isinstance(n.value, str)
     ]
 
 
@@ -114,7 +112,11 @@ def _input_prompts(tree: ast.AST) -> list[str]:
         func = value.func
         if not (isinstance(func, ast.Name) and func.id == "input"):
             continue
-        if value.args and isinstance(value.args[0], ast.Constant) and isinstance(value.args[0].value, str):
+        if (
+            value.args
+            and isinstance(value.args[0], ast.Constant)
+            and isinstance(value.args[0].value, str)
+        ):
             prompts.append(value.args[0].value)
     return prompts
 
@@ -272,8 +274,7 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
-    explanation = get_explanation_cell(
-        NOTEBOOK_PATH, tag=_explanation_tag(FULL_NAME_EXERCISE))
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(FULL_NAME_EXERCISE))
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
 
 
@@ -321,12 +322,10 @@ def test_exercise7_formatting() -> None:
 def test_exercise7_construct() -> None:
     tree = _exercise_ast(7)
     total_value = _assignment_value(tree, "total")
-    assert isinstance(total_value, ast.BinOp) and isinstance(
-        total_value.op, ast.Add)
+    assert isinstance(total_value, ast.BinOp) and isinstance(total_value.op, ast.Add)
     assert {"score1", "score2"} <= set(_names_in_node(total_value))
     average_value = _assignment_value(tree, "average")
-    assert isinstance(average_value, ast.BinOp) and isinstance(
-        average_value.op, ast.Div)
+    assert isinstance(average_value, ast.BinOp) and isinstance(average_value.op, ast.Div)
     assert "total" in _names_in_node(average_value)
     assert AVERAGE_DIVISOR in _number_constants(average_value)
     assert _print_uses_name(tree, "average")
@@ -386,8 +385,7 @@ def test_exercise9_construct() -> None:
     value = _assignment_value(tree, "perimeter")
     assert value is not None
     assert {"length", "width"} <= set(_names_in_node(value))
-    assert any(isinstance(node, (ast.Add, ast.Mult))
-               for node in ast.walk(value))
+    assert any(isinstance(node, (ast.Add, ast.Mult)) for node in ast.walk(value))
     assert _print_uses_name(tree, "perimeter")
 
 
@@ -428,6 +426,5 @@ def test_exercise10_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
-    explanation = get_explanation_cell(
-        NOTEBOOK_PATH, tag=_explanation_tag(PROFILE_EXERCISE))
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(PROFILE_EXERCISE))
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH

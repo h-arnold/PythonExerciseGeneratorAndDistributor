@@ -152,13 +152,11 @@ def _assigns_binop_sum(tree: ast.AST, target_name: str, variable: str, constant:
                 isinstance(value, ast.BinOp)
                 and isinstance(value.op, ast.Add)
                 and (
-                    (isinstance(value.left, ast.Name)
-                     and value.left.id == variable)
+                    (isinstance(value.left, ast.Name) and value.left.id == variable)
                     or (isinstance(value.right, ast.Name) and value.right.id == variable)
                 )
                 and (
-                    (isinstance(value.left, ast.Constant)
-                     and value.left.value == constant)
+                    (isinstance(value.left, ast.Constant) and value.left.value == constant)
                     or (isinstance(value.right, ast.Constant) and value.right.value == constant)
                 )
             ):
@@ -231,8 +229,7 @@ def test_exercise3_formatting() -> None:
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
     strings = _string_constants(tree)
-    assert EXPECTED_SINGLE_LINE[3] in strings or (
-        {"Learning", "Python"} <= strings)
+    assert EXPECTED_SINGLE_LINE[3] in strings or ({"Learning", "Python"} <= strings)
 
 
 @pytest.mark.task(taskno=3)

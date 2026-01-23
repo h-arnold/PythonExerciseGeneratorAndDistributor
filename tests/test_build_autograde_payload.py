@@ -11,8 +11,7 @@ from pathlib import Path
 
 import pytest
 
-CLI_SCRIPT = Path(__file__).resolve(
-).parents[1] / "scripts" / "build_autograde_payload.py"
+CLI_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
 REPO_ROOT = CLI_SCRIPT.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -78,8 +77,7 @@ def _execute_cli(  # noqa: PLR0913
 
 def _set_cli_env(monkeypatch: pytest.MonkeyPatch) -> None:
     current = os.environ.get("PYTHONPATH")
-    pythonpath = f"{REPO_ROOT}{os.pathsep}{current}" if current else str(
-        REPO_ROOT)
+    pythonpath = f"{REPO_ROOT}{os.pathsep}{current}" if current else str(REPO_ROOT)
     monkeypatch.setenv("PYTHONPATH", pythonpath)
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
@@ -139,7 +137,7 @@ def test_cli_validates_environment(tmp_path: Path) -> None:
     assert "Environment: PYTUTOR_NOTEBOOKS_DIR=<unset>" in completed.stdout
 
 
-def test_cli_rejects_wrong_notebook_dir(tmp_path: Path) -> None:
+def test_cli_allows_solution_notebook_dir(tmp_path: Path) -> None:
     test_file = _write_test_file(
         tmp_path,
         """
@@ -154,8 +152,49 @@ def test_cli_rejects_wrong_notebook_dir(tmp_path: Path) -> None:
         env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"},
         results_path=results_path,
     )
+    assert completed.returncode == 0
+    assert results_path.exists()
+
+
+def test_cli_allows_solution_notebook_dir_windows_path(tmp_path: Path) -> None:
+    test_file = _write_test_file(
+        tmp_path,
+        """
+        def test_ok() -> None:
+            assert True
+        """,
+    )
+    results_path = tmp_path / "tmp" / "autograde" / "results.json"
+    completed, _, _, _ = _execute_cli(
+        tmp_path,
+        [PLUGIN_FLAG, str(test_file)],
+        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks\\solutions"},
+        results_path=results_path,
+    )
+    assert completed.returncode == 0
+    assert results_path.exists()
+
+
+def test_cli_rejects_unknown_notebook_dir(tmp_path: Path) -> None:
+    test_file = _write_test_file(
+        tmp_path,
+        """
+        def test_ok() -> None:
+            assert True
+        """,
+    )
+    results_path = tmp_path / "tmp" / "autograde" / "results.json"
+    completed, _, _, _ = _execute_cli(
+        tmp_path,
+        [PLUGIN_FLAG, str(test_file)],
+        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/custom"},
+        results_path=results_path,
+    )
     assert completed.returncode == 1
-    assert "Error: PYTUTOR_NOTEBOOKS_DIR must be unset or 'notebooks'" in completed.stderr
+    assert (
+        "Error: PYTUTOR_NOTEBOOKS_DIR must be unset or one of 'notebooks', 'notebooks/solutions'"
+        in completed.stderr
+    )
     assert not results_path.exists()
 
 
@@ -287,8 +326,7 @@ def test_cli_handles_missing_results_file(
             path.unlink()
         return code
 
-    monkeypatch.setattr(build_autograde_payload,
-                        "run_pytest", run_pytest_and_remove)
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_remove)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -327,8 +365,7 @@ def test_cli_handles_malformed_json(
         path.write_text("{ invalid json", encoding="utf-8")
         return code
 
-    monkeypatch.setattr(build_autograde_payload,
-                        "run_pytest", run_pytest_and_corrupt)
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_corrupt)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(

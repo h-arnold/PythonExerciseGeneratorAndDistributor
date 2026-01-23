@@ -212,6 +212,8 @@ For any significant code changes (defined as adding/modifying more than 1 functi
     *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
 2.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes.
     *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
+3. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
+4. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 
 **ALWAYS** follow this process unless the user explictly directs you otherwise.
 

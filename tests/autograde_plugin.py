@@ -14,9 +14,49 @@ import inspect
 import json
 import sys
 import time
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+ELLIPSIS_GUARD_LENGTH = 3
+LOCATION_MIN_LENGTH = 2
+
+
+def _empty_results() -> list[AutogradeTestResult]:
+    return []
+
+
+def _empty_error_messages() -> list[str]:
+    return []
+
+
+def _empty_notes() -> list[str]:
+    return []
+
+
+def _empty_metadata() -> dict[str, AutogradeTestMetadata]:
+    return {}
+
+
+def _empty_reported_nodeids() -> set[str]:
+    return set()
+
+
+def _empty_extra() -> dict[str, Any]:
+    return {}
+
+
+_autograde_state: AutogradeState | None = None
+
+
+def _set_autograde_state(state: AutogradeState | None) -> None:
+    global _autograde_state
+    _autograde_state = state
+
+
+def _get_autograde_state() -> AutogradeState | None:
+    return _autograde_state
 
 
 @dataclass(slots=True)
@@ -34,23 +74,23 @@ class AutogradeTestResult:
     captured_stdout: str | None = None
     captured_stderr: str | None = None
     captured_log: str | None = None
-    extra: dict[str, Any] = field(default_factory=dict)
+    extra: dict[str, Any] = field(default_factory=_empty_extra)
 
 
 @dataclass(slots=True)
 class AutogradeState:
     """Mutable state shared across pytest hooks during autograde collection."""
 
-    results: list[AutogradeTestResult] = field(default_factory=list)
+    results: list[AutogradeTestResult] = field(default_factory=_empty_results)
     total_score: float = 0.0
     max_score: float = 0.0
-    encountered_errors: list[str] = field(default_factory=list)
-    notes: list[str] = field(default_factory=list)
+    encountered_errors: list[str] = field(default_factory=_empty_error_messages)
+    notes: list[str] = field(default_factory=_empty_notes)
     start_timestamp: float | None = None
     end_timestamp: float | None = None
     results_path: Path | None = None
-    metadata: dict[str, AutogradeTestMetadata] = field(default_factory=dict)
-    reported_nodeids: set[str] = field(default_factory=set)
+    metadata: dict[str, AutogradeTestMetadata] = field(default_factory=_empty_metadata)
+    reported_nodeids: set[str] = field(default_factory=_empty_reported_nodeids)
 
 
 @dataclass(slots=True)
@@ -62,7 +102,16 @@ class AutogradeTestMetadata:
     marker_name: str | None = None
 
 
-_AUTOGRADE_STATE: AutogradeState | None = None
+@dataclass(slots=True)
+class _ReportContext:
+    nodeid: str
+    display_name: str
+    task_number: int | None
+    line_number: int | None
+    duration: float | None
+    captured_stdout: str | None
+    captured_stderr: str | None
+    captured_log: str | None
 
 
 def _normalise_name(raw_name: str) -> str:
@@ -72,12 +121,86 @@ def _normalise_name(raw_name: str) -> str:
     lowered = cleaned.lower()
     for prefix in ("test ", "test_", "tests ", "tests_"):
         if lowered.startswith(prefix):
-            cleaned = cleaned[len(prefix):]
+            cleaned = cleaned[len(prefix) :]
             break
     cleaned = cleaned.lstrip(" _")
     cleaned = cleaned.replace("_", " ")
     cleaned = " ".join(cleaned.split())
     return cleaned or raw_name.strip() or "Unnamed test"
+
+
+def _get_task_marker(item: Any) -> Any | None:
+    if not hasattr(item, "get_closest_marker"):
+        return None
+    try:
+        return item.get_closest_marker("task")
+    except Exception:  # pragma: no cover - defensive guard
+        return None
+
+
+def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
+    kwargs = getattr(marker, "kwargs", None)
+    if isinstance(kwargs, dict):
+        return kwargs
+    return {}
+
+
+def _extract_marker_args(marker: Any) -> Sequence[Any]:
+    args = getattr(marker, "args", ())
+    if isinstance(args, Sequence):
+        return args
+    return ()
+
+
+def _select_task_source(marker_kwargs: dict[str, Any], marker_args: Sequence[Any]) -> Any | None:
+    for key in ("taskno", "number"):
+        if key in marker_kwargs:
+            return marker_kwargs[key]
+    if marker_args:
+        return marker_args[0]
+    return None
+
+
+def _resolve_task_number(
+    task_source: Any | None,
+    *,
+    item: Any,
+    state: AutogradeState,
+) -> int | None:
+    if task_source is None:
+        return None
+    try:
+        return int(task_source)
+    except (TypeError, ValueError):
+        note = (
+            f"Task marker for {getattr(item, 'nodeid', 'unknown item')} "
+            f"ignored invalid task number {task_source!r}."
+        )
+        if note not in state.notes:
+            state.notes.append(note)
+        return None
+
+
+def _parse_task_marker(item: Any, state: AutogradeState) -> tuple[int | None, str | None]:
+    marker = _get_task_marker(item)
+    marker_kwargs = _extract_marker_kwargs(marker)
+    marker_args = _extract_marker_args(marker)
+
+    task_source = _select_task_source(marker_kwargs, marker_args)
+    task_number = _resolve_task_number(task_source, item=item, state=state)
+
+    marker_name_raw = marker_kwargs.get("name") if marker_kwargs else None
+    marker_name = str(marker_name_raw) if marker_name_raw is not None else None
+    return task_number, marker_name
+
+
+def _get_item_doc(item: Any) -> str | None:
+    if hasattr(item, "obj"):
+        try:
+            return inspect.getdoc(item.obj)
+        except Exception:  # pragma: no cover - defensive guard
+            return None
+    return None
 
 
 def derive_display_name(nodeid: str, *, doc: str | None, marker_name: str | None = None) -> str:
@@ -99,15 +222,148 @@ def derive_display_name(nodeid: str, *, doc: str | None, marker_name: str | None
     return "Unnamed test"
 
 
+def _should_process_report(
+    state: AutogradeState,
+    nodeid: str,
+    is_call_phase: bool,
+    outcome: Any,
+) -> bool:
+    already_recorded = nodeid in state.reported_nodeids
+    if is_call_phase:
+        return not already_recorded
+    return outcome == "failed" and not already_recorded
+
+
+def _derive_display_context(
+    state: AutogradeState,
+    report: Any,
+    nodeid: str,
+) -> tuple[str, int | None]:
+    metadata = state.metadata.get(nodeid)
+    if metadata is not None:
+        return metadata.display_name, metadata.task_number
+
+    doc: str | None = None
+    head_line = getattr(report, "head_line", None)
+    if isinstance(head_line, str):
+        doc = head_line
+    display_name = derive_display_name(nodeid, doc=doc, marker_name=None)
+    return display_name, None
+
+
+def _resolve_line_number_from_location(location: Sequence[Any] | None) -> int | None:
+    if not isinstance(location, Sequence) or isinstance(location, (str, bytes)):
+        return None
+    if len(location) < LOCATION_MIN_LENGTH:
+        return None
+
+    candidate = location[1]
+    if isinstance(candidate, bool):  # bool is subclass of int but semantically different
+        candidate = int(candidate)
+
+    result: int | None = None
+    if isinstance(candidate, (int, float)):
+        result = int(candidate) + 1
+    elif isinstance(candidate, str):
+        stripped = candidate.strip()
+        if stripped:
+            try:
+                result = int(stripped) + 1
+            except ValueError:
+                result = None
+    return result
+
+
+def _resolve_line_number(report: Any) -> int | None:
+    longrepr = getattr(report, "longrepr", None)
+    reprcrash = getattr(longrepr, "reprcrash", None)
+    lineno_candidate = getattr(reprcrash, "lineno", None) if reprcrash else None
+    if isinstance(lineno_candidate, int):
+        return lineno_candidate
+
+    location = getattr(report, "location", None)
+    return _resolve_line_number_from_location(location)
+
+
+def _extract_captured_output(report: Any) -> tuple[str | None, str | None, str | None]:
+    stdout = getattr(report, "capstdout", None) or None
+    stderr = getattr(report, "capstderr", None) or None
+    log = getattr(report, "caplogtext", None) or None
+    return stdout, stderr, log
+
+
+def _build_call_phase_result(
+    *,
+    report: Any,
+    outcome: str | None,
+    context: _ReportContext,
+) -> AutogradeTestResult:
+    if outcome == "passed":
+        status = "pass"
+        score = 1.0
+        message: str | None = None
+    elif outcome == "skipped":
+        status = "fail"
+        score = 0.0
+        message_source = getattr(report, "longreprtext", None) or "Test skipped"
+        message = trim_failure_message(message_source)
+    else:
+        status = "fail"
+        score = 0.0
+        message_source = getattr(report, "longreprtext", None)
+        if not message_source and hasattr(report, "longrepr"):
+            message_source = str(report.longrepr)
+        message = trim_failure_message(message_source or "Test failed")
+
+    return AutogradeTestResult(
+        nodeid=context.nodeid,
+        display_name=context.display_name,
+        task_number=context.task_number,
+        status=status,
+        score=score,
+        message=message,
+        line_number=context.line_number,
+        duration=context.duration,
+        captured_stdout=context.captured_stdout,
+        captured_stderr=context.captured_stderr,
+        captured_log=context.captured_log,
+    )
+
+
+def _build_non_call_phase_result(
+    *,
+    report: Any,
+    context: _ReportContext,
+) -> AutogradeTestResult:
+    message_source = getattr(report, "longreprtext", None)
+    if not message_source and hasattr(report, "longrepr"):
+        message_source = str(report.longrepr)
+    message = trim_failure_message(message_source or "Test error during setup/teardown")
+
+    return AutogradeTestResult(
+        nodeid=context.nodeid,
+        display_name=context.display_name,
+        task_number=context.task_number,
+        status="error",
+        score=0.0,
+        message=message,
+        line_number=context.line_number,
+        duration=context.duration,
+        captured_stdout=context.captured_stdout,
+        captured_stderr=context.captured_stderr,
+        captured_log=context.captured_log,
+    )
+
+
 def trim_failure_message(message: str, *, max_length: int = 1_000) -> str:
     """Shorten failure messages while preserving key diagnostic information."""
 
     normalised = " ".join(message.strip().split())
-    if max_length <= 3:
+    if max_length <= ELLIPSIS_GUARD_LENGTH:
         return normalised[:max_length]
     if len(normalised) <= max_length:
         return normalised
-    return normalised[: max_length - 3].rstrip() + "..."
+    return normalised[: max_length - ELLIPSIS_GUARD_LENGTH].rstrip() + "..."
 
 
 def pytest_addoption(parser: Any) -> None:
@@ -129,8 +385,6 @@ def pytest_addoption(parser: Any) -> None:
 def pytest_configure(config: Any) -> None:
     """Initialise plugin state and attach it to the pytest config object."""
 
-    global _AUTOGRADE_STATE
-
     results_option = None
     try:
         results_option = config.getoption("autograde_results_path")
@@ -142,7 +396,7 @@ def pytest_configure(config: Any) -> None:
         state = AutogradeState()
         config._autograde_state = state  # type: ignore[attr-defined]
 
-    state.results_path = Path(results_option) if results_option else None
+    state.results_path = Path(results_option).expanduser().resolve() if results_option else None
     if state.start_timestamp is None:
         state.start_timestamp = time.time()
     if state.results_path is None:
@@ -153,7 +407,7 @@ def pytest_configure(config: Any) -> None:
         if warning not in state.notes:
             state.notes.append(warning)
 
-    _AUTOGRADE_STATE = state
+    _set_autograde_state(state)
 
 
 def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
@@ -164,47 +418,8 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
         return
 
     for item in items:
-        marker = item.get_closest_marker("task") if hasattr(
-            item, "get_closest_marker") else None
-        marker_kwargs = marker.kwargs if marker and isinstance(
-            marker.kwargs, dict) else {}
-        marker_args = marker.args if marker else ()
-
-        task_number_source: Any | None = None
-        if marker_kwargs:
-            if "taskno" in marker_kwargs:
-                task_number_source = marker_kwargs["taskno"]
-            elif "number" in marker_kwargs:
-                task_number_source = marker_kwargs["number"]
-        if task_number_source is None and marker_args:
-            task_number_source = marker_args[0]
-
-        task_number: int | None = None
-        invalid_task_value: Any | None = None
-        if task_number_source is not None:
-            try:
-                task_number = int(task_number_source)
-            except (TypeError, ValueError):
-                invalid_task_value = task_number_source
-
-        if invalid_task_value is not None:
-            note = (
-                f"Task marker for {item.nodeid} ignored invalid task number "
-                f"{invalid_task_value!r}."
-            )
-            if note not in state.notes:
-                state.notes.append(note)
-
-        marker_name_raw = marker_kwargs.get("name") if marker_kwargs else None
-        marker_name = str(
-            marker_name_raw) if marker_name_raw is not None else None
-        doc = None
-        if hasattr(item, "obj"):
-            try:
-                doc = inspect.getdoc(item.obj)
-            except Exception:  # pragma: no cover - defensive guard
-                doc = None
-
+        task_number, marker_name = _parse_task_marker(item, state)
+        doc = _get_item_doc(item)
         display_name = derive_display_name(
             item.nodeid,
             doc=doc,
@@ -222,7 +437,7 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
 def pytest_runtest_logreport(report: Any) -> None:
     """Record per-phase test results emitted by pytest's reporting pipeline."""
 
-    state = _AUTOGRADE_STATE
+    state = _get_autograde_state()
     if not isinstance(state, AutogradeState):
         return
 
@@ -234,85 +449,46 @@ def pytest_runtest_logreport(report: Any) -> None:
     outcome = getattr(report, "outcome", None)
 
     is_call_phase = when == "call"
-    already_recorded = nodeid in state.reported_nodeids
 
-    if is_call_phase and already_recorded:
-        return
-    if not is_call_phase and (outcome != "failed" or already_recorded):
+    if not _should_process_report(state, nodeid, is_call_phase, outcome):
         return
 
-    metadata = state.metadata.get(nodeid)
-    doc = None
-    if metadata is None and hasattr(report, "head_line"):
-        doc = getattr(report, "head_line", None)
+    display_name, task_number = _derive_display_context(state, report, nodeid)
 
-    display_name = metadata.display_name if metadata else derive_display_name(
-        nodeid, doc=doc, marker_name=None)
-    task_number = metadata.task_number if metadata else None
-
-    if is_call_phase:
-        if outcome == "passed":
-            status = "pass"
-            score = 1.0
-            message = None
-        elif outcome == "skipped":
-            status = "fail"
-            score = 0.0
-            message_source = getattr(
-                report, "longreprtext", None) or "Test skipped"
-            message = trim_failure_message(message_source)
-        else:
-            status = "fail"
-            score = 0.0
-            message_source = getattr(report, "longreprtext", None)
-            if not message_source and hasattr(report, "longrepr"):
-                message_source = str(report.longrepr)
-            message = trim_failure_message(message_source or "Test failed")
-    else:
-        status = "error"
-        score = 0.0
-        message_source = getattr(report, "longreprtext", None)
-        if not message_source and hasattr(report, "longrepr"):
-            message_source = str(report.longrepr)
-        message = trim_failure_message(
-            message_source or "Test error during setup/teardown")
-
-    location = getattr(report, "location", None)
-    line_number: int | None = None
-    if isinstance(location, tuple) and len(location) > 1:
-        try:
-            candidate = int(location[1])
-        except Exception:
-            line_number = None
-        else:
-            line_number = candidate + 1
-
+    line_number = _resolve_line_number(report)
     duration = getattr(report, "duration", None)
-    captured_stdout = getattr(report, "capstdout", None)
-    captured_stderr = getattr(report, "capstderr", None)
-    captured_log = getattr(report, "caplogtext", None)
+    captured_stdout, captured_stderr, captured_log = _extract_captured_output(report)
 
-    result = AutogradeTestResult(
+    context = _ReportContext(
         nodeid=nodeid,
         display_name=display_name,
         task_number=task_number,
-        status=status,
-        score=score,
-        message=message,
         line_number=line_number,
         duration=duration,
-        captured_stdout=captured_stdout or None,
-        captured_stderr=captured_stderr or None,
-        captured_log=captured_log or None,
+        captured_stdout=captured_stdout,
+        captured_stderr=captured_stderr,
+        captured_log=captured_log,
     )
+
+    if is_call_phase:
+        result = _build_call_phase_result(
+            report=report,
+            outcome=outcome,
+            context=context,
+        )
+    else:
+        result = _build_non_call_phase_result(
+            report=report,
+            context=context,
+        )
 
     state.results.append(result)
     state.reported_nodeids.add(nodeid)
-    state.total_score += score
+    state.total_score += result.score
     state.max_score = float(max(len(state.metadata), len(state.results)))
 
-    if status == "error" and message:
-        detail = f"{display_name}: {message}"
+    if result.status == "error" and result.message:
+        detail = f"{display_name}: {result.message}"
         if detail not in state.encountered_errors:
             state.encountered_errors.append(detail)
 
@@ -328,8 +504,7 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
 
     results_path = state.results_path
     results_payload = [_result_to_dict(res) for res in state.results]
-    max_score = float(len(state.metadata)) if state.metadata else float(
-        len(results_payload))
+    max_score = float(len(state.metadata)) if state.metadata else float(len(results_payload))
     earned_score = float(sum(entry["score"] for entry in results_payload))
     overall_status = _derive_overall_status(state, results_payload)
 
@@ -357,17 +532,23 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
         with results_path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
     except Exception as exc:  # pragma: no cover - exercised in error handling tests
-        fallback = {"status": "error", "score": 0.0,
-                    "max_score": 0.0, "tests": []}
+        error_message = f"Failed to write autograde results to {results_path}: {exc}"
+        state.encountered_errors.append(error_message)
+        print(f"Autograde plugin failed to write results: {error_message}", file=sys.stderr)
+
+        fallback = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
         try:
             with results_path.open("w", encoding="utf-8") as handle:
                 json.dump(fallback, handle, ensure_ascii=False, indent=2)
-        except Exception:
-            pass
-        state.encountered_errors.append(
-            f"Failed to write autograde results: {exc}")
-        print(
-            f"Autograde plugin failed to write results: {exc}", file=sys.stderr)
+        except Exception as fallback_exc:  # pragma: no cover - defensive fallback guard
+            fallback_message = (
+                f"Fallback write for autograde results failed at {results_path}: {fallback_exc}"
+            )
+            state.encountered_errors.append(fallback_message)
+            print(
+                f"Autograde plugin fallback write failed: {fallback_message}",
+                file=sys.stderr,
+            )
 
 
 def pytest_terminal_summary(terminalreporter: Any) -> None:
@@ -380,15 +561,13 @@ def pytest_terminal_summary(terminalreporter: Any) -> None:
 
     total_tests = len(state.metadata) if state.metadata else len(state.results)
     passed = sum(1 for result in state.results if result.status == "pass")
-    overall_status = _derive_overall_status(
-        state, [_result_to_dict(res) for res in state.results])
+    overall_status = _derive_overall_status(state, [_result_to_dict(res) for res in state.results])
     if state.results_path:
         terminalreporter.write_line(
             f"Autograde summary: {passed}/{total_tests} passed | "
             f"Score {state.total_score}/{state.max_score} | Status {overall_status}"
         )
-        terminalreporter.write_line(
-            f"Autograde results written to: {state.results_path}")
+        terminalreporter.write_line(f"Autograde results written to: {state.results_path}")
     else:
         terminalreporter.write_line(
             "Autograde summary: no results file written (missing --autograde-results-path)"

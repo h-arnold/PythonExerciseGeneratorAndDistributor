@@ -139,8 +139,7 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
     payload = _decode_payload(cli_output)
     assert payload["status"] == recorded["status"]
     assert pytest.approx(float(payload["score"])) == float(recorded["score"])
-    assert pytest.approx(float(payload["max_score"])) == float(
-        recorded["max_score"])
+    assert pytest.approx(float(payload["max_score"])) == float(recorded["max_score"])
     assert len(payload["tests"]) == len(recorded["tests"])
     assert cli_run.returncode == manual_run.returncode
 
@@ -158,8 +157,7 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
     assert sol_run.returncode == 0
     sol_data = json.loads(sol_results.read_text(encoding="utf-8"))
     assert sol_data["status"] == "pass"
-    assert pytest.approx(float(sol_data["score"])) == float(
-        sol_data["max_score"])
+    assert pytest.approx(float(sol_data["score"])) == float(sol_data["max_score"])
 
     sol_cli_results = tmp_path / "solutions" / "cli" / "results.json"
     sol_cli_output = tmp_path / "solutions" / "cli" / "payload.txt"
@@ -174,10 +172,8 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
     sol_payload = _decode_payload(sol_cli_output)
     assert sol_cli_run.returncode == sol_run.returncode
     assert sol_payload["status"] == "pass"
-    assert pytest.approx(float(sol_payload["score"])) == float(
-        sol_payload["max_score"])
-    assert pytest.approx(float(sol_payload["max_score"])) == float(
-        sol_data["max_score"])
+    assert pytest.approx(float(sol_payload["score"])) == float(sol_payload["max_score"])
+    assert pytest.approx(float(sol_payload["max_score"])) == float(sol_data["max_score"])
     assert len(sol_payload["tests"]) == len(sol_data["tests"])
 
     student_results = tmp_path / "students" / "manual" / "results.json"
@@ -198,8 +194,7 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
     )
     student_payload = _decode_payload(student_cli_output)
     assert student_cli_run.returncode == student_run.returncode
-    assert pytest.approx(float(student_payload["max_score"])) == float(
-        student_data["max_score"])
+    assert pytest.approx(float(student_payload["max_score"])) == float(student_data["max_score"])
     assert len(student_payload["tests"]) == len(student_data["tests"])
 
     if (

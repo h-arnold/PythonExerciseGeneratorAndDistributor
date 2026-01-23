@@ -75,30 +75,45 @@ class TemplatePackager:
         """
         if not self.template_files_dir.exists():
             raise FileNotFoundError(
-                f"Template files directory not found: {self.template_files_dir}"
+                "Template files directory missing at"
+                f" {self.template_files_dir}. Run the repository setup so"
+                " template_repo_files/ is populated before packaging."
             )
 
-        # Copy individual files
-        for filename in ["pyproject.toml", "pytest.ini", ".gitignore", "INSTRUCTIONS.md"]:
-            src = self.template_files_dir / filename
+        file_pairs = [
+            (
+                self.template_files_dir / "pyproject.toml",
+                workspace / "pyproject.toml",
+            ),
+            (
+                self.template_files_dir / "pytest.ini",
+                workspace / "pytest.ini",
+            ),
+            (
+                self.template_files_dir / ".gitignore",
+                workspace / ".gitignore",
+            ),
+            (
+                self.template_files_dir / "INSTRUCTIONS.md",
+                workspace / "INSTRUCTIONS.md",
+            ),
+            (
+                self.repo_root / "tests" / "notebook_grader.py",
+                workspace / "tests" / "notebook_grader.py",
+            ),
+            (
+                self.repo_root / "scripts" / "build_autograde_payload.py",
+                workspace / "scripts" / "build_autograde_payload.py",
+            ),
+            (
+                self.repo_root / "tests" / "autograde_plugin.py",
+                workspace / "tests" / "autograde_plugin.py",
+            ),
+        ]
+
+        for src, dest in file_pairs:
             if src.exists():
-                safe_copy_file(src, workspace / filename)
-
-        # Copy notebook grader helper from the actual project
-        src = self.repo_root / "tests" / "notebook_grader.py"
-        if src.exists():
-            safe_copy_file(src, workspace / "tests" / "notebook_grader.py")
-
-        # Include Classroom autograding payload builder
-        src = self.repo_root / "scripts" / "build_autograde_payload.py"
-        if src.exists():
-            safe_copy_file(src, workspace / "scripts" /
-                           "build_autograde_payload.py")
-
-        # Bundle pytest plugin for Classroom autograding
-        src = self.repo_root / "tests" / "autograde_plugin.py"
-        if src.exists():
-            safe_copy_file(src, workspace / "tests" / "autograde_plugin.py")
+                safe_copy_file(src, dest)
 
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
@@ -115,7 +130,7 @@ class TemplatePackager:
         # Read template
         template_path = self.template_files_dir / "README.md.template"
         if template_path.exists():
-            template_content = template_path.read_text()
+            template_content = template_path.read_text(encoding="utf-8")
         else:
             # Fallback template
             template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
@@ -129,7 +144,7 @@ class TemplatePackager:
 
         # Write README
         readme_path = workspace / "README.md"
-        readme_path.write_text(content)
+        readme_path.write_text(content, encoding="utf-8")
 
     def validate_package(self, workspace: Path) -> bool:
         """Validate package integrity.

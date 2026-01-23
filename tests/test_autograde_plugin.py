@@ -22,7 +22,9 @@ def _register_autograde_plugin(pytester: pytest.Pytester) -> None:
     pytester.makeconftest("pytest_plugins = ['autograde_plugin']\n")
 
 
-def _write_test_module(pytester: pytest.Pytester, body: str, *, name: str = "test_autograde") -> None:
+def _write_test_module(
+    pytester: pytest.Pytester, body: str, *, name: str = "test_autograde"
+) -> None:
     pytester.makepyfile(**{name: textwrap.dedent(body)})
 
 
@@ -192,13 +194,14 @@ def test_plugin_creates_output_directory(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, json_path = _run_with_results(
-        pytester, results_path=results_path)
+    _, payload, json_path = _run_with_results(pytester, results_path=results_path)
     assert payload["status"] == "pass"
     assert json_path.is_file()
 
 
-def test_plugin_handles_write_errors(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_plugin_handles_write_errors(
+    pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+) -> None:
     target = pytester.path / RESULTS_FILENAME
     original_open = Path.open
     call_count = {"count": 0}
