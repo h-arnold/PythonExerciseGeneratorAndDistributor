@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import IO, Any, NotRequired, Protocol, TypedDict, TypeGuard, cast
 
 import pytest
-from pytest import approx as approx  # pyright: ignore[reportUnknownVariableType]
+from pytest import approx  # pyright: ignore[reportUnknownVariableType]
 
 pytest_plugins = ("pytester",)
 
