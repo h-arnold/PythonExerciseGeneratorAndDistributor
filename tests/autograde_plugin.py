@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from tests.autograde_plugin_typeguards import is_marker_args, is_marker_kwargs
+
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
 
@@ -140,14 +142,14 @@ def _get_task_marker(item: Any) -> Any | None:
 
 def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
     kwargs = getattr(marker, "kwargs", None)
-    if isinstance(kwargs, dict):
+    if is_marker_kwargs(kwargs):
         return kwargs
     return {}
 
 
 def _extract_marker_args(marker: Any) -> Sequence[Any]:
     args = getattr(marker, "args", ())
-    if isinstance(args, Sequence):
+    if is_marker_args(args):
         return args
     return ()
 
@@ -493,27 +495,46 @@ def pytest_runtest_logreport(report: Any) -> None:
             state.encountered_errors.append(detail)
 
 
-def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
-    """Finalise aggregation and prepare data for consumption post-test run."""
+def _compute_final_scores(
+    state: AutogradeState,
+    results_payload: list[dict[str, Any]],
+) -> tuple[float, float]:
+    """Compute earned and maximum scores from test results.
 
-    state = getattr(session.config, "_autograde_state", None)
-    if not isinstance(state, AutogradeState):
-        return
+    Args:
+        state: The AutogradeState containing test results and metadata.
+        results_payload: Pre-computed list of result dictionaries.
 
-    state.end_timestamp = time.time()
-
-    results_path = state.results_path
-    results_payload = [_result_to_dict(res) for res in state.results]
+    Returns:
+        A tuple of (earned_score, max_score).
+    """
     max_score = float(len(state.metadata)) if state.metadata else float(len(results_payload))
     earned_score = float(sum(entry["score"] for entry in results_payload))
-    overall_status = _derive_overall_status(state, results_payload)
+    return earned_score, max_score
 
-    state.max_score = max_score
-    state.total_score = earned_score
+
+def _build_json_payload(
+    state: AutogradeState,
+    earned: float,
+    max_score: float,
+    results_payload: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build the complete JSON payload for autograder output.
+
+    Args:
+        state: The AutogradeState containing test results and metadata.
+        earned: The total earned score.
+        max_score: The maximum possible score.
+        results_payload: Pre-computed list of result dictionaries.
+
+    Returns:
+        A dictionary containing all autograder output fields.
+    """
+    overall_status = _derive_overall_status(state, results_payload)
 
     payload: dict[str, Any] = {
         "status": overall_status,
-        "score": earned_score,
+        "score": earned,
         "max_score": max_score,
         "tests": results_payload,
         "start_timestamp": state.start_timestamp,
@@ -524,31 +545,59 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
     if state.notes:
         payload["notes"] = state.notes
 
-    if not results_path:
-        return
+    return payload
 
+
+def _write_json_with_fallback(payload: dict[str, Any], path: Path, state: AutogradeState) -> None:
+    """Write JSON payload to file with error handling and fallback.
+
+    Args:
+        payload: The JSON payload to write.
+        path: The destination file path.
+        state: The AutogradeState for error tracking.
+    """
     try:
-        results_path.parent.mkdir(parents=True, exist_ok=True)
-        with results_path.open("w", encoding="utf-8") as handle:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
     except Exception as exc:  # pragma: no cover - exercised in error handling tests
-        error_message = f"Failed to write autograde results to {results_path}: {exc}"
+        error_message = f"Failed to write autograde results to {path}: {exc}"
         state.encountered_errors.append(error_message)
         print(f"Autograde plugin failed to write results: {error_message}", file=sys.stderr)
 
-        fallback = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
+        fallback: dict[str, Any] = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
         try:
-            with results_path.open("w", encoding="utf-8") as handle:
+            with path.open("w", encoding="utf-8") as handle:
                 json.dump(fallback, handle, ensure_ascii=False, indent=2)
         except Exception as fallback_exc:  # pragma: no cover - defensive fallback guard
             fallback_message = (
-                f"Fallback write for autograde results failed at {results_path}: {fallback_exc}"
+                f"Fallback write for autograde results failed at {path}: {fallback_exc}"
             )
             state.encountered_errors.append(fallback_message)
             print(
                 f"Autograde plugin fallback write failed: {fallback_message}",
                 file=sys.stderr,
             )
+
+
+def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
+    """Finalise aggregation and prepare data for consumption post-test run."""
+
+    state = getattr(session.config, "_autograde_state", None)
+    if not isinstance(state, AutogradeState):
+        return
+
+    state.end_timestamp = time.time()
+
+    results_payload = [_result_to_dict(res) for res in state.results]
+    earned_score, max_score = _compute_final_scores(state, results_payload)
+    state.max_score = max_score
+    state.total_score = earned_score
+
+    payload = _build_json_payload(state, earned_score, max_score, results_payload)
+
+    if state.results_path:
+        _write_json_with_fallback(payload, state.results_path, state)
 
 
 def pytest_terminal_summary(terminalreporter: Any) -> None:

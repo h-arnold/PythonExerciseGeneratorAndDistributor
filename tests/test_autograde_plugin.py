@@ -4,9 +4,10 @@ import json
 import textwrap
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, NotRequired, Protocol, TypedDict, TypeGuard
+from typing import IO, Any, NotRequired, Protocol, TypedDict, TypeGuard, cast
 
 import pytest
+from pytest import approx  # pyright: ignore[reportUnknownVariableType]
 
 pytest_plugins = ("pytester",)
 
@@ -19,7 +20,7 @@ EXPECTED_ASSERT_LINE = 2
 
 
 @pytest.fixture(autouse=True)
-def _register_autograde_plugin(pytester: pytest.Pytester) -> None:
+def _register_autograde_plugin(pytester: pytest.Pytester) -> None:  # pyright: ignore[reportUnusedFunction]
     pytester.syspathinsert(str(PLUGIN_PATH.parent))
     pytester.makeconftest("pytest_plugins = ['autograde_plugin']\n")
 
@@ -27,7 +28,7 @@ def _register_autograde_plugin(pytester: pytest.Pytester) -> None:
 def _write_test_module(
     pytester: pytest.Pytester, body: str, *, name: str = "test_autograde"
 ) -> None:
-    pytester.makepyfile(**{name: textwrap.dedent(body)})
+    pytester.makepyfile(**{name: textwrap.dedent(body)})  # pyright: ignore[reportUnknownMemberType]
 
 
 class AutogradePayloadTestEntry(TypedDict):
@@ -89,29 +90,33 @@ def _is_autograde_payload(value: object) -> TypeGuard[AutogradePayload]:
     status_ok = isinstance(value["status"], str)
     score_ok = isinstance(value["score"], (int, float))
     max_score_ok = isinstance(value["max_score"], (int, float))
-    tests = value["tests"]
-    tests_ok = isinstance(tests, list)
+    tests = cast(dict[str, Any], value).get("tests")
+    if not isinstance(tests, list):
+        return False
+    tests_ok = all(
+        isinstance(test, dict) and _is_autograde_test_entry(cast(dict[str, Any], test))
+        for test in cast(list[Any], tests)
+    )
     timestamps_ok = all(
         value[key] is None or isinstance(value[key], (int, float))
         for key in ("start_timestamp", "end_timestamp")
         if key in value
     )
-    extras_ok = all(isinstance(value[key], list)
-                    for key in ("errors", "notes") if key in value)
+    extras_ok = all(isinstance(value[key], list) for key in ("errors", "notes") if key in value)
     return status_ok and score_ok and max_score_ok and tests_ok and timestamps_ok and extras_ok
 
 
 def _is_autograde_test_entry(value: object) -> TypeGuard[AutogradePayloadTestEntry]:
     if not isinstance(value, dict):
         return False
-    nodeid = value.get("nodeid")
-    name = value.get("name")
-    status = value.get("status")
-    score = value.get("score")
-    taskno = value.get("taskno")
-    message = value.get("message", _MISSING)
-    line_no = value.get("line_no", _MISSING)
-    duration = value.get("duration", _MISSING)
+    nodeid = cast(dict[str, Any], value).get("nodeid")
+    name = cast(dict[str, Any], value).get("name")
+    status = cast(dict[str, Any], value).get("status")
+    score = cast(dict[str, Any], value).get("score")
+    taskno = cast(dict[str, Any], value).get("taskno")
+    message = cast(dict[str, Any], value).get("message", _MISSING)
+    line_no = cast(dict[str, Any], value).get("line_no", _MISSING)
+    duration = cast(dict[str, Any], value).get("duration", _MISSING)
 
     required_present = (
         isinstance(nodeid, str)
@@ -140,13 +145,12 @@ def expect_single_test_entry(
     expected: ExpectedTestFields | None = None,
 ) -> AutogradePayloadTestEntry:
     tests = payload["tests"]
-    assert len(
-        tests) == 1, f"Expected a single test entry, received {len(tests)}"
+    assert len(tests) == 1, f"Expected a single test entry, received {len(tests)}"
     entry_candidate = tests[0]
     assert _is_autograde_test_entry(entry_candidate)
     entry = entry_candidate
     assert entry["status"] == status
-    assert entry["score"] == pytest.approx(score)
+    assert entry["score"] == approx(score)
     if expected:
         if "message" in expected:
             assert entry["message"] == expected["message"]
@@ -396,11 +400,11 @@ def test_plugin_handles_write_errors(
     call_count = {"count": 0}
 
     # type: ignore[override]
-    def _fail_once(self: Path, *args: object, **kwargs: object):
+    def _fail_once(self: Path, *args: Any, **kwargs: Any) -> IO[Any]:  # pyright: ignore[reportUnknownVariableType]
         if self == target and call_count["count"] == 0:
             call_count["count"] += 1
             raise OSError("disk full")
-        return original_open(self, *args, **kwargs)
+        return original_open(self, *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
 
     monkeypatch.setattr(Path, "open", _fail_once, raising=True)
 

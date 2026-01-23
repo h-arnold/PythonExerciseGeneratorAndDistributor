@@ -26,7 +26,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict, TypeGuard
+from typing import Any, NotRequired, TypedDict, TypeGuard, cast
 
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
@@ -101,13 +101,17 @@ def _is_autograde_results(obj: object) -> TypeGuard[AutogradeResults]:
 
     if not isinstance(obj, dict):
         return False
+    # Type narrow dict to str keys for pyright strict mode
+    obj_dict = cast(dict[str, Any], obj)
     for key in ("max_score", "status", "tests"):
-        if key not in obj:
+        if key not in obj_dict:
             return False
-    tests = obj.get("tests")
+    tests = obj_dict.get("tests")
     if not isinstance(tests, list):
         return False
-    return all(isinstance(test, dict) for test in tests)
+    # Narrow type for comprehension in strict mode
+    tests_list = cast(list[Any], tests)
+    return all(isinstance(test, dict) for test in tests_list)
 
 
 def _validate_results_payload(data: object) -> AutogradeResults:
@@ -116,21 +120,28 @@ def _validate_results_payload(data: object) -> AutogradeResults:
     if not isinstance(data, dict):
         raise RuntimeError("Autograde results must be a JSON object.")
 
-    missing_key = next((key for key in ("max_score", "status", "tests") if key not in data), None)
+    # Type narrow dict to str keys for pyright strict mode
+    data_dict = cast(dict[str, Any], data)
+
+    missing_key = next(
+        (key for key in ("max_score", "status", "tests") if key not in data_dict), None
+    )
     if missing_key is not None:
         raise RuntimeError(f"Autograde results missing required key: {missing_key}")
 
-    tests = data.get("tests")
+    tests = data_dict.get("tests")
     if not isinstance(tests, list):
         raise RuntimeError("Autograde results 'tests' entry must be a list.")
 
-    if not all(isinstance(test, dict) for test in tests):
+    # Narrow type for comprehension in strict mode
+    tests_list = cast(list[Any], tests)
+    if not all(isinstance(test, dict) for test in tests_list):
         raise RuntimeError("Autograde results 'tests' entries must be objects.")
 
-    if not _is_autograde_results(data):
+    if not _is_autograde_results(data_dict):
         raise RuntimeError("Autograde results failed structural validation.")
 
-    return data
+    return data_dict
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
@@ -372,9 +383,17 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
         "tests": normalised_tests,
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
-    for key in ("errors", "notes", "start_timestamp", "end_timestamp"):
-        if key in raw_results:
-            payload[key] = raw_results[key]
+
+    # Explicitly assign optional fields to satisfy TypedDict type checking
+    if "errors" in raw_results:
+        payload["errors"] = raw_results["errors"]
+    if "notes" in raw_results:
+        payload["notes"] = raw_results["notes"]
+    if "start_timestamp" in raw_results:
+        payload["start_timestamp"] = raw_results["start_timestamp"]
+    if "end_timestamp" in raw_results:
+        payload["end_timestamp"] = raw_results["end_timestamp"]
+
     return payload
 
 
@@ -389,21 +408,21 @@ def encode_payload(payload: AutogradePayload) -> str:
 def _coerce_task_id_to_int(task_id: Any) -> int | None:
     """Best-effort coercion for numeric task identifiers."""
 
-    result: int | None = None
-    if isinstance(task_id, bool):
-        result = None
-    elif isinstance(task_id, int):
-        result = task_id
-    elif isinstance(task_id, float) and task_id.is_integer():
-        result = int(task_id)
-    elif isinstance(task_id, str):
-        candidate = task_id.strip()
-        if candidate:
+    match task_id:
+        case bool():
+            # Booleans are instances of int in Python, so handle them first
+            return None
+        case int():
+            return task_id
+        case float() if task_id.is_integer():
+            return int(task_id)
+        case str() if candidate := task_id.strip():
             try:
-                result = int(candidate)
+                return int(candidate)
             except ValueError:
-                result = None
-    return result
+                return None
+        case _:
+            return None
 
 
 def _task_group_sort_key(
