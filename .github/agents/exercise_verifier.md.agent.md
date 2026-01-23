@@ -2,7 +2,7 @@
 name: Exercise Verifier
 description: Verify generated exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
 tools: ['vscode/getProjectSetupInfo', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'vscode/vscodeAPI', 'execute', 'read', 'edit/editFiles', 'edit/editNotebook', 'search', 'web', 'todo']
-infer: false
+infer: true
 ---
 # Bassaleg Python Tutor — Exercise Verifier Mode
 

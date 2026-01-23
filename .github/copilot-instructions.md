@@ -144,7 +144,7 @@ ruff check . --fix
 
 ## When Asked to Create Exercises
 
-**Delegate to the exercise generation custom agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
+**Delegate to the exercise generation sub-agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
 
 Do not create exercises manually. Use:
 1. The exercise generation agent for authoring
@@ -178,9 +178,23 @@ See Testing Framework: `docs/testing-framework.md` for details.
 - Follow the existing patterns in the codebase
 - Always write in British English
 
+## Calling Sub-Agents
+
+**MANDATORY:** Every #runSubagent call must include agentName: "{name of subagent}". Calls that omit this parameter violate the workflow contract and should be rejected/retried.
+
+
+
+The sub-agents you can call are (first-line names are case-sensitive):
+
+ - **Exercise Generation** — `.github/agents/exercise_generation.md.agent.md`  (first line: `Exercise Generation`)
+ - **Exercise Verifier** — `.github/agents/exercise_verifier.md.agent.md`  (first line: `Exercise Verifier`)
+ - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
+ - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
+
+
 ## Implementation Workflow
 
-For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring):
+For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring) that **IS NOT** related to student notebook, follow this workflow:
 
 1.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `Implementer` agent. Pass a a detailed task description, including the scope of files to edit.
     *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
@@ -188,16 +202,6 @@ For any significant code changes (defined as adding/modifying more than 1 functi
     *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
 
 **ALWAYS** follow this process unless the user explictly directs you otherwise.
-
-## Code Review & Tidy Checks
-
-After making changes to code that **IS NOT** student notebooks (whether manually or via the Implementer agent), **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
-
-- Purpose: verify claimed changes, run lint/type diagnostics, apply safe cleanups (formatting, remove unused imports, small refactors), and report remaining issues.
-- Typical workflow:
-  1. Run tests and ruff locally (pytest -q; ruff check .).
-  2. Give the agent a summary of all the changes you've made, ensuring you list all files touched in your coding session.
-  3. Review the agent's report, address any remaining issues, re-run tests, and commit.
 
   
 
