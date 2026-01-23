@@ -228,6 +228,40 @@ def encode_payload(payload: dict[str, Any]) -> str:
     return encoded.decode("ascii")
 
 
+def _coerce_task_id_to_int(task_id: Any) -> int | None:
+    """Best-effort coercion for numeric task identifiers."""
+
+    if isinstance(task_id, bool):
+        return None
+    if isinstance(task_id, int):
+        return task_id
+    if isinstance(task_id, float) and task_id.is_integer():
+        return int(task_id)
+    if isinstance(task_id, str):
+        candidate = task_id.strip()
+        if not candidate:
+            return None
+        try:
+            return int(candidate)
+        except ValueError:
+            return None
+    return None
+
+
+def _task_group_sort_key(
+    item: tuple[str | int | None, list[dict[str, Any]]]
+) -> tuple[int, int, str]:
+    """Sort key that prefers numeric task identifiers."""
+
+    task_id, _ = item
+    if task_id is None:
+        return (2, 0, "")
+    numeric_task = _coerce_task_id_to_int(task_id)
+    if numeric_task is not None:
+        return (0, numeric_task, "")
+    return (1, 0, str(task_id))
+
+
 def print_summary(payload: dict[str, Any]) -> None:
     """Emit a human-readable summary of the autograde results."""
 
@@ -251,10 +285,7 @@ def print_summary(payload: dict[str, Any]) -> None:
     print("Task Breakdown:")
     header = f"{'Task':<10}{'Passed':>8}{'Total':>8}{'Points':>10}"
     print(header)
-    for task_id, task_tests in sorted(
-        grouped.items(),
-        key=lambda item: (item[0] is None, str(item[0])),
-    ):
+    for task_id, task_tests in sorted(grouped.items(), key=_task_group_sort_key):
         passed = sum(1 for test in task_tests if test.get("status") == "pass")
         total = len(task_tests)
         points = sum(float(test.get("score", 0.0)) for test in task_tests)

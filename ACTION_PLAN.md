@@ -62,9 +62,11 @@ This action plan implements GitHub Classroom autograding integration by creating
   - **Implementation**: Document error handling strategies
 
 ### Files to Create
+
 - `tests/autograde_plugin.py` (new file, ~250-300 lines)
 
 ### Files to Modify
+
 - None (plugin registration via command-line flag, not pyproject.toml)
 
 ### Implementation Notes
@@ -133,6 +135,7 @@ This action plan implements GitHub Classroom autograding integration by creating
 ### Test Cases
 
 Plugin testing will be implemented in Task 6.1. Required test cases:
+
 - Plugin correctly captures passing tests
 - Plugin correctly captures failing tests
 - Plugin correctly captures error tests (setup/teardown failures)
@@ -145,9 +148,11 @@ Plugin testing will be implemented in Task 6.1. Required test cases:
 - Plugin handles file write errors gracefully
 
 ### Files to Create
+
 - `tests/autograde_plugin.py` (new file)
 
 ### Files to Modify
+
 - None
 
 ### Implementation Notes
@@ -249,6 +254,7 @@ Plugin testing will be implemented in Task 6.1. Required test cases:
 ### Test Cases
 
 CLI testing will be implemented in Task 6.2. Required test cases:
+
 - Script runs pytest successfully
 - Script handles pytest failures (exit code propagation)
 - Script validates environment correctly
@@ -262,9 +268,11 @@ CLI testing will be implemented in Task 6.2. Required test cases:
 - Script handles malformed JSON gracefully
 
 ### Files to Create
+
 - `scripts/build_autograde_payload.py` (new file, ~300-400 lines)
 
 ### Files to Modify
+
 - None
 
 ### Implementation Notes
@@ -302,6 +310,7 @@ CLI testing will be implemented in Task 6.2. Required test cases:
 ### Test Cases
 
 Packager testing will be updated in Task 6.3. Required test cases:
+
 - Packager copies `build_autograde_payload.py` to workspace
 - Packager copies `autograde_plugin.py` to workspace
 - Packager validation checks for autograding files
@@ -309,6 +318,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
 - Integration test verifies complete package includes autograding files
 
 ### Files to Modify
+
 - `scripts/template_repo_cli/core/packager.py` (add ~15-20 lines)
 
 ### Implementation Notes
@@ -396,11 +406,13 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Verify complete workflow in subprocess
 
 ### Files to Create
+
 - `tests/test_autograde_plugin.py` (new file, ~400-500 lines)
 - `tests/test_build_autograde_payload.py` (new file, ~300-400 lines)
 - `tests/test_integration_autograding.py` (new file, ~150-200 lines)
 
 ### Files to Modify
+
 - `tests/template_repo_cli/test_packager.py` (add ~40-60 lines)
 
 ### Implementation Notes
@@ -464,9 +476,11 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Update validation to check for `classroom.yml`
 
 ### Files to Create
+
 - `template_repo_files/.github/workflows/classroom.yml` (new file, ~80-100 lines)
 
 ### Files to Modify
+
 - `template_repo_files/.github/workflows/tests.yml` (optional rename/removal)
 - `scripts/template_repo_cli/core/packager.py` (update validation if needed)
 
@@ -537,9 +551,11 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Update feature list to include autograding
 
 ### Files to Create
+
 - `docs/autograding-cli.md` (new file, ~100-150 lines)
 
 ### Files to Modify
+
 - `docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md` (add ~150-200 lines)
 - `docs/exercise-testing.md` (add ~80-100 lines)
 - `docs/project-structure.md` (add ~30-40 lines)
@@ -646,6 +662,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Documentation**: Record student-visible output
 
 ### Files to Verify
+
 - `tmp/results.json` (plugin output)
 - `tmp/payload.txt` (Base64 encoded payload)
 - `tmp/summary.json` (raw JSON for debugging)
@@ -717,10 +734,12 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Documentation**: Record any final issues
 
 ### Files to Create
+
 - `CHANGELOG.md` (new file or update existing)
 - `docs/migration-autograding.md` (if needed)
 
 ### Files to Verify
+
 - All test files pass
 - All documentation is accurate
 - All code is linted and formatted
@@ -735,6 +754,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
 ## Summary of Deliverables
 
 ### New Files Created (7-8 files)
+
 1. `tests/autograde_plugin.py` - Pytest plugin for capturing test results
 2. `scripts/build_autograde_payload.py` - CLI wrapper for payload generation
 3. `template_repo_files/.github/workflows/classroom.yml` - GitHub Classroom workflow
@@ -745,6 +765,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
 8. `CHANGELOG.md` (if not exists) - Project changelog
 
 ### Files Modified (6-7 files)
+
 1. `scripts/template_repo_cli/core/packager.py` - Add autograding file packaging
 2. `tests/template_repo_cli/test_packager.py` - Add packager tests
 3. `docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md` - Expand integration guide
@@ -754,6 +775,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
 7. `README.md` - Add feature mention
 
 ### Total Estimated Lines of Code
+
 - Plugin: ~300 lines
 - CLI: ~400 lines
 - Workflow: ~100 lines

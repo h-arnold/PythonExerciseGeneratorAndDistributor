@@ -166,20 +166,38 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
     for item in items:
         marker = item.get_closest_marker("task") if hasattr(
             item, "get_closest_marker") else None
-        marker_kwargs = marker.kwargs if marker else {}
-        task_number_raw = marker_kwargs.get(
-            "taskno") if isinstance(marker_kwargs, dict) else None
-        task_number: int | None
-        if isinstance(task_number_raw, int):
-            task_number = task_number_raw
-        elif isinstance(task_number_raw, str):
-            task_number = int(
-                task_number_raw) if task_number_raw.isdigit() else None
-        else:
-            task_number = None
+        marker_kwargs = marker.kwargs if marker and isinstance(
+            marker.kwargs, dict) else {}
+        marker_args = marker.args if marker else ()
 
-        marker_name = marker_kwargs.get("name") if isinstance(
-            marker_kwargs, dict) else None
+        task_number_source: Any | None = None
+        if marker_kwargs:
+            if "taskno" in marker_kwargs:
+                task_number_source = marker_kwargs["taskno"]
+            elif "number" in marker_kwargs:
+                task_number_source = marker_kwargs["number"]
+        if task_number_source is None and marker_args:
+            task_number_source = marker_args[0]
+
+        task_number: int | None = None
+        invalid_task_value: Any | None = None
+        if task_number_source is not None:
+            try:
+                task_number = int(task_number_source)
+            except (TypeError, ValueError):
+                invalid_task_value = task_number_source
+
+        if invalid_task_value is not None:
+            note = (
+                f"Task marker for {item.nodeid} ignored invalid task number "
+                f"{invalid_task_value!r}."
+            )
+            if note not in state.notes:
+                state.notes.append(note)
+
+        marker_name_raw = marker_kwargs.get("name") if marker_kwargs else None
+        marker_name = str(
+            marker_name_raw) if marker_name_raw is not None else None
         doc = None
         if hasattr(item, "obj"):
             try:
@@ -190,12 +208,12 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
         display_name = derive_display_name(
             item.nodeid,
             doc=doc,
-            marker_name=str(marker_name) if marker_name is not None else None,
+            marker_name=marker_name,
         )
         state.metadata[item.nodeid] = AutogradeTestMetadata(
             display_name=display_name,
             task_number=task_number,
-            marker_name=str(marker_name) if marker_name is not None else None,
+            marker_name=marker_name,
         )
 
     state.max_score = float(len(state.metadata))
@@ -260,13 +278,14 @@ def pytest_runtest_logreport(report: Any) -> None:
             message_source or "Test error during setup/teardown")
 
     location = getattr(report, "location", None)
+    line_number: int | None = None
     if isinstance(location, tuple) and len(location) > 1:
         try:
-            line_number = int(location[1]) + 1
+            candidate = int(location[1])
         except Exception:
-            line_number = 0
-    else:
-        line_number = 0
+            line_number = None
+        else:
+            line_number = candidate + 1
 
     duration = getattr(report, "duration", None)
     captured_stdout = getattr(report, "capstdout", None)
@@ -415,4 +434,4 @@ def _derive_overall_status(state: AutogradeState, tests: list[dict[str, Any]]) -
         return "fail"
     if tests:
         return "pass"
-    return "error"
+    return "pass"

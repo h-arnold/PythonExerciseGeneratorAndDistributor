@@ -187,6 +187,8 @@ For any significant code changes (defined as adding/modifying more than 1 functi
 2.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes.
     *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
 
+**ALWAYS** follow this process unless the user explictly directs you otherwise.
+
 ## Code Review & Tidy Checks
 
 After making changes to code that **IS NOT** student notebooks (whether manually or via the Implementer agent), **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
