@@ -182,7 +182,7 @@ See Testing Framework: `docs/testing-framework.md` for details.
 
 For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring):
 
-1.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `implementer` agent. Provide a detailed task description, including the scope of files to edit.
+1.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `implementer` agent. Pass the full set of the agent instructions from `.github/agents/implementer.md.agent.md` along with a detailed task description, including the scope of files to edit.
     *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
 2.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `tidy_code_review` agent to verify the changes.
     *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."

@@ -147,6 +147,7 @@ class TemplatePackager:
             workspace / "README.md",
             workspace / "scripts" / "build_autograde_payload.py",
             workspace / "tests" / "autograde_plugin.py",
+            workspace / ".github" / "workflows" / "classroom.yml",
         ]
 
         for required_file in required_files:

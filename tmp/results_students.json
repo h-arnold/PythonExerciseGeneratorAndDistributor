@@ -1,0 +1,19 @@
+{
+  "status": "pass",
+  "score": 1.0,
+  "max_score": 1.0,
+  "tests": [
+    {
+      "nodeid": "tests/test_ex001_sanity.py::test_example_returns_string",
+      "name": "example returns string",
+      "taskno": null,
+      "status": "pass",
+      "score": 1.0,
+      "message": null,
+      "line_no": 6,
+      "duration": 0.00026902199988398934
+    }
+  ],
+  "start_timestamp": 1769169041.9337382,
+  "end_timestamp": 1769169041.9589708
+}

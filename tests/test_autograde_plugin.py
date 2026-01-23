@@ -192,7 +192,8 @@ def test_plugin_creates_output_directory(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, json_path = _run_with_results(pytester, results_path=results_path)
+    _, payload, json_path = _run_with_results(
+        pytester, results_path=results_path)
     assert payload["status"] == "pass"
     assert json_path.is_file()
 

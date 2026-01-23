@@ -1,0 +1,66 @@
+name: Autograding # GitHub Classroom-facing workflow
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  autograding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        # Ensure we grade the current revision
+        uses: actions/checkout@v4
+
+      - name: Set up uv toolchain
+        # Provide uv for dependency and runtime management
+        uses: astral-sh/setup-uv@v5
+
+      - name: Cache uv artifacts
+        # Reuse downloaded packages to speed repeated runs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
+      - name: Install project dependencies
+        # Sync ensures the workflow mirrors the student's environment
+        run: uv sync
+
+      - id: build
+        name: Build autograde payload
+        # continue-on-error lets us harvest full failure context before exiting
+        continue-on-error: true
+        env:
+          PYTUTOR_NOTEBOOKS_DIR: notebooks
+        run: |
+          uv run python scripts/build_autograde_payload.py \
+            --output tmp/autograde/payload.txt \
+            --summary tmp/autograde/results.json
+
+      - name: Prepare reporter payload
+        # Propagate Base64 payload via GITHUB_ENV so reporter can read it
+        if: always()
+        run: |
+          echo "PYTEST_RESULTS=$(cat tmp/autograde/payload.txt)" >> "$GITHUB_ENV"
+
+      - name: Report results to Classroom
+        # Reporter expects PYTEST_RESULTS containing Base64 payload and labels this run
+        if: always()
+        uses: classroom-resources/autograding-grading-reporter@v1
+        with:
+          runners: pytest
+        env:
+          PYTEST_RESULTS: ${{ env.PYTEST_RESULTS }}
+
+      - name: Fail when grading fails
+        # Exit with failure if the payload build step reported errors despite collected output
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "Autograding failed despite continue-on-error; exiting" && exit 1

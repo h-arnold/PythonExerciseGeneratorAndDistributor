@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
 
@@ -67,6 +69,25 @@ class TestCopyFiles:
         assert (temp_dir / "pyproject.toml").exists()
         assert (temp_dir / "pytest.ini").exists()
         assert (temp_dir / ".gitignore").exists()
+        scripts_dir = temp_dir / "scripts"
+        assert scripts_dir.exists()
+        assert scripts_dir.is_dir()
+
+        autograde_src = repo_root / "scripts" / "build_autograde_payload.py"
+        autograde_dest = scripts_dir / "build_autograde_payload.py"
+        if autograde_src.exists():
+            assert autograde_dest.exists()
+            assert autograde_dest.read_text() == autograde_src.read_text()
+        else:
+            assert not autograde_dest.exists()
+
+        plugin_src = repo_root / "tests" / "autograde_plugin.py"
+        plugin_dest = temp_dir / "tests" / "autograde_plugin.py"
+        if plugin_src.exists():
+            assert plugin_dest.exists()
+            assert plugin_dest.read_text() == plugin_src.read_text()
+        else:
+            assert not plugin_dest.exists()
 
     def test_copy_preserves_structure(self, repo_root: Path, temp_dir: Path) -> None:
         """Test that directory structure is maintained."""
@@ -136,10 +157,11 @@ class TestPackageIntegrity:
         packager.copy_exercise_files(temp_dir, files)
         packager.copy_template_base_files(temp_dir)
         packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        assert (temp_dir / "scripts").is_dir()
 
         # Validate package
         is_valid = packager.validate_package(temp_dir)
-        assert is_valid is True
+        assert is_valid
 
     def test_package_integrity_missing_files(self, repo_root: Path, temp_dir: Path) -> None:
         """Test validation fails with missing required files."""
@@ -147,7 +169,53 @@ class TestPackageIntegrity:
 
         # Don't copy all required files
         is_valid = packager.validate_package(temp_dir)
-        assert is_valid is False
+        assert not is_valid
+
+    def test_package_integrity_missing_autograde_script(
+        self, repo_root: Path, temp_dir: Path
+    ) -> None:
+        """Test validation fails without Classroom autograde script."""
+        packager = TemplatePackager(repo_root)
+        files = {
+            "ex001_sanity": {
+                "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
+                "test": repo_root / "tests/test_ex001_sanity.py",
+            }
+        }
+
+        packager.copy_exercise_files(temp_dir, files)
+        packager.copy_template_base_files(temp_dir)
+        packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+
+        autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
+        if not autograde_path.exists():
+            pytest.skip("Autograde script not available in template copy")
+
+        autograde_path.unlink()
+        assert not packager.validate_package(temp_dir)
+
+    def test_package_integrity_missing_autograde_plugin(
+        self, repo_root: Path, temp_dir: Path
+    ) -> None:
+        """Test validation fails without Classroom autograde plugin."""
+        packager = TemplatePackager(repo_root)
+        files = {
+            "ex001_sanity": {
+                "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
+                "test": repo_root / "tests/test_ex001_sanity.py",
+            }
+        }
+
+        packager.copy_exercise_files(temp_dir, files)
+        packager.copy_template_base_files(temp_dir)
+        packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+
+        plugin_path = temp_dir / "tests" / "autograde_plugin.py"
+        if not plugin_path.exists():
+            pytest.skip("Autograde plugin not available in template copy")
+
+        plugin_path.unlink()
+        assert not packager.validate_package(temp_dir)
 
     def test_package_has_notebook_grader(self, repo_root: Path, temp_dir: Path) -> None:
         """Test that notebook_grader.py is copied from project tests when present."""
@@ -225,7 +293,8 @@ class TestPackageOptions:
         packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert not (
+            temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
 
 class TestPackageMultipleExercises:

@@ -321,7 +321,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
 
 ### Tasks
 
-- [ ] **6.1**: Create plugin unit tests
+- [x] **6.1**: Create plugin unit tests
   - **File**: Create `tests/test_autograde_plugin.py`
   - **Tests to implement**:
     - `test_plugin_captures_passing_test` - Verify plugin captures passing test with score 1
@@ -346,7 +346,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Invoke pytest with plugin via `pytester.runpytest()`
   - **Implementation**: Load and validate resulting JSON files
 
-- [ ] **6.2**: Create CLI integration tests
+- [x] **6.2**: Create CLI integration tests
   - **File**: Create `tests/test_build_autograde_payload.py`
   - **Tests to implement**:
     - `test_cli_runs_pytest_successfully` - Verify CLI executes pytest and captures results
@@ -367,7 +367,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Create minimal notebook and test fixtures
   - **Implementation**: Verify file outputs match expectations
 
-- [ ] **6.3**: Update packager tests
+- [x] **6.3**: Update packager tests
   - **File**: `tests/template_repo_cli/test_packager.py`
   - **Tests to implement**:
     - `test_packager_copies_autograde_script` - Verify build_autograde_payload.py is copied
@@ -378,7 +378,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Add assertions for new file copies in existing tests
   - **Implementation**: Verify directory structure includes `scripts/`
 
-- [ ] **6.4**: Create end-to-end integration test
+- [x] **6.4**: Create end-to-end integration test
   - **File**: `tests/test_integration_autograding.py` (new file)
   - **Tests to implement**:
     - `test_full_autograding_flow` - Complete flow from pytest to Base64 payload
@@ -413,14 +413,14 @@ Packager testing will be updated in Task 6.3. Required test cases:
 
 ### Tasks
 
-- [ ] **7.1**: Create new classroom workflow
+- [x] **7.1**: Create new classroom workflow
   - **File**: Create `template_repo_files/.github/workflows/classroom.yml`
   - **Implementation**: Add workflow name: `"Autograding"`
   - **Implementation**: Add triggers: `push`, `pull_request`, `workflow_dispatch`
   - **Implementation**: Add permissions: `contents: read`
   - **Implementation**: Define job: `autograding` on `ubuntu-latest`
 
-- [ ] **7.2**: Add workflow steps
+- [x] **7.2**: Add workflow steps
   - **File**: `template_repo_files/.github/workflows/classroom.yml`
   - **Implementation**: Step 1: Checkout code (`actions/checkout@v4`)
   - **Implementation**: Step 2: Install uv (`astral-sh/setup-uv@v5` or manual installation)
@@ -444,20 +444,20 @@ Packager testing will be updated in Task 6.3. Required test cases:
     - `if: steps.build.outcome == 'failure'`
     - `run: exit 1`
 
-- [ ] **7.3**: Document workflow behaviour
+- [x] **7.3**: Document workflow behaviour
   - **File**: `template_repo_files/.github/workflows/classroom.yml`
   - **Implementation**: Add comments explaining each step
   - **Implementation**: Add comment explaining `continue-on-error` strategy
   - **Implementation**: Add comment explaining reporter payload format
 
-- [ ] **7.4**: Handle old workflow
+- [x] **7.4**: Handle old workflow
   - **File**: `template_repo_files/.github/workflows/tests.yml`
   - **Decision**: Determine if keeping both workflows or replacing
   - **Implementation** (if keeping both): Rename to `tests-dev.yml` or similar for local testing
   - **Implementation** (if replacing): Document migration in changelog
   - **Implementation**: Update packager to include new workflow
 
-- [ ] **7.5**: Update workflow packaging
+- [x] **7.5**: Update workflow packaging
   - **File**: `scripts/template_repo_cli/core/packager.py`
   - **Implementation**: Verify `.github/workflows/` directory is copied
   - **Implementation**: Verify `classroom.yml` is included in copy
@@ -480,7 +480,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
 
 ### Tasks
 
-- [ ] **8.1**: Update GitHub Classroom integration guide
+- [x] **8.1**: Update GitHub Classroom integration guide
   - **File**: `docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md`
   - **Implementation**: Add section "Custom Pytest Integration"
   - **Implementation**: Explain plugin architecture and how it captures results
@@ -495,7 +495,7 @@ Packager testing will be updated in Task 6.3. Required test cases:
     - Common workflow errors and solutions
   - **Implementation**: Add example payload structure with annotations
 
-- [ ] **8.2**: Update exercise testing documentation
+- [x] **8.2**: Update exercise testing documentation
   - **File**: `docs/exercise-testing.md`
   - **Implementation**: Add section on autograding integration
   - **Implementation**: Explain 1 test = 1 point scoring model
@@ -505,14 +505,14 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Provide guidelines for writing autograder-friendly tests
   - **Implementation**: Add examples of good vs. bad test naming
 
-- [ ] **8.3**: Update project structure documentation
+- [x] **8.3**: Update project structure documentation
   - **File**: `docs/project-structure.md`
   - **Implementation**: Add `tests/autograde_plugin.py` to structure diagram
   - **Implementation**: Add `scripts/build_autograde_payload.py` to structure diagram
   - **Implementation**: Add description of autograding files purpose
   - **Implementation**: Update template workflow section
 
-- [ ] **8.4**: Create autograding CLI reference
+- [x] **8.4**: Create autograding CLI reference
   - **File**: Create `docs/autograding-cli.md` (new file)
   - **Implementation**: Document CLI arguments with examples
   - **Implementation**: Provide usage patterns:
@@ -523,14 +523,14 @@ Packager testing will be updated in Task 6.3. Required test cases:
   - **Implementation**: Provide troubleshooting guide
   - **Implementation**: Add examples of payload inspection
 
-- [ ] **8.5**: Update development guide
+- [x] **8.5**: Update development guide
   - **File**: `docs/development.md`
   - **Implementation**: Add section on testing autograding locally
   - **Implementation**: Document how to run plugin in development
   - **Implementation**: Explain how to test workflow changes
   - **Implementation**: Add guidelines for maintaining autograding compatibility
 
-- [ ] **8.6**: Update README
+- [x] **8.6**: Update README
   - **File**: `README.md`
   - **Implementation**: Add brief mention of GitHub Classroom integration
   - **Implementation**: Link to detailed autograding documentation

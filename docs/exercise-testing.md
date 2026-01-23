@@ -61,6 +61,14 @@ To provide granular feedback, implement **multiple tests** for a single exercise
 
 If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the points for that exercise.
 
+## Autograding Integration Details
+
+- **One test, one point**: The autograde plugin assigns one point per collected test. Keep each assertion focused on a single learning objective so Classroom feedback remains clear.
+- **Task markers**: Annotate every grading test with `@pytest.mark.task(taskno=<int>)`. The optional `name="Short title"` argument overrides the label surfaced to students.
+- **Unmarked tests**: If a test omits the `task` marker, the plugin records it with `task=None`. These tests still count for one point but appear in the "Ungrouped" bucket. Use this sparingly (for infrastructure smoke tests, for example).
+- **Authoring guidance**: Prefer many small tests over one large test. Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label. Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
+- **Name collisions**: Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
+
 ### Simulating Input
 
 Use the helper `run_cell_with_input` to inject data into `input()` calls.
