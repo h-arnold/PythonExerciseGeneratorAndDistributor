@@ -178,9 +178,18 @@ See Testing Framework: `docs/testing-framework.md` for details.
 - Follow the existing patterns in the codebase
 - Always write in British English
 
+## Implementation Workflow
+
+For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring):
+
+1.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `implementer` agent. Provide a detailed task description, including the scope of files to edit.
+    *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
+2.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `tidy_code_review` agent to verify the changes.
+    *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
+
 ## Code Review & Tidy Checks
 
-After making changes to code that **IS NOT** student notebooks, **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
+After making changes to code that **IS NOT** student notebooks (whether manually or via the Implementer agent), **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
 
 - Purpose: verify claimed changes, run lint/type diagnostics, apply safe cleanups (formatting, remove unused imports, small refactors), and report remaining issues.
 - Typical workflow:

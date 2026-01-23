@@ -75,7 +75,7 @@ Purpose: orchestrate pytest execution with the plugin, convert JSON into reporte
 
 Behaviour:
 
-- **Invocation**: script is executed via `uv run python scripts/build_autograde_payload.py`. It must be runnable inside student repositories.
+- **Invocation**: script is executed via `uv run python scripts/build_autograde_payload.py`. It must be runnable inside student repositories. **MAKE SURE THAT IT ONCE CREATED, THIS SCRIPT IS ADDED TO `packager.py` SO IT GETS INCLUDED IN DISTRIBUTIONS.**
 - **Arguments** (handled via `argparse`):
   - `--pytest-args` (optional, repeatable) to forward flags (default `-q`).
   - `--results-json` (optional) path override; defaults to temp file under `tmp/autograde/results.json`.
