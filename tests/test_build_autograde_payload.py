@@ -2,17 +2,18 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 import subprocess
 import sys
 import textwrap
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from pathlib import Path
+from typing import TypeAlias, TypedDict
 
 import pytest
 
-CLI_SCRIPT = Path(__file__).resolve(
-).parents[1] / "scripts" / "build_autograde_payload.py"
+from tests.helpers import build_autograde_env
+
+CLI_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
 REPO_ROOT = CLI_SCRIPT.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -21,6 +22,8 @@ from scripts import build_autograde_payload  # noqa: E402
 
 PLUGIN_FLAG = "-p tests.autograde_plugin"
 
+EnvOverrides: TypeAlias = Mapping[str, str | None] | None
+
 
 def _write_test_file(tmp_path: Path, content: str, *, name: str = "test_suite.py") -> Path:
     path = tmp_path / name
@@ -28,27 +31,32 @@ def _write_test_file(tmp_path: Path, content: str, *, name: str = "test_suite.py
     return path
 
 
-def _prepare_env(overrides: dict[str, str | None] | None = None) -> dict[str, str]:
-    env = os.environ.copy()
-    repo = str(REPO_ROOT)
-    current = env.get("PYTHONPATH")
-    env["PYTHONPATH"] = f"{repo}{os.pathsep}{current}" if current else repo
-    env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    env.setdefault("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
-    if overrides:
-        for key, value in overrides.items():
-            if value is None:
-                env.pop(key, None)
-            else:
-                env[key] = value
-    return env
+@pytest.fixture
+def passing_test_file(tmp_path: Path) -> Iterator[Path]:
+    """Provide a simple passing pytest suite for CLI smoke tests."""
+    path = _write_test_file(
+        tmp_path,
+        """
+        def test_ok() -> None:
+            assert True
+        """,
+    )
+    yield path
+
+
+class NotebookDirScenario(TypedDict):
+    env_overrides: dict[str, str | None]
+    expected_returncode: int
+    results_should_exist: bool
+    stdout_fragment: str | None
+    stderr_fragment: str | None
 
 
 def _execute_cli(  # noqa: PLR0913
     cwd: Path,
     pytest_chunks: Iterable[str],
     *,
-    env_overrides: dict[str, str | None] | None = None,
+    env_overrides: EnvOverrides = None,
     results_path: Path | None = None,
     output_path: Path | None = None,
     summary_path: Path | None = None,
@@ -68,7 +76,7 @@ def _execute_cli(  # noqa: PLR0913
     completed = subprocess.run(
         args,
         cwd=str(cwd),
-        env=_prepare_env(env_overrides),
+        env=build_autograde_env(overrides=env_overrides),
         check=False,
         text=True,
         capture_output=True,
@@ -77,25 +85,15 @@ def _execute_cli(  # noqa: PLR0913
 
 
 def _set_cli_env(monkeypatch: pytest.MonkeyPatch) -> None:
-    current = os.environ.get("PYTHONPATH")
-    pythonpath = f"{REPO_ROOT}{os.pathsep}{current}" if current else str(
-        REPO_ROOT)
-    monkeypatch.setenv("PYTHONPATH", pythonpath)
-    monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
+    base_env = build_autograde_env()
+    for key in ("PYTHONPATH", "PYTEST_DISABLE_PLUGIN_AUTOLOAD", "PYTUTOR_NOTEBOOKS_DIR"):
+        monkeypatch.setenv(key, base_env[key])
 
 
-def test_cli_runs_pytest_successfully(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+def test_cli_runs_pytest_successfully(tmp_path: Path, passing_test_file: Path) -> None:
     completed, results_path, output_path, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
     )
     assert completed.returncode == 0
     assert results_path.is_file()
@@ -122,98 +120,82 @@ def test_cli_propagates_pytest_exit_code(tmp_path: Path) -> None:
     assert payload["status"] == "fail"
 
 
-def test_cli_validates_environment(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
-    completed, _, _, _ = _execute_cli(
-        tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": None},
-    )
-    assert completed.returncode == 0
-    assert "Environment: PYTUTOR_NOTEBOOKS_DIR=<unset>" in completed.stdout
-
-
-def test_cli_allows_solution_notebook_dir(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+@pytest.mark.parametrize(
+    "scenario",
+    [
+        pytest.param(
+            {
+                "env_overrides": {"PYTUTOR_NOTEBOOKS_DIR": None},
+                "expected_returncode": 0,
+                "results_should_exist": True,
+                "stdout_fragment": "Environment: PYTUTOR_NOTEBOOKS_DIR=<unset>",
+                "stderr_fragment": None,
+            },
+            id="unset",
+        ),
+        pytest.param(
+            {
+                "env_overrides": {"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"},
+                "expected_returncode": 0,
+                "results_should_exist": True,
+                "stdout_fragment": None,
+                "stderr_fragment": None,
+            },
+            id="solutions-posix",
+        ),
+        pytest.param(
+            {
+                "env_overrides": {"PYTUTOR_NOTEBOOKS_DIR": "notebooks\\solutions"},
+                "expected_returncode": 0,
+                "results_should_exist": True,
+                "stdout_fragment": None,
+                "stderr_fragment": None,
+            },
+            id="solutions-windows",
+        ),
+        pytest.param(
+            {
+                "env_overrides": {"PYTUTOR_NOTEBOOKS_DIR": "notebooks/custom"},
+                "expected_returncode": 1,
+                "results_should_exist": False,
+                "stdout_fragment": None,
+                "stderr_fragment": (
+                    "Error: PYTUTOR_NOTEBOOKS_DIR must be unset or one of 'notebooks', 'notebooks/solutions'"
+                ),
+            },
+            id="custom-invalid",
+        ),
+    ],
+)
+def test_cli_notebook_dir_validation(
+    tmp_path: Path,
+    passing_test_file: Path,
+    scenario: NotebookDirScenario,
+) -> None:
     results_path = tmp_path / "tmp" / "autograde" / "results.json"
     completed, _, _, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"},
+        [PLUGIN_FLAG, str(passing_test_file)],
+        env_overrides=scenario["env_overrides"],
         results_path=results_path,
     )
-    assert completed.returncode == 0
-    assert results_path.exists()
+    assert completed.returncode == scenario["expected_returncode"]
+    assert results_path.exists() is scenario["results_should_exist"]
+    stdout_fragment = scenario["stdout_fragment"]
+    if stdout_fragment is not None:
+        assert stdout_fragment in completed.stdout
+    stderr_fragment = scenario["stderr_fragment"]
+    if stderr_fragment is not None:
+        assert stderr_fragment in completed.stderr
 
 
-def test_cli_allows_solution_notebook_dir_windows_path(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
-    results_path = tmp_path / "tmp" / "autograde" / "results.json"
-    completed, _, _, _ = _execute_cli(
-        tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks\\solutions"},
-        results_path=results_path,
-    )
-    assert completed.returncode == 0
-    assert results_path.exists()
-
-
-def test_cli_rejects_unknown_notebook_dir(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
-    results_path = tmp_path / "tmp" / "autograde" / "results.json"
-    completed, _, _, _ = _execute_cli(
-        tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/custom"},
-        results_path=results_path,
-    )
-    assert completed.returncode == 1
-    assert (
-        "Error: PYTUTOR_NOTEBOOKS_DIR must be unset or one of 'notebooks', 'notebooks/solutions'"
-        in completed.stderr
-    )
-    assert not results_path.exists()
-
-
-def test_cli_creates_output_directories(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+def test_cli_creates_output_directories(tmp_path: Path, passing_test_file: Path) -> None:
     results_path = tmp_path / "nested" / "dir" / "results.json"
     output_path = tmp_path / "another" / "dir" / "payload.txt"
     summary_path = tmp_path / "summary" / "dir" / "data.json"
     completed, results_path, output_path, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
         results_path=results_path,
         output_path=output_path,
         summary_path=summary_path,
@@ -224,17 +206,10 @@ def test_cli_creates_output_directories(tmp_path: Path) -> None:
     assert summary_path.is_file()
 
 
-def test_cli_writes_base64_payload(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+def test_cli_writes_base64_payload(tmp_path: Path, passing_test_file: Path) -> None:
     completed, _, output_path, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
     )
     assert completed.returncode == 0
     payload_text = output_path.read_text(encoding="utf-8")
@@ -244,18 +219,11 @@ def test_cli_writes_base64_payload(tmp_path: Path) -> None:
     base64.b64decode(encoded)
 
 
-def test_cli_writes_summary_json(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+def test_cli_writes_summary_json(tmp_path: Path, passing_test_file: Path) -> None:
     summary_path = tmp_path / "tmp" / "autograde" / "summary.json"
     completed, _, _, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
         summary_path=summary_path,
     )
     assert completed.returncode == 0
@@ -264,37 +232,26 @@ def test_cli_writes_summary_json(tmp_path: Path) -> None:
     assert len(summary["tests"]) == 1
 
 
-def test_cli_prints_summary_table(tmp_path: Path) -> None:
-    test_file = _write_test_file(
+def test_cli_prints_summary_table(tmp_path: Path, passing_test_file: Path) -> None:
+    completed, results_path, _, _ = _execute_cli(
         tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
-    completed, _, _, _ = _execute_cli(
-        tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
     )
     assert completed.returncode == 0
     stdout = completed.stdout
     assert "=== Autograde Summary ===" in stdout
     assert "Task Breakdown:" in stdout
-    assert "Tests Passed: 1/1" in stdout
+    results = json.loads(results_path.read_text(encoding="utf-8"))
+    total = len(results["tests"])
+    passed = sum(1 for test in results["tests"] if test["status"] == "pass")
+    assert f"Tests Passed: {passed}/{total}" in stdout
 
 
-def test_cli_writes_github_outputs(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+def test_cli_writes_github_outputs(tmp_path: Path, passing_test_file: Path) -> None:
     gh_output = tmp_path / "gh_output.txt"
     completed, _, _, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
         env_overrides={"GITHUB_OUTPUT": str(gh_output)},
     )
     assert completed.returncode == 0
@@ -309,14 +266,8 @@ def test_cli_handles_missing_results_file(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    passing_test_file: Path,
 ) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
     results_path = tmp_path / "tmp" / "autograde" / "results.json"
     output_path = tmp_path / "tmp" / "autograde" / "payload.txt"
 
@@ -328,8 +279,7 @@ def test_cli_handles_missing_results_file(
             path.unlink()
         return code
 
-    monkeypatch.setattr(build_autograde_payload,
-                        "run_pytest", run_pytest_and_remove)
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_remove)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -337,7 +287,7 @@ def test_cli_handles_missing_results_file(
             f"--results-json={results_path}",
             f"--output={output_path}",
             f"--pytest-args={PLUGIN_FLAG}",
-            f"--pytest-args={test_file}",
+            f"--pytest-args={passing_test_file}",
         ]
     )
     captured = capsys.readouterr()
@@ -350,14 +300,8 @@ def test_cli_handles_malformed_json(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
+    passing_test_file: Path,
 ) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
     results_path = tmp_path / "tmp" / "autograde" / "results.json"
     output_path = tmp_path / "tmp" / "autograde" / "payload.txt"
 
@@ -368,8 +312,7 @@ def test_cli_handles_malformed_json(
         path.write_text("{ invalid json", encoding="utf-8")
         return code
 
-    monkeypatch.setattr(build_autograde_payload,
-                        "run_pytest", run_pytest_and_corrupt)
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_corrupt)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -377,7 +320,7 @@ def test_cli_handles_malformed_json(
             f"--results-json={results_path}",
             f"--output={output_path}",
             f"--pytest-args={PLUGIN_FLAG}",
-            f"--pytest-args={test_file}",
+            f"--pytest-args={passing_test_file}",
         ]
     )
     captured = capsys.readouterr()
@@ -407,17 +350,10 @@ def test_cli_forwards_pytest_args(tmp_path: Path) -> None:
     assert payload["tests"][0]["name"] == "first"
 
 
-def test_cli_decodes_base64_correctly(tmp_path: Path) -> None:
-    test_file = _write_test_file(
-        tmp_path,
-        """
-        def test_ok() -> None:
-            assert True
-        """,
-    )
+def test_cli_decodes_base64_correctly(tmp_path: Path, passing_test_file: Path) -> None:
     completed, results_path, output_path, _ = _execute_cli(
         tmp_path,
-        [PLUGIN_FLAG, str(test_file)],
+        [PLUGIN_FLAG, str(passing_test_file)],
     )
     assert completed.returncode == 0
     encoded = output_path.read_text(encoding="utf-8").strip()

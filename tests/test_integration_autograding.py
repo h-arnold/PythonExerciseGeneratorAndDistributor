@@ -2,33 +2,38 @@ from __future__ import annotations
 
 import base64
 import json
-import os
 import subprocess
 import sys
+import textwrap
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, NotRequired, TypeAlias, TypedDict, cast
 
 import pytest
+
+from tests.helpers import build_autograde_env
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CLI_SCRIPT = REPO_ROOT / "scripts" / "build_autograde_payload.py"
 PLUGIN_NAME = "tests.autograde_plugin"
+PLUGIN_FLAG = f"-p {PLUGIN_NAME}"
 
 
-def _prepare_env(overrides: dict[str, str | None] | None = None) -> dict[str, str]:
-    env = os.environ.copy()
-    repo = str(REPO_ROOT)
-    current = env.get("PYTHONPATH")
-    env["PYTHONPATH"] = f"{repo}{os.pathsep}{current}" if current else repo
-    env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    env.setdefault("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
-    if overrides:
-        for key, value in overrides.items():
-            if value is None:
-                env.pop(key, None)
-            else:
-                env[key] = value
-    return env
+EnvOverrides: TypeAlias = Mapping[str, str | None] | None
+
+
+class AutogradeResultsDict(TypedDict):
+    status: str
+    max_score: float | int | str
+    tests: list[dict[str, Any]]
+    score: NotRequired[float | int | str | None]
+
+
+class AutogradePayloadDict(TypedDict):
+    status: str
+    max_score: float | int | str
+    score: float | int | str
+    tests: list[dict[str, Any]]
 
 
 def _run_pytest_with_plugin(
@@ -36,7 +41,7 @@ def _run_pytest_with_plugin(
     *,
     results_path: Path,
     pytest_args: list[str],
-    env_overrides: dict[str, str | None] | None = None,
+    env_overrides: EnvOverrides = None,
 ) -> subprocess.CompletedProcess[str]:
     results_path.parent.mkdir(parents=True, exist_ok=True)
     command = [
@@ -51,7 +56,7 @@ def _run_pytest_with_plugin(
     return subprocess.run(
         command,
         cwd=str(cwd),
-        env=_prepare_env(env_overrides),
+        env=build_autograde_env(overrides=env_overrides),
         check=False,
         text=True,
         capture_output=True,
@@ -64,7 +69,7 @@ def _run_cli(  # noqa: PLR0913 - helper mirrors CLI signature
     results_path: Path,
     output_path: Path,
     pytest_args: list[str],
-    env_overrides: dict[str, str | None] | None = None,
+    env_overrides: EnvOverrides = None,
     bypass_env_validation: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     results_path.parent.mkdir(parents=True, exist_ok=True)
@@ -73,18 +78,19 @@ def _run_cli(  # noqa: PLR0913 - helper mirrors CLI signature
     for chunk in pytest_args:
         cli_args.append(f"--pytest-args={chunk}")
 
-    env = _prepare_env(env_overrides)
+    env = build_autograde_env(overrides=env_overrides)
 
     if bypass_env_validation:
-        runner_path = results_path.parent / "_cli_runner.py"
-        runner_code = (
-            "import sys\n"
-            "from scripts import build_autograde_payload as cli\n"
-            "cli.validate_environment = lambda: None\n"
-            f"sys.exit(cli.main({cli_args!r}))\n"
+        override_code = textwrap.dedent(
+            f"""
+            import sys
+            from scripts import build_autograde_payload as cli
+
+            cli.validate_environment = lambda: None
+            raise SystemExit(cli.main({cli_args!r}))
+            """
         )
-        runner_path.write_text(runner_code, encoding="utf-8")
-        command = [sys.executable, str(runner_path)]
+        command = [sys.executable, "-c", override_code]
     else:
         command = [sys.executable, str(CLI_SCRIPT), *cli_args]
 
@@ -102,6 +108,123 @@ def _decode_payload(path: Path) -> dict[str, Any]:
     encoded = path.read_text(encoding="utf-8").strip()
     decoded = base64.b64decode(encoded)
     return json.loads(decoded)
+
+
+NumericValue: TypeAlias = float | int | str
+ScoreValue: TypeAlias = NumericValue | None
+
+
+def _normalise_score(value: ScoreValue) -> float:
+    return float(value) if value is not None else 0.0
+
+
+def _load_results(path: Path) -> AutogradeResultsDict:
+    return cast(AutogradeResultsDict, json.loads(path.read_text(encoding="utf-8")))
+
+
+def _assert_payload_matches_results(
+    payload: AutogradePayloadDict,
+    results: AutogradeResultsDict,
+) -> None:
+    assert payload["status"] == results["status"]
+    assert pytest.approx(_normalise_score(payload["max_score"])) == pytest.approx(
+        _normalise_score(results["max_score"])
+    )
+    assert len(payload["tests"]) == len(results["tests"])
+
+    recorded_score = _normalise_score(results.get("score"))
+    assert pytest.approx(_normalise_score(payload["score"])) == pytest.approx(recorded_score)
+
+
+def _assert_cli_alignment(
+    cli_run: subprocess.CompletedProcess[str],
+    manual_run: subprocess.CompletedProcess[str],
+    payload: AutogradePayloadDict,
+    results: AutogradeResultsDict,
+) -> None:
+    assert cli_run.returncode == manual_run.returncode
+    _assert_payload_matches_results(payload, results)
+
+
+def _expect_solution_success(
+    manual_run: subprocess.CompletedProcess[str],
+    payload: AutogradePayloadDict,
+    results: AutogradeResultsDict,
+) -> None:
+    assert manual_run.returncode == 0
+    assert payload["status"] == "pass"
+    assert results["status"] == "pass"
+    assert pytest.approx(_normalise_score(payload["score"])) == pytest.approx(
+        _normalise_score(payload["max_score"])
+    )
+    assert pytest.approx(_normalise_score(results.get("score"))) == pytest.approx(
+        _normalise_score(results["max_score"])
+    )
+
+
+def _expect_student_failure(
+    manual_run: subprocess.CompletedProcess[str],
+    payload: AutogradePayloadDict,
+    results: AutogradeResultsDict,
+) -> None:
+    if payload["status"] == "pass" and _normalise_score(payload["score"]) == _normalise_score(
+        payload["max_score"]
+    ):
+        pytest.xfail(
+            "Student notebooks currently satisfy ex001_sanity tests; update scaffolding to observe a failing case."
+        )
+
+    assert manual_run.returncode != 0
+    assert results["status"] == "fail"
+    assert payload["status"] == "fail"
+    assert _normalise_score(results.get("score")) < _normalise_score(results["max_score"])
+    assert _normalise_score(payload["score"]) < _normalise_score(payload["max_score"])
+
+
+def _assert_solution_vs_student(
+    solution_payload: AutogradePayloadDict,
+    student_payload: AutogradePayloadDict,
+) -> None:
+    assert solution_payload["status"] != student_payload["status"]
+    assert _normalise_score(solution_payload["score"]) > _normalise_score(student_payload["score"])
+    assert pytest.approx(_normalise_score(solution_payload["max_score"])) == pytest.approx(
+        _normalise_score(student_payload["max_score"])
+    )
+
+
+def _run_manual_autograde(
+    working_dir: Path,
+    target_test: Path,
+    env_overrides: EnvOverrides,
+) -> tuple[subprocess.CompletedProcess[str], AutogradeResultsDict]:
+    results_path = working_dir / "manual" / "results.json"
+    run = _run_pytest_with_plugin(
+        REPO_ROOT,
+        results_path=results_path,
+        pytest_args=[str(target_test)],
+        env_overrides=env_overrides,
+    )
+    return run, _load_results(results_path)
+
+
+def _run_cli_autograde(
+    working_dir: Path,
+    target_test: Path,
+    env_overrides: EnvOverrides,
+    *,
+    bypass_env_validation: bool = False,
+) -> tuple[subprocess.CompletedProcess[str], AutogradePayloadDict]:
+    results_path = working_dir / "cli" / "results.json"
+    output_path = working_dir / "cli" / "payload.txt"
+    run = _run_cli(
+        REPO_ROOT,
+        results_path=results_path,
+        output_path=output_path,
+        pytest_args=[PLUGIN_FLAG, str(target_test)],
+        env_overrides=env_overrides,
+        bypass_env_validation=bypass_env_validation,
+    )
+    return run, cast(AutogradePayloadDict, _decode_payload(output_path))
 
 
 def test_full_autograding_flow(tmp_path: Path) -> None:
@@ -125,7 +248,7 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
         pytest_args=[str(test_file)],
     )
     assert manual_results.exists()
-    recorded = json.loads(manual_results.read_text(encoding="utf-8"))
+    recorded = _load_results(manual_results)
 
     cli_results = project_dir / "tmp" / "cli" / "results.json"
     cli_output = project_dir / "tmp" / "cli" / "payload.txt"
@@ -133,86 +256,34 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
         project_dir,
         results_path=cli_results,
         output_path=cli_output,
-        pytest_args=["-p tests.autograde_plugin", str(test_file)],
+        pytest_args=[PLUGIN_FLAG, str(test_file)],
     )
 
-    payload = _decode_payload(cli_output)
-    assert payload["status"] == recorded["status"]
-    assert pytest.approx(float(payload["score"])) == float(recorded["score"])
-    assert pytest.approx(float(payload["max_score"])) == float(recorded["max_score"])
-    assert len(payload["tests"]) == len(recorded["tests"])
-    assert cli_run.returncode == manual_run.returncode
+    payload = cast(AutogradePayloadDict, _decode_payload(cli_output))
+    _assert_cli_alignment(cli_run, manual_run, payload, recorded)
 
 
 def test_autograding_with_real_exercise(tmp_path: Path) -> None:
     target_test = REPO_ROOT / "tests" / "test_ex001_sanity.py"
 
-    sol_results = tmp_path / "solutions" / "manual" / "results.json"
-    sol_run = _run_pytest_with_plugin(
-        REPO_ROOT,
-        results_path=sol_results,
-        pytest_args=[str(target_test)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"},
-    )
-    assert sol_run.returncode == 0
-    sol_data = json.loads(sol_results.read_text(encoding="utf-8"))
-    assert sol_data["status"] == "pass"
-    assert pytest.approx(float(sol_data["score"])) == float(sol_data["max_score"])
-
-    sol_cli_results = tmp_path / "solutions" / "cli" / "results.json"
-    sol_cli_output = tmp_path / "solutions" / "cli" / "payload.txt"
-    sol_cli_run = _run_cli(
-        REPO_ROOT,
-        results_path=sol_cli_results,
-        output_path=sol_cli_output,
-        pytest_args=["-p tests.autograde_plugin", str(target_test)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"},
+    solution_env: EnvOverrides = {"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"}
+    solution_dir = tmp_path / "solutions"
+    sol_run, sol_results = _run_manual_autograde(solution_dir, target_test, solution_env)
+    sol_cli_run, sol_payload = _run_cli_autograde(
+        solution_dir,
+        target_test,
+        solution_env,
         bypass_env_validation=True,
     )
-    sol_payload = _decode_payload(sol_cli_output)
-    assert sol_cli_run.returncode == sol_run.returncode
-    assert sol_payload["status"] == "pass"
-    assert pytest.approx(float(sol_payload["score"])) == float(sol_payload["max_score"])
-    assert pytest.approx(float(sol_payload["max_score"])) == float(sol_data["max_score"])
-    assert len(sol_payload["tests"]) == len(sol_data["tests"])
 
-    student_results = tmp_path / "students" / "manual" / "results.json"
-    student_run = _run_pytest_with_plugin(
-        REPO_ROOT,
-        results_path=student_results,
-        pytest_args=[str(target_test)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks"},
-    )
-    student_data = json.loads(student_results.read_text(encoding="utf-8"))
-    student_cli_results = tmp_path / "students" / "cli" / "results.json"
-    student_cli_output = tmp_path / "students" / "cli" / "payload.txt"
-    student_cli_run = _run_cli(
-        REPO_ROOT,
-        results_path=student_cli_results,
-        output_path=student_cli_output,
-        pytest_args=["-p tests.autograde_plugin", str(target_test)],
-    )
-    student_payload = _decode_payload(student_cli_output)
-    assert student_cli_run.returncode == student_run.returncode
-    assert pytest.approx(float(student_payload["max_score"])) == float(student_data["max_score"])
-    assert len(student_payload["tests"]) == len(student_data["tests"])
+    _assert_cli_alignment(sol_cli_run, sol_run, sol_payload, sol_results)
+    _expect_solution_success(sol_run, sol_payload, sol_results)
 
-    if (
-        student_payload["status"] == "pass"
-        and student_payload["score"] == student_payload["max_score"]
-    ):
-        pytest.xfail(
-            "Student notebooks currently satisfy ex001_sanity tests; update scaffolding to observe a failing case."
-        )
+    student_dir = tmp_path / "students"
+    student_run, student_results = _run_manual_autograde(student_dir, target_test, None)
+    student_cli_run, student_payload = _run_cli_autograde(student_dir, target_test, None)
 
-    assert student_run.returncode != 0
-    assert student_data["status"] == "fail"
-    assert student_data["score"] < student_data["max_score"]
-    assert student_payload["status"] == "fail"
-    assert student_payload["score"] < student_payload["max_score"]
+    _assert_cli_alignment(student_cli_run, student_run, student_payload, student_results)
+    _expect_student_failure(student_run, student_payload, student_results)
 
-    assert sol_payload["status"] != student_payload["status"]
-    assert sol_payload["score"] > student_payload["score"]
-    assert pytest.approx(float(sol_payload["max_score"])) == pytest.approx(
-        float(student_payload["max_score"])
-    )
+    _assert_solution_vs_student(sol_payload, student_payload)

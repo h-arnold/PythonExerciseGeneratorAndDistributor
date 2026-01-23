@@ -78,7 +78,7 @@ Default thresholds used by automated checks:
    - Set `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` and run `uv run pytest -q` to verify the solution notebooks pass.
    - Only run `uv run pytest -q` without the environment variable when you need to inspect student notebooks; confirm any failures are the expected pre-solution failures, not regressions.
 6. Run `uv run ruff check --fix` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
-7. Run `uv run ruff format --fix` to apply formatting fixes.
+7. Run `uv run ruff format` to apply formatting fixes.
 8. Run Pylance diagnostics:
    - For each changed file:
       - Open the file in the editor, one at a time to ensure Pylance indexes it. **You must do this. This task will fail if you don't open the file first.**

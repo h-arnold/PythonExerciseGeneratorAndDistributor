@@ -243,7 +243,8 @@ The sub-agents you can call are (first-line names are case-sensitive):
 
 For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring) that **IS NOT** related to student notebook, follow this workflow:
 
-1.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `Implementer` agent. Pass a a detailed task description, including the scope of files to edit.
+1. **Consider the size of the task**: If it's a large task requiring many changes, split the task into smaller chunks and update your TODO list with `manage_todo_list`.
+2.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `Implementer` agent. Pass a a detailed task description, including the scope of files to edit.
     *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
 2.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes.
     *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
@@ -251,6 +252,3 @@ For any significant code changes (defined as adding/modifying more than 1 functi
 4. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 
 **ALWAYS** follow this process unless the user explictly directs you otherwise.
-
-  
-

@@ -116,19 +116,16 @@ def _validate_results_payload(data: object) -> AutogradeResults:
     if not isinstance(data, dict):
         raise RuntimeError("Autograde results must be a JSON object.")
 
-    missing_key = next(
-        (key for key in ("max_score", "status", "tests") if key not in data), None)
+    missing_key = next((key for key in ("max_score", "status", "tests") if key not in data), None)
     if missing_key is not None:
-        raise RuntimeError(
-            f"Autograde results missing required key: {missing_key}")
+        raise RuntimeError(f"Autograde results missing required key: {missing_key}")
 
     tests = data.get("tests")
     if not isinstance(tests, list):
         raise RuntimeError("Autograde results 'tests' entry must be a list.")
 
     if not all(isinstance(test, dict) for test in tests):
-        raise RuntimeError(
-            "Autograde results 'tests' entries must be objects.")
+        raise RuntimeError("Autograde results 'tests' entries must be objects.")
 
     if not _is_autograde_results(data):
         raise RuntimeError("Autograde results failed structural validation.")
@@ -244,8 +241,7 @@ def load_results(results_path: Path) -> AutogradeResults:
         with results_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(
-            f"Results JSON at {results_path} is invalid: {exc}") from exc
+        raise RuntimeError(f"Results JSON at {results_path} is invalid: {exc}") from exc
 
     return _validate_results_payload(data)
 
@@ -330,8 +326,7 @@ def _normalise_test_entry(test: AutogradeTestEntry) -> AutogradePayloadTest:
     normalised_name = str(name_source)
     status = str(test.get("status", "error"))
     score_value = _ensure_float(
-        test.get(
-            "score", 0.0), f"Test entry for {normalised_name} has non-numeric score."
+        test.get("score", 0.0), f"Test entry for {normalised_name} has non-numeric score."
     )
     line_number = _normalise_line_number(test.get("line_no"))
 
@@ -364,8 +359,7 @@ def _calculate_earned_score(
 def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
-    max_score = _ensure_float(
-        raw_results["max_score"], "max_score in results must be numeric.")
+    max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
     status = str(raw_results["status"])
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
@@ -387,8 +381,7 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
 def encode_payload(payload: AutogradePayload) -> str:
     """Encode the payload as a Base64 JSON string."""
 
-    json_bytes = json.dumps(payload, ensure_ascii=False,
-                            indent=2).encode("utf-8")
+    json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
     encoded = base64.b64encode(json_bytes)
     return encoded.decode("ascii")
 
@@ -443,8 +436,7 @@ def print_summary(payload: AutogradePayload) -> None:
     print(f"Points: {earned_score}/{max_score} ({percentage:.1f}%)")
     print(f"Tests Passed: {passed_tests}/{total_tests}")
 
-    grouped: dict[str | int | None,
-                  list[AutogradePayloadTest]] = defaultdict(list)
+    grouped: dict[str | int | None, list[AutogradePayloadTest]] = defaultdict(list)
     for test in tests:
         grouped[test.get("task")].append(test)
 
@@ -464,8 +456,7 @@ def print_summary(payload: AutogradePayload) -> None:
         for test in failing_tests:
             message = test.get("message")
             message_text = "(no message)" if message is None else str(message)
-            truncated = textwrap.shorten(
-                message_text, width=200, placeholder="...")
+            truncated = textwrap.shorten(message_text, width=200, placeholder="...")
             print(f"- {test['name']}: {truncated}")
 
 
@@ -483,8 +474,7 @@ def write_outputs(
             handle.write(encoded_payload)
             handle.write("\n")
     except Exception as exc:
-        print(
-            f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
+        print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
         return
@@ -495,8 +485,7 @@ def write_outputs(
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
     except Exception as exc:
-        print(
-            f"Warning: failed to write summary to {summary_path}: {exc}", file=sys.stderr)
+        print(f"Warning: failed to write summary to {summary_path}: {exc}", file=sys.stderr)
 
 
 def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
@@ -518,8 +507,7 @@ def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
             for key, value in entries.items():
                 handle.write(f"{key}={value}\n")
     except Exception as exc:
-        print(
-            f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
+        print(f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

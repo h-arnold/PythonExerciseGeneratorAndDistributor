@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import textwrap
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any, NotRequired, Protocol, TypedDict, TypeGuard
 
 import pytest
 
@@ -28,23 +30,159 @@ def _write_test_module(
     pytester.makepyfile(**{name: textwrap.dedent(body)})
 
 
-def _run_with_results(
-    pytester: pytest.Pytester,
+class AutogradePayloadTestEntry(TypedDict):
+    nodeid: str
+    name: str
+    taskno: int | None
+    status: str
+    score: float
+    message: str | None
+    line_no: int | None
+    duration: float | None
+    stdout: NotRequired[str]
+    stderr: NotRequired[str]
+    log: NotRequired[str]
+    extra: NotRequired[dict[str, Any]]
+
+
+class AutogradePayload(TypedDict):
+    status: str
+    score: float
+    max_score: float
+    tests: list[AutogradePayloadTestEntry]
+    start_timestamp: NotRequired[float | None]
+    end_timestamp: NotRequired[float | None]
+    errors: NotRequired[list[str]]
+    notes: NotRequired[list[str]]
+
+
+class RunWithResults(Protocol):
+    def __call__(
+        self,
+        *,
+        results_path: str | Path = RESULTS_FILENAME,
+        args: Sequence[str] | None = None,
+    ) -> tuple[pytest.RunResult, AutogradePayload, Path]: ...
+
+
+class ExpectedTestFields(TypedDict, total=False):
+    message: str | None
+    taskno: int | None
+    name: str
+
+
+_MISSING = object()
+
+
+def _is_autograde_payload(value: object) -> TypeGuard[AutogradePayload]:
+    if not isinstance(value, dict):
+        return False
+    required_keys = (
+        "status",
+        "score",
+        "max_score",
+        "tests",
+    )
+    for key in required_keys:
+        if key not in value:
+            return False
+    status_ok = isinstance(value["status"], str)
+    score_ok = isinstance(value["score"], (int, float))
+    max_score_ok = isinstance(value["max_score"], (int, float))
+    tests = value["tests"]
+    tests_ok = isinstance(tests, list)
+    timestamps_ok = all(
+        value[key] is None or isinstance(value[key], (int, float))
+        for key in ("start_timestamp", "end_timestamp")
+        if key in value
+    )
+    extras_ok = all(isinstance(value[key], list) for key in ("errors", "notes") if key in value)
+    return status_ok and score_ok and max_score_ok and tests_ok and timestamps_ok and extras_ok
+
+
+def _is_autograde_test_entry(value: object) -> TypeGuard[AutogradePayloadTestEntry]:
+    if not isinstance(value, dict):
+        return False
+    nodeid = value.get("nodeid")
+    name = value.get("name")
+    status = value.get("status")
+    score = value.get("score")
+    taskno = value.get("taskno")
+    message = value.get("message", _MISSING)
+    line_no = value.get("line_no", _MISSING)
+    duration = value.get("duration", _MISSING)
+
+    required_present = (
+        isinstance(nodeid, str)
+        and isinstance(name, str)
+        and isinstance(status, str)
+        and isinstance(score, (int, float))
+        and message is not _MISSING
+        and line_no is not _MISSING
+        and duration is not _MISSING
+    )
+    if not required_present:
+        return False
+
+    message_ok = isinstance(message, str) or message is None
+    line_ok = isinstance(line_no, int) or line_no is None
+    duration_ok = isinstance(duration, (int, float)) or duration is None
+    task_ok = isinstance(taskno, int) or taskno is None
+    return message_ok and line_ok and duration_ok and task_ok
+
+
+def expect_single_test_entry(
+    payload: AutogradePayload,
     *,
-    results_path: str | Path = RESULTS_FILENAME,
-    args: list[str] | None = None,
-) -> tuple[pytest.RunResult, dict[str, object], Path]:
-    path_arg = str(results_path)
-    extra_args = [f"--autograde-results-path={path_arg}"]
-    if args:
-        extra_args.extend(args)
-    result = pytester.runpytest(*extra_args)
-    json_path = pytester.path / path_arg
+    status: str,
+    score: float,
+    expected: ExpectedTestFields | None = None,
+) -> AutogradePayloadTestEntry:
+    tests = payload["tests"]
+    assert len(tests) == 1, f"Expected a single test entry, received {len(tests)}"
+    entry_candidate = tests[0]
+    assert _is_autograde_test_entry(entry_candidate)
+    entry = entry_candidate
+    assert entry["status"] == status
+    assert entry["score"] == pytest.approx(score)
+    if expected:
+        if "message" in expected:
+            assert entry["message"] == expected["message"]
+        if "taskno" in expected:
+            assert entry["taskno"] == expected["taskno"]
+        if "name" in expected:
+            assert entry["name"] == expected["name"]
+    return entry
+
+
+def _load_payload(json_path: Path) -> AutogradePayload:
     data = json.loads(json_path.read_text(encoding="utf-8"))
-    return result, data, json_path
+    assert _is_autograde_payload(data)
+    return data
 
 
-def test_plugin_captures_passing_test(pytester: pytest.Pytester) -> None:
+@pytest.fixture
+def run_with_results(pytester: pytest.Pytester) -> RunWithResults:
+    def _runner(
+        *,
+        results_path: str | Path = RESULTS_FILENAME,
+        args: Sequence[str] | None = None,
+    ) -> tuple[pytest.RunResult, AutogradePayload, Path]:
+        path_arg = str(results_path)
+        extra_args = [f"--autograde-results-path={path_arg}"]
+        if args:
+            extra_args.extend(args)
+        result = pytester.runpytest(*extra_args)
+        json_path = pytester.path / path_arg
+        payload = _load_payload(json_path)
+        return result, payload, json_path
+
+    return _runner
+
+
+def test_plugin_captures_passing_test(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -52,16 +190,21 @@ def test_plugin_captures_passing_test(pytester: pytest.Pytester) -> None:
             assert 1 == 1
         """,
     )
-    result, payload, _ = _run_with_results(pytester)
+    result, payload, _ = run_with_results()
     result.assert_outcomes(passed=1)
     assert payload["score"] == 1.0
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["status"] == "pass"
-    assert test_entry["score"] == 1.0
-    assert test_entry["message"] is None
+    test_entry = expect_single_test_entry(
+        payload,
+        status="pass",
+        score=1.0,
+        expected={"message": None},
+    )
+    assert test_entry["name"]
 
 
-def test_plugin_captures_failing_test(pytester: pytest.Pytester) -> None:
+def test_plugin_captures_failing_test(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -69,15 +212,20 @@ def test_plugin_captures_failing_test(pytester: pytest.Pytester) -> None:
             assert 1 == 0
         """,
     )
-    result, payload, _ = _run_with_results(pytester)
+    result, payload, _ = run_with_results()
     result.assert_outcomes(failed=1)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["status"] == "fail"
-    assert test_entry["score"] == 0.0
+    test_entry = expect_single_test_entry(
+        payload,
+        status="fail",
+        score=0.0,
+    )
+    assert test_entry["message"] is not None
     assert "1 == 0" in test_entry["message"]
 
 
-def test_plugin_captures_error_test(pytester: pytest.Pytester) -> None:
+def test_plugin_captures_error_test(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -91,15 +239,20 @@ def test_plugin_captures_error_test(pytester: pytest.Pytester) -> None:
             pass
         """,
     )
-    result, payload, _ = _run_with_results(pytester)
+    result, payload, _ = run_with_results()
     result.assert_outcomes(errors=1)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["status"] == "error"
-    assert test_entry["score"] == 0.0
+    test_entry = expect_single_test_entry(
+        payload,
+        status="error",
+        score=0.0,
+    )
+    assert test_entry["message"] is not None
     assert "RuntimeError" in test_entry["message"]
 
 
-def test_plugin_extracts_task_number(pytester: pytest.Pytester) -> None:
+def test_plugin_extracts_task_number(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -110,12 +263,18 @@ def test_plugin_extracts_task_number(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["taskno"] == TASK_NUMBER
+    _, payload, _ = run_with_results()
+    expect_single_test_entry(
+        payload,
+        status="pass",
+        score=1.0,
+        expected={"taskno": TASK_NUMBER},
+    )
 
 
-def test_plugin_handles_missing_task_marker(pytester: pytest.Pytester) -> None:
+def test_plugin_handles_missing_task_marker(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -123,12 +282,18 @@ def test_plugin_handles_missing_task_marker(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["taskno"] is None
+    _, payload, _ = run_with_results()
+    expect_single_test_entry(
+        payload,
+        status="pass",
+        score=1.0,
+        expected={"taskno": None},
+    )
 
 
-def test_plugin_extracts_name_from_marker(pytester: pytest.Pytester) -> None:
+def test_plugin_extracts_name_from_marker(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -139,12 +304,18 @@ def test_plugin_extracts_name_from_marker(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["name"] == "Custom Task"
+    _, payload, _ = run_with_results()
+    expect_single_test_entry(
+        payload,
+        status="pass",
+        score=1.0,
+        expected={"name": "Custom Task"},
+    )
 
 
-def test_plugin_extracts_name_from_docstring(pytester: pytest.Pytester) -> None:
+def test_plugin_extracts_name_from_docstring(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         '''\
@@ -153,12 +324,18 @@ def test_plugin_extracts_name_from_docstring(pytester: pytest.Pytester) -> None:
             assert True
         ''',
     )
-    _, payload, _ = _run_with_results(pytester)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["name"] == "Docstring summary."
+    _, payload, _ = run_with_results()
+    expect_single_test_entry(
+        payload,
+        status="pass",
+        score=1.0,
+        expected={"name": "Docstring summary."},
+    )
 
 
-def test_plugin_extracts_name_from_nodeid(pytester: pytest.Pytester) -> None:
+def test_plugin_extracts_name_from_nodeid(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -166,12 +343,18 @@ def test_plugin_extracts_name_from_nodeid(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
-    test_entry = payload["tests"][0]  # type: ignore[index]
-    assert test_entry["name"] == "simple case"
+    _, payload, _ = run_with_results()
+    expect_single_test_entry(
+        payload,
+        status="pass",
+        score=1.0,
+        expected={"name": "simple case"},
+    )
 
 
-def test_plugin_writes_valid_json(pytester: pytest.Pytester) -> None:
+def test_plugin_writes_valid_json(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -179,13 +362,15 @@ def test_plugin_writes_valid_json(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
+    _, payload, _ = run_with_results()
     assert payload["status"] == "pass"
     assert payload["max_score"] == 1.0
     assert isinstance(payload["tests"], list)
 
 
-def test_plugin_creates_output_directory(pytester: pytest.Pytester) -> None:
+def test_plugin_creates_output_directory(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     results_path = Path("nested") / "dir" / "results.json"
     _write_test_module(
         pytester,
@@ -194,13 +379,15 @@ def test_plugin_creates_output_directory(pytester: pytest.Pytester) -> None:
             assert True
         """,
     )
-    _, payload, json_path = _run_with_results(pytester, results_path=results_path)
+    _, payload, json_path = run_with_results(results_path=results_path)
     assert payload["status"] == "pass"
     assert json_path.is_file()
 
 
 def test_plugin_handles_write_errors(
-    pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch
+    pytester: pytest.Pytester,
+    monkeypatch: pytest.MonkeyPatch,
+    run_with_results: RunWithResults,
 ) -> None:
     target = pytester.path / RESULTS_FILENAME
     original_open = Path.open
@@ -222,7 +409,7 @@ def test_plugin_handles_write_errors(
             assert True
         """,
     )
-    result, payload, _ = _run_with_results(pytester)
+    result, payload, _ = run_with_results()
     result.assert_outcomes(passed=1)
     assert payload == {
         "status": "error",
@@ -234,7 +421,9 @@ def test_plugin_handles_write_errors(
     assert "Autograde error: Failed to write autograde results" in stdout
 
 
-def test_plugin_calculates_max_score(pytester: pytest.Pytester) -> None:
+def test_plugin_calculates_max_score(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -245,12 +434,14 @@ def test_plugin_calculates_max_score(pytester: pytest.Pytester) -> None:
             assert False
         """,
     )
-    result, payload, _ = _run_with_results(pytester)
+    result, payload, _ = run_with_results()
     result.assert_outcomes(passed=1, failed=1)
     assert payload["max_score"] == TWO_TEST_MAX_SCORE
 
 
-def test_plugin_calculates_overall_status_pass(pytester: pytest.Pytester) -> None:
+def test_plugin_calculates_overall_status_pass(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -258,11 +449,13 @@ def test_plugin_calculates_overall_status_pass(pytester: pytest.Pytester) -> Non
             assert True
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
+    _, payload, _ = run_with_results()
     assert payload["status"] == "pass"
 
 
-def test_plugin_calculates_overall_status_fail(pytester: pytest.Pytester) -> None:
+def test_plugin_calculates_overall_status_fail(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -273,11 +466,13 @@ def test_plugin_calculates_overall_status_fail(pytester: pytest.Pytester) -> Non
             assert False
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
+    _, payload, _ = run_with_results()
     assert payload["status"] == "fail"
 
 
-def test_plugin_calculates_overall_status_error(pytester: pytest.Pytester) -> None:
+def test_plugin_calculates_overall_status_error(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -291,11 +486,13 @@ def test_plugin_calculates_overall_status_error(pytester: pytest.Pytester) -> No
             pass
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
+    _, payload, _ = run_with_results()
     assert payload["status"] == "error"
 
 
-def test_plugin_truncates_long_messages(pytester: pytest.Pytester) -> None:
+def test_plugin_truncates_long_messages(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -303,14 +500,21 @@ def test_plugin_truncates_long_messages(pytester: pytest.Pytester) -> None:
             raise AssertionError("x" * 1500)
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
-    message = payload["tests"][0]["message"]  # type: ignore[index]
+    _, payload, _ = run_with_results()
+    entry = expect_single_test_entry(
+        payload,
+        status="fail",
+        score=0.0,
+    )
+    message = entry["message"]
     assert isinstance(message, str)
     assert len(message) == TRUNCATED_MESSAGE_LIMIT
     assert message.endswith("...")
 
 
-def test_plugin_extracts_line_numbers(pytester: pytest.Pytester) -> None:
+def test_plugin_extracts_line_numbers(
+    pytester: pytest.Pytester, run_with_results: RunWithResults
+) -> None:
     _write_test_module(
         pytester,
         """\
@@ -318,6 +522,10 @@ def test_plugin_extracts_line_numbers(pytester: pytest.Pytester) -> None:
             assert 2 == 1
         """,
     )
-    _, payload, _ = _run_with_results(pytester)
-    line_no = payload["tests"][0]["line_no"]  # type: ignore[index]
-    assert line_no == EXPECTED_ASSERT_LINE
+    _, payload, _ = run_with_results()
+    entry = expect_single_test_entry(
+        payload,
+        status="fail",
+        score=0.0,
+    )
+    assert entry["line_no"] == EXPECTED_ASSERT_LINE

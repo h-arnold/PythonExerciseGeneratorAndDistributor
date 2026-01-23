@@ -48,11 +48,20 @@ jobs:
         # Propagate Base64 payload via GITHUB_ENV so reporter can read it
         if: always()
         run: |
-          echo "PYTEST_RESULTS=$(cat tmp/autograde/payload.txt)" >> "$GITHUB_ENV"
+          payload_path="tmp/autograde/payload.txt"
+          if [ -f "$payload_path" ]; then
+            {
+              echo "PYTEST_RESULTS<<'EOF'"
+              cat "$payload_path"
+              echo "EOF"
+            } >> "$GITHUB_ENV"
+          else
+            echo "PYTEST_RESULTS=" >> "$GITHUB_ENV"
+          fi
 
       - name: Report results to Classroom
         # Reporter expects PYTEST_RESULTS containing Base64 payload and labels this run
-        if: always()
+        if: env.PYTEST_RESULTS != ''
         uses: classroom-resources/autograding-grading-reporter@v1
         with:
           runners: pytest

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import os
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +16,8 @@ from tests.notebook_grader import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def resolve_notebook_path(notebook_path: str | Path) -> Path:
@@ -77,3 +81,27 @@ def assert_code_cell_present(
 def get_explanation_cell(notebook_path: str, *, tag: str) -> str:
     """Return the content of a tagged explanation cell from the grading helper."""
     return grading_get_explanation_cell(notebook_path, tag=tag)
+
+
+def build_autograde_env(
+    overrides: Mapping[str, str | None] | None = None,
+    *,
+    base_env: Mapping[str, str] | None = None,
+) -> dict[str, str]:
+    """Return an environment mapping suitable for invoking autograde helpers."""
+
+    env = dict(base_env or os.environ)
+    repo = str(REPO_ROOT)
+    current = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = f"{repo}{os.pathsep}{current}" if current else repo
+    env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
+    env.setdefault("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
+
+    if overrides:
+        for key, value in overrides.items():
+            if value is None:
+                env.pop(key, None)
+            else:
+                env[key] = value
+
+    return env
