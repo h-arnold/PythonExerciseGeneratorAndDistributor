@@ -141,7 +141,8 @@ def test_exercise1_construct() -> None:
     tree = _exercise_ast(1)
     constants = _string_constants(tree)
     assert EXPECTED_STATIC_OUTPUT[1] in constants
-    assert _assignment_matches(tree, "greeting", lambda value: value == EXPECTED_STATIC_OUTPUT[1])
+    assert _assignment_matches(
+        tree, "greeting", lambda value: value == EXPECTED_STATIC_OUTPUT[1])
 
 
 @pytest.mark.task(taskno=2)
@@ -160,7 +161,8 @@ def test_exercise2_formatting() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_construct() -> None:
     tree = _exercise_ast(2)
-    assert _assignment_matches(tree, "subject", lambda value: value == "coding")
+    assert _assignment_matches(
+        tree, "subject", lambda value: value == "coding")
     assert _print_uses_name(tree, "subject")
 
 
@@ -189,7 +191,8 @@ def test_exercise4_logic() -> None:
     fruit = "dragonfruit"
     output = _exercise_output_with_inputs(4, [fruit])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[4], EXPECTED_INPUT_MESSAGES[4].format(value=fruit)]
+    assert lines == [EXPECTED_PROMPTS[4],
+                     EXPECTED_INPUT_MESSAGES[4].format(value=fruit)]
 
 
 @pytest.mark.task(taskno=4)
@@ -214,7 +217,8 @@ def test_exercise5_logic() -> None:
     place = "Newport"
     output = _exercise_output_with_inputs(5, [place])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[5], EXPECTED_INPUT_MESSAGES[5].format(value=place)]
+    assert lines == [EXPECTED_PROMPTS[5],
+                     EXPECTED_INPUT_MESSAGES[5].format(value=place)]
 
 
 @pytest.mark.task(taskno=5)
@@ -239,7 +243,8 @@ def test_exercise6_logic() -> None:
     name = "Jess"
     output = _exercise_output_with_inputs(6, [name])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[6], EXPECTED_INPUT_MESSAGES[6].format(value=name)]
+    assert lines == [EXPECTED_PROMPTS[6],
+                     EXPECTED_INPUT_MESSAGES[6].format(value=name)]
 
 
 @pytest.mark.task(taskno=6)
@@ -277,8 +282,10 @@ def test_exercise7_formatting() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_construct() -> None:
     tree = _exercise_ast(7)
-    assert _assignment_matches(tree, "first_word", lambda value: value == "Variables")
-    assert _assignment_matches(tree, "second_word", lambda value: value == "matter")
+    assert _assignment_matches(
+        tree, "first_word", lambda value: value == "Variables")
+    assert _assignment_matches(
+        tree, "second_word", lambda value: value == "matter")
     assert _print_uses_name(tree, "first_word")
     assert _print_uses_name(tree, "second_word")
 
@@ -300,7 +307,8 @@ def test_exercise8_formatting() -> None:
 def test_exercise8_construct() -> None:
     tree = _exercise_ast(8)
     assert _assignment_matches(tree, "part1", lambda value: value == "Keep")
-    assert _assignment_matches(tree, "part2", lambda value: value == "experimenting")
+    assert _assignment_matches(
+        tree, "part2", lambda value: value == "experimenting")
     assert _print_uses_name(tree, "part1")
     assert _print_uses_name(tree, "part2")
 
@@ -322,8 +330,10 @@ def test_exercise9_formatting() -> None:
 def test_exercise9_construct() -> None:
     tree = _exercise_ast(9)
     assert _assignment_matches(tree, "greeting", lambda value: value == "Good")
-    assert _assignment_matches(tree, "time_of_day", lambda value: value == "evening")
-    assert _assignment_matches(tree, "audience", lambda value: value == "everyone!")
+    assert _assignment_matches(
+        tree, "time_of_day", lambda value: value == "evening")
+    assert _assignment_matches(
+        tree, "audience", lambda value: value == "everyone!")
     assert _print_uses_name(tree, "greeting")
     assert _print_uses_name(tree, "time_of_day")
     assert _print_uses_name(tree, "audience")
@@ -346,9 +356,12 @@ def test_exercise10_formatting() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_construct() -> None:
     tree = _exercise_ast(10)
-    assert _assignment_matches(tree, "part_one", lambda value: "Variables" in value)
-    assert _assignment_matches(tree, "part_two", lambda value: "strings" in value)
-    assert _assignment_matches(tree, "part_three", lambda value: "message" in value)
+    assert _assignment_matches(
+        tree, "part_one", lambda value: "Variables" in value)
+    assert _assignment_matches(
+        tree, "part_two", lambda value: "strings" in value)
+    assert _assignment_matches(
+        tree, "part_three", lambda value: "message" in value)
     assert _print_uses_name(tree, "part_one")
     assert _print_uses_name(tree, "part_two")
     assert _print_uses_name(tree, "part_three")

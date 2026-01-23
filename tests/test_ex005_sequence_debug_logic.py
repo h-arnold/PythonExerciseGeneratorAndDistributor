@@ -272,7 +272,8 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(FULL_NAME_EXERCISE))
+    explanation = get_explanation_cell(
+        NOTEBOOK_PATH, tag=_explanation_tag(FULL_NAME_EXERCISE))
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
 
 
@@ -427,5 +428,6 @@ def test_exercise10_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(PROFILE_EXERCISE))
+    explanation = get_explanation_cell(
+        NOTEBOOK_PATH, tag=_explanation_tag(PROFILE_EXERCISE))
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
