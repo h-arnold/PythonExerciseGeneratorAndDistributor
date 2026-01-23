@@ -19,6 +19,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from tests.autograde_plugin_typeguards import is_marker_args, is_marker_kwargs
+
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
 
@@ -140,14 +142,14 @@ def _get_task_marker(item: Any) -> Any | None:
 
 def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
     kwargs = getattr(marker, "kwargs", None)
-    if isinstance(kwargs, dict):
+    if is_marker_kwargs(kwargs):
         return kwargs
     return {}
 
 
 def _extract_marker_args(marker: Any) -> Sequence[Any]:
     args = getattr(marker, "args", ())
-    if isinstance(args, Sequence):
+    if is_marker_args(args):
         return args
     return ()
 
@@ -563,7 +565,7 @@ def _write_json_with_fallback(payload: dict[str, Any], path: Path, state: Autogr
         state.encountered_errors.append(error_message)
         print(f"Autograde plugin failed to write results: {error_message}", file=sys.stderr)
 
-        fallback = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
+        fallback: dict[str, Any] = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
         try:
             with path.open("w", encoding="utf-8") as handle:
                 json.dump(fallback, handle, ensure_ascii=False, indent=2)
