@@ -372,9 +372,17 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
         "tests": normalised_tests,
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
-    for key in ("errors", "notes", "start_timestamp", "end_timestamp"):
-        if key in raw_results:
-            payload[key] = raw_results[key]
+
+    # Explicitly assign optional fields to satisfy TypedDict type checking
+    if "errors" in raw_results:
+        payload["errors"] = raw_results["errors"]
+    if "notes" in raw_results:
+        payload["notes"] = raw_results["notes"]
+    if "start_timestamp" in raw_results:
+        payload["start_timestamp"] = raw_results["start_timestamp"]
+    if "end_timestamp" in raw_results:
+        payload["end_timestamp"] = raw_results["end_timestamp"]
+
     return payload
 
 
