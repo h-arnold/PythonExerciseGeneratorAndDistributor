@@ -38,6 +38,41 @@ scripts/               # Automation utilities
 docs/                  # Project documentation
 ```
 
+### Naming and folder organisation
+
+- File and module naming
+    - Use snake_case for module and file names (e.g., `my_module.py`, `string_utils.py`).
+    - Use CamelCase for classes (e.g., `HtmlParser`) and UPPER_SNAKE for constants.
+    - Keep module surface area small and explicit: prefer small modules with a clear single responsibility.
+
+- Packages and splitting modules
+    - When a module grows or has distinct responsibilities, convert it to a package:
+        - Create a folder `my_module/` with `__init__.py`.
+        - Split parts into cohesive submodules (e.g., `my_module/core.py`, `my_module/_helpers.py`, `my_module/cli.py`).
+        - Keep truly internal pieces prefixed with an underscore (e.g., `_helpers.py`).
+        - Re-export the public API from `__init__.py` so callers use `from my_module import X`.
+    - Aim for shallow, focused packages. If a package becomes complex, consider further subpackages.
+
+- Type hints, guards and shared types
+    - Put type guard helpers adjacent to the code they protect:
+        - Prefer `module_typeguards.py`.
+    - For cross-cutting TypedDicts or widely used type definitions, use a small `types/` package at repo root (e.g., `types/__init__.py`).
+    - Keep type-only modules small and documented; avoid circular imports by placing shared TypedDicts in `types/` if necessary.
+
+- Tests organisation
+    - Mirror the package/module layout under `tests/`. Examples:
+        - `my_module.py` -> `tests/test_my_module.py`
+        - `my_module/` package -> `tests/test_my_module_api.py`, `tests/test_my_module_core.py`
+    - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
+    - Keep tests fast and deterministic (no network, sleep, or randomness).
+    - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
+    - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` and `PYTUTOR_NOTEBOOKS_DIR` as described elsewhere.
+
+- Practical rules of thumb
+    - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
+    - Keep type guards and tiny helpers close to the code they protect to reduce cognitive overhead and avoid import cycles.
+    - When splitting code, update and add tests at the same time and expose only the intended public API from packages.
+
 ## Key Concepts
 
 ### Tagged Cells
