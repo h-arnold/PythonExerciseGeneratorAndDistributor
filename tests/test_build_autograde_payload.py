@@ -11,7 +11,8 @@ from pathlib import Path
 
 import pytest
 
-CLI_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
+CLI_SCRIPT = Path(__file__).resolve(
+).parents[1] / "scripts" / "build_autograde_payload.py"
 REPO_ROOT = CLI_SCRIPT.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -77,7 +78,8 @@ def _execute_cli(  # noqa: PLR0913
 
 def _set_cli_env(monkeypatch: pytest.MonkeyPatch) -> None:
     current = os.environ.get("PYTHONPATH")
-    pythonpath = f"{REPO_ROOT}{os.pathsep}{current}" if current else str(REPO_ROOT)
+    pythonpath = f"{REPO_ROOT}{os.pathsep}{current}" if current else str(
+        REPO_ROOT)
     monkeypatch.setenv("PYTHONPATH", pythonpath)
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
@@ -326,7 +328,8 @@ def test_cli_handles_missing_results_file(
             path.unlink()
         return code
 
-    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_remove)
+    monkeypatch.setattr(build_autograde_payload,
+                        "run_pytest", run_pytest_and_remove)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -365,7 +368,8 @@ def test_cli_handles_malformed_json(
         path.write_text("{ invalid json", encoding="utf-8")
         return code
 
-    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_corrupt)
+    monkeypatch.setattr(build_autograde_payload,
+                        "run_pytest", run_pytest_and_corrupt)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(

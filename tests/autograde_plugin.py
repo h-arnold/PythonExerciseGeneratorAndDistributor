@@ -84,12 +84,14 @@ class AutogradeState:
     results: list[AutogradeTestResult] = field(default_factory=_empty_results)
     total_score: float = 0.0
     max_score: float = 0.0
-    encountered_errors: list[str] = field(default_factory=_empty_error_messages)
+    encountered_errors: list[str] = field(
+        default_factory=_empty_error_messages)
     notes: list[str] = field(default_factory=_empty_notes)
     start_timestamp: float | None = None
     end_timestamp: float | None = None
     results_path: Path | None = None
-    metadata: dict[str, AutogradeTestMetadata] = field(default_factory=_empty_metadata)
+    metadata: dict[str, AutogradeTestMetadata] = field(
+        default_factory=_empty_metadata)
     reported_nodeids: set[str] = field(default_factory=_empty_reported_nodeids)
 
 
@@ -121,7 +123,7 @@ def _normalise_name(raw_name: str) -> str:
     lowered = cleaned.lower()
     for prefix in ("test ", "test_", "tests ", "tests_"):
         if lowered.startswith(prefix):
-            cleaned = cleaned[len(prefix) :]
+            cleaned = cleaned[len(prefix):]
             break
     cleaned = cleaned.lstrip(" _")
     cleaned = cleaned.replace("_", " ")
@@ -277,7 +279,8 @@ def _resolve_line_number_from_location(location: Sequence[Any] | None) -> int | 
 def _resolve_line_number(report: Any) -> int | None:
     longrepr = getattr(report, "longrepr", None)
     reprcrash = getattr(longrepr, "reprcrash", None)
-    lineno_candidate = getattr(reprcrash, "lineno", None) if reprcrash else None
+    lineno_candidate = getattr(
+        reprcrash, "lineno", None) if reprcrash else None
     if isinstance(lineno_candidate, int):
         return lineno_candidate
 
@@ -305,7 +308,8 @@ def _build_call_phase_result(
     elif outcome == "skipped":
         status = "fail"
         score = 0.0
-        message_source = getattr(report, "longreprtext", None) or "Test skipped"
+        message_source = getattr(
+            report, "longreprtext", None) or "Test skipped"
         message = trim_failure_message(message_source)
     else:
         status = "fail"
@@ -338,7 +342,8 @@ def _build_non_call_phase_result(
     message_source = getattr(report, "longreprtext", None)
     if not message_source and hasattr(report, "longrepr"):
         message_source = str(report.longrepr)
-    message = trim_failure_message(message_source or "Test error during setup/teardown")
+    message = trim_failure_message(
+        message_source or "Test error during setup/teardown")
 
     return AutogradeTestResult(
         nodeid=context.nodeid,
@@ -396,7 +401,8 @@ def pytest_configure(config: Any) -> None:
         state = AutogradeState()
         config._autograde_state = state  # type: ignore[attr-defined]
 
-    state.results_path = Path(results_option).expanduser().resolve() if results_option else None
+    state.results_path = Path(results_option).expanduser(
+    ).resolve() if results_option else None
     if state.start_timestamp is None:
         state.start_timestamp = time.time()
     if state.results_path is None:
@@ -457,7 +463,8 @@ def pytest_runtest_logreport(report: Any) -> None:
 
     line_number = _resolve_line_number(report)
     duration = getattr(report, "duration", None)
-    captured_stdout, captured_stderr, captured_log = _extract_captured_output(report)
+    captured_stdout, captured_stderr, captured_log = _extract_captured_output(
+        report)
 
     context = _ReportContext(
         nodeid=nodeid,
@@ -504,7 +511,8 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
 
     results_path = state.results_path
     results_payload = [_result_to_dict(res) for res in state.results]
-    max_score = float(len(state.metadata)) if state.metadata else float(len(results_payload))
+    max_score = float(len(state.metadata)) if state.metadata else float(
+        len(results_payload))
     earned_score = float(sum(entry["score"] for entry in results_payload))
     overall_status = _derive_overall_status(state, results_payload)
 
@@ -534,9 +542,11 @@ def pytest_sessionfinish(session: Any, exitstatus: int) -> None:
     except Exception as exc:  # pragma: no cover - exercised in error handling tests
         error_message = f"Failed to write autograde results to {results_path}: {exc}"
         state.encountered_errors.append(error_message)
-        print(f"Autograde plugin failed to write results: {error_message}", file=sys.stderr)
+        print(
+            f"Autograde plugin failed to write results: {error_message}", file=sys.stderr)
 
-        fallback = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
+        fallback = {"status": "error", "score": 0.0,
+                    "max_score": 0.0, "tests": []}
         try:
             with results_path.open("w", encoding="utf-8") as handle:
                 json.dump(fallback, handle, ensure_ascii=False, indent=2)
@@ -561,13 +571,15 @@ def pytest_terminal_summary(terminalreporter: Any) -> None:
 
     total_tests = len(state.metadata) if state.metadata else len(state.results)
     passed = sum(1 for result in state.results if result.status == "pass")
-    overall_status = _derive_overall_status(state, [_result_to_dict(res) for res in state.results])
+    overall_status = _derive_overall_status(
+        state, [_result_to_dict(res) for res in state.results])
     if state.results_path:
         terminalreporter.write_line(
             f"Autograde summary: {passed}/{total_tests} passed | "
             f"Score {state.total_score}/{state.max_score} | Status {overall_status}"
         )
-        terminalreporter.write_line(f"Autograde results written to: {state.results_path}")
+        terminalreporter.write_line(
+            f"Autograde results written to: {state.results_path}")
     else:
         terminalreporter.write_line(
             "Autograde summary: no results file written (missing --autograde-results-path)"
