@@ -83,7 +83,8 @@ Default thresholds used by automated checks:
    - For each changed file:
       - Open the file in the editor, one at a time to ensure Pylance indexes it. **You must do this. This task will fail if you don't open the file first.**
       - Run Pylance diagnostics for that file and capture issues via `get_errors` and `pylance-mcp-server`.
-9. Decide next action based on the issues found (see Decision tree).
+9. Check the total line length of files changed. If over 500 lines, suggest splitting into smaller modules when sensible.
+10. Decide next action based on the issues found (see Decision tree).
 
 ## Decision tree (automated)
 

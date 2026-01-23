@@ -23,6 +23,7 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 - Readability & naming: meaningful names, consistent formatting, short expressions. Flag unclear/one-letter names and long inline expressions.
 - Single Responsibility: functions/classes should do one thing. Flag multi-responsibility functions for extraction.
 - Small functions & modules: prefer short functions (< max_function_length) and small modules; suggest splitting where appropriate.
+- If a function needs more than 5 parameters, refactor to use a configuration object or class.
 - Explicit error handling: no silent excepts; ensure clear exceptions and helpful messages.
 - Deterministic, fast tests: require unit tests for changed code, cover edge cases, avoid randomness/time/network in tests.
 - No dead code or commented-out code: remove unused imports, variables, and unreachable statements.
@@ -34,6 +35,7 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 - Performance when measured: don't preoptimize; add micro-benchmarks for hotspots and document trade-offs.
 - Consistent style & linting: run and fix ruff/formatting rules; ensure CI lints pass.
 - Type hints for public APIs: prefer modern annotations; check mismatches with tests or usage.
+- Type guards must be in a separate file near the main module to avoid cluttering business logic.
 - Backwards compatibility & deprecation: document breaking changes, provide migration notes or deprecation warnings.
 - Commit quality & scope: small, focused commits with clear messages and tests; include CHANGELOG or PR description for notable changes.
 - Testability & observability: code should be easily unit-testable; include logs/metrics where helpful for debugging.

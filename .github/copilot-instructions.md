@@ -62,7 +62,7 @@ The same tests run against both sets.
 
 ## Coding Standards
 
-### Concise Standards (derived from lint + tidy review)
+### Concise Standards
 
 - Python 3.11+; use modern type hints (e.g., `list[str]`).
 - Fail Fast: **No unnessecary defensive guards**. Better to find out something is broken than silently swallow errors!
