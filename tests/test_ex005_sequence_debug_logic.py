@@ -14,6 +14,10 @@ from tests.notebook_grader import (
 NOTEBOOK_PATH = "notebooks/ex005_sequence_debug_logic.ipynb"
 MIN_EXPLANATION_LENGTH = 10
 
+FULL_NAME_EXERCISE = 5
+PROFILE_EXERCISE = 10
+AVERAGE_DIVISOR = 2
+
 EXPECTED_SINGLE_LINE = {
     1: "50",
     2: "Alice",
@@ -26,13 +30,13 @@ EXPECTED_SINGLE_LINE = {
 }
 
 EXERCISE_INPUTS = {
-    5: ["Maria", "Jones"],
-    10: ["16", "Birmingham"],
+    FULL_NAME_EXERCISE: ["Maria", "Jones"],
+    PROFILE_EXERCISE: ["16", "Birmingham"],
 }
 
 INPUT_PROMPTS = {
-    5: ("Enter first name: ", "Enter last name: "),
-    10: ("Enter your age: ", "Enter your city: "),
+    FULL_NAME_EXERCISE: ("Enter first name: ", "Enter last name: "),
+    PROFILE_EXERCISE: ("Enter your age: ", "Enter your city: "),
 }
 
 
@@ -91,9 +95,9 @@ def _print_uses_name(tree: ast.AST, name: str) -> bool:
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
             and node.func.id == "print"
+            and any(isinstance(child, ast.Name) and child.id == name for child in ast.walk(node))
         ):
-            if any(isinstance(child, ast.Name) and child.id == name for child in ast.walk(node)):
-                return True
+            return True
     return False
 
 
@@ -117,10 +121,10 @@ def _input_prompts(tree: ast.AST) -> list[str]:
 
 def _expected_io_output(exercise_no: int, inputs: list[str]) -> str:
     prompt_first, prompt_second = INPUT_PROMPTS[exercise_no]
-    if exercise_no == 5:
+    if exercise_no == FULL_NAME_EXERCISE:
         first, last = inputs
         return f"{prompt_first}{prompt_second}{first} {last}\n"
-    if exercise_no == 10:
+    if exercise_no == PROFILE_EXERCISE:
         age, city = inputs
         return f"{prompt_first}{prompt_second}You are {age} years old and live in {city}\n"
     raise ValueError(f"Unexpected interactive exercise: {exercise_no}")
@@ -239,24 +243,24 @@ def test_exercise4_explanation() -> None:
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
-    output = _exercise_output(5)
-    first, last = EXERCISE_INPUTS[5]
+    output = _exercise_output(FULL_NAME_EXERCISE)
+    first, last = EXERCISE_INPUTS[FULL_NAME_EXERCISE]
     expected_name = f"{first} {last}"
     assert expected_name in output
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
-    inputs = EXERCISE_INPUTS[5]
-    output = _exercise_output(5)
-    assert output == _expected_io_output(5, inputs)
+    inputs = EXERCISE_INPUTS[FULL_NAME_EXERCISE]
+    output = _exercise_output(FULL_NAME_EXERCISE)
+    assert output == _expected_io_output(FULL_NAME_EXERCISE, inputs)
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_construct() -> None:
-    tree = _exercise_ast(5)
+    tree = _exercise_ast(FULL_NAME_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(INPUT_PROMPTS[5]).issubset(prompts)
+    assert set(INPUT_PROMPTS[FULL_NAME_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "full_name")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):
@@ -268,7 +272,7 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(5))
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(FULL_NAME_EXERCISE))
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
 
 
@@ -316,12 +320,14 @@ def test_exercise7_formatting() -> None:
 def test_exercise7_construct() -> None:
     tree = _exercise_ast(7)
     total_value = _assignment_value(tree, "total")
-    assert isinstance(total_value, ast.BinOp) and isinstance(total_value.op, ast.Add)
+    assert isinstance(total_value, ast.BinOp) and isinstance(
+        total_value.op, ast.Add)
     assert {"score1", "score2"} <= set(_names_in_node(total_value))
     average_value = _assignment_value(tree, "average")
-    assert isinstance(average_value, ast.BinOp) and isinstance(average_value.op, ast.Div)
+    assert isinstance(average_value, ast.BinOp) and isinstance(
+        average_value.op, ast.Div)
     assert "total" in _names_in_node(average_value)
-    assert 2 in _number_constants(average_value)
+    assert AVERAGE_DIVISOR in _number_constants(average_value)
     assert _print_uses_name(tree, "average")
 
 
@@ -379,7 +385,8 @@ def test_exercise9_construct() -> None:
     value = _assignment_value(tree, "perimeter")
     assert value is not None
     assert {"length", "width"} <= set(_names_in_node(value))
-    assert any(isinstance(node, (ast.Add, ast.Mult)) for node in ast.walk(value))
+    assert any(isinstance(node, (ast.Add, ast.Mult))
+               for node in ast.walk(value))
     assert _print_uses_name(tree, "perimeter")
 
 
@@ -391,24 +398,24 @@ def test_exercise9_explanation() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_logic() -> None:
-    output = _exercise_output(10)
-    age, city = EXERCISE_INPUTS[10]
+    output = _exercise_output(PROFILE_EXERCISE)
+    age, city = EXERCISE_INPUTS[PROFILE_EXERCISE]
     expected_message = f"You are {age} years old and live in {city}"
     assert expected_message in output
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_formatting() -> None:
-    inputs = EXERCISE_INPUTS[10]
-    output = _exercise_output(10)
-    assert output == _expected_io_output(10, inputs)
+    inputs = EXERCISE_INPUTS[PROFILE_EXERCISE]
+    output = _exercise_output(PROFILE_EXERCISE)
+    assert output == _expected_io_output(PROFILE_EXERCISE, inputs)
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_construct() -> None:
-    tree = _exercise_ast(10)
+    tree = _exercise_ast(PROFILE_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(INPUT_PROMPTS[10]).issubset(prompts)
+    assert set(INPUT_PROMPTS[PROFILE_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "message")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):
@@ -420,5 +427,5 @@ def test_exercise10_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(10))
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(PROFILE_EXERCISE))
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
