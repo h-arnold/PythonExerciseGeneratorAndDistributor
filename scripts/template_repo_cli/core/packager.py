@@ -1,4 +1,4 @@
-"""Template packager."""
+"""Template packager, including Classroom autograding support files."""
 
 from __future__ import annotations
 
@@ -89,6 +89,16 @@ class TemplatePackager:
         if src.exists():
             safe_copy_file(src, workspace / "tests" / "notebook_grader.py")
 
+        # Include Classroom autograding payload builder
+        src = self.repo_root / "scripts" / "build_autograde_payload.py"
+        if src.exists():
+            safe_copy_file(src, workspace / "scripts" / "build_autograde_payload.py")
+
+        # Bundle pytest plugin for Classroom autograding
+        src = self.repo_root / "tests" / "autograde_plugin.py"
+        if src.exists():
+            safe_copy_file(src, workspace / "tests" / "autograde_plugin.py")
+
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
@@ -134,6 +144,8 @@ class TemplatePackager:
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
+            workspace / "scripts" / "build_autograde_payload.py",
+            workspace / "tests" / "autograde_plugin.py",
         ]
 
         for required_file in required_files:

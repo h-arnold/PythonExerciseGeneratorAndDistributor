@@ -27,7 +27,13 @@ Follow this decision tree strictly:
 1.  **Edit**: Make changes to the code.
     *   *Rule*: Apply "KISS" (Keep It Simple, Stupid).
     *   *Rule*: Apply "DRY" (Don't Repeat Yourself).
-2.  **Lint/Type Check**: Use `pylance-mcp-server` tools or run `ruff check .` to verify no immediate errors were introduced.
+2.  **Lint/Type Check**: 
+    * Use `pylance-mcp-server` tools,
+    * run `ruff check .` and,
+    * use your `get_errors` tool to:
+
+    to verify no immediate errors were introduced. Pay particular attention for typing errors and address these immediately. 
+
 3.  **Test**:
     *   Run `pytest` on the relevant test files.
     *   **IF** tests fail: Analyze, Fix, Repeat.

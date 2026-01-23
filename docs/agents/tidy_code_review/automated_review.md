@@ -82,7 +82,7 @@ Default thresholds used by automated checks:
 8. Run Pylance diagnostics:
    - For each changed file:
       - Open the file in the editor, one at a time to ensure Pylance indexes it. **You must do this. This task will fail if you don't open the file first.**
-      - Run Pylance diagnostics for that file and capture issues via `problems` and `pylance-mcp-server`.
+      - Run Pylance diagnostics for that file and capture issues via `get_errors` and `pylance-mcp-server`.
 9. Decide next action based on the issues found (see Decision tree).
 
 ## Decision tree (automated)
