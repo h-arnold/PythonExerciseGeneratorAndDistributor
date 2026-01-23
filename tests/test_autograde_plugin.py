@@ -96,7 +96,8 @@ def _is_autograde_payload(value: object) -> TypeGuard[AutogradePayload]:
         for key in ("start_timestamp", "end_timestamp")
         if key in value
     )
-    extras_ok = all(isinstance(value[key], list) for key in ("errors", "notes") if key in value)
+    extras_ok = all(isinstance(value[key], list)
+                    for key in ("errors", "notes") if key in value)
     return status_ok and score_ok and max_score_ok and tests_ok and timestamps_ok and extras_ok
 
 
@@ -139,7 +140,8 @@ def expect_single_test_entry(
     expected: ExpectedTestFields | None = None,
 ) -> AutogradePayloadTestEntry:
     tests = payload["tests"]
-    assert len(tests) == 1, f"Expected a single test entry, received {len(tests)}"
+    assert len(
+        tests) == 1, f"Expected a single test entry, received {len(tests)}"
     entry_candidate = tests[0]
     assert _is_autograde_test_entry(entry_candidate)
     entry = entry_candidate

@@ -38,6 +38,12 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
+Run the helper directly during development:
+
+```bash
+./scripts/verify_solutions.sh
+```
+
 ## Working on the Grading System
 
 ### `notebook_grader.py`

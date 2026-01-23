@@ -8,15 +8,15 @@ The core of the integration lies in the **template repository** used for your as
 
 ### Is `classroom.yml` Sufficient?
 
-**Yes, placing the custom workflow file at `.github/workflows/classroom.yml` in your template repository is the sufficient and recommended method** for configuring autograding [1].
+**Yes, placing the custom workflow file at `.github/workflows/classroom.yml` in your template repository is the sufficient and recommended method** for configuring autograding (see [Use autograding](https://docs.github.com/en/education/manage-coursework-with-github-classroom/teach-with-github-classroom/use-autograding)).
 
-When a student accepts the assignment, GitHub Classroom automatically copies the contents of the template repository, including the `.github/workflows/classroom.yml` file, into the student's new assignment repository. GitHub Actions then automatically detects and runs this workflow on specified events, such as a `push` or `workflow_dispatch` [2].
+When a student accepts the assignment, GitHub Classroom automatically copies the contents of the template repository, including the `.github/workflows/classroom.yml` file, into the student's new assignment repository. GitHub Actions then automatically detects and runs this workflow on specified events, such as a `push` or `workflow_dispatch` (see [View autograding results](https://docs.github.com/en/education/manage-coursework-with-github-classroom/learn-with-github-classroom/view-autograding-results)).
 
 ### The Reporting Mechanism
 
 GitHub Classroom does not "watch" for a specific file or output. Instead, the `autograding-grading-reporter` action is responsible for communicating the final score back to the GitHub Classroom interface.
 
-The reporter achieves this by using the GitHub Actions workflow command `core.notice` to create annotations containing the score summary and a JSON payload. GitHub Classroom parses these notices to display the score and pass/fail status to both the student and the instructor [3].
+The reporter achieves this by using the GitHub Actions workflow command `core.notice` to create annotations containing the score summary and a JSON payload. GitHub Classroom parses these notices to display the score and pass/fail status to both the student and the instructor (see [notify-classroom.js](https://github.com/classroom-resources/autograding-grading-reporter/blob/main/src/notify-classroom.js)).
 
 ## 2. Integrating the Grading Reporter into `classroom.yml`
 
@@ -24,7 +24,7 @@ The custom workflow must consist of two main parts: the **Test Runner Steps** an
 
 ### A. Test Runner Steps
 
-Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array).
+Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array). For pytest-based projects, run the CLI wrapper so the autograde plugin is activated and payloads are generated consistently; see the [Autograding CLI guide](docs/autograding-cli.md) for the exact invocation.
 
 The key is to assign a unique `id` to each test step and ensure it outputs the result.
 
@@ -94,7 +94,7 @@ jobs:
 | Requirement | Detail |
 | :--- | :--- |
 | **Workflow File** | Must be located at `.github/workflows/classroom.yml` in the template repository. |
-| **Permissions** | Standard read permissions are sufficient for the reporter in most workflows; the action relies on workflow notices rather than direct checks updates [3] [4]. |
+| **Permissions** | Standard read permissions are sufficient for the reporter in most workflows; the action relies on workflow notices rather than direct checks updates (see [notify-classroom.js](https://github.com/classroom-resources/autograding-grading-reporter/blob/main/src/notify-classroom.js) and the [autograding-grading-reporter README](https://github.com/classroom-resources/autograding-grading-reporter/blob/main/README.md)). |
 | **Test Runner Output** | Each test step must output a Base64-encoded JSON string containing the test results, including `max_score` and the `tests` array. |
 | **Reporter Configuration** | The `runners` input must be a comma-separated list of the test step `id`s. |
 | **Environment Variables** | Environment variables must be set for each runner in the format `UPPERCASE_STEP_ID_RESULTS` to pass the Base64-encoded JSON output. |
@@ -165,7 +165,7 @@ The Base64 text is written to the file specified via `--output` (default `tmp/au
 
 ## References
 
-[1] GitHub Docs. (n.d.). *Use autograding*. Retrieved from https://docs.github.com/en/education/manage-coursework-with-github-classroom/teach-with-github-classroom/use-autograding
-[2] GitHub Docs. (n.d.). *View autograding results*. Retrieved from https://docs.github.com/en/education/manage-coursework-with-github-classroom/learn-with-github-classroom/view-autograding-results
-[3] classroom-resources. (2023). *notify-classroom.js*. GitHub. Retrieved from https://github.com/classroom-resources/autograding-grading-reporter/blob/main/src/notify-classroom.js
-[4] classroom-resources. (n.d.). *autograding-grading-reporter README.md*. Retrieved from https://github.com/classroom-resources/autograding-grading-reporter/blob/main/README.md
+- GitHub Docs. (n.d.). *Use autograding*. [GitHub Classroom documentation](https://docs.github.com/en/education/manage-coursework-with-github-classroom/teach-with-github-classroom/use-autograding)
+- GitHub Docs. (n.d.). *View autograding results*. [GitHub Classroom documentation](https://docs.github.com/en/education/manage-coursework-with-github-classroom/learn-with-github-classroom/view-autograding-results)
+- classroom-resources. (2023). *notify-classroom.js*. [Repository source](https://github.com/classroom-resources/autograding-grading-reporter/blob/main/src/notify-classroom.js)
+- classroom-resources. (n.d.). *autograding-grading-reporter README.md*. [Repository documentation](https://github.com/classroom-resources/autograding-grading-reporter/blob/main/README.md)

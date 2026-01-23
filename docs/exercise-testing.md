@@ -89,7 +89,7 @@ def test_exercise1_happy_path():
 ```python
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic():
-    """Criteria 1: Arithmetic logic is corect."""
+    """Criteria 1: Arithmetic logic is correct."""
     output = run_cell_with_input(..., inputs=["5"])
     assert "25" in output  # The answer
 

@@ -45,12 +45,12 @@ uv run python scripts/build_autograde_payload.py --pytest-args=-k --pytest-args=
 - name: Build autograde payload
   run: |
     uv run python scripts/build_autograde_payload.py \
-      --pytest-args=-q \
       --pytest-args=tests/test_ex001_sanity.py \
+      --output=tmp/autograde/payload.txt \
       --summary=tmp/autograde/payload.json
 ```
 
-The workflow reads the Base64 payload from the file specified by `--output` and exports `encoded_payload`, `overall_status`, `earned_score`, and `max_score` through `GITHUB_OUTPUT` for the reporter.
+The default `-q` flag still applies when `--pytest-args=-q` is omitted, so the snippet relies on the implicit quiet mode. The workflow reads the Base64 payload from the file specified by `--output` and exports `encoded_payload`, `overall_status`, `earned_score`, and `max_score` through `GITHUB_OUTPUT` for the reporter.
 
 ## Outputs
 
