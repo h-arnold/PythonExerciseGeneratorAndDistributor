@@ -2,6 +2,7 @@
 name: Implementer Agent
 description: Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes.
 tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
+infer: true
 ---
 # Implementer Agent
 

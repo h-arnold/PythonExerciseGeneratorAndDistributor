@@ -189,7 +189,7 @@ For any significant code changes (defined as adding/modifying more than 1 functi
 
 ## Code Review & Tidy Checks
 
-After making changes to code that **IS NOT** student notebooks (whether manually or via the Implementer agent), **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
+After making changes to code that **IS NOT** student notebooks (whether manually or via the Implementer agent), **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `functions.runSubagent` tool.
 
 - Purpose: verify claimed changes, run lint/type diagnostics, apply safe cleanups (formatting, remove unused imports, small refactors), and report remaining issues.
 - Typical workflow:
