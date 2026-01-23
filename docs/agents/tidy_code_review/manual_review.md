@@ -53,8 +53,9 @@ Defaults and thresholds are configurable via `agent-config.yml`.
 5. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.
 6. **Review code duplication**: Manually scan for repeated logic patterns, especially across module boundaries. Suggest extraction to shared utilities.
 7. **Verify adherence to standards**: Check that changed code follows the repo's coding conventions, naming patterns, and architectural principles outlined in the docs.
+   1. Focus particularly hard on unnessecary defensive guards that result in silent failures or obscure error handling. Code **must** fail fast and loudly with clear exceptions bubbled up.
 8. **Compare docs against the code**: Ensure any behavioural changes are reflected in documentation, README, or docstrings. Flag discrepancies for update.
-9. **Check the total length of files**: If a file exceeds 500 lines, suggest splitting into smaller modules when sensible.
+9.  **Check the total length of files**: If a file exceeds 500 lines, suggest splitting into smaller modules when sensible.
 10. **Prepare findings report**: Document control/data flow observations, suggested refactors requiring human judgement, and patches for non-trivial changes. Recommend draft PRs where extensive follow-up work is needed.
 
 ### OPTIONAL (manual)

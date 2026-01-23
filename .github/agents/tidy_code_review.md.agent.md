@@ -19,6 +19,8 @@ Ignore files in the following locations:
 
 **Workflow**: Always call the automated review first. Based on issue count, decide whether to proceed with manual review or defer.
 
+**Never silence linting errors without explict authorisation from the user.**
+
 ## Workflow (main agent entry point)
 
 Execute the following phases in strict order:
