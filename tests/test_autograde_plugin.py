@@ -396,7 +396,7 @@ def test_plugin_handles_write_errors(
     call_count = {"count": 0}
 
     # type: ignore[override]
-    def _fail_once(self: Path, *args: object, **kwargs: object):
+    def _fail_once(self: Path, *args: Any, **kwargs: Any) -> Any:
         if self == target and call_count["count"] == 0:
             call_count["count"] += 1
             raise OSError("disk full")
