@@ -196,7 +196,8 @@ def _normalise_notebooks_dir(value: str | None) -> str | None:
 
     if value is None:
         return None
-    return value.replace("\\", "/").strip()
+    normalised = value.replace("\\", "/").strip()
+    return normalised or None
 
 
 def _should_zero_scores_on_failure() -> bool:
