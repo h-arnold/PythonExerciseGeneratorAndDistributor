@@ -24,11 +24,9 @@ import sys
 import textwrap
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, TypedDict, cast
-
-from typing_extensions import NotRequired  # noqa: UP035
+from typing import Any, NotRequired, TypedDict, cast
 
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
@@ -359,7 +357,7 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
         "max_score": max_score,
         "score": earned_score_value,
         "tests": normalised_tests,
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),  # noqa: UP017
+        "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
 
     # Explicitly assign optional fields to satisfy TypedDict type checking

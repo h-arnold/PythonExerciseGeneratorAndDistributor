@@ -7,11 +7,10 @@ import sys
 import textwrap
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, TypeAlias, TypedDict, cast
+from typing import Any, NotRequired, TypeAlias, TypedDict, cast
 
 import pytest
 from pytest import approx  # pyright: ignore[reportUnknownVariableType]
-from typing_extensions import NotRequired  # noqa: UP035
 
 from tests.helpers import build_autograde_env
 

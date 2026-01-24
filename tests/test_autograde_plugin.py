@@ -4,11 +4,10 @@ import json
 import textwrap
 from collections.abc import Sequence
 from pathlib import Path
-from typing import IO, Any, Protocol, TypedDict, cast
+from typing import IO, Any, NotRequired, Protocol, TypedDict, cast
 
 import pytest
 from pytest import approx  # pyright: ignore[reportUnknownVariableType]
-from typing_extensions import NotRequired  # noqa: UP035
 
 pytest_plugins = ("pytester",)
 
@@ -80,7 +79,16 @@ def _assert_dict(value: object, *, context: str) -> dict[str, Any]:
 
 def _assert_autograde_test_entry(value: object) -> AutogradePayloadTestEntry:
     entry = _assert_dict(value, context="Test entry")
-    required_keys = ("nodeid", "name", "status", "score", "message", "line_no", "duration")
+    required_keys = (
+        "nodeid",
+        "name",
+        "status",
+        "score",
+        "message",
+        "line_no",
+        "duration",
+        "taskno",
+    )
     for key in required_keys:
         assert key in entry, f"Missing required test field: {key}"
 
@@ -92,7 +100,7 @@ def _assert_autograde_test_entry(value: object) -> AutogradePayloadTestEntry:
     message = entry["message"]
     line_no = entry["line_no"]
     duration = entry["duration"]
-    taskno = entry.get("taskno")
+    taskno = entry["taskno"]
 
     assert isinstance(message, str) or message is None
     assert isinstance(line_no, int) or line_no is None
