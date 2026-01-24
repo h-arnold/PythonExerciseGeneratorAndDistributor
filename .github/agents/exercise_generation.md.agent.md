@@ -275,6 +275,6 @@ Rules:
 - **Always use your `manage_todo_list` tool** to plan and track your progress through a task.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
-- **Convention**: No docstrings until the Functions construct is reached.
+- **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.
 - **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass using the verifier subagent.
 - **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).
