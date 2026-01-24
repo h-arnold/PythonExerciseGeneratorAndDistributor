@@ -1,4 +1,4 @@
-# Codex Repository Instructions — PythonExerciseGeneratorAndDistributor
+# Codex Repository Instructions — PythonTutorExercises
 
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
