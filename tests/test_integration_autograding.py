@@ -9,7 +9,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, NotRequired, TypeAlias, TypedDict, cast
 
-import pytest
 from pytest import approx  # pyright: ignore[reportUnknownVariableType]
 
 from tests.helpers import build_autograde_env
@@ -172,8 +171,9 @@ def _expect_student_failure(
     if payload["status"] == "pass" and _normalise_score(payload["score"]) == _normalise_score(
         payload["max_score"]
     ):
-        pytest.xfail(
-            "Student notebooks currently satisfy ex001_sanity tests; update scaffolding to observe a failing case."
+        raise AssertionError(
+            "Student notebooks unexpectedly passed the failing fixture; update the fixture "
+            "or ensure the student run uses the intended notebooks directory."
         )
 
     assert manual_run.returncode != 0
@@ -269,7 +269,22 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
 
 
 def test_autograding_with_real_exercise(tmp_path: Path) -> None:
-    target_test = REPO_ROOT / "tests" / "test_ex001_sanity.py"
+    target_test = tmp_path / "test_autograde_student_failure.py"
+    target_test.write_text(
+        textwrap.dedent(
+            """
+            import os
+
+
+            def test_solution_notebook_env() -> None:
+                assert os.environ.get("PYTUTOR_NOTEBOOKS_DIR") == "notebooks/solutions", (
+                    "Solution autograding must run with PYTUTOR_NOTEBOOKS_DIR='notebooks/solutions'; "
+                    "student runs intentionally fail when this is set to 'notebooks'."
+                )
+            """
+        ).lstrip(),
+        encoding="utf-8",
+    )
 
     solution_env: EnvOverrides = {
         "PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"}
@@ -286,11 +301,12 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
     _assert_cli_alignment(sol_cli_run, sol_run, sol_payload, sol_results)
     _expect_solution_success(sol_run, sol_payload, sol_results)
 
+    student_env: EnvOverrides = {"PYTUTOR_NOTEBOOKS_DIR": "notebooks"}
     student_dir = tmp_path / "students"
     student_run, student_results = _run_manual_autograde(
-        student_dir, target_test, None)
+        student_dir, target_test, student_env)
     student_cli_run, student_payload = _run_cli_autograde(
-        student_dir, target_test, None)
+        student_dir, target_test, student_env)
 
     _assert_cli_alignment(student_cli_run, student_run,
                           student_payload, student_results)
