@@ -115,14 +115,14 @@ PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
     --results-json=tmp/autograde/results.json
 ```
 
-If you omit `PYTUTOR_NOTEBOOKS_DIR`, the script will exercise the student notebooks instead. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](docs/autograding-cli.md).
+If you omit `PYTUTOR_NOTEBOOKS_DIR`, the script will exercise the student notebooks instead. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
 
 ### Test workflow changes safely
 
 - Use [act](https://github.com/nektos/act) to dry-run workflow edits against the repository configuration before pushing
 - Push experiment branches to a sandbox Classroom template and run the full workflow end-to-end
 - Keep payload fields backward compatible: preserve the plugin option names, JSON structure, and Base64 encoding so existing Classroom assignments keep working
-- Review the GitHub Classroom integration guidance in [docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md](docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md) when adjusting CI steps
+- Review the GitHub Classroom integration guidance in [docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md](GitHub_Classroom_Autograding_Integration_Guide__Us.md) when adjusting CI steps
 
 ## Working on the Exercise Generator
 
