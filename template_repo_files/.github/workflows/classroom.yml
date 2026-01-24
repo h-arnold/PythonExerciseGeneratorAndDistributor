@@ -41,6 +41,7 @@ jobs:
           PYTUTOR_NOTEBOOKS_DIR: notebooks
         run: |
           uv run python scripts/build_autograde_payload.py \
+            --pytest-args="-p tests.autograde_plugin" \
             --output tmp/autograde/payload.txt \
             --summary tmp/autograde/results.json
 
