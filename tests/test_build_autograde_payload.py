@@ -121,6 +121,31 @@ def test_cli_propagates_pytest_exit_code(tmp_path: Path) -> None:
     assert payload["status"] == "fail"
 
 
+def test_cli_zeroes_scores_when_student_notebooks_fail(tmp_path: Path) -> None:
+    """Verify that failing tests with PYTUTOR_NOTEBOOKS_DIR=notebooks yield zero scores."""
+    test_file = _write_test_file(
+        tmp_path,
+        """
+        def test_failure() -> None:
+            assert False, "Expected failure"
+
+        def test_another_failure() -> None:
+            assert 1 == 2
+        """,
+    )
+    completed, results_path, _, _ = _execute_cli(
+        tmp_path,
+        [PLUGIN_FLAG, str(test_file)],
+        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks"},
+    )
+    assert completed.returncode == 1
+    payload = json.loads(results_path.read_text(encoding="utf-8"))
+    assert payload["status"] == "fail"
+    assert payload["score"] == 0.0
+    for test in payload["tests"]:
+        assert test["score"] == 0.0
+
+
 @pytest.mark.parametrize(
     "scenario",
     [
