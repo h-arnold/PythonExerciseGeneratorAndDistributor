@@ -81,7 +81,7 @@ The agent should finish when all the following are satisfied:
 4. A final report (as described below) has been produced and either posted back to the calling agent or opened as a draft PR.
 5. All trivial/safe fixes permitted by the automated phase were applied and tests were re-run when possible.
 
-## Safety & automation policy (summary) (summary)
+## Safety & automation policy (summary)
 See "Scope & Limits" section above for the complete list of safe edits vs. suggestions-only changes.
 
 For non-automated refactors:
