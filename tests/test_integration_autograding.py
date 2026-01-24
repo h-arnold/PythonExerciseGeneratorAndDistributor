@@ -276,10 +276,10 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
             import os
 
 
-            def test_student_notebooks_fail() -> None:
+            def test_solution_notebook_env() -> None:
                 assert os.environ.get("PYTUTOR_NOTEBOOKS_DIR") == "notebooks/solutions", (
-                    "Student notebooks should fail autograding; update the fixture if "
-                    "the default environment changes."
+                    "Solution autograding must run with PYTUTOR_NOTEBOOKS_DIR='notebooks/solutions'; "
+                    "student runs intentionally fail when this is set to 'notebooks'."
                 )
             """
         ).lstrip(),
