@@ -107,7 +107,7 @@ The same tests run against both sets.
 ### Concise Standards
 
 - Python 3.11+; use modern type hints (e.g., `list[str]`).
-- Fail Fast: **No unnessecary defensive guards**. Better to find out something is broken than silently swallow errors!
+- Fail Fast: **No unnecessary defensive guards**. Better to find out something is broken than silently swallow errors!
 - Docstrings required for public functions.
 - Keep logic simple (KISS): low complexity, shallow nesting, short functions.
 - Avoid duplication (DRY): extract shared helpers when logic repeats.
