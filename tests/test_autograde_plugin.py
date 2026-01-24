@@ -4,7 +4,7 @@ import json
 import textwrap
 from collections.abc import Sequence
 from pathlib import Path
-from typing import IO, Any, NotRequired, Protocol, TypedDict, TypeGuard, cast
+from typing import IO, Any, NotRequired, Protocol, TypedDict, cast
 
 import pytest
 from pytest import approx  # pyright: ignore[reportUnknownVariableType]
@@ -72,69 +72,66 @@ class ExpectedTestFields(TypedDict, total=False):
     name: str
 
 
-_MISSING = object()
+def _assert_dict(value: object, *, context: str) -> dict[str, Any]:
+    assert isinstance(value, dict), f"{context} should be a dict"
+    return cast(dict[str, Any], value)
 
 
-def _is_autograde_payload(value: object) -> TypeGuard[AutogradePayload]:
-    if not isinstance(value, dict):
-        return False
+def _assert_autograde_test_entry(value: object) -> AutogradePayloadTestEntry:
+    entry = _assert_dict(value, context="Test entry")
     required_keys = (
+        "nodeid",
+        "name",
         "status",
         "score",
-        "max_score",
-        "tests",
+        "message",
+        "line_no",
+        "duration",
+        "taskno",
     )
     for key in required_keys:
-        if key not in value:
-            return False
-    status_ok = isinstance(value["status"], str)
-    score_ok = isinstance(value["score"], (int, float))
-    max_score_ok = isinstance(value["max_score"], (int, float))
-    tests = cast(dict[str, Any], value).get("tests")
-    if not isinstance(tests, list):
-        return False
-    tests_ok = all(
-        isinstance(test, dict) and _is_autograde_test_entry(cast(dict[str, Any], test))
-        for test in cast(list[Any], tests)
-    )
-    timestamps_ok = all(
-        value[key] is None or isinstance(value[key], (int, float))
-        for key in ("start_timestamp", "end_timestamp")
-        if key in value
-    )
-    extras_ok = all(isinstance(value[key], list) for key in ("errors", "notes") if key in value)
-    return status_ok and score_ok and max_score_ok and tests_ok and timestamps_ok and extras_ok
+        assert key in entry, f"Missing required test field: {key}"
+
+    assert isinstance(entry["nodeid"], str)
+    assert isinstance(entry["name"], str)
+    assert isinstance(entry["status"], str)
+    assert isinstance(entry["score"], (int, float))
+
+    message = entry["message"]
+    line_no = entry["line_no"]
+    duration = entry["duration"]
+    taskno = entry["taskno"]
+
+    assert isinstance(message, str) or message is None
+    assert isinstance(line_no, int) or line_no is None
+    assert isinstance(duration, (int, float)) or duration is None
+    assert isinstance(taskno, int) or taskno is None
+    return cast(AutogradePayloadTestEntry, entry)
 
 
-def _is_autograde_test_entry(value: object) -> TypeGuard[AutogradePayloadTestEntry]:
-    if not isinstance(value, dict):
-        return False
-    nodeid = cast(dict[str, Any], value).get("nodeid")
-    name = cast(dict[str, Any], value).get("name")
-    status = cast(dict[str, Any], value).get("status")
-    score = cast(dict[str, Any], value).get("score")
-    taskno = cast(dict[str, Any], value).get("taskno")
-    message = cast(dict[str, Any], value).get("message", _MISSING)
-    line_no = cast(dict[str, Any], value).get("line_no", _MISSING)
-    duration = cast(dict[str, Any], value).get("duration", _MISSING)
+def _assert_autograde_payload(value: object) -> AutogradePayload:
+    payload = _assert_dict(value, context="Autograde payload")
+    for key in ("status", "score", "max_score", "tests"):
+        assert key in payload, f"Missing required payload field: {key}"
 
-    required_present = (
-        isinstance(nodeid, str)
-        and isinstance(name, str)
-        and isinstance(status, str)
-        and isinstance(score, (int, float))
-        and message is not _MISSING
-        and line_no is not _MISSING
-        and duration is not _MISSING
-    )
-    if not required_present:
-        return False
+    assert isinstance(payload["status"], str)
+    assert isinstance(payload["score"], (int, float))
+    assert isinstance(payload["max_score"], (int, float))
 
-    message_ok = isinstance(message, str) or message is None
-    line_ok = isinstance(line_no, int) or line_no is None
-    duration_ok = isinstance(duration, (int, float)) or duration is None
-    task_ok = isinstance(taskno, int) or taskno is None
-    return message_ok and line_ok and duration_ok and task_ok
+    tests = payload["tests"]
+    assert isinstance(tests, list)
+    tests_list = cast(list[object], tests)
+    for test in tests_list:
+        _assert_autograde_test_entry(test)
+
+    for key in ("start_timestamp", "end_timestamp"):
+        if key in payload:
+            assert payload[key] is None or isinstance(payload[key], (int, float))
+    for key in ("errors", "notes"):
+        if key in payload:
+            assert isinstance(payload[key], list)
+
+    return cast(AutogradePayload, payload)
 
 
 def expect_single_test_entry(
@@ -147,8 +144,7 @@ def expect_single_test_entry(
     tests = payload["tests"]
     assert len(tests) == 1, f"Expected a single test entry, received {len(tests)}"
     entry_candidate = tests[0]
-    assert _is_autograde_test_entry(entry_candidate)
-    entry = entry_candidate
+    entry = _assert_autograde_test_entry(entry_candidate)
     assert entry["status"] == status
     assert entry["score"] == approx(score)
     if expected:
@@ -163,8 +159,7 @@ def expect_single_test_entry(
 
 def _load_payload(json_path: Path) -> AutogradePayload:
     data = json.loads(json_path.read_text(encoding="utf-8"))
-    assert _is_autograde_payload(data)
-    return data
+    return _assert_autograde_payload(data)
 
 
 @pytest.fixture

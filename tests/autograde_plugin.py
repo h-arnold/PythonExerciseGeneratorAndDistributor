@@ -19,8 +19,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from tests.autograde_plugin_typeguards import is_marker_args, is_marker_kwargs
-
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
 
@@ -142,14 +140,12 @@ def _get_task_marker(item: Any) -> Any | None:
 
 def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
     kwargs = getattr(marker, "kwargs", None)
-    if is_marker_kwargs(kwargs):
-        return kwargs
-    return {}
+    return kwargs if isinstance(kwargs, dict) else {}
 
 
 def _extract_marker_args(marker: Any) -> Sequence[Any]:
     args = getattr(marker, "args", ())
-    if is_marker_args(args):
+    if isinstance(args, Sequence) and not isinstance(args, (str, bytes)):
         return args
     return ()
 

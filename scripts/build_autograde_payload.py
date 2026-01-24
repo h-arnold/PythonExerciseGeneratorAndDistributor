@@ -26,7 +26,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict, TypeGuard, cast
+from typing import Any, NotRequired, TypedDict, cast
 
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
@@ -96,31 +96,12 @@ class AutogradePayload(TypedDict):
     end_timestamp: NotRequired[float | str | None]
 
 
-def _is_autograde_results(obj: object) -> TypeGuard[AutogradeResults]:
-    """Best-effort structural check for plugin result payloads."""
-
-    if not isinstance(obj, dict):
-        return False
-    # Type narrow dict to str keys for pyright strict mode
-    obj_dict = cast(dict[str, Any], obj)
-    for key in ("max_score", "status", "tests"):
-        if key not in obj_dict:
-            return False
-    tests = obj_dict.get("tests")
-    if not isinstance(tests, list):
-        return False
-    # Narrow type for comprehension in strict mode
-    tests_list = cast(list[Any], tests)
-    return all(isinstance(test, dict) for test in tests_list)
-
-
 def _validate_results_payload(data: object) -> AutogradeResults:
     """Validate the plugin JSON payload and return a typed mapping."""
 
     if not isinstance(data, dict):
         raise RuntimeError("Autograde results must be a JSON object.")
 
-    # Type narrow dict to str keys for pyright strict mode
     data_dict = cast(dict[str, Any], data)
 
     missing_key = next(
@@ -133,15 +114,10 @@ def _validate_results_payload(data: object) -> AutogradeResults:
     if not isinstance(tests, list):
         raise RuntimeError("Autograde results 'tests' entry must be a list.")
 
-    # Narrow type for comprehension in strict mode
-    tests_list = cast(list[Any], tests)
+    tests_list = cast(list[object], tests)
     if not all(isinstance(test, dict) for test in tests_list):
         raise RuntimeError("Autograde results 'tests' entries must be objects.")
-
-    if not _is_autograde_results(data_dict):
-        raise RuntimeError("Autograde results failed structural validation.")
-
-    return data_dict
+    return cast(AutogradeResults, data_dict)
 
 
 def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
