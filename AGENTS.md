@@ -239,4 +239,4 @@ For any significant code changes (defined as adding/modifying more than 1 functi
 4. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
 5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 
-**ALWAYS** follow this process unless the user explictly directs you otherwise.
+**ALWAYS** follow this process unless the user explicitly directs you otherwise.
