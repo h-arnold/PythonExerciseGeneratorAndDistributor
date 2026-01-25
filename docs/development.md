@@ -38,6 +38,12 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
+Run the helper directly during development:
+
+```bash
+./scripts/verify_solutions.sh
+```
+
 ## Working on the Grading System
 
 ### `notebook_grader.py`
@@ -79,6 +85,44 @@ When modifying `notebook_grader.py`:
 2. **Keep it simple**: Students need to understand error messages
 3. **Document behaviour**: Update `docs/testing-framework.md`
 4. **Test edge cases**: Invalid JSON, missing tags, malformed cells
+
+## Autograding Development Workflow
+
+### Run the autograde plugin locally
+
+Always exercise the pytest plugin with an explicit results path so the Classroom payload can be inspected:
+
+```bash
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
+    uv run pytest -q \
+    --autograde-results-path tmp/autograde/solutions.json
+
+uv run pytest tests/test_ex001_sanity.py -q \
+    --autograde-results-path tmp/autograde/student.json
+```
+
+The first command targets the instructor notebooks; the second intentionally hits the student notebooks to confirm failure messaging. Replace `tests/test_ex001_sanity.py` with focused paths as needed.
+
+### Build Classroom payloads with the CLI
+
+Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow. Set `PYTUTOR_NOTEBOOKS_DIR` before the call when validating solution notebooks so pytest imports the correct files:
+
+```bash
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
+    uv run python scripts/build_autograde_payload.py \
+    --pytest-args=-q \
+    --pytest-args=tests/test_ex001_sanity.py \
+    --results-json=tmp/autograde/results.json
+```
+
+If you omit `PYTUTOR_NOTEBOOKS_DIR`, the script will exercise the student notebooks instead. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
+
+### Test workflow changes safely
+
+- Use [act](https://github.com/nektos/act) to dry-run workflow edits against the repository configuration before pushing
+- Push experiment branches to a sandbox Classroom template and run the full workflow end-to-end
+- Keep payload fields backward compatible: preserve the plugin option names, JSON structure, and Base64 encoding so existing Classroom assignments keep working
+- Review the GitHub Classroom integration guidance in [docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md](GitHub_Classroom_Autograding_Integration_Guide__Us.md) when adjusting CI steps
 
 ## Working on the Exercise Generator
 

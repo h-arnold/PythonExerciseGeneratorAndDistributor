@@ -40,6 +40,8 @@
         "**/.venv":true
     },
     "chat.tools.terminal.autoApprove": {
-        "ruff": true
-    }
+        "ruff": true    
+    },
+    "chat.customAgentInSubagent.enabled": true,
+    "debug.showSubSessionsInToolBar": true
 }

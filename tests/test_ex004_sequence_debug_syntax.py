@@ -1,133 +1,425 @@
 from __future__ import annotations
 
-import json
+import ast
 
 import pytest
 
 from tests.notebook_grader import (
+    extract_tagged_code,
     get_explanation_cell,
-    resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
 
-MIN_EXPLANATION_LENGTH = 10
 NOTEBOOK_PATH = "notebooks/ex004_sequence_debug_syntax.ipynb"
+MIN_EXPLANATION_LENGTH = 10
+
+EXPECTED_SINGLE_LINE = {
+    1: "Hello World!",
+    2: "I like Python",
+    3: "Learning Python",
+    4: "50",
+    5: "Hello Alice",
+    6: "Welcome to school",
+    9: "It's amazing",
+}
+
+PROMPT_STRINGS = {
+    7: "How many apples?",
+    8: "Enter your name:",
+    10: "What is your favourite colour?",
+}
+
+FORMAT_VALIDATION = {
+    7: "You have 10 apples in total",
+    8: "Hello Alice",
+    10: "My favourite colour is Blue",
+}
 
 
-# Test that exercises run and produce correct output
-@pytest.mark.parametrize(
-    "tag",
-    [
-        "exercise1",
-        "exercise2",
-        "exercise3",
-        "exercise4",
-        "exercise5",
-        "exercise6",
-        "exercise7",
-        "exercise8",
-        "exercise9",
-    ],
-)
-def test_exercise_output(tag: str) -> None:
-    """Test that exercise cells exist and are properly tagged."""
-    with open(NOTEBOOK_PATH, encoding="utf-8") as f:
-        nb = json.load(f)
-
-    # Extract the buggy code
-    for cell in nb.get("cells", []):
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags and cell.get("cell_type") == "code":
-            code = "".join(cell.get("source", []))
-            # Students must fix the code, so it should raise an error/fail initially
-            # We're just checking that the cell exists and is tagged correctly
-            assert code.strip() != "", f"Exercise cell {tag} must contain code"
-            break
-    else:
-        pytest.fail(f"No code cell found with tag {tag}")
+def _tag(exercise_no: int) -> str:
+    return f"exercise{exercise_no}"
 
 
-# Test solution notebook produces correct outputs (for exercises without input)
-@pytest.mark.parametrize(
-    "tag,expected",
-    [
-        ("exercise1", "Hello World!"),
-        ("exercise2", "I like Python"),
-        ("exercise3", "Learning Python"),
-        ("exercise4", "50"),
-        ("exercise5", "Hello Alice"),
-        ("exercise6", "Welcome to school"),
-        ("exercise7", "10"),  # 5 + 5
-        ("exercise9", "It's amazing"),
-    ],
-)
-def test_solution_output(tag: str, expected: str) -> None:
-    """Test that solution notebook produces correct output."""
-    try:
-        # For input exercises, provide mock input
-        if tag == "exercise7":
-            output = run_cell_with_input(NOTEBOOK_PATH, tag=tag, inputs=["5"])
-        else:
-            output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
-
-        # For multi-line output, just check that key parts exist
-        if tag == "exercise7":
-            assert "10" in output, f"Expected '10' in output for {tag}, got: {output}"
-        else:
-            assert expected in output, f"Expected '{expected}' in output for {tag}, got: {output}"
-
-    except Exception as e:
-        pytest.fail(f"Solution notebook exercise {tag} failed to execute: {e}")
+def _explanation_tag(exercise_no: int) -> str:
+    return f"explanation{exercise_no}"
 
 
-# Test that explanation cells have content
-TAGS = [f"explanation{i}" for i in range(1, 11)]
+def _exercise_output(exercise_no: int) -> str:
+    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=_tag(exercise_no))
 
 
-@pytest.mark.parametrize("tag", TAGS)
-def test_explanations_have_content(tag: str) -> None:
-    """Test that students filled in explanation cells."""
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH, (
-        f"Explanation {tag} must be more than {MIN_EXPLANATION_LENGTH} characters"
+def _exercise_output_with_input(exercise_no: int, inputs: list[str]) -> str:
+    return run_cell_with_input(NOTEBOOK_PATH, tag=_tag(exercise_no), inputs=inputs)
+
+
+def _exercise_ast(exercise_no: int) -> ast.Module:
+    code = extract_tagged_code(NOTEBOOK_PATH, tag=_tag(exercise_no))
+    return ast.parse(code)
+
+
+def _string_constants(tree: ast.AST) -> set[str]:
+    return {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+
+
+def _has_print_constant(tree: ast.AST, text: str) -> bool:
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "print"
+        ):
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and arg.value == text:
+                    return True
+    return False
+
+
+def _assigns_constant(tree: ast.AST, name: str, value: str) -> bool:
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
+            continue
+        if (
+            isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, str)
+            and node.value.value == value
+        ):
+            return True
+    return False
+
+
+def _print_uses_name(tree: ast.AST, name: str) -> bool:
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "print"
+        ):
+            for child in ast.walk(node):
+                if isinstance(child, ast.Name) and child.id == name:
+                    return True
+    return False
+
+
+def _has_call(tree: ast.AST, func_name: str) -> bool:
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == func_name
+        ):
+            return True
+    return False
+
+
+def _assigns_call(tree: ast.AST, name: str, func_name: str) -> bool:
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
+            continue
+        value = node.value
+        if not isinstance(value, ast.Call):
+            continue
+        func = value.func
+        if isinstance(func, ast.Name) and func.id == func_name:
+            return True
+        if (
+            isinstance(func, ast.Name)
+            and func.id == "int"
+            and value.args
+            and isinstance(value.args[0], ast.Call)
+            and isinstance(value.args[0].func, ast.Name)
+            and value.args[0].func.id == func_name
+        ):
+            return True
+    return False
+
+
+def _assigns_binop_sum(tree: ast.AST, target_name: str, variable: str, constant: int) -> bool:
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(isinstance(t, ast.Name) and t.id == target_name for t in node.targets):
+            value = node.value
+            if (
+                isinstance(value, ast.BinOp)
+                and isinstance(value.op, ast.Add)
+                and (
+                    (isinstance(value.left, ast.Name) and value.left.id == variable)
+                    or (isinstance(value.right, ast.Name) and value.right.id == variable)
+                )
+                and (
+                    (isinstance(value.left, ast.Constant) and value.left.value == constant)
+                    or (isinstance(value.right, ast.Constant) and value.right.value == constant)
+                )
+            ):
+                return True
+    return False
+
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_logic() -> None:
+    output = _exercise_output(1)
+    assert output.strip() == EXPECTED_SINGLE_LINE[1]
+    assert "TODO" not in output
+
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_formatting() -> None:
+    output = _exercise_output(1)
+    assert output == f"{EXPECTED_SINGLE_LINE[1]}\n"
+
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct() -> None:
+    tree = _exercise_ast(1)
+    assert _has_print_constant(tree, EXPECTED_SINGLE_LINE[1])
+
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(1))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_logic() -> None:
+    output = _exercise_output(2)
+    assert output.strip() == EXPECTED_SINGLE_LINE[2]
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_formatting() -> None:
+    output = _exercise_output(2)
+    assert output == f"{EXPECTED_SINGLE_LINE[2]}\n"
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_construct() -> None:
+    tree = _exercise_ast(2)
+    assert _has_print_constant(tree, EXPECTED_SINGLE_LINE[2])
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(2))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=3)
+def test_exercise3_logic() -> None:
+    output = _exercise_output(3)
+    assert output.strip() == EXPECTED_SINGLE_LINE[3]
+
+
+@pytest.mark.task(taskno=3)
+def test_exercise3_formatting() -> None:
+    output = _exercise_output(3)
+    assert output == f"{EXPECTED_SINGLE_LINE[3]}\n"
+
+
+@pytest.mark.task(taskno=3)
+def test_exercise3_construct() -> None:
+    tree = _exercise_ast(3)
+    strings = _string_constants(tree)
+    assert EXPECTED_SINGLE_LINE[3] in strings or ({"Learning", "Python"} <= strings)
+
+
+@pytest.mark.task(taskno=3)
+def test_exercise3_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(3))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=4)
+def test_exercise4_logic() -> None:
+    output = _exercise_output(4)
+    assert output.strip() == EXPECTED_SINGLE_LINE[4]
+
+
+@pytest.mark.task(taskno=4)
+def test_exercise4_formatting() -> None:
+    output = _exercise_output(4)
+    assert output == f"{EXPECTED_SINGLE_LINE[4]}\n"
+
+
+@pytest.mark.task(taskno=4)
+def test_exercise4_construct() -> None:
+    tree = _exercise_ast(4)
+    has_multiplication = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
+    assert has_multiplication
 
 
-# Test that all exercise cells are tagged
-@pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
-def test_exercise_cells_tagged(tag: str) -> None:
-    """Test that all exercise cells are properly tagged."""
-    with open(NOTEBOOK_PATH, encoding="utf-8") as f:
-        nb = json.load(f)
-
-    for cell in nb.get("cells", []):
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags:
-            assert cell.get("cell_type") == "code", f"Cell {tag} must be a code cell"
-            code = "".join(cell.get("source", []))
-            assert code.strip() != "", f"Cell {tag} must not be empty"
-            return
-
-    pytest.fail(f"No code cell found with tag {tag}")
+@pytest.mark.task(taskno=4)
+def test_exercise4_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(4))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
 
 
-# Test that solution notebook has all cells
-@pytest.mark.parametrize("tag", [f"exercise{i}" for i in range(1, 11)])
-def test_solution_cells_tagged(tag: str) -> None:
-    """Test that solution notebook has all exercise cells."""
-    solution_path = resolve_notebook_path(NOTEBOOK_PATH)
-    with open(solution_path, encoding="utf-8") as f:
-        nb = json.load(f)
+@pytest.mark.task(taskno=5)
+def test_exercise5_logic() -> None:
+    output = _exercise_output(5)
+    assert output.strip() == EXPECTED_SINGLE_LINE[5]
 
-    for cell in nb.get("cells", []):
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags:
-            assert cell.get("cell_type") == "code", f"Solution cell {tag} must be a code cell"
-            code = "".join(cell.get("source", []))
-            assert code.strip() != "", f"Solution cell {tag} must not be empty"
-            # For solution, verify no placeholder "TODO"
-            assert "TODO" not in code, f"Solution {tag} should not contain TODO placeholder"
-            return
 
-    pytest.fail(f"No code cell found in solution with tag {tag}")
+@pytest.mark.task(taskno=5)
+def test_exercise5_formatting() -> None:
+    output = _exercise_output(5)
+    assert output == f"{EXPECTED_SINGLE_LINE[5]}\n"
+
+
+@pytest.mark.task(taskno=5)
+def test_exercise5_construct() -> None:
+    tree = _exercise_ast(5)
+    assert _assigns_constant(tree, "name", "Alice")
+    assert _print_uses_name(tree, "name")
+
+
+@pytest.mark.task(taskno=5)
+def test_exercise5_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(5))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=6)
+def test_exercise6_logic() -> None:
+    output = _exercise_output(6)
+    assert output.strip() == EXPECTED_SINGLE_LINE[6]
+
+
+@pytest.mark.task(taskno=6)
+def test_exercise6_formatting() -> None:
+    output = _exercise_output(6)
+    assert output == f"{EXPECTED_SINGLE_LINE[6]}\n"
+
+
+@pytest.mark.task(taskno=6)
+def test_exercise6_construct() -> None:
+    tree = _exercise_ast(6)
+    assert _assigns_constant(tree, "greeting", EXPECTED_SINGLE_LINE[6])
+    assert _print_uses_name(tree, "greeting")
+
+
+@pytest.mark.task(taskno=6)
+def test_exercise6_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(6))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=7)
+def test_exercise7_logic() -> None:
+    output = _exercise_output_with_input(7, ["5"])
+    assert FORMAT_VALIDATION[7] in output
+    assert PROMPT_STRINGS[7] in output
+
+
+@pytest.mark.task(taskno=7)
+def test_exercise7_formatting() -> None:
+    output = _exercise_output_with_input(7, ["5"])
+    assert output.startswith(PROMPT_STRINGS[7])
+    assert output.rstrip().endswith(FORMAT_VALIDATION[7])
+
+
+@pytest.mark.task(taskno=7)
+def test_exercise7_construct() -> None:
+    tree = _exercise_ast(7)
+    assert _assigns_call(tree, "apples", "input")
+    assert _has_call(tree, "int")
+    assert _assigns_binop_sum(tree, "total", "apples", 5)
+
+
+@pytest.mark.task(taskno=7)
+def test_exercise7_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(7))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=8)
+def test_exercise8_logic() -> None:
+    name = "Alice"
+    output = _exercise_output_with_input(8, [name])
+    assert FORMAT_VALIDATION[8].replace("Alice", name) in output
+    assert PROMPT_STRINGS[8] in output
+
+
+@pytest.mark.task(taskno=8)
+def test_exercise8_formatting() -> None:
+    name = "Alice"
+    output = _exercise_output_with_input(8, [name])
+    expected = f"{PROMPT_STRINGS[8]} {FORMAT_VALIDATION[8]}\n"
+    assert output == expected
+
+
+@pytest.mark.task(taskno=8)
+def test_exercise8_construct() -> None:
+    tree = _exercise_ast(8)
+    assert _assigns_call(tree, "name", "input")
+    assert _print_uses_name(tree, "name")
+
+
+@pytest.mark.task(taskno=8)
+def test_exercise8_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(8))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=9)
+def test_exercise9_logic() -> None:
+    output = _exercise_output(9)
+    assert output.strip() == EXPECTED_SINGLE_LINE[9]
+
+
+@pytest.mark.task(taskno=9)
+def test_exercise9_formatting() -> None:
+    output = _exercise_output(9)
+    assert output == f"{EXPECTED_SINGLE_LINE[9]}\n"
+
+
+@pytest.mark.task(taskno=9)
+def test_exercise9_construct() -> None:
+    tree = _exercise_ast(9)
+    assert _has_print_constant(tree, EXPECTED_SINGLE_LINE[9])
+
+
+@pytest.mark.task(taskno=9)
+def test_exercise9_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(9))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+
+
+@pytest.mark.task(taskno=10)
+def test_exercise10_logic() -> None:
+    colour = "Blue"
+    output = _exercise_output_with_input(10, [colour])
+    assert FORMAT_VALIDATION[10].replace("Blue", colour) in output
+    assert PROMPT_STRINGS[10] in output
+
+
+@pytest.mark.task(taskno=10)
+def test_exercise10_formatting() -> None:
+    colour = "Blue"
+    output = _exercise_output_with_input(10, [colour])
+    expected = f"{PROMPT_STRINGS[10]} {FORMAT_VALIDATION[10]}\n"
+    assert output == expected
+
+
+@pytest.mark.task(taskno=10)
+def test_exercise10_construct() -> None:
+    tree = _exercise_ast(10)
+    assert _assigns_call(tree, "colour", "input")
+    assert _print_uses_name(tree, "colour")
+
+
+@pytest.mark.task(taskno=10)
+def test_exercise10_explanation() -> None:
+    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(10))
+    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH

@@ -38,6 +38,41 @@ scripts/               # Automation utilities
 docs/                  # Project documentation
 ```
 
+### Naming and folder organisation
+
+- File and module naming
+    - Use snake_case for module and file names (e.g., `my_module.py`, `string_utils.py`).
+    - Use CamelCase for classes (e.g., `HtmlParser`) and UPPER_SNAKE for constants.
+    - Keep module surface area small and explicit: prefer small modules with a clear single responsibility.
+
+- Packages and splitting modules
+    - When a module grows or has distinct responsibilities, convert it to a package:
+        - Create a folder `my_module/` with `__init__.py`.
+        - Split parts into cohesive submodules (e.g., `my_module/core.py`, `my_module/_helpers.py`, `my_module/cli.py`).
+        - Keep truly internal pieces prefixed with an underscore (e.g., `_helpers.py`).
+        - Re-export the public API from `__init__.py` so callers use `from my_module import X`.
+    - Aim for shallow, focused packages. If a package becomes complex, consider further subpackages.
+
+- Type hints, guards and shared types
+    - Put type guard helpers adjacent to the code they protect:
+        - Prefer `module_typeguards.py`.
+    - For cross-cutting TypedDicts or widely used type definitions, use a small `types/` package at repo root (e.g., `types/__init__.py`).
+    - Keep type-only modules small and documented; avoid circular imports by placing shared TypedDicts in `types/` if necessary.
+
+- Tests organisation
+    - Mirror the package/module layout under `tests/`. Examples:
+        - `my_module.py` -> `tests/test_my_module.py`
+        - `my_module/` package -> `tests/test_my_module_api.py`, `tests/test_my_module_core.py`
+    - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
+    - Keep tests fast and deterministic (no network, sleep, or randomness).
+    - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
+    - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` and `PYTUTOR_NOTEBOOKS_DIR` as described elsewhere.
+
+- Practical rules of thumb
+    - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
+    - Keep type guards and tiny helpers close to the code they protect to reduce cognitive overhead and avoid import cycles.
+    - When splitting code, update and add tests at the same time and expose only the intended public API from packages.
+
 ## Key Concepts
 
 ### Tagged Cells
@@ -62,9 +97,10 @@ The same tests run against both sets.
 
 ## Coding Standards
 
-### Concise Standards (derived from lint + tidy review)
+### Concise Standards
 
 - Python 3.11+; use modern type hints (e.g., `list[str]`).
+- Fail Fast: **No unnecessary defensive guards**. Better to find out something is broken than silently swallow errors!
 - Docstrings required for public functions.
 - Keep logic simple (KISS): low complexity, shallow nesting, short functions.
 - Avoid duplication (DRY): extract shared helpers when logic repeats.
@@ -72,6 +108,7 @@ The same tests run against both sets.
 - Deterministic, fast tests: no randomness, time, or network.
 - Prefer stdlib; avoid new deps unless necessary and justified.
 - Match Ruff rules in `pyproject.toml` (E/F/W/I/UP/B/C90/LOG/PIE/RUF/SIM/PLR).
+- **NEVER** silence linting errors without explicit authorisation from the user. If you feel that fixing the linting error would make the code less readable, then stop and ask for clarification.
 
 ### Python Style (for infrastructure code, not student exercises)
 
@@ -81,6 +118,38 @@ The same tests run against both sets.
 - **Docstrings**: Required for public functions
 
 Student exercise code in notebooks may omit these standards as exercises are designed for learning.
+
+### TypeGuard best practices (typing and runtime checks) 🔧
+
+- Prefer using `TypeGuard` functions to narrow runtime types instead of scattering `cast(...)` calls; they are clearer and Pylance understands them.
+- Keep guards close to the code they protect: create a `_typeguards.py` or `<module>_typeguards.py` alongside the module they support (e.g., `scripts/template_repo_cli/core/_typeguards.py`). For cross-cutting types you can also create a small `types/` package or a shared `tests/typeguards/` package for test-only helpers.
+- Name guards `is_<thing>` and keep each guard small and fast; they should check only the surface-level properties required for safe narrowing.
+- Add unit tests for type guards (e.g., see `scripts/template_repo_cli/core/github.py` and its tests in `tests/template_repo_cli/test_github.py`).
+- Example TypeGuard (place in the same module or in `<module>_typeguards.py`):
+
+```py
+from typing import TypeGuard
+
+def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
+    if not isinstance(obj, dict):
+        return False
+    cell_type = obj.get("cell_type")
+    if cell_type is not None and not isinstance(cell_type, str):
+        return False
+    source = obj.get("source")
+    if source is not None and not (isinstance(source, str) or isinstance(source, list)):
+        return False
+    if isinstance(source, list):
+        for s in source:
+            if not isinstance(s, str):
+                return False
+    metadata = obj.get("metadata")
+    if metadata is not None and not isinstance(metadata, dict):
+        return False
+    return True
+```
+
+- Folder structure suggestion: for each module `module.py`, prefer a sibling `module_typeguards.py` (or `_typeguards.py`) containing guards for that module. Keep guards near code to avoid circular imports; if circular imports are possible, put small TypedDicts in a `types/` module or keep a tiny module-local guard instead.
 
 ### Testing Standards
 
@@ -112,7 +181,7 @@ ruff check . --fix
 
 ## When Asked to Create Exercises
 
-**Delegate to the exercise generation custom agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
+**Delegate to the exercise generation sub-agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
 
 Do not create exercises manually. Use:
 1. The exercise generation agent for authoring
@@ -146,13 +215,40 @@ See Testing Framework: `docs/testing-framework.md` for details.
 - Follow the existing patterns in the codebase
 - Always write in British English
 
-## Code Review & Tidy Checks
+## Calling Sub-Agents
 
-After making changes to code that **IS NOT** student notebooks, **you MUST** call the 'Tidy Code Reviewer' sub-agent using your `runSubagent` tool.
+**MANDATORY:** Every #runSubagent call must include agentName: "{name of subagent}". Calls that omit this parameter violate the workflow contract and should be rejected/retried.
 
-- Purpose: verify claimed changes, run lint/type diagnostics, apply safe cleanups (formatting, remove unused imports, small refactors), and report remaining issues.
-- Typical workflow:
-  1. Run tests and ruff locally (pytest -q; ruff check .).
-  2. Give the agent a summary of all the changes you've made, ensuring you list all files touched in your coding session.
-  3. Review the agent's report, address any remaining issues, re-run tests, and commit.
+**Example (exact shape requested):**
 
+```json
+{
+  "type": "function_call",
+  "name": "runSubagent",
+  "arguments": "{\"prompt\":\"Please implement a dummy task: add CLI command 'foo' that scaffolds an exercise.\",\"description\":\"Create files: exercises/ex999_dummy/, notebooks/solutions/ex999_dummy.ipynb, tests/test_ex999_dummy.py. Ensure tests pass and linting is clean.\",\"agentName\":\"Implementer\"}",
+  "call_id": "call_000000000001"
+}
+```
+
+
+The sub-agents you can call are (first-line names are case-sensitive):
+
+ - **Exercise Generation** — `.github/agents/exercise_generation.md.agent.md`  (first line: `Exercise Generation`)
+ - **Exercise Verifier** — `.github/agents/exercise_verifier.md.agent.md`  (first line: `Exercise Verifier`)
+ - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
+ - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
+
+
+## Implementation Workflow
+
+For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring) that **IS NOT** related to student notebook, follow this workflow:
+
+1. **Consider the size of the task**: If it's a large task requiring many changes, split the task into smaller chunks and update your TODO list with `manage_todo_list`.
+2.  **Delegate to the Implementer Agent**: Use the `runSubagent` tool with the `Implementer` agent. Pass a a detailed task description, including the scope of files to edit.
+    *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
+2.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes.
+    *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
+3. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
+4. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
+
+**ALWAYS** follow this process unless the user explictly directs you otherwise.

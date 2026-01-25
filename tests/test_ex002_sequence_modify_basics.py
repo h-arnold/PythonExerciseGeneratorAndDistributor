@@ -1,244 +1,311 @@
 from __future__ import annotations
 
-import math
+import ast
 
 import pytest
 
-from tests.notebook_grader import run_cell_and_capture_output
-
-# Named constants to avoid magic numbers flagged by linters
-EXPECTED_15 = 15
-NOT_ADDITION_5_3 = 8
-EXPECTED_WORDS = 3
-EXPECTED_LINES = 3
-LAST_LINE_WORDS = 2
-DIV_EXPECTED = 5.0
-MULT_EXPECTED_24 = 24
-NOT_ADDITION_2_3_4 = 9
-EXPECTED_RESULT_7 = 7
-MIN_SPACES = 3
+from tests.notebook_grader import extract_tagged_code, run_cell_and_capture_output
 
 NOTEBOOK_PATH = "notebooks/ex002_sequence_modify_basics.ipynb"
 
+EXPECTED_SINGLE_LINE = {
+    1: "Hello Python!",
+    2: "I go to Bassaleg School",
+    3: "15",
+    4: "Good Morning Everyone",
+    5: "5.0",
+    7: "The result is 100",
+    8: "24",
+    10: "Welcome to Python programming!",
+}
 
-def _run_and_capture(tag: str) -> str:
-    """Execute the tagged cell and capture its print output."""
-    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
+EXPECTED_MULTI_LINE = {
+    6: ["Learning", "to", "code rocks"],
+    9: ["10 minus 3 equals", "7"],
+}
+
+EXPECTED_NUMERIC = {
+    3: int(EXPECTED_SINGLE_LINE[3]),
+    5: float(EXPECTED_SINGLE_LINE[5]),
+    8: int(EXPECTED_SINGLE_LINE[8]),
+    9: int(EXPECTED_MULTI_LINE[9][1]),
+}
+
+EXPECTED_PRINT_CALLS = {
+    4: 1,
+    6: 3,
+    9: 2,
+}
 
 
-# Exercise 1: Change greeting from "Hello World!" to "Hello Python!"
-def test_exercise1_prints_hello_python():
-    output = _run_and_capture("exercise1")
-    assert output.strip() == "Hello Python!", f"Expected 'Hello Python!' but got {output.strip()!r}"
+def _exercise_tag(exercise_no: int) -> str:
+    return f"exercise{exercise_no}"
 
 
-def test_exercise1_single_line():
-    output = _run_and_capture("exercise1")
-    lines = output.strip().split("\n")
-    assert len(lines) == 1, "Should print exactly one line"
-
-
-def test_exercise1_exact_match():
-    output = _run_and_capture("exercise1")
-    assert "Hello Python!" in output, "Output must contain 'Hello Python!'"
-
-
-# Exercise 2: Change school name to "Bassaleg School"
-def test_exercise2_prints_bassaleg():
-    output = _run_and_capture("exercise2")
-    assert output.strip() == "I go to Bassaleg School", (
-        f"Expected 'I go to Bassaleg School' but got {output.strip()!r}"
+def _exercise_output(exercise_no: int) -> str:
+    return run_cell_and_capture_output(
+        NOTEBOOK_PATH,
+        tag=_exercise_tag(exercise_no),
     )
 
 
-def test_exercise2_contains_school():
-    output = _run_and_capture("exercise2")
-    assert "Bassaleg School" in output, "Output must mention 'Bassaleg School'"
-
-
-def test_exercise2_single_line():
-    output = _run_and_capture("exercise2")
-    lines = output.strip().split("\n")
-    assert len(lines) == 1, "Should print exactly one line"
-
-
-# Exercise 3: Change addition to multiplication (5 * 3 = 15)
-def test_exercise3_prints_15():
-    output = _run_and_capture("exercise3")
-    assert output.strip() == str(EXPECTED_15), (
-        f"Expected '{EXPECTED_15}' but got {output.strip()!r}"
+def _exercise_ast(exercise_no: int) -> ast.Module:
+    code = extract_tagged_code(
+        NOTEBOOK_PATH,
+        tag=_exercise_tag(exercise_no),
     )
+    return ast.parse(code)
 
 
-def test_exercise3_is_multiplication():
-    output = _run_and_capture("exercise3")
+@pytest.mark.task(taskno=1)
+def test_exercise1_logic() -> None:
+    output = _exercise_output(1)
+    assert "Hello World" not in output
+    assert "Hello Python!" in output
+
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_formatting() -> None:
+    output = _exercise_output(1)
+    assert output == f"{EXPECTED_SINGLE_LINE[1]}\n"
+
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct() -> None:
+    tree = _exercise_ast(1)
+    strings = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert "Hello Python!" in strings
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_logic() -> None:
+    output = _exercise_output(2)
+    assert "Bassaleg School" in output
+    assert "Greenfield" not in output
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_formatting() -> None:
+    output = _exercise_output(2)
+    assert output == f"{EXPECTED_SINGLE_LINE[2]}\n"
+
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_construct() -> None:
+    tree = _exercise_ast(2)
+    strings = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert any("Bassaleg School" in s for s in strings)
+
+
+@pytest.mark.task(taskno=3)
+def test_exercise3_logic() -> None:
+    output = _exercise_output(3)
     value = int(output.strip())
-    assert value == EXPECTED_15, "5 * 3 should equal 15"
+    assert value == EXPECTED_NUMERIC[3]
 
 
-def test_exercise3_not_addition():
-    output = _run_and_capture("exercise3")
-    value = int(output.strip())
-    assert value != NOT_ADDITION_5_3, "Should not be addition (5 + 3 = 8)"
+@pytest.mark.task(taskno=3)
+def test_exercise3_formatting() -> None:
+    output = _exercise_output(3)
+    assert output == f"{EXPECTED_SINGLE_LINE[3]}\n"
 
 
-# Exercise 4: Concatenate "Good Morning Everyone"
-def test_exercise4_prints_good_morning():
-    output = _run_and_capture("exercise4")
-    assert output.strip() == "Good Morning Everyone", (
-        f"Expected 'Good Morning Everyone' but got {output.strip()!r}"
+@pytest.mark.task(taskno=3)
+def test_exercise3_construct() -> None:
+    tree = _exercise_ast(3)
+    has_multiplication = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
+    assert has_multiplication
 
 
-def test_exercise4_has_spaces():
-    output = _run_and_capture("exercise4")
-    assert " " in output, "Words should be separated by spaces"
-
-
-def test_exercise4_three_words():
-    output = _run_and_capture("exercise4")
+@pytest.mark.task(taskno=4)
+def test_exercise4_logic() -> None:
+    output = _exercise_output(4)
     words = output.strip().split()
-    assert len(words) == EXPECTED_WORDS, "Should contain exactly 3 words"
+    assert words == ["Good", "Morning", "Everyone"]
 
 
-# Exercise 5: Division 10 / 2 = 5.0
-def test_exercise5_prints_5_point_0():
-    output = _run_and_capture("exercise5")
-    assert output.strip() == "5.0", f"Expected '5.0' but got {output.strip()!r}"
+@pytest.mark.task(taskno=4)
+def test_exercise4_formatting() -> None:
+    output = _exercise_output(4)
+    assert output == f"{EXPECTED_SINGLE_LINE[4]}\n"
 
 
-def test_exercise5_is_division():
-    output = _run_and_capture("exercise5")
+@pytest.mark.task(taskno=4)
+def test_exercise4_construct() -> None:
+    tree = _exercise_ast(4)
+    print_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
+    ]
+    assert len(print_calls) == EXPECTED_PRINT_CALLS[4]
+
+
+@pytest.mark.task(taskno=5)
+def test_exercise5_logic() -> None:
+    output = _exercise_output(5)
     value = float(output.strip())
-    assert math.isclose(value, 5.0), "10 / 2 should equal 5.0"
+    assert value == EXPECTED_NUMERIC[5]
 
 
-def test_exercise5_is_float():
-    output = _run_and_capture("exercise5")
-    assert ".0" in output or "." in output, "Division should produce a float (decimal number)"
+@pytest.mark.task(taskno=5)
+def test_exercise5_formatting() -> None:
+    output = _exercise_output(5)
+    assert output == f"{EXPECTED_SINGLE_LINE[5]}\n"
 
 
-# Exercise 6: Three print statements - "Learning", "to", "code rocks"
-def test_exercise6_three_lines():
-    output = _run_and_capture("exercise6")
-    lines = [line for line in output.strip().split("\n") if line]
-    assert len(lines) == EXPECTED_LINES, f"Expected {EXPECTED_LINES} lines but got {len(lines)}"
-
-
-def test_exercise6_correct_content():
-    output = _run_and_capture("exercise6")
-    lines = [line.strip() for line in output.strip().split("\n") if line]
-    assert lines[0] == "Learning", f"First line should be 'Learning' but got {lines[0]!r}"
-    assert lines[1] == "to", f"Second line should be 'to' but got {lines[1]!r}"
-    assert lines[2] == "code rocks", f"Third line should be 'code rocks' but got {lines[2]!r}"
-
-
-def test_exercise6_last_line_two_words():
-    output = _run_and_capture("exercise6")
-    lines = [line.strip() for line in output.strip().split("\n") if line]
-    last_words = lines[2].split()
-    assert len(last_words) == LAST_LINE_WORDS, "Last line should contain two words"
-
-
-# Exercise 7: Concatenation "The result is 100"
-def test_exercise7_prints_result_100():
-    output = _run_and_capture("exercise7")
-    assert output.strip() == "The result is 100", (
-        f"Expected 'The result is 100' but got {output.strip()!r}"
+@pytest.mark.task(taskno=5)
+def test_exercise5_construct() -> None:
+    tree = _exercise_ast(5)
+    has_division = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div) for node in ast.walk(tree)
     )
+    assert has_division
 
 
-def test_exercise7_contains_100():
-    output = _run_and_capture("exercise7")
-    assert "100" in output, "Output must contain '100'"
+@pytest.mark.task(taskno=6)
+def test_exercise6_logic() -> None:
+    output = _exercise_output(6)
+    lines = output.strip().splitlines()
+    assert lines == EXPECTED_MULTI_LINE[6]
 
 
-def test_exercise7_contains_result():
-    output = _run_and_capture("exercise7")
-    assert "result" in output.lower(), "Output should mention 'result'"
+@pytest.mark.task(taskno=6)
+def test_exercise6_formatting() -> None:
+    output = _exercise_output(6)
+    expected = "\n".join(EXPECTED_MULTI_LINE[6]) + "\n"
+    assert output == expected
 
 
-# Exercise 8: Multiplication 2 * 3 * 4 = 24
-def test_exercise8_prints_24():
-    output = _run_and_capture("exercise8")
-    assert output.strip() == str(MULT_EXPECTED_24), (
-        f"Expected '{MULT_EXPECTED_24}' but got {output.strip()!r}"
-    )
+@pytest.mark.task(taskno=6)
+def test_exercise6_construct() -> None:
+    tree = _exercise_ast(6)
+    print_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
+    ]
+    assert len(print_calls) == EXPECTED_PRINT_CALLS[6]
 
 
-def test_exercise8_is_multiplication():
-    output = _run_and_capture("exercise8")
+@pytest.mark.task(taskno=7)
+def test_exercise7_logic() -> None:
+    output = _exercise_output(7)
+    assert "The result" in output
+    assert "100" in output
+
+
+@pytest.mark.task(taskno=7)
+def test_exercise7_formatting() -> None:
+    output = _exercise_output(7)
+    assert output == f"{EXPECTED_SINGLE_LINE[7]}\n"
+
+
+@pytest.mark.task(taskno=7)
+def test_exercise7_construct() -> None:
+    tree = _exercise_ast(7)
+    strings = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert any("100" in s for s in strings)
+
+
+@pytest.mark.task(taskno=8)
+def test_exercise8_logic() -> None:
+    output = _exercise_output(8)
     value = int(output.strip())
-    assert value == MULT_EXPECTED_24, "2 * 3 * 4 should equal 24"
+    assert value == EXPECTED_NUMERIC[8]
 
 
-def test_exercise8_not_addition():
-    output = _run_and_capture("exercise8")
-    value = int(output.strip())
-    assert value != NOT_ADDITION_2_3_4, "Should not be addition (2 + 3 + 4 = 9)"
+@pytest.mark.task(taskno=8)
+def test_exercise8_formatting() -> None:
+    output = _exercise_output(8)
+    assert output == f"{EXPECTED_SINGLE_LINE[8]}\n"
 
 
-# Exercise 9: Two lines - "10 minus 3 equals" and "7"
-def test_exercise9_two_lines():
-    output = _run_and_capture("exercise9")
-    lines = [line for line in output.strip().split("\n") if line]
-    EXPECTED_TWO_LINES = 2
-    assert len(lines) == EXPECTED_TWO_LINES, (
-        f"Expected {EXPECTED_TWO_LINES} lines but got {len(lines)}"
+@pytest.mark.task(taskno=8)
+def test_exercise8_construct() -> None:
+    tree = _exercise_ast(8)
+    has_multiplication = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
+    assert has_multiplication
 
 
-def test_exercise9_correct_content():
-    output = _run_and_capture("exercise9")
-    lines = [line.strip() for line in output.strip().split("\n") if line]
-    assert lines[0] == "10 minus 3 equals", (
-        f"First line should be '10 minus 3 equals' but got {lines[0]!r}"
+@pytest.mark.task(taskno=9)
+def test_exercise9_logic() -> None:
+    output = _exercise_output(9)
+    lines = output.strip().splitlines()
+    assert lines[0] == "10 minus 3 equals"
+    assert int(lines[1]) == EXPECTED_NUMERIC[9]
+
+
+@pytest.mark.task(taskno=9)
+def test_exercise9_formatting() -> None:
+    output = _exercise_output(9)
+    expected = "\n".join(EXPECTED_MULTI_LINE[9]) + "\n"
+    assert output == expected
+
+
+@pytest.mark.task(taskno=9)
+def test_exercise9_construct() -> None:
+    tree = _exercise_ast(9)
+    has_subtraction = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub) for node in ast.walk(tree)
     )
-    assert lines[1] == "7", f"Second line should be '7' but got {lines[1]!r}"
+    print_calls = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
+    ]
+    assert has_subtraction
+    assert len(print_calls) == EXPECTED_PRINT_CALLS[9]
 
 
-def test_exercise9_calculation_correct():
-    output = _run_and_capture("exercise9")
-    lines = [line.strip() for line in output.strip().split("\n") if line]
-    result = int(lines[1])
-    assert result == EXPECTED_RESULT_7, "10 - 3 should equal 7"
+@pytest.mark.task(taskno=10)
+def test_exercise10_logic() -> None:
+    output = _exercise_output(10)
+    assert "Welcome" in output
+    assert "Python programming" in output
 
 
-# Exercise 10: Concatenation "Welcome to Python programming!"
-def test_exercise10_prints_welcome():
-    output = _run_and_capture("exercise10")
-    assert output.strip() == "Welcome to Python programming!", (
-        f"Expected 'Welcome to Python programming!' but got {output.strip()!r}"
-    )
+@pytest.mark.task(taskno=10)
+def test_exercise10_formatting() -> None:
+    output = _exercise_output(10)
+    assert output == f"{EXPECTED_SINGLE_LINE[10]}\n"
 
 
-def test_exercise10_has_spaces():
-    output = _run_and_capture("exercise10")
-    assert output.count(" ") >= MIN_SPACES, "Should have multiple spaces between words"
+@pytest.mark.task(taskno=10)
+def test_exercise10_construct() -> None:
+    tree = _exercise_ast(10)
+    strings = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert "Welcome to Python programming!" in strings
 
 
-def test_exercise10_ends_with_exclamation():
-    output = _run_and_capture("exercise10")
-    assert output.strip().endswith("!"), "Should end with an exclamation mark"
-
-
-# Smoke test: all cells execute without errors
-@pytest.mark.parametrize(
-    "tag",
-    [
-        "exercise1",
-        "exercise2",
-        "exercise3",
-        "exercise4",
-        "exercise5",
-        "exercise6",
-        "exercise7",
-        "exercise8",
-        "exercise9",
-        "exercise10",
-    ],
-)
-def test_exercise_cells_execute(tag: str) -> None:
-    """Verify each tagged cell executes without error."""
-    output = _run_and_capture(tag)
-    assert output is not None, f"{tag} should produce output"
+@pytest.mark.parametrize("exercise_no", range(1, 11))
+@pytest.mark.task(taskno=0)
+def test_exercise_cells_execute(exercise_no: int) -> None:
+    output = _exercise_output(exercise_no)
+    assert output is not None

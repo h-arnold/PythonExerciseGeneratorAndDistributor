@@ -23,6 +23,7 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 - Readability & naming: meaningful names, consistent formatting, short expressions. Flag unclear/one-letter names and long inline expressions.
 - Single Responsibility: functions/classes should do one thing. Flag multi-responsibility functions for extraction.
 - Small functions & modules: prefer short functions (< max_function_length) and small modules; suggest splitting where appropriate.
+- If a function needs more than 5 parameters, refactor to use a configuration object or class.
 - Explicit error handling: no silent excepts; ensure clear exceptions and helpful messages.
 - Deterministic, fast tests: require unit tests for changed code, cover edge cases, avoid randomness/time/network in tests.
 - No dead code or commented-out code: remove unused imports, variables, and unreachable statements.
@@ -34,6 +35,7 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 - Performance when measured: don't preoptimize; add micro-benchmarks for hotspots and document trade-offs.
 - Consistent style & linting: run and fix ruff/formatting rules; ensure CI lints pass.
 - Type hints for public APIs: prefer modern annotations; check mismatches with tests or usage.
+- Type guards must be in a separate file near the main module to avoid cluttering business logic.
 - Backwards compatibility & deprecation: document breaking changes, provide migration notes or deprecation warnings.
 - Commit quality & scope: small, focused commits with clear messages and tests; include CHANGELOG or PR description for notable changes.
 - Testability & observability: code should be easily unit-testable; include logs/metrics where helpful for debugging.
@@ -41,6 +43,41 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 
 For each principle: note a concise rationale, an automated detection heuristic (tool/metric), and an actionable suggestion (fix, refactor, or docs).
 Defaults and thresholds are configurable via `agent-config.yml`.
+
+## Naming and folder organisation
+
+- File and module naming
+  - Use snake_case for module and file names (e.g., `my_module.py`, `string_utils.py`).
+  - Use CamelCase for classes (e.g., `HtmlParser`) and UPPER_SNAKE for constants.
+  - Keep module surface area small and explicit: prefer small modules with a clear single responsibility.
+
+- Packages and splitting modules
+  - When a module grows or has distinct responsibilities, convert it to a package:
+    - Create a folder `my_module/` with `__init__.py`.
+    - Split parts into cohesive submodules (e.g., `my_module/core.py`, `my_module/_helpers.py`, `my_module/cli.py`).
+    - Keep truly internal pieces prefixed with an underscore (e.g., `_helpers.py`).
+    - Re-export the public API from `__init__.py` so callers use `from my_module import X`.
+  - Aim for shallow, focused packages. If a package becomes complex, consider further subpackages.
+
+- Type hints, guards and shared types
+  - Put type guard helpers adjacent to the code they protect:
+    - Prefer `module_typeguards.py`.
+  - For cross-cutting TypedDicts or widely used type definitions, use a small `types/` package at repo root (e.g., `types/__init__.py`).
+  - Keep type-only modules small and documented; avoid circular imports by placing shared TypedDicts in `types/` if necessary.
+
+- Tests organisation
+  - Mirror the package/module layout under `tests/`. Examples:
+    - `my_module.py` -> `tests/test_my_module.py`
+    - `my_module/` package -> `tests/test_my_module_api.py`, `tests/test_my_module_core.py`
+  - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
+  - Keep tests fast and deterministic (no network, sleep, or randomness).
+  - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
+  - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` and `PYTUTOR_NOTEBOOKS_DIR` as described elsewhere.
+
+- Practical rules of thumb
+  - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
+  - Keep type guards and tiny helpers close to the code they protect to reduce cognitive overhead and avoid import cycles.
+  - When splitting code, update and add tests at the same time and expose only the intended public API from packages.
 
 ## Workflow (MUST do vs OPTIONAL) - manual steps
 
@@ -53,6 +90,7 @@ Defaults and thresholds are configurable via `agent-config.yml`.
 5. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.
 6. **Review code duplication**: Manually scan for repeated logic patterns, especially across module boundaries. Suggest extraction to shared utilities.
 7. **Verify adherence to standards**: Check that changed code follows the repo's coding conventions, naming patterns, and architectural principles outlined in the docs.
+   1. Focus particularly hard on unnessecary defensive guards that result in silent failures or obscure error handling. Code **must** fail fast and loudly with clear exceptions bubbled up.
 8. **Compare docs against the code**: Ensure any behavioural changes are reflected in documentation, README, or docstrings. Flag discrepancies for update.
 9. **Check the total length of files**: If a file exceeds 500 lines, suggest splitting into smaller modules when sensible.
 10. **Prepare findings report**: Document control/data flow observations, suggested refactors requiring human judgement, and patches for non-trivial changes. Recommend draft PRs where extensive follow-up work is needed.

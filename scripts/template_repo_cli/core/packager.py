@@ -1,4 +1,4 @@
-"""Template packager."""
+"""Template packager, including Classroom autograding support files."""
 
 from __future__ import annotations
 
@@ -56,17 +56,6 @@ class TemplatePackager:
                 dest = workspace / "tests" / f"test_{exercise_id}.py"
                 safe_copy_file(file_dict["test"], dest)
 
-    def _copy_single_file(self, filename: str, workspace: Path) -> None:
-        """Copy a single template file if it exists.
-
-        Args:
-            filename: Name of the file to copy.
-            workspace: Destination workspace directory.
-        """
-        src = self.template_files_dir / filename
-        if src.exists():
-            safe_copy_file(src, workspace / filename)
-
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
 
@@ -86,14 +75,45 @@ class TemplatePackager:
         """
         if not self.template_files_dir.exists():
             raise FileNotFoundError(
-                f"Template files directory not found: {self.template_files_dir}"
+                "Template files directory missing at"
+                f" {self.template_files_dir}. Run the repository setup so"
+                " template_repo_files/ is populated before packaging."
             )
 
-        # Copy individual files
-        self._copy_single_file("pyproject.toml", workspace)
-        self._copy_single_file("pytest.ini", workspace)
-        self._copy_single_file(".gitignore", workspace)
-        self._copy_single_file("INSTRUCTIONS.md", workspace)
+        file_pairs = [
+            (
+                self.template_files_dir / "pyproject.toml",
+                workspace / "pyproject.toml",
+            ),
+            (
+                self.template_files_dir / "pytest.ini",
+                workspace / "pytest.ini",
+            ),
+            (
+                self.template_files_dir / ".gitignore",
+                workspace / ".gitignore",
+            ),
+            (
+                self.template_files_dir / "INSTRUCTIONS.md",
+                workspace / "INSTRUCTIONS.md",
+            ),
+            (
+                self.repo_root / "tests" / "notebook_grader.py",
+                workspace / "tests" / "notebook_grader.py",
+            ),
+            (
+                self.repo_root / "scripts" / "build_autograde_payload.py",
+                workspace / "scripts" / "build_autograde_payload.py",
+            ),
+            (
+                self.repo_root / "tests" / "autograde_plugin.py",
+                workspace / "tests" / "autograde_plugin.py",
+            ),
+        ]
+
+        for src, dest in file_pairs:
+            if src.exists():
+                safe_copy_file(src, dest)
 
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
@@ -110,7 +130,7 @@ class TemplatePackager:
         # Read template
         template_path = self.template_files_dir / "README.md.template"
         if template_path.exists():
-            template_content = template_path.read_text()
+            template_content = template_path.read_text(encoding="utf-8")
         else:
             # Fallback template
             template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
@@ -124,7 +144,7 @@ class TemplatePackager:
 
         # Write README
         readme_path = workspace / "README.md"
-        readme_path.write_text(content)
+        readme_path.write_text(content, encoding="utf-8")
 
     def validate_package(self, workspace: Path) -> bool:
         """Validate package integrity.
@@ -140,6 +160,9 @@ class TemplatePackager:
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
+            workspace / "scripts" / "build_autograde_payload.py",
+            workspace / "tests" / "autograde_plugin.py",
+            workspace / ".github" / "workflows" / "classroom.yml",
         ]
 
         for required_file in required_files:

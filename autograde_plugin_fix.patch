@@ -1,0 +1,43 @@
+--- a/tests/autograde_plugin.py
++++ b/tests/autograde_plugin.py
+@@ -17,7 +17,7 @@ import time
+ from collections.abc import Sequence
+ from dataclasses import dataclass, field
+ from pathlib import Path
+-from typing import Any
++from typing import Any, cast
+ 
+ ELLIPSIS_GUARD_LENGTH = 3
+ LOCATION_MIN_LENGTH = 2
+@@ -141,7 +141,7 @@ def _get_task_marker(item: Any) -> Any | None:
+ def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
+     kwargs = getattr(marker, "kwargs", None)
+     if isinstance(kwargs, dict):
+-        return kwargs
++        return cast(dict[str, Any], kwargs)
+     return {}
+ 
+ 
+@@ -148,7 +148,7 @@ def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
+ def _extract_marker_args(marker: Any) -> Sequence[Any]:
+     args = getattr(marker, "args", ())
+     if isinstance(args, Sequence):
+-        return args
++        return cast(Sequence[Any], args)
+     return ()
+ 
+ 
+@@ -563,7 +563,11 @@ def _write_json_with_fallback(payload: dict[str, Any], path: Path, state: Auto
+         state.encountered_errors.append(error_message)
+         print(f"Autograde plugin failed to write results: {error_message}", file=sys.stderr)
+ 
+-        fallback = {"status": "error", "score": 0.0, "max_score": 0.0, "tests": []}
++        fallback: dict[str, Any] = {
++            "status": "error",
++            "score": 0.0,
++            "max_score": 0.0,
++            "tests": []
++        }
+         try:
+             with path.open("w", encoding="utf-8") as handle:
+                 json.dump(fallback, handle, ensure_ascii=False, indent=2)

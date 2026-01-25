@@ -1,0 +1,21 @@
+{
+  "typeCheckingMode": "strict",
+  "pythonVersion": "3.11",
+  "useLibraryCodeForTypes": true,
+  "reportUnknownMemberType": true,
+  "reportUnknownParameterType": true,
+  "reportUnknownArgumentType": true,
+  "reportUnknownVariableType": true,
+  "reportUnknownLambdaType": true,
+  "reportMissingTypeStubs": true,
+  "reportImportCycles": true,
+  "exclude": [
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    "**/.venv",
+    "**/notebooks/**"
+  ],
+  "venvPath": ".",
+  "venv": ".venv"
+}

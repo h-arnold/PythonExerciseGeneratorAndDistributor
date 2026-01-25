@@ -368,9 +368,9 @@ class TestCliCreateCommand:
     @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
     )
-    def test_cli_permission_hint(
+    def test_cli_permission_hint(  # noqa: PLR0913
         self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys
-    ) -> None:  # noqa: PLR0913
+    ) -> None:
         """Display guidance when GitHub rejects repo creation for integrations."""
         from scripts.template_repo_cli.cli import main
 

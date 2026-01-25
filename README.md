@@ -14,6 +14,7 @@ For teachers:
 - Create exercises fast using the built-in Exercise Generation assistant (see [docs/exercise-generation.md](docs/exercise-generation.md)).
 - Ship browser‑ready assignments your students can run inline (Codespaces now; Pyodide client‑side execution planned).
 - Autograde student work with pytest so learners get immediate, actionable feedback.
+- Plug the suite into GitHub Classroom autograding end-to-end (see [docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md](docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md) and [docs/autograding-cli.md](docs/autograding-cli.md)).
 - Create GitHub Classroom template repos with a CLI and consistent VS Code/devcontainer configs.
 
 For students:
@@ -27,6 +28,8 @@ Why teachers will care:
 - Slash setup time and eliminate “it works on my machine” problems ✅
 - Spend classroom time teaching, not troubleshooting environments ✅
 - Designed to be age‑appropriate and easy to adopt ✅
+
+[Read about the pedagogical approach here](docs/pedagogy.md).
 
 ## How it works (plain‑English overview)
 

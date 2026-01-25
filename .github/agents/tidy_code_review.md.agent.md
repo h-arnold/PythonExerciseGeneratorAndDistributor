@@ -2,6 +2,7 @@
 name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent
 tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
+infer: true
 ---
 # Tidy Code Review Sub-Agent
 
@@ -18,13 +19,15 @@ Ignore files in the following locations:
 
 **Workflow**: Always call the automated review first. Based on issue count, decide whether to proceed with manual review or defer.
 
+**Never silence linting errors without explict authorisation from the user.**
+
 ## Workflow (main agent entry point)
 
 Execute the following phases in strict order:
 
 ### Phase 1: Automated Review (ALWAYS START HERE)
 
-1. Create a TODO entry and mark `in-progress`
+1. Create a TODO entry (`manage_todo_list`) outlining **all** the steps you need to take and mark `in-progress`
 2. Run `source .venv/bin/activate`. **YOU MUST DO THIS OR THE CHECKS WILL FAIL.**
 3. Open and read *all* of **`docs/agents/tidy_code_review/automated_review.md`**. This contains the instructions you **must** follow to the letter to complete Phase 1.
 
