@@ -10,6 +10,17 @@ Modification exercises follow the debugging sets once pupils are confident with 
   - **Task** describing the required change.
   - **Expected output** showing the exact stdout the tests check. Use plain fenced blocks so learners can copy the target result.
 - The code cell directly underneath is the student workspace. It contains the unmodified working code and any guiding comments (for example, `# Exercise N — YOUR CODE`). There is **no separate execution cell** for the working solution; students edit this tagged cell in place.
+- In the solutions notebook, prefer stepwise, "slow" implementations that perform one small change per line so learners can trace variable state and see how each transformation affects the program. For example:
+
+```python
+age = input()
+age = int(age)
+age = age + 1
+print("Next year you will be " + str(age))
+```
+
+Avoid compressing multiple operations into a single expression in solution examples, as that hides intermediate steps and reduces learning value.
+
 - Cell metadata must include `{"language": "python", "tags": ["exerciseN"]}`. The grading helper `run_cell_and_capture_output()` in [tests/notebook_grader.py](tests/notebook_grader.py#L94) executes code by tag, so missing or misspelled tags will cause automated tests to fail.
 - Exercises rely on printed output. Ensure the starter code already produces syntactically correct output so students focus on modification, not syntax errors.
 - Optional extension or scratch cells (for self-checking) should be left untagged so the grader ignores them.

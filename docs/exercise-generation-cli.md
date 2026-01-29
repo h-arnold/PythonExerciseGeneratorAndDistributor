@@ -205,6 +205,16 @@ Edit `notebooks/solutions/exNNN_slug.ipynb`:
 - Complete the exercise cells with correct implementations
 - Keep the same cell tags
 - Ensure the solution is pedagogically appropriate (don't use advanced features students haven't learned)
+- Prefer stepwise, "slow" solutions in the instructor notebook: make each transformation or change on its own line so learners can observe how variables change. For example, in a casting exercise prefer:
+
+```python
+age = input()
+age = int(age)
+age = age + 1
+print("Next year you will be " + str(age))
+```
+
+Avoid compact one-liners such as `print("Next year you will be " + str(int(input()) + 1))`, which hide intermediate steps and make it harder for students to follow the state change.
 
 ### 5. Verify
 

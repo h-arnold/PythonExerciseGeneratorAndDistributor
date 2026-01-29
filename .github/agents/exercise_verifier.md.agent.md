@@ -172,6 +172,7 @@ Also verify the solution notebook mirror (`notebooks/solutions/...`) is accurate
 Also check the solution notebook:
 - For debug: it’s OK (and encouraged) to include extra teacher-facing markdown explaining the bug(s) and correct fix.
 - For modify/make: solution cells should be clean and not use unnecessary advanced tricks.
+- Prefer stepwise, one-change-per-line examples in solution cells so learners can follow variable state changes. If you see compact one-liners that combine input(), casting and computation (for example, `print("Next year you will be " + str(int(input()) + 1))`), flag it and recommend expanding into explicit steps (read input, cast, update variable with `age = age + 1`, then print).
 
 ### Gate F — Order of teaching updated
 The exercise must be listed in the construct-level teaching order file:

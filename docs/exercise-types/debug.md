@@ -136,7 +136,7 @@ Remove comments that point out the fault (for example, `# missing brackets`). Le
 ### 5. **Separate student and teacher messaging**
 
 - Student notebook (`notebooks/exNNN_slug.ipynb`): neutral titles and prompts, buggy code, concise reflection prompt.
-- Solutions notebook (`notebooks/solutions/exNNN_slug.ipynb`): includes the corrected code plus optional teaching notes, keeping the same tag structure so tests can run against either version via `PYTUTOR_NOTEBOOKS_DIR`.
+- Solutions notebook (`notebooks/solutions/exNNN_slug.ipynb`): includes the corrected code plus optional teaching notes, keeping the same tag structure so tests can run against either version via `PYTUTOR_NOTEBOOKS_DIR`. When writing the corrected code, favour stepwise, one-change-per-line examples so students can observe how variables change (for example, cast the input to `age` on one line, then increment with `age = age + 1` on the next). Avoid compressing multiple transformations into single, compact expressions which hide intermediate steps.
 
 ### 6. **Progress difficulty deliberately**
 
