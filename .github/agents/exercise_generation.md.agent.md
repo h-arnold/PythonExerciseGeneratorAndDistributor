@@ -83,11 +83,20 @@ Use `read_file` to fetch the exact file needed
 
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
+### Quick 8-step workflow summary ✅
+
+1. Create a TODO using `manage_todo_list` to plan the work.
+2. Pick exercise identifiers (exNNN and a clear slug).
+3. Scaffold files with the generator (notebook, solution mirror, tests, exercise metadata).
+4. Author the student notebook (intro, worked examples, one graded cell per part).
+5. Run the **Exercise Verifier** (before writing tests) to check structure and sequencing.
+6. Write and refine pytest tests following the testing guide.
+7. Verify tests locally and confirm they pass on `notebooks/solutions` while student notebooks still fail.
+8. Run the **Exercise Verifier** again (after tests) and update `exercises/CONSTRUCT/OrderOfTeaching.md`.
+
 ## When asked to create an exercise
 
 Refer to these key docs:
-
-
 
 1) Create a TODO using your `manage_todo_list` to help you organise your work.
 
@@ -97,7 +106,6 @@ Refer to these key docs:
 
 [Exercise Generation CLI](/docs/exercise-generation-cli.md)
 [Exercise Generation](/docs/exercise-generation.md)
-
 
 This creates:
   - `exercises/CONSTRUCT/TYPE/exNNN_slug/README.md` (where CONSTRUCT is sequence, selection, iteration, etc. and TYPE is debug, modify, or make)
@@ -130,12 +138,16 @@ Why these files matter:
 
 Note: The generator provides a minimal starting notebook and tests. You should edit the notebook to add prompt text, examples, and the code cell(s) tagged `exercise1`, `exercise2`, etc. where learners will write their solution(s).
 
-3) Author the notebook
+4) Author the notebook
 - Keep a clear structure:
   - Intro + goal
   - 1–2 worked examples
   - One graded cell per exercise part
   - Optional self-check / exploration cell
+
+**IMPORTANT** Create the exercises **one at a time** in the studenet notebook. Doing this one at a time ensures that you can ensure that difficulty gradually increases and each exercise builds on the last.
+
+Once you have completed the student notebook, you can then create the solutions notebook
 
 Graded cell rules:
 - Must be tagged with `exercise1`, `exercise2`, etc. (exact match in `metadata.tags`)
@@ -157,7 +169,7 @@ Metadata tips:
 - When you tag a cell for grading, ensure the tag exactly matches `exercise1`, `exercise2`, etc.; the grader locates cells by this metadata tag.
 - Do not place multiple independent student solutions in the same tagged cell; the grader executes only the tagged cell's content.
 
-### Quality gate (run the verifier — BEFORE tests)
+5) ### Quality gate (run the verifier — BEFORE tests)
 After scaffolding + authoring the notebooks (student + solutions mirror), use your runSubAgent tool to run the **Exercise Verifier** sub-agent to check:
 - exercise-type compliance (debug/modify/make format rules)
 - concept sequencing (no later constructs accidentally introduced in prompts/starter code)
@@ -166,7 +178,7 @@ After scaffolding + authoring the notebooks (student + solutions mirror), use yo
 
 Only once the verifier is happy should you start writing/refining the pytest tests.
 
-4) Write / refine tests
+6) Write / refine tests
 
 Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testing philosophy and patterns. Key points:
 
@@ -176,7 +188,7 @@ Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testi
 - **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
 - **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` to mock `input()` calls.
 
-5) Verify
+7) Verify
 - Run `pytest -q` locally.
 
 Also verify the tests pass against the solution mirror:
@@ -186,7 +198,7 @@ Also verify the tests pass against the solution mirror:
 
 If tests fail locally, update only the tests or notebook relevant to the exercise — do not modify unrelated exercises or global test configuration.
 
-### Quality gate (run the verifier — AFTER tests)
+8) ### Quality gate (run the verifier — AFTER tests)
 After tests pass on the solution notebooks, user your runSubAgent tool run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
 - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q` (or the relevant single test file)
 - confirm student notebooks still *fail* until students do the work
