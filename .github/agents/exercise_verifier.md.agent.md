@@ -130,6 +130,7 @@ All tests must follow the **"Task Completion"** model: (1) code runs without err
 
 **Output Matching (Strictness):**
 - Default to **strict checks**: exact casing, whitespace, and punctuation.
+- **Model best practice**: Ensure variable names are descriptive, whitespacing conventions are adhered to etc.
 - Exceptions allowed only for specific task types (e.g., "Make" tasks) or when pedagogical reason is documented.
 - Rationale: Developing precise coding habits (correct formatting matters) is part of the learning objective.
 

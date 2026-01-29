@@ -159,6 +159,9 @@ Additional guidance:
 - Make each graded cell small (10–20 lines) and focused on a single learning objective.
 - Before the Functions construct is taught, omit docstrings; after Functions, include a docstring on the target function describing parameters, return values, and an example.
 - Keep the cell's variable and function names consistent with the test expectations (the scaffold expects `solve()` unless you update the tests).
+- Ensure you always use meaningful variable names e.g. 
+  - ✅ `temp_celsius`
+  - ❌ `c`
 
 Notebook formatting requirements
 - Notebook is JSON (`.ipynb`).
