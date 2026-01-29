@@ -37,3 +37,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Fixing common *logical* errors with string values, variable assignment and short message construction.
 - Type: Debug exercises with an emphasis on reading expected output and correcting subtle wording/logic mistakes.
 - Purpose: Build students' attention to detail and ability to reason about intended program behaviour.
+
+1. [**Casting and Type Conversion**](`ex006_sequence_modify_casting`)
+
+[Supporting docs](./modify/ex006_sequence_modify_casting/)
+[Notebook](notebooks/ex006_sequence_modify_casting.ipynb)
+
+- Focus: Converting between `str`, `int`, `float`, and `bool` using `int()`, `float()`, `str()` and comparisons.
+- Type: Modification exercises focused on practical casting scenarios such as reading `input()` text and converting for calculations.
+- Purpose: Help students understand why types matter and how to safely convert data for arithmetic and text output.

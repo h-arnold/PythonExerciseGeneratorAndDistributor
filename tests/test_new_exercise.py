@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import re
 
 import scripts.new_exercise as ne
 
@@ -98,3 +99,26 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
         "Explanation must be more than 10 characters" in txt
         or "Explanation must be more than 10 characters" in txt
     )
+
+
+def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() -> None:
+    """Ensure the standard (non-debug) template tags only graded exercise code cells with 'exerciseN' and leaves the optional self-check cell untagged."""
+    nb = ne._make_notebook_with_parts("Title Standard", parts=3, exercise_type=None)
+    cells = nb["cells"]
+
+    # Collect exercise tags present on code cells
+    exercise_tags = {
+        t
+        for cell in cells
+        if cell.get("cell_type") == "code"
+        for t in cell.get("metadata", {}).get("tags", [])
+        if re.fullmatch(r"^exercise\d+$", t)
+    }
+
+    expected = {f"exercise{i}" for i in range(1, 4)}
+    assert exercise_tags == expected
+
+    # The last cell should be the optional self-check code cell and must have no tags
+    last_cell = cells[-1]
+    assert last_cell["cell_type"] == "code"
+    assert not last_cell.get("metadata", {}).get("tags", []), "Optional self-check cell should not be tagged"
