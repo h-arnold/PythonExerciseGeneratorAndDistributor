@@ -46,3 +46,4 @@ These exercises are intended to be taught in the following order:
 - Focus: Converting between `str`, `int`, `float`, and `bool` using `int()`, `float()`, `str()` and comparisons.
 - Type: Modification exercises focused on practical casting scenarios such as reading `input()` text and converting for calculations.
 - Purpose: Help students understand why types matter and how to safely convert data for arithmetic and text output.
+
