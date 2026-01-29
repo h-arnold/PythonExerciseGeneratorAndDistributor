@@ -88,7 +88,7 @@ If the required guide is missing or cannot be read, the agent must stop and ask 
 1. Create a TODO using `manage_todo_list` to plan the work.
 2. Pick exercise identifiers (exNNN and a clear slug).
 3. Scaffold files with the generator (notebook, solution mirror, tests, exercise metadata).
-4. Author the student notebook (intro, worked examples, one graded cell per part).
+4. Author the student notebook (intro, worked examples, one graded cell per part). **Create the exercises one a time**.
 5. Run the **Exercise Verifier** (before writing tests) to check structure and sequencing.
 6. Write and refine pytest tests following the testing guide.
 7. Verify tests locally and confirm they pass on `notebooks/solutions` while student notebooks still fail.
@@ -145,7 +145,7 @@ Note: The generator provides a minimal starting notebook and tests. You should e
   - One graded cell per exercise part
   - Optional self-check / exploration cell
 
-**IMPORTANT** Create the exercises **one at a time** in the studenet notebook. Doing this one at a time ensures that you can ensure that difficulty gradually increases and each exercise builds on the last.
+**IMPORTANT**: YOU MUST create the exercises **one at a time** in the student notebook. After each exercise, check the one before to ensure that there is the appropriate, very gradual progression and that the next exercise is harder than the last.
 
 Once you have completed the student notebook, you can then create the solutions notebook
 
