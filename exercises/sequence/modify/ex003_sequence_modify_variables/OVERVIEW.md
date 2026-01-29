@@ -17,3 +17,4 @@
 - Keep the focus on editing a single line per step; encourage students to read the expected output before making the change.
 - When demonstrating concatenation, highlight how each variable contributes one piece of the sentence and the `+` operator simply joins them together.
 - Use the optional self-check cell (at the bottom of the notebook) to trial extra strings if a student wants to practise more before re-running the tests.
+- Later parts of the exercise (ex4-ex6) require students to use two input() calls to build the final message; teachers may demonstrate concatenation with + and show sample inputs.

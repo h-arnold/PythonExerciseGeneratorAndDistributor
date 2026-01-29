@@ -24,15 +24,15 @@ EXPECTED_STATIC_OUTPUT = {
 }
 
 EXPECTED_PROMPTS = {
-    4: "Type the name of your favourite fruit:",
-    5: "Which town do you like the most?",
-    6: "Please enter your name:",
+    4: ["Type the name of your favourite fruit:", "Type one word to describe it:"],
+    5: ["Which town do you like the most?", "Which country is it in?"],
+    6: ["Please enter your first name:", "Please enter your last name:"],
 }
 
 EXPECTED_INPUT_MESSAGES = {
-    4: "I like {value}",
-    5: "I would visit {value}",
-    6: "Welcome, {value}!",
+    4: "I like {value1} because it is {value2}",
+    5: "I would visit {town} in {country}",
+    6: "Welcome, {first} {last}!",
 }
 
 ORIGINAL_PROMPTS = {
@@ -117,7 +117,8 @@ def _has_input_assignment(tree: ast.AST, name: str) -> bool:
 @pytest.mark.task(taskno=0)
 def test_exercise_cells_execute(exercise_no: int) -> None:
     if exercise_no in (4, 5, 6):
-        output = _exercise_output_with_inputs(exercise_no, ["check"])
+        # These exercises now require two input() calls
+        output = _exercise_output_with_inputs(exercise_no, ["check", "check"])
     else:
         output = _exercise_output(exercise_no)
     assert output is not None
@@ -187,15 +188,16 @@ def test_exercise3_construct() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
     fruit = "dragonfruit"
-    output = _exercise_output_with_inputs(4, [fruit])
+    descriptor = "sweet"
+    output = _exercise_output_with_inputs(4, [fruit, descriptor])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[4], EXPECTED_INPUT_MESSAGES[4].format(value=fruit)]
+    assert lines == [EXPECTED_PROMPTS[4][0], EXPECTED_PROMPTS[4][1], EXPECTED_INPUT_MESSAGES[4].format(value1=fruit, value2=descriptor)]
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
-    output = _exercise_output_with_inputs(4, ["mango"])
-    expected = f"{EXPECTED_PROMPTS[4]}\n{EXPECTED_INPUT_MESSAGES[4].format(value='mango')}\n"
+    output = _exercise_output_with_inputs(4, ["mango", "tropical"])
+    expected = f"{EXPECTED_PROMPTS[4][0]}\n{EXPECTED_PROMPTS[4][1]}\n{EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}\n"
     assert output == expected
 
 
@@ -203,24 +205,30 @@ def test_exercise4_formatting() -> None:
 def test_exercise4_construct() -> None:
     tree = _exercise_ast(4)
     constants = _string_constants(tree)
-    assert EXPECTED_PROMPTS[4] in constants
+    # Both prompts should be present and the old prompt removed
+    assert EXPECTED_PROMPTS[4][0] in constants
+    assert EXPECTED_PROMPTS[4][1] in constants
     assert ORIGINAL_PROMPTS[4] not in constants
-    assert _has_input_assignment(tree, "fruit")
-    assert _print_uses_name(tree, "fruit")
+    # We now expect two input assignments and that both names are used in the print
+    assert _has_input_assignment(tree, "fav_fruit")
+    assert _has_input_assignment(tree, "descriptor")
+    assert _print_uses_name(tree, "fav_fruit")
+    assert _print_uses_name(tree, "descriptor")
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
-    place = "Newport"
-    output = _exercise_output_with_inputs(5, [place])
+    town = "Newport"
+    country = "Wales"
+    output = _exercise_output_with_inputs(5, [town, country])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[5], EXPECTED_INPUT_MESSAGES[5].format(value=place)]
+    assert lines == [EXPECTED_PROMPTS[5][0], EXPECTED_PROMPTS[5][1], EXPECTED_INPUT_MESSAGES[5].format(town=town, country=country)]
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
-    output = _exercise_output_with_inputs(5, ["Cardiff"])
-    expected = f"{EXPECTED_PROMPTS[5]}\n{EXPECTED_INPUT_MESSAGES[5].format(value='Cardiff')}\n"
+    output = _exercise_output_with_inputs(5, ["Cardiff", "Wales"])
+    expected = f"{EXPECTED_PROMPTS[5][0]}\n{EXPECTED_PROMPTS[5][1]}\n{EXPECTED_INPUT_MESSAGES[5].format(town='Cardiff', country='Wales')}\n"
     assert output == expected
 
 
@@ -228,24 +236,28 @@ def test_exercise5_formatting() -> None:
 def test_exercise5_construct() -> None:
     tree = _exercise_ast(5)
     constants = _string_constants(tree)
-    assert EXPECTED_PROMPTS[5] in constants
+    assert EXPECTED_PROMPTS[5][0] in constants
+    assert EXPECTED_PROMPTS[5][1] in constants
     assert ORIGINAL_PROMPTS[5] not in constants
-    assert _has_input_assignment(tree, "place")
-    assert _print_uses_name(tree, "place")
+    assert _has_input_assignment(tree, "town")
+    assert _has_input_assignment(tree, "country")
+    assert _print_uses_name(tree, "town")
+    assert _print_uses_name(tree, "country")
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
-    name = "Jess"
-    output = _exercise_output_with_inputs(6, [name])
+    first = "Jess"
+    last = "Jones"
+    output = _exercise_output_with_inputs(6, [first, last])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[6], EXPECTED_INPUT_MESSAGES[6].format(value=name)]
+    assert lines == [EXPECTED_PROMPTS[6][0], EXPECTED_PROMPTS[6][1], EXPECTED_INPUT_MESSAGES[6].format(first=first, last=last)]
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
-    output = _exercise_output_with_inputs(6, ["Alex"])
-    expected = f"{EXPECTED_PROMPTS[6]}\n{EXPECTED_INPUT_MESSAGES[6].format(value='Alex')}\n"
+    output = _exercise_output_with_inputs(6, ["Alex", "Morgan"])
+    expected = f"{EXPECTED_PROMPTS[6][0]}\n{EXPECTED_PROMPTS[6][1]}\n{EXPECTED_INPUT_MESSAGES[6].format(first='Alex', last='Morgan')}\n"
     assert output == expected
 
 
@@ -253,10 +265,13 @@ def test_exercise6_formatting() -> None:
 def test_exercise6_construct() -> None:
     tree = _exercise_ast(6)
     constants = _string_constants(tree)
-    assert EXPECTED_PROMPTS[6] in constants
+    assert EXPECTED_PROMPTS[6][0] in constants
+    assert EXPECTED_PROMPTS[6][1] in constants
     assert ORIGINAL_PROMPTS[6] not in constants
-    assert _has_input_assignment(tree, "name")
-    assert _print_uses_name(tree, "name")
+    assert _has_input_assignment(tree, "first_name")
+    assert _has_input_assignment(tree, "last_name")
+    assert _print_uses_name(tree, "first_name")
+    assert _print_uses_name(tree, "last_name")
     assert any("!" in value for value in constants)
 
 
