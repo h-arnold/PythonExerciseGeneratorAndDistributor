@@ -1,8 +1,11 @@
 from __future__ import annotations
+from pathlib import Path
+import re
+import json
 
 import pytest
 
-from tests.notebook_grader import run_cell_with_input, run_cell_and_capture_output
+from tests.notebook_grader import run_cell_and_capture_output, run_cell_with_input
 
 NOTEBOOK_PATH = "notebooks/ex006_sequence_modify_casting.ipynb"
 
@@ -16,7 +19,8 @@ def test_exercise1_adds_one() -> None:
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_price_times_quantity() -> None:
-    output = run_cell_with_input(NOTEBOOK_PATH, tag="exercise2", inputs=["2.5", "3"])
+    output = run_cell_with_input(
+        NOTEBOOK_PATH, tag="exercise2", inputs=["2.5", "3"])
     assert "Enter the unit price:" in output
     assert "Enter the quantity:" in output
     assert output.endswith("Total cost: 7.5\n")
@@ -50,7 +54,8 @@ def test_exercise6_phone_assembly() -> None:
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_total_pounds() -> None:
-    output = run_cell_with_input(NOTEBOOK_PATH, tag="exercise7", inputs=["4", "150"])
+    output = run_cell_with_input(
+        NOTEBOOK_PATH, tag="exercise7", inputs=["4", "150"])
     assert "Enter quantity:" in output
     assert "Enter price in pence (e.g. 150):" in output
     assert output.endswith("Total in pounds: 6.0\n")
@@ -58,14 +63,16 @@ def test_exercise7_total_pounds() -> None:
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_member_yes() -> None:
-    output = run_cell_with_input(NOTEBOOK_PATH, tag="exercise8", inputs=["yes"])
+    output = run_cell_with_input(
+        NOTEBOOK_PATH, tag="exercise8", inputs=["yes"])
     assert "Are you a member? (yes/no)" in output
     assert output.endswith("Access granted: True\n")
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_average() -> None:
-    output = run_cell_with_input(NOTEBOOK_PATH, tag="exercise9", inputs=["3", "4"])
+    output = run_cell_with_input(
+        NOTEBOOK_PATH, tag="exercise9", inputs=["3", "4"])
     assert "Enter first number:" in output
     assert "Enter second number:" in output
     assert output.endswith("Average: 3.5\n")
@@ -73,7 +80,8 @@ def test_exercise9_average() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_final_total() -> None:
-    output = run_cell_with_input(NOTEBOOK_PATH, tag="exercise10", inputs=["2", "25.0", "10"])
+    output = run_cell_with_input(
+        NOTEBOOK_PATH, tag="exercise10", inputs=["2", "25.0", "10"])
     assert "Enter number of items:" in output
     assert "Enter price per item:" in output
     assert "Enter tax percent (e.g. 5):" in output
@@ -89,15 +97,11 @@ def test_exercise_cells_execute(exercise_no: int) -> None:
     if exercise_no in {1, 2, 3, 5, 7, 8, 9, 10}:
         # Provide two or three inputs for those that ask; extra inputs are ignored
         sample_inputs = ["1", "2", "3"]
-        output = run_cell_with_input(NOTEBOOK_PATH, tag=tag, inputs=sample_inputs)
+        output = run_cell_with_input(
+            NOTEBOOK_PATH, tag=tag, inputs=sample_inputs)
     else:
         output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
     assert output is not None
-
-
-import json
-import re
-from pathlib import Path
 
 
 def test_only_expected_exercise_tags_in_notebook() -> None:

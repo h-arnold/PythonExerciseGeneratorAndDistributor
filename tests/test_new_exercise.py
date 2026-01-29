@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-import sys
 import re
+import sys
 
 import scripts.new_exercise as ne
 
@@ -16,7 +16,8 @@ def _find_tags(cells, tag):
 
 
 def test_make_notebook_debug_structure():
-    nb = ne._make_notebook_with_parts("Title Debug", parts=2, exercise_type="debug")
+    nb = ne._make_notebook_with_parts(
+        "Title Debug", parts=2, exercise_type="debug")
     cells = nb["cells"]
 
     # For each part check we have expected-output, exercise tag and explanation tag
@@ -75,7 +76,8 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
     exercise_key = "ex010_debug_example"
     ex_dir = tmp_path / "exercises" / exercise_key
     nb_path = tmp_path / "notebooks" / f"{exercise_key}.ipynb"
-    nb_solution = tmp_path / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
+    nb_solution = tmp_path / "notebooks" / \
+        "solutions" / f"{exercise_key}.ipynb"
     test_path = tmp_path / "tests" / f"test_{exercise_key}.py"
 
     assert ex_dir.exists(), "Exercise directory should be created"
@@ -85,7 +87,8 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
 
     # Notebook should include exercise1 and explanation1 tags
     nb = json.loads(nb_path.read_text(encoding="utf-8"))
-    tags = [t for cell in nb["cells"] for t in cell.get("metadata", {}).get("tags", [])]
+    tags = [t for cell in nb["cells"]
+            for t in cell.get("metadata", {}).get("tags", [])]
     assert "exercise1" in tags
     assert "explanation1" in tags
 
@@ -103,7 +106,8 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
 
 def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() -> None:
     """Ensure the standard (non-debug) template tags only graded exercise code cells with 'exerciseN' and leaves the optional self-check cell untagged."""
-    nb = ne._make_notebook_with_parts("Title Standard", parts=3, exercise_type=None)
+    nb = ne._make_notebook_with_parts(
+        "Title Standard", parts=3, exercise_type=None)
     cells = nb["cells"]
 
     # Collect exercise tags present on code cells
@@ -121,4 +125,5 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     # The last cell should be the optional self-check code cell and must have no tags
     last_cell = cells[-1]
     assert last_cell["cell_type"] == "code"
-    assert not last_cell.get("metadata", {}).get("tags", []), "Optional self-check cell should not be tagged"
+    assert not last_cell.get("metadata", {}).get(
+        "tags", []), "Optional self-check cell should not be tagged"
