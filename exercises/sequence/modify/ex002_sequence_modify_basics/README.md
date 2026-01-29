@@ -36,3 +36,5 @@ This is designed as the **very first** set of exercises for students who have ne
 
 All exercises are self-contained and require only modification of existing working code, making them less intimidating than writing from scratch.
 
+**Note:** The automated tests enforce exact output formatting (case, spacing, punctuation and final newline). Make this explicit to students when demonstrating expected output.
+
