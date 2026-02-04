@@ -108,7 +108,8 @@ def _validate_results_payload(data: object) -> AutogradeResults:
         (key for key in ("max_score", "status", "tests") if key not in data_dict), None
     )
     if missing_key is not None:
-        raise RuntimeError(f"Autograde results missing required key: {missing_key}")
+        raise RuntimeError(
+            f"Autograde results missing required key: {missing_key}")
 
     tests = data_dict.get("tests")
     if not isinstance(tests, list):
@@ -116,7 +117,8 @@ def _validate_results_payload(data: object) -> AutogradeResults:
 
     tests_list = cast(list[object], tests)
     if not all(isinstance(test, dict) for test in tests_list):
-        raise RuntimeError("Autograde results 'tests' entries must be objects.")
+        raise RuntimeError(
+            "Autograde results 'tests' entries must be objects.")
     return cast(AutogradeResults, data_dict)
 
 
@@ -153,6 +155,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         type=Path,
         default=None,
         help="Optional path for writing the decoded payload as formatted JSON.",
+    )
+    parser.add_argument(
+        "--minimal",
+        action="store_true",
+        help="Strip verbose fields (stdout/stderr/log/extra/nodeid/duration) to reduce payload size.",
     )
 
     args = parser.parse_args(argv)
@@ -203,7 +210,8 @@ def _normalise_notebooks_dir(value: str | None) -> str | None:
 def _should_zero_scores_on_failure() -> bool:
     """Return True when failing student notebooks should yield zero credit."""
 
-    notebooks_dir = _normalise_notebooks_dir(os.environ.get("PYTUTOR_NOTEBOOKS_DIR"))
+    notebooks_dir = _normalise_notebooks_dir(
+        os.environ.get("PYTUTOR_NOTEBOOKS_DIR"))
     return notebooks_dir == "notebooks"
 
 
@@ -244,7 +252,8 @@ def load_results(results_path: Path) -> AutogradeResults:
         with results_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Results JSON at {results_path} is invalid: {exc}") from exc
+        raise RuntimeError(
+            f"Results JSON at {results_path} is invalid: {exc}") from exc
 
     return _validate_results_payload(data)
 
@@ -329,7 +338,8 @@ def _normalise_test_entry(test: AutogradeTestEntry) -> AutogradePayloadTest:
     normalised_name = str(name_source)
     status = str(test.get("status", "error"))
     score_value = _ensure_float(
-        test.get("score", 0.0), f"Test entry for {normalised_name} has non-numeric score."
+        test.get(
+            "score", 0.0), f"Test entry for {normalised_name} has non-numeric score."
     )
     line_number = _normalise_line_number(test.get("line_no"))
 
@@ -362,7 +372,8 @@ def _calculate_earned_score(
 def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
-    max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
+    max_score = _ensure_float(
+        raw_results["max_score"], "max_score in results must be numeric.")
     status = str(raw_results["status"])
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
@@ -393,10 +404,45 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
     return payload
 
 
+def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
+    """Remove verbose fields to reduce payload size for environment variable limits.
+
+    GitHub Classroom's reporter expects minimal fields:
+    - tests[].name, status, message (optional), score (optional)
+    - max_score (optional)
+    This strips stdout/stderr/log/extra/nodeid/duration/line_no to stay under 32KB.
+    """
+    minimal_tests: list[AutogradePayloadTest] = []
+    for test in payload["tests"]:
+        minimal_test: AutogradePayloadTest = {
+            "name": test["name"],
+            "status": test["status"],
+            "score": test["score"],
+            "line_no": 0,  # Required by TypedDict but not used by reporter
+        }
+        if test.get("message"):
+            # Truncate message to prevent bloat
+            msg = str(test["message"])
+            if len(msg) > 200:
+                msg = msg[:200] + "..."
+            minimal_test["message"] = msg
+        minimal_tests.append(minimal_test)
+
+    minimal_payload: AutogradePayload = {
+        "status": payload["status"],
+        "max_score": payload["max_score"],
+        "score": payload["score"],
+        "tests": minimal_tests,
+        "generated_at": payload["generated_at"],
+    }
+    return minimal_payload
+
+
 def encode_payload(payload: AutogradePayload) -> str:
     """Encode the payload as a Base64 JSON string."""
 
-    json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    json_bytes = json.dumps(payload, ensure_ascii=False,
+                            indent=2).encode("utf-8")
     encoded = base64.b64encode(json_bytes)
     return encoded.decode("ascii")
 
@@ -451,7 +497,8 @@ def print_summary(payload: AutogradePayload) -> None:
     print(f"Points: {earned_score}/{max_score} ({percentage:.1f}%)")
     print(f"Tests Passed: {passed_tests}/{total_tests}")
 
-    grouped: dict[str | int | None, list[AutogradePayloadTest]] = defaultdict(list)
+    grouped: dict[str | int | None,
+                  list[AutogradePayloadTest]] = defaultdict(list)
     for test in tests:
         grouped[test.get("task")].append(test)
 
@@ -471,7 +518,8 @@ def print_summary(payload: AutogradePayload) -> None:
         for test in failing_tests:
             message = test.get("message")
             message_text = "(no message)" if message is None else str(message)
-            truncated = textwrap.shorten(message_text, width=200, placeholder="...")
+            truncated = textwrap.shorten(
+                message_text, width=200, placeholder="...")
             print(f"- {test['name']}: {truncated}")
 
 
@@ -489,7 +537,8 @@ def write_outputs(
             handle.write(encoded_payload)
             handle.write("\n")
     except Exception as exc:
-        print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
         return
@@ -500,7 +549,8 @@ def write_outputs(
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
     except Exception as exc:
-        print(f"Warning: failed to write summary to {summary_path}: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write summary to {summary_path}: {exc}", file=sys.stderr)
 
 
 def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
@@ -522,7 +572,8 @@ def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
             for key, value in entries.items():
                 handle.write(f"{key}={value}\n")
     except Exception as exc:
-        print(f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -545,7 +596,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         raw_results = load_results(results_path)
         payload = build_payload(raw_results)
-        encoded_payload = encode_payload(payload)
+
+        # Apply minimal mode to reduce payload size for GitHub Classroom
+        if args.minimal:
+            print("Using minimal payload mode (stripped verbose fields)")
+            encoded_payload = encode_payload(minimize_payload(payload))
+        else:
+            encoded_payload = encode_payload(payload)
+
         print_summary(payload)
         write_outputs(encoded_payload, payload, output_path, summary_path)
         write_github_outputs(encoded_payload, payload)

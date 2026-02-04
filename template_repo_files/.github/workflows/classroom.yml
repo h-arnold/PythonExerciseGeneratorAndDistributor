@@ -43,7 +43,8 @@ jobs:
           uv run python scripts/build_autograde_payload.py \
             --pytest-args="-p tests.autograde_plugin" \
             --output tmp/autograde/payload.txt \
-            --summary tmp/autograde/results.json
+            --summary tmp/autograde/results.json \
+            --minimal
 
       - name: Prepare reporter payload
         # Propagate Base64 payload via GITHUB_ENV so reporter can read it
@@ -51,11 +52,9 @@ jobs:
         run: |
           payload_path="tmp/autograde/payload.txt"
           if [ -f "$payload_path" ]; then
-            {
-              echo "PYTEST_RESULTS<<'EOF'"
-              cat "$payload_path"
-              echo "EOF"
-            } >> "$GITHUB_ENV"
+            echo "PYTEST_RESULTS<<EOF_PYTEST_PAYLOAD_DELIMITER" >> "$GITHUB_ENV"
+            cat "$payload_path" >> "$GITHUB_ENV"
+            echo "EOF_PYTEST_PAYLOAD_DELIMITER" >> "$GITHUB_ENV"
           else
             echo "PYTEST_RESULTS=" >> "$GITHUB_ENV"
           fi
