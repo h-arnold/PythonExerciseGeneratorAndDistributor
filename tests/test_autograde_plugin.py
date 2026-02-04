@@ -20,7 +20,8 @@ EXPECTED_ASSERT_LINE = 2
 
 
 @pytest.fixture(autouse=True)
-def _register_autograde_plugin(pytester: pytest.Pytester) -> None:  # pyright: ignore[reportUnusedFunction]
+# pyright: ignore[reportUnusedFunction]
+def _register_autograde_plugin(pytester: pytest.Pytester) -> None:
     pytester.syspathinsert(str(PLUGIN_PATH.parent))
     pytester.makeconftest("pytest_plugins = ['autograde_plugin']\n")
 
@@ -28,7 +29,8 @@ def _register_autograde_plugin(pytester: pytest.Pytester) -> None:  # pyright: i
 def _write_test_module(
     pytester: pytest.Pytester, body: str, *, name: str = "test_autograde"
 ) -> None:
-    pytester.makepyfile(**{name: textwrap.dedent(body)})  # pyright: ignore[reportUnknownMemberType]
+    # pyright: ignore[reportUnknownMemberType]
+    pytester.makepyfile(**{name: textwrap.dedent(body)})
 
 
 class AutogradePayloadTestEntry(TypedDict):
@@ -126,7 +128,8 @@ def _assert_autograde_payload(value: object) -> AutogradePayload:
 
     for key in ("start_timestamp", "end_timestamp"):
         if key in payload:
-            assert payload[key] is None or isinstance(payload[key], (int, float))
+            assert payload[key] is None or isinstance(
+                payload[key], (int, float))
     for key in ("errors", "notes"):
         if key in payload:
             assert isinstance(payload[key], list)
@@ -142,7 +145,8 @@ def expect_single_test_entry(
     expected: ExpectedTestFields | None = None,
 ) -> AutogradePayloadTestEntry:
     tests = payload["tests"]
-    assert len(tests) == 1, f"Expected a single test entry, received {len(tests)}"
+    assert len(
+        tests) == 1, f"Expected a single test entry, received {len(tests)}"
     entry_candidate = tests[0]
     entry = _assert_autograde_test_entry(entry_candidate)
     assert entry["status"] == status
@@ -310,7 +314,7 @@ def test_plugin_extracts_name_from_marker(
         payload,
         status="pass",
         score=1.0,
-        expected={"name": "Custom Task"},
+        expected={"name": "test_autograde - Custom Task"},
     )
 
 
@@ -330,7 +334,7 @@ def test_plugin_extracts_name_from_docstring(
         payload,
         status="pass",
         score=1.0,
-        expected={"name": "Docstring summary."},
+        expected={"name": "test_autograde - Docstring summary."},
     )
 
 
@@ -349,7 +353,7 @@ def test_plugin_extracts_name_from_nodeid(
         payload,
         status="pass",
         score=1.0,
-        expected={"name": "simple case"},
+        expected={"name": "test_autograde - simple case"},
     )
 
 
@@ -395,11 +399,13 @@ def test_plugin_handles_write_errors(
     call_count = {"count": 0}
 
     # type: ignore[override]
-    def _fail_once(self: Path, *args: Any, **kwargs: Any) -> IO[Any]:  # pyright: ignore[reportUnknownVariableType]
+    # pyright: ignore[reportUnknownVariableType]
+    def _fail_once(self: Path, *args: Any, **kwargs: Any) -> IO[Any]:
         if self == target and call_count["count"] == 0:
             call_count["count"] += 1
             raise OSError("disk full")
-        return original_open(self, *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
+        # pyright: ignore[reportUnknownVariableType]
+        return original_open(self, *args, **kwargs)
 
     monkeypatch.setattr(Path, "open", _fail_once, raising=True)
 

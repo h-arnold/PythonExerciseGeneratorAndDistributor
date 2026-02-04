@@ -31,6 +31,7 @@ from typing import Any, NotRequired, TypedDict, cast
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
 SUMMARY_HEADER = "=== Autograde Summary ==="
+MAX_MESSAGE_LENGTH = 200
 
 
 class AutogradeTestEntry(TypedDict):
@@ -423,8 +424,8 @@ def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
         if test.get("message"):
             # Truncate message to prevent bloat
             msg = str(test["message"])
-            if len(msg) > 200:
-                msg = msg[:200] + "..."
+            if len(msg) > MAX_MESSAGE_LENGTH:
+                msg = msg[:MAX_MESSAGE_LENGTH] + "..."
             minimal_test["message"] = msg
         minimal_tests.append(minimal_test)
 

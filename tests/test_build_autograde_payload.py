@@ -273,6 +273,24 @@ def test_cli_prints_summary_table(tmp_path: Path, passing_test_file: Path) -> No
     assert f"Tests Passed: {passed}/{total}" in stdout
 
 
+def test_cli_summary_failing_entry_includes_slug(tmp_path: Path) -> None:
+    failure_file = _write_test_file(
+        tmp_path,
+        """
+        def test_failure() -> None:
+            assert False, "Bad"
+        """,
+    )
+    completed, _, _, _ = _execute_cli(
+        tmp_path,
+        [PLUGIN_FLAG, str(failure_file)],
+    )
+    assert completed.returncode == 1
+    stdout = completed.stdout
+    assert "Failing Tests:" in stdout
+    assert "- test_suite - failure" in stdout
+
+
 def test_cli_writes_github_outputs(tmp_path: Path, passing_test_file: Path) -> None:
     gh_output = tmp_path / "gh_output.txt"
     completed, _, _, _ = _execute_cli(
@@ -375,7 +393,7 @@ def test_cli_forwards_pytest_args(tmp_path: Path) -> None:
     assert completed.returncode == 0
     payload = json.loads(results_path.read_text(encoding="utf-8"))
     assert len(payload["tests"]) == 1
-    assert payload["tests"][0]["name"] == "first"
+    assert payload["tests"][0]["name"] == "test_suite - first"
 
 
 def test_cli_decodes_base64_correctly(tmp_path: Path, passing_test_file: Path) -> None:

@@ -57,6 +57,7 @@ The `--minimal` flag is required in GitHub Actions to ensure the Base64 payload 
 ## Outputs
 
 - **Results JSON** (`--results-json`): direct dump from the pytest plugin showing every test, score, and failure message. Inspect this when debugging collection issues. Always contains full verbose output regardless of `--minimal` flag.
+- Each entry's `name` field now begins with the exercise slug (the test file stem) followed by a dash, so the CLI summary, payload file, and GitHub reporter all share a consistent slug-prefixed label.
 - **Payload file** (`--output`): Base64 text containing the structure required by Classroom. Feed this to `autograding-grading-reporter`. Use `--minimal` in CI to reduce size.
 - **Summary JSON** (`--summary`): optional, mirrors the decoded payload for quick inspection without manual Base64 decoding. Contains full payload when `--minimal` is not used, or minimal payload when flag is set.
 - **GitHub outputs**: when `GITHUB_OUTPUT` is set, the CLI appends the encoded payload plus overall score metrics so downstream workflow steps can pass them to the reporter.
@@ -68,5 +69,7 @@ After pytest completes the CLI prints a task-level table. Keep in mind:
 - Scores are expressed as `earned/available` per task number; unmarked tests appear under `Ungrouped`.
 - The percentage reflects total earned points versus `max_score` in the payload.
 - Failures list the truncated assertion messages the student will see; review them to ensure they are concise and actionable.
+
+Every output path (the results JSON, decoded payload, and the printed summary table) reuses the same slug-prefixed test display names (for example, `ex001_sanity - check for odd numbers`), which makes it easy to tie CLI feedback back to the originating exercise notebook or module.
 
 If the summary omits expected tests, rerun with `--summary` and confirm that pytest collected the file you anticipated. Missing task numbers usually indicate a forgotten `@pytest.mark.task(taskno=...)` decorator.

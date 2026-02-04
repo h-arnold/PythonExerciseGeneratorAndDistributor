@@ -100,6 +100,7 @@ class AutogradeTestMetadata:
     display_name: str
     task_number: int | None
     marker_name: str | None = None
+    slug: str | None = None
 
 
 @dataclass(slots=True)
@@ -127,6 +128,19 @@ def _normalise_name(raw_name: str) -> str:
     cleaned = cleaned.replace("_", " ")
     cleaned = " ".join(cleaned.split())
     return cleaned or raw_name.strip() or "Unnamed test"
+
+
+def _extract_slug_from_nodeid(nodeid: str) -> str | None:
+    if not nodeid:
+        return None
+    path_segment = nodeid.split("::", 1)[0]
+    if not path_segment:
+        return None
+    potential = path_segment.split("[", 1)[0].strip()
+    if not potential:
+        return None
+    slug = Path(potential).stem
+    return slug or None
 
 
 def _get_task_marker(item: Any) -> Any | None:
@@ -201,7 +215,13 @@ def _get_item_doc(item: Any) -> str | None:
     return None
 
 
-def derive_display_name(nodeid: str, *, doc: str | None, marker_name: str | None = None) -> str:
+def derive_display_name(
+    nodeid: str,
+    *,
+    doc: str | None,
+    marker_name: str | None = None,
+    slug: str | None = None,
+) -> str:
     """Return a human-friendly display name derived from pytest metadata."""
 
     candidates: list[str] = []
@@ -213,11 +233,15 @@ def derive_display_name(nodeid: str, *, doc: str | None, marker_name: str | None
             candidates.append(first_line)
     last_segment = nodeid.split("::")[-1]
     candidates.append(last_segment)
+    chosen: str | None = None
     for candidate in candidates:
         normalised = _normalise_name(candidate)
         if normalised:
-            return normalised
-    return "Unnamed test"
+            chosen = normalised
+            break
+    if chosen is None:
+        chosen = "Unnamed test"
+    return f"{slug} - {chosen}" if slug else chosen
 
 
 def _should_process_report(
@@ -245,7 +269,8 @@ def _derive_display_context(
     head_line = getattr(report, "head_line", None)
     if isinstance(head_line, str):
         doc = head_line
-    display_name = derive_display_name(nodeid, doc=doc, marker_name=None)
+    slug = _extract_slug_from_nodeid(nodeid)
+    display_name = derive_display_name(nodeid, doc=doc, marker_name=None, slug=slug)
     return display_name, None
 
 
@@ -418,15 +443,18 @@ def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
     for item in items:
         task_number, marker_name = _parse_task_marker(item, state)
         doc = _get_item_doc(item)
+        slug = _extract_slug_from_nodeid(item.nodeid)
         display_name = derive_display_name(
             item.nodeid,
             doc=doc,
             marker_name=marker_name,
+            slug=slug,
         )
         state.metadata[item.nodeid] = AutogradeTestMetadata(
             display_name=display_name,
             task_number=task_number,
             marker_name=marker_name,
+            slug=slug,
         )
 
     state.max_score = float(len(state.metadata))
