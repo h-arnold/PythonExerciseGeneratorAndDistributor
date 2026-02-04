@@ -119,8 +119,9 @@ The CLI wrapper orchestrates the full autograding flow so template workflows (an
 1. Validate the execution environment (refusing to run if `PYTUTOR_NOTEBOOKS_DIR` points at the wrong notebook set).
 2. Invoke pytest with the autograde plugin enabled, forwarding any `--pytest-args` values.
 3. Load the resulting JSON, perform schema checks, and build a final payload that mirrors the reporter requirements.
-4. Base64-encode the payload, write it to disk, emit an optional plain JSON summary, and surface GitHub Actions outputs (`encoded_payload`, `overall_status`, `earned_score`, `max_score`).
-5. Print a per-task summary table that mirrors what GitHub Classroom will display.
+4. Optionally minimize the payload (via `--minimal`) by stripping verbose fields (stdout/stderr/log/extra/nodeid/duration) and truncating error messages to 200 characters. This is essential for GitHub Actions workflows to avoid environment variable size limits (typically 32KB).
+5. Base64-encode the payload, write it to disk, emit an optional plain JSON summary, and surface GitHub Actions outputs (`encoded_payload`, `overall_status`, `earned_score`, `max_score`).
+6. Print a per-task summary table that mirrors what GitHub Classroom will display.
 
 #### Example: Local Dry Run
 
@@ -130,9 +131,23 @@ uv run python scripts/build_autograde_payload.py --pytest-args=-k test_ex001_san
 
 You can repeat `--pytest-args` to forward multiple options, for example to switch notebooks (`--pytest-args=--maxfail=1 --pytest-args=tests/test_ex001_sanity.py`). The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
 
+#### Example: GitHub Actions Integration
+
+```bash
+uv run python scripts/build_autograde_payload.py \
+  --pytest-args="-p tests.autograde_plugin" \
+  --output tmp/autograde/payload.txt \
+  --summary tmp/autograde/results.json \
+  --minimal
+```
+
+**Important**: The `--minimal` flag is required in GitHub Actions workflows. Without it, large test suites can exceed environment variable size limits (typically 32KB), causing "Argument list too long" errors when the Base64 payload is passed to the autograding reporter.
+
 ### 4.3 Base64 Payload Format
 
-`autograding-grading-reporter` expects a Base64-encoded JSON string so that the structured payload can be transmitted safely through GitHub Actions outputs, which are limited to UTF-8 text and must avoid control characters that raw JSON might introduce. The CLI produces payloads shaped as:
+`autograding-grading-reporter` expects a Base64-encoded JSON string so that the structured payload can be transmitted safely through GitHub Actions environment variables. However, environment variables have size limits (typically 32KB on Linux systems). For test suites with many tests or verbose output, the payload can exceed this limit, causing "Argument list too long" errors.
+
+The `--minimal` flag addresses this by producing a streamlined payload containing only the fields required by GitHub Classroom:
 
 ```json
 {
@@ -142,26 +157,28 @@ You can repeat `--pytest-args` to forward multiple options, for example to switc
   "tests": [
     {
       "name": "Display name",
-      "task": <int | null>,
-      "score": 0 or 1,
-      "max_score": 1,
       "status": "passed" | "failed" | "error",
-      "message": "Truncated failure details",
-      "duration": <float>,
-      "nodeid": "pytest node identifier"
+      "score": 0 or 1,
+      "line_no": 0,
+      "message": "Truncated failure details (max 200 chars)"
     }
-  ]
+  ],
+  "generated_at": "ISO 8601 timestamp"
 }
 ```
 
-The Base64 text is written to the file specified via `--output` (default `tmp/autograde/payload.txt`) and exported as the `encoded_payload` Actions output for the reporter step.
+When `--minimal` is omitted (for local debugging), the payload includes additional fields: `task`, `taskno`, `nodeid`, `duration`, `stdout`, `stderr`, `log`, and `extra`. These verbose fields are stripped in minimal mode to keep the payload under size limits.
+
+The Base64 text is written to the file specified via `--output` (default `tmp/autograde/payload.txt`) and passed to the reporter via a heredoc-style environment variable with a unique delimiter (`EOF_PYTEST_PAYLOAD_DELIMITER`) to prevent premature termination if the payload contains the string "EOF".
 
 ### 4.4 Troubleshooting
 
 - **Missing tests in the payload**: Confirm each grading test imports the plugin by running the CLI wrapper rather than calling pytest directly. Ensure every test file resides under `tests/` and is collected by pytest (watch for typos in the filename pattern).
 - **Task number or label issues**: Verify that every autograded test is marked `@pytest.mark.task(taskno=<int>)`. Add an optional `name="Short title"` to override the display label. Unmarked tests appear with `task` set to `null` and are grouped together in the summary.
 - **Payload validation failures**: Inspect the raw results JSON (pass `--summary tmp/autograde/results.json` to the CLI) to confirm required keys exist. The CLI prints schema errors to stderr and exits non-zero if validation fails.
-- **Workflow wiring errors**: Ensure the GitHub Actions job calls `uv run python scripts/build_autograde_payload.py` and passes the resulting Base64 string to `autograding-grading-reporter`. Double-check that `PYTUTOR_NOTEBOOKS_DIR` matches `notebooks` when grading student submissions and `notebooks/solutions` for dry runs.
+- **"Argument list too long" errors**: This occurs when the Base64 payload exceeds environment variable size limits (typically 32KB). Solution: Add the `--minimal` flag to `build_autograde_payload.py` in your workflow. This strips verbose fields while preserving student-facing feedback.
+- **"Invalid value. Matching delimiter not found 'EOF'" errors**: The payload contains the string "EOF" which prematurely terminates the heredoc. The workflow now uses `EOF_PYTEST_PAYLOAD_DELIMITER` as a unique delimiter to prevent this issue.
+- **Workflow wiring errors**: Ensure the GitHub Actions job calls `uv run python scripts/build_autograde_payload.py` with the `--minimal` flag and passes the resulting Base64 string to `autograding-grading-reporter`. Double-check that `PYTUTOR_NOTEBOOKS_DIR` matches `notebooks` when grading student submissions and `notebooks/solutions` for dry runs.
 
 ## References
 
