@@ -209,14 +209,6 @@ def _normalise_notebooks_dir(value: str | None) -> str | None:
     return normalised or None
 
 
-def _should_zero_scores_on_failure() -> bool:
-    """Return True when failing student notebooks should yield zero credit."""
-
-    notebooks_dir = _normalise_notebooks_dir(
-        os.environ.get("PYTUTOR_NOTEBOOKS_DIR"))
-    return notebooks_dir == "notebooks"
-
-
 def _ensure_autograde_option(pytest_args: Sequence[str], results_path: Path) -> list[str]:
     """Attach the autograde results path option if not already present."""
 
@@ -380,10 +372,6 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
     earned_score_value = _calculate_earned_score(raw_results, normalised_tests)
-    if status != "pass" and _should_zero_scores_on_failure():
-        earned_score_value = 0.0
-        for test in normalised_tests:
-            test["score"] = 0.0
 
     payload: AutogradePayload = {
         "status": status,
