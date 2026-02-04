@@ -128,8 +128,7 @@ def _assert_autograde_payload(value: object) -> AutogradePayload:
 
     for key in ("start_timestamp", "end_timestamp"):
         if key in payload:
-            assert payload[key] is None or isinstance(
-                payload[key], (int, float))
+            assert payload[key] is None or isinstance(payload[key], (int, float))
     for key in ("errors", "notes"):
         if key in payload:
             assert isinstance(payload[key], list)
@@ -145,8 +144,7 @@ def expect_single_test_entry(
     expected: ExpectedTestFields | None = None,
 ) -> AutogradePayloadTestEntry:
     tests = payload["tests"]
-    assert len(
-        tests) == 1, f"Expected a single test entry, received {len(tests)}"
+    assert len(tests) == 1, f"Expected a single test entry, received {len(tests)}"
     entry_candidate = tests[0]
     entry = _assert_autograde_test_entry(entry_candidate)
     assert entry["status"] == status

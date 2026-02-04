@@ -89,6 +89,7 @@ class AutogradePayload(TypedDict):
     status: str
     max_score: float
     score: float
+    totalPoints: float
     tests: list[AutogradePayloadTest]
     generated_at: str
     errors: NotRequired[list[str] | str | None]
@@ -388,6 +389,7 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
         "status": status,
         "max_score": max_score,
         "score": earned_score_value,
+        "totalPoints": earned_score_value,
         "tests": normalised_tests,
         "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
@@ -421,9 +423,10 @@ def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
             "score": test["score"],
             "line_no": 0,  # Required by TypedDict but not used by reporter
         }
-        if test.get("message"):
+        message_value = test.get("message")
+        if message_value:
             # Truncate message to prevent bloat
-            msg = str(test["message"])
+            msg = str(message_value)
             if len(msg) > MAX_MESSAGE_LENGTH:
                 msg = msg[:MAX_MESSAGE_LENGTH] + "..."
             minimal_test["message"] = msg
@@ -433,6 +436,7 @@ def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
         "status": payload["status"],
         "max_score": payload["max_score"],
         "score": payload["score"],
+        "totalPoints": payload["totalPoints"],
         "tests": minimal_tests,
         "generated_at": payload["generated_at"],
     }

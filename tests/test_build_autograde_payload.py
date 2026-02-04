@@ -256,6 +256,7 @@ def test_cli_writes_summary_json(tmp_path: Path, passing_test_file: Path) -> Non
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["status"] == "pass"
     assert len(summary["tests"]) == 1
+    assert summary["score"] == pytest.approx(summary["totalPoints"])
 
 
 def test_cli_prints_summary_table(tmp_path: Path, passing_test_file: Path) -> None:

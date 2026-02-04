@@ -12,7 +12,7 @@ from tests.notebook_grader import (
     run_cell_with_input,
 )
 
-NOTEBOOK_PATH = 'notebooks/ex006_sequence_modify_casting.ipynb'
+NOTEBOOK_PATH = "notebooks/ex006_sequence_modify_casting.ipynb"
 
 
 def _tag(n: int) -> str:
@@ -33,8 +33,10 @@ def test_exercise1_output_and_construct() -> None:
     output = _run(1)
     assert output == "15\n"
     tree = _ast(1)
-    has_int = any(isinstance(node, ast.Call) and isinstance(
-        node.func, ast.Name) and node.func.id == 'int' for node in ast.walk(tree))
+    has_int = any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "int"
+        for node in ast.walk(tree)
+    )
     assert has_int
 
 
@@ -43,8 +45,10 @@ def test_exercise2_output_and_construct() -> None:
     output = _run(2)
     assert output == "6.0\n"
     tree = _ast(2)
-    has_float = any(isinstance(node, ast.Call) and isinstance(
-        node.func, ast.Name) and node.func.id == 'float' for node in ast.walk(tree))
+    has_float = any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "float"
+        for node in ast.walk(tree)
+    )
     assert has_float
 
 
@@ -53,8 +57,10 @@ def test_exercise3_output_and_construct() -> None:
     output = _run(3)
     assert output == "28\n"
     tree = _ast(3)
-    has_int = any(isinstance(node, ast.Call) and isinstance(
-        node.func, ast.Name) and node.func.id == 'int' for node in ast.walk(tree))
+    has_int = any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "int"
+        for node in ast.walk(tree)
+    )
     assert has_int
 
 
@@ -63,8 +69,10 @@ def test_exercise4_output_and_construct() -> None:
     output = _run(4)
     assert output == "Your score is 500\n"
     tree = _ast(4)
-    has_str = any(isinstance(node, ast.Call) and isinstance(
-        node.func, ast.Name) and node.func.id == 'str' for node in ast.walk(tree))
+    has_str = any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "str"
+        for node in ast.walk(tree)
+    )
     assert has_str
 
 
@@ -73,8 +81,10 @@ def test_exercise5_output_and_construct() -> None:
     output = _run(5)
     assert output == "25\n"
     tree = _ast(5)
-    has_int = any(isinstance(node, ast.Call) and isinstance(
-        node.func, ast.Name) and node.func.id == 'int' for node in ast.walk(tree))
+    has_int = any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "int"
+        for node in ast.walk(tree)
+    )
     assert has_int
 
 
@@ -99,8 +109,9 @@ def test_exercise8_output_and_construct() -> None:
     output = _run(8)
     assert output == "Area: 50\n"
     tree = _ast(8)
-    has_mul = any(isinstance(node, ast.BinOp) and isinstance(
-        node.op, ast.Mult) for node in ast.walk(tree))
+    has_mul = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
+    )
     assert has_mul
 
 
@@ -109,15 +120,16 @@ def test_exercise9_output_and_construct() -> None:
     output = _run(9)
     assert output == "The Burger costs £5.5\n"
     tree = _ast(9)
-    has_str = any(isinstance(node, ast.Call) and isinstance(
-        node.func, ast.Name) and node.func.id == 'str' for node in ast.walk(tree))
+    has_str = any(
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "str"
+        for node in ast.walk(tree)
+    )
     assert has_str
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_with_input() -> None:
-    output = run_cell_with_input(
-        NOTEBOOK_PATH, tag=_tag(10), inputs=["10", "20"])
+    output = run_cell_with_input(NOTEBOOK_PATH, tag=_tag(10), inputs=["10", "20"])
     assert "Enter item 1" in output
     assert "Enter item 2" in output
     assert "Total: 30.0" in output
@@ -148,11 +160,9 @@ def test_each_cell_executes(n: int) -> None:
     if n in (6,):
         output = run_cell_with_input(NOTEBOOK_PATH, tag=_tag(n), inputs=["6"])
     elif n in (7,):
-        output = run_cell_with_input(
-            NOTEBOOK_PATH, tag=_tag(n), inputs=["1.5"])
+        output = run_cell_with_input(NOTEBOOK_PATH, tag=_tag(n), inputs=["1.5"])
     elif n == 10:
-        output = run_cell_with_input(
-            NOTEBOOK_PATH, tag=_tag(n), inputs=["10", "20"])
+        output = run_cell_with_input(NOTEBOOK_PATH, tag=_tag(n), inputs=["10", "20"])
     else:
         output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=_tag(n))
     assert output is not None

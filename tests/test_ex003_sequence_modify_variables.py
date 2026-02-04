@@ -191,7 +191,11 @@ def test_exercise4_logic() -> None:
     descriptor = "sweet"
     output = _exercise_output_with_inputs(4, [fruit, descriptor])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[4][0], EXPECTED_PROMPTS[4][1], EXPECTED_INPUT_MESSAGES[4].format(value1=fruit, value2=descriptor)]
+    assert lines == [
+        EXPECTED_PROMPTS[4][0],
+        EXPECTED_PROMPTS[4][1],
+        EXPECTED_INPUT_MESSAGES[4].format(value1=fruit, value2=descriptor),
+    ]
 
 
 @pytest.mark.task(taskno=4)
@@ -222,7 +226,11 @@ def test_exercise5_logic() -> None:
     country = "Wales"
     output = _exercise_output_with_inputs(5, [town, country])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[5][0], EXPECTED_PROMPTS[5][1], EXPECTED_INPUT_MESSAGES[5].format(town=town, country=country)]
+    assert lines == [
+        EXPECTED_PROMPTS[5][0],
+        EXPECTED_PROMPTS[5][1],
+        EXPECTED_INPUT_MESSAGES[5].format(town=town, country=country),
+    ]
 
 
 @pytest.mark.task(taskno=5)
@@ -251,7 +259,11 @@ def test_exercise6_logic() -> None:
     last = "Jones"
     output = _exercise_output_with_inputs(6, [first, last])
     lines = output.strip().splitlines()
-    assert lines == [EXPECTED_PROMPTS[6][0], EXPECTED_PROMPTS[6][1], EXPECTED_INPUT_MESSAGES[6].format(first=first, last=last)]
+    assert lines == [
+        EXPECTED_PROMPTS[6][0],
+        EXPECTED_PROMPTS[6][1],
+        EXPECTED_INPUT_MESSAGES[6].format(first=first, last=last),
+    ]
 
 
 @pytest.mark.task(taskno=6)
