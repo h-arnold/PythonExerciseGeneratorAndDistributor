@@ -5,11 +5,14 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
+from pathlib import Path
 from typing import Final
 
 from tests.notebook_grader import extract_tagged_code, run_cell_and_capture_output
 
-EX002_NOTEBOOK_PATH: Final[str] = "notebooks/ex002_sequence_modify_basics.ipynb"
+EX002_NOTEBOOK_PATH: Final[Path] = (
+    Path(__file__).resolve().parents[2] / "notebooks/ex002_sequence_modify_basics.ipynb"
+)
 EX002_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {
     1: "Hello Python!",
     2: "I go to Bassaleg School",

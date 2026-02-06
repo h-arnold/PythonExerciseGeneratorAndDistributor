@@ -6,6 +6,8 @@ This is an intentional exception to the ASCII-only output preference.
 
 from __future__ import annotations
 
+import re
+import textwrap
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Final
@@ -50,6 +52,7 @@ from tests.notebook_grader import (
 
 PASS_STATUS_LABEL: Final[str] = "🟢 Pass"
 FAIL_STATUS_LABEL: Final[str] = "🔴 Fix"
+ERROR_COLUMN_WIDTH: Final[int] = 48
 
 
 @dataclass(frozen=True)
@@ -178,6 +181,77 @@ def _render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
     return "\n".join(lines)
 
 
+def _strip_exercise_prefix(message: str) -> str:
+    match = re.match(r"^Exercise\s+\d+:\s*", message)
+    if match:
+        return message[match.end() :]
+    return message
+
+
+def _wrap_text_to_width(message: str, width: int) -> list[str]:
+    if message == "":
+        return [""]
+    return textwrap.wrap(
+        message,
+        width=width,
+        break_long_words=False,
+        break_on_hyphens=False,
+    )
+
+
+def _render_grouped_table_with_errors(rows: list[tuple[str, str, bool, str]]) -> str:
+    exercise_width = max(len(label) for label, _, _, _ in rows)
+    check_width = max(len(title) for _, title, _, _ in rows)
+    status_width = len(PASS_STATUS_LABEL)
+    error_width = ERROR_COLUMN_WIDTH
+
+    top = (
+        f"┌{'─' * (exercise_width + 2)}┬{'─' * (check_width + 2)}"
+        f"┬{'─' * (status_width + 2)}┬{'─' * (error_width + 2)}┐"
+    )
+    mid = (
+        f"├{'─' * (exercise_width + 2)}┼{'─' * (check_width + 2)}"
+        f"┼{'─' * (status_width + 2)}┼{'─' * (error_width + 2)}┤"
+    )
+    bottom = (
+        f"└{'─' * (exercise_width + 2)}┴{'─' * (check_width + 2)}"
+        f"┴{'─' * (status_width + 2)}┴{'─' * (error_width + 2)}┘"
+    )
+
+    lines = [top]
+    rendered_rows: list[tuple[str, str, str, str]] = []
+    for exercise_label, title, passed, error in rows:
+        status = PASS_STATUS_LABEL if passed else FAIL_STATUS_LABEL
+        trimmed_error = _strip_exercise_prefix(error)
+        uses_long_word_wrap = any(len(word) > error_width for word in trimmed_error.split())
+        if uses_long_word_wrap:
+            wrapped_error = textwrap.wrap(
+                trimmed_error,
+                width=error_width,
+                break_long_words=True,
+                break_on_hyphens=False,
+            )
+        else:
+            wrapped_error = _wrap_text_to_width(trimmed_error, error_width)
+        for index, line in enumerate(wrapped_error):
+            if index == 0:
+                rendered_rows.append((exercise_label, title, status, line))
+            else:
+                rendered_rows.append(("", "", "", line))
+
+    for index, (exercise_label, title, status, error) in enumerate(rendered_rows):
+        lines.append(
+            f"│ {exercise_label.ljust(exercise_width)} "
+            f"│ {title.ljust(check_width)} "
+            f"│ {status.ljust(status_width)} "
+            f"│ {error.ljust(error_width)} │"
+        )
+        if index != len(rendered_rows) - 1:
+            lines.append(mid)
+    lines.append(bottom)
+    return "\n".join(lines)
+
+
 def _check_ex001() -> list[str]:
     errors: list[str] = []
     ns = exec_tagged_code(EX001_NOTEBOOK_PATH, tag=EX001_TAG)
@@ -216,14 +290,19 @@ def _run_ex002_checks() -> list[Ex002CheckResult]:
 
 
 def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
-    rows: list[tuple[str, str, bool]] = []
+    rows: list[tuple[str, str, bool, str]] = []
     last_exercise: int | None = None
     for result in results:
         label = f"Exercise {result.exercise_no}" if result.exercise_no != last_exercise else ""
-        rows.append((label, result.title, result.passed))
+        if result.passed:
+            error_message = ""
+        else:
+            stripped = [_strip_exercise_prefix(issue) for issue in result.issues]
+            error_message = "; ".join(stripped)
+        rows.append((label, result.title, result.passed, error_message))
         last_exercise = result.exercise_no
 
-    table = _render_grouped_table(rows)
+    table = _render_grouped_table_with_errors(rows)
     print(table)
 
     failures = [result for result in results if not result.passed]
@@ -233,7 +312,7 @@ def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
             label = f"Exercise {result.exercise_no}: {result.title}"
             print(f"- {label}:")
             for issue in result.issues:
-                print(f"  - {issue}")
+                print(f"  - {_strip_exercise_prefix(issue)}")
     else:
         print("\nGreat work! Everything that can be checked here looks good.")
 
