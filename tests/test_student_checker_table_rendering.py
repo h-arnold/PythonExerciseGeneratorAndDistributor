@@ -24,8 +24,7 @@ def _split_table_row(line: str) -> list[str]:
 
 def test_strip_exercise_prefix_removes_leading_label() -> None:
     message = "Exercise 3: colour mismatch in the greeting."
-    assert _strip_exercise_prefix(
-        message) == "colour mismatch in the greeting."
+    assert _strip_exercise_prefix(message) == "colour mismatch in the greeting."
 
 
 def test_strip_exercise_prefix_leaves_unmatched_text() -> None:
@@ -76,8 +75,7 @@ def test_render_grouped_table_with_errors_wraps_and_blanks() -> None:
         break_on_hyphens=False,
     )
 
-    row_lines = [
-        line for line in lines if "|" in line and not line.startswith("+")]
+    row_lines = [line for line in lines if "|" in line and not line.startswith("+")]
     # Verify error message wrapping happened correctly
     assert "Exercise 2:" not in table
 
@@ -109,8 +107,7 @@ def test_render_grouped_table_with_errors_wraps_long_words() -> None:
         break_on_hyphens=False,
     )
 
-    row_lines = [
-        line for line in lines if "|" in line and not line.startswith("+")]
+    row_lines = [line for line in lines if "|" in line and not line.startswith("+")]
     # Verify long word wrapping occurred
     assert long_word not in table  # Full word shouldn't appear unbroken
     # Check that the word was broken across multiple lines

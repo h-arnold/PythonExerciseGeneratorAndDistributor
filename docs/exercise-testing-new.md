@@ -13,8 +13,10 @@ This document specifies the intended behaviour of the exercise testing process. 
 - A notebook slug (for a single notebook check), or no slug (for the default multi-notebook check).
 - Jupyter notebooks containing code cells tagged with `exerciseN` tags in cell metadata.
 - Optional environment variable `PYTUTOR_NOTEBOOKS_DIR`:
-	- When set (typically to `notebooks/solutions`), all notebook paths are resolved against that directory.
+ 	- When set (typically to `notebooks/solutions`), all notebook paths are resolved against that directory.
 	- When unset, the student notebooks under `notebooks/` are used.
+	- If the override path does not exist, the original notebook path is used as a fallback.
+	- If the original path is not under `notebooks/`, only the filename is used for the override lookup.
 
 ## Outputs
 
@@ -22,19 +24,19 @@ This document specifies the intended behaviour of the exercise testing process. 
 - For ex002, a grouped table with per-exercise checks and error messages.
 - No trailing details list is printed after the table.
 - A success message is printed only when every check passes:
-	- `Great work! Everything that can be checked here looks good.`
+ 	- `Great work! Everything that can be checked here looks good.`
 
 ## Table Rendering Rules
 
 - Tables are rendered using the `tabulate` library with `tablefmt="grid"`.
 - Status values are emoji + tag:
-	- Pass: `🟢 OK`
-	- Fail: `🔴 NO`
+ 	- Pass: `🟢 OK`
+ 	- Fail: `🔴 NO`
 - The grid uses `+`, `-`, and `|` characters. Column alignment must be visually consistent even with emoji.
 - For tables that include an error column:
-	- Error text is wrapped to a fixed width of 40 characters.
-	- Wrapping keeps words intact unless a single word exceeds the width, in which case long words are split.
-	- When errors wrap to multiple lines, only the first line includes the exercise/check/status columns; subsequent lines are blank in those columns.
+ 	- Error text is wrapped to a fixed width of 40 characters.
+ 	- Wrapping keeps words intact unless a single word exceeds the width, in which case long words are split.
+ 	- When errors wrap to multiple lines, only the first line includes the exercise/check/status columns; subsequent lines are blank in those columns.
 
 ## High-Level Flow
 
@@ -43,8 +45,8 @@ This document specifies the intended behaviour of the exercise testing process. 
 - The checker runs ex001 to ex006 in a fixed order.
 - Each notebook produces a single pass/fail result.
 - Output is a 2-column table:
-	- `Check` (human-readable notebook name)
-	- `Status` (`🟢 OK` or `🔴 NO`)
+ 	- `Check` (human-readable notebook name)
+ 	- `Status` (`🟢 OK` or `🔴 NO`)
 - If all checks pass, the success message is printed after the table.
 
 ### 2) Single-notebook check
@@ -57,7 +59,7 @@ This document specifies the intended behaviour of the exercise testing process. 
 
 - Tagged cells are executed using the grading helpers in [tests/notebook_grader.py](tests/notebook_grader.py).
 - If a tagged cell is missing or cannot be executed, the error is surfaced as a failing issue for that check.
-- Checks are fail-fast per check item, but all check items are still attempted and reported in the table.
+- Checks may accumulate multiple issues per item, and all check items are still attempted and reported in the table.
 - No check should silently swallow errors; problems are reported as messages in the error column.
 
 ## ex002 Detailed Checks
@@ -75,19 +77,22 @@ The ex002 checker performs three checks per exercise (1 to 10), resulting in 30 
 - Exact output is required, including casing and punctuation.
 - Single-line and multi-line outputs are supported based on the expectations for that exercise.
 - Failure message format (after prefix removal):
-	- `expected '<expected output>'.`
+	- Single-line output: `expected '<expected output>'.`
+	- Multi-line output: `expected 'line1 | line2'.`
 
 ### Formatting Check
 
-- Verifies the number of output lines (print calls) matches expectations.
+- Verifies the number of output lines (print calls) matches expectations when a print count is configured.
 - Failure message format (after prefix removal):
-	- `expected N print calls.`
+ 	- `expected N print calls.`
 
 ### Construct Check
 
 - Verifies required constructs are present in the student code.
+- Requires a `print(...)` statement for each exercise.
 - For example, checks that `print(...)` is used and that specific operators appear where required (`*`, `/`, `-`).
 - Failure message format (after prefix removal):
+	- `expected a print statement.`
 	- `expected to use '<operator>' in the calculation.`
 
 ### Error Column Behaviour for ex002
@@ -129,3 +134,170 @@ The ex002 checker performs three checks per exercise (1 to 10), resulting in 30 
 - This document does not prescribe how the tests are implemented internally.
 - It does not define exercise content or pedagogy; it only defines observable testing behaviour.
 
+## Refactor Plan (Technical Specification)
+
+This section defines the intended architecture and migration plan for a clean, modular exercise testing framework. It is a design target for refactoring, not a description of the current code.
+
+### Design Goals
+
+- DRY and KISS: shared helpers for common patterns and minimal branching logic.
+- Separation of concerns: execution, expectations, assertions, and reporting live in distinct modules.
+- Stable, small APIs: a few well-defined entry points used by tests, scripts, and agents.
+- Easy extension: adding a new exercise should involve a small, predictable set of steps.
+
+### Proposed File and Folder Layout
+
+```
+tests/
+ exercise_framework/
+  __init__.py
+  runtime.py           # notebook loading, tag extraction, execution
+  paths.py             # notebook path resolution, PYTUTOR_NOTEBOOKS_DIR
+  expectations.py      # shared expectation helpers and normalisers
+  assertions.py        # reusable assertion helpers with consistent messages
+  constructs.py        # construct checks (e.g., print usage, operators)
+  reporting.py         # student-facing output tables and formatting
+  fixtures.py          # pytest fixtures for runtime and output capture
+ exercise_expectations/
+  exNNN_*.py            # per-exercise expectations (data + small checks)
+ test_exNNN_*.py         # per-exercise tests using the shared framework
+scripts/
+ verify_exercise_quality.py   # thin wrapper around framework
+ new_exercise.py              # scaffolding that references framework defaults
+docs/
+ exercise-testing-new.md       # this document
+```
+
+### Module Responsibilities
+
+- `runtime.py`:
+ 	- Load notebooks and extract tagged code cells.
+ 	- Execute tagged cells in isolated namespaces.
+ 	- Provide helpers for captured output and simulated input.
+ 	- Contains no exercise-specific logic.
+
+- `paths.py`:
+ 	- Resolve notebook paths with `PYTUTOR_NOTEBOOKS_DIR` override.
+ 	- Provide a single path resolver used everywhere.
+
+- `expectations.py`:
+ 	- Normalise outputs (single-line vs multi-line, trailing newline handling).
+ 	- Provide helpers like `expected_output(exercise_no)` for common patterns.
+ 	- Contain data structures for expected outputs and print counts.
+
+- `assertions.py`:
+ 	- Provide high-level assertions with consistent failure text.
+ 	- Examples: `assert_output_matches`, `assert_print_count`, `assert_constructs`.
+
+- `constructs.py`:
+ 	- Shared checks for code constructs (e.g., `print(...)` usage, operators).
+ 	- Takes parameters to avoid per-exercise duplication.
+ 	- Example helper: `check_required_operator(code, "*")`.
+
+- `reporting.py`:
+ 	- Student-facing tables and formatting.
+ 	- Encodes rules for error wrapping and status formatting.
+ 	- Uses a single table renderer (currently `tabulate`).
+
+- `fixtures.py`:
+ 	- pytest fixtures for commonly repeated setup.
+ 	- Example: `notebook_ns`, `captured_output`, `exercise_code`.
+
+### Data Flow (Single Exercise)
+
+1. Resolve the notebook path via `paths.py`.
+2. Extract tagged code with `runtime.py`.
+3. Execute the tagged code with `runtime.py`.
+4. Apply expectations from `expectations.py`.
+5. Assert outcomes with `assertions.py`.
+6. Report results through `reporting.py` when student-facing output is needed.
+
+### Shared Helpers (Examples)
+
+- Construct checks should be parameterised and reusable:
+ 	- `check_print_usage(code)`
+ 	- `check_required_operator(code, operator)`
+ 	- `check_no_placeholder_phrases(text, phrases)`
+
+- Expectation helpers should be consistent and minimal:
+ 	- `expected_single_line(exercise_no)`
+ 	- `expected_multi_line(exercise_no)`
+ 	- `expected_print_calls(exercise_no)`
+
+### Test Patterns
+
+- Each exercise test file should only:
+ 	- Declare expectations for that exercise.
+ 	- Call shared helpers and assertions.
+ 	- Avoid custom execution logic and ad-hoc parsing.
+
+- Example pattern:
+ 	- Use `runtime.exec_tagged_code` to get output.
+ 	- Use `assertions.assert_output_matches` to validate output.
+ 	- Use `constructs.check_required_operator` to validate code structure.
+
+### Naming Conventions
+
+- Files and modules: snake_case.
+- Helpers: `check_*`, `assert_*`, `expected_*` for clarity.
+- Fixtures: descriptive noun phrases (`exercise_output`, `exercise_code`).
+
+### Migration Steps
+
+1. Introduce `tests/exercise_framework/` with small, single-purpose modules.
+2. Move notebook resolution into `paths.py` and update callers.
+3. Move execution helpers into `runtime.py` and update tests.
+4. Extract repeated construct logic into `constructs.py` and use it in tests.
+5. Extract repeated expectation logic into `expectations.py`.
+6. Centralise table rendering in `reporting.py`.
+7. Update exercise tests to use fixtures and assertions.
+8. Update scripts and agents to call the same framework entry points.
+
+### Benefits for Exercise Generation and Verifier Agents
+
+- Fewer steps: a single entry point handles path resolution, execution, checking, and reporting.
+- Less duplication: generators and verifiers can reuse the same helper APIs.
+- Lower error rate: shared helpers prevent inconsistent or incomplete checks.
+- Easier extension: new exercises require adding only expectations and minimal test wiring.
+
+### GitHub Classroom Autograder Integration
+
+The refactor must preserve behaviour for both the regular pytest workflow and the GitHub Classroom autograder pipeline.
+
+- **Shared core**: the same runtime, expectation, and assertion helpers should be used by standard tests and autograde runs. This avoids divergence between developer checks and classroom grading.
+- **Autograde plugin**: the pytest plugin in [tests/autograde_plugin.py](tests/autograde_plugin.py) must continue to collect results using standard pytest outcomes. The refactor should not require special-casing in the tests for autograde mode.
+- **Payload builder**: [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py) relies on the autograde JSON schema produced by the plugin. The refactor must preserve:
+	- Test result names and statuses (`pass`, `fail`, `error`).
+	- Task markers (`@pytest.mark.task`) and display names.
+	- Output capture fields (stdout, stderr, log) when present.
+- **Environment control**: autograde runs typically set `PYTUTOR_NOTEBOOKS_DIR=notebooks` to grade student notebooks. The path resolver must keep the same override and fallback behaviour so CI matches local checks.
+- **Minimal vs full payload**: the `--minimal` mode must remain viable; do not add required fields that are only present in verbose mode.
+
+**Implication for refactor**: avoid moving or renaming autograde plugin hooks or the payload schema without an explicit migration. The new framework should expose a single test harness API that both standard tests and autograde runs can call, so the plugin observes the same results in all modes.
+
+## Behaviour Parity Checklist
+
+Use this list to verify the refactor preserves observable behaviour.
+
+- Path resolution respects `PYTUTOR_NOTEBOOKS_DIR` with fallback rules unchanged.
+- Table output uses `tabulate` with `tablefmt="grid"` and aligned emoji status labels.
+- Summary tables show only `Check` and `Status` columns for the default run.
+- ex002 uses a 4-column grouped table with `Logic`, `Formatting`, `Construct` rows.
+- Error wrapping is 40 characters wide with long-word splitting and blanked columns on continuation lines.
+- ex002 error messages strip the `Exercise N:` prefix.
+- Multi-line expected outputs are joined with ` | ` in error messages.
+- Formatting checks run only when a print count is configured.
+- Construct checks require `print(...)` and expected operators per exercise.
+- Multiple issues for a single check are joined with `; `.
+- Success message prints only when all checks pass.
+
+### Autograder Compatibility Checklist
+
+Use this list to verify GitHub Classroom autograding remains stable after refactor.
+
+- Autograde plugin hooks still run without test changes in autograde mode.
+- Test results preserve `pass`/`fail`/`error` statuses and task markers.
+- Display names remain derived from markers/docstrings/nodeids as before.
+- Autograde JSON schema remains compatible with the payload builder.
+- `build_autograde_payload.py` produces identical fields in full and minimal modes.
+- `PYTUTOR_NOTEBOOKS_DIR=notebooks` continues to grade student notebooks by default.
