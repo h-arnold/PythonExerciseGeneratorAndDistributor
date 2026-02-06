@@ -10,7 +10,7 @@
         "ms-python.python",
         "ms-python.vscode-pylance",
         "ms-toolsai.jupyter",
-        "donjayamanne.vscode-default-python-kernel"
+        "donjayamanne.vscode-default-python-kernel" 
       ],
 
       // VS Code settings
@@ -42,6 +42,17 @@
           "**/*.pyc": true,
           "**/.pytest_cache": true
         },
+
+        // Copilot Config
+        "github.copilot.enable": {
+          "*": false,
+          "plaintext": false,
+          "markdown": false,
+          "scminput": false
+        },
+        "copilot.chat.enabledLanguages": ["-python"],
+
+
         
         // Jupyter configuration
         "jupyter.notebookFileRoot": "${workspaceFolder}",
