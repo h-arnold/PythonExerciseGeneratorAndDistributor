@@ -108,6 +108,7 @@ The same tests run against both sets.
 - Deterministic, fast tests: no randomness, time, or network.
 - Prefer stdlib; avoid new deps unless necessary and justified.
 - Match Ruff rules in `pyproject.toml` (E/F/W/I/UP/B/C90/LOG/PIE/RUF/SIM/PLR).
+- Keep formatter changes unless the user says otherwise.
 - **NEVER** silence linting errors without explicit authorisation from the user. If you feel that fixing the linting error would make the code less readable, then stop and ask for clarification.
 
 ### Python Style (for infrastructure code, not student exercises)

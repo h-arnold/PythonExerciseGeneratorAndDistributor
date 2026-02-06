@@ -98,3 +98,41 @@ def test_render_grouped_table_with_errors_wraps_and_blanks() -> None:
         assert columns[2].strip() == ""
         assert len(error_cell) <= ERROR_COLUMN_WIDTH
         assert len(columns[3]) == ERROR_COLUMN_WIDTH + TABLE_CELL_PADDING
+
+
+def test_render_grouped_table_with_errors_wraps_long_words() -> None:
+    long_word = "a" * (ERROR_COLUMN_WIDTH + 12)
+    error_message = f"Exercise 1: {long_word}"
+    rows = [
+        ("Exercise 1", "Long word check", False, error_message),
+    ]
+
+    table = _render_grouped_table_with_errors(rows)
+
+    lines = table.splitlines()
+    assert lines[0].startswith("\u250c")
+    assert lines[0].count("\u252c") == EXPECTED_SEPARATOR_COUNT
+    assert lines[-1].startswith("\u2514")
+    assert lines[-1].count("\u2534") == EXPECTED_SEPARATOR_COUNT
+
+    expected_lines = textwrap.wrap(
+        long_word,
+        width=ERROR_COLUMN_WIDTH,
+        break_long_words=True,
+        break_on_hyphens=False,
+    )
+
+    row_lines = [line for line in lines if "\u2502" in line]
+    error_rows: list[tuple[list[str], str]] = []
+    for row in row_lines:
+        columns = _split_table_row(row)
+        error_cell = columns[3].strip()
+        if error_cell:
+            error_rows.append((columns, error_cell))
+
+    assert len(error_rows) >= MIN_ERROR_ROWS
+    assert [cell for _, cell in error_rows] == expected_lines
+
+    for columns, error_cell in error_rows:
+        assert len(error_cell) <= ERROR_COLUMN_WIDTH
+        assert len(columns[3]) == ERROR_COLUMN_WIDTH + TABLE_CELL_PADDING

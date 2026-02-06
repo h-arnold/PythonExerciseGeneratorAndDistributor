@@ -50,8 +50,15 @@ from tests.notebook_grader import (
     run_cell_with_input,
 )
 
-PASS_STATUS_LABEL: Final[str] = "🟢 Pass"
-FAIL_STATUS_LABEL: Final[str] = "🔴 Fix"
+PASS_STATUS_EMOJI: Final[str] = "🟢"
+FAIL_STATUS_EMOJI: Final[str] = "🔴"
+PASS_STATUS_TAG: Final[str] = "OK"
+FAIL_STATUS_TAG: Final[str] = "NO"
+PASS_STATUS_LABEL: Final[str] = f"{PASS_STATUS_EMOJI} {PASS_STATUS_TAG}"
+FAIL_STATUS_LABEL: Final[str] = f"{FAIL_STATUS_EMOJI} {FAIL_STATUS_TAG}"
+STATUS_TAG_WIDTH: Final[int] = max(len(PASS_STATUS_TAG), len(FAIL_STATUS_TAG))
+STATUS_COLUMN_PADDING: Final[int] = 2
+STATUS_COLUMN_WIDTH: Final[int] = STATUS_TAG_WIDTH + STATUS_COLUMN_PADDING + 1
 ERROR_COLUMN_WIDTH: Final[int] = 48
 
 
@@ -130,19 +137,13 @@ def _print_results(results: list[tuple[str, bool, list[str]]]) -> None:
     print(table)
 
     failures = [(label, issues) for label, passed, issues in results if not passed]
-    if failures:
-        print("\nDetails:")
-        for label, issues in failures:
-            print(f"- {label}:")
-            for issue in issues:
-                print(f"  - {issue}")
-    else:
+    if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
 
 
 def _render_table(rows: list[tuple[str, bool]]) -> str:
     name_width = max(len(label) for label, _ in rows)
-    status_width = len(PASS_STATUS_LABEL)
+    status_width = STATUS_COLUMN_WIDTH
 
     top = f"┌{'─' * (name_width + 2)}┬{'─' * (status_width + 2)}┐"
     mid = f"├{'─' * (name_width + 2)}┼{'─' * (status_width + 2)}┤"
@@ -161,7 +162,7 @@ def _render_table(rows: list[tuple[str, bool]]) -> str:
 def _render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
     exercise_width = max(len(label) for label, _, _ in rows)
     check_width = max(len(title) for _, title, _ in rows)
-    status_width = len(PASS_STATUS_LABEL)
+    status_width = STATUS_COLUMN_WIDTH
 
     top = f"┌{'─' * (exercise_width + 2)}┬{'─' * (check_width + 2)}┬{'─' * (status_width + 2)}┐"
     mid = f"├{'─' * (exercise_width + 2)}┼{'─' * (check_width + 2)}┼{'─' * (status_width + 2)}┤"
@@ -202,7 +203,7 @@ def _wrap_text_to_width(message: str, width: int) -> list[str]:
 def _render_grouped_table_with_errors(rows: list[tuple[str, str, bool, str]]) -> str:
     exercise_width = max(len(label) for label, _, _, _ in rows)
     check_width = max(len(title) for _, title, _, _ in rows)
-    status_width = len(PASS_STATUS_LABEL)
+    status_width = STATUS_COLUMN_WIDTH
     error_width = ERROR_COLUMN_WIDTH
 
     top = (
@@ -306,14 +307,7 @@ def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
     print(table)
 
     failures = [result for result in results if not result.passed]
-    if failures:
-        print("\nDetails:")
-        for result in failures:
-            label = f"Exercise {result.exercise_no}: {result.title}"
-            print(f"- {label}:")
-            for issue in result.issues:
-                print(f"  - {_strip_exercise_prefix(issue)}")
-    else:
+    if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
 
 
