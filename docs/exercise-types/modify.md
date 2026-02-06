@@ -66,4 +66,4 @@ The snippet below reflects the structure emitted by the current scaffolding comm
 }
 ```
 
-Tests such as [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py) call each tagged cell and compare its stdout against the expected output shown in the markdown instructions. When adding new modification exercises, mirror this pattern so both the scaffolding CLI and the grading suite continue to work without adjustment.
+Tests such as [tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py](tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py) call each tagged cell and compare its stdout against the expected output shown in the markdown instructions. When adding new modification exercises, mirror this pattern so both the scaffolding CLI and the grading suite continue to work without adjustment.

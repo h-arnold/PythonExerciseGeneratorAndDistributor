@@ -102,7 +102,7 @@ A shortened JSON excerpt from a two-part debug notebook is shown below. It refle
 
 **Tag requirements**
 
-- Each buggy code cell that the grader executes **must** carry exactly one `exerciseN` tag. Tests such as `test_ex002_sequence_modify_basics.py` and `test_ex004_sequence_debug_syntax.py` rely on these tags when calling `run_cell_and_capture_output()`.
+- Each buggy code cell that the grader executes **must** carry exactly one `exerciseN` tag. Tests such as `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` and `test_ex004_sequence_debug_syntax.py` rely on these tags when calling `run_cell_and_capture_output()`.
 - The reflection markdown cell after each buggy implementation **must** carry the matching `explanationN` tag. Automated checks use `get_explanation_cell()` to enforce this.
 - Tags are case-sensitive; do not use variations like `Exercise1` or `exercise_1`.
 

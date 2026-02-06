@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Final
 
 from tests.exercise_expectations import (
     EX001_FUNCTION_NAME,
@@ -37,9 +38,7 @@ from tests.exercise_expectations import (
     is_valid_explanation,
 )
 from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
-    EX002_EXPECTED_MULTI_LINE,
-    EX002_EXPECTED_SINGLE_LINE,
-    EX002_NOTEBOOK_PATH,
+    EX002_CHECKS,
 )
 from tests.notebook_grader import (
     NotebookGradingError,
@@ -48,6 +47,9 @@ from tests.notebook_grader import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+
+PASS_STATUS_LABEL: Final[str] = "🟢 Pass"
+FAIL_STATUS_LABEL: Final[str] = "🔴 Fix"
 
 
 @dataclass(frozen=True)
@@ -58,6 +60,16 @@ class CheckItem:
     runner: Callable[[], list[str]]
 
 
+@dataclass(frozen=True)
+class Ex002CheckResult:
+    """Represents a single ex002 check result."""
+
+    exercise_no: int
+    title: str
+    passed: bool
+    issues: list[str]
+
+
 def check_exercises() -> None:
     """Run a simple check for exercises 1-6 and print a summary table."""
     results = _run_checks(list(_get_checks().values()))
@@ -66,6 +78,9 @@ def check_exercises() -> None:
 
 def check_notebook(notebook_slug: str) -> None:
     """Run a simple check for a single notebook and print a summary table."""
+    if notebook_slug == "ex002_sequence_modify_basics":
+        check_ex002_notebook()
+        return
     checks = _get_checks()
     check = checks.get(notebook_slug)
     if check is None:
@@ -73,6 +88,12 @@ def check_notebook(notebook_slug: str) -> None:
         raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
     results = _run_checks([check])
     _print_results(results)
+
+
+def check_ex002_notebook() -> None:
+    """Run the detailed checks for ex002 and print a grouped summary table."""
+    results = _run_ex002_checks()
+    _print_ex002_results(results)
 
 
 def _get_checks() -> dict[str, CheckItem]:
@@ -118,7 +139,7 @@ def _print_results(results: list[tuple[str, bool, list[str]]]) -> None:
 
 def _render_table(rows: list[tuple[str, bool]]) -> str:
     name_width = max(len(label) for label, _ in rows)
-    status_width = len("🟢 Pass")
+    status_width = len(PASS_STATUS_LABEL)
 
     top = f"┌{'─' * (name_width + 2)}┬{'─' * (status_width + 2)}┐"
     mid = f"├{'─' * (name_width + 2)}┼{'─' * (status_width + 2)}┤"
@@ -126,8 +147,31 @@ def _render_table(rows: list[tuple[str, bool]]) -> str:
 
     lines = [top]
     for index, (label, passed) in enumerate(rows):
-        status = "🟢 Pass" if passed else "🔴 Fix"
+        status = PASS_STATUS_LABEL if passed else FAIL_STATUS_LABEL
         lines.append(f"│ {label.ljust(name_width)} │ {status.ljust(status_width)} │")
+        if index != len(rows) - 1:
+            lines.append(mid)
+    lines.append(bottom)
+    return "\n".join(lines)
+
+
+def _render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
+    exercise_width = max(len(label) for label, _, _ in rows)
+    check_width = max(len(title) for _, title, _ in rows)
+    status_width = len(PASS_STATUS_LABEL)
+
+    top = f"┌{'─' * (exercise_width + 2)}┬{'─' * (check_width + 2)}┬{'─' * (status_width + 2)}┐"
+    mid = f"├{'─' * (exercise_width + 2)}┼{'─' * (check_width + 2)}┼{'─' * (status_width + 2)}┤"
+    bottom = f"└{'─' * (exercise_width + 2)}┴{'─' * (check_width + 2)}┴{'─' * (status_width + 2)}┘"
+
+    lines = [top]
+    for index, (exercise_label, title, passed) in enumerate(rows):
+        status = PASS_STATUS_LABEL if passed else FAIL_STATUS_LABEL
+        lines.append(
+            f"│ {exercise_label.ljust(exercise_width)} "
+            f"│ {title.ljust(check_width)} "
+            f"│ {status.ljust(status_width)} │"
+        )
         if index != len(rows) - 1:
             lines.append(mid)
     lines.append(bottom)
@@ -150,19 +194,48 @@ def _check_ex001() -> list[str]:
 
 
 def _check_ex002() -> list[str]:
-    errors: list[str] = []
-    for exercise_no, expected in EX002_EXPECTED_SINGLE_LINE.items():
-        output = run_cell_and_capture_output(EX002_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
-        if output != f"{expected}\n":
-            errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
+    return [issue for result in _run_ex002_checks() for issue in result.issues]
 
-    for exercise_no, expected_lines in EX002_EXPECTED_MULTI_LINE.items():
-        output = run_cell_and_capture_output(EX002_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
-        expected_output = "\n".join(expected_lines) + "\n"
-        if output != expected_output:
-            errors.append(f"Exercise {exercise_no}: output does not match.")
 
-    return errors
+def _run_ex002_checks() -> list[Ex002CheckResult]:
+    results: list[Ex002CheckResult] = []
+    for check in EX002_CHECKS:
+        try:
+            issues = check.check()
+        except NotebookGradingError as exc:
+            issues = [str(exc)]
+        results.append(
+            Ex002CheckResult(
+                exercise_no=check.exercise_no,
+                title=check.title,
+                passed=len(issues) == 0,
+                issues=issues,
+            )
+        )
+    return results
+
+
+def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
+    rows: list[tuple[str, str, bool]] = []
+    last_exercise: int | None = None
+    for result in results:
+        label = f"Exercise {result.exercise_no}" if result.exercise_no != last_exercise else ""
+        rows.append((label, result.title, result.passed))
+        last_exercise = result.exercise_no
+
+    table = _render_grouped_table(rows)
+    print(table)
+
+    failures = [result for result in results if not result.passed]
+    if failures:
+        print("\nDetails:")
+        for result in failures:
+            label = f"Exercise {result.exercise_no}: {result.title}"
+            print(f"- {label}:")
+            for issue in result.issues:
+                print(f"  - {issue}")
+    else:
+        print("\nGreat work! Everything that can be checked here looks good.")
 
 
 def _check_ex003() -> list[str]:

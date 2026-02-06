@@ -71,7 +71,7 @@ PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
 
 # Focus on a specific exercise (still targeting solutions)
 PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex001_sanity.py -q
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex002_sequence_modify_basics.py -q
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py -q
 
 # Only switch to student notebooks when validating the classroom experience
 uv run pytest tests/test_ex001_sanity.py -q

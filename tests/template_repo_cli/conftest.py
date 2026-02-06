@@ -26,7 +26,8 @@ def sample_exercises(repo_root: Path) -> dict[str, dict[str, Path]]:
         },
         "ex002_sequence_modify_basics": {
             "notebook": repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
-            "test": repo_root / "tests/test_ex002_sequence_modify_basics.py",
+            "test": repo_root
+            / "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
         },
     }
 
