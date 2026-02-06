@@ -8,7 +8,7 @@
     "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {}
   },
 
-  "postCreateCommand": "uv sync && . .venv/bin/activate",
+  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && uv sync && . .venv/bin/activate",
   "customizations": {
     "vscode": {
       "extensions": [
