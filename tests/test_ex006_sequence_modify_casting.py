@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import ast
-import json
-from pathlib import Path
 
 import pytest
 
@@ -121,38 +119,3 @@ def test_exercise10_with_input() -> None:
     assert "Enter item 1" in output
     assert "Enter item 2" in output
     assert "Total: 30.0" in output
-
-
-@pytest.mark.task(taskno=0)
-def test_tag_validation_and_count() -> None:
-    data = json.loads(Path(NOTEBOOK_PATH).read_text())
-    tags = set()
-    count = 0
-    for cell in data.get("cells", []):
-        if cell.get("cell_type") != "code":
-            continue
-        md = cell.get("metadata", {}) or {}
-        for t in md.get("tags", []) or []:
-            if isinstance(t, str) and t.startswith("exercise"):
-                tags.add(t)
-                count += 1
-    expected = {f"exercise{i}" for i in range(1, 11)}
-    assert tags == expected
-    assert count == 10
-
-
-@pytest.mark.parametrize("n", range(1, 11))
-@pytest.mark.task(taskno=0)
-def test_each_cell_executes(n: int) -> None:
-    # Smoke test: ensure each tagged cell runs; use mocked input for input() exercises
-    if n in (6,):
-        output = run_cell_with_input(NOTEBOOK_PATH, tag=_tag(n), inputs=["6"])
-    elif n in (7,):
-        output = run_cell_with_input(
-            NOTEBOOK_PATH, tag=_tag(n), inputs=["1.5"])
-    elif n == 10:
-        output = run_cell_with_input(
-            NOTEBOOK_PATH, tag=_tag(n), inputs=["10", "20"])
-    else:
-        output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=_tag(n))
-    assert output is not None

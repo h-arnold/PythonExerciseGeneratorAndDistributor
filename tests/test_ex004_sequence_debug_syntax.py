@@ -12,7 +12,30 @@ from tests.notebook_grader import (
 )
 
 NOTEBOOK_PATH = "notebooks/ex004_sequence_debug_syntax.ipynb"
-MIN_EXPLANATION_LENGTH = 10
+MIN_EXPLANATION_LENGTH = 50
+
+# Placeholder phrases that indicate incomplete student work
+PLACEHOLDER_PHRASES = (
+    "describe what",
+    "describe briefly",
+    "your explanation",
+    "explain here",
+    "write your",
+    "todo",
+    "...",
+    "test it by",
+    "verifying it works",
+    "include any error",
+)
+
+
+def _is_valid_explanation(text: str) -> bool:
+    """Check explanation is long enough and doesn't contain placeholder phrases."""
+    stripped = text.strip().lower()
+    if len(stripped) < MIN_EXPLANATION_LENGTH:
+        return False
+    return not any(phrase in stripped for phrase in PLACEHOLDER_PHRASES)
+
 
 EXPECTED_SINGLE_LINE = {
     1: "Hello World!",
@@ -152,11 +175,13 @@ def _assigns_binop_sum(tree: ast.AST, target_name: str, variable: str, constant:
                 isinstance(value, ast.BinOp)
                 and isinstance(value.op, ast.Add)
                 and (
-                    (isinstance(value.left, ast.Name) and value.left.id == variable)
+                    (isinstance(value.left, ast.Name)
+                     and value.left.id == variable)
                     or (isinstance(value.right, ast.Name) and value.right.id == variable)
                 )
                 and (
-                    (isinstance(value.left, ast.Constant) and value.left.value == constant)
+                    (isinstance(value.left, ast.Constant)
+                     and value.left.value == constant)
                     or (isinstance(value.right, ast.Constant) and value.right.value == constant)
                 )
             ):
@@ -186,7 +211,7 @@ def test_exercise1_construct() -> None:
 @pytest.mark.task(taskno=1)
 def test_exercise1_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(1))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=2)
@@ -210,7 +235,7 @@ def test_exercise2_construct() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(2))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=3)
@@ -229,13 +254,14 @@ def test_exercise3_formatting() -> None:
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
     strings = _string_constants(tree)
-    assert EXPECTED_SINGLE_LINE[3] in strings or ({"Learning", "Python"} <= strings)
+    assert EXPECTED_SINGLE_LINE[3] in strings or (
+        {"Learning", "Python"} <= strings)
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(3))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=4)
@@ -262,7 +288,7 @@ def test_exercise4_construct() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(4))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=5)
@@ -287,7 +313,7 @@ def test_exercise5_construct() -> None:
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(5))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=6)
@@ -312,7 +338,7 @@ def test_exercise6_construct() -> None:
 @pytest.mark.task(taskno=6)
 def test_exercise6_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(6))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=7)
@@ -340,7 +366,7 @@ def test_exercise7_construct() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(7))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=8)
@@ -369,7 +395,7 @@ def test_exercise8_construct() -> None:
 @pytest.mark.task(taskno=8)
 def test_exercise8_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(8))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=9)
@@ -393,7 +419,7 @@ def test_exercise9_construct() -> None:
 @pytest.mark.task(taskno=9)
 def test_exercise9_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(9))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)
 
 
 @pytest.mark.task(taskno=10)
@@ -422,4 +448,4 @@ def test_exercise10_construct() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
     explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(10))
-    assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
+    assert _is_valid_explanation(explanation)

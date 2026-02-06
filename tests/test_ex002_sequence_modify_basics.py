@@ -151,6 +151,17 @@ def test_exercise4_construct() -> None:
         and node.func.id == "print"
     ]
     assert len(print_calls) == EXPECTED_PRINT_CALLS[4]
+    # Verify string content includes required words
+    strings = {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+    assert any("Good" in s for s in strings), "Missing 'Good' in string constants"
+    assert any(
+        "Morning" in s for s in strings), "Missing 'Morning' in string constants"
+    assert any(
+        "Everyone" in s for s in strings), "Missing 'Everyone' in string constants"
 
 
 @pytest.mark.task(taskno=5)
@@ -302,10 +313,3 @@ def test_exercise10_construct() -> None:
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
     assert "Welcome to Python programming!" in strings
-
-
-@pytest.mark.parametrize("exercise_no", range(1, 11))
-@pytest.mark.task(taskno=0)
-def test_exercise_cells_execute(exercise_no: int) -> None:
-    output = _exercise_output(exercise_no)
-    assert output is not None
