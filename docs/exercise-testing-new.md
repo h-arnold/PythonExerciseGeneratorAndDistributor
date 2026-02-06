@@ -96,38 +96,6 @@ The ex002 checker performs three checks per exercise (1 to 10), resulting in 30 
 - Multiple issues for a single check are joined with `; `.
 - When a check passes, the error column is blank for that row.
 
-## ex001, ex003, ex004, ex005, ex006 Summary Behaviour
-
-These notebooks use a summary-level pass/fail rather than per-exercise checks.
-
-### ex001
-
-- Requires a function named `example` to exist.
-- The function must return a non-empty string.
-- Failures report specific messages for missing function, wrong type, or empty string.
-
-### ex003
-
-- Verifies static outputs for specific exercises by running tagged cells.
-- Verifies input/output flow for prompts using pre-defined inputs.
-- Any mismatch in expected output or prompt flow is a failure.
-
-### ex004
-
-- Validates that explanations are present and meet a minimum length.
-- Rejects placeholder phrases and formatting errors.
-- Failing outputs list the specific explanation or formatting issue.
-
-### ex005
-
-- Verifies prompt input flow and expected output formatting for multiple exercises.
-- Ensures explanations are present and meet quality checks similar to ex004.
-
-### ex006
-
-- Verifies expected outputs and required type conversion behaviour.
-- Checks that the input expectations and outputs match the specification for each exercise.
-
 ## Expected Console Output Examples (Illustrative)
 
 ### ex002 (grouped table)

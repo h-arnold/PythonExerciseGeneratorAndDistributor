@@ -86,7 +86,7 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
 
-The same tests run against both sets. 
+The same tests run against both sets.
 
 **IMPORTANT NOTE:** Always run the *Development* tests unless you are creating or verifying jupyter notebook exercises. The tests for the students notebooks are designed to fail until they are completed with the correct code.
 
@@ -185,6 +185,7 @@ ruff check . --fix
 **Delegate to the exercise generation sub-agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
 
 Do not create exercises manually. Use:
+
 1. The exercise generation agent for authoring
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
@@ -202,6 +203,7 @@ See Testing Framework: `docs/testing-framework.md` for details.
 ## Constraints
 
 **Do not**:
+
 - Include full solutions in student-facing notebooks
 - Add dependencies that can't be installed via micropip (web VSCode compatibility)
 - Use network access in exercises or tests
@@ -209,6 +211,7 @@ See Testing Framework: `docs/testing-framework.md` for details.
 - Use generic best practices that aren't specific to this codebase
 
 **Do**:
+
 - Keep instructions clear and age-appropriate (14-18 year olds)
 - Write concise, accurate documentation
 - Use the scaffolding tools for consistency
@@ -227,16 +230,15 @@ The sub-agents you can call are (first-line names are case-sensitive):
 - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
 - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
 
-
 ## Implementation Workflow
 
 For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring) that **IS NOT** related to student notebook, follow this workflow:
 
 1. **Consider the size of the task**: If it's a large task requiring many changes, split the task into smaller chunks and update your TODO list manually.
 2. **Delegate to the Implementer Agent**: Use the available sub-agent tool with the `Implementer` agent. Pass a detailed task description, including the scope of files to edit. If sub-agents are unavailable, complete the work directly.
-    *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
-3.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
-    *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
+    - *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
+3. **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
+    - *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
 4. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
 5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 
