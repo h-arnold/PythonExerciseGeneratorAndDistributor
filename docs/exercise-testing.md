@@ -37,6 +37,7 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 
 - **Enforce the Lesson Construct**: If the lesson covers **Iteration**, code that manually prints 10 times instead of looping is **incorrect**.
 - **Use AST Checks**: Verify that the required syntax (`for`, `if`, etc.) is present.
+- **Student notebook tests should always fail before being attempted**: The student notebook tests must *all* fail in their initial state. If any test passes before the student writes code, it is not a useful test.
 - **Allow flexibility in "Make" tasks**: "Make" tasks are strictly about the outcome; if they achieve the result using valid code, be more permissive with implementation details.
 
 ### 3. Edge Cases
