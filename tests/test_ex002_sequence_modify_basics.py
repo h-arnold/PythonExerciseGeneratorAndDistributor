@@ -4,38 +4,14 @@ import ast
 
 import pytest
 
+from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
+    EX002_EXPECTED_MULTI_LINE,
+    EX002_EXPECTED_NUMERIC,
+    EX002_EXPECTED_PRINT_CALLS,
+    EX002_EXPECTED_SINGLE_LINE,
+    EX002_NOTEBOOK_PATH,
+)
 from tests.notebook_grader import extract_tagged_code, run_cell_and_capture_output
-
-NOTEBOOK_PATH = "notebooks/ex002_sequence_modify_basics.ipynb"
-
-EXPECTED_SINGLE_LINE = {
-    1: "Hello Python!",
-    2: "I go to Bassaleg School",
-    3: "15",
-    4: "Good Morning Everyone",
-    5: "5.0",
-    7: "The result is 100",
-    8: "24",
-    10: "Welcome to Python programming!",
-}
-
-EXPECTED_MULTI_LINE = {
-    6: ["Learning", "to", "code rocks"],
-    9: ["10 minus 3 equals", "7"],
-}
-
-EXPECTED_NUMERIC = {
-    3: int(EXPECTED_SINGLE_LINE[3]),
-    5: float(EXPECTED_SINGLE_LINE[5]),
-    8: int(EXPECTED_SINGLE_LINE[8]),
-    9: int(EXPECTED_MULTI_LINE[9][1]),
-}
-
-EXPECTED_PRINT_CALLS = {
-    4: 1,
-    6: 3,
-    9: 2,
-}
 
 
 def _exercise_tag(exercise_no: int) -> str:
@@ -44,14 +20,14 @@ def _exercise_tag(exercise_no: int) -> str:
 
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
-        NOTEBOOK_PATH,
+        EX002_NOTEBOOK_PATH,
         tag=_exercise_tag(exercise_no),
     )
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
-        NOTEBOOK_PATH,
+        EX002_NOTEBOOK_PATH,
         tag=_exercise_tag(exercise_no),
     )
     return ast.parse(code)
@@ -67,7 +43,7 @@ def test_exercise1_logic() -> None:
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[1]}\n"
 
 
 @pytest.mark.task(taskno=1)
@@ -91,7 +67,7 @@ def test_exercise2_logic() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
-    assert output == f"{EXPECTED_SINGLE_LINE[2]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[2]}\n"
 
 
 @pytest.mark.task(taskno=2)
@@ -109,13 +85,13 @@ def test_exercise2_construct() -> None:
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
     value = int(output.strip())
-    assert value == EXPECTED_NUMERIC[3]
+    assert value == EX002_EXPECTED_NUMERIC[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
-    assert output == f"{EXPECTED_SINGLE_LINE[3]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[3]}\n"
 
 
 @pytest.mark.task(taskno=3)
@@ -137,7 +113,7 @@ def test_exercise4_logic() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
-    assert output == f"{EXPECTED_SINGLE_LINE[4]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[4]}\n"
 
 
 @pytest.mark.task(taskno=4)
@@ -150,7 +126,7 @@ def test_exercise4_construct() -> None:
         and isinstance(node.func, ast.Name)
         and node.func.id == "print"
     ]
-    assert len(print_calls) == EXPECTED_PRINT_CALLS[4]
+    assert len(print_calls) == EX002_EXPECTED_PRINT_CALLS[4]
     # Verify string content includes required words
     strings = {
         node.value
@@ -158,23 +134,21 @@ def test_exercise4_construct() -> None:
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
     assert any("Good" in s for s in strings), "Missing 'Good' in string constants"
-    assert any(
-        "Morning" in s for s in strings), "Missing 'Morning' in string constants"
-    assert any(
-        "Everyone" in s for s in strings), "Missing 'Everyone' in string constants"
+    assert any("Morning" in s for s in strings), "Missing 'Morning' in string constants"
+    assert any("Everyone" in s for s in strings), "Missing 'Everyone' in string constants"
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
     value = float(output.strip())
-    assert value == EXPECTED_NUMERIC[5]
+    assert value == EX002_EXPECTED_NUMERIC[5]
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
     output = _exercise_output(5)
-    assert output == f"{EXPECTED_SINGLE_LINE[5]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[5]}\n"
 
 
 @pytest.mark.task(taskno=5)
@@ -190,13 +164,13 @@ def test_exercise5_construct() -> None:
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
     lines = output.strip().splitlines()
-    assert lines == EXPECTED_MULTI_LINE[6]
+    assert lines == EX002_EXPECTED_MULTI_LINE[6]
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    expected = "\n".join(EXPECTED_MULTI_LINE[6]) + "\n"
+    expected = "\n".join(EX002_EXPECTED_MULTI_LINE[6]) + "\n"
     assert output == expected
 
 
@@ -210,7 +184,7 @@ def test_exercise6_construct() -> None:
         and isinstance(node.func, ast.Name)
         and node.func.id == "print"
     ]
-    assert len(print_calls) == EXPECTED_PRINT_CALLS[6]
+    assert len(print_calls) == EX002_EXPECTED_PRINT_CALLS[6]
 
 
 @pytest.mark.task(taskno=7)
@@ -223,7 +197,7 @@ def test_exercise7_logic() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_formatting() -> None:
     output = _exercise_output(7)
-    assert output == f"{EXPECTED_SINGLE_LINE[7]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[7]}\n"
 
 
 @pytest.mark.task(taskno=7)
@@ -241,13 +215,13 @@ def test_exercise7_construct() -> None:
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
     value = int(output.strip())
-    assert value == EXPECTED_NUMERIC[8]
+    assert value == EX002_EXPECTED_NUMERIC[8]
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_formatting() -> None:
     output = _exercise_output(8)
-    assert output == f"{EXPECTED_SINGLE_LINE[8]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[8]}\n"
 
 
 @pytest.mark.task(taskno=8)
@@ -264,13 +238,13 @@ def test_exercise9_logic() -> None:
     output = _exercise_output(9)
     lines = output.strip().splitlines()
     assert lines[0] == "10 minus 3 equals"
-    assert int(lines[1]) == EXPECTED_NUMERIC[9]
+    assert int(lines[1]) == EX002_EXPECTED_NUMERIC[9]
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    expected = "\n".join(EXPECTED_MULTI_LINE[9]) + "\n"
+    expected = "\n".join(EX002_EXPECTED_MULTI_LINE[9]) + "\n"
     assert output == expected
 
 
@@ -288,7 +262,7 @@ def test_exercise9_construct() -> None:
         and node.func.id == "print"
     ]
     assert has_subtraction
-    assert len(print_calls) == EXPECTED_PRINT_CALLS[9]
+    assert len(print_calls) == EX002_EXPECTED_PRINT_CALLS[9]
 
 
 @pytest.mark.task(taskno=10)
@@ -301,7 +275,7 @@ def test_exercise10_logic() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_formatting() -> None:
     output = _exercise_output(10)
-    assert output == f"{EXPECTED_SINGLE_LINE[10]}\n"
+    assert output == f"{EX002_EXPECTED_SINGLE_LINE[10]}\n"
 
 
 @pytest.mark.task(taskno=10)

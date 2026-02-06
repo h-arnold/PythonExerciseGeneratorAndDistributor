@@ -4,59 +4,24 @@ import ast
 
 import pytest
 
+from tests.exercise_expectations import (
+    EX005_AVERAGE_DIVISOR,
+    EX005_EXERCISE_INPUTS,
+    EX005_EXPECTED_SINGLE_LINE,
+    EX005_FULL_NAME_EXERCISE,
+    EX005_INPUT_PROMPTS,
+    EX005_MIN_EXPLANATION_LENGTH,
+    EX005_NOTEBOOK_PATH,
+    EX005_PLACEHOLDER_PHRASES,
+    EX005_PROFILE_EXERCISE,
+    is_valid_explanation,
+)
 from tests.notebook_grader import (
     extract_tagged_code,
     get_explanation_cell,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-
-NOTEBOOK_PATH = "notebooks/ex005_sequence_debug_logic.ipynb"
-MIN_EXPLANATION_LENGTH = 50
-
-# Placeholder phrases that indicate incomplete student work
-PLACEHOLDER_PHRASES = (
-    "describe what",
-    "your explanation",
-    "explain here",
-    "write your",
-    "todo",
-    "...",
-)
-
-
-def _is_valid_explanation(text: str) -> bool:
-    """Check explanation is long enough and doesn't contain placeholder phrases."""
-    stripped = text.strip().lower()
-    if len(stripped) < MIN_EXPLANATION_LENGTH:
-        return False
-    return not any(phrase in stripped for phrase in PLACEHOLDER_PHRASES)
-
-
-FULL_NAME_EXERCISE = 5
-PROFILE_EXERCISE = 10
-AVERAGE_DIVISOR = 2
-
-EXPECTED_SINGLE_LINE = {
-    1: "50",
-    2: "Alice",
-    3: "24",
-    4: "Hello World",
-    6: "5",
-    7: "25.0",
-    8: "I love learning Python",
-    9: "30",
-}
-
-EXERCISE_INPUTS = {
-    FULL_NAME_EXERCISE: ["Maria", "Jones"],
-    PROFILE_EXERCISE: ["16", "Birmingham"],
-}
-
-INPUT_PROMPTS = {
-    FULL_NAME_EXERCISE: ("Enter first name: ", "Enter last name: "),
-    PROFILE_EXERCISE: ("Enter your age: ", "Enter your city: "),
-}
 
 
 def _tag(exercise_no: int) -> str:
@@ -68,14 +33,14 @@ def _explanation_tag(exercise_no: int) -> str:
 
 
 def _exercise_output(exercise_no: int) -> str:
-    inputs = EXERCISE_INPUTS.get(exercise_no)
+    inputs = EX005_EXERCISE_INPUTS.get(exercise_no)
     if inputs is None:
-        return run_cell_and_capture_output(NOTEBOOK_PATH, tag=_tag(exercise_no))
-    return run_cell_with_input(NOTEBOOK_PATH, tag=_tag(exercise_no), inputs=inputs)
+        return run_cell_and_capture_output(EX005_NOTEBOOK_PATH, tag=_tag(exercise_no))
+    return run_cell_with_input(EX005_NOTEBOOK_PATH, tag=_tag(exercise_no), inputs=inputs)
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
-    code = extract_tagged_code(NOTEBOOK_PATH, tag=_tag(exercise_no))
+    code = extract_tagged_code(EX005_NOTEBOOK_PATH, tag=_tag(exercise_no))
     return ast.parse(code)
 
 
@@ -141,11 +106,11 @@ def _input_prompts(tree: ast.AST) -> list[str]:
 
 
 def _expected_io_output(exercise_no: int, inputs: list[str]) -> str:
-    prompt_first, prompt_second = INPUT_PROMPTS[exercise_no]
-    if exercise_no == FULL_NAME_EXERCISE:
+    prompt_first, prompt_second = EX005_INPUT_PROMPTS[exercise_no]
+    if exercise_no == EX005_FULL_NAME_EXERCISE:
         first, last = inputs
         return f"{prompt_first}{prompt_second}{first} {last}\n"
-    if exercise_no == PROFILE_EXERCISE:
+    if exercise_no == EX005_PROFILE_EXERCISE:
         age, city = inputs
         return f"{prompt_first}{prompt_second}You are {age} years old and live in {city}\n"
     raise ValueError(f"Unexpected interactive exercise: {exercise_no}")
@@ -154,13 +119,13 @@ def _expected_io_output(exercise_no: int, inputs: list[str]) -> str:
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    assert output.strip() == EXPECTED_SINGLE_LINE[1]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[1]
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[1]}\n"
 
 
 @pytest.mark.task(taskno=1)
@@ -174,20 +139,24 @@ def test_exercise1_construct() -> None:
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(1))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(1))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic() -> None:
     output = _exercise_output(2)
-    assert output.strip() == EXPECTED_SINGLE_LINE[2]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[2]
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
-    assert output == f"{EXPECTED_SINGLE_LINE[2]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[2]}\n"
 
 
 @pytest.mark.task(taskno=2)
@@ -201,20 +170,24 @@ def test_exercise2_construct() -> None:
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(2))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(2))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
-    assert output.strip() == EXPECTED_SINGLE_LINE[3]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
-    assert output == f"{EXPECTED_SINGLE_LINE[3]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[3]}\n"
 
 
 @pytest.mark.task(taskno=3)
@@ -228,20 +201,24 @@ def test_exercise3_construct() -> None:
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(3))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(3))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
     output = _exercise_output(4)
-    assert output.strip() == EXPECTED_SINGLE_LINE[4]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[4]
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
-    assert output == f"{EXPECTED_SINGLE_LINE[4]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[4]}\n"
 
 
 @pytest.mark.task(taskno=4)
@@ -258,30 +235,34 @@ def test_exercise4_construct() -> None:
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(4))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(4))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
-    output = _exercise_output(FULL_NAME_EXERCISE)
-    first, last = EXERCISE_INPUTS[FULL_NAME_EXERCISE]
+    output = _exercise_output(EX005_FULL_NAME_EXERCISE)
+    first, last = EX005_EXERCISE_INPUTS[EX005_FULL_NAME_EXERCISE]
     expected_name = f"{first} {last}"
     assert expected_name in output
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
-    inputs = EXERCISE_INPUTS[FULL_NAME_EXERCISE]
-    output = _exercise_output(FULL_NAME_EXERCISE)
-    assert output == _expected_io_output(FULL_NAME_EXERCISE, inputs)
+    inputs = EX005_EXERCISE_INPUTS[EX005_FULL_NAME_EXERCISE]
+    output = _exercise_output(EX005_FULL_NAME_EXERCISE)
+    assert output == _expected_io_output(EX005_FULL_NAME_EXERCISE, inputs)
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_construct() -> None:
-    tree = _exercise_ast(FULL_NAME_EXERCISE)
+    tree = _exercise_ast(EX005_FULL_NAME_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(INPUT_PROMPTS[FULL_NAME_EXERCISE]).issubset(prompts)
+    assert set(EX005_INPUT_PROMPTS[EX005_FULL_NAME_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "full_name")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):
@@ -294,20 +275,25 @@ def test_exercise5_construct() -> None:
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
     explanation = get_explanation_cell(
-        NOTEBOOK_PATH, tag=_explanation_tag(FULL_NAME_EXERCISE))
-    assert _is_valid_explanation(explanation)
+        EX005_NOTEBOOK_PATH, tag=_explanation_tag(EX005_FULL_NAME_EXERCISE)
+    )
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
-    assert output.strip() == EXPECTED_SINGLE_LINE[6]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[6]
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    assert output == f"{EXPECTED_SINGLE_LINE[6]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[6]}\n"
 
 
 @pytest.mark.task(taskno=6)
@@ -322,53 +308,59 @@ def test_exercise6_construct() -> None:
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(6))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(6))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_logic() -> None:
     output = _exercise_output(7)
-    assert output.strip() == EXPECTED_SINGLE_LINE[7]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[7]
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_formatting() -> None:
     output = _exercise_output(7)
-    assert output == f"{EXPECTED_SINGLE_LINE[7]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[7]}\n"
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_construct() -> None:
     tree = _exercise_ast(7)
     total_value = _assignment_value(tree, "total")
-    assert isinstance(total_value, ast.BinOp) and isinstance(
-        total_value.op, ast.Add)
+    assert isinstance(total_value, ast.BinOp) and isinstance(total_value.op, ast.Add)
     assert {"score1", "score2"} <= set(_names_in_node(total_value))
     average_value = _assignment_value(tree, "average")
-    assert isinstance(average_value, ast.BinOp) and isinstance(
-        average_value.op, ast.Div)
+    assert isinstance(average_value, ast.BinOp) and isinstance(average_value.op, ast.Div)
     assert "total" in _names_in_node(average_value)
-    assert AVERAGE_DIVISOR in _number_constants(average_value)
+    assert EX005_AVERAGE_DIVISOR in _number_constants(average_value)
     assert _print_uses_name(tree, "average")
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(7))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(7))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
-    assert output.strip() == EXPECTED_SINGLE_LINE[8]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[8]
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_formatting() -> None:
     output = _exercise_output(8)
-    assert output == f"{EXPECTED_SINGLE_LINE[8]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[8]}\n"
 
 
 @pytest.mark.task(taskno=8)
@@ -385,20 +377,24 @@ def test_exercise8_construct() -> None:
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(8))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(8))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_logic() -> None:
     output = _exercise_output(9)
-    assert output.strip() == EXPECTED_SINGLE_LINE[9]
+    assert output.strip() == EX005_EXPECTED_SINGLE_LINE[9]
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    assert output == f"{EXPECTED_SINGLE_LINE[9]}\n"
+    assert output == f"{EX005_EXPECTED_SINGLE_LINE[9]}\n"
 
 
 @pytest.mark.task(taskno=9)
@@ -407,37 +403,40 @@ def test_exercise9_construct() -> None:
     value = _assignment_value(tree, "perimeter")
     assert value is not None
     assert {"length", "width"} <= set(_names_in_node(value))
-    assert any(isinstance(node, (ast.Add, ast.Mult))
-               for node in ast.walk(value))
+    assert any(isinstance(node, (ast.Add, ast.Mult)) for node in ast.walk(value))
     assert _print_uses_name(tree, "perimeter")
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_explanation() -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=_explanation_tag(9))
-    assert _is_valid_explanation(explanation)
+    explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=_explanation_tag(9))
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_logic() -> None:
-    output = _exercise_output(PROFILE_EXERCISE)
-    age, city = EXERCISE_INPUTS[PROFILE_EXERCISE]
+    output = _exercise_output(EX005_PROFILE_EXERCISE)
+    age, city = EX005_EXERCISE_INPUTS[EX005_PROFILE_EXERCISE]
     expected_message = f"You are {age} years old and live in {city}"
     assert expected_message in output
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_formatting() -> None:
-    inputs = EXERCISE_INPUTS[PROFILE_EXERCISE]
-    output = _exercise_output(PROFILE_EXERCISE)
-    assert output == _expected_io_output(PROFILE_EXERCISE, inputs)
+    inputs = EX005_EXERCISE_INPUTS[EX005_PROFILE_EXERCISE]
+    output = _exercise_output(EX005_PROFILE_EXERCISE)
+    assert output == _expected_io_output(EX005_PROFILE_EXERCISE, inputs)
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_construct() -> None:
-    tree = _exercise_ast(PROFILE_EXERCISE)
+    tree = _exercise_ast(EX005_PROFILE_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(INPUT_PROMPTS[PROFILE_EXERCISE]).issubset(prompts)
+    assert set(EX005_INPUT_PROMPTS[EX005_PROFILE_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "message")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):
@@ -450,5 +449,10 @@ def test_exercise10_construct() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
     explanation = get_explanation_cell(
-        NOTEBOOK_PATH, tag=_explanation_tag(PROFILE_EXERCISE))
-    assert _is_valid_explanation(explanation)
+        EX005_NOTEBOOK_PATH, tag=_explanation_tag(EX005_PROFILE_EXERCISE)
+    )
+    assert is_valid_explanation(
+        explanation,
+        min_length=EX005_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
+    )
