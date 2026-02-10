@@ -26,7 +26,7 @@ def strip_exercise_prefix(message: str) -> str:
     """Remove a leading "Exercise N:" prefix when present."""
     match = re.match(r"^Exercise\s+\d+:\s*", message)
     if match:
-        return message[match.end():]
+        return message[match.end() :]
     return message
 
 
@@ -74,8 +74,7 @@ def render_table(rows: list[tuple[str, bool]]) -> str:
 
 def render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
     """Render a 3-column table with exercise, check name, and status."""
-    data = [[label, title, format_status(passed)]
-            for label, title, passed in rows]
+    data = [[label, title, format_status(passed)] for label, title, passed in rows]
     return tabulate(data, headers=["Exercise", "Check", "Status"], tablefmt="grid")
 
 

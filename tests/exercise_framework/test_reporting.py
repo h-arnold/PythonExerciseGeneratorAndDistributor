@@ -111,8 +111,7 @@ def test_render_grouped_table_with_errors_continuation_rows_blank_columns() -> N
         "about the school location and punctuation in this response."
     )
 
-    table = render_grouped_table_with_errors(
-        [("Exercise 2", "Logic", False, long_error)])
+    table = render_grouped_table_with_errors([("Exercise 2", "Logic", False, long_error)])
 
     row_lines = [line for line in table.splitlines() if line.startswith("| ")]
 

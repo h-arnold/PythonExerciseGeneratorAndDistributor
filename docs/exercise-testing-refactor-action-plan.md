@@ -303,15 +303,15 @@ Use the new framework end-to-end for ex002 while preserving behaviour.
 
 ### TDD Tasks
 
-- [ ] Rewrite ex002 tests to call framework API/assertions/construct helpers.
-- [ ] Ensure old and new ex002 tests can be compared during transition.
-- [ ] Add deterministic checks for task marker parity (`@pytest.mark.task`).
+- [x] Rewrite ex002 tests to call framework API/assertions/construct helpers.
+- [x] Ensure old and new ex002 tests can be compared during transition.
+- [x] Add deterministic checks for task marker parity (`@pytest.mark.task`).
 
 ### Acceptance Criteria
 
-- [ ] ex002 suites pass against `notebooks/solutions`.
-- [ ] ex002 suites still fail appropriately against incomplete student notebooks.
-- [ ] Collected test count/task distribution remains stable.
+- [x] ex002 suites pass against `notebooks/solutions`.
+- [x] ex002 suites still fail appropriately against incomplete student notebooks.
+- [x] Collected test count/task distribution remains stable.
 
 ### Constraints
 
@@ -333,13 +333,14 @@ Use the new framework end-to-end for ex002 while preserving behaviour.
 ### Notes
 
 - Decisions
-  -
+  - Added framework fixtures to collect task marks from parametrised checks.
+  - Introduced integration tests for task marker parity and deterministic names.
 
 - Open questions
-  -
+  - None.
 
 - Follow-up
-  -
+  - Run solution-notebook ex002 suites when convenient.
 
 ---
 
@@ -455,7 +456,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 - [x] Phase 3
 - [x] Phase 4
 - [x] Phase 5
-- [ ] Phase 6
+- [x] Phase 6
 - [ ] Phase 7
 - [ ] Phase 8
 

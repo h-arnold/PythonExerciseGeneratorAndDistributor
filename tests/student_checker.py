@@ -84,8 +84,7 @@ def check_notebook(notebook_slug: str) -> None:
     check = checks.get(notebook_slug)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(
-            f"Unknown notebook '{notebook_slug}'. Available: {available}")
+        raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
     results = _run_checks([check])
     _print_results(results)
 
@@ -126,8 +125,7 @@ def _print_results(results: list[tuple[str, bool, list[str]]]) -> None:
     table = render_table([(label, passed) for label, passed, _ in results])
     print(table)
 
-    failures = [(label, issues)
-                for label, passed, issues in results if not passed]
+    failures = [(label, issues) for label, passed, issues in results if not passed]
     if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
 
@@ -143,8 +141,7 @@ def _check_ex001() -> list[str]:
     if not isinstance(result, str):
         errors.append("The `example` function must return a string.")
     elif result == "":
-        errors.append(
-            "The `example` function should not return an empty string.")
+        errors.append("The `example` function should not return an empty string.")
     return errors
 
 
@@ -175,8 +172,7 @@ def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
     last_exercise: int | None = None
     for result in results:
         label = f"Exercise {result.exercise_no}" if result.exercise_no != last_exercise else ""
-        error_message = "" if result.passed else normalise_issue_text(
-            result.issues)
+        error_message = "" if result.passed else normalise_issue_text(result.issues)
         rows.append((label, result.title, result.passed, error_message))
         last_exercise = result.exercise_no
 
@@ -191,8 +187,7 @@ def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
 def _check_ex003() -> list[str]:
     errors: list[str] = []
     for exercise_no, expected in EX003_EXPECTED_STATIC_OUTPUT.items():
-        output = run_cell_and_capture_output(
-            EX003_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
+        output = run_cell_and_capture_output(EX003_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
         if output != f"{expected}\n":
             errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
 
@@ -207,8 +202,7 @@ def _check_ex003() -> list[str]:
         f"{EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}\n"
     )
     if fruit_output != expected_fruit:
-        errors.append(
-            "Exercise 4: output does not match the expected prompt flow.")
+        errors.append("Exercise 4: output does not match the expected prompt flow.")
 
     town_output = run_cell_with_input(
         EX003_NOTEBOOK_PATH,
@@ -221,8 +215,7 @@ def _check_ex003() -> list[str]:
         f"{EX003_EXPECTED_INPUT_MESSAGES[5].format(town='Cardiff', country='Wales')}\n"
     )
     if town_output != expected_town:
-        errors.append(
-            "Exercise 5: output does not match the expected prompt flow.")
+        errors.append("Exercise 5: output does not match the expected prompt flow.")
 
     name_output = run_cell_with_input(
         EX003_NOTEBOOK_PATH,
@@ -235,8 +228,7 @@ def _check_ex003() -> list[str]:
         f"{EX003_EXPECTED_INPUT_MESSAGES[6].format(first='Alex', last='Morgan')}\n"
     )
     if name_output != expected_name:
-        errors.append(
-            "Exercise 6: output does not match the expected prompt flow.")
+        errors.append("Exercise 6: output does not match the expected prompt flow.")
 
     return errors
 
@@ -251,30 +243,23 @@ def _check_ex004() -> list[str]:
 def _check_ex004_outputs() -> list[str]:
     errors: list[str] = []
     for exercise_no, expected in EX004_EXPECTED_SINGLE_LINE.items():
-        output = run_cell_and_capture_output(
-            EX004_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
+        output = run_cell_and_capture_output(EX004_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
         if output != f"{expected}\n":
             errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
 
-    exercise7 = run_cell_with_input(
-        EX004_NOTEBOOK_PATH, tag=_exercise_tag(7), inputs=["5"])
+    exercise7 = run_cell_with_input(EX004_NOTEBOOK_PATH, tag=_exercise_tag(7), inputs=["5"])
     if EX004_PROMPT_STRINGS[7] not in exercise7 or EX004_FORMAT_VALIDATION[7] not in exercise7:
-        errors.append(
-            "Exercise 7: output does not match the expected prompt or total.")
+        errors.append("Exercise 7: output does not match the expected prompt or total.")
 
-    exercise8 = run_cell_with_input(
-        EX004_NOTEBOOK_PATH, tag=_exercise_tag(8), inputs=["Alice"])
+    exercise8 = run_cell_with_input(EX004_NOTEBOOK_PATH, tag=_exercise_tag(8), inputs=["Alice"])
     expected8 = f"{EX004_PROMPT_STRINGS[8]} {EX004_FORMAT_VALIDATION[8]}\n"
     if exercise8 != expected8:
-        errors.append(
-            "Exercise 8: output does not match the expected greeting.")
+        errors.append("Exercise 8: output does not match the expected greeting.")
 
-    exercise10 = run_cell_with_input(
-        EX004_NOTEBOOK_PATH, tag=_exercise_tag(10), inputs=["Blue"])
+    exercise10 = run_cell_with_input(EX004_NOTEBOOK_PATH, tag=_exercise_tag(10), inputs=["Blue"])
     expected10 = f"{EX004_PROMPT_STRINGS[10]} {EX004_FORMAT_VALIDATION[10]}\n"
     if exercise10 != expected10:
-        errors.append(
-            "Exercise 10: output does not match the expected response.")
+        errors.append("Exercise 10: output does not match the expected response.")
 
     return errors
 
@@ -284,8 +269,7 @@ def _check_ex004_explanations() -> list[str]:
     for exercise_no in range(1, 11):
         explanation_tag = f"explanation{exercise_no}"
         try:
-            explanation = get_explanation_cell(
-                EX004_NOTEBOOK_PATH, tag=explanation_tag)
+            explanation = get_explanation_cell(EX004_NOTEBOOK_PATH, tag=explanation_tag)
         except AssertionError:
             errors.append(f"Exercise {exercise_no}: explanation is missing.")
             continue
@@ -294,8 +278,7 @@ def _check_ex004_explanations() -> list[str]:
             min_length=EX004_MIN_EXPLANATION_LENGTH,
             placeholder_phrases=EX004_PLACEHOLDER_PHRASES,
         ):
-            errors.append(
-                f"Exercise {exercise_no}: explanation needs more detail.")
+            errors.append(f"Exercise {exercise_no}: explanation needs more detail.")
 
     return errors
 
@@ -303,8 +286,7 @@ def _check_ex004_explanations() -> list[str]:
 def _check_ex005() -> list[str]:
     errors: list[str] = []
     for exercise_no, expected in EX005_EXPECTED_SINGLE_LINE.items():
-        output = run_cell_and_capture_output(
-            EX005_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
+        output = run_cell_and_capture_output(EX005_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
         if output != f"{expected}\n":
             errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
 
@@ -317,8 +299,7 @@ def _check_ex005() -> list[str]:
     first, last = EX005_EXERCISE_INPUTS[EX005_FULL_NAME_EXERCISE]
     expected_full_name = f"{prompt_first}{prompt_second}{first} {last}\n"
     if full_name_output != expected_full_name:
-        errors.append(
-            "Exercise 5: output does not match the expected full name flow.")
+        errors.append("Exercise 5: output does not match the expected full name flow.")
 
     profile_output = run_cell_with_input(
         EX005_NOTEBOOK_PATH,
@@ -331,14 +312,12 @@ def _check_ex005() -> list[str]:
         f"{profile_prompt_first}{profile_prompt_second}You are {age} years old and live in {city}\n"
     )
     if profile_output != expected_profile:
-        errors.append(
-            "Exercise 10: output does not match the expected profile flow.")
+        errors.append("Exercise 10: output does not match the expected profile flow.")
 
     for exercise_no in range(1, 11):
         explanation_tag = f"explanation{exercise_no}"
         try:
-            explanation = get_explanation_cell(
-                EX005_NOTEBOOK_PATH, tag=explanation_tag)
+            explanation = get_explanation_cell(EX005_NOTEBOOK_PATH, tag=explanation_tag)
         except AssertionError:
             errors.append(f"Exercise {exercise_no}: explanation is missing.")
             continue
@@ -347,8 +326,7 @@ def _check_ex005() -> list[str]:
             min_length=EX005_MIN_EXPLANATION_LENGTH,
             placeholder_phrases=EX005_PLACEHOLDER_PHRASES,
         ):
-            errors.append(
-                f"Exercise {exercise_no}: explanation needs more detail.")
+            errors.append(f"Exercise {exercise_no}: explanation needs more detail.")
 
     return errors
 
@@ -356,11 +334,9 @@ def _check_ex005() -> list[str]:
 def _check_ex006() -> list[str]:
     errors: list[str] = []
     for exercise_no, expected in EX006_EXPECTED_OUTPUTS.items():
-        output = run_cell_and_capture_output(
-            EX006_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
+        output = run_cell_and_capture_output(EX006_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
         if output != expected:
-            errors.append(
-                f"Exercise {exercise_no}: expected '{expected.strip()}'.")
+            errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
 
     for exercise_no, details in EX006_INPUT_EXPECTATIONS.items():
         inputs = details["inputs"]
@@ -374,13 +350,11 @@ def _check_ex006() -> list[str]:
         if prompt_contains not in output:
             errors.append(f"Exercise {exercise_no}: prompt text is missing.")
         if output_contains is not None and output_contains not in output:
-            errors.append(
-                f"Exercise {exercise_no}: expected message is missing.")
+            errors.append(f"Exercise {exercise_no}: expected message is missing.")
         if last_line is not None:
             last_output_line = output.strip().splitlines()[-1]
             if last_output_line != last_line:
-                errors.append(
-                    f"Exercise {exercise_no}: expected last line '{last_line}'.")
+                errors.append(f"Exercise {exercise_no}: expected last line '{last_line}'.")
 
     return errors
 
