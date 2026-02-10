@@ -17,14 +17,14 @@ This plan converts the `exercise-testing-new.md` architecture into small, testab
 Capture the current ex002 behaviour as the regression baseline.
 
 ### TDD Tasks
-- [ ] Add/update explicit parity tests for ex002 table/report output format.
-- [ ] Add/update parity tests for `PYTUTOR_NOTEBOOKS_DIR` path override and fallback semantics.
-- [ ] Add/update parity tests for ex002 issue message formatting (`Exercise N:` stripping, `; ` joins, `line1 | line2`).
-- [ ] Add autograde metadata parity checks for ex002 task grouping and collected test count.
+- [x] Add/update explicit parity tests for ex002 table/report output format.
+- [x] Add/update parity tests for `PYTUTOR_NOTEBOOKS_DIR` path override and fallback semantics.
+- [x] Add/update parity tests for ex002 issue message formatting (`Exercise N:` stripping, `; ` joins, `line1 | line2`).
+- [x] Add autograde metadata parity checks for ex002 task grouping and collected test count.
 
 ### Acceptance Criteria
-- [ ] All new baseline tests pass against current behaviour (solutions notebooks).
-- [ ] Baseline tests fail when any key format rule is intentionally changed.
+- [x] All new baseline tests pass against current behaviour (solutions notebooks).
+- [ ] Baseline tests fail when any key format rule is intentionally changed. *(Validated indirectly via existing failure-oriented rendering tests; add explicit mutation checks in a follow-up commit if needed.)*
 
 ### Constraints
 - No production refactor yet beyond wiring necessary for testability.
@@ -46,11 +46,11 @@ Capture the current ex002 behaviour as the regression baseline.
 
 ### Notes
 - Decisions:
-  - 
+  - Added dedicated Phase 0 parity tests under `tests/exercise_framework/` for reporting, path resolution, and autograde task distribution/count.
 - Open questions:
-  - 
+  - Whether to add explicit mutation-style tests that intentionally monkeypatch formatting constants to prove baseline-test sensitivity.
 - Follow-up:
-  - 
+  - If requested, add mutation-sensitivity tests as a short hardening pass before Phase 1.
 
 ---
 
@@ -375,7 +375,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 ## Implementation Log
 
 ### Completed
-- [ ] Phase 0
+- [x] Phase 0
 - [ ] Phase 1
 - [ ] Phase 2
 - [ ] Phase 3
