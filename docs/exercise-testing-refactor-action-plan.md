@@ -99,13 +99,13 @@ Create `tests/exercise_framework/` with a stable public facade and minimal behav
 Move notebook resolution/execution concerns into dedicated modules with parity.
 
 ### TDD Tasks
-- [ ] Write tests for path resolver parity with current fallback rules.
-- [ ] Write tests for runtime extraction/execution parity (tag not found, JSON errors, execution errors).
-- [ ] Add tests for execution artefact caching per `(path, tag, input_signature)` when safe.
+- [x] Write tests for path resolver parity with current fallback rules.
+- [x] Write tests for runtime extraction/execution parity (tag not found, JSON errors, execution errors).
+- [x] Add tests for execution artefact caching per `(path, tag, input_signature)` when safe.
 
 ### Acceptance Criteria
-- [ ] `paths.py` and `runtime.py` satisfy parity tests from Phase 0.
-- [ ] Runtime caching does not change observable outputs/messages.
+- [x] `paths.py` and `runtime.py` satisfy parity tests from Phase 0.
+- [x] Runtime caching does not change observable outputs/messages.
 
 ### Constraints
 - Preserve fail-fast behaviour and existing exception semantics.
@@ -123,11 +123,13 @@ Move notebook resolution/execution concerns into dedicated modules with parity.
 
 ### Notes
 - Decisions:
-  - 
+  - Added `tests/exercise_framework/paths.py` as the Phase 2 resolver entry point, delegating to existing grading semantics for strict parity.
+  - Added `tests/exercise_framework/runtime.py` wrappers plus `RuntimeCache` keyed by `(path, tag)` and `(path, tag, input_signature)` for safe artefact reuse.
+  - Added dedicated Phase 2 tests in `tests/exercise_framework/test_paths.py` and `tests/exercise_framework/test_runtime.py`.
 - Open questions:
-  - 
+  - Whether to move API callers from `student_checker` internals to runtime/paths wrappers immediately, or in a dedicated transition commit in Phase 3.
 - Follow-up:
-  - 
+  - Rewire `tests/exercise_framework/api.py` to consume `runtime.py`/`paths.py` after expectation and assertion layers are introduced.
 
 ---
 
@@ -378,7 +380,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 ### Completed
 - [x] Phase 0
 - [x] Phase 1
-- [ ] Phase 2
+- [x] Phase 2
 - [ ] Phase 3
 - [ ] Phase 4
 - [ ] Phase 5
