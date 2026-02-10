@@ -40,7 +40,7 @@ Scaffolds the boilerplate for new exercises to ensure consistency across the rep
 
 ### Command-Line Arguments
 
-```
+```bash
 python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TYPE]
 ```
 
@@ -86,6 +86,9 @@ Contains:
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - For multi-part notebooks, a markdown prompt precedes each tagged cell
 - Optional self-check cell (not graded)
+- Auto-appended untagged code cell that imports `tests.student_checker` and calls `run_notebook_checks` so students can verify their notebook before submitting
+
+The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
 
 Debug notebooks contain, for each part:
 
@@ -142,12 +145,13 @@ Edit `notebooks/exNNN_slug.ipynb`:
 
 **Notebook structure**:
 
-```
+```text
 1. Markdown: Title and goal
 2. Markdown/Code: Examples or context
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
 5. Code (untagged): Optional self-check cell
+6. Code (untagged): Auto-appended check-your-answers cell that runs `tests.student_checker.run_notebook_checks` against the generated notebook
 ```
 
 ### 3. Write Tests

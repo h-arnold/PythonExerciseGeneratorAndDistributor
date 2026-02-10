@@ -36,7 +36,8 @@ def _slugify(text: str) -> str:
 
 def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
     """Create cell metadata dictionary."""
-    meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
+    meta: dict[str, object] = {
+        "id": uuid.uuid4().hex[:8], "language": language}
     if tags:
         meta["tags"] = tags
     return meta
@@ -148,8 +149,27 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
     return cells
 
 
+def _make_check_answers_cell(notebook_path: str) -> dict[str, Any]:
+    """Return the auto-generated check-your-answers cell for the notebook."""
+    return {
+        "cell_type": "code",
+        "metadata": _make_meta("python"),
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "from tests.student_checker import run_notebook_checks\n",
+            "\n",
+            f"run_notebook_checks({notebook_path!r})\n",
+        ],
+    }
+
+
 def _make_notebook_with_parts(
-    title: str, *, parts: int, exercise_type: str | None = None
+    title: str,
+    *,
+    parts: int,
+    exercise_type: str | None = None,
+    notebook_path: str | None = None,
 ) -> dict[str, Any]:
     if parts < 1:
         raise ValueError("parts must be >= 1")
@@ -190,6 +210,9 @@ def _make_notebook_with_parts(
         }
     )
 
+    if notebook_path:
+        cells.append(_make_check_answers_cell(notebook_path))
+
     return {
         "cells": cells,
         "metadata": {
@@ -207,7 +230,8 @@ def _make_notebook_with_parts(
 
 def _validate_and_parse_args() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
-    parser = argparse.ArgumentParser(description="Create a new exercise skeleton")
+    parser = argparse.ArgumentParser(
+        description="Create a new exercise skeleton")
     parser.add_argument("id", help='Exercise id like "ex001"')
     parser.add_argument("title", help="Human title for the exercise")
     parser.add_argument(
@@ -232,7 +256,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
     if args.parts < 1:
         raise SystemExit("--parts must be >= 1")
     if args.parts > MAX_PARTS:
-        raise SystemExit(f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
+        raise SystemExit(
+            f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
 
     ex_id = args.id.strip().lower()
     if not re.fullmatch(r"ex\d{3}", ex_id):
@@ -240,7 +265,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
 
     slug = args.slug.strip().lower() if args.slug else _slugify(args.title)
     if not re.fullmatch(r"[a-z0-9]+(?:_[a-z0-9]+)*", slug):
-        raise SystemExit("Slug must be snake_case containing only a-z, 0-9, and underscores.")
+        raise SystemExit(
+            "Slug must be snake_case containing only a-z, 0-9, and underscores.")
 
     return args
 
@@ -249,7 +275,8 @@ def _check_exercise_not_exists(exercise_key: str) -> None:
     """Raise SystemExit if exercise already exists."""
     ex_dir = ROOT / "exercises" / exercise_key
     nb_path = ROOT / "notebooks" / f"{exercise_key}.ipynb"
-    nb_solution_path = ROOT / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
+    nb_solution_path = ROOT / "notebooks" / \
+        "solutions" / f"{exercise_key}.ipynb"
     test_path = ROOT / "tests" / f"test_{exercise_key}.py"
 
     if ex_dir.exists() or nb_path.exists() or nb_solution_path.exists() or test_path.exists():
@@ -266,7 +293,8 @@ def main() -> int:
 
     ex_dir = ROOT / "exercises" / exercise_key
     nb_path = ROOT / "notebooks" / f"{exercise_key}.ipynb"
-    nb_solution_path = ROOT / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
+    nb_solution_path = ROOT / "notebooks" / \
+        "solutions" / f"{exercise_key}.ipynb"
     test_path = ROOT / "tests" / f"test_{exercise_key}.py"
 
     ex_dir.mkdir(parents=True)
@@ -362,15 +390,23 @@ def main() -> int:
     test_path.write_text("\n".join(test_lines), encoding="utf-8")
 
     # Build notebook with the optional exercise type (e.g., debug)
-    notebook = _make_notebook_with_parts(args.title, parts=args.parts, exercise_type=args.type)
+    relative_nb_path = f"notebooks/{exercise_key}.ipynb"
+    notebook = _make_notebook_with_parts(
+        args.title,
+        parts=args.parts,
+        exercise_type=args.type,
+        notebook_path=relative_nb_path,
+    )
     nb_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
 
     nb_solution_path.parent.mkdir(parents=True, exist_ok=True)
-    nb_solution_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
+    nb_solution_path.write_text(json.dumps(
+        notebook, indent=2), encoding="utf-8")
 
     # If this is a debug exercise, update README to mention explanation tags
     if args.type == "debug":
-        readme_lines = (ex_dir / "README.md").read_text(encoding="utf-8").splitlines()
+        readme_lines = (
+            ex_dir / "README.md").read_text(encoding="utf-8").splitlines()
         # Add short instruction about the explanation cell
         readme_lines.insert(
             7,

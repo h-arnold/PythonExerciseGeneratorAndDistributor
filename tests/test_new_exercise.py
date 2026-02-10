@@ -16,7 +16,8 @@ def _find_tags(cells, tag):
 
 
 def test_make_notebook_debug_structure():
-    nb = ne._make_notebook_with_parts("Title Debug", parts=2, exercise_type="debug")
+    nb = ne._make_notebook_with_parts(
+        "Title Debug", parts=2, exercise_type="debug")
     cells = nb["cells"]
 
     # For each part check we have expected-output, exercise tag and explanation tag
@@ -75,7 +76,8 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
     exercise_key = "ex010_debug_example"
     ex_dir = tmp_path / "exercises" / exercise_key
     nb_path = tmp_path / "notebooks" / f"{exercise_key}.ipynb"
-    nb_solution = tmp_path / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
+    nb_solution = tmp_path / "notebooks" / \
+        "solutions" / f"{exercise_key}.ipynb"
     test_path = tmp_path / "tests" / f"test_{exercise_key}.py"
 
     assert ex_dir.exists(), "Exercise directory should be created"
@@ -85,7 +87,8 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
 
     # Notebook should include exercise1 and explanation1 tags
     nb = json.loads(nb_path.read_text(encoding="utf-8"))
-    tags = [t for cell in nb["cells"] for t in cell.get("metadata", {}).get("tags", [])]
+    tags = [t for cell in nb["cells"]
+            for t in cell.get("metadata", {}).get("tags", [])]
     assert "exercise1" in tags
     assert "explanation1" in tags
 
@@ -95,15 +98,17 @@ def test_main_creates_debug_files(tmp_path, monkeypatch):
 
     # Test file should include an assertion checking explanation content (>10 chars)
     txt = test_path.read_text(encoding="utf-8")
-    assert (
-        "Explanation must be more than 10 characters" in txt
-        or "Explanation must be more than 10 characters" in txt
-    )
+    assert "Explanation must be more than 10 characters" in txt
 
 
 def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() -> None:
-    """Ensure the standard (non-debug) template tags only graded exercise code cells with 'exerciseN' and leaves the optional self-check cell untagged."""
-    nb = ne._make_notebook_with_parts("Title Standard", parts=3, exercise_type=None)
+    """Ensure the standard template keeps untagged helper cells even once we append the check-your-answers helper."""
+    nb = ne._make_notebook_with_parts(
+        "Title Standard",
+        parts=3,
+        exercise_type=None,
+        notebook_path="notebooks/ex001_dummy.ipynb",
+    )
     cells = nb["cells"]
 
     # Collect exercise tags present on code cells
@@ -118,9 +123,21 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     expected = {f"exercise{i}" for i in range(1, 4)}
     assert exercise_tags == expected
 
-    # The last cell should be the optional self-check code cell and must have no tags
-    last_cell = cells[-1]
-    assert last_cell["cell_type"] == "code"
-    assert not last_cell.get("metadata", {}).get("tags", []), (
+    assert len(cells) >= 2
+    self_check_cell = cells[-2]
+    assert self_check_cell["cell_type"] == "code"
+    assert not self_check_cell.get("metadata", {}).get("tags", []), (
         "Optional self-check cell should not be tagged"
     )
+    assert any(
+        "Optional self-check" in line for line in self_check_cell.get("source", []))
+
+    # The final cell is the auto-generated check-your-answers helper
+    check_answers_cell = cells[-1]
+    assert check_answers_cell["cell_type"] == "code"
+    assert not check_answers_cell.get("metadata", {}).get("tags", []), (
+        "Check-your-answers cell should remain untagged"
+    )
+    joined_source = "".join(check_answers_cell.get("source", []))
+    assert "from tests.student_checker import run_notebook_checks" in joined_source
+    assert "run_notebook_checks(" in joined_source
