@@ -241,7 +241,7 @@ Example:
 ```bash
 codex-delegate --role implementation \
   --task "Add input validation to the assessor controller" \
-  --instructions "Use existing DTO patterns; update tests." \
+  --instructions "{Detailed and highly specific instructions on exactly what you expect the sub-agent to do. More detail is better.}" \
   --working-dir packages/my-app \
   --timeout-minutes 10
 ```

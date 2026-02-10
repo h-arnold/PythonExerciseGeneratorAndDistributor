@@ -12,7 +12,13 @@ from tests.exercise_framework.reporting import (
 )
 from tests.notebook_grader import NotebookGradingError
 
-from .models import DetailedCheckResult, Ex002CheckResult, Ex006CheckResult, NotebookCheckSpec
+from .models import (
+    DetailedCheckResult,
+    Ex002CheckResult,
+    Ex006CheckResult,
+    ExerciseCheckResult,
+    NotebookCheckSpec,
+)
 
 CheckResult = tuple[str, bool, list[str]]
 
@@ -76,6 +82,25 @@ def print_ex002_results(results: list[Ex002CheckResult]) -> None:
 
 def print_ex006_results(results: list[Ex006CheckResult]) -> None:
     """Print grouped ex006 check results."""
+    print_detailed_results(_grouped_exercise_rows(results))
+
+
+def print_ex003_results(results: list[ExerciseCheckResult]) -> None:
+    """Print grouped ex003 check results."""
+    _print_exercise_results(results)
+
+
+def print_ex004_results(results: list[ExerciseCheckResult]) -> None:
+    """Print grouped ex004 check results."""
+    _print_exercise_results(results)
+
+
+def print_ex005_results(results: list[ExerciseCheckResult]) -> None:
+    """Print grouped ex005 check results."""
+    _print_exercise_results(results)
+
+
+def _print_exercise_results(results: Iterable[ExerciseCheckResult]) -> None:
     print_detailed_results(_grouped_exercise_rows(results))
 
 

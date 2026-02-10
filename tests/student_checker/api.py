@@ -10,13 +10,18 @@ from .checks import (
     check_ex005,
     check_ex006,
     run_ex002_checks,
+    run_ex003_checks,
+    run_ex004_checks,
+    run_ex005_checks,
     run_ex006_checks,
 )
 from .models import NotebookCheckSpec
 from .reporting import (
     print_ex002_results,
+    print_ex003_results,
+    print_ex004_results,
+    print_ex005_results,
     print_ex006_results,
-    print_notebook_detailed_results,
     print_results,
     run_check,
     run_checks,
@@ -82,29 +87,17 @@ def _get_checks() -> dict[str, NotebookCheckSpec]:
         _EX003_SLUG: NotebookCheckSpec(
             "ex003 Sequence Modify Variables",
             check_ex003,
-            lambda: print_notebook_detailed_results(
-                "ex003 Sequence Modify Variables",
-                check_ex003,
-                exercise_label="Exercises 1-6",
-            ),
+            lambda: print_ex003_results(run_ex003_checks()),
         ),
         _EX004_SLUG: NotebookCheckSpec(
             "ex004 Debug Syntax Errors",
             check_ex004,
-            lambda: print_notebook_detailed_results(
-                "ex004 Debug Syntax Errors",
-                check_ex004,
-                exercise_label="Exercises 1-10",
-            ),
+            lambda: print_ex004_results(run_ex004_checks()),
         ),
         _EX005_SLUG: NotebookCheckSpec(
             "ex005 Debug Logical Errors",
             check_ex005,
-            lambda: print_notebook_detailed_results(
-                "ex005 Debug Logical Errors",
-                check_ex005,
-                exercise_label="Exercises 1-10",
-            ),
+            lambda: print_ex005_results(run_ex005_checks()),
         ),
         _EX006_SLUG: NotebookCheckSpec(
             "ex006 Casting and Type Conversion",

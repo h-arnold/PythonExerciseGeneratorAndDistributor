@@ -7,13 +7,14 @@ from .api import (
     check_exercises,
     check_notebook,
 )
-from .models import DetailedCheckResult, Ex002CheckResult, Ex006CheckResult
+from .models import DetailedCheckResult, Ex002CheckResult, Ex006CheckResult, ExerciseCheckResult
 from .notebook_runtime import run_notebook_checks
 
 __all__ = [
     "DetailedCheckResult",
     "Ex002CheckResult",
     "Ex006CheckResult",
+    "ExerciseCheckResult",
     "check_ex002_notebook",
     "check_ex003_notebook",
     "check_ex004_notebook",

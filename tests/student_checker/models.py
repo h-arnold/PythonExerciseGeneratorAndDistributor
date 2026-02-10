@@ -16,6 +16,16 @@ class NotebookCheckSpec:
 
 
 @dataclass(frozen=True)
+class ExerciseCheckResult:
+    """Represents a single grouped exercise check result."""
+
+    exercise_no: int
+    title: str
+    passed: bool
+    issues: list[str]
+
+
+@dataclass(frozen=True)
 class Ex002CheckResult:
     """Represents a single ex002 check result."""
 
@@ -26,13 +36,8 @@ class Ex002CheckResult:
 
 
 @dataclass(frozen=True)
-class Ex006CheckResult:
+class Ex006CheckResult(ExerciseCheckResult):
     """Represents a single ex006 check result."""
-
-    exercise_no: int
-    title: str
-    passed: bool
-    issues: list[str]
 
 
 @dataclass(frozen=True)
