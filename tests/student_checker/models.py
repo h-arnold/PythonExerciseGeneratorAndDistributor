@@ -26,9 +26,29 @@ class Ex002CheckResult:
 
 
 @dataclass(frozen=True)
+class Ex006CheckResult:
+    """Represents a single ex006 check result."""
+
+    exercise_no: int
+    title: str
+    passed: bool
+    issues: list[str]
+
+
+@dataclass(frozen=True)
 class NotebookTagCheckResult:
     """Represents the status of a tagged exercise cell."""
 
     tag: str
     passed: bool
     message: str
+
+
+@dataclass(frozen=True)
+class DetailedCheckResult:
+    """Represents a single row in a grouped detailed report."""
+
+    exercise_label: str
+    check_label: str
+    passed: bool
+    issues: list[str]

@@ -92,9 +92,9 @@ def render_grouped_table_with_errors(
 
         if trimmed_error and len(trimmed_error) > error_width:
             wrapped_lines = _wrap_error_text(trimmed_error, error_width)
-            data.append([exercise_label, title, status, wrapped_lines[0]])
-            for line in wrapped_lines[1:]:
-                data.append(["", "", "", line])
+            # Keep wrapped feedback in one multi-line cell so continuation lines
+            # do not create extra row separators in grid output.
+            data.append([exercise_label, title, status, "\n".join(wrapped_lines)])
         else:
             data.append([exercise_label, title, status, trimmed_error])
 

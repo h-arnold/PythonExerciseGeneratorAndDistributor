@@ -129,6 +129,28 @@ def test_render_grouped_table_with_errors_continuation_rows_blank_columns() -> N
     assert "🔴 NO" not in continuation_row
 
 
+def test_render_grouped_table_with_errors_no_separators_between_wrapped_lines() -> None:
+    long_error = (
+        "Exercise 9: Execution failed for code tagged 'exercise9' in notebook path "
+        "because a float was concatenated to a string."
+    )
+
+    table = render_grouped_table_with_errors(
+        [("Exercise 9", "Static output", False, long_error)]
+    )
+
+    lines = table.splitlines()
+    first_data_index = next(i for i, line in enumerate(lines) if "| Exercise 9" in line)
+    next_line = lines[first_data_index + 1]
+    separator_line = lines[first_data_index + 2]
+
+    assert next_line.startswith("| ")
+    assert "Exercise 9" not in next_line
+    assert "Static output" not in next_line
+    assert "🔴 NO" not in next_line
+    assert not separator_line.startswith("+")
+
+
 def test_normalise_issue_lines_strips_joins_and_wraps() -> None:
     issues = [
         "Exercise 1: expected a friendlier greeting for the learner.",

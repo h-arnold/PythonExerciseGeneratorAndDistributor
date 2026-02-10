@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from typing import Protocol
 
 from tests.exercise_framework.reporting import (
     normalise_issue_text,
@@ -11,9 +12,18 @@ from tests.exercise_framework.reporting import (
 )
 from tests.notebook_grader import NotebookGradingError
 
-from .models import Ex002CheckResult, NotebookCheckSpec
+from .models import DetailedCheckResult, Ex002CheckResult, Ex006CheckResult, NotebookCheckSpec
 
 CheckResult = tuple[str, bool, list[str]]
+
+
+class _ExerciseCheckResult(Protocol):
+    """Protocol covering the fields required for grouped rendering."""
+
+    exercise_no: int
+    title: str
+    passed: bool
+    issues: list[str]
 
 
 def run_check(check: NotebookCheckSpec) -> None:
@@ -61,17 +71,76 @@ def print_results(results: list[CheckResult]) -> None:
 
 def print_ex002_results(results: list[Ex002CheckResult]) -> None:
     """Print grouped ex002 check results."""
-    rows: list[tuple[str, str, bool, str]] = []
+    print_detailed_results(_grouped_exercise_rows(results))
+
+
+def print_ex006_results(results: list[Ex006CheckResult]) -> None:
+    """Print grouped ex006 check results."""
+    print_detailed_results(_grouped_exercise_rows(results))
+
+
+def _grouped_exercise_rows(
+    results: Iterable[_ExerciseCheckResult],
+) -> list[DetailedCheckResult]:
+    """Build grouped detailed rows for exercise checks."""
+    rows: list[DetailedCheckResult] = []
     last_exercise: int | None = None
     for result in results:
         label = f"Exercise {result.exercise_no}" if result.exercise_no != last_exercise else ""
-        error_message = "" if result.passed else normalise_issue_text(result.issues)
-        rows.append((label, result.title, result.passed, error_message))
+        rows.append(
+            DetailedCheckResult(
+                exercise_label=label,
+                check_label=result.title,
+                passed=result.passed,
+                issues=result.issues,
+            )
+        )
         last_exercise = result.exercise_no
+    return rows
 
+
+def print_detailed_results(
+    results: Iterable[DetailedCheckResult],
+    success_message: str | None = None,
+) -> None:
+    """Render grouped rows with exercise/check statuses and errors."""
+    detailed_results = list(results)
+    rows = [
+        (
+            item.exercise_label,
+            item.check_label,
+            item.passed,
+            "" if item.passed else normalise_issue_text(item.issues),
+        )
+        for item in detailed_results
+    ]
     table = render_grouped_table_with_errors(rows)
     print(table)
 
-    failures = [result for result in results if not result.passed]
+    failures = [item for item in detailed_results if not item.passed]
     if not failures:
-        print("\nGreat work! Everything that can be checked here looks good.")
+        message = success_message or "Great work! Everything that can be checked here looks good."
+        print(f"\n{message}")
+
+
+def print_notebook_detailed_results(
+    label: str,
+    runner: Callable[[], list[str]],
+    *,
+    exercise_label: str = "",
+    success_message: str | None = None,
+) -> None:
+    """Run a notebook check runner and print its results as a grouped table."""
+
+    label, passed, issues = safe_check_result(label, runner)
+    print_detailed_results(
+        [
+            DetailedCheckResult(
+                exercise_label=exercise_label,
+                check_label=label,
+                passed=passed,
+                issues=issues,
+            )
+        ],
+        success_message=success_message,
+    )

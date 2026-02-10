@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
+from functools import partial
+
 from tests.exercise_expectations import (
     EX001_FUNCTION_NAME,
     EX001_NOTEBOOK_PATH,
@@ -30,6 +34,7 @@ from tests.exercise_expectations import (
 )
 from tests.exercise_framework.expectations import EX002_CHECKS
 from tests.exercise_framework.expectations_helpers import is_valid_explanation
+from tests.exercise_framework.paths import resolve_notebook_path as resolve_framework_notebook_path
 from tests.notebook_grader import (
     NotebookGradingError,
     exec_tagged_code,
@@ -38,7 +43,7 @@ from tests.notebook_grader import (
     run_cell_with_input,
 )
 
-from .models import Ex002CheckResult
+from .models import Ex002CheckResult, Ex006CheckResult
 
 
 def check_ex001() -> list[str]:
@@ -190,31 +195,98 @@ def check_ex005() -> list[str]:
 
 def check_ex006() -> list[str]:
     """Run checks for ex006."""
-    errors: list[str] = []
-    for exercise_no, expected in EX006_EXPECTED_OUTPUTS.items():
-        output = run_cell_and_capture_output(EX006_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no))
-        if output != expected:
-            errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
+    return [issue for result in run_ex006_checks() for issue in result.issues]
 
-    for exercise_no, details in EX006_INPUT_EXPECTATIONS.items():
-        inputs = details["inputs"]
-        output = run_cell_with_input(
-            EX006_NOTEBOOK_PATH, tag=_exercise_tag(exercise_no), inputs=inputs
+
+def run_ex006_checks() -> list[Ex006CheckResult]:
+    """Run detailed checks for ex006 and return structured results."""
+    results: list[Ex006CheckResult] = []
+    for check in _EX006_CHECKS:
+        try:
+            issues = check.check()
+        except NotebookGradingError as exc:
+            issues = [str(exc)]
+        results.append(
+            Ex006CheckResult(
+                exercise_no=check.exercise_no,
+                title=check.title,
+                passed=len(issues) == 0,
+                issues=issues,
+            )
         )
-        prompt_contains = details["prompt_contains"]
-        output_contains = details.get("output_contains")
-        last_line = details.get("last_line")
+    return results
 
-        if prompt_contains not in output:
-            errors.append(f"Exercise {exercise_no}: prompt text is missing.")
-        if output_contains is not None and output_contains not in output:
-            errors.append(f"Exercise {exercise_no}: expected message is missing.")
-        if last_line is not None:
-            last_output_line = output.strip().splitlines()[-1]
-            if last_output_line != last_line:
-                errors.append(f"Exercise {exercise_no}: expected last line '{last_line}'.")
 
+def _check_ex006_static_output(exercise_no: int) -> list[str]:
+    errors: list[str] = []
+    notebook_path = _resolve_ex006_notebook_path()
+    output = run_cell_and_capture_output(notebook_path, tag=_exercise_tag(exercise_no))
+    expected = EX006_EXPECTED_OUTPUTS[exercise_no]
+    if output != expected:
+        errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
     return errors
+
+
+def _check_ex006_input_flow(exercise_no: int) -> list[str]:
+    errors: list[str] = []
+    notebook_path = _resolve_ex006_notebook_path()
+    details = EX006_INPUT_EXPECTATIONS[exercise_no]
+    inputs = details["inputs"]
+    output = run_cell_with_input(notebook_path, tag=_exercise_tag(exercise_no), inputs=inputs)
+    prompt_contains = details["prompt_contains"]
+    output_contains = details.get("output_contains")
+    last_line = details.get("last_line")
+
+    if prompt_contains not in output:
+        errors.append(f"Exercise {exercise_no}: prompt text is missing.")
+    if output_contains is not None and output_contains not in output:
+        errors.append(f"Exercise {exercise_no}: expected message is missing.")
+    if last_line is not None:
+        last_output_line = output.strip().splitlines()[-1]
+        if last_output_line != last_line:
+            errors.append(f"Exercise {exercise_no}: expected last line '{last_line}'.")
+    return errors
+
+
+def _resolve_ex006_notebook_path() -> str:
+    return str(resolve_framework_notebook_path(EX006_NOTEBOOK_PATH))
+
+
+@dataclass(frozen=True)
+class Ex006CheckDefinition:
+    """Defines a detailed student-friendly ex006 check."""
+
+    exercise_no: int
+    title: str
+    check: Callable[[], list[str]]
+
+
+def _build_ex006_check(
+    exercise_no: int,
+    title: str,
+    check_fn: Callable[[int], list[str]],
+) -> Ex006CheckDefinition:
+    return Ex006CheckDefinition(
+        exercise_no=exercise_no,
+        title=title,
+        check=partial(check_fn, exercise_no),
+    )
+
+
+def _build_ex006_checks() -> list[Ex006CheckDefinition]:
+    checks: list[Ex006CheckDefinition] = []
+    exercise_numbers = sorted(set(EX006_EXPECTED_OUTPUTS) | set(EX006_INPUT_EXPECTATIONS))
+    for exercise_no in exercise_numbers:
+        if exercise_no in EX006_EXPECTED_OUTPUTS:
+            checks.append(
+                _build_ex006_check(exercise_no, "Static output", _check_ex006_static_output)
+            )
+        if exercise_no in EX006_INPUT_EXPECTATIONS:
+            checks.append(_build_ex006_check(exercise_no, "Prompt flow", _check_ex006_input_flow))
+    return checks
+
+
+_EX006_CHECKS: list[Ex006CheckDefinition] = _build_ex006_checks()
 
 
 def _check_ex004_outputs() -> list[str]:
