@@ -17,7 +17,7 @@ from tests.exercise_expectations import (
     EX002_NOTEBOOK_PATH as EX002_NOTEBOOK_PATH_VALUE,
 )
 
-from . import paths, runtime
+from . import assertions, constructs, paths, runtime
 
 
 @dataclass(frozen=True)
@@ -131,8 +131,13 @@ def _check_construct(exercise_no: int) -> list[str]:
         _resolve_ex002_notebook_path(),
         tag=_exercise_tag(exercise_no),
     )
-    if "print(" not in code:
-        errors.append(f"Exercise {exercise_no}: expected a print statement.")
+    has_print = constructs.check_has_print_statement(code)
+    errors.extend(
+        assertions.assert_has_print_statement(
+            exercise_no=exercise_no,
+            has_print=has_print,
+        )
+    )
 
     operator_expectations: dict[int, str] = {
         3: "*",
@@ -141,8 +146,15 @@ def _check_construct(exercise_no: int) -> list[str]:
         9: "-",
     }
     operator = operator_expectations.get(exercise_no)
-    if operator and operator not in code:
-        errors.append(f"Exercise {exercise_no}: expected to use '{operator}' in the calculation.")
+    if operator:
+        uses_operator = constructs.check_uses_operator(code, operator=operator)
+        errors.extend(
+            assertions.assert_uses_operator(
+                exercise_no=exercise_no,
+                operator=operator,
+                used=uses_operator,
+            )
+        )
 
     return errors
 

@@ -208,14 +208,14 @@ Unify construct checks and assertion messaging with reusable helpers.
 
 ### TDD Tasks
 
-- [ ] Add AST-based tests for required `print()` usage.
-- [ ] Add AST-based tests for required operators (`*`, `/`, `-`) in ex002 exercises.
-- [ ] Add assertion-helper tests for exact failure text parity.
+- [x] Add AST-based tests for required `print()` usage.
+- [x] Add AST-based tests for required operators (`*`, `/`, `-`) in ex002 exercises.
+- [x] Add assertion-helper tests for exact failure text parity.
 
 ### Acceptance Criteria
 
-- [ ] Construct checks are AST-first and pass positive/negative test cases.
-- [ ] Failure messages remain consistent with current student-facing output rules.
+- [x] Construct checks are AST-first and pass positive/negative test cases.
+- [x] Failure messages remain consistent with current student-facing output rules.
 
 ### Constraints
 
@@ -237,13 +237,14 @@ Unify construct checks and assertion messaging with reusable helpers.
 ### Notes
 
 - Decisions
-  -
+  - Introduced AST-first construct helpers with token-based fallbacks for invalid code.
+  - Centralised ex002 construct failure messaging in assertion helpers.
 
 - Open questions
-  -
+  - None.
 
 - Follow-up
-  -
+  - Run solution-notebook tests for ex002 construct and assertion helpers when convenient.
 
 ---
 
@@ -451,7 +452,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 - [x] Phase 1
 - [x] Phase 2
 - [x] Phase 3
-- [ ] Phase 4
+- [x] Phase 4
 - [ ] Phase 5
 - [ ] Phase 6
 - [ ] Phase 7
