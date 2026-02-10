@@ -1,6 +1,6 @@
 # Exercise Testing Specification
 
-This document specifies the intended behaviour of the exercise testing process. It is a natural language reference for refactoring, so it focuses on observable behaviour, inputs, outputs, and edge cases rather than implementation details.
+This document specifies the behaviour of the exercise testing process. It focuses on observable behaviour, inputs, outputs, and edge cases while reflecting the current framework architecture.
 
 ## Scope
 
@@ -57,7 +57,8 @@ This document specifies the intended behaviour of the exercise testing process. 
 
 ## Notebook Grading Behaviour
 
-- Tagged cells are executed using the grading helpers in [tests/notebook_grader.py](tests/notebook_grader.py).
+- Tagged cells are executed using the runtime helpers in [tests/exercise_framework/runtime.py](tests/exercise_framework/runtime.py), which wrap [tests/notebook_grader.py](tests/notebook_grader.py).
+- The student checker still calls `tests.notebook_grader` directly; the exercise framework wraps it for tests and future tooling.
 - If a tagged cell is missing or cannot be executed, the error is surfaced as a failing issue for that check.
 - Checks may accumulate multiple issues per item, and all check items are still attempted and reported in the table.
 - No check should silently swallow errors; problems are reported as messages in the error column.
@@ -134,9 +135,9 @@ The ex002 checker performs three checks per exercise (1 to 10), resulting in 30 
 - This document does not prescribe how the tests are implemented internally.
 - It does not define exercise content or pedagogy; it only defines observable testing behaviour.
 
-## Refactor Plan (Technical Specification)
+## Exercise Framework Architecture
 
-This section defines the intended architecture and migration plan for a clean, modular exercise testing framework. It is a design target for refactoring, not a description of the current code.
+This section outlines the current architecture of the modular exercise testing framework used by the repository.
 
 ### Design Goals
 
@@ -145,7 +146,7 @@ This section defines the intended architecture and migration plan for a clean, m
 - Stable, small APIs: a few well-defined entry points used by tests, scripts, and agents.
 - Easy extension: adding a new exercise should involve a small, predictable set of steps.
 
-### Proposed File and Folder Layout
+### Current File and Folder Layout
 
 ```
 tests/
@@ -154,7 +155,8 @@ tests/
   api.py               # stable public facade used by tests/scripts/notebooks
   runtime.py           # notebook loading, tag extraction, execution
   paths.py             # notebook path resolution, PYTUTOR_NOTEBOOKS_DIR
-  expectations.py      # shared expectation helpers and normalisers
+	expectations.py      # shared expectation helpers and normalisers
+	expectations_helpers.py  # small validation helpers
   assertions.py        # reusable assertion helpers with consistent messages
   constructs.py        # construct checks (e.g., print usage, operators)
   reporting.py         # student-facing output tables and formatting
@@ -174,7 +176,7 @@ docs/
 - `api.py`:
 	- Provides the stable orchestration entry points for callers outside the framework internals.
 	- Exposes workflows such as `run_all_checks()`, `run_notebook_check(slug)`, and `run_detailed_ex002_check()`.
-	- Is the only module that scripts, notebook check cells, and future agents should import directly.
+	- Preferred entry point for new scripts and tooling; some legacy callers still import runtime or notebook_grader directly.
 
 - `runtime.py`:
  	- Load notebooks and extract tagged code cells.
@@ -183,8 +185,8 @@ docs/
  	- Contains no exercise-specific logic.
 
 - `paths.py`:
- 	- Resolve notebook paths with `PYTUTOR_NOTEBOOKS_DIR` override.
- 	- Provide a single path resolver used everywhere.
+	- Resolve notebook paths with `PYTUTOR_NOTEBOOKS_DIR` override.
+	- Used by the framework; low-level helpers still exist in `tests/notebook_grader.py` and CLI utilities.
 
 - `expectations.py`:
  	- Normalise outputs (single-line vs multi-line, trailing newline handling).
@@ -219,12 +221,11 @@ docs/
 5. Assert outcomes with `assertions.py`.
 6. Report results through `reporting.py` when student-facing output is needed.
 
-### Additional Refactor Constraints and Clarifications
+### Design Constraints and Clarifications
 
 - **No backwards-compatibility shim for legacy tests**:
-	- The non-ex002 test suites are intentionally out of date and will be migrated later.
-	- Do not add compatibility wrappers solely to preserve legacy test imports or helper names.
-	- During this refactor stage, prioritise clean architecture for ex002 and framework internals.
+	- The framework now supports ex001 to ex006; avoid adding shims just to preserve old helper names.
+	- Prioritise clean architecture for the framework internals.
 
 - **Canonical expectations location**:
 	- Consolidate expectations into package-based modules under `tests/exercise_expectations/`.
@@ -290,7 +291,7 @@ docs/
 7. Centralise table rendering in `reporting.py` with a shared normalisation pipeline.
 8. Update ex002 tests to use fixtures and assertions while preserving observable behaviour.
 9. Update scripts and agents to call framework entry points exposed by `api.py`.
-10. Migrate non-ex002 legacy tests later, after ex002 parity is proven.
+10. Extend the framework patterns to new exercises as they are added.
 
 ### Parity Gates Per Migration Stage
 
@@ -314,10 +315,10 @@ Each migration step should complete only when the relevant parity gate passes.
 
 ### Benefits for Exercise Generation and Verifier Agents
 
-- Fewer steps: a single entry point handles path resolution, execution, checking, and reporting.
-- Less duplication: generators and verifiers can reuse the same helper APIs.
+- Fewer steps: a single entry point in `tests/exercise_framework/api.py` handles path resolution, execution, checking, and reporting.
+- Less duplication: generators and verifiers can reuse runtime helpers and expectations modules.
 - Lower error rate: shared helpers prevent inconsistent or incomplete checks.
-- Easier extension: new exercises require adding only expectations and minimal test wiring.
+- Easier extension: new exercises require adding only expectations data and minimal test wiring.
 
 ### GitHub Classroom Autograder Integration
 

@@ -64,13 +64,13 @@ Tests for make exercises should import `exec_tagged_code` and call the function 
 ```python
 import pytest
 
-from tests.notebook_grader import exec_tagged_code
+from tests.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex099_sequence_make_example.ipynb"
 
 
 def _solve(tag: str, *args, **kwargs):
-    ns = exec_tagged_code(NOTEBOOK_PATH, tag=tag)
+    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag=tag)
     assert "solve" in ns, "solve() must be defined in the tagged cell"
     return ns["solve"](*args, **kwargs)
 

@@ -30,11 +30,12 @@ uv run python -V
 
 ### Code Organisation
 
-- `tests/notebook_grader.py`: Core grading logic (extract and execute tagged cells)
+- `tests/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
+- `tests/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
 - `scripts/new_exercise.py`: Exercise scaffolding tool
 - `scripts/verify_solutions.sh`: Helper to test solutions (wraps `pytest` with `PYTUTOR_NOTEBOOKS_DIR`)
 - `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
-- `.github/copilot-instructions.md`: Repo-wide Copilot context
+- `AGENTS.md`: Repo-wide Copilot context
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
@@ -46,9 +47,11 @@ Run the helper directly during development:
 
 ## Working on the Grading System
 
-### `notebook_grader.py`
+### `tests/exercise_framework/`
 
-The grading system exposes these core helpers:
+The grading system now uses the exercise framework, which wraps the low-level notebook grader.
+
+Core helpers (via `tests/exercise_framework/runtime.py`):
 
 1. **`resolve_notebook_path()`**: Redirects to alternative notebook directories via `PYTUTOR_NOTEBOOKS_DIR`
 2. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
@@ -56,6 +59,9 @@ The grading system exposes these core helpers:
 4. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
 5. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
 6. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
+
+Shared expectations live in `tests/exercise_expectations/` and should be the single source of truth for
+expected outputs, prompts, and input data.
 
 **Design principles**:
 
@@ -79,7 +85,7 @@ uv run pytest tests/test_ex001_sanity.py -q
 
 ### Adding Features to the Grader
 
-When modifying `notebook_grader.py`:
+When modifying grading logic:
 
 1. **Preserve backwards compatibility**: Existing tests must continue to work
 2. **Keep it simple**: Students need to understand error messages
@@ -122,7 +128,7 @@ If you omit `PYTUTOR_NOTEBOOKS_DIR`, the script will exercise the student notebo
 - Use [act](https://github.com/nektos/act) to dry-run workflow edits against the repository configuration before pushing
 - Push experiment branches to a sandbox Classroom template and run the full workflow end-to-end
 - Keep payload fields backward compatible: preserve the plugin option names, JSON structure, and Base64 encoding so existing Classroom assignments keep working
-- Review the GitHub Classroom integration guidance in [docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md](GitHub_Classroom_Autograding_Integration_Guide__Us.md) when adjusting CI steps
+- Review the GitHub Classroom integration guidance in [docs/github-classroom-autograding-guide.md](github-classroom-autograding-guide.md) when adjusting CI steps
 
 ## Working on the Exercise Generator
 
@@ -295,7 +301,7 @@ If an exercise needs to be removed:
 
 ### Custom Instructions
 
-`.github/copilot-instructions.md` provides repo-wide context to Copilot.
+`AGENTS.md` provides repo-wide context to Copilot.
 
 **What to include**:
 

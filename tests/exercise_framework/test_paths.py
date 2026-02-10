@@ -61,6 +61,7 @@ def test_paths_resolver_anchors_relative_notebook_paths_to_repo_root(
 ) -> None:
     repo_root = Path(__file__).resolve().parents[2]
     monkeypatch.chdir(repo_root / "notebooks")
+    monkeypatch.delenv("PYTUTOR_NOTEBOOKS_DIR", raising=False)
 
     resolved = paths.resolve_notebook_path(
         "notebooks/ex002_sequence_modify_basics.ipynb")

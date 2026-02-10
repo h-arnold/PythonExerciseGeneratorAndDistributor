@@ -72,15 +72,15 @@ If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the poi
 
 ### Simulating Input
 
-Use the helper `run_cell_with_input` to inject data into `input()` calls.
+Use the runtime helper `run_cell_with_input` to inject data into `input()` calls.
 
 ```python
-from tests.notebook_grader import run_cell_with_input
+from tests.exercise_framework import runtime
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_happy_path():
     # Simulate user typing "Alice" then "Blue"
-    output = run_cell_with_input(..., inputs=["Alice", "Blue"])
+    output = runtime.run_cell_with_input(..., tag="exercise1", inputs=["Alice", "Blue"])
     assert "Alice" in output
     assert "Blue" in output
 ```
@@ -88,22 +88,24 @@ def test_exercise1_happy_path():
 ## Template for a Good Test Suite (Exercise 1)
 
 ```python
+from tests.exercise_framework import runtime
+
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic():
     """Criteria 1: Arithmetic logic is correct."""
-    output = run_cell_with_input(..., inputs=["5"])
+    output = runtime.run_cell_with_input(..., tag="exercise1", inputs=["5"])
     assert "25" in output  # The answer
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct():
     """Criteria 2: Used the required loop."""
-    code = extract_tagged_code(..., tag="exercise1")
+    code = runtime.extract_tagged_code(..., tag="exercise1")
     assert "for " in code and " in " in code
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting():
     """Criteria 3: Output format is precise."""
-    output = run_cell_with_input(..., inputs=["5"])
+    output = runtime.run_cell_with_input(..., tag="exercise1", inputs=["5"])
     # Strict check for casing/punctuation
     assert "The square is: 25" in output
 ```
@@ -115,13 +117,28 @@ def test_exercise1_formatting():
 - [ ] **Granularity**: Are logic, constructs, and formatting tested separately (where appropriate) for better partial credit?
 - [ ] **Grouping**: Is every test marked with `@pytest.mark.task(taskno=N)`?
 
-## Technical Reference: `notebook_grader.py`
+## Technical Reference: Exercise Framework
 
-This section details the helper functions available for writing tests.
+The testing framework now lives under [tests/exercise_framework/](../tests/exercise_framework/).
+Use the runtime helpers and shared expectations when authoring or updating tests.
+
+### Core Modules and Responsibilities
+
+- `runtime.py`: notebook loading, tag extraction, execution, input simulation.
+- `expectations.py`: normalised output and print-call expectations (exercise-level).
+- `assertions.py`: consistent error messages for construct checks.
+- `constructs.py`: AST-first construct checks (print usage, operators).
+- `reporting.py`: table formatting and error normalisation for student-facing output.
+- `api.py`: stable entry points for scripts and CLI checks.
+
+Exercise-specific expectations data lives under [tests/exercise_expectations/](../tests/exercise_expectations/).
+Treat those modules as the canonical source of expected outputs, prompt text, and input data.
+
+### Runtime Helpers
 
 ### Core Helpers
 
-#### `run_cell_and_capture_output(notebook_path, *, tag) -> str`
+#### `runtime.run_cell_and_capture_output(notebook_path, *, tag) -> str`
 
 **Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
 
@@ -129,11 +146,11 @@ This section details the helper functions available for writing tests.
 - **Returns**: Captured stdout. `input()` prompts are included.
 
 ```python
-output = run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
+output = runtime.run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
 assert output.strip() == "Hello Python!"
 ```
 
-#### `run_cell_with_input(notebook_path, *, tag, inputs) -> str`
+#### `runtime.run_cell_with_input(notebook_path, *, tag, inputs) -> str`
 
 For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
 
@@ -142,7 +159,7 @@ For exercises requiring user input, this function mocks `input()` with predeterm
 - **Raises**: `RuntimeError` if code calls `input()` more times than provided.
 
 ```python
-output = run_cell_with_input(
+output = runtime.run_cell_with_input(
     "notebooks/ex002.ipynb",
     tag="exercise1",
     inputs=["Alice", "Smith"]
@@ -150,7 +167,7 @@ output = run_cell_with_input(
 assert "Alice Smith" in output
 ```
 
-#### `get_explanation_cell(notebook_path, *, tag) -> str`
+#### `runtime.get_explanation_cell(notebook_path, *, tag) -> str`
 
 Extracts content from markdown reflection cells.
 
@@ -158,28 +175,28 @@ Extracts content from markdown reflection cells.
 - **Returns**: Cell content string.
 
 ```python
-expl = get_explanation_cell("notebooks/ex.ipynb", tag="explanation1")
+expl = runtime.get_explanation_cell("notebooks/ex.ipynb", tag="explanation1")
 assert len(expl.strip()) > 10
 ```
 
 ### Advanced Helpers
 
-#### `extract_tagged_code(notebook_path, *, tag="student") -> str`
+#### `runtime.extract_tagged_code(notebook_path, *, tag="student") -> str`
 
 Extracts raw source code from tagged cells. Useful for **AST checks** (verifying constructs).
 
 ```python
-code = extract_tagged_code(path, tag="exercise1")
+code = runtime.extract_tagged_code(path, tag="exercise1")
 assert "for " in code, "Must use a for loop"
 ```
 
-#### `exec_tagged_code(notebook_path, *, tag="student", filename_hint=None) -> dict`
+#### `runtime.exec_tagged_code(notebook_path, *, tag="student", filename_hint=None) -> dict`
 
 Low-level executor. Returns the variable namespace (dict). Useful if you need to inspect variable values directly (rarely needed).
 
 ### Environment & Paths
 
-#### `resolve_notebook_path(notebook_path) -> Path`
+#### `runtime.resolve_notebook_path(notebook_path) -> Path`
 
 Most tests use `NOTEBOOK_PATH` constant. This function resolves that path, strictly adhering to the `PYTUTOR_NOTEBOOKS_DIR` environment variable if set.
 
@@ -190,7 +207,7 @@ Tests generally define a constant at the top:
 NOTEBOOK_PATH = "notebooks/ex001_slug.ipynb"
 ```
 
-The helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.
+The runtime helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.
 
 #### `PYTUTOR_NOTEBOOKS_DIR`
 
@@ -199,8 +216,23 @@ Environment variable to redirect tests to a different directory (e.g., solutions
 ```bash
 # Run tests against solution notebooks
 export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-pytest -q
+uv run pytest -q
 ```
+
+### Expectations Modules
+
+Exercise expectations live in [tests/exercise_expectations/](../tests/exercise_expectations/).
+Tests should import expectations from there instead of hard-coding outputs or prompts.
+Example for ex002:
+
+```python
+from tests.exercise_expectations import EX002_EXPECTED_SINGLE_LINE
+```
+
+### Reporting Helpers
+
+Student-facing check tables should be generated via [tests/exercise_framework/reporting.py](../tests/exercise_framework/reporting.py)
+so formatting and error normalisation stay consistent across exercises.
 
 ## Running Tests
 

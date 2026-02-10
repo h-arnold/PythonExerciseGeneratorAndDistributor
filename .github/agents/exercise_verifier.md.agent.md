@@ -24,9 +24,9 @@ Always open and follow the relevant exercise-type guide **in full** before verif
 - Make: `docs/exercise-types/make.md`
 
 Also keep these repo rules in mind:
-- Tag-based extraction: `tests/notebook_grader.py` uses `cell.metadata.tags`.
+- Tag-based extraction: the exercise framework runtime uses `cell.metadata.tags`.
 - Parallel notebooks: `notebooks/` (student) and `notebooks/solutions/` (solution mirror).
-- Solution verification: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`.
+- Solution verification: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`.
 
 ## What “acceptable” means (gates)
 An exercise is acceptable only if it passes all gates below.
@@ -49,12 +49,9 @@ Verify the student notebook matches the required format for its type. Make sure 
 
 **Make exercises** (see `docs/exercise-types/make.md`):
 - The graded `exerciseN` cell contains a clear function skeleton.
-- Student notebook does not include a full solution.
 - Prompt includes task + expected output and is appropriately scoped.
 
 ### Gate B — Sequencing / concept progression
-The exercise must not require concepts not yet taught.
-
 Use the construct ordering from the generation agent:
 1. Sequence
 2. Selection
@@ -100,7 +97,7 @@ If you find a progression violation:
 - Propose the smallest change that removes the advanced concept.
 
 **Automation helper (recommended):** run the repo script to catch common progression slips quickly:
-- `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
 
 Treat warnings from this script as prompts for closer manual review (it’s heuristic).
 
@@ -116,7 +113,7 @@ Note: existing notebooks may also include a top-level `id` field on cells; prese
 - For interactive prompts, verify the expected-output markdown uses the bracketed input notation (`[Input: ...]`) *inside* the fenced code block. A simple heuristic is to search for the literal pattern `[Input:` within the prompt cell; if found, confirm it appears inside a code fence and matches the prompt text.
 
 **Automation helper (recommended):** the same script checks language fields, tag placement, and solution-mirror presence:
-- `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
 
 ### Gate D — Tests
 
@@ -147,14 +144,15 @@ Tests cases should be written that answer these questions for each of the exerci
 - Where possible, split logic, construct checks, and formatting into separate tests under the same taskno for better feedback.
 
 **Helper Functions:**
-- Use `run_cell_and_capture_output()` for simple output capture.
-- Use `run_cell_with_input()` for exercises with `input()` prompts.
-- Use `extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
-- Use `get_explanation_cell()` to verify reflection cells are non-empty.
+- Use `tests.exercise_framework.runtime.run_cell_and_capture_output()` for simple output capture.
+- Use `tests.exercise_framework.runtime.run_cell_with_input()` for exercises with `input()` prompts.
+- Use `tests.exercise_framework.runtime.extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
+- Use `tests.exercise_framework.runtime.get_explanation_cell()` to verify reflection cells are non-empty.
+- Pull expected outputs and prompts from `tests/exercise_expectations/` rather than hard-coding them.
 
 **Validation:**
 - Tests must pass against solution notebooks:
-  - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q tests/test_exNNN_slug.py`
+  - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q tests/test_exNNN_slug.py`
 - Tests should fail against student notebooks until the student completes the work:
   - For debug: buggy student code should fail behaviour tests.
   - For modify/make: incomplete/placeholder code should fail behaviour tests.
@@ -182,7 +180,7 @@ The exercise must be listed in the construct-level teaching order file:
 This ensures maintainers can see the intended progression and find notebooks quickly.
 
 **Automation helper (recommended):** the repo script checks this automatically when the exercise lives under `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
-- `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
 
 ## Output format (what you report back)
 Return a concise verdict:
@@ -199,7 +197,7 @@ For FAIL:
 2) Identify exercise type + construct from folder path under `exercises/`.
 3) Open the appropriate exercise-type guide in full.
 4) Run the quick script checks (Gates B/C + teacher file presence):
-  - `python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
+  - `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
 5) Inspect manually:
    - student notebook
    - solution notebook
