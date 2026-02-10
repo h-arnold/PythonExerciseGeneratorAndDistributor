@@ -6,8 +6,11 @@ This module provides structured, renderer-agnostic access to notebook checks.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Final
 
 from tests import student_checker
+
+RawNotebookResult = tuple[str, bool, list[str]]
 
 
 @dataclass(frozen=True)
@@ -29,16 +32,20 @@ class ExerciseCheckResult:
     issues: list[str]
 
 
-EX002_SLUG = "ex002_sequence_modify_basics"
+EX002_SLUG: Final[str] = "ex002_sequence_modify_basics"
+
+
+def _to_notebook_results(raw_results: list[RawNotebookResult]) -> list[NotebookCheckResult]:
+    return [
+        NotebookCheckResult(label=label, passed=passed, issues=issues)
+        for label, passed, issues in raw_results
+    ]
 
 
 def run_all_checks() -> list[NotebookCheckResult]:
     """Run all notebook checks and return structured results."""
     raw_results = student_checker._run_checks(list(student_checker._get_checks().values()))
-    return [
-        NotebookCheckResult(label=label, passed=passed, issues=issues)
-        for label, passed, issues in raw_results
-    ]
+    return _to_notebook_results(raw_results)
 
 
 def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
@@ -50,10 +57,7 @@ def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
         raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
 
     raw_results = student_checker._run_checks([check])
-    return [
-        NotebookCheckResult(label=label, passed=passed, issues=issues)
-        for label, passed, issues in raw_results
-    ]
+    return _to_notebook_results(raw_results)
 
 
 def run_detailed_ex002_check() -> list[ExerciseCheckResult]:
