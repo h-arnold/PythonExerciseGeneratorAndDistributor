@@ -60,13 +60,13 @@ Capture the current ex002 behaviour as the regression baseline.
 Create `tests/exercise_framework/` with a stable public facade and minimal behaviour-preserving plumbing.
 
 ### TDD Tasks
-- [ ] Write API contract tests for `run_all_checks`, `run_notebook_check`, and `run_detailed_ex002_check`.
-- [ ] Verify API returns structured results independent of rendering concerns.
-- [ ] Verify unknown slug handling remains explicit and informative.
+- [x] Write API contract tests for `run_all_checks`, `run_notebook_check`, and `run_detailed_ex002_check`.
+- [x] Verify API returns structured results independent of rendering concerns.
+- [x] Verify unknown slug handling remains explicit and informative.
 
 ### Acceptance Criteria
-- [ ] `api.py` exists and is used by at least one caller path.
-- [ ] API contract tests pass without depending on private internals.
+- [x] `api.py` exists and is used by at least one caller path.
+- [x] API contract tests pass without depending on private internals.
 
 ### Constraints
 - Avoid moving all logic at once; introduce facade first.
@@ -84,11 +84,12 @@ Create `tests/exercise_framework/` with a stable public facade and minimal behav
 
 ### Notes
 - Decisions:
-  - 
+  - Introduced `tests/exercise_framework/api.py` and `tests/exercise_framework/__init__.py` as the initial stable framework facade for Phase 1.
+  - Added contract tests in `tests/exercise_framework/test_api_contract.py` with solution-notebook execution to keep development checks deterministic.
 - Open questions:
-  - 
+  - Whether to introduce a small dedicated `types.py` module now or wait until richer result structures arrive in Phase 2/3.
 - Follow-up:
-  - 
+  - Repoint at least one existing caller to import through the new API once Phase 2 runtime/path modules are in place.
 
 ---
 
@@ -376,7 +377,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 
 ### Completed
 - [x] Phase 0
-- [ ] Phase 1
+- [x] Phase 1
 - [ ] Phase 2
 - [ ] Phase 3
 - [ ] Phase 4
