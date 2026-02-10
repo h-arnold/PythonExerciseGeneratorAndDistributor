@@ -151,6 +151,7 @@ This section defines the intended architecture and migration plan for a clean, m
 tests/
  exercise_framework/
   __init__.py
+  api.py               # stable public facade used by tests/scripts/notebooks
   runtime.py           # notebook loading, tag extraction, execution
   paths.py             # notebook path resolution, PYTUTOR_NOTEBOOKS_DIR
   expectations.py      # shared expectation helpers and normalisers
@@ -169,6 +170,11 @@ docs/
 ```
 
 ### Module Responsibilities
+
+- `api.py`:
+	- Provides the stable orchestration entry points for callers outside the framework internals.
+	- Exposes workflows such as `run_all_checks()`, `run_notebook_check(slug)`, and `run_detailed_ex002_check()`.
+	- Is the only module that scripts, notebook check cells, and future agents should import directly.
 
 - `runtime.py`:
  	- Load notebooks and extract tagged code cells.
@@ -190,9 +196,10 @@ docs/
  	- Examples: `assert_output_matches`, `assert_print_count`, `assert_constructs`.
 
 - `constructs.py`:
- 	- Shared checks for code constructs (e.g., `print(...)` usage, operators).
- 	- Takes parameters to avoid per-exercise duplication.
- 	- Example helper: `check_required_operator(code, "*")`.
+	- Shared checks for code constructs (e.g., `print(...)` usage, operators).
+	- Uses AST-based checks by default for Python syntax constructs.
+	- Takes parameters to avoid per-exercise duplication.
+	- Example helper: `check_required_operator(code, "*")`.
 
 - `reporting.py`:
  	- Student-facing tables and formatting.
@@ -212,12 +219,42 @@ docs/
 5. Assert outcomes with `assertions.py`.
 6. Report results through `reporting.py` when student-facing output is needed.
 
+### Additional Refactor Constraints and Clarifications
+
+- **No backwards-compatibility shim for legacy tests**:
+	- The non-ex002 test suites are intentionally out of date and will be migrated later.
+	- Do not add compatibility wrappers solely to preserve legacy test imports or helper names.
+	- During this refactor stage, prioritise clean architecture for ex002 and framework internals.
+
+- **Canonical expectations location**:
+	- Consolidate expectations into package-based modules under `tests/exercise_expectations/`.
+	- Remove or deprecate duplicate expectation definitions to ensure there is exactly one source of truth.
+
+- **Path declaration standard**:
+	- Use repo-relative notebook paths in expectations data.
+	- Resolve paths only through the shared resolver in `paths.py`; avoid ad-hoc `Path(...).resolve()` in expectation modules.
+
+- **Execution reuse model**:
+	- Within a single check run, cache execution artefacts per `(notebook_path, tag, input_signature)` where safe.
+	- Reuse captured output/code snapshots across logic/formatting checks to reduce duplicated execution.
+	- Keep construct checks independent of runtime side effects by sourcing code via extraction helpers.
+
+- **Error normalisation policy**:
+	- All student-facing reporting must use one canonical normalisation pipeline.
+	- The pipeline must include prefix stripping, issue joining, wrapping rules, and continuation-row formatting.
+	- ex002 remains the reference behaviour, and the same policy should be reusable for later exercise migrations.
+
+- **Autograder scoring stability**:
+	- Preserve collected test cardinality and task grouping for existing ex002 tests during migration.
+	- Add parity checks for collected test count and task distribution so point allocation does not drift silently.
+
 ### Shared Helpers (Examples)
 
 - Construct checks should be parameterised and reusable:
- 	- `check_print_usage(code)`
- 	- `check_required_operator(code, operator)`
- 	- `check_no_placeholder_phrases(text, phrases)`
+	- `check_print_usage(code)`
+	- `check_required_operator(code, operator)`
+	- `check_required_operator_ast(code, operator)`
+	- `check_no_placeholder_phrases(text, phrases)`
 
 - Expectation helpers should be consistent and minimal:
  	- `expected_single_line(exercise_no)`
@@ -247,11 +284,33 @@ docs/
 1. Introduce `tests/exercise_framework/` with small, single-purpose modules.
 2. Move notebook resolution into `paths.py` and update callers.
 3. Move execution helpers into `runtime.py` and update tests.
-4. Extract repeated construct logic into `constructs.py` and use it in tests.
-5. Extract repeated expectation logic into `expectations.py`.
-6. Centralise table rendering in `reporting.py`.
-7. Update exercise tests to use fixtures and assertions.
-8. Update scripts and agents to call the same framework entry points.
+4. Add `api.py` as the stable public entry point and route framework consumers through it.
+5. Extract repeated construct logic into `constructs.py` (AST-first) and use it in tests.
+6. Extract repeated expectation logic into `expectations.py` and remove duplicated expectation sources.
+7. Centralise table rendering in `reporting.py` with a shared normalisation pipeline.
+8. Update ex002 tests to use fixtures and assertions while preserving observable behaviour.
+9. Update scripts and agents to call framework entry points exposed by `api.py`.
+10. Migrate non-ex002 legacy tests later, after ex002 parity is proven.
+
+### Parity Gates Per Migration Stage
+
+Each migration step should complete only when the relevant parity gate passes.
+
+- **Gate A (paths/runtime)**:
+	- `PYTUTOR_NOTEBOOKS_DIR` override and fallback behaviour unchanged.
+	- ex002 checks still execute all 30 check rows.
+
+- **Gate B (constructs/expectations)**:
+	- Logic, formatting, and construct failure messages remain behaviourally equivalent.
+	- Multi-line expected output messaging remains `line1 | line2`.
+
+- **Gate C (reporting)**:
+	- Grid formatting, emoji status labels, and 40-character error wrapping unchanged.
+	- Continuation rows keep blank exercise/check/status columns.
+
+- **Gate D (autograde)**:
+	- Collected test count and task distribution for ex002 unchanged.
+	- Payload schema remains compatible in full and `--minimal` modes.
 
 ### Benefits for Exercise Generation and Verifier Agents
 
