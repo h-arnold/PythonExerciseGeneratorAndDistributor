@@ -62,6 +62,8 @@ To provide granular feedback, implement **multiple tests** for a single exercise
 
 If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the points for that exercise.
 
+**IMPORTANT:** Not all tasks need multiple tests. If an exercise has a single clear criterion, one test is sufficient. Equally, some exercises will be complex enough to warrant 4+ tests. Use your judgment based on the learning objectives.
+
 ## Autograding Integration Details
 
 - **One test, one point**: The autograde plugin assigns one point per collected test. Keep each assertion focused on a single learning objective so Classroom feedback remains clear.
@@ -69,6 +71,7 @@ If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the poi
 - **Unmarked tests**: If a test omits the `task` marker, the plugin records it with `task=None`. These tests still count for one point but appear in the "Ungrouped" bucket. Use this sparingly (for infrastructure smoke tests, for example).
 - **Authoring guidance**: Prefer many small tests over one large test. Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label. Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
 - **Name collisions**: Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
+- **Tests must fail initially**: Before the student writes any code, all tests should fail. If any test passes in the initial state, it is not a useful test and should be revised or discarded.
 
 ### Simulating Input
 
@@ -116,6 +119,7 @@ def test_exercise1_formatting():
 - [ ] **Constructs**: If this is a `for` loop lesson, does the test fail if no loop is used?
 - [ ] **Granularity**: Are logic, constructs, and formatting tested separately (where appropriate) for better partial credit?
 - [ ] **Grouping**: Is every test marked with `@pytest.mark.task(taskno=N)`?
+- [ ] **Failure**: Do all tests fail before the student writes code?
 
 ## Technical Reference: Exercise Framework
 
