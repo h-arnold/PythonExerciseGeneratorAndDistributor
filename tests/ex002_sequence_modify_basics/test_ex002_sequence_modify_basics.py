@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
-    EX002_CHECKS,
-    Ex002CheckDefinition,
-)
+from tests.exercise_framework.expectations import EX002_CHECKS, Ex002CheckDefinition
 
 
 def _check_id(check: Ex002CheckDefinition) -> str:

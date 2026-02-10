@@ -18,9 +18,7 @@ from tests.exercise_expectations import (
     EX005_NOTEBOOK_PATH,
     EX006_NOTEBOOK_PATH,
 )
-from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
-    EX002_CHECKS,
-)
+from tests.exercise_framework.expectations import EX002_CHECKS
 from tests.notebook_grader import NotebookGradingError
 
 from . import runtime

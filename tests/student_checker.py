@@ -39,11 +39,9 @@ from tests.exercise_expectations import (
     EX006_EXPECTED_OUTPUTS,
     EX006_INPUT_EXPECTATIONS,
     EX006_NOTEBOOK_PATH,
-    is_valid_explanation,
 )
-from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
-    EX002_CHECKS,
-)
+from tests.exercise_framework.expectations import EX002_CHECKS
+from tests.exercise_framework.expectations_helpers import is_valid_explanation
 from tests.notebook_grader import (
     NotebookGradingError,
     exec_tagged_code,

@@ -14,8 +14,8 @@ from tests.exercise_expectations import (
     EX005_NOTEBOOK_PATH,
     EX005_PLACEHOLDER_PHRASES,
     EX005_PROFILE_EXERCISE,
-    is_valid_explanation,
 )
+from tests.exercise_framework.expectations_helpers import is_valid_explanation
 from tests.notebook_grader import (
     extract_tagged_code,
     get_explanation_cell,

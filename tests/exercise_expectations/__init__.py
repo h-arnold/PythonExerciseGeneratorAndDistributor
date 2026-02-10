@@ -4,6 +4,14 @@ from __future__ import annotations
 
 from typing import Final, NotRequired, TypedDict
 
+from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
+    EX002_EXPECTED_MULTI_LINE,
+    EX002_EXPECTED_NUMERIC,
+    EX002_EXPECTED_PRINT_CALLS,
+    EX002_EXPECTED_SINGLE_LINE,
+    EX002_NOTEBOOK_PATH,
+)
+
 EX001_NOTEBOOK_PATH: Final[str] = "notebooks/ex001_sanity.ipynb"
 EX001_TAG: Final[str] = "exercise1"
 EX001_FUNCTION_NAME: Final[str] = "example"
@@ -140,14 +148,37 @@ EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {
 }
 
 
-def is_valid_explanation(
-    text: str,
-    *,
-    min_length: int,
-    placeholder_phrases: tuple[str, ...],
-) -> bool:
-    """Return True when an explanation is long enough and not a placeholder."""
-    stripped = text.strip().lower()
-    if len(stripped) < min_length:
-        return False
-    return not any(phrase in stripped for phrase in placeholder_phrases)
+__all__ = [
+    "EX001_FUNCTION_NAME",
+    "EX001_NOTEBOOK_PATH",
+    "EX001_TAG",
+    "EX002_EXPECTED_MULTI_LINE",
+    "EX002_EXPECTED_NUMERIC",
+    "EX002_EXPECTED_PRINT_CALLS",
+    "EX002_EXPECTED_SINGLE_LINE",
+    "EX002_NOTEBOOK_PATH",
+    "EX003_EXPECTED_INPUT_MESSAGES",
+    "EX003_EXPECTED_PROMPTS",
+    "EX003_EXPECTED_STATIC_OUTPUT",
+    "EX003_NOTEBOOK_PATH",
+    "EX003_ORIGINAL_PROMPTS",
+    "EX004_EXPECTED_SINGLE_LINE",
+    "EX004_FORMAT_VALIDATION",
+    "EX004_MIN_EXPLANATION_LENGTH",
+    "EX004_NOTEBOOK_PATH",
+    "EX004_PLACEHOLDER_PHRASES",
+    "EX004_PROMPT_STRINGS",
+    "EX005_AVERAGE_DIVISOR",
+    "EX005_EXERCISE_INPUTS",
+    "EX005_EXPECTED_SINGLE_LINE",
+    "EX005_FULL_NAME_EXERCISE",
+    "EX005_INPUT_PROMPTS",
+    "EX005_MIN_EXPLANATION_LENGTH",
+    "EX005_NOTEBOOK_PATH",
+    "EX005_PLACEHOLDER_PHRASES",
+    "EX005_PROFILE_EXERCISE",
+    "EX006_EXPECTED_OUTPUTS",
+    "EX006_INPUT_EXPECTATIONS",
+    "EX006_NOTEBOOK_PATH",
+    "Ex006InputExpectation",
+]

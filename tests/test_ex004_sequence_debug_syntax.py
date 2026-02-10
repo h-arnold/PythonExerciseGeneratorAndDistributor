@@ -11,8 +11,8 @@ from tests.exercise_expectations import (
     EX004_NOTEBOOK_PATH,
     EX004_PLACEHOLDER_PHRASES,
     EX004_PROMPT_STRINGS,
-    is_valid_explanation,
 )
+from tests.exercise_framework.expectations_helpers import is_valid_explanation
 from tests.notebook_grader import (
     extract_tagged_code,
     get_explanation_cell,
@@ -126,25 +126,27 @@ def _assigns_call(tree: ast.AST, name: str, func_name: str) -> bool:
     return False
 
 
+def _is_name(node: ast.AST, name: str) -> bool:
+    return isinstance(node, ast.Name) and node.id == name
+
+
+def _is_constant(node: ast.AST, value: int) -> bool:
+    return isinstance(node, ast.Constant) and node.value == value
+
+
 def _assigns_binop_sum(tree: ast.AST, target_name: str, variable: str, constant: int) -> bool:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
-        if any(isinstance(t, ast.Name) and t.id == target_name for t in node.targets):
-            value = node.value
-            if (
-                isinstance(value, ast.BinOp)
-                and isinstance(value.op, ast.Add)
-                and (
-                    (isinstance(value.left, ast.Name) and value.left.id == variable)
-                    or (isinstance(value.right, ast.Name) and value.right.id == variable)
-                )
-                and (
-                    (isinstance(value.left, ast.Constant) and value.left.value == constant)
-                    or (isinstance(value.right, ast.Constant) and value.right.value == constant)
-                )
-            ):
-                return True
+        if not any(_is_name(target, target_name) for target in node.targets):
+            continue
+        value = node.value
+        if not isinstance(value, ast.BinOp) or not isinstance(value.op, ast.Add):
+            continue
+        if (_is_name(value.left, variable) or _is_name(value.right, variable)) and (
+            _is_constant(value.left, constant) or _is_constant(value.right, constant)
+        ):
+            return True
     return False
 
 
