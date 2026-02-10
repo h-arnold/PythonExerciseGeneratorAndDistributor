@@ -12,6 +12,15 @@ from tests.notebook_grader import (
     resolve_notebook_path,
     run_cell_and_capture_output,
 )
+from tests.student_checker.notebook_runtime_typeguards import (
+    NotebookCell,
+    NotebookJson,
+    NotebookMetadata,
+    is_notebook_cell,
+    is_notebook_cells_list,
+    is_notebook_json,
+    is_notebook_metadata,
+)
 
 from .models import NotebookTagCheckResult
 
@@ -30,35 +39,47 @@ def run_notebook_checks(notebook_path: str) -> None:
     _print_notebook_check_results(results)
 
 
-def _load_notebook_json(path: Path) -> dict[str, object]:
+def _load_notebook_json(path: Path) -> NotebookJson:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise NotebookGradingError(f"Notebook not found: {path}") from exc
     except json.JSONDecodeError as exc:
         raise NotebookGradingError(f"Unable to parse notebook JSON: {path}") from exc
-    if not isinstance(data, dict):
-        return {}
-    return data
+    if is_notebook_json(data):
+        return data
+    return {}
 
 
 def _extract_tags_from_cell(cell: object) -> list[str]:
-    if not isinstance(cell, dict):
+    if not is_notebook_cell(cell):
         return []
-    metadata = cell.get("metadata")
-    if not isinstance(metadata, dict):
+    cell_dict: NotebookCell = cell
+    metadata = cell_dict.get("metadata")
+    if not is_notebook_metadata(metadata):
         return []
-    cell_tags = metadata.get("tags")
-    if isinstance(cell_tags, str):
-        candidates = [cell_tags]
-    elif isinstance(cell_tags, list):
-        candidates = cell_tags
+    metadata_dict: NotebookMetadata = metadata
+    return _extract_tags_from_metadata(metadata_dict)
+
+
+def _extract_tags_from_metadata(metadata: NotebookMetadata) -> list[str]:
+    """Return the exercise tags encoded in notebook metadata."""
+    raw_tags = metadata.get("tags")
+    if isinstance(raw_tags, str):
+        candidates = (raw_tags,)
+    elif isinstance(raw_tags, list):
+        str_items: list[str] = []
+        for item in raw_tags:
+            if not isinstance(item, str):
+                return []
+            str_items.append(item)
+        candidates = tuple(str_items)
     else:
         return []
 
     tags: list[str] = []
     for tag in candidates:
-        if isinstance(tag, str) and _EXERCISE_TAG_PATTERN.fullmatch(tag):
+        if _EXERCISE_TAG_PATTERN.fullmatch(tag):
             tags.append(tag)
     return tags
 
@@ -66,7 +87,7 @@ def _extract_tags_from_cell(cell: object) -> list[str]:
 def _collect_exercise_tags(path: Path) -> list[str]:
     data = _load_notebook_json(path)
     cells = data.get("cells")
-    if not isinstance(cells, list):
+    if not is_notebook_cells_list(cells):
         return []
 
     tags: list[str] = []
