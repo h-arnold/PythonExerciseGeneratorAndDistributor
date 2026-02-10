@@ -256,15 +256,15 @@ Move all table and error formatting to one reporting module.
 
 ### TDD Tasks
 
-- [ ] Port existing rendering tests to framework reporting tests.
-- [ ] Add tests for 40-char wrapping and long-word splitting.
-- [ ] Add tests for continuation-row blank columns.
-- [ ] Add tests for canonical issue normalisation pipeline (strip, join, wrap).
+- [x] Port existing rendering tests to framework reporting tests.
+- [x] Add tests for 40-char wrapping and long-word splitting.
+- [x] Add tests for continuation-row blank columns.
+- [x] Add tests for canonical issue normalisation pipeline (strip, join, wrap).
 
 ### Acceptance Criteria
 
-- [ ] Reporting output is parity-equivalent to current ex002/student-checker output.
-- [ ] No ad-hoc rendering logic remains in exercise-specific checks.
+- [x] Reporting output is parity-equivalent to current ex002/student-checker output.
+- [x] No ad-hoc rendering logic remains in exercise-specific checks.
 
 ### Constraints
 
@@ -284,13 +284,14 @@ Move all table and error formatting to one reporting module.
 ### Notes
 
 - Decisions
-  -
+  - Centralised reporting and issue normalisation in a framework module.
+  - Rewired student checker rendering to use shared reporting helpers.
 
 - Open questions
-  -
+  - None.
 
 - Follow-up
-  -
+  - Run solution-notebook rendering tests when convenient.
 
 ---
 
@@ -453,7 +454,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 - [x] Phase 2
 - [x] Phase 3
 - [x] Phase 4
-- [ ] Phase 5
+- [x] Phase 5
 - [ ] Phase 6
 - [ ] Phase 7
 - [ ] Phase 8

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from tests.student_checker import (
-    Ex002CheckResult,
-    _render_grouped_table_with_errors,
-    _strip_exercise_prefix,
+from tests.exercise_framework.reporting import (
+    normalise_issue_text,
+    render_grouped_table_with_errors,
 )
+from tests.student_checker import Ex002CheckResult
 
 MINIMUM_EXPECTED_ROWS = 3
 
@@ -15,12 +15,13 @@ def test_ex002_error_normalisation_pipeline_parity() -> None:
             exercise_no=1,
             title="Logic",
             passed=False,
-            issues=["Exercise 1: expected 'Hello Python!'.", "Exercise 1: expected 1 print calls."],
+            issues=["Exercise 1: expected 'Hello Python!'.",
+                    "Exercise 1: expected 1 print calls."],
         )
     ]
 
-    error_message = "; ".join(_strip_exercise_prefix(issue) for issue in results[0].issues)
-    table = _render_grouped_table_with_errors(
+    error_message = normalise_issue_text(results[0].issues)
+    table = render_grouped_table_with_errors(
         [("Exercise 1", results[0].title, results[0].passed, error_message)]
     )
 
@@ -39,7 +40,8 @@ def test_ex002_error_wrapping_continuation_row_columns_are_blank() -> None:
         "about the school location and punctuation in this response."
     )
 
-    table = _render_grouped_table_with_errors([("Exercise 2", "Logic", False, long_error)])
+    table = render_grouped_table_with_errors(
+        [("Exercise 2", "Logic", False, long_error)])
 
     row_lines = [line for line in table.splitlines() if line.startswith("| ")]
 
