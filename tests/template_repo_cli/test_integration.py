@@ -269,7 +269,9 @@ class TestCliCreateCommand:
             ),
             patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
-            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
+            result = main(
+                ["create", "--construct", "sequence", "--repo-name", "test-repo"]
+            )
 
         assert result == 0
         # By default the CLI should set template=True
@@ -318,7 +320,9 @@ class TestCliCreateCommand:
         assert called.get("template") is False
 
     @patch("subprocess.run")
-    def test_cli_create_with_template_repo_argument(self, mock_run, repo_root: Path) -> None:
+    def test_cli_create_with_template_repo_argument(
+        self, mock_run, repo_root: Path
+    ) -> None:
         """Passing --template-repo should forward the value."""
         from scripts.template_repo_cli.cli import main
         from scripts.template_repo_cli.core.github import GitHubClient
@@ -363,13 +367,21 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_permission_hint(  # noqa: PLR0913
-        self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_create,
+        repo_root: Path,
+        capsys,
     ) -> None:
         """Display guidance when GitHub rejects repo creation for integrations."""
         from scripts.template_repo_cli.cli import main
@@ -403,13 +415,21 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_permission_hint_unset_env_token(  # noqa: PLR0913
-        self, mock_installed, mock_auth, mock_scopes, mock_create, repo_root: Path, capsys
+        self,
+        mock_installed,
+        mock_auth,
+        mock_scopes,
+        mock_create,
+        repo_root: Path,
+        capsys,
     ) -> None:
         """Hint to unset GITHUB_TOKEN when it blocks login."""
         from scripts.template_repo_cli.cli import main
@@ -448,10 +468,12 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_permission_hint_reauth_flow(  # noqa: PLR0913
         self,
@@ -580,7 +602,9 @@ class TestCliOutputDir:
     """Tests for custom output directory."""
 
     @patch("subprocess.run")
-    def test_cli_custom_output_dir(self, mock_run, repo_root: Path, temp_dir: Path) -> None:
+    def test_cli_custom_output_dir(
+        self, mock_run, repo_root: Path, temp_dir: Path
+    ) -> None:
         """Test using custom output directory."""
         from scripts.template_repo_cli.cli import main
 
@@ -625,13 +649,17 @@ class TestCliUpdateRepo:
         assert result == 0
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch(
+        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
+    )
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_update_calls_push_when_repo_exists(  # noqa: PLR0913
         self,
@@ -668,13 +696,17 @@ class TestCliUpdateRepo:
         mock_push.assert_called_once()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch(
+        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
+    )
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_update_fails_when_repo_missing(  # noqa: PLR0913
         self,
@@ -712,13 +744,17 @@ class TestCliUpdateRepo:
         assert "does not exist" in captured.err.lower()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch(
+        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
+    )
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_update_allows_owner_prefixed_repo_name(  # noqa: PLR0913
         self,
@@ -754,13 +790,17 @@ class TestCliUpdateRepo:
         mock_push.assert_called_once()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
+    @patch(
+        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
+    )
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
+        return_value=True,
     )
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed", return_value=True
+        "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
+        return_value=True,
     )
     def test_cli_update_prompts_for_owner_when_remote_missing(  # noqa: PLR0913
         self,

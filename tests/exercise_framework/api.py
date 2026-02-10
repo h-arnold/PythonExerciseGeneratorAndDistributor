@@ -69,14 +69,18 @@ class NotebookCheckDefinition:
     runner: Callable[[], list[str]]
 
 
-def _to_notebook_results(raw_results: list[RawNotebookResult]) -> list[NotebookCheckResult]:
+def _to_notebook_results(
+    raw_results: list[RawNotebookResult],
+) -> list[NotebookCheckResult]:
     return [
         NotebookCheckResult(label=label, passed=passed, issues=issues)
         for label, passed, issues in raw_results
     ]
 
 
-def _run_definitions(definitions: list[NotebookCheckDefinition]) -> list[RawNotebookResult]:
+def _run_definitions(
+    definitions: list[NotebookCheckDefinition],
+) -> list[RawNotebookResult]:
     raw_results: list[RawNotebookResult] = []
     for definition in definitions:
         try:
@@ -115,7 +119,9 @@ def _check_notebook_can_execute_first_exercise(notebook_path: str) -> list[str]:
 def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
     return {
         EX001_SLUG: NotebookCheckDefinition("ex001 Sanity", _check_ex001),
-        EX002_SLUG: NotebookCheckDefinition("ex002 Sequence Modify Basics", _check_ex002_summary),
+        EX002_SLUG: NotebookCheckDefinition(
+            "ex002 Sequence Modify Basics", _check_ex002_summary
+        ),
         EX003_SLUG: NotebookCheckDefinition(
             "ex003 Sequence Modify Variables",
             lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),

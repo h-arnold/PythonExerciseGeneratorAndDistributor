@@ -29,7 +29,9 @@ def test_ex002_autograde_task_distribution_and_count_parity(tmp_path: Path) -> N
         "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
     ]
 
-    completed = subprocess.run(command, check=False, capture_output=True, text=True, env=env)
+    completed = subprocess.run(
+        command, check=False, capture_output=True, text=True, env=env
+    )
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert results_path.exists()
 

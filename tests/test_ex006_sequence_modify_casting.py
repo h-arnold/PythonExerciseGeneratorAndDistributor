@@ -50,7 +50,9 @@ def _ast(n: int) -> ast.Module:
 
 def _has_call(tree: ast.AST, func_name: str) -> bool:
     return any(
-        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == func_name
         for node in ast.walk(tree)
     )
 

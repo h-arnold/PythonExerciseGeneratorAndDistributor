@@ -60,7 +60,9 @@ def test_paths_resolver_anchors_relative_notebook_paths_to_repo_root(
     monkeypatch.chdir(repo_root / "notebooks")
     monkeypatch.delenv("PYTUTOR_NOTEBOOKS_DIR", raising=False)
 
-    resolved = paths.resolve_notebook_path("notebooks/ex002_sequence_modify_basics.ipynb")
+    resolved = paths.resolve_notebook_path(
+        "notebooks/ex002_sequence_modify_basics.ipynb"
+    )
     expected = repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
 
     assert resolved == expected
@@ -81,6 +83,8 @@ def test_paths_resolver_uses_override_root_when_cwd_is_notebooks(
 
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(override_root))
 
-    resolved = paths.resolve_notebook_path("notebooks/ex002_sequence_modify_basics.ipynb")
+    resolved = paths.resolve_notebook_path(
+        "notebooks/ex002_sequence_modify_basics.ipynb"
+    )
 
     assert resolved == candidate

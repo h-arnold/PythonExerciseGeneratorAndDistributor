@@ -43,7 +43,9 @@ def temp_dir() -> Generator[Path, None, None]:
 def mock_gh_success() -> MagicMock:
     """Mock successful gh CLI execution."""
     mock = MagicMock()
-    mock.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
+    mock.return_value = MagicMock(
+        returncode=0, stdout='{"name": "test-repo"}', stderr=""
+    )
     return mock
 
 

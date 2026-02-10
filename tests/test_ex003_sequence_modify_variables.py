@@ -65,7 +65,10 @@ def _assignment_matches(
     for node in ast.walk(tree):
         if (
             isinstance(node, ast.Assign)
-            and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
+            and any(
+                isinstance(target, ast.Name) and target.id == name
+                for target in node.targets
+            )
             and isinstance(node.value, ast.Constant)
             and isinstance(node.value.value, str)
             and predicate(node.value.value)
@@ -80,7 +83,10 @@ def _print_uses_name(tree: ast.AST, name: str) -> bool:
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
             and node.func.id == "print"
-            and any(isinstance(child, ast.Name) and child.id == name for child in ast.walk(node))
+            and any(
+                isinstance(child, ast.Name) and child.id == name
+                for child in ast.walk(node)
+            )
         ):
             return True
     return False
@@ -90,7 +96,10 @@ def _has_input_assignment(tree: ast.AST, name: str) -> bool:
     for node in ast.walk(tree):
         if (
             isinstance(node, ast.Assign)
-            and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
+            and any(
+                isinstance(target, ast.Name) and target.id == name
+                for target in node.targets
+            )
             and isinstance(node.value, ast.Call)
             and isinstance(node.value.func, ast.Name)
             and node.value.func.id == "input"

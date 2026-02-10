@@ -71,8 +71,7 @@ def _read_notebook(notebook_path: str | Path) -> dict[str, Any]:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise NotebookGradingError(
-            f"Invalid JSON in notebook: {path}") from exc
+        raise NotebookGradingError(f"Invalid JSON in notebook: {path}") from exc
 
 
 def _cell_tags(cell: NotebookCell | dict[str, Any]) -> set[str]:
@@ -132,8 +131,7 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
     if not isinstance(cells, list):
         raise NotebookGradingError("Notebook has no 'cells' list")
 
-    tagged_sources = _collect_tagged_sources(
-        cast(Sequence[object], cells), tag)
+    tagged_sources = _collect_tagged_sources(cast(Sequence[object], cells), tag)
 
     if not tagged_sources:
         raise NotebookGradingError(
@@ -215,7 +213,9 @@ def run_cell_and_capture_output(notebook_path: str | Path, *, tag: str) -> str:
         return buffer.getvalue()
 
 
-def run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
+def run_cell_with_input(
+    notebook_path: str | Path, *, tag: str, inputs: list[str]
+) -> str:
     """Execute a tagged cell with mocked input() and capture stdout.
 
     For exercises that require user input, this helper mocks the input()
@@ -302,5 +302,7 @@ def _format_cell_source(source: object) -> str:
     if isinstance(source, str):
         return source
     if isinstance(source, Sequence):
-        return "".join(str(s) for s in cast(Sequence[object], source) if isinstance(s, str))
+        return "".join(
+            str(s) for s in cast(Sequence[object], source) if isinstance(s, str)
+        )
     return str(source)

@@ -37,8 +37,7 @@ def _slugify(text: str) -> str:
 
 def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
     """Create cell metadata dictionary."""
-    meta: dict[str, object] = {
-        "id": uuid.uuid4().hex[:8], "language": language}
+    meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
     if tags:
         meta["tags"] = tags
     return meta
@@ -246,8 +245,7 @@ def _build_readme_lines(title: str, created_date: str) -> list[str]:
 
 def _validate_and_parse_args() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description="Create a new exercise skeleton")
+    parser = argparse.ArgumentParser(description="Create a new exercise skeleton")
     parser.add_argument("id", help='Exercise id like "ex001"')
     parser.add_argument("title", help="Human title for the exercise")
     parser.add_argument(
@@ -273,7 +271,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
         raise SystemExit("--parts must be >= 1")
     if args.parts > MAX_PARTS:
         raise SystemExit(
-            f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
+            f"--parts is capped at {MAX_PARTS} to keep notebooks manageable"
+        )
 
     ex_id = args.id.strip().lower()
     if not re.fullmatch(r"ex\d{3}", ex_id):
@@ -282,7 +281,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
     slug = args.slug.strip().lower() if args.slug else _slugify(args.title)
     if not re.fullmatch(r"[a-z0-9]+(?:_[a-z0-9]+)*", slug):
         raise SystemExit(
-            "Slug must be snake_case containing only a-z, 0-9, and underscores.")
+            "Slug must be snake_case containing only a-z, 0-9, and underscores."
+        )
 
     return args
 
@@ -291,11 +291,15 @@ def _check_exercise_not_exists(exercise_key: str) -> None:
     """Raise SystemExit if exercise already exists."""
     ex_dir = ROOT / "exercises" / exercise_key
     nb_path = ROOT / "notebooks" / f"{exercise_key}.ipynb"
-    nb_solution_path = ROOT / "notebooks" / \
-        "solutions" / f"{exercise_key}.ipynb"
+    nb_solution_path = ROOT / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
     test_path = ROOT / "tests" / f"test_{exercise_key}.py"
 
-    if ex_dir.exists() or nb_path.exists() or nb_solution_path.exists() or test_path.exists():
+    if (
+        ex_dir.exists()
+        or nb_path.exists()
+        or nb_solution_path.exists()
+        or test_path.exists()
+    ):
         raise SystemExit(f"Exercise already exists: {exercise_key}")
 
 
@@ -309,8 +313,7 @@ def main() -> int:
 
     ex_dir = ROOT / "exercises" / exercise_key
     nb_path = ROOT / "notebooks" / f"{exercise_key}.ipynb"
-    nb_solution_path = ROOT / "notebooks" / \
-        "solutions" / f"{exercise_key}.ipynb"
+    nb_solution_path = ROOT / "notebooks" / "solutions" / f"{exercise_key}.ipynb"
     test_path = ROOT / "tests" / f"test_{exercise_key}.py"
 
     ex_dir.mkdir(parents=True)
@@ -403,20 +406,21 @@ def main() -> int:
     nb_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
 
     nb_solution_path.parent.mkdir(parents=True, exist_ok=True)
-    nb_solution_path.write_text(json.dumps(
-        notebook, indent=2), encoding="utf-8")
+    nb_solution_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
 
     # If this is a debug exercise, update README to mention explanation tags
     if args.type == "debug":
         readme_lines = (
-            ex_dir / README_FILENAME).read_text(encoding="utf-8").splitlines()
+            (ex_dir / README_FILENAME).read_text(encoding="utf-8").splitlines()
+        )
         # Add short instruction about the explanation cell
         readme_lines.insert(
             7,
             "- After running your corrected solution, describe what happened in the cell tagged `explanation1` (or `explanationN`).",
         )
-        (ex_dir / README_FILENAME).write_text("\n".join(readme_lines) +
-                                              "\n", encoding="utf-8")
+        (ex_dir / README_FILENAME).write_text(
+            "\n".join(readme_lines) + "\n", encoding="utf-8"
+        )
 
     print(f"Created exercise: {exercise_key}")
     print(f"- {ex_dir.relative_to(ROOT)}")

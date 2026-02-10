@@ -21,7 +21,10 @@ def _check_mark(check: Ex002CheckDefinition) -> pytest.MarkDecorator:
 
 @pytest.mark.parametrize(
     "check",
-    [pytest.param(check, id=_check_id(check), marks=_check_mark(check)) for check in EX002_CHECKS],
+    [
+        pytest.param(check, id=_check_id(check), marks=_check_mark(check))
+        for check in EX002_CHECKS
+    ],
 )
 def test_ex002_check_definitions(check: Ex002CheckDefinition) -> None:
     errors = check.check()

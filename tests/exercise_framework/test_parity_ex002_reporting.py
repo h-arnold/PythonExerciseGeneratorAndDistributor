@@ -15,7 +15,10 @@ def test_ex002_error_normalisation_pipeline_parity() -> None:
             exercise_no=1,
             title="Logic",
             passed=False,
-            issues=["Exercise 1: expected 'Hello Python!'.", "Exercise 1: expected 1 print calls."],
+            issues=[
+                "Exercise 1: expected 'Hello Python!'.",
+                "Exercise 1: expected 1 print calls.",
+            ],
         )
     ]
 
@@ -39,7 +42,9 @@ def test_ex002_error_wrapping_continuation_row_columns_are_blank() -> None:
         "about the school location and punctuation in this response."
     )
 
-    table = render_grouped_table_with_errors([("Exercise 2", "Logic", False, long_error)])
+    table = render_grouped_table_with_errors(
+        [("Exercise 2", "Logic", False, long_error)]
+    )
 
     row_lines = [line for line in table.splitlines() if line.startswith("| ")]
 

@@ -5,7 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from tests.exercise_expectations import ex002_sequence_modify_basics_exercise_expectations as ex002
+from tests.exercise_expectations import (
+    ex002_sequence_modify_basics_exercise_expectations as ex002,
+)
 from tests.exercise_framework import (
     assertions,
     constructs,
@@ -207,7 +209,9 @@ def test_exercise4_construct() -> None:
     }
     assert any("Good" in s for s in strings), "Missing 'Good' in string constants"
     assert any("Morning" in s for s in strings), "Missing 'Morning' in string constants"
-    assert any("Everyone" in s for s in strings), "Missing 'Everyone' in string constants"
+    assert any(
+        "Everyone" in s for s in strings
+    ), "Missing 'Everyone' in string constants"
 
 
 @pytest.mark.task(taskno=5)

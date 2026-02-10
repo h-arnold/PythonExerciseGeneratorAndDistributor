@@ -119,7 +119,9 @@ class TemplatePackager:
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
 
-    def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
+    def generate_readme(
+        self, workspace: Path, template_name: str, exercises: list[str]
+    ) -> None:
         """Generate README file.
 
         Args:
