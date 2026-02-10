@@ -253,7 +253,7 @@ While a sub-agent is running, expect a heartbeat line (`agent is still working`)
 ### Sub-agent roles
 
 Sub-agent roles are defined in the `.codex` folder, along with the configuration file. To create a new role, add a markdown file with the role name (e.g. `implementation.md`) and a prompt template for that role. Empty files are ignored. Use `--list-roles` to see the discovered roles.
-`````
+
 
 ## Implementation Workflow
 
