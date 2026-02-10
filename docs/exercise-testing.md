@@ -62,7 +62,121 @@ To provide granular feedback, implement **multiple tests** for a single exercise
 
 If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the points for that exercise.
 
-**IMPORTANT:** Not all tasks need multiple tests. If an exercise has a single clear criterion, one test is sufficient. Equally, some exercises will be complex enough to warrant 4+ tests. Use your judgment based on the learning objectives.
+**IMPORTANT:** Not all tasks need multiple tests. If an exercise has a single clear criterion, one test is sufficient. Equally, some exercises will be complex enough to warrant 4+ tests. Use your judgement based on the learning objectives.
+
+### Choosing the Right Number of Tests (real repository examples)
+
+Use professional judgement per exercise, not a fixed "always three tests" rule.
+
+#### 1) One-test example (ex006 Exercise 7)
+
+Use one test where there is a single clear success criterion.
+
+**Starter code (student notebook):**
+```python
+# Exercise 7 — YOUR CODE
+print("Enter price:")
+price = input()
+print("Two items cost: " + price + price)
+```
+
+**Grading test:**
+```python
+@pytest.mark.task(taskno=7)
+def test_exercise7_logic() -> None:
+    output = _run_with_inputs(7, list(ex006.EX006_INPUT_EXPECTATIONS[7]["inputs"]))
+    assert ex006.EX006_INPUT_EXPECTATIONS[7]["prompt_contains"] in output
+    expected_output = ex006.EX006_INPUT_EXPECTATIONS[7].get("output_contains")
+    assert expected_output is not None
+    assert expected_output in output
+```
+
+Why one test is enough here: the exercise is outcome-focused (prompt and resulting output), and there is no additional construct to score separately.
+
+#### 2) Three-test example (ex003 Exercise 4)
+
+Use three tests when logic, formatting, and construct are all distinct learning goals.
+
+**Starter code (student notebook):**
+```python
+# Exercise 4 — YOUR CODE
+# Update the prompt to the new wording and the final message
+print("What is your favourite fruit?")
+fruit = input()
+print("My favourite fruit is " + fruit)
+```
+
+**Grading tests:**
+```python
+@pytest.mark.task(taskno=4)
+def test_exercise4_logic() -> None:
+    fruit = "dragonfruit"
+    descriptor = "sweet"
+    output = _exercise_output_with_inputs(4, [fruit, descriptor])
+    lines = output.strip().splitlines()
+    assert lines == [
+        ex003.EX003_EXPECTED_PROMPTS[4][0],
+        ex003.EX003_EXPECTED_PROMPTS[4][1],
+        ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1=fruit, value2=descriptor),
+    ]
+
+@pytest.mark.task(taskno=4)
+def test_exercise4_formatting() -> None:
+    output = _exercise_output_with_inputs(4, ["mango", "tropical"])
+    expected = f"{ex003.EX003_EXPECTED_PROMPTS[4][0]}\n{ex003.EX003_EXPECTED_PROMPTS[4][1]}\n{ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}\n"
+    assert output == expected
+
+@pytest.mark.task(taskno=4)
+def test_exercise4_construct() -> None:
+    tree = _exercise_ast(4)
+    constants = _string_constants(tree)
+    assert ex003.EX003_EXPECTED_PROMPTS[4][0] in constants
+    assert ex003.EX003_EXPECTED_PROMPTS[4][1] in constants
+    assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants
+```
+
+#### 3) 4+ test example (ex004 Exercise 1)
+
+Use more than three tests only when the task genuinely has extra criteria.
+
+**Starter code + explanation prompt (student notebook):**
+```python
+print("Hello World!"
+```
+
+```markdown
+### What actually happened
+Describe what error you got and why. Fix the code above.
+```
+
+**Grading tests:**
+```python
+@pytest.mark.task(taskno=1)
+def test_exercise1_logic() -> None:
+    output = _exercise_output(1)
+    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[1]
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_formatting() -> None:
+    output = _exercise_output(1)
+    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[1]}\n"
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct() -> None:
+    tree = _exercise_ast(1)
+    assert _has_print_constant(tree, ex004.EX004_EXPECTED_SINGLE_LINE[1])
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_explanation() -> None:
+    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(1))
+    assert is_valid_explanation(
+        explanation,
+        min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=ex004.EX004_PLACEHOLDER_PHRASES,
+    )
+```
+
+If you cannot justify extra tests with a clear learning objective, do not add them.
 
 ## Autograding Integration Details
 
@@ -72,6 +186,68 @@ If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the poi
 - **Authoring guidance**: Prefer many small tests over one large test. Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label. Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
 - **Name collisions**: Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
 - **Tests must fail initially**: Before the student writes any code, all tests should fail. If any test passes in the initial state, it is not a useful test and should be revised or discarded.
+
+### Initial-Failure Rule: Examples and Non-Examples
+
+A test is only useful for grading if it distinguishes an unattempted notebook from a completed one.
+
+**Good examples (useful tests):**
+- Checking exact required output against scaffold text that is intentionally wrong.
+
+```python
+# student starter code
+print("Hello from Python!")
+
+# test
+assert output.strip() == "Hi there!"
+```
+
+- Checking an updated input flow with new prompt wording.
+
+```python
+# student starter code
+print("What is your favourite fruit?")
+fruit = input()
+print("My favourite fruit is " + fruit)
+
+# test
+assert ex003.EX003_EXPECTED_PROMPTS[4][0] in constants
+assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants
+```
+
+- Checking explanation quality where the notebook starts with a placeholder prompt.
+
+```python
+# markdown starter prompt
+"""Describe what error you got and why. Fix the code above."""
+
+# test
+assert is_valid_explanation(...)
+```
+
+**Non-examples (useless tests):**
+- A test that checks only for `print(` when scaffold code already contains `print(...)`.
+
+```python
+# bad test (passes immediately)
+assert "print(" in code
+```
+
+- A test that checks only for a variable name already present in starter code.
+
+```python
+# bad test (passes immediately if starter already has price = input())
+assert "price" in code
+```
+
+- A test that accepts unchanged placeholder output.
+
+```python
+# bad test (passes immediately)
+assert "Hello from Python!" in output
+```
+
+If a test passes on the untouched student notebook, either tighten the assertion (preferred) or remove the test.
 
 ### Simulating Input
 

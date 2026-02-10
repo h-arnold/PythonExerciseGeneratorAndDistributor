@@ -95,6 +95,12 @@ def check_notebook(notebook_slug: str) -> None:
     if notebook_slug == "ex002_sequence_modify_basics":
         check_ex002_notebook()
         return
+    if notebook_slug == "ex003_sequence_modify_variables":
+        check_ex003_notebook()
+        return
+    if notebook_slug == "ex004_sequence_debug_syntax":
+        check_ex004_notebook()
+        return
     checks = _get_checks()
     check = checks.get(notebook_slug)
     if check is None:
@@ -108,6 +114,20 @@ def check_ex002_notebook() -> None:
     """Run the detailed checks for ex002 and print a grouped summary table."""
     results = _run_ex002_checks()
     _print_ex002_results(results)
+
+
+def check_ex003_notebook() -> None:
+    """Run detailed checks for ex003 and print a notebook-specific summary table."""
+    issues = _check_ex003()
+    passed = len(issues) == 0
+    _print_results([("ex003 Sequence Modify Variables", passed, issues)])
+
+
+def check_ex004_notebook() -> None:
+    """Run detailed checks for ex004 and print a notebook-specific summary table."""
+    issues = _check_ex004()
+    passed = len(issues) == 0
+    _print_results([("ex004 Debug Syntax Errors", passed, issues)])
 
 
 def _get_checks() -> dict[str, CheckItem]:

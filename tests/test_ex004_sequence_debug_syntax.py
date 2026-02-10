@@ -54,6 +54,16 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
     return ast.parse(code)
 
 
+def _assert_strict_single_line(exercise_no: int, output: str, expected: str) -> None:
+    assert output.strip() == expected, (
+        f"Exercise {exercise_no}: expected exact text '{expected}' but got "
+        f"'{output.strip()}'."
+    )
+    assert output == f"{expected}\n", (
+        f"Exercise {exercise_no}: output must end with a single newline."
+    )
+
+
 def _string_constants(tree: ast.AST) -> set[str]:
     return {
         node.value
@@ -173,14 +183,8 @@ def _assigns_binop_sum(
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[1]
+    _assert_strict_single_line(1, output, ex004.EX004_EXPECTED_SINGLE_LINE[1])
     assert "TODO" not in output
-
-
-@pytest.mark.task(taskno=1)
-def test_exercise1_formatting() -> None:
-    output = _exercise_output(1)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[1]}\n"
 
 
 @pytest.mark.task(taskno=1)
@@ -202,13 +206,7 @@ def test_exercise1_explanation() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic() -> None:
     output = _exercise_output(2)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[2]
-
-
-@pytest.mark.task(taskno=2)
-def test_exercise2_formatting() -> None:
-    output = _exercise_output(2)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[2]}\n"
+    _assert_strict_single_line(2, output, ex004.EX004_EXPECTED_SINGLE_LINE[2])
 
 
 @pytest.mark.task(taskno=2)
@@ -230,13 +228,7 @@ def test_exercise2_explanation() -> None:
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[3]
-
-
-@pytest.mark.task(taskno=3)
-def test_exercise3_formatting() -> None:
-    output = _exercise_output(3)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[3]}\n"
+    _assert_strict_single_line(3, output, ex004.EX004_EXPECTED_SINGLE_LINE[3])
 
 
 @pytest.mark.task(taskno=3)
@@ -261,13 +253,7 @@ def test_exercise3_explanation() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
     output = _exercise_output(4)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[4]
-
-
-@pytest.mark.task(taskno=4)
-def test_exercise4_formatting() -> None:
-    output = _exercise_output(4)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[4]}\n"
+    _assert_strict_single_line(4, output, ex004.EX004_EXPECTED_SINGLE_LINE[4])
 
 
 @pytest.mark.task(taskno=4)
@@ -293,13 +279,7 @@ def test_exercise4_explanation() -> None:
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[5]
-
-
-@pytest.mark.task(taskno=5)
-def test_exercise5_formatting() -> None:
-    output = _exercise_output(5)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[5]}\n"
+    _assert_strict_single_line(5, output, ex004.EX004_EXPECTED_SINGLE_LINE[5])
 
 
 @pytest.mark.task(taskno=5)
@@ -322,13 +302,7 @@ def test_exercise5_explanation() -> None:
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[6]
-
-
-@pytest.mark.task(taskno=6)
-def test_exercise6_formatting() -> None:
-    output = _exercise_output(6)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[6]}\n"
+    _assert_strict_single_line(6, output, ex004.EX004_EXPECTED_SINGLE_LINE[6])
 
 
 @pytest.mark.task(taskno=6)
@@ -416,13 +390,7 @@ def test_exercise8_explanation() -> None:
 @pytest.mark.task(taskno=9)
 def test_exercise9_logic() -> None:
     output = _exercise_output(9)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[9]
-
-
-@pytest.mark.task(taskno=9)
-def test_exercise9_formatting() -> None:
-    output = _exercise_output(9)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[9]}\n"
+    _assert_strict_single_line(9, output, ex004.EX004_EXPECTED_SINGLE_LINE[9])
 
 
 @pytest.mark.task(taskno=9)
