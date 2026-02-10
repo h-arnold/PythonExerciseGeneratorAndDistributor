@@ -61,10 +61,13 @@ def check_uses_operator(code: str, operator: str) -> bool:
     tree = _parse_code(code)
     if tree is None:
         allowed_tokens = {operator, f"{operator}="}
-        for tok in tokenize.generate_tokens(io.StringIO(code).readline):
-            if tok.type in {token.STRING, tokenize.COMMENT}:
-                continue
-            if tok.type == token.OP and tok.string in allowed_tokens:
-                return True
+        try:
+            for tok in tokenize.generate_tokens(io.StringIO(code).readline):
+                if tok.type in {token.STRING, tokenize.COMMENT}:
+                    continue
+                if tok.type == token.OP and tok.string in allowed_tokens:
+                    return True
+        except (tokenize.TokenError, IndentationError):
+            return False
         return False
     return _has_operator(tree, operator_type)
