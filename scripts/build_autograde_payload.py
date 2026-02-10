@@ -188,7 +188,7 @@ def validate_environment() -> None:
 
     normalised_dir = _normalise_notebooks_dir(notebooks_dir)
     allowed_dirs = {"notebooks", "notebooks/solutions"}
-    # TODO: offer a CLI flag to override the notebook directory when workflows expand.
+    # Consider offering a CLI flag to override the notebook directory when workflows expand.
     if normalised_dir in allowed_dirs:
         return
 

@@ -23,6 +23,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_PARTS = 20
+README_FILENAME = "README.md"
 
 
 def _slugify(text: str) -> str:
@@ -228,6 +229,21 @@ def _make_notebook_with_parts(
     }
 
 
+def _build_readme_lines(title: str, created_date: str) -> list[str]:
+    return [
+        f"# {title}",
+        "",
+        "## Student prompt",
+        "- Open the matching notebook in `notebooks/`.",
+        "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
+        "- Run `pytest -q` until all tests pass.",
+        "",
+        "## Teacher notes",
+        f"- Created: {created_date}",
+        "- Target concepts: (fill in)",
+    ]
+
+
 def _validate_and_parse_args() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
     parser = argparse.ArgumentParser(
@@ -302,22 +318,9 @@ def main() -> int:
 
     today = _dt.date.today().isoformat()
 
-    (ex_dir / "README.md").write_text(
-        "\n".join(
-            [
-                f"# {args.title}",
-                "",
-                "## Student prompt",
-                "- Open the matching notebook in `notebooks/`.",
-                "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
-                "- Run `pytest -q` until all tests pass.",
-                "",
-                "## Teacher notes",
-                f"- Created: {today}",
-                "- Target concepts: (fill in)",
-            ]
-        )
-        + "\n",
+    readme_lines = _build_readme_lines(args.title, today)
+    (ex_dir / README_FILENAME).write_text(
+        "\n".join(readme_lines) + "\n",
         encoding="utf-8",
     )
 
@@ -406,13 +409,14 @@ def main() -> int:
     # If this is a debug exercise, update README to mention explanation tags
     if args.type == "debug":
         readme_lines = (
-            ex_dir / "README.md").read_text(encoding="utf-8").splitlines()
+            ex_dir / README_FILENAME).read_text(encoding="utf-8").splitlines()
         # Add short instruction about the explanation cell
         readme_lines.insert(
             7,
             "- After running your corrected solution, describe what happened in the cell tagged `explanation1` (or `explanationN`).",
         )
-        (ex_dir / "README.md").write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
+        (ex_dir / README_FILENAME).write_text("\n".join(readme_lines) +
+                                              "\n", encoding="utf-8")
 
     print(f"Created exercise: {exercise_key}")
     print(f"- {ex_dir.relative_to(ROOT)}")

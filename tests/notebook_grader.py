@@ -289,16 +289,18 @@ def get_explanation_cell(notebook_path: str | Path, *, tag: str) -> str:
         if not isinstance(cell, dict):
             continue
         cell_dict = cast(dict[str, Any], cell)
-        if tag in _cell_tags(cell_dict):
-            source = cell_dict.get("source", [])
-            if isinstance(source, list):
-                source_list: list[str] = []
-                for s in cast(Sequence[object], source):
-                    if isinstance(s, str):
-                        source_list.append(s)
-                return "".join(source_list)
-            if isinstance(source, str):
-                return source
-            return str(source)
+        if tag not in _cell_tags(cell_dict):
+            continue
+        return _format_cell_source(cell_dict.get("source", []))
 
     raise AssertionError(f"No cell with tag {tag!r} found in {notebook_path}")
+
+
+def _format_cell_source(source: object) -> str:
+    """Return a single string representation of a cell's source value."""
+
+    if isinstance(source, str):
+        return source
+    if isinstance(source, Sequence):
+        return "".join(str(s) for s in cast(Sequence[object], source) if isinstance(s, str))
+    return str(source)

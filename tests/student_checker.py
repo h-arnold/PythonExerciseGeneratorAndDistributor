@@ -54,6 +54,8 @@ from tests.notebook_grader import (
     run_cell_with_input,
 )
 
+_EXERCISE_TAG_PATTERN = re.compile(r"exercise\d+")
+
 
 @dataclass(frozen=True)
 class CheckItem:
@@ -415,7 +417,7 @@ def run_notebook_checks(notebook_path: str) -> None:
     _print_notebook_check_results(results)
 
 
-def _collect_exercise_tags(path: Path) -> list[str]:
+def _load_notebook_json(path: Path) -> dict[str, object]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
@@ -423,25 +425,41 @@ def _collect_exercise_tags(path: Path) -> list[str]:
     except json.JSONDecodeError as exc:
         raise NotebookGradingError(
             f"Unable to parse notebook JSON: {path}") from exc
+    if not isinstance(data, dict):
+        return {}
+    return data
 
+
+def _extract_tags_from_cell(cell: object) -> list[str]:
+    if not isinstance(cell, dict):
+        return []
+    metadata = cell.get("metadata")
+    if not isinstance(metadata, dict):
+        return []
+    cell_tags = metadata.get("tags")
+    if isinstance(cell_tags, str):
+        candidates = [cell_tags]
+    elif isinstance(cell_tags, list):
+        candidates = cell_tags
+    else:
+        return []
+
+    tags: list[str] = []
+    for tag in candidates:
+        if isinstance(tag, str) and _EXERCISE_TAG_PATTERN.fullmatch(tag):
+            tags.append(tag)
+    return tags
+
+
+def _collect_exercise_tags(path: Path) -> list[str]:
+    data = _load_notebook_json(path)
     cells = data.get("cells")
     if not isinstance(cells, list):
         return []
 
     tags: list[str] = []
     for cell in cells:
-        if not isinstance(cell, dict):
-            continue
-        metadata = cell.get("metadata")
-        if not isinstance(metadata, dict):
-            continue
-        cell_tags = metadata.get("tags")
-        if isinstance(cell_tags, str):
-            cell_tags = [cell_tags]
-        if isinstance(cell_tags, list):
-            for tag in cell_tags:
-                if isinstance(tag, str) and re.fullmatch(r"exercise\d+", tag):
-                    tags.append(tag)
+        tags.extend(_extract_tags_from_cell(cell))
     return tags
 
 

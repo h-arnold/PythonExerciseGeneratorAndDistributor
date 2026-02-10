@@ -6,6 +6,8 @@ import sys
 
 import scripts.new_exercise as ne
 
+_MIN_SELFCHECK_CELLS = 2
+
 
 def _find_tags(cells, tag):
     for cell in cells:
@@ -123,7 +125,7 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     expected = {f"exercise{i}" for i in range(1, 4)}
     assert exercise_tags == expected
 
-    assert len(cells) >= 2
+    assert len(cells) >= _MIN_SELFCHECK_CELLS
     self_check_cell = cells[-2]
     assert self_check_cell["cell_type"] == "code"
     assert not self_check_cell.get("metadata", {}).get("tags", []), (

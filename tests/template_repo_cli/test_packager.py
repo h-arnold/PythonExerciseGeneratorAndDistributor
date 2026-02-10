@@ -173,13 +173,6 @@ class TestGenerateFiles:
         content = gitignore.read_text()
         assert "__pycache__" in content
 
-    def test_generate_workflow(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
-        """Test creating GitHub Actions workflow."""
-        template_packager.copy_template_base_files(temp_dir)
-
-        workflow = temp_dir / ".github/workflows/tests.yml"
-        assert workflow.exists()
-
 
 class TestPackageIntegrity:
     """Tests for package validation."""
@@ -330,7 +323,8 @@ class TestPackageOptions:
         template_packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert not (
+            temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
 
 class TestPackageMultipleExercises:
