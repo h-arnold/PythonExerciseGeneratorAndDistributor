@@ -398,14 +398,14 @@ Migrate legacy non-ex002 suites to the framework once ex002 parity is complete.
 
 ### TDD Tasks
 
-- [ ] For each exercise suite, port tests to framework helpers first.
-- [ ] Keep logic/format/construct separation and task markers explicit.
-- [ ] Remove obsolete duplicated execution/parsing code once parity is confirmed.
+- [x] For each exercise suite, port tests to framework helpers first.
+- [x] Keep logic/format/construct separation and task markers explicit.
+- [x] Remove obsolete duplicated execution/parsing code once parity is confirmed.
 
 ### Acceptance Criteria
 
-- [ ] Each migrated suite preserves intended student feedback quality.
-- [ ] Framework usage is consistent; little/no bespoke execution logic remains.
+- [x] Each migrated suite preserves intended student feedback quality.
+- [x] Framework usage is consistent; little/no bespoke execution logic remains.
 
 ### Constraints
 
@@ -426,13 +426,14 @@ Migrate legacy non-ex002 suites to the framework once ex002 parity is complete.
 ### Notes
 
 - Decisions
-  -
+  - Introduced per-exercise expectations modules for non-ex002 suites.
+  - Rewired legacy tests to framework runtime helpers for consistent execution.
 
 - Open questions
-  -
+  - None.
 
 - Follow-up
-  -
+  - Run solution-notebook suites for ex001/ex003/ex004/ex005/ex006 when convenient.
 
 ---
 
@@ -458,7 +459,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 - [x] Phase 5
 - [x] Phase 6
 - [x] Phase 7
-- [ ] Phase 8
+- [x] Phase 8
 
 ### Risks to Track During Delivery
 
