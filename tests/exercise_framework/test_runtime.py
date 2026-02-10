@@ -13,6 +13,23 @@ EXERCISE1_TAG = "exercise1"
 EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS = 2
 
 
+def _make_fake_input_runner() -> tuple[
+    callable[[str | Path, str, list[str]], str],
+    callable[[], int],
+]:
+    call_count = 0
+
+    def fake_run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
+        nonlocal call_count
+        call_count += 1
+        return f"{notebook_path}:{tag}:{'|'.join(inputs)}"
+
+    def get_call_count() -> int:
+        return call_count
+
+    return fake_run_cell_with_input, get_call_count
+
+
 def test_runtime_output_helper_matches_notebook_grader(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -91,14 +108,9 @@ def test_runtime_input_cache_reuses_result_for_same_input_signature(
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
 
     cache = runtime.RuntimeCache()
-    call_count = 0
+    fake_runner, get_call_count = _make_fake_input_runner()
 
-    def fake_run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
-        nonlocal call_count
-        call_count += 1
-        return f"{notebook_path}:{tag}:{'|'.join(inputs)}"
-
-    monkeypatch.setattr(notebook_grader, "run_cell_with_input", fake_run_cell_with_input)
+    monkeypatch.setattr(notebook_grader, "run_cell_with_input", fake_runner)
 
     first = runtime.run_cell_with_input(
         EX002_NOTEBOOK_PATH,
@@ -114,7 +126,7 @@ def test_runtime_input_cache_reuses_result_for_same_input_signature(
     )
 
     assert first == second
-    assert call_count == 1
+    assert get_call_count() == 1
 
 
 def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
@@ -123,14 +135,9 @@ def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
 
     cache = runtime.RuntimeCache()
-    call_count = 0
+    fake_runner, get_call_count = _make_fake_input_runner()
 
-    def fake_run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
-        nonlocal call_count
-        call_count += 1
-        return f"{notebook_path}:{tag}:{'|'.join(inputs)}"
-
-    monkeypatch.setattr(notebook_grader, "run_cell_with_input", fake_run_cell_with_input)
+    monkeypatch.setattr(notebook_grader, "run_cell_with_input", fake_runner)
 
     first = runtime.run_cell_with_input(
         EX002_NOTEBOOK_PATH,
@@ -146,4 +153,4 @@ def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
     )
 
     assert first != second
-    assert call_count == EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS
+    assert get_call_count() == EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS
