@@ -158,32 +158,32 @@ Replace the placeholder test with real assertions. Two common patterns:
 
 ```python
 # Option 1: assert on printed output (matches the scaffold)
-from tests.notebook_grader import run_cell_and_capture_output
+from tests.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
 
 
 def test_exercise1_greets_user() -> None:
-    output = run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
+    output = runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
     assert "Hello" in output
     assert "TODO" not in output
 ```
 
 ```python
 # Option 2: execute the cell and inspect objects
-from tests.notebook_grader import exec_tagged_code
+from tests.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
 
 
 def test_solve_returns_correct_value() -> None:
-    ns = exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
     assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](5) == 10
 
 
 def test_solve_handles_edge_case() -> None:
-    ns = exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
     assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](0) == 0
 ```
@@ -197,6 +197,8 @@ def test_solve_handles_edge_case() -> None:
 - Deterministic (no randomness or time-based checks)
 - Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
 - For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
+
+**Note on scaffolding**: the generator's placeholder tests may still use `tests.notebook_grader` directly. Replace those with the framework runtime helpers shown above so tests are consistent across the codebase.
 
 ### 4. Fill in the Solution Notebook
 
@@ -348,13 +350,13 @@ When creating a notebook with `--parts 10`:
 
 ```python
 import pytest
-from tests.notebook_grader import exec_tagged_code
+from tests.exercise_framework import runtime
 
 TAGS = [f"exercise{i}" for i in range(1, 11)]
 
 @pytest.mark.parametrize("tag", TAGS)
 def test_exercise_exists(tag):
-    ns = exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
+    ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
     assert "solve" in ns, f"Missing solve() in {tag}"
 
 @pytest.mark.parametrize(
@@ -366,7 +368,7 @@ def test_exercise_exists(tag):
     ],
 )
 def test_exercise_behaviour(tag, input_val, expected):
-    ns = exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
+    ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
     assert ns["solve"](input_val) == expected
 ```
 

@@ -6,13 +6,8 @@ This is an intentional exception to the ASCII-only output preference.
 
 from __future__ import annotations
 
-import re
-import textwrap
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Final
-
-from tabulate import tabulate
 
 from tests.exercise_expectations import (
     EX001_FUNCTION_NAME,
@@ -39,10 +34,13 @@ from tests.exercise_expectations import (
     EX006_EXPECTED_OUTPUTS,
     EX006_INPUT_EXPECTATIONS,
     EX006_NOTEBOOK_PATH,
-    is_valid_explanation,
 )
-from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
-    EX002_CHECKS,
+from tests.exercise_framework.expectations import EX002_CHECKS
+from tests.exercise_framework.expectations_helpers import is_valid_explanation
+from tests.exercise_framework.reporting import (
+    normalise_issue_text,
+    render_grouped_table_with_errors,
+    render_table,
 )
 from tests.notebook_grader import (
     NotebookGradingError,
@@ -51,12 +49,6 @@ from tests.notebook_grader import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-
-PASS_STATUS_EMOJI: Final[str] = "🟢"
-FAIL_STATUS_EMOJI: Final[str] = "🔴"
-PASS_STATUS_TAG: Final[str] = "OK"
-FAIL_STATUS_TAG: Final[str] = "NO"
-ERROR_COLUMN_WIDTH: Final[int] = 40
 
 
 @dataclass(frozen=True)
@@ -130,83 +122,12 @@ def _run_checks(checks: list[CheckItem]) -> list[tuple[str, bool, list[str]]]:
 
 
 def _print_results(results: list[tuple[str, bool, list[str]]]) -> None:
-    table = _render_table([(label, passed) for label, passed, _ in results])
+    table = render_table([(label, passed) for label, passed, _ in results])
     print(table)
 
     failures = [(label, issues) for label, passed, issues in results if not passed]
     if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
-
-
-def _render_table(rows: list[tuple[str, bool]]) -> str:
-    """Render a simple 2-column table with name and pass/fail status."""
-    data = [[label, _format_status(passed)] for label, passed in rows]
-    return tabulate(data, headers=["Check", "Status"], tablefmt="grid")
-
-
-def _render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
-    """Render a 3-column table with exercise, check name, and status."""
-    data = [[label, title, _format_status(passed)] for label, title, passed in rows]
-    return tabulate(data, headers=["Exercise", "Check", "Status"], tablefmt="grid")
-
-
-def _strip_exercise_prefix(message: str) -> str:
-    match = re.match(r"^Exercise\s+\d+:\s*", message)
-    if match:
-        return message[match.end() :]
-    return message
-
-
-def _wrap_text_to_width(message: str, width: int) -> list[str]:
-    if message == "":
-        return [""]
-    return textwrap.wrap(
-        message,
-        width=width,
-        break_long_words=False,
-        break_on_hyphens=False,
-    )
-
-
-def _format_status(passed: bool) -> str:
-    """Format status with emoji and tag."""
-    emoji = PASS_STATUS_EMOJI if passed else FAIL_STATUS_EMOJI
-    tag = PASS_STATUS_TAG if passed else FAIL_STATUS_TAG
-    return f"{emoji} {tag}"
-
-
-def _render_grouped_table_with_errors(rows: list[tuple[str, str, bool, str]]) -> str:
-    """Render a 4-column table with exercise, check, status, and error message."""
-    # Wrap long error messages
-    data = []
-    for exercise_label, title, passed, error in rows:
-        status = _format_status(passed)
-        trimmed_error = _strip_exercise_prefix(error)
-
-        # Wrap error message if needed
-        if trimmed_error and len(trimmed_error) > ERROR_COLUMN_WIDTH:
-            uses_long_word_wrap = any(
-                len(word) > ERROR_COLUMN_WIDTH for word in trimmed_error.split()
-            )
-            if uses_long_word_wrap:
-                wrapped_lines = textwrap.wrap(
-                    trimmed_error,
-                    width=ERROR_COLUMN_WIDTH,
-                    break_long_words=True,
-                    break_on_hyphens=False,
-                )
-            else:
-                wrapped_lines = _wrap_text_to_width(trimmed_error, ERROR_COLUMN_WIDTH)
-
-            # First line with all columns
-            data.append([exercise_label, title, status, wrapped_lines[0]])
-            # Subsequent lines with blank exercise/title/status
-            for line in wrapped_lines[1:]:
-                data.append(["", "", "", line])
-        else:
-            data.append([exercise_label, title, status, trimmed_error])
-
-    return tabulate(data, headers=["Exercise", "Check", "Status", "Error"], tablefmt="grid")
 
 
 def _check_ex001() -> list[str]:
@@ -251,15 +172,11 @@ def _print_ex002_results(results: list[Ex002CheckResult]) -> None:
     last_exercise: int | None = None
     for result in results:
         label = f"Exercise {result.exercise_no}" if result.exercise_no != last_exercise else ""
-        if result.passed:
-            error_message = ""
-        else:
-            stripped = [_strip_exercise_prefix(issue) for issue in result.issues]
-            error_message = "; ".join(stripped)
+        error_message = "" if result.passed else normalise_issue_text(result.issues)
         rows.append((label, result.title, result.passed, error_message))
         last_exercise = result.exercise_no
 
-    table = _render_grouped_table_with_errors(rows)
+    table = render_grouped_table_with_errors(rows)
     print(table)
 
     failures = [result for result in results if not result.passed]

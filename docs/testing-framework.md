@@ -9,7 +9,7 @@ For details on **testing student notebooks**, see [Exercise Testing](exercise-te
 The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, and documentation) is tested using `pytest`. These tests ensure that:
 
 1. **Exercise Generation**: The `new_exercise` script creates valid, compilable, and standards-compliant exercises.
-2. **Grading Logic**: The `notebook_grader.py` module correctly extracts and executes code from notebooks.
+2. **Grading Logic**: The exercise framework under `tests/exercise_framework/` coordinates notebook extraction, execution, and assertions (wrapping `tests/notebook_grader.py`).
 3. **Template CLI**: The template repository tools work as expected.
 4. **Documentation**: Exercise validation rules are respected.
 
@@ -29,7 +29,7 @@ Run tests for specific components:
 
 ```bash
 # Test the grading logic itself
-uv run pytest tests/notebook_grader.py
+uv run pytest tests/exercise_framework/test_runtime.py
 
 # Test the exercise generator script
 uv run pytest tests/test_new_exercise.py
@@ -55,7 +55,7 @@ Integration tests for the template repository CLI. These tests verify:
 - Filesystem operations (copying files and directories, workspace creation/cleanup).
 - GitHub interactions (via mocked `subprocess.run` or `gh` command outputs).
 - Configuration parsing and selection logic.
-- Packaging behaviour (e.g., that `TemplatePackager` copies the required base files and, when present, the project's `tests/notebook_grader.py` into the generated workspace).
+- Packaging behaviour (e.g., that `TemplatePackager` copies the required base files and the `.github` workflow directory when present). Note that `tests/exercise_framework/` is not copied unless it is included under `template_repo_files/`.
 
 > **Tip:** The `tests/template_repo_cli/conftest.py` file exposes useful pytest fixtures (e.g., `repo_root`, `temp_dir`, `sample_exercises`, and `mock_gh_*`) that are intentionally reusable for new tests.
 
@@ -63,7 +63,9 @@ Integration tests for the template repository CLI. These tests verify:
 
 This repository provides a small set of shared helpers used across infrastructure tests and the CLI; knowing their locations helps future contributors write consistent tests and tools.
 
-- `tests/notebook_grader.py` — grading helpers used by notebook-related tests (e.g., `exec_tagged_code`, `run_cell_and_capture_output`, and `resolve_notebook_path`). Detailed behaviour for notebook grading is documented in `docs/exercise-testing.md`.
+- `tests/exercise_framework/` — the current notebook testing framework. Use `runtime.py` for execution helpers, `constructs.py` for AST checks, `assertions.py` for consistent messages, and `reporting.py` for table output. Detailed behaviour for notebook grading is documented in `docs/exercise-testing.md`.
+
+- `tests/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The framework wraps these helpers rather than calling them directly.
 
 - `scripts/template_repo_cli/utils/` — utility functions for the template CLI and packager, notably:
   - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`, `resolve_notebook_path`)
@@ -74,11 +76,12 @@ This repository provides a small set of shared helpers used across infrastructur
 
 Important note on similarly-named helpers:
 
-- There are two helpers named `resolve_notebook_path()` in the codebase:
-  - `tests/notebook_grader.py::resolve_notebook_path` is intended for grading-related resolution and respects the `PYTUTOR_NOTEBOOKS_DIR` override.
+- There are three helpers named `resolve_notebook_path()` in the codebase:
+  - `tests/exercise_framework/paths.py::resolve_notebook_path` is the framework entry point and respects the `PYTUTOR_NOTEBOOKS_DIR` override.
+  - `tests/notebook_grader.py::resolve_notebook_path` is a low-level helper used by the framework runtime.
   - `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
 
-Recommendation: Use the helper from `tests/notebook_grader.py` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic.
+Recommendation: Use the helper from `tests/exercise_framework/paths.py` or `tests/exercise_framework/runtime.py` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic.
 
 ### 4. Exercise Quality (`tests/test_exercise_type_docs.py`)
 

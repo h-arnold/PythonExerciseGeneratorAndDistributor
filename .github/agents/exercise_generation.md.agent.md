@@ -17,8 +17,8 @@ This repo supports two parallel notebook sets:
 
 The same pytest tests can be run against either set:
 
-- Default (student notebooks): `pytest -q`
-- Solution verification: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
+- Default (student notebooks): `uv run pytest -q`
+- Solution verification: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`
 
 This is used to quickly confirm the tests are correct (they pass on the known-good solution notebooks) and that the student notebooks still fail until students make changes.
 
@@ -68,7 +68,7 @@ To achieve the best possible understanding, students are given exercises that fo
 - Each cell object includes `metadata.language` set to `python` or `markdown` to match our validator.
 - Student code should expose a small, pure function.
 - Before the Functions construct is taught, avoid requiring docstrings; after Functions, include clear docstrings with examples.
-- Tests will use `exec_tagged_code("notebooks/exNNN_slug.ipynb", tag="exercise1")` to extract and run the tagged cell.
+- Tests should use `tests.exercise_framework.runtime.exec_tagged_code("notebooks/exNNN_slug.ipynb", tag="exercise1")` to extract and run the tagged cell.
 - **Namespace isolation**: By default, each tagged cell is executed in isolation. If an exercise explicitly builds on previous exercises (e.g., exercise2 extends exercise1), state this clearly in the notebook instructions and design tests accordingly.
 
 ## Creating exercises - the process
@@ -189,21 +189,22 @@ Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testi
 - **Strict output matching**: Enforce exact casing, whitespace, and punctuation unless there's a strong pedagogical reason not to (e.g., "Make" tasks may be looser).
 - **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
 - **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
-- **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` to mock `input()` calls.
+- **Input simulation**: Use `runtime.run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` to mock `input()` calls.
+- **Expectations data**: Store expected outputs, prompts, and inputs in `tests/exercise_expectations/` and import them into tests.
 
 7) Verify
-- Run `pytest -q` locally.
+- Run `uv run pytest -q` locally.
 
 Also verify the tests pass against the solution mirror:
 
-- Either: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
+- Either: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`
 - Or (recommended): `scripts/verify_solutions.sh -q`
 
 If tests fail locally, update only the tests or notebook relevant to the exercise — do not modify unrelated exercises or global test configuration.
 
 8) ### Quality gate (run the verifier — AFTER tests)
 After tests pass on the solution notebooks, user your runSubAgent tool run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
-- `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q` (or the relevant single test file)
+- `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q` (or the relevant single test file)
 - confirm student notebooks still *fail* until students do the work
 
 ### Required final step: update teaching order
@@ -221,7 +222,7 @@ This is required for maintainability; the verifier will check that the new exerc
 - Clearly document each exercise prompt in the notebook so students know which `exerciseK` they are solving.
 
 ## Output expectations
-- When generating notebook content in-chat, use the XML cell format (`<VSCode.Cell language="python">...</VSCode.Cell>`).
+- When generating notebook content in-chat, use the JSON notebook format (cells array with `metadata.language`; preserve `metadata.id` on existing cells).
 - Expected output should be shown in a fenced code block within the markdown prompt cell (triple backticks).
 
 ### Notating interactive user input in Expected Output
@@ -249,31 +250,6 @@ Rules:
 - Use `Prompt? [Input: value]` when the prompt and input appear on the same line.
 - For multiple prompts, list each prompt and its input on a separate line.
 - If the program echoes the input, still show the prompt line with `[Input: ...]`, then the program's printed output below.
-- Keep examples concise and inside the same code block as other expected output.
-When a notebook prompt requires the user to type input, use the following standard notation: place the user's entry in square brackets immediately after the prompt using the labelled prefix `Input:`. Place all interactive lines inside the same expected-output block as the program output.
-
-Examples:
-
-```
-How many apples? [Input: 5]
-You have 10 apples in total
-```
-
-```
-Enter your name: [Input: Alice]
-Hello Alice
-```
-
-```
-Enter first number: [Input: 2]
-Enter second number: [Input: 3]
-The sum is 5
-```
-
-Rules:
-- Use `Prompt? [Input: value]` when the prompt and input appear on the same line.
-- For multiple prompts, list each prompt and `[Input: ...]` on its own line.
-- If the program echoes the input, still show the prompt line with `[Input: ...]` and then the program's printed output below.
 - Keep examples concise and inside the same code block as other expected output.
 
 - Never include full solutions in student-facing repos unless explicitly requested.

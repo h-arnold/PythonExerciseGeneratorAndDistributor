@@ -40,7 +40,17 @@ def resolve_notebook_path(notebook_path: str | Path) -> Path:
     if not override_root:
         return original
 
+    override_root = override_root.replace("\\", "/").strip()
+    if override_root.startswith("./"):
+        override_root = override_root[2:]
+    override_root = override_root.rstrip("/")
+    if not override_root:
+        return original
+
     override_root_path = Path(override_root)
+    if not override_root_path.is_absolute():
+        repo_root = Path(__file__).resolve().parents[1]
+        override_root_path = (repo_root / override_root_path).resolve()
 
     try:
         rel = original.relative_to("notebooks")
@@ -61,7 +71,8 @@ def _read_notebook(notebook_path: str | Path) -> dict[str, Any]:
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise NotebookGradingError(f"Invalid JSON in notebook: {path}") from exc
+        raise NotebookGradingError(
+            f"Invalid JSON in notebook: {path}") from exc
 
 
 def _cell_tags(cell: NotebookCell | dict[str, Any]) -> set[str]:
@@ -121,7 +132,8 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
     if not isinstance(cells, list):
         raise NotebookGradingError("Notebook has no 'cells' list")
 
-    tagged_sources = _collect_tagged_sources(cast(Sequence[object], cells), tag)
+    tagged_sources = _collect_tagged_sources(
+        cast(Sequence[object], cells), tag)
 
     if not tagged_sources:
         raise NotebookGradingError(

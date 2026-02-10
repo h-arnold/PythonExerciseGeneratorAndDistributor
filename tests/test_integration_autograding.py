@@ -247,6 +247,7 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
         project_dir,
         results_path=manual_results,
         pytest_args=[str(test_file)],
+        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": None},
     )
     assert manual_results.exists()
     recorded = _load_results(manual_results)
@@ -258,6 +259,7 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
         results_path=cli_results,
         output_path=cli_output,
         pytest_args=[PLUGIN_FLAG, str(test_file)],
+        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": None},
     )
 
     payload = cast(AutogradePayloadDict, _decode_payload(cli_output))

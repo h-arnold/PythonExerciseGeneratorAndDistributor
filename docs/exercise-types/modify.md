@@ -21,7 +21,7 @@ print("Next year you will be " + str(age))
 
 Avoid compressing multiple operations into a single expression in solution examples, as that hides intermediate steps and reduces learning value.
 
-- Cell metadata must include `{"language": "python", "tags": ["exerciseN"]}`. The grading helper `run_cell_and_capture_output()` in [tests/notebook_grader.py](tests/notebook_grader.py#L94) executes code by tag, so missing or misspelled tags will cause automated tests to fail.
+- Cell metadata must include `{"language": "python", "tags": ["exerciseN"]}`. The grading helper `runtime.run_cell_and_capture_output()` in [tests/exercise_framework/runtime.py](tests/exercise_framework/runtime.py) executes code by tag, so missing or misspelled tags will cause automated tests to fail.
 - Exercises rely on printed output. Ensure the starter code already produces syntactically correct output so students focus on modification, not syntax errors.
 - Optional extension or scratch cells (for self-checking) should be left untagged so the grader ignores them.
 

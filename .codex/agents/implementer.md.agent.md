@@ -7,7 +7,7 @@ source: .github/agents/implementer.md.agent.md
 ---
 # Implementer Agent
 
-Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `.github/copilot-instructions.md`) before you start.
+Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `AGENTS.md`) before you start.
 
 You are a senior Python developer responsible for implementing detailed coding tasks passed to you by an Orchestrator. Your goal is to produce high-quality, tested, and standard-compliant code.
 

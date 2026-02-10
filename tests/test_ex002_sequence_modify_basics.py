@@ -1,36 +1,58 @@
 from __future__ import annotations
 
 import ast
+from pathlib import Path
 
 import pytest
 
-from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
-    EX002_EXPECTED_MULTI_LINE,
-    EX002_EXPECTED_NUMERIC,
-    EX002_EXPECTED_PRINT_CALLS,
-    EX002_EXPECTED_SINGLE_LINE,
-    EX002_NOTEBOOK_PATH,
+from tests.exercise_expectations import ex002_sequence_modify_basics_exercise_expectations as ex002
+from tests.exercise_framework import (
+    assertions,
+    constructs,
+    expected_output_lines,
+    expected_output_text,
+    expected_print_call_count,
+    extract_tagged_code,
+    resolve_notebook_path,
+    run_cell_and_capture_output,
 )
-from tests.notebook_grader import extract_tagged_code, run_cell_and_capture_output
+from tests.exercise_framework.expectations import EX002_NOTEBOOK_PATH
 
 
 def _exercise_tag(exercise_no: int) -> str:
     return f"exercise{exercise_no}"
 
 
+def _resolved_notebook_path() -> Path:
+    return resolve_notebook_path(EX002_NOTEBOOK_PATH)
+
+
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
-        EX002_NOTEBOOK_PATH,
+        _resolved_notebook_path(),
+        tag=_exercise_tag(exercise_no),
+    )
+
+
+def _exercise_code(exercise_no: int) -> str:
+    return extract_tagged_code(
+        _resolved_notebook_path(),
         tag=_exercise_tag(exercise_no),
     )
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
-    code = extract_tagged_code(
-        EX002_NOTEBOOK_PATH,
-        tag=_exercise_tag(exercise_no),
+    return ast.parse(_exercise_code(exercise_no))
+
+
+def _print_call_count(tree: ast.AST) -> int:
+    return sum(
+        1
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
     )
-    return ast.parse(code)
 
 
 @pytest.mark.task(taskno=1)
@@ -43,11 +65,24 @@ def test_exercise1_logic() -> None:
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == expected_output_text(
+        1,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct() -> None:
+    code = _exercise_code(1)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=1,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
+    )
+
     tree = _exercise_ast(1)
     strings = {
         node.value
@@ -67,11 +102,24 @@ def test_exercise2_logic() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[2]}\n"
+    assert output == expected_output_text(
+        2,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_construct() -> None:
+    code = _exercise_code(2)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=2,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
+    )
+
     tree = _exercise_ast(2)
     strings = {
         node.value
@@ -85,22 +133,37 @@ def test_exercise2_construct() -> None:
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
     value = int(output.strip())
-    assert value == EX002_EXPECTED_NUMERIC[3]
+    assert value == ex002.EX002_EXPECTED_NUMERIC[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[3]}\n"
+    assert output == expected_output_text(
+        3,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_construct() -> None:
-    tree = _exercise_ast(3)
-    has_multiplication = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
+    code = _exercise_code(3)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=3,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
     )
-    assert has_multiplication
+    assert (
+        assertions.assert_uses_operator(
+            exercise_no=3,
+            operator="*",
+            used=constructs.check_uses_operator(code, operator="*"),
+        )
+        == []
+    )
 
 
 @pytest.mark.task(taskno=4)
@@ -113,20 +176,29 @@ def test_exercise4_logic() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[4]}\n"
+    assert output == expected_output_text(
+        4,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_construct() -> None:
+    code = _exercise_code(4)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=4,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
+    )
+
     tree = _exercise_ast(4)
-    print_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    ]
-    assert len(print_calls) == EX002_EXPECTED_PRINT_CALLS[4]
+    assert _print_call_count(tree) == expected_print_call_count(
+        4,
+        expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
+    )
     # Verify string content includes required words
     strings = {
         node.value
@@ -142,49 +214,76 @@ def test_exercise4_construct() -> None:
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
     value = float(output.strip())
-    assert value == EX002_EXPECTED_NUMERIC[5]
+    assert value == ex002.EX002_EXPECTED_NUMERIC[5]
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
     output = _exercise_output(5)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[5]}\n"
+    assert output == expected_output_text(
+        5,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_construct() -> None:
-    tree = _exercise_ast(5)
-    has_division = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div) for node in ast.walk(tree)
+    code = _exercise_code(5)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=5,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
     )
-    assert has_division
+    assert (
+        assertions.assert_uses_operator(
+            exercise_no=5,
+            operator="/",
+            used=constructs.check_uses_operator(code, operator="/"),
+        )
+        == []
+    )
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
     lines = output.strip().splitlines()
-    assert lines == EX002_EXPECTED_MULTI_LINE[6]
+    assert lines == expected_output_lines(
+        6,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    expected = "\n".join(EX002_EXPECTED_MULTI_LINE[6]) + "\n"
-    assert output == expected
+    assert output == expected_output_text(
+        6,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_construct() -> None:
+    code = _exercise_code(6)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=6,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
+    )
+
     tree = _exercise_ast(6)
-    print_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    ]
-    assert len(print_calls) == EX002_EXPECTED_PRINT_CALLS[6]
+    assert _print_call_count(tree) == expected_print_call_count(
+        6,
+        expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
+    )
 
 
 @pytest.mark.task(taskno=7)
@@ -197,11 +296,24 @@ def test_exercise7_logic() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_formatting() -> None:
     output = _exercise_output(7)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[7]}\n"
+    assert output == expected_output_text(
+        7,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_construct() -> None:
+    code = _exercise_code(7)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=7,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
+    )
+
     tree = _exercise_ast(7)
     strings = {
         node.value
@@ -215,22 +327,37 @@ def test_exercise7_construct() -> None:
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
     value = int(output.strip())
-    assert value == EX002_EXPECTED_NUMERIC[8]
+    assert value == ex002.EX002_EXPECTED_NUMERIC[8]
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_formatting() -> None:
     output = _exercise_output(8)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[8]}\n"
+    assert output == expected_output_text(
+        8,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_construct() -> None:
-    tree = _exercise_ast(8)
-    has_multiplication = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
+    code = _exercise_code(8)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=8,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
     )
-    assert has_multiplication
+    assert (
+        assertions.assert_uses_operator(
+            exercise_no=8,
+            operator="*",
+            used=constructs.check_uses_operator(code, operator="*"),
+        )
+        == []
+    )
 
 
 @pytest.mark.task(taskno=9)
@@ -238,31 +365,43 @@ def test_exercise9_logic() -> None:
     output = _exercise_output(9)
     lines = output.strip().splitlines()
     assert lines[0] == "10 minus 3 equals"
-    assert int(lines[1]) == EX002_EXPECTED_NUMERIC[9]
+    assert int(lines[1]) == ex002.EX002_EXPECTED_NUMERIC[9]
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    expected = "\n".join(EX002_EXPECTED_MULTI_LINE[9]) + "\n"
-    assert output == expected
+    assert output == expected_output_text(
+        9,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_construct() -> None:
-    tree = _exercise_ast(9)
-    has_subtraction = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub) for node in ast.walk(tree)
+    code = _exercise_code(9)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=9,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
     )
-    print_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    ]
-    assert has_subtraction
-    assert len(print_calls) == EX002_EXPECTED_PRINT_CALLS[9]
+    assert (
+        assertions.assert_uses_operator(
+            exercise_no=9,
+            operator="-",
+            used=constructs.check_uses_operator(code, operator="-"),
+        )
+        == []
+    )
+
+    tree = _exercise_ast(9)
+    assert _print_call_count(tree) == expected_print_call_count(
+        9,
+        expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
+    )
 
 
 @pytest.mark.task(taskno=10)
@@ -275,11 +414,24 @@ def test_exercise10_logic() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_formatting() -> None:
     output = _exercise_output(10)
-    assert output == f"{EX002_EXPECTED_SINGLE_LINE[10]}\n"
+    assert output == expected_output_text(
+        10,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_construct() -> None:
+    code = _exercise_code(10)
+    assert (
+        assertions.assert_has_print_statement(
+            exercise_no=10,
+            has_print=constructs.check_has_print_statement(code),
+        )
+        == []
+    )
+
     tree = _exercise_ast(10)
     strings = {
         node.value
