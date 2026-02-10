@@ -127,9 +127,9 @@ Move notebook resolution/execution concerns into dedicated modules with parity.
   - Added `tests/exercise_framework/runtime.py` wrappers plus `RuntimeCache` keyed by `(path, tag)` and `(path, tag, input_signature)` for safe artefact reuse.
   - Added dedicated Phase 2 tests in `tests/exercise_framework/test_paths.py` and `tests/exercise_framework/test_runtime.py`.
 - Open questions:
-  - Whether to move API callers from `student_checker` internals to runtime/paths wrappers immediately, or in a dedicated transition commit in Phase 3.
+  - None at this stage; API now uses framework runtime/path modules for execution and resolution concerns.
 - Follow-up:
-  - Rewire `tests/exercise_framework/api.py` to consume `runtime.py`/`paths.py` after expectation and assertion layers are introduced.
+  - Keep API runners aligned with upcoming expectation/assertion extraction in Phase 3 to avoid duplicate logic drift.
 
 ---
 
