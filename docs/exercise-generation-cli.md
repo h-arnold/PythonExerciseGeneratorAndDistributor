@@ -90,6 +90,8 @@ Contains:
 
 The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
 
+On notebooks with multiple exercises (ex003 and later) that final helper now prints grouped rows for each check with columns `Exercise`, `Check`, `Status` and `Error`, mirroring the ex002 experience. Long error text wraps inside the Error column so continuation lines belong to the same cell rather than introducing extra separators, and this grouped layout replaces the older single-notebook summary output that appeared for ex003+.
+
 Debug notebooks contain, for each part:
 
 - A markdown cell describing expected behaviour and output

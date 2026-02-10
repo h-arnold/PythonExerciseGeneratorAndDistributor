@@ -140,7 +140,7 @@ def _format_ex003_prompt_flow_output(exercise_no: int) -> str:
     template = EX003_EXPECTED_INPUT_MESSAGES[exercise_no]
     placeholders = _EX003_PROMPT_FLOW_PLACEHOLDERS[exercise_no]
     inputs = _EX003_PROMPT_FLOW_INPUTS[exercise_no]
-    values = dict(zip(placeholders, inputs))
+    values = dict(zip(placeholders, inputs, strict=True))
     lines = [*prompts, template.format(**values)]
     return "".join(f"{line}\n" for line in lines)
 
@@ -196,30 +196,42 @@ def _check_ex004_static_output(exercise_no: int) -> list[str]:
     return errors
 
 
+def _validate_ex004_prompt_7(notebook_path: str) -> list[str]:
+    output = run_cell_with_input(notebook_path, tag=_exercise_tag(7), inputs=["5"])
+    if EX004_PROMPT_STRINGS[7] not in output or EX004_FORMAT_VALIDATION[7] not in output:
+        return ["Exercise 7: output does not match the expected prompt or total."]
+    return []
+
+
+def _validate_ex004_prompt_8(notebook_path: str) -> list[str]:
+    output = run_cell_with_input(notebook_path, tag=_exercise_tag(8), inputs=["Alice"])
+    expected = f"{EX004_PROMPT_STRINGS[8]} {EX004_FORMAT_VALIDATION[8]}\n"
+    if output != expected:
+        return ["Exercise 8: output does not match the expected greeting."]
+    return []
+
+
+def _validate_ex004_prompt_10(notebook_path: str) -> list[str]:
+    output = run_cell_with_input(notebook_path, tag=_exercise_tag(10), inputs=["Blue"])
+    expected = f"{EX004_PROMPT_STRINGS[10]} {EX004_FORMAT_VALIDATION[10]}\n"
+    if output != expected:
+        return ["Exercise 10: output does not match the expected response."]
+    return []
+
+
+_EX004_PROMPT_FLOW_HANDLERS: dict[int, Callable[[str], list[str]]] = {
+    7: _validate_ex004_prompt_7,
+    8: _validate_ex004_prompt_8,
+    10: _validate_ex004_prompt_10,
+}
+
+
 def _check_ex004_prompt_flow(exercise_no: int) -> list[str]:
-    errors: list[str] = []
+    handler = _EX004_PROMPT_FLOW_HANDLERS.get(exercise_no)
+    if handler is None:
+        return []
     notebook_path = _resolve_ex004_notebook_path()
-    if exercise_no == 7:
-        output = run_cell_with_input(
-            notebook_path, tag=_exercise_tag(7), inputs=["5"]
-        )
-        if EX004_PROMPT_STRINGS[7] not in output or EX004_FORMAT_VALIDATION[7] not in output:
-            errors.append("Exercise 7: output does not match the expected prompt or total.")
-    elif exercise_no == 8:
-        output = run_cell_with_input(
-            notebook_path, tag=_exercise_tag(8), inputs=["Alice"]
-        )
-        expected = f"{EX004_PROMPT_STRINGS[8]} {EX004_FORMAT_VALIDATION[8]}\n"
-        if output != expected:
-            errors.append("Exercise 8: output does not match the expected greeting.")
-    elif exercise_no == 10:
-        output = run_cell_with_input(
-            notebook_path, tag=_exercise_tag(10), inputs=["Blue"]
-        )
-        expected = f"{EX004_PROMPT_STRINGS[10]} {EX004_FORMAT_VALIDATION[10]}\n"
-        if output != expected:
-            errors.append("Exercise 10: output does not match the expected response.")
-    return errors
+    return handler(notebook_path)
 
 
 def _check_ex004_explanation(exercise_no: int) -> list[str]:
@@ -289,9 +301,7 @@ def _check_ex005_prompt_flow(exercise_no: int) -> list[str]:
         )
         profile_prompt_first, profile_prompt_second = EX005_INPUT_PROMPTS[exercise_no]
         age, city = inputs
-        expected = (
-            f"{profile_prompt_first}{profile_prompt_second}You are {age} years old and live in {city}\n"
-        )
+        expected = f"{profile_prompt_first}{profile_prompt_second}You are {age} years old and live in {city}\n"
         if output != expected:
             errors.append("Exercise 10: output does not match the expected profile flow.")
     return errors
@@ -439,7 +449,9 @@ def _build_ex003_checks() -> list[ExerciseCheckDefinition]:
                 _build_exercise_check(exercise_no, "Static output", _check_ex003_static_output)
             )
         if exercise_no in _EX003_PROMPT_FLOW_INPUTS:
-            checks.append(_build_exercise_check(exercise_no, "Prompt flow", _check_ex003_prompt_flow))
+            checks.append(
+                _build_exercise_check(exercise_no, "Prompt flow", _check_ex003_prompt_flow)
+            )
     return checks
 
 
@@ -452,7 +464,9 @@ def _build_ex004_checks() -> list[ExerciseCheckDefinition]:
                 _build_exercise_check(exercise_no, "Static output", _check_ex004_static_output)
             )
         if exercise_no in prompt_exercises:
-            checks.append(_build_exercise_check(exercise_no, "Prompt flow", _check_ex004_prompt_flow))
+            checks.append(
+                _build_exercise_check(exercise_no, "Prompt flow", _check_ex004_prompt_flow)
+            )
         checks.append(_build_exercise_check(exercise_no, "Explanation", _check_ex004_explanation))
     return checks
 
@@ -466,7 +480,9 @@ def _build_ex005_checks() -> list[ExerciseCheckDefinition]:
                 _build_exercise_check(exercise_no, "Static output", _check_ex005_static_output)
             )
         if exercise_no in prompt_exercises:
-            checks.append(_build_exercise_check(exercise_no, "Prompt flow", _check_ex005_prompt_flow))
+            checks.append(
+                _build_exercise_check(exercise_no, "Prompt flow", _check_ex005_prompt_flow)
+            )
         checks.append(_build_exercise_check(exercise_no, "Explanation", _check_ex005_explanation))
     return checks
 

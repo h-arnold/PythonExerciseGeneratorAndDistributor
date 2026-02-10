@@ -26,10 +26,21 @@ CheckResult = tuple[str, bool, list[str]]
 class _ExerciseCheckResult(Protocol):
     """Protocol covering the fields required for grouped rendering."""
 
-    exercise_no: int
-    title: str
-    passed: bool
-    issues: list[str]
+    @property
+    def exercise_no(self) -> int:  # pragma: no cover - protocol definition
+        ...
+
+    @property
+    def title(self) -> str:  # pragma: no cover - protocol definition
+        ...
+
+    @property
+    def passed(self) -> bool:  # pragma: no cover - protocol definition
+        ...
+
+    @property
+    def issues(self) -> list[str]:  # pragma: no cover - protocol definition
+        ...
 
 
 def run_check(check: NotebookCheckSpec) -> None:
