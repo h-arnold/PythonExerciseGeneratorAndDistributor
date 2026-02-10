@@ -352,15 +352,15 @@ Prove the refactor is autograder-safe before wider migration.
 
 ### TDD Tasks
 
-- [ ] Add integration tests exercising autograde plugin with ex002-focused runs.
-- [ ] Add payload-builder tests for full and `--minimal` modes.
-- [ ] Assert unchanged status fields (`pass`/`fail`/`error`) and task metadata.
+- [x] Add integration tests exercising autograde plugin with ex002-focused runs.
+- [x] Add payload-builder tests for full and `--minimal` modes.
+- [x] Assert unchanged status fields (`pass`/`fail`/`error`) and task metadata.
 
 ### Acceptance Criteria
 
-- [ ] Autograde plugin hooks function unchanged.
-- [ ] Payload schema and required fields remain compatible.
-- [ ] No scoring drift for ex002 tasks.
+- [x] Autograde plugin hooks function unchanged.
+- [x] Payload schema and required fields remain compatible.
+- [x] No scoring drift for ex002 tasks.
 
 ### Constraints
 
@@ -380,13 +380,13 @@ Prove the refactor is autograder-safe before wider migration.
 ### Notes
 
 - Decisions
-  -
+  - Added parity tests for autograde plugin output and payload minimisation.
 
 - Open questions
-  -
+  - None.
 
 - Follow-up
-  -
+  - Run autograde parity tests against solution notebooks when convenient.
 
 ---
 
@@ -457,7 +457,7 @@ Use the `uv` environment and prefer solution notebooks for development checks.
 - [x] Phase 4
 - [x] Phase 5
 - [x] Phase 6
-- [ ] Phase 7
+- [x] Phase 7
 - [ ] Phase 8
 
 ### Risks to Track During Delivery
