@@ -45,28 +45,158 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 - **Only test edge cases requested in the prompt.**
 - Do not test for defensive coding unless specifically asked for.
 
+### 4. Mandatory Testing Rules
+
+**Rule 1: Always test the taught construct**
+
+If the exercise teaches a specific Python feature, you MUST include a construct test.
+
+Examples:
+- Casting lesson → Check for `int()`, `float()`, or `str()` calls
+- Input lesson → Check for `input()` assignment and variable usage in print
+- Loop lesson → Check for `for` or `while` syntax
+- Concatenation lesson → Check variables are used in the print statement
+- Arithmetic lesson → Check for the required operator (`+`, `*`, etc.)
+
+**Rule 2: Test for absence of old/incorrect values**
+
+When modifying existing code, verify the original value is gone.
+
+Examples:
+- Changing `"pasta"` to `"sushi"` → Assert `"pasta"` not in output
+- Updating a prompt → Assert old prompt text not in code constants
+- Fixing a calculation → Assert the wrong answer doesn't appear
+
 ## Grouping & Scoring (GitHub Classroom)
 
 We group tests using `@pytest.mark.task(taskno=N)` to align with the GitHub Classroom runner.
 
-### Scoring Strategy
+### Scoring Strategy: Test Count Guidelines
 
-Each **exercise** (e.g., Exercise 1) often has **multiple success criteria**.
-To provide granular feedback, implement **multiple tests** for a single exercise, all tagged with the same `taskno`.
+Each exercise should have tests for its **distinct success criteria**. Every test with the same `taskno` contributes to partial credit for that exercise.
 
-**Example Criteria for Exercise 1:**
+**Core criteria (choose applicable):**
 
-1. **Logic**: Did it calculate the correct answer?
-2. **Construct**: Did it use a `for` loop?
-3. **Formatting**: Was the output message formatted correctly?
+1. **Logic**: Does it produce the correct output?
+2. **Construct**: Does it use the required syntax? (MANDATORY if lesson teaches specific construct)
+3. **Formatting**: Is output precisely formatted? (when exact whitespace/punctuation matters)
+4. **Negative checks**: Is old/incorrect code gone? (for modify tasks)
 
-If an exercise has 3 such tests and 1 fails, the student receives 2/3 of the points for that exercise.
+**Test count by exercise type:**
 
-**IMPORTANT:** Not all tasks need multiple tests. If an exercise has a single clear criterion, one test is sufficient. Equally, some exercises will be complex enough to warrant 4+ tests. Use your judgement based on the learning objectives.
+| Exercise Type | Typical Tests | Criteria |
+|--------------|---------------|----------|
+| Static output change | 2 | Logic + Construct |
+| Input/output with construct | 3 | Logic + Formatting + Construct |
+| Debug with explanation | 4+ | Logic + Formatting + Construct + Explanation |
+| Pure "Make" task | 1-2 | Logic (+ Construct if applicable) |
 
-### Choosing the Right Number of Tests (real repository examples)
+### How Many Tests Should an Exercise Have?
 
-Use professional judgement per exercise, not a fixed "always three tests" rule.
+Ask these questions in order:
+
+1. **Does it teach a specific construct?** → YES = Add construct test
+2. **Does it modify existing code?** → YES = Add negative assertion (old value absent)
+3. **Does output format matter (exact whitespace/punctuation)?** → YES = Add formatting test
+4. **Does it accept input?** → YES = Check prompt text + variable usage
+5. **Does it produce output?** → YES = Add logic test (always)
+
+**Minimum:** 1 test (output only) for pure "Make" tasks with no construct requirements
+**Typical:** 2-3 tests for modify/debug tasks with construct requirements
+**Maximum:** 4+ tests only when exercise has distinct explanation/edge cases
+
+### Common Missing Test Patterns
+
+#### Missing Construct Check (INCOMPLETE)
+
+**Exercise:** Cast the input to int and multiply by 2
+
+```python
+# Student code
+num = input()
+print(int(num) * 2)
+```
+
+**Inadequate test (only checks output):**
+```python
+@pytest.mark.task(taskno=1)
+def test_exercise1_logic():
+    output = run_with_input(["5"])
+    assert "10" in output  # ❌ Student could hardcode "10"
+```
+
+**Complete test suite:**
+```python
+@pytest.mark.task(taskno=1)
+def test_exercise1_logic():
+    output = run_with_input(["5"])
+    assert "10" in output  # ✅ Output is correct
+
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct():
+    tree = _ast(1)
+    assert _has_call(tree, "int")  # ✅ Required cast is present
+    assert _has_binop(tree, ast.Mult)  # ✅ Multiplication is used
+```
+
+#### Missing Input Variable Check (INCOMPLETE)
+
+**Exercise:** Ask for name with input() and print it
+
+**Inadequate test:**
+```python
+@pytest.mark.task(taskno=2)
+def test_exercise2_logic():
+    output = run_with_input(["Alice"])
+    assert "Alice" in output  # ❌ Could be hardcoded: print("Alice")
+```
+
+**Complete test:**
+```python
+@pytest.mark.task(taskno=2)
+def test_exercise2_logic():
+    output = run_with_input(["Alice"])
+    assert "Alice" in output
+
+@pytest.mark.task(taskno=2)
+def test_exercise2_construct():
+    tree = _ast(2)
+    input_vars = _input_assigned_names(tree)  # ✅ Check input() used
+    assert len(input_vars) >= 1
+    assert any(_print_uses_name(tree, var) for var in input_vars)  # ✅ Variable used in print
+```
+
+#### Missing Negative Check (INCOMPLETE)
+
+**Exercise:** Change the greeting from "Hello" to "Hi"
+
+**Inadequate test:**
+```python
+@pytest.mark.task(taskno=3)
+def test_exercise3_logic():
+    output = _run(3)
+    assert "Hi there!" in output  # ❌ Both "Hello" and "Hi" could appear
+```
+
+**Complete test:**
+```python
+@pytest.mark.task(taskno=3)
+def test_exercise3_logic():
+    output = _run(3)
+    assert "Hi there!" in output
+    assert "Hello" not in output  # ✅ Old value is gone
+
+@pytest.mark.task(taskno=3)
+def test_exercise3_construct():
+    tree = _ast(3)
+    constants = _string_constants(tree)
+    assert "Hi there!" in constants  # ✅ New value in code
+    assert "Hello from Python" not in constants  # ✅ Old constant removed
+```
+
+### Real Repository Examples
+
+Apply the decision framework above to determine test count. These examples from the codebase show how different exercise types require different numbers of tests.
 
 #### 1) One-test example (ex006 Exercise 7)
 
@@ -91,7 +221,7 @@ def test_exercise7_logic() -> None:
     assert expected_output in output
 ```
 
-Why one test is enough here: the exercise is outcome-focused (prompt and resulting output), and there is no additional construct to score separately.
+**Note:** This example is from the current codebase but is actually **incomplete** by our new standards. Since this is a casting lesson exercise, it should include a construct test checking for `float()` and addition. Use one test only when there truly is a single criterion (pure output-only "Make" tasks with no required construct).
 
 #### 2) Three-test example (ex003 Exercise 4)
 
