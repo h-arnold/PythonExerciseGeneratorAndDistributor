@@ -70,5 +70,13 @@
   {
     "text": "Tidy review: alias compatibility automated+manual",
     "status": "done"
+  },
+  {
+    "text": "TCR metadata cleanup & git hook review",
+    "status": "done"
+  },
+  {
+    "text": "TCR metadata hook review - automated+manual",
+    "status": "done"
   }
 ]

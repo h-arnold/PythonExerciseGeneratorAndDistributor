@@ -1,15 +1,16 @@
 """Utility to clear notebook metadata before commits."""
+
 from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Iterable, Sequence, Set
 
 DEFAULT_SCAN_PATHS = ("notebooks",)
 
 
-def iter_notebook_paths(paths: Iterable[Path]) -> Set[Path]:
+def iter_notebook_paths(paths: Iterable[Path]) -> set[Path]:
     """Yield every tracked notebook for the given start paths."""
     resolved: list[Path] = []
     for path in paths:
@@ -22,12 +23,9 @@ def iter_notebook_paths(paths: Iterable[Path]) -> Set[Path]:
 
 def clear_notebook_metadata(path: Path) -> bool:
     """Ensure the notebook has empty metadata, returning True if a rewrite occured."""
-    text = path.read_text(encoding="utf-8")
-    notebook = json.loads(text)
+    notebook = json.loads(path.read_text(encoding="utf-8"))
     metadata = notebook.get("metadata")
-    if isinstance(metadata, dict) and not metadata:
-        return False
-    if metadata is None:
+    if metadata == {}:
         return False
     notebook["metadata"] = {}
     path.write_text(json.dumps(notebook, indent=1) + "\n", encoding="utf-8")
@@ -47,7 +45,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     inputs = [Path(p) for p in args.paths]
     notebooks = iter_notebook_paths(inputs)
-    updated = []
+    updated: list[Path] = []
     for notebook in sorted(notebooks):
         if clear_notebook_metadata(notebook):
             updated.append(notebook)

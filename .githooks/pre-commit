@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+run_uv() {
+  echo "[pre-commit] $*"
+  uv run "$@"
+}
+
+run_uv python scripts/clear_notebook_metadata.py --paths notebooks
+run_uv ruff format
+run_uv ruff check .

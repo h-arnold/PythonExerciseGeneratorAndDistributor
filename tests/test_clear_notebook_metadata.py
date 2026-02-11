@@ -1,14 +1,23 @@
 """Tests for the notebook metadata cleaning helper."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TypedDict
 
 from scripts.clear_notebook_metadata import clear_notebook_metadata, main
 
 
+class NotebookData(TypedDict):
+    metadata: object | None
+    cells: list[dict[str, object]]
+    nbformat: int
+    nbformat_minor: int
+
+
 def _write_notebook(path: Path, metadata: object | None) -> Path:
-    data = {
+    data: NotebookData = {
         "metadata": metadata,
         "cells": [],
         "nbformat": 4,
@@ -44,3 +53,9 @@ def test_main_returns_zero_when_nothing_changes(tmp_path: Path) -> None:
     notebooks.mkdir()
     _write_notebook(notebooks / "lesson.ipynb", {})
     assert main(["--paths", str(notebooks)]) == 0
+
+
+def test_clear_metadata_handles_null(tmp_path: Path) -> None:
+    notebook = _write_notebook(tmp_path / "null_metadata.ipynb", None)
+    assert clear_notebook_metadata(notebook)
+    assert json.loads(notebook.read_text(encoding="utf-8"))["metadata"] == {}
