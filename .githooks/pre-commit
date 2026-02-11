@@ -9,10 +9,28 @@ run_uv() {
   uv run "$@"
 }
 
+before_diff_file=$(mktemp)
+after_diff_file=$(mktemp)
+trap 'rm -f "$before_diff_file" "$after_diff_file"' EXIT
+
+git diff --no-ext-diff -- . >"$before_diff_file"
+
+metadata_status=0
+set +e
 run_uv python scripts/clear_notebook_metadata.py --paths notebooks
+metadata_status=$?
+set -e
+if [ "$metadata_status" -gt 1 ]; then
+  exit "$metadata_status"
+fi
+
 run_uv ruff format
-if ! git diff --quiet --exit-code -- .; then
+
+git diff --no-ext-diff -- . >"$after_diff_file"
+if ! cmp -s "$before_diff_file" "$after_diff_file"; then
   echo "[pre-commit] Formatting changed tracked files; review and restage." >&2
+  git diff --name-only -- . >&2
   exit 1
 fi
+
 run_uv ruff check .
