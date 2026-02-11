@@ -9,7 +9,11 @@ run_uv() {
   uv run "$@"
 }
 
-before_unstaged=$(git diff --name-only -- . | sort -u)
+before_diff_file=$(mktemp)
+after_diff_file=$(mktemp)
+trap 'rm -f "$before_diff_file" "$after_diff_file"' EXIT
+
+git diff --no-ext-diff -- . >"$before_diff_file"
 
 metadata_status=0
 set +e
@@ -21,12 +25,12 @@ if [ "$metadata_status" -gt 1 ]; then
 fi
 
 run_uv ruff format
-after_unstaged=$(git diff --name-only -- . | sort -u)
-new_unstaged=$(comm -13 <(printf "%s\n" "$before_unstaged") <(printf "%s\n" "$after_unstaged"))
 
-if [ -n "$new_unstaged" ]; then
+git diff --no-ext-diff -- . >"$after_diff_file"
+if ! cmp -s "$before_diff_file" "$after_diff_file"; then
   echo "[pre-commit] Formatting changed tracked files; review and restage." >&2
-  printf '%s\n' "$new_unstaged" >&2
+  git diff --name-only -- . >&2
   exit 1
 fi
+
 run_uv ruff check .
