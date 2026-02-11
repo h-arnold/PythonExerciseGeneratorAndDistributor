@@ -17,7 +17,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
@@ -139,15 +139,26 @@ def _get_task_marker(item: Any) -> Any | None:
 
 
 def _extract_marker_kwargs(marker: Any) -> dict[str, Any]:
-    kwargs = getattr(marker, "kwargs", None)
-    return kwargs if isinstance(kwargs, dict) else {}
+    raw_kwargs = getattr(marker, "kwargs", None)
+    if not isinstance(raw_kwargs, dict):
+        return {}
+    typed_kwargs: dict[str, Any] = {}
+    typed_items = cast(dict[object, object], raw_kwargs)
+    for key, value in typed_items.items():
+        if isinstance(key, str):
+            typed_kwargs[key] = value
+    return typed_kwargs
 
 
 def _extract_marker_args(marker: Any) -> Sequence[Any]:
-    args = getattr(marker, "args", ())
-    if isinstance(args, Sequence) and not isinstance(args, (str, bytes)):
-        return args
-    return ()
+    raw_args = getattr(marker, "args", None)
+    if not isinstance(raw_args, Sequence) or isinstance(raw_args, (str, bytes)):
+        return ()
+    typed_sequence = cast(Sequence[Any], raw_args)
+    typed_args: list[Any] = []
+    for arg in typed_sequence:
+        typed_args.append(arg)
+    return tuple(typed_args)
 
 
 def _select_task_source(marker_kwargs: dict[str, Any], marker_args: Sequence[Any]) -> Any | None:

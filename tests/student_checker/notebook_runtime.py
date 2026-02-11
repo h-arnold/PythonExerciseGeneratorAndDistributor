@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from typing import cast
 
 from tests.exercise_framework.reporting import render_grouped_table_with_errors
 from tests.notebook_grader import (
@@ -68,8 +69,9 @@ def _extract_tags_from_metadata(metadata: NotebookMetadata) -> list[str]:
     if isinstance(raw_tags, str):
         candidates = (raw_tags,)
     elif isinstance(raw_tags, list):
+        typed_tags = cast(list[object], raw_tags)
         str_items: list[str] = []
-        for item in raw_tags:
+        for item in typed_tags:
             if not isinstance(item, str):
                 return []
             str_items.append(item)

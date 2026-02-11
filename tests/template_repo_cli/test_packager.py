@@ -8,9 +8,10 @@ from typing import TypeAlias
 
 import pytest
 
+from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
-ExerciseFileMap: TypeAlias = dict[str, dict[str, Path]]
+ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
 ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
 
 
@@ -30,10 +31,10 @@ def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
             msg = "At least one exercise_id is required"
             raise ValueError(msg)
         return {
-            exercise_id: {
-                "notebook": repo_root / f"notebooks/{exercise_id}.ipynb",
-                "test": repo_root / f"tests/test_{exercise_id}.py",
-            }
+            exercise_id: ExerciseFiles(
+                notebook=repo_root / f"notebooks/{exercise_id}.ipynb",
+                test=repo_root / f"tests/test_{exercise_id}.py",
+            )
             for exercise_id in exercise_ids
         }
 
