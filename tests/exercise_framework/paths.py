@@ -20,10 +20,22 @@ def resolve_notebook_path(notebook_path: str | Path) -> Path:
     if override_root.startswith("./"):
         override_root = override_root[2:]
     override_root = override_root.rstrip("/")
-    if not override_root:
-        if original.is_absolute():
-            return original
-        return (repo_root / original).resolve()
+    if override_root:
+        override_root_path = Path(override_root)
+        if not override_root_path.is_absolute():
+            override_root_path = (repo_root / override_root_path).resolve()
+
+        try:
+            rel = original.relative_to("notebooks")
+        except ValueError:
+            rel = Path(original.name)
+
+        candidate = override_root_path / rel
+        return candidate if candidate.exists() else original
+    
+    if original.is_absolute():
+        return original
+    return (repo_root / original).resolve()
 
     override_root_path = Path(override_root)
     if not override_root_path.is_absolute():
