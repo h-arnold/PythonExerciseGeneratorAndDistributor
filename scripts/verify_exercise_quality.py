@@ -386,6 +386,13 @@ def _check_notebook_structure(
             continue
         cell_mapping = cast(dict[str, Any], cell)
         if not _is_notebook_cell(cell_mapping):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    f"Cell {idx} has invalid notebook cell structure",
+                    path=nb_path,
+                )
+            )
             continue
 
         findings.extend(_check_cell_language(idx, cell_mapping, nb_path))
