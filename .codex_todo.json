@@ -58,5 +58,13 @@
   {
     "text": "TCR input-handling review: manual trace and final report.",
     "status": "done"
+  },
+  {
+    "text": "TCR checks split: automated review (env, tests, lint, pyright)",
+    "status": "done"
+  },
+  {
+    "text": "TCR checks split: manual trace + final report",
+    "status": "done"
   }
 ]

@@ -17,7 +17,7 @@ from tests.notebook_grader import (
 )
 
 from ..models import Ex006CheckResult
-from .base import Ex006CheckDefinition, _build_ex006_check, _exercise_tag
+from .base import Ex006CheckDefinition, build_ex006_check, exercise_tag
 
 
 def check_ex006() -> list[str]:
@@ -47,7 +47,7 @@ def run_ex006_checks() -> list[Ex006CheckResult]:
 def _check_ex006_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
     notebook_path = _resolve_ex006_notebook_path()
-    output = run_cell_and_capture_output(notebook_path, tag=_exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(notebook_path, tag=exercise_tag(exercise_no))
     expected = EX006_EXPECTED_OUTPUTS[exercise_no]
     if output != expected:
         errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
@@ -59,7 +59,7 @@ def _check_ex006_input_flow(exercise_no: int) -> list[str]:
     notebook_path = _resolve_ex006_notebook_path()
     details = EX006_INPUT_EXPECTATIONS[exercise_no]
     inputs = details["inputs"]
-    output = run_cell_with_input(notebook_path, tag=_exercise_tag(exercise_no), inputs=inputs)
+    output = run_cell_with_input(notebook_path, tag=exercise_tag(exercise_no), inputs=inputs)
     prompt_contains = details["prompt_contains"]
     output_contains = details.get("output_contains")
     last_line = details.get("last_line")
@@ -89,17 +89,19 @@ def _build_ex006_checks() -> list[Ex006CheckDefinition]:
     for exercise_no in exercise_numbers:
         if exercise_no in EX006_EXPECTED_OUTPUTS:
             checks.append(
-                _build_ex006_check(exercise_no, "Static output", _check_ex006_static_output)
+                build_ex006_check(exercise_no, "Static output", _check_ex006_static_output)
             )
         if exercise_no in EX006_INPUT_EXPECTATIONS:
-            checks.append(_build_ex006_check(exercise_no, "Prompt flow", _check_ex006_input_flow))
+            checks.append(build_ex006_check(exercise_no, "Prompt flow", _check_ex006_input_flow))
     return checks
 
 
 _EX006_CHECKS: list[Ex006CheckDefinition] = _build_ex006_checks()
+EX006_CHECKS = _EX006_CHECKS
 
 
 __all__ = [
+    "EX006_CHECKS",
     "_EX006_CHECKS",
     "Ex006CheckDefinition",
     "check_ex006",

@@ -3,19 +3,22 @@
 from __future__ import annotations
 
 from tests.exercise_expectations import ex007_data_types_debug_casting as ex007
-from tests.exercise_framework.expectations_helpers import is_valid_explanation
 from tests.exercise_framework.paths import (
     resolve_notebook_path as resolve_framework_notebook_path,
 )
 from tests.notebook_grader import (
     NotebookGradingError,
-    get_explanation_cell,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
 
 from ..models import ExerciseCheckResult
-from .base import ExerciseCheckDefinition, _build_exercise_check, _exercise_tag
+from .base import (
+    ExerciseCheckDefinition,
+    build_exercise_check,
+    check_explanation_cell,
+    exercise_tag,
+)
 
 
 def check_ex007() -> list[str]:
@@ -46,7 +49,7 @@ def _check_ex007_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
     notebook_path = _resolve_ex007_notebook_path()
     expected = ex007.EX007_EXPECTED_STATIC_OUTPUTS[exercise_no]
-    output = run_cell_and_capture_output(notebook_path, tag=_exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(notebook_path, tag=exercise_tag(exercise_no))
     if output != expected:
         errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
     return errors
@@ -57,7 +60,7 @@ def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
     notebook_path = _resolve_ex007_notebook_path()
     case = ex007.EX007_INPUT_CASES[exercise_no]
     inputs = list(case["inputs"])
-    output = run_cell_with_input(notebook_path, tag=_exercise_tag(exercise_no), inputs=inputs)
+    output = run_cell_with_input(notebook_path, tag=exercise_tag(exercise_no), inputs=inputs)
     prompts = case["prompts"]
     for prompt in prompts:
         if prompt not in output:
@@ -74,20 +77,12 @@ def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
 
 
 def _check_ex007_explanation(exercise_no: int) -> list[str]:
-    try:
-        explanation = get_explanation_cell(
-            _resolve_ex007_notebook_path(),
-            tag=f"explanation{exercise_no}",
-        )
-    except AssertionError:
-        return [f"Exercise {exercise_no}: explanation is missing."]
-    if not is_valid_explanation(
-        explanation,
-        min_length=ex007.EX007_MIN_EXPLANATION_LENGTH,
-        placeholder_phrases=ex007.EX007_PLACEHOLDER_PHRASES,
-    ):
-        return [f"Exercise {exercise_no}: explanation needs more detail."]
-    return []
+    return check_explanation_cell(
+        _resolve_ex007_notebook_path(),
+        exercise_no,
+        ex007.EX007_MIN_EXPLANATION_LENGTH,
+        ex007.EX007_PLACEHOLDER_PHRASES,
+    )
 
 
 def _resolve_ex007_notebook_path() -> str:
@@ -100,20 +95,22 @@ def _build_ex007_checks() -> list[ExerciseCheckDefinition]:
     for exercise_no in exercise_numbers:
         if exercise_no in ex007.EX007_EXPECTED_STATIC_OUTPUTS:
             checks.append(
-                _build_exercise_check(exercise_no, "Static output", _check_ex007_static_output)
+                build_exercise_check(exercise_no, "Static output", _check_ex007_static_output)
             )
         if exercise_no in ex007.EX007_INPUT_CASES:
             checks.append(
-                _build_exercise_check(exercise_no, "Prompt flow", _check_ex007_prompt_flow)
+                build_exercise_check(exercise_no, "Prompt flow", _check_ex007_prompt_flow)
             )
-        checks.append(_build_exercise_check(exercise_no, "Explanation", _check_ex007_explanation))
+        checks.append(build_exercise_check(exercise_no, "Explanation", _check_ex007_explanation))
     return checks
 
 
 _EX007_CHECKS: list[ExerciseCheckDefinition] = _build_ex007_checks()
+EX007_CHECKS = _EX007_CHECKS
 
 
 __all__ = [
+    "EX007_CHECKS",
     "_EX007_CHECKS",
     "ExerciseCheckDefinition",
     "check_ex007",
