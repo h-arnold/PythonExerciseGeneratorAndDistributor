@@ -148,6 +148,7 @@ Notebook formatting requirements
 - Notebook is JSON (`.ipynb`).
 - Each cell must include `metadata.language` (`markdown`/`python`).
 - If editing existing notebook cells, preserve `metadata.id`.
+- For the optional self-check cell, call `run_notebook_checks()` with the notebook filename only (for example, `run_notebook_checks('ex007_data_types_debug_casting.ipynb')`), not a `notebooks/...` prefixed path. This keeps the cell portable when the kernel working directory is `notebooks/` or `notebooks/solutions/`.
 
 Metadata tips:
 - When you tag a cell for grading, ensure the tag exactly matches `exercise1`, `exercise2`, etc.; the grader locates cells by this metadata tag.

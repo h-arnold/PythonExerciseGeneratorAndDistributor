@@ -108,6 +108,7 @@ For both student + solution notebooks:
 - Every graded code cell must include `metadata.tags` with the exact tag (`exercise1`, `exercise2`, ...).
 - For debug exercises: explanation markdown cells must have tags `explanation1`, ...
 - Every cell must have `metadata.language` (`markdown` or `python`).
+- If there is an optional self-check cell using `run_notebook_checks(...)`, verify it passes the notebook filename only (for example, `ex007_data_types_debug_casting.ipynb`) rather than a `notebooks/...` prefixed path. A prefixed path can fail with `Notebook not found` when run from inside the `notebooks/` directory.
 - The exercises in the student and solution notebooks must match.
 
 Note: existing notebooks may also include a top-level `id` field on cells; preserve it.

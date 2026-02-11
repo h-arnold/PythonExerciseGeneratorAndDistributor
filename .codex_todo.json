@@ -1,0 +1,42 @@
+[
+  {
+    "text": "Plan new data types debug exercise set (id & slug).",
+    "status": "done"
+  },
+  {
+    "text": "Scaffold notebooks/tests/metadata via scripts/new_exercise.py.",
+    "status": "done"
+  },
+  {
+    "text": "Author student & solution notebooks plus supporting README/OVERVIEW.",
+    "status": "in-progress"
+  },
+  {
+    "text": "Run Exercise Verifier pre-test, then craft pytest suite for exercises.",
+    "status": "todo"
+  },
+  {
+    "text": "Run solution+student test passes, final verifier, update OrderOfTeaching.",
+    "status": "todo"
+  },
+  {
+    "text": "Review debug/data-types instructions for ex007 verification.",
+    "status": "in-progress"
+  },
+  {
+    "text": "Run scripts/verify_exercise_quality.py for ex007.",
+    "status": "todo"
+  },
+  {
+    "text": "Inspect student & solution notebooks plus teacher docs for ex007.",
+    "status": "todo"
+  },
+  {
+    "text": "Review pytest expectations/tests and run PYTUTOR solution suite.",
+    "status": "todo"
+  },
+  {
+    "text": "Write final verifier report with Gate A-F verdicts.",
+    "status": "todo"
+  }
+]
