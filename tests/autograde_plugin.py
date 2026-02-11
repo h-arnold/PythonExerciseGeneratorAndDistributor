@@ -150,9 +150,7 @@ def _extract_marker_args(marker: Any) -> Sequence[Any]:
     return ()
 
 
-def _select_task_source(
-    marker_kwargs: dict[str, Any], marker_args: Sequence[Any]
-) -> Any | None:
+def _select_task_source(marker_kwargs: dict[str, Any], marker_args: Sequence[Any]) -> Any | None:
     for key in ("taskno", "number"):
         if key in marker_kwargs:
             return marker_kwargs[key]
@@ -181,9 +179,7 @@ def _resolve_task_number(
         return None
 
 
-def _parse_task_marker(
-    item: Any, state: AutogradeState
-) -> tuple[int | None, str | None]:
+def _parse_task_marker(item: Any, state: AutogradeState) -> tuple[int | None, str | None]:
     marker = _get_task_marker(item)
     marker_kwargs = _extract_marker_kwargs(marker)
     marker_args = _extract_marker_args(marker)
@@ -205,9 +201,7 @@ def _get_item_doc(item: Any) -> str | None:
     return None
 
 
-def derive_display_name(
-    nodeid: str, *, doc: str | None, marker_name: str | None = None
-) -> str:
+def derive_display_name(nodeid: str, *, doc: str | None, marker_name: str | None = None) -> str:
     """Return a human-friendly display name derived from pytest metadata."""
 
     candidates: list[str] = []
@@ -262,9 +256,7 @@ def _resolve_line_number_from_location(location: Sequence[Any] | None) -> int | 
         return None
 
     candidate = location[1]
-    if isinstance(
-        candidate, bool
-    ):  # bool is subclass of int but semantically different
+    if isinstance(candidate, bool):  # bool is subclass of int but semantically different
         candidate = int(candidate)
 
     result: int | None = None
@@ -402,9 +394,7 @@ def pytest_configure(config: Any) -> None:
         state = AutogradeState()
         config._autograde_state = state  # type: ignore[attr-defined]
 
-    state.results_path = (
-        Path(results_option).expanduser().resolve() if results_option else None
-    )
+    state.results_path = Path(results_option).expanduser().resolve() if results_option else None
     if state.start_timestamp is None:
         state.start_timestamp = time.time()
     if state.results_path is None:
@@ -514,9 +504,7 @@ def _compute_final_scores(
     Returns:
         A tuple of (earned_score, max_score).
     """
-    max_score = (
-        float(len(state.metadata)) if state.metadata else float(len(results_payload))
-    )
+    max_score = float(len(state.metadata)) if state.metadata else float(len(results_payload))
     earned_score = float(sum(entry["score"] for entry in results_payload))
     return earned_score, max_score
 
@@ -556,9 +544,7 @@ def _build_json_payload(
     return payload
 
 
-def _write_json_with_fallback(
-    payload: dict[str, Any], path: Path, state: AutogradeState
-) -> None:
+def _write_json_with_fallback(payload: dict[str, Any], path: Path, state: AutogradeState) -> None:
     """Write JSON payload to file with error handling and fallback.
 
     Args:
@@ -628,17 +614,13 @@ def pytest_terminal_summary(terminalreporter: Any) -> None:
 
     total_tests = len(state.metadata) if state.metadata else len(state.results)
     passed = sum(1 for result in state.results if result.status == "pass")
-    overall_status = _derive_overall_status(
-        state, [_result_to_dict(res) for res in state.results]
-    )
+    overall_status = _derive_overall_status(state, [_result_to_dict(res) for res in state.results])
     if state.results_path:
         terminalreporter.write_line(
             f"Autograde summary: {passed}/{total_tests} passed | "
             f"Score {state.total_score}/{state.max_score} | Status {overall_status}"
         )
-        terminalreporter.write_line(
-            f"Autograde results written to: {state.results_path}"
-        )
+        terminalreporter.write_line(f"Autograde results written to: {state.results_path}")
     else:
         terminalreporter.write_line(
             "Autograde summary: no results file written (missing --autograde-results-path)"

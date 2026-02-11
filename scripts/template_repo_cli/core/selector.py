@@ -179,9 +179,7 @@ class ExerciseSelector:
 
         return exercises
 
-    def select_by_construct_and_type(
-        self, constructs: list[str], types: list[str]
-    ) -> list[str]:
+    def select_by_construct_and_type(self, constructs: list[str], types: list[str]) -> list[str]:
         """Select exercises by construct AND type.
 
         Args:

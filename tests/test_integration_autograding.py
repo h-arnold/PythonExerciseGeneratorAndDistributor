@@ -165,9 +165,9 @@ def _expect_student_failure(
     payload: AutogradePayloadDict,
     results: AutogradeResultsDict,
 ) -> None:
-    if payload["status"] == "pass" and _normalise_score(
-        payload["score"]
-    ) == _normalise_score(payload["max_score"]):
+    if payload["status"] == "pass" and _normalise_score(payload["score"]) == _normalise_score(
+        payload["max_score"]
+    ):
         raise AssertionError(
             "Student notebooks unexpectedly passed the failing fixture; update the fixture "
             "or ensure the student run uses the intended notebooks directory."
@@ -176,9 +176,7 @@ def _expect_student_failure(
     assert manual_run.returncode != 0
     assert results["status"] == "fail"
     assert payload["status"] == "fail"
-    assert _normalise_score(results.get("score")) < _normalise_score(
-        results["max_score"]
-    )
+    assert _normalise_score(results.get("score")) < _normalise_score(results["max_score"])
     assert _normalise_score(payload["score"]) < _normalise_score(payload["max_score"])
 
 
@@ -187,9 +185,7 @@ def _assert_solution_vs_student(
     student_payload: AutogradePayloadDict,
 ) -> None:
     assert solution_payload["status"] != student_payload["status"]
-    assert _normalise_score(solution_payload["score"]) > _normalise_score(
-        student_payload["score"]
-    )
+    assert _normalise_score(solution_payload["score"]) > _normalise_score(student_payload["score"])
     assert approx(_normalise_score(solution_payload["max_score"])) == approx(
         _normalise_score(student_payload["max_score"])
     )
@@ -286,9 +282,7 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
 
     solution_env: EnvOverrides = {"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"}
     solution_dir = tmp_path / "solutions"
-    sol_run, sol_results = _run_manual_autograde(
-        solution_dir, target_test, solution_env
-    )
+    sol_run, sol_results = _run_manual_autograde(solution_dir, target_test, solution_env)
     sol_cli_run, sol_payload = _run_cli_autograde(
         solution_dir,
         target_test,
@@ -301,16 +295,10 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
 
     student_env: EnvOverrides = {"PYTUTOR_NOTEBOOKS_DIR": "notebooks"}
     student_dir = tmp_path / "students"
-    student_run, student_results = _run_manual_autograde(
-        student_dir, target_test, student_env
-    )
-    student_cli_run, student_payload = _run_cli_autograde(
-        student_dir, target_test, student_env
-    )
+    student_run, student_results = _run_manual_autograde(student_dir, target_test, student_env)
+    student_cli_run, student_payload = _run_cli_autograde(student_dir, target_test, student_env)
 
-    _assert_cli_alignment(
-        student_cli_run, student_run, student_payload, student_results
-    )
+    _assert_cli_alignment(student_cli_run, student_run, student_payload, student_results)
     _expect_student_failure(student_run, student_payload, student_results)
 
     _assert_solution_vs_student(sol_payload, student_payload)

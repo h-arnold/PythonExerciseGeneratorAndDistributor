@@ -82,9 +82,7 @@ class TestSelectByConstructAndType:
     def test_select_by_construct_and_type(self, repo_root: Path) -> None:
         """Test intersection of construct and type."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_construct_and_type(
-            constructs=["sequence"], types=["modify"]
-        )
+        exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["modify"])
 
         assert len(exercises) > 0
         # All should be sequence AND modify
@@ -113,9 +111,7 @@ class TestSelectBySpecificNotebooks:
     def test_select_multiple_notebooks(self, repo_root: Path) -> None:
         """Test selecting multiple specific notebooks."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_notebooks(
-            ["ex001_sanity", "ex002_sequence_modify_basics"]
-        )
+        exercises = selector.select_by_notebooks(["ex001_sanity", "ex002_sequence_modify_basics"])
 
         EXPECTED_SELECTION_COUNT = 2
         assert len(exercises) == EXPECTED_SELECTION_COUNT

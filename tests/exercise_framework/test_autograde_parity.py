@@ -30,9 +30,7 @@ MIN_STATUS_MUTATION_TESTS = 2
 
 def _run_ex002_autograde(tmp_path: Path) -> AutogradeResults:
     results_path = tmp_path / "autograde-results.json"
-    env = build_autograde_env(
-        overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"}
-    )
+    env = build_autograde_env(overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"})
     command = [
         sys.executable,
         "-m",
@@ -114,9 +112,7 @@ def test_payload_builder_full_preserves_status_and_task_metadata(
 
     assert payload["status"] == raw_results["status"]
 
-    for raw_test, payload_test in zip(
-        raw_results["tests"], payload["tests"], strict=True
-    ):
+    for raw_test, payload_test in zip(raw_results["tests"], payload["tests"], strict=True):
         assert payload_test["status"] == raw_test["status"]
         assert payload_test.get("task") == raw_test.get("taskno")
         assert payload_test.get("taskno") == raw_test.get("taskno")
@@ -134,9 +130,7 @@ def test_payload_builder_minimal_preserves_status_fields(
 
     assert minimal_payload["status"] == payload["status"]
 
-    for minimal_test, full_test in zip(
-        minimal_payload["tests"], payload["tests"], strict=True
-    ):
+    for minimal_test, full_test in zip(minimal_payload["tests"], payload["tests"], strict=True):
         assert minimal_test["status"] == full_test["status"]
         assert "task" not in minimal_test
         assert "taskno" not in minimal_test

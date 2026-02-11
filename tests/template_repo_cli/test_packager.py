@@ -85,9 +85,7 @@ class TestCreateTempDirectory:
         assert temp_path.exists()
         assert temp_path.is_dir()
 
-    def test_create_temp_directory_unique(
-        self, template_packager: TemplatePackager
-    ) -> None:
+    def test_create_temp_directory_unique(self, template_packager: TemplatePackager) -> None:
         """Test that each workspace is unique."""
         temp1 = template_packager.create_workspace()
         temp2 = template_packager.create_workspace()
@@ -154,9 +152,7 @@ class TestCopyFiles:
 class TestGenerateFiles:
     """Tests for generating template files."""
 
-    def test_generate_readme(
-        self, template_packager: TemplatePackager, temp_dir: Path
-    ) -> None:
+    def test_generate_readme(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating custom README with exercise list."""
         exercises = ["ex001_sanity", "ex002_sequence_modify_basics"]
 
@@ -168,9 +164,7 @@ class TestGenerateFiles:
         assert "Test Template" in content
         assert "ex001_sanity" in content
 
-    def test_generate_gitignore(
-        self, template_packager: TemplatePackager, temp_dir: Path
-    ) -> None:
+    def test_generate_gitignore(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating appropriate .gitignore."""
         template_packager.copy_template_base_files(temp_dir)
 
@@ -303,9 +297,7 @@ class TestPackageIntegrity:
 class TestPackageCleanup:
     """Tests for cleanup on error."""
 
-    def test_package_cleanup_on_error(
-        self, template_packager: TemplatePackager
-    ) -> None:
+    def test_package_cleanup_on_error(self, template_packager: TemplatePackager) -> None:
         """Test cleaning up temp files on failure."""
         temp_path = template_packager.create_workspace()
 

@@ -27,9 +27,7 @@ class TestCollectAllFiles:
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
         collector = FileCollector(repo_root)
-        all_files = collector.collect_multiple(
-            ["ex001_sanity", "ex002_sequence_modify_basics"]
-        )
+        all_files = collector.collect_multiple(["ex001_sanity", "ex002_sequence_modify_basics"])
 
         EXPECTED_MULTIPLE_COUNT = 2
         assert len(all_files) == EXPECTED_MULTIPLE_COUNT

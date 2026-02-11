@@ -30,9 +30,7 @@ def _register_autograde_plugin(
 def _write_test_module(
     pytester: pytest.Pytester, body: str, *, name: str = "test_autograde"
 ) -> None:
-    pytester.makepyfile(
-        **{name: textwrap.dedent(body)}
-    )  # pyright: ignore[reportUnknownMemberType]
+    pytester.makepyfile(**{name: textwrap.dedent(body)})  # pyright: ignore[reportUnknownMemberType]
 
 
 class AutogradePayloadTestEntry(TypedDict):
@@ -399,15 +397,11 @@ def test_plugin_handles_write_errors(
     call_count = {"count": 0}
 
     # type: ignore[override]
-    def _fail_once(
-        self: Path, *args: Any, **kwargs: Any
-    ) -> IO[Any]:  # pyright: ignore[reportUnknownVariableType]
+    def _fail_once(self: Path, *args: Any, **kwargs: Any) -> IO[Any]:  # pyright: ignore[reportUnknownVariableType]
         if self == target and call_count["count"] == 0:
             call_count["count"] += 1
             raise OSError("disk full")
-        return original_open(
-            self, *args, **kwargs
-        )  # pyright: ignore[reportUnknownVariableType]
+        return original_open(self, *args, **kwargs)  # pyright: ignore[reportUnknownVariableType]
 
     monkeypatch.setattr(Path, "open", _fail_once, raising=True)
 

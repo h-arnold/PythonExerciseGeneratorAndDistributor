@@ -269,9 +269,7 @@ class TestCliCreateCommand:
             ),
             patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
-            result = main(
-                ["create", "--construct", "sequence", "--repo-name", "test-repo"]
-            )
+            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -320,9 +318,7 @@ class TestCliCreateCommand:
         assert called.get("template") is False
 
     @patch("subprocess.run")
-    def test_cli_create_with_template_repo_argument(
-        self, mock_run, repo_root: Path
-    ) -> None:
+    def test_cli_create_with_template_repo_argument(self, mock_run, repo_root: Path) -> None:
         """Passing --template-repo should forward the value."""
         from scripts.template_repo_cli.cli import main
         from scripts.template_repo_cli.core.github import GitHubClient
@@ -602,9 +598,7 @@ class TestCliOutputDir:
     """Tests for custom output directory."""
 
     @patch("subprocess.run")
-    def test_cli_custom_output_dir(
-        self, mock_run, repo_root: Path, temp_dir: Path
-    ) -> None:
+    def test_cli_custom_output_dir(self, mock_run, repo_root: Path, temp_dir: Path) -> None:
         """Test using custom output directory."""
         from scripts.template_repo_cli.cli import main
 
@@ -649,9 +643,7 @@ class TestCliUpdateRepo:
         assert result == 0
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
-    )
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
@@ -696,9 +688,7 @@ class TestCliUpdateRepo:
         mock_push.assert_called_once()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
-    )
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
@@ -744,9 +734,7 @@ class TestCliUpdateRepo:
         assert "does not exist" in captured.err.lower()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
-    )
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
@@ -790,9 +778,7 @@ class TestCliUpdateRepo:
         mock_push.assert_called_once()
 
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_repository_exists")
-    @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository"
-    )
+    @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",

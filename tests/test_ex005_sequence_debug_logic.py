@@ -68,9 +68,7 @@ def _names_in_node(node: ast.AST) -> list[str]:
 
 def _string_constants(node: ast.AST) -> list[str]:
     return [
-        n.value
-        for n in ast.walk(node)
-        if isinstance(n, ast.Constant) and isinstance(n.value, str)
+        n.value for n in ast.walk(node) if isinstance(n, ast.Constant) and isinstance(n.value, str)
     ]
 
 
@@ -88,10 +86,7 @@ def _print_uses_name(tree: ast.AST, name: str) -> bool:
             isinstance(node, ast.Call)
             and isinstance(node.func, ast.Name)
             and node.func.id == "print"
-            and any(
-                isinstance(child, ast.Name) and child.id == name
-                for child in ast.walk(node)
-            )
+            and any(isinstance(child, ast.Name) and child.id == name for child in ast.walk(node))
         ):
             return True
     return False
@@ -126,9 +121,7 @@ def _expected_io_output(exercise_no: int, inputs: list[str]) -> str:
         return f"{prompt_first}{prompt_second}{first} {last}\n"
     if exercise_no == ex005.EX005_PROFILE_EXERCISE:
         age, city = inputs
-        return (
-            f"{prompt_first}{prompt_second}You are {age} years old and live in {city}\n"
-        )
+        return f"{prompt_first}{prompt_second}You are {age} years old and live in {city}\n"
     raise ValueError(f"Unexpected interactive exercise: {exercise_no}")
 
 
@@ -278,9 +271,7 @@ def test_exercise5_formatting() -> None:
 def test_exercise5_construct() -> None:
     tree = _exercise_ast(ex005.EX005_FULL_NAME_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_FULL_NAME_EXERCISE]).issubset(
-        prompts
-    )
+    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_FULL_NAME_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "full_name")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):
@@ -353,9 +344,7 @@ def test_exercise7_construct() -> None:
     assert isinstance(total_value, ast.BinOp) and isinstance(total_value.op, ast.Add)
     assert {"score1", "score2"} <= set(_names_in_node(total_value))
     average_value = _assignment_value(tree, "average")
-    assert isinstance(average_value, ast.BinOp) and isinstance(
-        average_value.op, ast.Div
-    )
+    assert isinstance(average_value, ast.BinOp) and isinstance(average_value.op, ast.Div)
     assert "total" in _names_in_node(average_value)
     assert ex005.EX005_AVERAGE_DIVISOR in _number_constants(average_value)
     assert _print_uses_name(tree, "average")
@@ -456,9 +445,7 @@ def test_exercise10_formatting() -> None:
 def test_exercise10_construct() -> None:
     tree = _exercise_ast(ex005.EX005_PROFILE_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_PROFILE_EXERCISE]).issubset(
-        prompts
-    )
+    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_PROFILE_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "message")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):

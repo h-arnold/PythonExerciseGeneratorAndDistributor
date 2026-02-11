@@ -19,9 +19,7 @@ class RuntimeCache:
 
     code_by_tag: dict[tuple[str, str], str] = field(default_factory=dict)
     output_by_tag: dict[tuple[str, str], str] = field(default_factory=dict)
-    input_output_by_tag: dict[tuple[str, str, tuple[str, ...]], str] = field(
-        default_factory=dict
-    )
+    input_output_by_tag: dict[tuple[str, str, tuple[str, ...]], str] = field(default_factory=dict)
 
 
 def _path_key(notebook_path: str | Path) -> str:

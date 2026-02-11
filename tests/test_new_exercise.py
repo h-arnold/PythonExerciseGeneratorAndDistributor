@@ -125,19 +125,17 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     assert len(cells) >= _MIN_SELFCHECK_CELLS
     self_check_cell = cells[-2]
     assert self_check_cell["cell_type"] == "code"
-    assert not self_check_cell.get("metadata", {}).get(
-        "tags", []
-    ), "Optional self-check cell should not be tagged"
-    assert any(
-        "Optional self-check" in line for line in self_check_cell.get("source", [])
+    assert not self_check_cell.get("metadata", {}).get("tags", []), (
+        "Optional self-check cell should not be tagged"
     )
+    assert any("Optional self-check" in line for line in self_check_cell.get("source", []))
 
     # The final cell is the auto-generated check-your-answers helper
     check_answers_cell = cells[-1]
     assert check_answers_cell["cell_type"] == "code"
-    assert not check_answers_cell.get("metadata", {}).get(
-        "tags", []
-    ), "Check-your-answers cell should remain untagged"
+    assert not check_answers_cell.get("metadata", {}).get("tags", []), (
+        "Check-your-answers cell should remain untagged"
+    )
     joined_source = "".join(check_answers_cell.get("source", []))
     assert "from tests.student_checker import run_notebook_checks" in joined_source
     assert "run_notebook_checks(" in joined_source

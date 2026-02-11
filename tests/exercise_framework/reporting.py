@@ -61,9 +61,7 @@ def normalise_issue_text(issues: list[str]) -> str:
     return "; ".join(strip_exercise_prefix(issue) for issue in issues)
 
 
-def normalise_issue_lines(
-    issues: list[str], width: int = ERROR_COLUMN_WIDTH
-) -> list[str]:
+def normalise_issue_lines(issues: list[str], width: int = ERROR_COLUMN_WIDTH) -> list[str]:
     """Normalise and wrap issue text for display."""
     return _wrap_error_text(normalise_issue_text(issues), width)
 

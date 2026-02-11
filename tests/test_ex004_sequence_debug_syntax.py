@@ -56,8 +56,7 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
 
 def _assert_strict_single_line(exercise_no: int, output: str, expected: str) -> None:
     assert output.strip() == expected, (
-        f"Exercise {exercise_no}: expected exact text '{expected}' but got "
-        f"'{output.strip()}'."
+        f"Exercise {exercise_no}: expected exact text '{expected}' but got '{output.strip()}'."
     )
     assert output == f"{expected}\n", (
         f"Exercise {exercise_no}: output must end with a single newline."
@@ -89,10 +88,7 @@ def _assigns_constant(tree: ast.AST, name: str, value: str) -> bool:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
-        if not any(
-            isinstance(target, ast.Name) and target.id == name
-            for target in node.targets
-        ):
+        if not any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
             continue
         if (
             isinstance(node.value, ast.Constant)
@@ -131,10 +127,7 @@ def _assigns_call(tree: ast.AST, name: str, func_name: str) -> bool:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
-        if not any(
-            isinstance(target, ast.Name) and target.id == name
-            for target in node.targets
-        ):
+        if not any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
             continue
         value = node.value
         if not isinstance(value, ast.Call):
@@ -162,9 +155,7 @@ def _is_constant(node: ast.AST, value: int) -> bool:
     return isinstance(node, ast.Constant) and node.value == value
 
 
-def _assigns_binop_sum(
-    tree: ast.AST, target_name: str, variable: str, constant: int
-) -> bool:
+def _assigns_binop_sum(tree: ast.AST, target_name: str, variable: str, constant: int) -> bool:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
             continue
@@ -235,9 +226,7 @@ def test_exercise3_logic() -> None:
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
     strings = _string_constants(tree)
-    assert ex004.EX004_EXPECTED_SINGLE_LINE[3] in strings or (
-        {"Learning", "Python"} <= strings
-    )
+    assert ex004.EX004_EXPECTED_SINGLE_LINE[3] in strings or ({"Learning", "Python"} <= strings)
 
 
 @pytest.mark.task(taskno=3)
@@ -260,8 +249,7 @@ def test_exercise4_logic() -> None:
 def test_exercise4_construct() -> None:
     tree = _exercise_ast(4)
     has_multiplication = any(
-        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult)
-        for node in ast.walk(tree)
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
     assert has_multiplication
 
