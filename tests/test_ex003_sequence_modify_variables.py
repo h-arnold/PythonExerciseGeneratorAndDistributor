@@ -154,8 +154,7 @@ def test_exercise1_construct() -> None:
         "greeting",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[1]["greeting"],
     )
-    assert _print_uses_name(
-        tree, "greeting"), "Must use greeting variable in print"
+    assert _print_uses_name(tree, "greeting"), "Must use greeting variable in print"
 
 
 @pytest.mark.task(taskno=2)
@@ -175,10 +174,8 @@ def test_exercise2_construct() -> None:
         "subject",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[2]["subject"],
     )
-    assert _print_uses_name(
-        tree, "subject"), "Must use subject variable in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert _print_uses_name(tree, "subject"), "Must use subject variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=3)
@@ -199,8 +196,7 @@ def test_exercise3_construct() -> None:
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[3]["food"],
     )
     assert _print_uses_name(tree, "food"), "Must use food variable in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=4)
@@ -212,8 +208,7 @@ def test_exercise4_logic() -> None:
     assert lines == [
         ex003.EX003_EXPECTED_PROMPTS[4][0],
         ex003.EX003_EXPECTED_PROMPTS[4][1],
-        ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(
-            value1=fruit, value2=descriptor),
+        ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1=fruit, value2=descriptor),
     ]
 
 
@@ -238,12 +233,13 @@ def test_exercise4_construct() -> None:
 
     assert _has_input_call(tree), "Must use input() to capture user input"
     input_names = _input_assigned_names(tree)
-    assert len(
-        input_names) == _EXPECTED_INPUT_CALLS, f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
-    assert all(_print_uses_name(tree, name)
-               for name in input_names), "Must use input variables in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert len(input_names) == _EXPECTED_INPUT_CALLS, (
+        f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
+    )
+    assert all(_print_uses_name(tree, name) for name in input_names), (
+        "Must use input variables in print"
+    )
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=5)
@@ -255,8 +251,7 @@ def test_exercise5_logic() -> None:
     assert lines == [
         ex003.EX003_EXPECTED_PROMPTS[5][0],
         ex003.EX003_EXPECTED_PROMPTS[5][1],
-        ex003.EX003_EXPECTED_INPUT_MESSAGES[5].format(
-            town=town, country=country),
+        ex003.EX003_EXPECTED_INPUT_MESSAGES[5].format(town=town, country=country),
     ]
 
 
@@ -281,12 +276,13 @@ def test_exercise5_construct() -> None:
 
     assert _has_input_call(tree), "Must use input() to capture user input"
     input_names = _input_assigned_names(tree)
-    assert len(
-        input_names) == _EXPECTED_INPUT_CALLS, f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
-    assert all(_print_uses_name(tree, name)
-               for name in input_names), "Must use input variables in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert len(input_names) == _EXPECTED_INPUT_CALLS, (
+        f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
+    )
+    assert all(_print_uses_name(tree, name) for name in input_names), (
+        "Must use input variables in print"
+    )
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=6)
@@ -323,14 +319,14 @@ def test_exercise6_construct() -> None:
 
     assert _has_input_call(tree), "Must use input() to capture user input"
     input_names = _input_assigned_names(tree)
-    assert len(
-        input_names) == _EXPECTED_INPUT_CALLS, f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
-    assert all(_print_uses_name(tree, name)
-               for name in input_names), "Must use input variables in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
-    assert any(
-        "!" in value for value in constants), "Must include exclamation mark"
+    assert len(input_names) == _EXPECTED_INPUT_CALLS, (
+        f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
+    )
+    assert all(_print_uses_name(tree, name) for name in input_names), (
+        "Must use input variables in print"
+    )
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
+    assert any("!" in value for value in constants), "Must include exclamation mark"
 
 
 @pytest.mark.task(taskno=7)
@@ -357,12 +353,9 @@ def test_exercise7_construct() -> None:
         "second_word",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[7]["second_word"],
     )
-    assert _print_uses_name(
-        tree, "first_word"), "Must use first_word variable in print"
-    assert _print_uses_name(
-        tree, "second_word"), "Must use second_word variable in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert _print_uses_name(tree, "first_word"), "Must use first_word variable in print"
+    assert _print_uses_name(tree, "second_word"), "Must use second_word variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=8)
@@ -389,8 +382,7 @@ def test_exercise8_construct() -> None:
     )
     assert _print_uses_name(tree, "part1"), "Must use part1 variable in print"
     assert _print_uses_name(tree, "part2"), "Must use part2 variable in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=9)
@@ -421,14 +413,10 @@ def test_exercise9_construct() -> None:
         "audience",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[9]["audience"],
     )
-    assert _print_uses_name(
-        tree, "greeting"), "Must use greeting variable in print"
-    assert _print_uses_name(
-        tree, "time_of_day"), "Must use time_of_day variable in print"
-    assert _print_uses_name(
-        tree, "audience"), "Must use audience variable in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert _print_uses_name(tree, "greeting"), "Must use greeting variable in print"
+    assert _print_uses_name(tree, "time_of_day"), "Must use time_of_day variable in print"
+    assert _print_uses_name(tree, "audience"), "Must use audience variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=10)
@@ -460,11 +448,7 @@ def test_exercise10_construct() -> None:
         "part_three",
         lambda value: ex003.EX003_EXERCISE10_REQUIRED_PHRASES["part_three"] in value,
     )
-    assert _print_uses_name(
-        tree, "part_one"), "Must use part_one variable in print"
-    assert _print_uses_name(
-        tree, "part_two"), "Must use part_two variable in print"
-    assert _print_uses_name(
-        tree, "part_three"), "Must use part_three variable in print"
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+    assert _print_uses_name(tree, "part_one"), "Must use part_one variable in print"
+    assert _print_uses_name(tree, "part_two"), "Must use part_two variable in print"
+    assert _print_uses_name(tree, "part_three"), "Must use part_three variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"

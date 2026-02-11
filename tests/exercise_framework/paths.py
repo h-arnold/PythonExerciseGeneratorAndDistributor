@@ -6,45 +6,40 @@ import os
 from pathlib import Path
 
 
+def _resolve_from_repo_root(repo_root: Path, notebook_path: Path) -> Path:
+    if notebook_path.is_absolute():
+        return notebook_path
+    return (repo_root / notebook_path).resolve()
+
+
+def _normalise_override_root(override_root: str) -> str:
+    normalised = override_root.replace("\\", "/").strip()
+    if normalised.startswith("./"):
+        normalised = normalised[2:]
+    return normalised.rstrip("/")
+
+
+def _relative_notebook_path(notebook_path: Path) -> Path:
+    try:
+        return notebook_path.relative_to("notebooks")
+    except ValueError:
+        return Path(notebook_path.name)
+
+
 def resolve_notebook_path(notebook_path: str | Path) -> Path:
     """Resolve notebook paths using the repository's grading semantics."""
     repo_root = Path(__file__).resolve().parents[2]
     original = Path(notebook_path)
     override_root = os.environ.get("PYTUTOR_NOTEBOOKS_DIR")
     if not override_root:
-        if original.is_absolute():
-            return original
-        return (repo_root / original).resolve()
+        return _resolve_from_repo_root(repo_root, original)
 
-    override_root = override_root.replace("\\", "/").strip()
-    if override_root.startswith("./"):
-        override_root = override_root[2:]
-    override_root = override_root.rstrip("/")
-    if override_root:
-        override_root_path = Path(override_root)
-        if not override_root_path.is_absolute():
-            override_root_path = (repo_root / override_root_path).resolve()
-
-        try:
-            rel = original.relative_to("notebooks")
-        except ValueError:
-            rel = Path(original.name)
-
-        candidate = override_root_path / rel
-        return candidate if candidate.exists() else original
-    
-    if original.is_absolute():
-        return original
-    return (repo_root / original).resolve()
-
-    override_root_path = Path(override_root)
+    normalised_override_root = _normalise_override_root(override_root)
+    if not normalised_override_root:
+        return _resolve_from_repo_root(repo_root, original)
+    override_root_path = Path(normalised_override_root)
     if not override_root_path.is_absolute():
         override_root_path = (repo_root / override_root_path).resolve()
 
-    try:
-        rel = original.relative_to("notebooks")
-    except ValueError:
-        rel = Path(original.name)
-
-    candidate = override_root_path / rel
+    candidate = override_root_path / _relative_notebook_path(original)
     return candidate if candidate.exists() else original
