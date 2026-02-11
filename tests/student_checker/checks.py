@@ -54,6 +54,9 @@ def check_ex001() -> list[str]:
     if example is None:
         errors.append("The `example` function is missing.")
         return errors
+    if not callable(example):
+        errors.append("The `example` function must be callable.")
+        return errors
     result = example()
     if not isinstance(result, str):
         errors.append("The `example` function must return a string.")
@@ -392,7 +395,11 @@ def _check_ex006_input_flow(exercise_no: int) -> list[str]:
     if output_contains is not None and output_contains not in output:
         errors.append(f"Exercise {exercise_no}: expected message is missing.")
     if last_line is not None:
-        last_output_line = output.strip().splitlines()[-1]
+        stripped_output = output.strip()
+        if not stripped_output:
+            errors.append(f"Exercise {exercise_no}: no output was produced.")
+            return errors
+        last_output_line = stripped_output.splitlines()[-1]
         if last_output_line != last_line:
             errors.append(f"Exercise {exercise_no}: expected last line '{last_line}'.")
     return errors
