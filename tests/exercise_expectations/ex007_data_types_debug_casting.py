@@ -10,6 +10,7 @@ class Ex007InputCase(TypedDict):
     prompts: list[str]
     last_line: str
 
+
 EX007_NOTEBOOK_PATH: Final[str] = "notebooks/ex007_data_types_debug_casting.ipynb"
 EX007_MIN_EXPLANATION_LENGTH: Final[int] = 50
 EX007_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
