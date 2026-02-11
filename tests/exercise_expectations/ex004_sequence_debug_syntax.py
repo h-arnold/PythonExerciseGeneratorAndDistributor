@@ -33,7 +33,7 @@ EX004_PROMPT_STRINGS: Final[dict[int, str]] = {
     10: "What is your favourite colour?",
 }
 EX004_FORMAT_VALIDATION: Final[dict[int, str]] = {
-    7: "You have 10 apples in total",
+    7: "You have 5 apples",
     8: "Hello Alice",
     10: "My favourite colour is Blue",
 }

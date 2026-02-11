@@ -6,13 +6,14 @@
 
 ## Common Misconceptions
 - Missing parentheses or quotes cause syntax errors; students may not spot the missing character.
-- `input()` returns a string; adding numbers requires converting to `int()` (this is noted below).
+- Students often forget that string concatenation requires the `+` operator between each part.
+- `input()` always returns a string, so no type casting is needed for string concatenation.
 
 ## Teaching Approach
 1. Demonstrate reading a Python SyntaxError and locating the line with the problem.
 2. For each buggy example, ask students to explain the error first (short written explanation), then fix and run it.
-3. For Exercise 7 (apples), we avoid casting in the solution to keep the exercise within Sequence: the solution uses a numeric literal so students can focus on reading and fixing syntax without introducing `int()` casting.
+3. Exercise 7 focuses on string concatenation syntax: students must add `+` operators between string parts. This reinforces that concatenation requires explicit operators in Python.
 
 ## Hints
 - Encourage students to run one cell at a time and read the error trace.
-- If casting (`int()`) is unfamiliar to your group, replace that solution with an approach that avoids numeric conversion.
+- For Exercise 7, remind students that Python needs `+` to join strings together (e.g., `"Hello " + name`).

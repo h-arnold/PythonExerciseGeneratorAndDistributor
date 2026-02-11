@@ -1,7 +1,7 @@
 ---
 name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent
-tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
+tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
 user-invokable: true
 ---
 # Tidy Code Review Sub-Agent

@@ -13,9 +13,7 @@ import pytest
 
 from tests.helpers import build_autograde_env
 
-CLI_SCRIPT = (
-    Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
-)
+CLI_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
 REPO_ROOT = CLI_SCRIPT.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -27,9 +25,7 @@ PLUGIN_FLAG = "-p tests.autograde_plugin"
 EnvOverrides: TypeAlias = Mapping[str, str | None] | None
 
 
-def _write_test_file(
-    tmp_path: Path, content: str, *, name: str = "test_suite.py"
-) -> Path:
+def _write_test_file(tmp_path: Path, content: str, *, name: str = "test_suite.py") -> Path:
     path = tmp_path / name
     path.write_text(textwrap.dedent(content), encoding="utf-8")
     return path
@@ -222,9 +218,7 @@ def test_cli_notebook_dir_validation(
         assert stderr_fragment in completed.stderr
 
 
-def test_cli_creates_output_directories(
-    tmp_path: Path, passing_test_file: Path
-) -> None:
+def test_cli_creates_output_directories(tmp_path: Path, passing_test_file: Path) -> None:
     results_path = tmp_path / "nested" / "dir" / "results.json"
     output_path = tmp_path / "another" / "dir" / "payload.txt"
     summary_path = tmp_path / "summary" / "dir" / "data.json"

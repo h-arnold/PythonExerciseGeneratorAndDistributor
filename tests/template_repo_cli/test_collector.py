@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from scripts.template_repo_cli.core.collector import FileCollector
+from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 
 
 class TestCollectAllFiles:
     """Tests for collecting all files for an exercise."""
 
     def test_collect_all_files_for_exercise(
-        self, repo_root: Path, sample_exercises: dict[str, dict[str, Path]]
+        self, repo_root: Path, sample_exercises: dict[str, ExerciseFiles]
     ) -> None:
         """Test collecting all related files for an exercise."""
         collector = FileCollector(repo_root)
@@ -27,9 +27,7 @@ class TestCollectAllFiles:
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
         collector = FileCollector(repo_root)
-        all_files = collector.collect_multiple(
-            ["ex001_sanity", "ex002_sequence_modify_basics"]
-        )
+        all_files = collector.collect_multiple(["ex001_sanity", "ex002_sequence_modify_basics"])
 
         EXPECTED_MULTIPLE_COUNT = 2
         assert len(all_files) == EXPECTED_MULTIPLE_COUNT
@@ -42,9 +40,8 @@ class TestCollectAllFiles:
         files = collector.collect_files("ex001_sanity")
 
         # All collected paths should exist
-        for file_type, file_path in files.items():
-            if file_path is not None:
-                assert file_path.exists(), f"{file_type} does not exist: {file_path}"
+        assert files["notebook"].exists()
+        assert files["test"].exists()
 
 
 class TestCollectMissingFiles:

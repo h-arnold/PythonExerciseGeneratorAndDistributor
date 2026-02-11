@@ -216,14 +216,11 @@ def _should_zero_scores_on_failure() -> bool:
     return notebooks_dir == "notebooks"
 
 
-def _ensure_autograde_option(
-    pytest_args: Sequence[str], results_path: Path
-) -> list[str]:
+def _ensure_autograde_option(pytest_args: Sequence[str], results_path: Path) -> list[str]:
     """Attach the autograde results path option if not already present."""
 
     option_present = any(
-        arg == AUTOGRADE_OPTION or arg.startswith(f"{AUTOGRADE_OPTION}=")
-        for arg in pytest_args
+        arg == AUTOGRADE_OPTION or arg.startswith(f"{AUTOGRADE_OPTION}=") for arg in pytest_args
     )
     if option_present:
         return list(pytest_args)
@@ -241,9 +238,7 @@ def run_pytest(pytest_args: Sequence[str], results_path: Path) -> int:
     print(f"Executing: {printable}")
     try:
         completed_process = subprocess.run(command, check=False)
-    except (
-        OSError
-    ) as exc:  # pragma: no cover - defensive logging for unexpected failures
+    except OSError as exc:  # pragma: no cover - defensive logging for unexpected failures
         print(f"Failed to execute pytest: {exc}", file=sys.stderr)
         return 1
     return int(completed_process.returncode)
@@ -377,9 +372,7 @@ def _calculate_earned_score(
 def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
-    max_score = _ensure_float(
-        raw_results["max_score"], "max_score in results must be numeric."
-    )
+    max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
     status = str(raw_results["status"])
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
@@ -426,9 +419,10 @@ def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
             "score": test["score"],
             "line_no": 0,  # Required by TypedDict but not used by reporter
         }
-        if test.get("message"):
+        message = test.get("message")
+        if message:
             # Truncate message to prevent bloat
-            msg = str(test["message"])
+            msg = str(message)
             if len(msg) > MAX_AUTOGRADE_MESSAGE_LENGTH:
                 msg = msg[:MAX_AUTOGRADE_MESSAGE_LENGTH] + "..."
             minimal_test["message"] = msg
@@ -540,9 +534,7 @@ def write_outputs(
             handle.write(encoded_payload)
             handle.write("\n")
     except Exception as exc:
-        print(
-            f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr
-        )
+        print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
         return

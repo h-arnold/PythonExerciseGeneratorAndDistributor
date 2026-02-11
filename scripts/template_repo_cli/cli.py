@@ -11,7 +11,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from scripts.template_repo_cli.core.collector import FileCollector
+from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 from scripts.template_repo_cli.core.github import GitHubClient
 from scripts.template_repo_cli.core.packager import TemplatePackager
 from scripts.template_repo_cli.core.selector import ExerciseSelector
@@ -27,9 +27,7 @@ def get_repo_root() -> Path:
     return Path.cwd()
 
 
-def _select_by_notebooks(
-    args: argparse.Namespace, selector: ExerciseSelector
-) -> list[str]:
+def _select_by_notebooks(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
     """Select exercises by notebooks or patterns.
 
     Args:
@@ -39,7 +37,7 @@ def _select_by_notebooks(
     Returns:
         List of exercise IDs.
     """
-    exercises = []
+    exercises: list[str] = []
     for pattern in args.notebooks:
         if "*" in pattern or "?" in pattern or "[" in pattern:
             exercises.extend(selector.select_by_pattern(pattern))
@@ -48,9 +46,7 @@ def _select_by_notebooks(
     return exercises
 
 
-def _select_exercises(
-    args: argparse.Namespace, selector: ExerciseSelector
-) -> list[str]:
+def _select_exercises(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
     """Select exercises based on command-line arguments.
 
     Args:
@@ -119,10 +115,7 @@ def _github_permission_hint(error: str | None) -> str | None:
         return None
 
     message = error.lower()
-    if (
-        "resource not accessible by integration" in message
-        and "createrepository" in message
-    ):
+    if "resource not accessible by integration" in message and "createrepository" in message:
         env_key = _detect_auth_token_env()
         base = (
             "The current GitHub authentication token cannot create repositories. "
@@ -151,10 +144,7 @@ def _is_integration_permission_error(error: str | None) -> bool:
         return False
 
     message = error.lower()
-    return (
-        "resource not accessible by integration" in message
-        and "createrepository" in message
-    )
+    return "resource not accessible by integration" in message and "createrepository" in message
 
 
 def _github_already_exists_hint(error: str | None, repo_name: str) -> str | None:
@@ -197,9 +187,7 @@ def _offer_unset_token_and_reauth(env_key: str) -> bool:
     return True
 
 
-def _handle_output_directory(
-    workspace: Path, output_dir: str, packager: TemplatePackager
-) -> int:
+def _handle_output_directory(workspace: Path, output_dir: str, packager: TemplatePackager) -> int:
     """Handle copying workspace to output directory.
 
     Args:
@@ -231,7 +219,7 @@ def _handle_output_directory(
 def _build_template_package(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
-    files: dict,
+    files: dict[str, ExerciseFiles],
     template_name: str,
     exercises: list[str],
     verbose: bool,
@@ -378,9 +366,7 @@ def _create_github_repo(
 
         # Check if we should retry with reauthentication
         normalized_error = error_msg or "Unknown error"
-        if _should_retry_with_reauth(
-            github, normalized_error, env_key, already_reauthenticated
-        ):
+        if _should_retry_with_reauth(github, normalized_error, env_key, already_reauthenticated):
             already_reauthenticated = True
             env_key = _detect_auth_token_env()
             continue
@@ -394,7 +380,7 @@ def _prepare_exercises(
     args: argparse.Namespace,
     selector: ExerciseSelector,
     collector: FileCollector,
-) -> tuple[list[str], dict] | tuple[None, None]:
+) -> tuple[list[str], dict[str, ExerciseFiles]] | tuple[None, None]:
     """Prepare exercises: select and collect files.
 
     Args:
@@ -447,7 +433,7 @@ def _prepare_workspace(
     selector: ExerciseSelector,
     collector: FileCollector,
     packager: TemplatePackager,
-) -> tuple[Path | None, list[str] | None, dict | None]:
+) -> tuple[Path | None, list[str] | None, dict[str, ExerciseFiles] | None]:
     """Select exercises, collect files, and create a workspace."""
 
     exercises, files = _prepare_exercises(args, selector, collector)
@@ -617,7 +603,7 @@ def _execute_template_creation(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
     github: GitHubClient,
-    files: dict,
+    files: dict[str, ExerciseFiles],
     exercises: list[str],
 ) -> int:
     """Execute the template creation workflow.
@@ -644,9 +630,7 @@ def _execute_template_creation(  # noqa: PLR0913
             return 1
 
         # Create GitHub repository
-        result = _handle_repository_creation(
-            args, github, workspace, packager, exercises
-        )
+        result = _handle_repository_creation(args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -674,7 +658,7 @@ def _execute_template_update(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
     github: GitHubClient,
-    files: dict,
+    files: dict[str, ExerciseFiles],
     exercises: list[str],
 ) -> int:
     """Execute the template update workflow (push into existing repo)."""
@@ -740,16 +724,12 @@ def create_command(args: argparse.Namespace) -> int:
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(
-        args, selector, collector, packager
-    )
+    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
     # Execute template creation
-    return _execute_template_creation(
-        args, workspace, packager, github, files, exercises
-    )
+    return _execute_template_creation(args, workspace, packager, github, files, exercises)
 
 
 def update_repo_command(args: argparse.Namespace) -> int:
@@ -768,18 +748,14 @@ def update_repo_command(args: argparse.Namespace) -> int:
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(
-        args, selector, collector, packager
-    )
+    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
     return _execute_template_update(args, workspace, packager, github, files, exercises)
 
 
-def _get_exercises_for_list(
-    args: argparse.Namespace, selector: ExerciseSelector
-) -> list[str]:
+def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
     """Get list of exercises based on filter arguments.
 
     Args:
@@ -888,7 +864,7 @@ def validate_command(args: argparse.Namespace) -> int:
 
     # Validate files exist
     print(f"Found {len(exercises)} exercises:")
-    missing_files = []
+    missing_files: list[str] = []
 
     for ex in exercises:
         try:
@@ -925,12 +901,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Build and validate without executing gh commands",
     )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Show detailed progress"
-    )
-    parser.add_argument(
-        "--output-dir", type=str, help="Local output directory (default: temp)"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
+    parser.add_argument("--output-dir", type=str, help="Local output directory (default: temp)")
 
     # Subcommands
     subparsers = parser.add_subparsers(dest="command", help="Command to execute")
@@ -939,12 +911,8 @@ def main(argv: list[str] | None = None) -> int:
     create_parser = subparsers.add_parser("create", help="Create template repository")
     create_parser.add_argument("--construct", nargs="+", help="One or more constructs")
     create_parser.add_argument("--type", nargs="+", help="One or more exercise types")
-    create_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns"
-    )
-    create_parser.add_argument(
-        "--name", type=str, help="Template repository name/description"
-    )
+    create_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    create_parser.add_argument("--name", type=str, help="Template repository name/description")
     create_parser.add_argument(
         "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
     )
@@ -983,9 +951,7 @@ def main(argv: list[str] | None = None) -> int:
     validate_parser = subparsers.add_parser("validate", help="Validate selection")
     validate_parser.add_argument("--construct", nargs="+", help="Filter by construct")
     validate_parser.add_argument("--type", nargs="+", help="Filter by type")
-    validate_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns"
-    )
+    validate_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
 
     # Update command
     update_parser = subparsers.add_parser(
@@ -994,12 +960,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     update_parser.add_argument("--construct", nargs="+", help="One or more constructs")
     update_parser.add_argument("--type", nargs="+", help="One or more exercise types")
-    update_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns"
-    )
-    update_parser.add_argument(
-        "--name", type=str, help="Template repository name/description"
-    )
+    update_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    update_parser.add_argument("--name", type=str, help="Template repository name/description")
     update_parser.add_argument(
         "--repo-name",
         type=str,

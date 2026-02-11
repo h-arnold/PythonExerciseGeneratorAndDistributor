@@ -96,9 +96,7 @@ def run_subprocess(
     elif output_mode == "silent":
         # Don't capture or stream anything
         # Note: Both stdout and stderr will be None in the returned CompletedProcess
-        return subprocess.run(
-            cmd, cwd=cwd, capture_output=False, text=text, check=check
-        )
+        return subprocess.run(cmd, cwd=cwd, capture_output=False, text=text, check=check)
     else:
         raise ValueError(f"Invalid output_mode: {output_mode}")
 
@@ -314,9 +312,7 @@ class GitHubClient:
         except (FileNotFoundError, OSError):
             return False
 
-    def check_scopes(
-        self, required_scopes: list[str] | None = None
-    ) -> CheckScopesResult:
+    def check_scopes(self, required_scopes: list[str] | None = None) -> CheckScopesResult:
         """Check if current authentication has required scopes.
 
         Args:
@@ -369,9 +365,7 @@ class GitHubClient:
                     break
 
             # Check if all required scopes are present
-            missing: list[str] = [
-                s for s in required_scopes if s not in result["scopes"]
-            ]
+            missing: list[str] = [s for s in required_scopes if s not in result["scopes"]]
             result["missing_scopes"] = missing
             result["has_scopes"] = len(missing) == 0
 
@@ -471,9 +465,7 @@ class GitHubClient:
 
         # Mark repository as a template if requested
         if result["success"] and template:
-            template_result: ExecResult = self.mark_repository_as_template(
-                repo_name, org
-            )
+            template_result: ExecResult = self.mark_repository_as_template(repo_name, org)
             if not template_result.get("success", False):
                 return {
                     "success": False,
@@ -485,9 +477,7 @@ class GitHubClient:
 
         return result
 
-    def mark_repository_as_template(
-        self, repo_name: str, org: str | None = None
-    ) -> ExecResult:
+    def mark_repository_as_template(self, repo_name: str, org: str | None = None) -> ExecResult:
         """Mark an existing repository as a template.
 
         Args:
@@ -603,9 +593,7 @@ class GitHubClient:
             )
 
         # Ensure we replace any existing origin to avoid failures
-        run_subprocess(
-            ["git", "remote", "remove", "origin"], cwd=workspace, check=False
-        )
+        run_subprocess(["git", "remote", "remove", "origin"], cwd=workspace, check=False)
         run_subprocess(
             ["git", "remote", "add", "origin", remote_url],
             cwd=workspace,
@@ -718,9 +706,7 @@ class GitHubClient:
         """
         error_text = ((exc.stderr or "") + (exc.stdout or "")).lower()
 
-        return "403" in error_text or (
-            "permission" in error_text and "denied" in error_text
-        )
+        return "403" in error_text or ("permission" in error_text and "denied" in error_text)
 
     @staticmethod
     def _format_called_process_error(exc: subprocess.CalledProcessError) -> str:
@@ -751,10 +737,7 @@ class GitHubClient:
         )
         combined_message: str = " ".join(part for part in message_parts if part)
 
-        if all(
-            marker in combined_message
-            for marker in INTEGRATION_PERMISSION_ERROR_MARKERS
-        ):
+        if all(marker in combined_message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS):
             return True
 
         return any(marker in combined_message for marker in AUTH_TOKEN_HINT_MARKERS)

@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 @dataclass(slots=True)
@@ -16,12 +16,18 @@ class TemplateRepoConfig:
     avoid external dependencies.
     """
 
-    defaults: dict[str, Any] = field(default_factory=dict)
+    defaults: dict[str, Any] = field(default_factory=dict[str, Any])
 
 
 def default_config_path() -> Path:
     """Return the default config path in the user's home directory."""
     return Path.home() / ".template_repo_cli.json"
+
+
+def _config_object_hook(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Object hook that preserves string keys when loading JSON."""
+
+    return dict(pairs)
 
 
 def load_config(path: Path | None = None) -> TemplateRepoConfig:
@@ -37,9 +43,14 @@ def load_config(path: Path | None = None) -> TemplateRepoConfig:
     if not config_path.exists():
         return TemplateRepoConfig()
 
-    data = json.loads(config_path.read_text())
-    if not isinstance(data, dict):
+    raw_data = json.loads(
+        config_path.read_text(),
+        object_pairs_hook=_config_object_hook,
+    )
+    if not isinstance(raw_data, dict):
         return TemplateRepoConfig()
+
+    data = cast(dict[str, Any], raw_data)
 
     return TemplateRepoConfig(defaults=data)
 

@@ -213,9 +213,7 @@ def run_cell_and_capture_output(notebook_path: str | Path, *, tag: str) -> str:
         return buffer.getvalue()
 
 
-def run_cell_with_input(
-    notebook_path: str | Path, *, tag: str, inputs: list[str]
-) -> str:
+def run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
     """Execute a tagged cell with mocked input() and capture stdout.
 
     For exercises that require user input, this helper mocks the input()
@@ -302,7 +300,5 @@ def _format_cell_source(source: object) -> str:
     if isinstance(source, str):
         return source
     if isinstance(source, Sequence):
-        return "".join(
-            str(s) for s in cast(Sequence[object], source) if isinstance(s, str)
-        )
+        return "".join(str(s) for s in cast(Sequence[object], source) if isinstance(s, str))
     return str(source)

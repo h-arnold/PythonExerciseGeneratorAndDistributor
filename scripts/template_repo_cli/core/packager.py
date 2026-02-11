@@ -6,6 +6,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.utils.filesystem import (
     safe_copy_directory,
     safe_copy_file,
@@ -37,7 +38,7 @@ class TemplatePackager:
     def copy_exercise_files(
         self,
         workspace: Path,
-        files: dict[str, dict[str, Path]],
+        files: dict[str, ExerciseFiles],
     ) -> None:
         """Copy exercise files to workspace.
 
@@ -119,9 +120,7 @@ class TemplatePackager:
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
 
-    def generate_readme(
-        self, workspace: Path, template_name: str, exercises: list[str]
-    ) -> None:
+    def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
         """Generate README file.
 
         Args:

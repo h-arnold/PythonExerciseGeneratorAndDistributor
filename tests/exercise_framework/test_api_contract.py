@@ -42,9 +42,7 @@ def test_run_notebook_check_returns_single_structured_result(
 
 
 def test_run_notebook_check_unknown_slug_is_explicit() -> None:
-    with pytest.raises(
-        ValueError, match="Unknown notebook 'unknown_notebook'\\. Available:"
-    ):
+    with pytest.raises(ValueError, match="Unknown notebook 'unknown_notebook'\\. Available:"):
         run_notebook_check("unknown_notebook")
 
 

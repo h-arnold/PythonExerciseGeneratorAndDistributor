@@ -61,7 +61,9 @@ def test_render_grouped_table_with_errors_wraps_and_blanks() -> None:
     assert lines[-1].startswith("+")
     assert lines[-1].count("+") >= MINIMUM_CORNER_COUNT
 
-    expected_error = "The output did not match the expected wording for the sentence about the school location."
+    expected_error = (
+        "The output did not match the expected wording for the sentence about the school location."
+    )
     expected_lines = textwrap.wrap(
         expected_error,
         width=ERROR_COLUMN_WIDTH,
@@ -109,9 +111,7 @@ def test_render_grouped_table_with_errors_continuation_rows_blank_columns() -> N
         "about the school location and punctuation in this response."
     )
 
-    table = render_grouped_table_with_errors(
-        [("Exercise 2", "Logic", False, long_error)]
-    )
+    table = render_grouped_table_with_errors([("Exercise 2", "Logic", False, long_error)])
 
     row_lines = [line for line in table.splitlines() if line.startswith("| ")]
 
@@ -127,6 +127,26 @@ def test_render_grouped_table_with_errors_continuation_rows_blank_columns() -> N
     assert "Exercise 2" not in continuation_row
     assert "Logic" not in continuation_row
     assert "🔴 NO" not in continuation_row
+
+
+def test_render_grouped_table_with_errors_no_separators_between_wrapped_lines() -> None:
+    long_error = (
+        "Exercise 9: Execution failed for code tagged 'exercise9' in notebook path "
+        "because a float was concatenated to a string."
+    )
+
+    table = render_grouped_table_with_errors([("Exercise 9", "Static output", False, long_error)])
+
+    lines = table.splitlines()
+    first_data_index = next(i for i, line in enumerate(lines) if "| Exercise 9" in line)
+    next_line = lines[first_data_index + 1]
+    separator_line = lines[first_data_index + 2]
+
+    assert next_line.startswith("| ")
+    assert "Exercise 9" not in next_line
+    assert "Static output" not in next_line
+    assert "🔴 NO" not in next_line
+    assert not separator_line.startswith("+")
 
 
 def test_normalise_issue_lines_strips_joins_and_wraps() -> None:

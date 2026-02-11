@@ -119,9 +119,7 @@ def _check_notebook_can_execute_first_exercise(notebook_path: str) -> list[str]:
 def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
     return {
         EX001_SLUG: NotebookCheckDefinition("ex001 Sanity", _check_ex001),
-        EX002_SLUG: NotebookCheckDefinition(
-            "ex002 Sequence Modify Basics", _check_ex002_summary
-        ),
+        EX002_SLUG: NotebookCheckDefinition("ex002 Sequence Modify Basics", _check_ex002_summary),
         EX003_SLUG: NotebookCheckDefinition(
             "ex003 Sequence Modify Variables",
             lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),

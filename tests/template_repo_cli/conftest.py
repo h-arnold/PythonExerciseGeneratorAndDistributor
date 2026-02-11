@@ -9,6 +9,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from scripts.template_repo_cli.core.collector import ExerciseFiles
+
 
 @pytest.fixture
 def repo_root() -> Path:
@@ -17,18 +19,18 @@ def repo_root() -> Path:
 
 
 @pytest.fixture
-def sample_exercises(repo_root: Path) -> dict[str, dict[str, Path]]:
+def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
     """Sample exercise file mappings for testing."""
     return {
-        "ex001_sanity": {
-            "notebook": repo_root / "notebooks/ex001_sanity.ipynb",
-            "test": repo_root / "tests/test_ex001_sanity.py",
-        },
-        "ex002_sequence_modify_basics": {
-            "notebook": repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
-            "test": repo_root
+        "ex001_sanity": ExerciseFiles(
+            notebook=repo_root / "notebooks/ex001_sanity.ipynb",
+            test=repo_root / "tests/test_ex001_sanity.py",
+        ),
+        "ex002_sequence_modify_basics": ExerciseFiles(
+            notebook=repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
+            test=repo_root
             / "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
-        },
+        ),
     }
 
 
@@ -43,9 +45,7 @@ def temp_dir() -> Generator[Path, None, None]:
 def mock_gh_success() -> MagicMock:
     """Mock successful gh CLI execution."""
     mock = MagicMock()
-    mock.return_value = MagicMock(
-        returncode=0, stdout='{"name": "test-repo"}', stderr=""
-    )
+    mock.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
     return mock
 
 

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import Protocol
 
 import pytest
 
@@ -13,15 +15,14 @@ EXERCISE1_TAG = "exercise1"
 EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS = 2
 
 
-def _make_fake_input_runner() -> tuple[
-    callable[[str | Path, str, list[str]], str],
-    callable[[], int],
-]:
+class InputRunner(Protocol):
+    def __call__(self, notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str: ...
+
+
+def _make_fake_input_runner() -> tuple[InputRunner, Callable[[], int]]:
     call_count = 0
 
-    def fake_run_cell_with_input(
-        notebook_path: str | Path, *, tag: str, inputs: list[str]
-    ) -> str:
+    def fake_run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
         nonlocal call_count
         call_count += 1
         return f"{notebook_path}:{tag}:{'|'.join(inputs)}"
@@ -37,9 +38,7 @@ def test_runtime_output_helper_matches_notebook_grader(
 ) -> None:
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
 
-    from_runtime = runtime.run_cell_and_capture_output(
-        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG
-    )
+    from_runtime = runtime.run_cell_and_capture_output(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
     from_grader = notebook_grader.run_cell_and_capture_output(
         EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG
     )
@@ -53,9 +52,7 @@ def test_runtime_extract_helper_matches_notebook_grader(
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
 
     from_runtime = runtime.extract_tagged_code(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
-    from_grader = notebook_grader.extract_tagged_code(
-        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG
-    )
+    from_grader = notebook_grader.extract_tagged_code(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
 
     assert from_runtime == from_grader
 
@@ -99,9 +96,7 @@ def test_runtime_output_cache_reuses_result_for_same_path_and_tag(
         notebook_grader, "run_cell_and_capture_output", fake_run_cell_and_capture_output
     )
 
-    first = runtime.run_cell_and_capture_output(
-        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG, cache=cache
-    )
+    first = runtime.run_cell_and_capture_output(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG, cache=cache)
     second = runtime.run_cell_and_capture_output(
         EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG, cache=cache
     )
