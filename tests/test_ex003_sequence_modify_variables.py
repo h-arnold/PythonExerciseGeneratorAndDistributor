@@ -111,6 +111,31 @@ def _input_assigned_names(tree: ast.AST) -> set[str]:
     return names
 
 
+def _has_input_call(tree: ast.AST) -> bool:
+    """Check if code contains at least one input() call."""
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "input"
+        ):
+            return True
+    return False
+
+
+def _has_string_concatenation_in_print(tree: ast.AST) -> bool:
+    """Check if print() statement uses string concatenation (+)."""
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Name) or node.func.id != "print":
+            continue
+        for arg in node.args:
+            if isinstance(arg, ast.BinOp) and isinstance(arg.op, ast.Add):
+                return True
+    return False
+
+
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
@@ -123,11 +148,13 @@ def test_exercise1_construct() -> None:
     tree = _exercise_ast(1)
     constants = _string_constants(tree)
     assert ex003.EX003_EXPECTED_STATIC_OUTPUT[1] in constants
+    assert "Hello from Python!" not in constants, "Old greeting value should be removed"
     assert _assignment_matches(
         tree,
         "greeting",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[1]["greeting"],
     )
+    assert _print_uses_name(tree, "greeting"), "Must use greeting variable in print"
 
 
 @pytest.mark.task(taskno=2)
@@ -140,12 +167,15 @@ def test_exercise2_logic() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_construct() -> None:
     tree = _exercise_ast(2)
+    constants = _string_constants(tree)
+    assert "math" not in constants, "Old subject value should be removed"
     assert _assignment_matches(
         tree,
         "subject",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[2]["subject"],
     )
-    assert _print_uses_name(tree, "subject")
+    assert _print_uses_name(tree, "subject"), "Must use subject variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=3)
@@ -158,12 +188,15 @@ def test_exercise3_logic() -> None:
 @pytest.mark.task(taskno=3)
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
+    constants = _string_constants(tree)
+    assert "pasta" not in constants, "Old food value should be removed"
     assert _assignment_matches(
         tree,
         "food",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[3]["food"],
     )
-    assert _print_uses_name(tree, "food")
+    assert _print_uses_name(tree, "food"), "Must use food variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=4)
@@ -196,11 +229,13 @@ def test_exercise4_construct() -> None:
     constants = _string_constants(tree)
     assert ex003.EX003_EXPECTED_PROMPTS[4][0] in constants
     assert ex003.EX003_EXPECTED_PROMPTS[4][1] in constants
-    assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants
+    assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants, "Old prompt should be removed"
 
+    assert _has_input_call(tree), "Must use input() to capture user input"
     input_names = _input_assigned_names(tree)
-    assert len(input_names) == _EXPECTED_INPUT_CALLS
-    assert all(_print_uses_name(tree, name) for name in input_names)
+    assert len(input_names) == _EXPECTED_INPUT_CALLS, f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
+    assert all(_print_uses_name(tree, name) for name in input_names), "Must use input variables in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=5)
@@ -233,11 +268,13 @@ def test_exercise5_construct() -> None:
     constants = _string_constants(tree)
     assert ex003.EX003_EXPECTED_PROMPTS[5][0] in constants
     assert ex003.EX003_EXPECTED_PROMPTS[5][1] in constants
-    assert ex003.EX003_ORIGINAL_PROMPTS[5] not in constants
+    assert ex003.EX003_ORIGINAL_PROMPTS[5] not in constants, "Old prompt should be removed"
 
+    assert _has_input_call(tree), "Must use input() to capture user input"
     input_names = _input_assigned_names(tree)
-    assert len(input_names) == _EXPECTED_INPUT_CALLS
-    assert all(_print_uses_name(tree, name) for name in input_names)
+    assert len(input_names) == _EXPECTED_INPUT_CALLS, f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
+    assert all(_print_uses_name(tree, name) for name in input_names), "Must use input variables in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=6)
@@ -270,12 +307,14 @@ def test_exercise6_construct() -> None:
     constants = _string_constants(tree)
     assert ex003.EX003_EXPECTED_PROMPTS[6][0] in constants
     assert ex003.EX003_EXPECTED_PROMPTS[6][1] in constants
-    assert ex003.EX003_ORIGINAL_PROMPTS[6] not in constants
+    assert ex003.EX003_ORIGINAL_PROMPTS[6] not in constants, "Old prompt should be removed"
 
+    assert _has_input_call(tree), "Must use input() to capture user input"
     input_names = _input_assigned_names(tree)
-    assert len(input_names) == _EXPECTED_INPUT_CALLS
-    assert all(_print_uses_name(tree, name) for name in input_names)
-    assert any("!" in value for value in constants)
+    assert len(input_names) == _EXPECTED_INPUT_CALLS, f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
+    assert all(_print_uses_name(tree, name) for name in input_names), "Must use input variables in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
+    assert any("!" in value for value in constants), "Must include exclamation mark"
 
 
 @pytest.mark.task(taskno=7)
@@ -289,6 +328,9 @@ def test_exercise7_logic() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_construct() -> None:
     tree = _exercise_ast(7)
+    constants = _string_constants(tree)
+    assert "Learning" not in constants, "Old first_word value should be removed"
+    assert "Python" not in constants, "Old second_word value should be removed"
     assert _assignment_matches(
         tree,
         "first_word",
@@ -299,8 +341,9 @@ def test_exercise7_construct() -> None:
         "second_word",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[7]["second_word"],
     )
-    assert _print_uses_name(tree, "first_word")
-    assert _print_uses_name(tree, "second_word")
+    assert _print_uses_name(tree, "first_word"), "Must use first_word variable in print"
+    assert _print_uses_name(tree, "second_word"), "Must use second_word variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=8)
@@ -313,6 +356,8 @@ def test_exercise8_logic() -> None:
 @pytest.mark.task(taskno=8)
 def test_exercise8_construct() -> None:
     tree = _exercise_ast(8)
+    constants = _string_constants(tree)
+    assert "coding" not in constants, "Old part2 value should be removed"
     assert _assignment_matches(
         tree,
         "part1",
@@ -323,8 +368,9 @@ def test_exercise8_construct() -> None:
         "part2",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[8]["part2"],
     )
-    assert _print_uses_name(tree, "part1")
-    assert _print_uses_name(tree, "part2")
+    assert _print_uses_name(tree, "part1"), "Must use part1 variable in print"
+    assert _print_uses_name(tree, "part2"), "Must use part2 variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=9)
@@ -337,6 +383,9 @@ def test_exercise9_logic() -> None:
 @pytest.mark.task(taskno=9)
 def test_exercise9_construct() -> None:
     tree = _exercise_ast(9)
+    constants = _string_constants(tree)
+    assert "morning" not in constants, "Old time_of_day value should be removed"
+    assert "students" not in constants, "Old audience value should be removed"
     assert _assignment_matches(
         tree,
         "greeting",
@@ -352,9 +401,10 @@ def test_exercise9_construct() -> None:
         "audience",
         lambda value: value == ex003.EX003_EXPECTED_ASSIGNMENTS[9]["audience"],
     )
-    assert _print_uses_name(tree, "greeting")
-    assert _print_uses_name(tree, "time_of_day")
-    assert _print_uses_name(tree, "audience")
+    assert _print_uses_name(tree, "greeting"), "Must use greeting variable in print"
+    assert _print_uses_name(tree, "time_of_day"), "Must use time_of_day variable in print"
+    assert _print_uses_name(tree, "audience"), "Must use audience variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
 
 
 @pytest.mark.task(taskno=10)
@@ -368,6 +418,9 @@ def test_exercise10_logic() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_construct() -> None:
     tree = _exercise_ast(10)
+    constants = _string_constants(tree)
+    assert "Python" not in constants, "Old part_one value should be removed"
+    assert "matter" not in constants, "Old part_three value should be removed"
     assert _assignment_matches(
         tree,
         "part_one",
@@ -383,6 +436,7 @@ def test_exercise10_construct() -> None:
         "part_three",
         lambda value: ex003.EX003_EXERCISE10_REQUIRED_PHRASES["part_three"] in value,
     )
-    assert _print_uses_name(tree, "part_one")
-    assert _print_uses_name(tree, "part_two")
-    assert _print_uses_name(tree, "part_three")
+    assert _print_uses_name(tree, "part_one"), "Must use part_one variable in print"
+    assert _print_uses_name(tree, "part_two"), "Must use part_two variable in print"
+    assert _print_uses_name(tree, "part_three"), "Must use part_three variable in print"
+    assert _has_string_concatenation_in_print(tree), "Must use + to concatenate strings"
