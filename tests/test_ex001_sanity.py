@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from tests.notebook_grader import exec_tagged_code
+from tests.exercise_expectations import ex001_sanity as ex001
+from tests.exercise_framework import exec_tagged_code, resolve_notebook_path
+
+_NOTEBOOK_PATH = resolve_notebook_path(ex001.EX001_NOTEBOOK_PATH)
 
 
 def test_example_returns_string() -> None:
-    ns = exec_tagged_code("notebooks/ex001_sanity.ipynb", tag="exercise1")
-    assert "example" in ns
-    result = ns["example"]()
+    ns = exec_tagged_code(_NOTEBOOK_PATH, tag=ex001.EX001_TAG)
+    assert ex001.EX001_FUNCTION_NAME in ns
+    result = ns[ex001.EX001_FUNCTION_NAME]()
     assert isinstance(result, str)
     assert result != ""

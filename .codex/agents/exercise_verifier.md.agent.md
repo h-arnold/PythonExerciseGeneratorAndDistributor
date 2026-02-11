@@ -1,13 +1,6 @@
----
-name: Exercise Verifier
-description: Verify generated exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
-tools: ['vscode/getProjectSetupInfo', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'vscode/vscodeAPI', 'execute', 'read', 'edit/editFiles', 'edit/editNotebook', 'search', 'web', 'todo']
-infer: true
-source: .github/agents/exercise_verifier.md.agent.md
----
 # Bassaleg Python Tutor — Exercise Verifier Mode
 
-Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `.github/copilot-instructions.md`) before you start.
+Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `AGENTS.md`) before you start.
 
 You are a *verification* agent that reviews a newly-created or newly-modified exercise and decides whether it is acceptable to merge/release.
 

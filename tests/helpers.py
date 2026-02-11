@@ -40,8 +40,7 @@ def run_tagged_cell_output(
 
 def load_notebook(notebook_path: str | Path, *, use_solution: bool = False) -> dict[str, Any]:
     """Load a notebook JSON document, optionally redirecting to the solution directory."""
-    target = resolve_notebook_path(
-        notebook_path) if use_solution else Path(notebook_path)
+    target = resolve_notebook_path(notebook_path) if use_solution else Path(notebook_path)
     with open(target, encoding="utf-8") as handle:
         return json.load(handle)
 
@@ -74,8 +73,7 @@ def assert_code_cell_present(
     if ensure_not_empty:
         assert source.strip(), f"Cell {tag} must not be empty"
     if not allow_todo and "TODO" in source:
-        raise AssertionError(
-            f"Solution cell {tag} should not contain TODO placemarkers")
+        raise AssertionError(f"Solution cell {tag} should not contain TODO placemarkers")
 
     return source
 

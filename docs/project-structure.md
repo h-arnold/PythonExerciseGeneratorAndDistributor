@@ -28,7 +28,7 @@ PythonExerciseGeneratorAndDistributor/
 ├── pyproject.toml
 ├── pytest.ini
 ├── README.md
-└── TODO.md
+└── AGENTS.md
 ```
 
 ## Key Directories
@@ -72,13 +72,14 @@ The `notebooks/solutions/` subdirectory contains instructor solution mirrors tha
 
 Contains pytest-based automated grading and support tooling tests:
 
-- `notebook_grader.py`: Core framework that extracts and executes tagged cells from notebooks
+- `exercise_framework/`: Core framework that extracts and executes tagged cells from notebooks
+- `notebook_grader.py`: Low-level notebook parsing and execution helpers wrapped by the framework
 - `autograde_plugin.py`: Captures test outcomes in the format required by GitHub Classroom and powers the Base64 payload CLI
 - `test_exNNN_slug.py`: Test files for each exercise that verify student solutions
 - `test_debug_explanations.py`: Validates teacher-facing explanations that accompany debug exercises
 - `template_repo_cli/`: Ensures the template-repo packaging CLI remains stable
 
-Tests use `exec_tagged_code()` to extract student code from tagged cells and assert correctness.
+Tests use the exercise framework runtime helpers (for example, `runtime.exec_tagged_code()`) to extract student code from tagged cells and assert correctness.
 
 Type guard helpers (using `typing.TypeGuard`) — place TypeGuard functions close to the module they validate. For module-level guards create a sibling `_typeguards.py` or `<module>_typeguards.py` next to the module they support. For shared or test-specific guards, use a `tests/typeguards/` package. Name guards `is_<name>` and include unit tests that verify both positive and negative cases.
 
@@ -102,7 +103,6 @@ The autograding workflow distributed to classrooms resides at `template_repo_fil
 
 GitHub-specific configuration:
 
-- `copilot-instructions.md`: Repo-wide custom instructions for GitHub Copilot
 - `agents/exercise_generation.md.agent.md`: Custom agent for exercise generation
 - `workflows/`: CI/CD workflows for testing
 
@@ -111,7 +111,7 @@ GitHub-specific configuration:
 - `pyproject.toml`: Defines project dependencies and tooling; `uv` uses this file to resolve and lock packages
 - `pytest.ini`: Shared pytest settings for grading and infrastructure tests
 - `README.md`: High-level project overview for contributors and students
-- `TODO.md`: Backlog of maintenance and enhancement tasks
+- `AGENTS.md`: Repo-wide custom instructions for GitHub Copilot
 - `main.py`: Entry point used by distribution tooling and classic Python execution environments
 
 ## File Naming Conventions
@@ -127,7 +127,7 @@ Students write code in cells tagged with `exerciseN` in the cell metadata:
 - Single-part exercises: one cell tagged `exercise1`
 - Multi-part exercises: multiple cells tagged `exercise1`, `exercise2`, etc.
 
-Tests extract these tagged cells using `notebook_grader.exec_tagged_code()` and execute them in isolation to verify correctness.
+Tests extract these tagged cells using `tests/exercise_framework/runtime.py` and execute them in isolation to verify correctness.
 
 ## Parallel Notebook Sets
 

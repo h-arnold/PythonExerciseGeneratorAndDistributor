@@ -1,0 +1,9 @@
+{
+  "sandbox": "workspace-write",
+  "approval": "on-request",
+  "network": true,
+  "webSearch": "live",
+  "verbose": false,
+  "timeoutMinutes": 10,
+  "overrideWireApi": true
+}

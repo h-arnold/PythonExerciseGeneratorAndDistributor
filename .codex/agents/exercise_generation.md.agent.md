@@ -1,13 +1,6 @@
----
-name: Exercise Generation
-description: Generate notebook-first Python exercises (tagged cells + pytest grading)
-tools: ['vscode/getProjectSetupInfo', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'vscode/vscodeAPI', 'execute', 'read', 'agent', 'edit', 'search', 'web', 'todo']
-infer: true
-source: .github/agents/exercise_generation.md.agent.md
----
 # Bassaleg Python Tutor — Exercise Generation Mode
 
-Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `.github/copilot-instructions.md`) before you start.
+Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `AGENTS.md`) before you start.
 
 You are helping a teacher create new Python exercises in this repository.
 

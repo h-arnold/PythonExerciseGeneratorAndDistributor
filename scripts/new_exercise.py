@@ -23,6 +23,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_PARTS = 20
+README_FILENAME = "README.md"
 
 
 def _slugify(text: str) -> str:
@@ -148,8 +149,27 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
     return cells
 
 
+def _make_check_answers_cell(notebook_path: str) -> dict[str, Any]:
+    """Return the auto-generated check-your-answers cell for the notebook."""
+    return {
+        "cell_type": "code",
+        "metadata": _make_meta("python"),
+        "execution_count": None,
+        "outputs": [],
+        "source": [
+            "from tests.student_checker import run_notebook_checks\n",
+            "\n",
+            f"run_notebook_checks({notebook_path!r})\n",
+        ],
+    }
+
+
 def _make_notebook_with_parts(
-    title: str, *, parts: int, exercise_type: str | None = None
+    title: str,
+    *,
+    parts: int,
+    exercise_type: str | None = None,
+    notebook_path: str | None = None,
 ) -> dict[str, Any]:
     if parts < 1:
         raise ValueError("parts must be >= 1")
@@ -190,6 +210,9 @@ def _make_notebook_with_parts(
         }
     )
 
+    if notebook_path:
+        cells.append(_make_check_answers_cell(notebook_path))
+
     return {
         "cells": cells,
         "metadata": {
@@ -203,6 +226,21 @@ def _make_notebook_with_parts(
         "nbformat": 4,
         "nbformat_minor": 5,
     }
+
+
+def _build_readme_lines(title: str, created_date: str) -> list[str]:
+    return [
+        f"# {title}",
+        "",
+        "## Student prompt",
+        "- Open the matching notebook in `notebooks/`.",
+        "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
+        "- Run `pytest -q` until all tests pass.",
+        "",
+        "## Teacher notes",
+        f"- Created: {created_date}",
+        "- Target concepts: (fill in)",
+    ]
 
 
 def _validate_and_parse_args() -> argparse.Namespace:
@@ -274,22 +312,9 @@ def main() -> int:
 
     today = _dt.date.today().isoformat()
 
-    (ex_dir / "README.md").write_text(
-        "\n".join(
-            [
-                f"# {args.title}",
-                "",
-                "## Student prompt",
-                "- Open the matching notebook in `notebooks/`.",
-                "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
-                "- Run `pytest -q` until all tests pass.",
-                "",
-                "## Teacher notes",
-                f"- Created: {today}",
-                "- Target concepts: (fill in)",
-            ]
-        )
-        + "\n",
+    readme_lines = _build_readme_lines(args.title, today)
+    (ex_dir / README_FILENAME).write_text(
+        "\n".join(readme_lines) + "\n",
         encoding="utf-8",
     )
 
@@ -362,7 +387,13 @@ def main() -> int:
     test_path.write_text("\n".join(test_lines), encoding="utf-8")
 
     # Build notebook with the optional exercise type (e.g., debug)
-    notebook = _make_notebook_with_parts(args.title, parts=args.parts, exercise_type=args.type)
+    relative_nb_path = f"notebooks/{exercise_key}.ipynb"
+    notebook = _make_notebook_with_parts(
+        args.title,
+        parts=args.parts,
+        exercise_type=args.type,
+        notebook_path=relative_nb_path,
+    )
     nb_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
 
     nb_solution_path.parent.mkdir(parents=True, exist_ok=True)
@@ -370,13 +401,13 @@ def main() -> int:
 
     # If this is a debug exercise, update README to mention explanation tags
     if args.type == "debug":
-        readme_lines = (ex_dir / "README.md").read_text(encoding="utf-8").splitlines()
+        readme_lines = (ex_dir / README_FILENAME).read_text(encoding="utf-8").splitlines()
         # Add short instruction about the explanation cell
         readme_lines.insert(
             7,
             "- After running your corrected solution, describe what happened in the cell tagged `explanation1` (or `explanationN`).",
         )
-        (ex_dir / "README.md").write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
+        (ex_dir / README_FILENAME).write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
 
     print(f"Created exercise: {exercise_key}")
     print(f"- {ex_dir.relative_to(ROOT)}")

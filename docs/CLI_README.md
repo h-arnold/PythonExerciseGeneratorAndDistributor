@@ -201,7 +201,7 @@ Each generated template repository includes:
 
 ### Testing Framework
 
-The template includes only the selected test files for the exercises. The full grading framework (for example, `tests/notebook_grader.py` and other infrastructure) is **not** included by default. If you want the complete grading framework to be present in generated templates, add the required files to the `template_repo_files` directory before creating the template. See `template_repo_files/README.md.template` for guidance on what to include.
+The template includes only the selected test files for the exercises. The full grading framework (for example, `tests/exercise_framework/`, `tests/exercise_expectations/`, and other infrastructure) is **not** included by default. Many current tests import those modules, so if you package exercises that depend on the framework you must include those directories in `template_repo_files/` (or extend the packager to copy them). See `template_repo_files/README.md.template` for guidance on what to include.
 
 ## Available Constructs
 

@@ -10,7 +10,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from scripts.template_repo_cli.core.github import ExecResult, GitHubClient, is_command_sequence
+from scripts.template_repo_cli.core.github import (
+    ExecResult,
+    GitHubClient,
+    is_command_sequence,
+)
 
 
 class TestBuildCreateRepoCommand:
@@ -394,7 +398,13 @@ class TestMarkRepositoryAsTemplate:
 
         assert result["success"] is True
         # Verify gh api user was called
-        assert mock_run.call_args_list[0][0][0] == ["gh", "api", "user", "--jq", ".login"]
+        assert mock_run.call_args_list[0][0][0] == [
+            "gh",
+            "api",
+            "user",
+            "--jq",
+            ".login",
+        ]
         # Verify gh repo edit was called with username/repo
         assert mock_run.call_args_list[1][0][0] == [
             "gh",
@@ -608,7 +618,9 @@ class TestScopeChecking:
     def test_check_scopes_parses_multiple_formats(self, mock_run: MagicMock) -> None:
         """Test scope parsing handles different quote styles."""
         mock_run.return_value = MagicMock(
-            returncode=0, stdout="  - Token scopes: 'gist', \"read:org\", repo", stderr=""
+            returncode=0,
+            stdout="  - Token scopes: 'gist', \"read:org\", repo",
+            stderr="",
         )
 
         client = GitHubClient()

@@ -19,10 +19,14 @@ TRUNCATED_MESSAGE_LIMIT = 1000
 EXPECTED_ASSERT_LINE = 2
 
 
-@pytest.fixture(autouse=True)
-def _register_autograde_plugin(pytester: pytest.Pytester) -> None:  # pyright: ignore[reportUnusedFunction]
+def _register_autograde_plugin(
+    pytester: pytest.Pytester,
+) -> None:
     pytester.syspathinsert(str(PLUGIN_PATH.parent))
     pytester.makeconftest("pytest_plugins = ['autograde_plugin']\n")
+
+
+_register_autograde_plugin = pytest.fixture(autouse=True)(_register_autograde_plugin)
 
 
 def _write_test_module(

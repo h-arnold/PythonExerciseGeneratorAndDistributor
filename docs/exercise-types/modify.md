@@ -21,7 +21,7 @@ print("Next year you will be " + str(age))
 
 Avoid compressing multiple operations into a single expression in solution examples, as that hides intermediate steps and reduces learning value.
 
-- Cell metadata must include `{"language": "python", "tags": ["exerciseN"]}`. The grading helper `run_cell_and_capture_output()` in [tests/notebook_grader.py](tests/notebook_grader.py#L94) executes code by tag, so missing or misspelled tags will cause automated tests to fail.
+- Cell metadata must include `{"language": "python", "tags": ["exerciseN"]}`. The grading helper `runtime.run_cell_and_capture_output()` in [tests/exercise_framework/runtime.py](tests/exercise_framework/runtime.py) executes code by tag, so missing or misspelled tags will cause automated tests to fail.
 - Exercises rely on printed output. Ensure the starter code already produces syntactically correct output so students focus on modification, not syntax errors.
 - Optional extension or scratch cells (for self-checking) should be left untagged so the grader ignores them.
 
@@ -66,4 +66,4 @@ The snippet below reflects the structure emitted by the current scaffolding comm
 }
 ```
 
-Tests such as [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py) call each tagged cell and compare its stdout against the expected output shown in the markdown instructions. When adding new modification exercises, mirror this pattern so both the scaffolding CLI and the grading suite continue to work without adjustment.
+Tests such as [tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py](tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py) call each tagged cell and compare its stdout against the expected output shown in the markdown instructions. When adding new modification exercises, mirror this pattern so both the scaffolding CLI and the grading suite continue to work without adjustment.

@@ -19,6 +19,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, TypedDict, TypeGuard, cast
 
 CONSTRUCT_ORDER: list[str] = [
     "sequence",
@@ -44,32 +45,117 @@ class Finding:
     path: Path | None = None
 
 
-def _load_notebook(path: Path) -> dict:
+NotebookCellSource = str | list[str]
+
+
+class NotebookCellMetadata(TypedDict, total=False):
+    language: str
+    tags: NotebookCellSource
+
+
+class NotebookCell(TypedDict, total=False):
+    cell_type: str
+    metadata: NotebookCellMetadata
+    source: NotebookCellSource
+
+
+class NotebookDocument(TypedDict, total=False):
+    cells: list[NotebookCell]
+
+
+def _is_notebook_cell_source(value: object) -> TypeGuard[NotebookCellSource]:
+    if isinstance(value, str):
+        return True
+    if not isinstance(value, list):
+        return False
+    value_list: list[object] = cast(list[object], value)
+    return all(isinstance(item, str) for item in value_list)
+
+
+def _is_notebook_cell_metadata(value: object) -> TypeGuard[NotebookCellMetadata]:
+    if not isinstance(value, dict):
+        return False
+    metadata = cast(dict[str, Any], value)
+    language = metadata.get("language")
+    if language is not None and not isinstance(language, str):
+        return False
+    tags = metadata.get("tags")
+    if tags is None:
+        return True
+    if isinstance(tags, str):
+        return True
+    if isinstance(tags, list):
+        tags_list: list[object] = cast(list[object], tags)
+        return all(isinstance(tag, str) for tag in tags_list)
+    return False
+
+
+def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
+    if not isinstance(value, dict):
+        return False
+    cell = cast(dict[str, Any], value)
+    cell_type = cell.get("cell_type")
+    if cell_type is not None and not isinstance(cell_type, str):
+        return False
+    metadata = cell.get("metadata")
+    if metadata is not None and not _is_notebook_cell_metadata(metadata):
+        return False
+    source = cell.get("source")
+    if source is None:
+        return True
+    return _is_notebook_cell_source(source)
+
+
+def _is_notebook_cells(value: object | None) -> TypeGuard[list[NotebookCell]]:
+    if not isinstance(value, list):
+        return False
+    typed_cells: list[object] = cast(list[object], value)
+    return all(_is_notebook_cell(item) for item in typed_cells)
+
+
+def _is_notebook_document(value: object) -> TypeGuard[NotebookDocument]:
+    if not isinstance(value, dict):
+        return False
+    mapping = cast(dict[str, Any], value)
+    return _is_notebook_cells(mapping.get("cells"))
+
+
+def _load_notebook(path: Path) -> NotebookDocument:
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        raw = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise SystemExit(f"Notebook not found: {path}") from exc
     except json.JSONDecodeError as exc:
         raise SystemExit(f"Invalid JSON in notebook: {path}: {exc}") from exc
 
-
-def _cell_tags(cell: dict) -> set[str]:
-    metadata = cell.get("metadata") or {}
-    tags = metadata.get("tags") or []
-    if isinstance(tags, str):
-        return {tags}
-    if isinstance(tags, list):
-        return {t for t in tags if isinstance(t, str)}
-    return set()
+    if not _is_notebook_document(raw):
+        raise SystemExit(f"Notebook {path} is missing a top-level 'cells' list.")
+    return raw
 
 
-def _cell_source_text(cell: dict) -> str:
-    source = cell.get("source", "")
+def _cell_tags(cell: NotebookCell) -> set[str]:
+    metadata: NotebookCellMetadata | None = cell.get("metadata")
+    if metadata is None or "tags" not in metadata:
+        return set()
+
+    raw_tags = metadata["tags"]
+    if isinstance(raw_tags, list):
+        tags: set[str] = set()
+        raw_tags_list: list[object] = cast(list[object], raw_tags)
+        for tag in raw_tags_list:
+            if isinstance(tag, str):
+                tags.add(tag)
+        return tags
+    return {raw_tags}
+
+
+def _cell_source_text(cell: NotebookCell) -> str:
+    if "source" not in cell:
+        return ""
+    source = cell["source"]
     if isinstance(source, list):
-        return "\n".join(str(x) for x in source)
-    if isinstance(source, str):
-        return source
-    return ""
+        return "\n".join(source)
+    return source
 
 
 _EXERCISE_TAG_RE = re.compile(r"^exercise(?P<n>\d+)$")
@@ -167,9 +253,11 @@ def _check_order_of_teaching(ex_dir: Path, *, repo_root: Path, notebook_name: st
     return findings
 
 
-def _check_cell_language(cell_index: int, cell: dict, nb_path: Path) -> list[Finding]:
-    metadata = cell.get("metadata") or {}
-    lang = metadata.get("language")
+def _check_cell_language(cell_index: int, cell: NotebookCell, nb_path: Path) -> list[Finding]:
+    metadata: NotebookCellMetadata | None = cell.get("metadata")
+    lang: str | None = None
+    if metadata is not None and "language" in metadata:
+        lang = metadata["language"]
     if lang in {"python", "markdown"}:
         return []
     return [
@@ -279,25 +367,38 @@ def _check_tag_continuity(
     return findings
 
 
-def _check_notebook_structure(nb_path: Path, nb: dict, *, expect_debug: bool) -> list[Finding]:
+def _check_notebook_structure(
+    nb_path: Path, nb: NotebookDocument, *, expect_debug: bool
+) -> list[Finding]:
     findings: list[Finding] = []
 
     cells = nb.get("cells")
     if not isinstance(cells, list):
         return [Finding("ERROR", "Notebook has no 'cells' list", path=nb_path)]
+    cells_list = cast(list[object], cells)
 
     found_exercise_tags: set[str] = set()
     found_explanation_tags: set[str] = set()
 
-    for idx, cell in enumerate(cells, start=1):
+    for idx, cell in enumerate(cells_list, start=1):
         if not isinstance(cell, dict):
             findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
+        cell_mapping = cast(dict[str, Any], cell)
+        if not _is_notebook_cell(cell_mapping):
+            findings.append(
+                Finding(
+                    "ERROR",
+                    f"Cell {idx} has invalid notebook cell structure",
+                    path=nb_path,
+                )
+            )
+            continue
 
-        findings.extend(_check_cell_language(idx, cell, nb_path))
+        findings.extend(_check_cell_language(idx, cell_mapping, nb_path))
 
-        cell_type = cell.get("cell_type")
-        tags = _cell_tags(cell)
+        cell_type = cell_mapping.get("cell_type")
+        tags = _cell_tags(cell_mapping)
         exercise_tags, explanation_tags, tag_findings = _collect_tag_findings(
             cell_type=cell_type,
             tags=tags,
@@ -324,7 +425,11 @@ def _progression_rules() -> dict[str, list[re.Pattern[str]]]:
     # Patterns that indicate the presence of a construct.
     # These are heuristic checks and intentionally conservative.
     return {
-        "selection": [re.compile(r"\bif\b"), re.compile(r"\belif\b"), re.compile(r"\belse\b")],
+        "selection": [
+            re.compile(r"\bif\b"),
+            re.compile(r"\belif\b"),
+            re.compile(r"\belse\b"),
+        ],
         "iteration": [
             re.compile(r"\bfor\b"),
             re.compile(r"\bwhile\b"),
@@ -348,14 +453,24 @@ def _progression_rules() -> dict[str, list[re.Pattern[str]]]:
             re.compile(r"\.get\s*\("),
             re.compile(r"\.items\s*\("),
         ],
-        "functions": [re.compile(r"^\s*def\s+", re.MULTILINE), re.compile(r"\breturn\b")],
+        "functions": [
+            re.compile(r"^\s*def\s+", re.MULTILINE),
+            re.compile(r"\breturn\b"),
+        ],
         "file_handling": [re.compile(r"\bopen\s*\("), re.compile(r"\bwith\s+open\b")],
-        "exceptions": [re.compile(r"\btry\b"), re.compile(r"\bexcept\b"), re.compile(r"\braise\b")],
+        "exceptions": [
+            re.compile(r"\btry\b"),
+            re.compile(r"\bexcept\b"),
+            re.compile(r"\braise\b"),
+        ],
         "libraries": [
             re.compile(r"^\s*import\b", re.MULTILINE),
             re.compile(r"^\s*from\s+\w+\s+import\b", re.MULTILINE),
         ],
-        "oop": [re.compile(r"^\s*class\s+", re.MULTILINE), re.compile(r"\bself\b\s*\.")],
+        "oop": [
+            re.compile(r"^\s*class\s+", re.MULTILINE),
+            re.compile(r"\bself\b\s*\."),
+        ],
     }
 
 
@@ -435,13 +550,19 @@ def _scan_for_progression_violations(  # noqa: C901
     return findings
 
 
-def _collect_code_cell_text(nb: dict) -> str:
+def _collect_code_cell_text(nb: NotebookDocument) -> str:
     cells = nb.get("cells")
     if not isinstance(cells, list):
         return ""
-    return "\n\n".join(
-        _cell_source_text(c) for c in cells if isinstance(c, dict) and c.get("cell_type") == "code"
-    )
+    code_chunks: list[str] = []
+    for cell in cells:
+        if not _is_notebook_cell(cell):
+            continue
+        cell_type = cell.get("cell_type")
+        if cell_type != "code":
+            continue
+        code_chunks.append(_cell_source_text(cell))
+    return "\n\n".join(code_chunks)
 
 
 def _print_findings(findings: list[Finding]) -> None:

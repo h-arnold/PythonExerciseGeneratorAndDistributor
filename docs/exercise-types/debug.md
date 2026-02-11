@@ -102,7 +102,7 @@ A shortened JSON excerpt from a two-part debug notebook is shown below. It refle
 
 **Tag requirements**
 
-- Each buggy code cell that the grader executes **must** carry exactly one `exerciseN` tag. Tests such as `test_ex002_sequence_modify_basics.py` and `test_ex004_sequence_debug_syntax.py` rely on these tags when calling `run_cell_and_capture_output()`.
+- Each buggy code cell that the grader executes **must** carry exactly one `exerciseN` tag. Tests such as `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` and `test_ex004_sequence_debug_syntax.py` rely on these tags when calling `run_cell_and_capture_output()`.
 - The reflection markdown cell after each buggy implementation **must** carry the matching `explanationN` tag. Automated checks use `get_explanation_cell()` to enforce this.
 - Tags are case-sensitive; do not use variations like `Exercise1` or `exercise_1`.
 
@@ -144,7 +144,7 @@ Early parts typically focus on single syntax slips; later parts can combine synt
 
 ## Testing guidance (required)
 
-- Use helpers from `tests/notebook_grader.py` to execute tagged cells and capture output. They respect the `PYTUTOR_NOTEBOOKS_DIR` override so the same checks run against student and solution notebooks.
+- Use helpers from `tests/exercise_framework/runtime.py` to execute tagged cells and capture output. They respect the `PYTUTOR_NOTEBOOKS_DIR` override so the same checks run against student and solution notebooks.
 - Verify both the corrected programme behaviour and the filled-in explanation cells.
 - For input-driven exercises, prefer `run_cell_with_input()` to provide deterministic inputs.
 
@@ -153,11 +153,7 @@ Example pattern for a debug exercise test module:
 ```python
 import pytest
 
-from tests.notebook_grader import (
-    get_explanation_cell,
-    run_cell_and_capture_output,
-    run_cell_with_input,
-)
+from tests.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex004_sequence_debug_syntax.ipynb"
 MIN_EXPLANATION_LENGTH = 10
@@ -167,18 +163,18 @@ MIN_EXPLANATION_LENGTH = 10
     ("exercise2", "I like Python"),
 ])
 def test_exercise_output(tag: str, expected: str) -> None:
-    output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
+    output = runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
     assert expected in output
 
 
 def test_exercise7_handles_input() -> None:
-    output = run_cell_with_input(NOTEBOOK_PATH, tag="exercise7", inputs=["5"])
+    output = runtime.run_cell_with_input(NOTEBOOK_PATH, tag="exercise7", inputs=["5"])
     assert "10" in output
 
 
 @pytest.mark.parametrize("tag", [f"explanation{i}" for i in range(1, 11)])
 def test_explanations_have_content(tag: str) -> None:
-    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)
+    explanation = runtime.get_explanation_cell(NOTEBOOK_PATH, tag=tag)
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
 ```
 
@@ -189,4 +185,4 @@ def test_explanations_have_content(tag: str) -> None:
 - [ ] Buggy code cells are tagged `exercise1` … `exerciseN` and contain executable code.
 - [ ] Reflection markdown cells are tagged `explanation1` … `explanationN` and the default text encourages students to describe what went wrong.
 - [ ] Solution notebooks mirror the structure and tags while demonstrating the corrected code.
-- [ ] Tests verify the corrected behaviour *and* enforce explanation content using the helpers in `tests/notebook_grader.py`.
+- [ ] Tests verify the corrected behaviour *and* enforce explanation content using the helpers in `tests/exercise_framework/runtime.py`.

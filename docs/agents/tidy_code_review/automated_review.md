@@ -33,7 +33,7 @@ The automated review will automatically apply the following safe changes that pr
 - Remove trivially dead or unreachable code (single-line unused assignments, clearly dead imports)
 - Trivial simplifications flagged by `ruff`
 - Rename unused variables, fix obvious no-op expressions
-- Adding or fixing type hints flagged up by `pylance`.
+- Adding or fixing type hints flagged up by `pyright`.
 
 ### Suggestions Only (never auto-applied)
 
@@ -51,7 +51,7 @@ For these, the automated review should generate a patch file with explanation an
 **IMPORTANT**: This repository uses a uv-managed virtual environment. Run `uv sync` when dependencies change and execute commands via `uv run ...` (or activate the `.venv` created by uv with `source .venv/bin/activate`) before running diagnostics. Skipping this step leads to missing tooling.
 
 - `uv run ruff check` (with `SIM`, `PLR`, `C90x`, `E/F/W`) — primary lint, complexity, and simplification signals
-- Pylance diagnostics via the `problems` view and the `pylance-mcp-server/*` tools — surface unused code, type issues, and quick fixes. Important: **open each changed file in the editor before running Pylance diagnostics** so the language server indexes it; then invoke the `problems` tool or the Pylance tool for that specific file to capture all file-specific diagnostics. Doing a per-file check is required because Pylance may not reveal all issues unless the file is open.
+- `uv run --with pyright pyright [paths...]` — typing diagnostics. Run against the affected files (or the repo root when surface area is large) so pyright reports new issues.
 - Semantic search (`search`) for near-duplicate blocks when no dedicated duplication tool is available
 - `run_in_terminal` / `execute` to run these tools and capture machine-friendly output
 
@@ -79,23 +79,22 @@ Default thresholds used by automated checks:
    - Only run `uv run pytest -q` without the environment variable when you need to inspect student notebooks; confirm any failures are the expected pre-solution failures, not regressions.
 6. Run `uv run ruff check --fix` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
 7. Run `uv run ruff format` to apply formatting fixes.
-8. Run Pylance diagnostics:
-   - For each changed file:
-      - Open the file in the editor, one at a time to ensure Pylance indexes it. **You must do this. This task will fail if you don't open the file first.**
-      - Run Pylance diagnostics for that file and capture issues via `get_errors` and `pylance-mcp-server`.
+8. Run Pyright diagnostics:
+   - Execute `uv run --with pyright pyright [paths...]`, supplying the changed files or `.` when many files were touched.
+   - Capture the typing issues reported and include them in the automated report so the manual reviewer can triage any remaining errors.
 9. Check the total line length of files changed. If over 500 lines, suggest splitting into smaller modules when sensible.
 10. Decide next action based on the issues found (see Decision tree).
 
 ## Decision tree (automated)
 
-1) Run automated checks (ruff, Pylance, KISS/DRY heuristics).
+1) Run automated checks (ruff, Pyright, KISS/DRY heuristics).
 2) If the number of issues found is <= 15: apply/report safe fixes and proceed to request a manual trace (call the manual review) for a full manual review.
 3) If > 15 issues found: apply/report what automation can safely fix, then skip the manual trace for now and report that a follow-up manual review is required after the bulk issues are handled.
 
 ## When a tool is missing
 
 - Log which tools are unavailable and which analyses were skipped.
-- Fall back to grep/semantic search and Pylance suggestions and annotate reduced confidence.
+- Fall back to grep/semantic search and any outstanding Pyright hints and annotate reduced confidence.
 
 ## Output
 

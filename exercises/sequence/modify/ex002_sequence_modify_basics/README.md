@@ -9,7 +9,7 @@
 - Open the matching notebook in `notebooks/ex002_sequence_modify_basics.ipynb`.
 - Each exercise shows you working code. Your task is to **modify** it to meet the new requirements.
 - Write your solution in the notebook cells tagged `exercise1` through `exercise10`.
-- Run `pytest -q tests/test_ex002_sequence_modify_basics.py` until all tests pass.
+- Run `pytest -q tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` until all tests pass.
 
 ## Teacher notes
 - Created: 2026-01-09

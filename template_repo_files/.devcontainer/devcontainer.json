@@ -45,6 +45,7 @@
         
         // Jupyter configuration
         "jupyter.notebookFileRoot": "${workspaceFolder}",
+        "notebook.output.scrolling": true,
         
         // Workbench configuration - keep environment simple
         "workbench.startupEditor": "none",

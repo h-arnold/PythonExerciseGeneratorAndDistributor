@@ -86,7 +86,7 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
 
-The same tests run against both sets. 
+The same tests run against both sets.
 
 **IMPORTANT NOTE:** Always run the *Development* tests unless you are creating or verifying jupyter notebook exercises. The tests for the students notebooks are designed to fail until they are completed with the correct code.
 
@@ -108,6 +108,7 @@ The same tests run against both sets.
 - Deterministic, fast tests: no randomness, time, or network.
 - Prefer stdlib; avoid new deps unless necessary and justified.
 - Match Ruff rules in `pyproject.toml` (E/F/W/I/UP/B/C90/LOG/PIE/RUF/SIM/PLR).
+- Keep formatter changes unless the user says otherwise.
 - **NEVER** silence linting errors without explicit authorisation from the user. If you feel that fixing the linting error would make the code less readable, then stop and ask for clarification.
 
 ### Python Style (for infrastructure code, not student exercises)
@@ -184,6 +185,7 @@ ruff check . --fix
 **Delegate to the exercise generation sub-agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
 
 Do not create exercises manually. Use:
+
 1. The exercise generation agent for authoring
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
@@ -201,6 +203,7 @@ See Testing Framework: `docs/testing-framework.md` for details.
 ## Constraints
 
 **Do not**:
+
 - Include full solutions in student-facing notebooks
 - Add dependencies that can't be installed via micropip (web VSCode compatibility)
 - Use network access in exercises or tests
@@ -208,6 +211,7 @@ See Testing Framework: `docs/testing-framework.md` for details.
 - Use generic best practices that aren't specific to this codebase
 
 **Do**:
+
 - Keep instructions clear and age-appropriate (14-18 year olds)
 - Write concise, accurate documentation
 - Use the scaffolding tools for consistency
@@ -215,7 +219,9 @@ See Testing Framework: `docs/testing-framework.md` for details.
 - Follow the existing patterns in the codebase
 - Always write in British English
 
-## Calling Sub-Agents
+## Calling Sub-Agents in a Github Copilot Environment
+
+When you need to perform a task that falls under the expertise of a sub-agent, you should delegate to that agent rather than trying to handle it yourself. This ensures that the task is completed with the appropriate level of focus and expertise.
 
 **MANDATORY:** Every sub-agent call must include `agentName: "{name of subagent}"` in its payload. If sub-agent tools are unavailable in this environment, handle the task directly.
 
@@ -226,6 +232,28 @@ The sub-agents you can call are (first-line names are case-sensitive):
 - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
 - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
 
+## Spawning sub-agents in a Codex Enironment
+
+Use `codex-delegate` to spawn a focused sub-agent for a specific task. Keep tasks small, pass constraints in `--instructions`, and set `--timeout-minutes` to 10 or more for long-running jobs.
+
+Example:
+
+```bash
+codex-delegate --role implementation \
+  --task "Add input validation to the assessor controller" \
+  --instructions "{Detailed and highly specific instructions on exactly what you expect the sub-agent to do. More detail is better.}" \
+  --working-dir packages/my-app \
+  --timeout-minutes 10
+```
+
+While a sub-agent is running, expect a heartbeat line (`agent is still working`) roughly every minute if no new stream events arrive.
+
+**IMPORTANT**: Be patient. Some tasks will take several minutes and if the agent is thinking, you may not see any output for a while. If you see the heartbeat line, it is still working. If there is an error with the agent, `codex-delegate` will throw an error. If you stop it early, you may lose the work it has done so far. If you think it has stalled, check the logs for details `codex-delegate.log` (or set `--log-file` to write logs to a different path).
+
+### Sub-agent roles
+
+Sub-agent roles are defined in the `.codex` folder, along with the configuration file. To create a new role, add a markdown file with the role name (e.g. `implementation.md`) and a prompt template for that role. Empty files are ignored. Use `--list-roles` to see the discovered roles.
+
 
 ## Implementation Workflow
 
@@ -233,9 +261,9 @@ For any significant code changes (defined as adding/modifying more than 1 functi
 
 1. **Consider the size of the task**: If it's a large task requiring many changes, split the task into smaller chunks and update your TODO list manually.
 2. **Delegate to the Implementer Agent**: Use the available sub-agent tool with the `Implementer` agent. Pass a detailed task description, including the scope of files to edit. If sub-agents are unavailable, complete the work directly.
-    *   *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
-3.  **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
-    *   *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
+    - *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
+3. **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
+    - *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
 4. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
 5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 

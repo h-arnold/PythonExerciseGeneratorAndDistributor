@@ -4,6 +4,7 @@
 Created a 10-part **modification** exercise set for absolute beginners learning Python sequence (sequential execution).
 
 ## Key Features
+
 - **No variables** - only literals and operators
 - Topics covered:
   - Basic print statements
@@ -14,12 +15,13 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
 - Difficulty progression: starts with single-word changes, builds to multi-element modifications
 
 ## Files Created
+
 - **Notebook**: [notebooks/ex002_sequence_modify_basics.ipynb](notebooks/ex002_sequence_modify_basics.ipynb)
   - 10 exercises with tagged cells (`exercise1` through `exercise10`)
   - Clear instructions and expected output for each
   - Self-check cell for experimentation
 
-- **Tests**: [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py)
+- **Tests**: [tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py](tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py)
   - 40 test cases total (3-4 per exercise)
   - Captures stdout to verify print output
   - Smoke tests verify all cells execute
@@ -34,11 +36,13 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
 ❌ 24/40 behavioral tests fail (expected - students haven't modified code yet)
 
 This is the correct behavior for modification exercises:
+
 - Students start with working code
 - Tests verify the modified (correct) output
 - Until students make modifications, most tests will fail
 
 ## Exercise Progression
+
 1. **Ex 1-2**: Simple word substitution in print statements
 2. **Ex 3**: Change arithmetic operator (+ to *)
 3. **Ex 4**: String concatenation with 3 parts
@@ -50,6 +54,7 @@ This is the correct behavior for modification exercises:
 9. **Ex 10**: Complex concatenation (5 parts)
 
 ## Pedagogical Notes
+
 - Designed for students aged 14-18 in their first Python lesson
 - Inverted order: modification before debugging (as requested)
 - No advanced features (no input(), no functions, no variables)
@@ -58,13 +63,15 @@ This is the correct behavior for modification exercises:
 
 ## Usage
 Students:
+
 1. Open `notebooks/ex002_sequence_modify_basics.ipynb`
 2. Read each exercise description
 3. Modify the code in tagged cells
 4. Run cells to see output
-5. Run `pytest tests/test_ex002_sequence_modify_basics.py` to verify
+5. Run `pytest tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` to verify
 
 Teachers:
+
 - Reference solutions in [notebooks/solutions/ex002_sequence_modify_basics.ipynb](notebooks/solutions/ex002_sequence_modify_basics.ipynb)
 - Tests are deterministic and fast (< 1s total)
 - Can be used with GitHub Classroom autograding

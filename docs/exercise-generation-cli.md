@@ -40,7 +40,7 @@ Scaffolds the boilerplate for new exercises to ensure consistency across the rep
 
 ### Command-Line Arguments
 
-```
+```bash
 python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TYPE]
 ```
 
@@ -86,6 +86,11 @@ Contains:
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - For multi-part notebooks, a markdown prompt precedes each tagged cell
 - Optional self-check cell (not graded)
+- Auto-appended untagged code cell that imports `tests.student_checker` and calls `run_notebook_checks` so students can verify their notebook before submitting
+
+The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
+
+On notebooks with multiple exercises (ex003 and later) that final helper now prints grouped rows for each check with columns `Exercise`, `Check`, `Status` and `Error`, mirroring the ex002 experience. Long error text wraps inside the Error column so continuation lines belong to the same cell rather than introducing extra separators, and this grouped layout replaces the older single-notebook summary output that appeared for ex003+.
 
 Debug notebooks contain, for each part:
 
@@ -142,12 +147,13 @@ Edit `notebooks/exNNN_slug.ipynb`:
 
 **Notebook structure**:
 
-```
+```text
 1. Markdown: Title and goal
 2. Markdown/Code: Examples or context
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
 5. Code (untagged): Optional self-check cell
+6. Code (untagged): Auto-appended check-your-answers cell that runs `tests.student_checker.run_notebook_checks` against the generated notebook
 ```
 
 ### 3. Write Tests
@@ -158,32 +164,32 @@ Replace the placeholder test with real assertions. Two common patterns:
 
 ```python
 # Option 1: assert on printed output (matches the scaffold)
-from tests.notebook_grader import run_cell_and_capture_output
+from tests.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
 
 
 def test_exercise1_greets_user() -> None:
-    output = run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
+    output = runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
     assert "Hello" in output
     assert "TODO" not in output
 ```
 
 ```python
 # Option 2: execute the cell and inspect objects
-from tests.notebook_grader import exec_tagged_code
+from tests.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
 
 
 def test_solve_returns_correct_value() -> None:
-    ns = exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
     assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](5) == 10
 
 
 def test_solve_handles_edge_case() -> None:
-    ns = exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
     assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](0) == 0
 ```
@@ -197,6 +203,8 @@ def test_solve_handles_edge_case() -> None:
 - Deterministic (no randomness or time-based checks)
 - Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
 - For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
+
+**Note on scaffolding**: the generator's placeholder tests may still use `tests.notebook_grader` directly. Replace those with the framework runtime helpers shown above so tests are consistent across the codebase.
 
 ### 4. Fill in the Solution Notebook
 
@@ -348,13 +356,13 @@ When creating a notebook with `--parts 10`:
 
 ```python
 import pytest
-from tests.notebook_grader import exec_tagged_code
+from tests.exercise_framework import runtime
 
 TAGS = [f"exercise{i}" for i in range(1, 11)]
 
 @pytest.mark.parametrize("tag", TAGS)
 def test_exercise_exists(tag):
-    ns = exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
+    ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
     assert "solve" in ns, f"Missing solve() in {tag}"
 
 @pytest.mark.parametrize(
@@ -366,7 +374,7 @@ def test_exercise_exists(tag):
     ],
 )
 def test_exercise_behaviour(tag, input_val, expected):
-    ns = exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
+    ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
     assert ns["solve"](input_val) == expected
 ```
 

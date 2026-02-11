@@ -11,7 +11,7 @@ import sys
 import traceback
 from pathlib import Path
 
-from scripts.template_repo_cli.core.collector import FileCollector
+from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 from scripts.template_repo_cli.core.github import GitHubClient
 from scripts.template_repo_cli.core.packager import TemplatePackager
 from scripts.template_repo_cli.core.selector import ExerciseSelector
@@ -37,7 +37,7 @@ def _select_by_notebooks(args: argparse.Namespace, selector: ExerciseSelector) -
     Returns:
         List of exercise IDs.
     """
-    exercises = []
+    exercises: list[str] = []
     for pattern in args.notebooks:
         if "*" in pattern or "?" in pattern or "[" in pattern:
             exercises.extend(selector.select_by_pattern(pattern))
@@ -219,7 +219,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
 def _build_template_package(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
-    files: dict,
+    files: dict[str, ExerciseFiles],
     template_name: str,
     exercises: list[str],
     verbose: bool,
@@ -380,7 +380,7 @@ def _prepare_exercises(
     args: argparse.Namespace,
     selector: ExerciseSelector,
     collector: FileCollector,
-) -> tuple[list[str], dict] | tuple[None, None]:
+) -> tuple[list[str], dict[str, ExerciseFiles]] | tuple[None, None]:
     """Prepare exercises: select and collect files.
 
     Args:
@@ -433,7 +433,7 @@ def _prepare_workspace(
     selector: ExerciseSelector,
     collector: FileCollector,
     packager: TemplatePackager,
-) -> tuple[Path | None, list[str] | None, dict | None]:
+) -> tuple[Path | None, list[str] | None, dict[str, ExerciseFiles] | None]:
     """Select exercises, collect files, and create a workspace."""
 
     exercises, files = _prepare_exercises(args, selector, collector)
@@ -603,7 +603,7 @@ def _execute_template_creation(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
     github: GitHubClient,
-    files: dict,
+    files: dict[str, ExerciseFiles],
     exercises: list[str],
 ) -> int:
     """Execute the template creation workflow.
@@ -658,7 +658,7 @@ def _execute_template_update(  # noqa: PLR0913
     workspace: Path,
     packager: TemplatePackager,
     github: GitHubClient,
-    files: dict,
+    files: dict[str, ExerciseFiles],
     exercises: list[str],
 ) -> int:
     """Execute the template update workflow (push into existing repo)."""
@@ -864,7 +864,7 @@ def validate_command(args: argparse.Namespace) -> int:
 
     # Validate files exist
     print(f"Found {len(exercises)} exercises:")
-    missing_files = []
+    missing_files: list[str] = []
 
     for ex in exercises:
         try:
@@ -955,7 +955,8 @@ def main(argv: list[str] | None = None) -> int:
 
     # Update command
     update_parser = subparsers.add_parser(
-        "update-repo", help="Update an existing template repository by pushing new contents"
+        "update-repo",
+        help="Update an existing template repository by pushing new contents",
     )
     update_parser.add_argument("--construct", nargs="+", help="One or more constructs")
     update_parser.add_argument("--type", nargs="+", help="One or more exercise types")
@@ -971,7 +972,10 @@ def main(argv: list[str] | None = None) -> int:
         "--org", type=str, help="Target organization (default: user account)"
     )
     update_parser.add_argument(
-        "--branch", type=str, default="main", help="Branch to push updates to (default: main)"
+        "--branch",
+        type=str,
+        default="main",
+        help="Branch to push updates to (default: main)",
     )
 
     # Parse arguments

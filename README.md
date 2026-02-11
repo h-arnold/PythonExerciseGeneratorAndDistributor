@@ -14,7 +14,7 @@ For teachers:
 - Create exercises fast using the built-in Exercise Generation assistant (see [docs/exercise-generation.md](docs/exercise-generation.md)).
 - Ship browser‑ready assignments your students can run inline (Codespaces now; Pyodide client‑side execution planned).
 - Autograde student work with pytest so learners get immediate, actionable feedback.
-- Plug the suite into GitHub Classroom autograding end-to-end (see [docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md](docs/GitHub_Classroom_Autograding_Integration_Guide__Us.md) and [docs/autograding-cli.md](docs/autograding-cli.md)).
+- Plug the suite into GitHub Classroom autograding end-to-end (see [docs/github-classroom-autograding-guide.md](docs/github-classroom-autograding-guide.md) and [docs/autograding-cli.md](docs/autograding-cli.md)).
 - Create GitHub Classroom template repos with a CLI and consistent VS Code/devcontainer configs.
 
 For students:
@@ -39,7 +39,7 @@ Why teachers will care:
 </figure>
 
 1. Each exercise is a notebook in [notebooks/](notebooks/), with a tagged cell like exercise1.
-2. Tests in [tests/](tests/) extract that tagged cell and run it automatically.
+2. Tests in [tests/](tests/) use the exercise framework to extract tagged cells and run them automatically.
 3. Solution notebooks live in [notebooks/solutions/](notebooks/solutions/) and are used to verify the tests.
 4. A CLI can bundle selected exercises into a GitHub Classroom template repo.
 
@@ -97,7 +97,7 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
 > Note: Running `pytest` without setting `PYTUTOR_NOTEBOOKS_DIR` will test the student notebooks (and will usually fail until exercises are completed). To verify instructor solutions locally, run:
 >
 > ```bash
-> PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
+> PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
 > ```
 
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)

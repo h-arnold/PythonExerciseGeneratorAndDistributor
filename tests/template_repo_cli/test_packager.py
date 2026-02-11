@@ -8,9 +8,10 @@ from typing import TypeAlias
 
 import pytest
 
+from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
-ExerciseFileMap: TypeAlias = dict[str, dict[str, Path]]
+ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
 ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
 
 
@@ -30,10 +31,10 @@ def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
             msg = "At least one exercise_id is required"
             raise ValueError(msg)
         return {
-            exercise_id: {
-                "notebook": repo_root / f"notebooks/{exercise_id}.ipynb",
-                "test": repo_root / f"tests/test_{exercise_id}.py",
-            }
+            exercise_id: ExerciseFiles(
+                notebook=repo_root / f"notebooks/{exercise_id}.ipynb",
+                test=repo_root / f"tests/test_{exercise_id}.py",
+            )
             for exercise_id in exercise_ids
         }
 
@@ -172,13 +173,6 @@ class TestGenerateFiles:
         assert gitignore.exists()
         content = gitignore.read_text()
         assert "__pycache__" in content
-
-    def test_generate_workflow(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
-        """Test creating GitHub Actions workflow."""
-        template_packager.copy_template_base_files(temp_dir)
-
-        workflow = temp_dir / ".github/workflows/tests.yml"
-        assert workflow.exists()
 
 
 class TestPackageIntegrity:
@@ -330,8 +324,7 @@ class TestPackageOptions:
         template_packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (
-            temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
 
 class TestPackageMultipleExercises:

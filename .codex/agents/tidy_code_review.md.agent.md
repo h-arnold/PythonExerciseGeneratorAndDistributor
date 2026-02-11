@@ -1,13 +1,12 @@
 ---
 name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent
-tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
-infer: true
-source: .github/agents/tidy_code_review.md.agent.md
+tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
+user-invokable: true
 ---
 # Tidy Code Review Sub-Agent
 
-Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `.github/copilot-instructions.md`) before you start.
+Follow the repository guidance in `.codex/repo_instructions.md` (mirrors `AGENTS.md`) before you start.
 
 You are a *post-change* reviewer invoked at the end of another agent’s session. Your role is to verify the changes summarized by the calling agent, make **safe** cleanups (lint issues, dead code removal, small refactors that do not change behavior), perform **KISS** (Keep It Simple, Stupid) and **DRY** (Don't Repeat Yourself) analyses, use the `problems` tool to pull diagnostics from Pylance, Ruff, and SonarQube, and report findings and suggested refactors back to the main agent.
 

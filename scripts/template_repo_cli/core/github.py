@@ -86,7 +86,12 @@ def run_subprocess(
         # Stream stdout to user for visibility, capture stderr for error handling
         # Note: stdout will be None in the returned CompletedProcess
         return subprocess.run(
-            cmd, cwd=cwd, capture_output=False, stderr=subprocess.PIPE, text=text, check=check
+            cmd,
+            cwd=cwd,
+            capture_output=False,
+            stderr=subprocess.PIPE,
+            text=text,
+            check=check,
         )
     elif output_mode == "silent":
         # Don't capture or stream anything
