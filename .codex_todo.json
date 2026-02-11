@@ -66,5 +66,9 @@
   {
     "text": "TCR checks split: manual trace + final report",
     "status": "done"
+  },
+  {
+    "text": "Tidy review: alias compatibility automated+manual",
+    "status": "done"
   }
 ]

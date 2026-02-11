@@ -86,7 +86,7 @@ Contains:
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - For multi-part notebooks, a markdown prompt precedes each tagged cell
 - Optional self-check cell (not graded)
-- Auto-appended untagged code cell that imports `tests.student_checker` and calls `run_notebook_checks` so students can verify their notebook before submitting
+ - Auto-appended untagged code cell that imports `tests.student_checker` and calls `check_notebook('<slug>')` so students see the full grouped results for each internal check before submitting
 
 The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
 
@@ -153,7 +153,7 @@ Edit `notebooks/exNNN_slug.ipynb`:
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
 5. Code (untagged): Optional self-check cell
-6. Code (untagged): Auto-appended check-your-answers cell that runs `tests.student_checker.run_notebook_checks` against the generated notebook
+6. Code (untagged): Auto-appended check-your-answers cell that runs `tests.student_checker.check_notebook('<slug>')` against the generated notebook so students see the grouped per-check output
 ```
 
 ### 3. Write Tests

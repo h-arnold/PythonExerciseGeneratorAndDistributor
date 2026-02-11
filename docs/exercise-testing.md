@@ -560,7 +560,7 @@ from tests.exercise_expectations import EX002_EXPECTED_SINGLE_LINE
 Student-facing check tables should be generated via [tests/exercise_framework/reporting.py](../tests/exercise_framework/reporting.py)
 so formatting and error normalisation stay consistent across exercises.
 
-The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`, `Error`) are now the same grouped output shown in the final check-your-answers cells for ex003, ex004, ex005 and ex006. Those notebooks call the specialised printers in `tests.student_checker`, so each check gets its own row rather than the older single summary entry that appeared for ex003 and later. Treat this grouped layout as the canonical student-facing summary for all multi-part notebooks.
+The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`, `Error`) are now the same grouped output shown in the final check-your-answers cells for ex003 through ex007. Each notebook now imports `tests.student_checker` and calls `check_notebook('<slug>')`, which runs the specialised printers so every check gets its own row instead of the older single summary entry that appeared for ex003 and later. Treat this grouped layout as the canonical student-facing summary for all multi-part notebooks.
 
 `render_grouped_table_with_errors` keeps long error text inside the Error column, so wrapped lines appear as continuation text without inserting extra grid separators. When reading new checker output you will therefore see multi-line errors indented in a single Error cell while the Exercise/Check/Status columns remain blank on the continuation lines.
 
