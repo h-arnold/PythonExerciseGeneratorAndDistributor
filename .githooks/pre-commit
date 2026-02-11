@@ -9,10 +9,24 @@ run_uv() {
   uv run "$@"
 }
 
+before_unstaged=$(git diff --name-only -- . | sort -u)
+
+metadata_status=0
+set +e
 run_uv python scripts/clear_notebook_metadata.py --paths notebooks
+metadata_status=$?
+set -e
+if [ "$metadata_status" -gt 1 ]; then
+  exit "$metadata_status"
+fi
+
 run_uv ruff format
-if ! git diff --quiet --exit-code -- .; then
+after_unstaged=$(git diff --name-only -- . | sort -u)
+new_unstaged=$(comm -13 <(printf "%s\n" "$before_unstaged") <(printf "%s\n" "$after_unstaged"))
+
+if [ -n "$new_unstaged" ]; then
   echo "[pre-commit] Formatting changed tracked files; review and restage." >&2
+  printf '%s\n' "$new_unstaged" >&2
   exit 1
 fi
 run_uv ruff check .

@@ -11,7 +11,7 @@ DEFAULT_SCAN_PATHS = ("notebooks",)
 
 
 def iter_notebook_paths(paths: Iterable[Path]) -> set[Path]:
-    """Yield every tracked notebook for the given start paths."""
+    """Return a set of tracked notebook paths under the given start paths."""
     resolved: list[Path] = []
     for path in paths:
         if path.is_dir():
@@ -22,7 +22,7 @@ def iter_notebook_paths(paths: Iterable[Path]) -> set[Path]:
 
 
 def clear_notebook_metadata(path: Path) -> bool:
-    """Ensure the notebook has empty metadata, returning True if a rewrite occured."""
+    """Ensure the notebook has empty metadata, returning True if a rewrite occurred."""
     notebook = json.loads(path.read_text(encoding="utf-8"))
     metadata = notebook.get("metadata")
     if metadata == {}:

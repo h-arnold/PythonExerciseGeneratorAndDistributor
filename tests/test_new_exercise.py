@@ -209,7 +209,7 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     metadata_dict = cast(dict[str, Any], metadata)
     assert not _string_tags(metadata_dict), "Check-your-answers cell should remain untagged"
     joined_source = "".join(_ensure_source_lines(check_answers_cell))
-    assert "from tests.student_checker import run_notebook_checks" in joined_source
-    assert "run_notebook_checks(" in joined_source
+    assert "from tests.student_checker import check_notebook" in joined_source
+    assert "check_notebook(" in joined_source
     assert "notebooks/" not in joined_source
-    assert "run_notebook_checks('ex001_dummy.ipynb')" in joined_source
+    assert "check_notebook('ex001_dummy')" in joined_source
