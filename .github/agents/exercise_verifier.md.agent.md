@@ -46,10 +46,12 @@ Verify the student notebook matches the required format for its type. Make sure 
 - Working code is shown (non-tagged), and the graded `exerciseN` cell is what students modify.
 - The graded cell should be close to the working code, but NOT already correct for the new task.
 - Prompt provides task + expected output.
+- Student notebook cells must not include the complete final answer.
 
 **Make exercises** (see `docs/exercise-types/make.md`):
 - The graded `exerciseN` cell contains a clear function skeleton.
 - Prompt includes task + expected output and is appropriately scoped.
+- Student notebook cells must not include the complete final answer.
 
 ### Gate B — Sequencing / concept progression
 Use the construct ordering from the generation agent:
