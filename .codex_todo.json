@@ -38,5 +38,13 @@
   {
     "text": "Write final verifier report with Gate A-F verdicts.",
     "status": "todo"
+  },
+  {
+    "text": "Tidy review: run automated lint/type checks, capture diagnostics, decide on manual pass.",
+    "status": "done"
+  },
+  {
+    "text": "Tidy review: automated+manual pass after pyright dep + uv sync; report findings.",
+    "status": "in-progress"
   }
 ]

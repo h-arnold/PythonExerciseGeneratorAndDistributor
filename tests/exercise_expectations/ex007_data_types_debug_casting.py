@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, TypedDict
+
+
+class Ex007InputCase(TypedDict):
+    inputs: list[str]
+    prompts: list[str]
+    last_line: str
 
 EX007_NOTEBOOK_PATH: Final[str] = "notebooks/ex007_data_types_debug_casting.ipynb"
 EX007_MIN_EXPLANATION_LENGTH: Final[int] = 50
@@ -20,7 +26,7 @@ EX007_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
     4: "Average per day: 3.5 km\n",
 }
 
-EX007_INPUT_CASES: Final[dict[int, dict[str, object]]] = {
+EX007_INPUT_CASES: Final[dict[int, Ex007InputCase]] = {
     3: {
         "inputs": ["14"],
         "prompts": ["Enter your age: "],
