@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from pathlib import Path
+from typing import Protocol
 
 import pytest
 
@@ -13,10 +15,11 @@ EXERCISE1_TAG = "exercise1"
 EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS = 2
 
 
-def _make_fake_input_runner() -> tuple[
-    callable[[str | Path, str, list[str]], str],
-    callable[[], int],
-]:
+class InputRunner(Protocol):
+    def __call__(self, notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str: ...
+
+
+def _make_fake_input_runner() -> tuple[InputRunner, Callable[[], int]]:
     call_count = 0
 
     def fake_run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:

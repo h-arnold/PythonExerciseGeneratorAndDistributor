@@ -6,20 +6,19 @@ for repeated checks within a single run.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from tests import notebook_grader
 
 
-@dataclass
 class RuntimeCache:
     """In-memory cache for extracted code and captured outputs."""
 
-    code_by_tag: dict[tuple[str, str], str] = field(default_factory=dict)
-    output_by_tag: dict[tuple[str, str], str] = field(default_factory=dict)
-    input_output_by_tag: dict[tuple[str, str, tuple[str, ...]], str] = field(default_factory=dict)
+    def __init__(self) -> None:
+        self.code_by_tag: dict[tuple[str, str], str] = {}
+        self.output_by_tag: dict[tuple[str, str], str] = {}
+        self.input_output_by_tag: dict[tuple[str, str, tuple[str, ...]], str] = {}
 
 
 def _path_key(notebook_path: str | Path) -> str:
