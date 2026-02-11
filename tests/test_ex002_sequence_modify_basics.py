@@ -67,7 +67,11 @@ def test_exercise1_logic() -> None:
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == expected_output_text(
+        1,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=1)
@@ -100,7 +104,11 @@ def test_exercise2_logic() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
-    assert output == f"{EXPECTED_SINGLE_LINE[2]}\n"
+    assert output == expected_output_text(
+        2,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=2)
@@ -127,13 +135,17 @@ def test_exercise2_construct() -> None:
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
     value = int(output.strip())
-    assert value == EXPECTED_NUMERIC[3]
+    assert value == ex002.EX002_EXPECTED_NUMERIC[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
-    assert output == f"{EXPECTED_SINGLE_LINE[3]}\n"
+    assert output == expected_output_text(
+        3,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=3)
@@ -155,7 +167,11 @@ def test_exercise4_logic() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
-    assert output == f"{EXPECTED_SINGLE_LINE[4]}\n"
+    assert output == expected_output_text(
+        4,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=4)
@@ -177,7 +193,10 @@ def test_exercise4_construct() -> None:
         and isinstance(node.func, ast.Name)
         and node.func.id == "print"
     ]
-    assert len(print_calls) == EXPECTED_PRINT_CALLS[4]
+    assert len(print_calls) == expected_print_call_count(
+        4,
+        expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
+    )
     # Verify string content includes required words
     strings = {
         node.value
@@ -193,13 +212,17 @@ def test_exercise4_construct() -> None:
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
     value = float(output.strip())
-    assert value == EXPECTED_NUMERIC[5]
+    assert value == ex002.EX002_EXPECTED_NUMERIC[5]
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
     output = _exercise_output(5)
-    assert output == f"{EXPECTED_SINGLE_LINE[5]}\n"
+    assert output == expected_output_text(
+        5,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=5)
@@ -215,13 +238,21 @@ def test_exercise5_construct() -> None:
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
     lines = output.strip().splitlines()
-    assert lines == EXPECTED_MULTI_LINE[6]
+    assert lines == expected_output_lines(
+        6,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    expected = "\n".join(EXPECTED_MULTI_LINE[6]) + "\n"
+    expected = expected_output_text(
+        6,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
     assert output == expected
 
 
@@ -244,7 +275,10 @@ def test_exercise6_construct() -> None:
         and isinstance(node.func, ast.Name)
         and node.func.id == "print"
     ]
-    assert len(print_calls) == EXPECTED_PRINT_CALLS[6]
+    assert len(print_calls) == expected_print_call_count(
+        6,
+        expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
+    )
 
 
 @pytest.mark.task(taskno=7)
@@ -257,7 +291,11 @@ def test_exercise7_logic() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_formatting() -> None:
     output = _exercise_output(7)
-    assert output == f"{EXPECTED_SINGLE_LINE[7]}\n"
+    assert output == expected_output_text(
+        7,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=7)
@@ -284,13 +322,17 @@ def test_exercise7_construct() -> None:
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
     value = int(output.strip())
-    assert value == EXPECTED_NUMERIC[8]
+    assert value == ex002.EX002_EXPECTED_NUMERIC[8]
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_formatting() -> None:
     output = _exercise_output(8)
-    assert output == f"{EXPECTED_SINGLE_LINE[8]}\n"
+    assert output == expected_output_text(
+        8,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=8)
@@ -307,13 +349,17 @@ def test_exercise9_logic() -> None:
     output = _exercise_output(9)
     lines = output.strip().splitlines()
     assert lines[0] == "10 minus 3 equals"
-    assert int(lines[1]) == EXPECTED_NUMERIC[9]
+    assert int(lines[1]) == ex002.EX002_EXPECTED_NUMERIC[9]
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    expected = "\n".join(EXPECTED_MULTI_LINE[9]) + "\n"
+    expected = expected_output_text(
+        9,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
     assert output == expected
 
 
@@ -348,7 +394,10 @@ def test_exercise9_construct() -> None:
         and node.func.id == "print"
     ]
     assert has_subtraction
-    assert len(print_calls) == EXPECTED_PRINT_CALLS[9]
+    assert len(print_calls) == expected_print_call_count(
+        9,
+        expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
+    )
 
 
 @pytest.mark.task(taskno=10)
@@ -361,7 +410,11 @@ def test_exercise10_logic() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_formatting() -> None:
     output = _exercise_output(10)
-    assert output == f"{EXPECTED_SINGLE_LINE[10]}\n"
+    assert output == expected_output_text(
+        10,
+        single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
+        multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
+    )
 
 
 @pytest.mark.task(taskno=10)
