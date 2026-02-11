@@ -111,6 +111,11 @@ def print_ex005_results(results: list[ExerciseCheckResult]) -> None:
     _print_exercise_results(results)
 
 
+def print_ex007_results(results: list[ExerciseCheckResult]) -> None:
+    """Print grouped ex007 check results."""
+    _print_exercise_results(results)
+
+
 def _print_exercise_results(results: Iterable[ExerciseCheckResult]) -> None:
     print_detailed_results(_grouped_exercise_rows(results))
 

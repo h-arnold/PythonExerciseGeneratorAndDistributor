@@ -17,6 +17,7 @@ from tests.student_checker.reporting import (
     print_ex004_results,
     print_ex005_results,
     print_ex006_results,
+    print_ex007_results,
     print_notebook_detailed_results,
 )
 
@@ -282,6 +283,41 @@ def test_run_ex005_checks_continues_after_notebook_grading_error(
 
     results = student_checks.run_ex005_checks()
     print_ex005_results(results)
+    output = capsys.readouterr().out
+
+    assert "Exercise 1" in output
+    assert "Exercise 2" in output
+
+
+def test_run_ex007_checks_continues_after_notebook_grading_error(
+    monkeypatch: MonkeyPatch,
+    capsys: CaptureFixture[str],
+) -> None:
+    def broken_check() -> list[str]:
+        raise NotebookGradingError("Cell failure.")
+
+    def working_check() -> list[str]:
+        return []
+
+    monkeypatch.setattr(
+        student_checks,
+        "_EX007_CHECKS",
+        [
+            student_checks.ExerciseCheckDefinition(
+                exercise_no=1,
+                title="Broken",
+                check=broken_check,
+            ),
+            student_checks.ExerciseCheckDefinition(
+                exercise_no=2,
+                title="Working",
+                check=working_check,
+            ),
+        ],
+    )
+
+    results = student_checks.run_ex007_checks()
+    print_ex007_results(results)
     output = capsys.readouterr().out
 
     assert "Exercise 1" in output

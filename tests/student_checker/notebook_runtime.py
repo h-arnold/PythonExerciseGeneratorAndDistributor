@@ -30,6 +30,8 @@ from .models import NotebookTagCheckResult
 
 _EXERCISE_TAG_PATTERN = re.compile(r"exercise\d+")
 _DEFAULT_INPUT_VALUE = "2"
+_MISSING_INPUT_ERROR_MESSAGE = "Test expected more input values"
+_MAX_AUTOMATED_INPUTS = 10
 
 
 def run_notebook_checks(notebook_path: str) -> None:
@@ -106,16 +108,46 @@ def _run_notebook_checks(path: Path, tags: list[str]) -> list[NotebookTagCheckRe
     results: list[NotebookTagCheckResult] = []
     for tag in tags:
         try:
-            input_calls = _count_input_calls(str(path), tag=tag)
-            if input_calls > 0:
-                inputs = [_DEFAULT_INPUT_VALUE for _ in range(input_calls)]
-                run_cell_with_input(str(path), tag=tag, inputs=inputs)
-            else:
-                run_cell_and_capture_output(str(path), tag=tag)
+            _run_tagged_cell(str(path), tag)
             results.append(NotebookTagCheckResult(tag=tag, passed=True, message=""))
         except NotebookGradingError as exc:
             results.append(NotebookTagCheckResult(tag=tag, passed=False, message=str(exc)))
     return results
+
+
+def _run_tagged_cell(notebook_path: str, tag: str) -> None:
+    input_calls = _count_input_calls(notebook_path, tag=tag)
+    if input_calls == 0:
+        run_cell_and_capture_output(notebook_path, tag=tag)
+        return
+    _run_interactive_cell_with_backfill(notebook_path, tag=tag, input_calls=input_calls)
+
+
+def _run_interactive_cell_with_backfill(
+    notebook_path: str,
+    *,
+    tag: str,
+    input_calls: int,
+) -> None:
+    required_inputs = max(input_calls, 1)
+    while True:
+        inputs = [_DEFAULT_INPUT_VALUE for _ in range(required_inputs)]
+        try:
+            run_cell_with_input(notebook_path, tag=tag, inputs=inputs)
+            return
+        except NotebookGradingError as exc:
+            if not _is_missing_input_error(exc):
+                raise
+            if required_inputs >= _MAX_AUTOMATED_INPUTS:
+                raise
+            required_inputs = min(_MAX_AUTOMATED_INPUTS, required_inputs + 1)
+
+
+def _is_missing_input_error(exc: NotebookGradingError) -> bool:
+    cause = exc.__cause__
+    if isinstance(cause, RuntimeError):
+        return str(cause) == _MISSING_INPUT_ERROR_MESSAGE
+    return False
 
 
 def _count_input_calls(notebook_path: str, *, tag: str) -> int:

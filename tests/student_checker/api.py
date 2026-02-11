@@ -9,11 +9,13 @@ from .checks import (
     check_ex004,
     check_ex005,
     check_ex006,
+    check_ex007,
     run_ex002_checks,
     run_ex003_checks,
     run_ex004_checks,
     run_ex005_checks,
     run_ex006_checks,
+    run_ex007_checks,
 )
 from .models import NotebookCheckSpec
 from .reporting import (
@@ -22,6 +24,7 @@ from .reporting import (
     print_ex004_results,
     print_ex005_results,
     print_ex006_results,
+    print_ex007_results,
     print_results,
     run_check,
     run_checks,
@@ -33,6 +36,7 @@ _EX003_SLUG = "ex003_sequence_modify_variables"
 _EX004_SLUG = "ex004_sequence_debug_syntax"
 _EX005_SLUG = "ex005_sequence_debug_logic"
 _EX006_SLUG = "ex006_sequence_modify_casting"
+_EX007_SLUG = "ex007_data_types_debug_casting"
 _NOTEBOOK_ORDER = [
     _EX001_SLUG,
     _EX002_SLUG,
@@ -40,6 +44,7 @@ _NOTEBOOK_ORDER = [
     _EX004_SLUG,
     _EX005_SLUG,
     _EX006_SLUG,
+    _EX007_SLUG,
 ]
 
 
@@ -76,6 +81,11 @@ def check_ex004_notebook() -> None:
     check_notebook(_EX004_SLUG)
 
 
+def check_ex007_notebook() -> None:
+    """Run checks for ex007 and print a notebook-specific summary table."""
+    check_notebook(_EX007_SLUG)
+
+
 def _get_checks() -> dict[str, NotebookCheckSpec]:
     return {
         _EX001_SLUG: NotebookCheckSpec("ex001 Sanity", check_ex001),
@@ -103,6 +113,11 @@ def _get_checks() -> dict[str, NotebookCheckSpec]:
             "ex006 Casting and Type Conversion",
             check_ex006,
             lambda: print_ex006_results(run_ex006_checks()),
+        ),
+        _EX007_SLUG: NotebookCheckSpec(
+            "ex007 Data Types Debug Casting",
+            check_ex007,
+            lambda: print_ex007_results(run_ex007_checks()),
         ),
     }
 

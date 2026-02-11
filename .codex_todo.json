@@ -46,5 +46,17 @@
   {
     "text": "Tidy review: automated+manual pass after pyright dep + uv sync; report findings.",
     "status": "in-progress"
+  },
+  {
+    "text": "TCR input-handling review: gather instructions + prep env.",
+    "status": "done"
+  },
+  {
+    "text": "TCR input-handling review: execute automated checks + catalog issues.",
+    "status": "done"
+  },
+  {
+    "text": "TCR input-handling review: manual trace and final report.",
+    "status": "done"
   }
 ]
