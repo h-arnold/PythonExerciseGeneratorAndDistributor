@@ -31,7 +31,7 @@ class ExerciseSelector:
         Returns:
             List of notebook IDs (without .ipynb extension).
         """
-        notebooks = []
+        notebooks: list[str] = []
         if self.notebooks_dir.exists():
             for nb_file in self.notebooks_dir.glob("ex*.ipynb"):
                 # Extract notebook ID (filename without extension)
@@ -79,7 +79,7 @@ class ExerciseSelector:
         Returns:
             List of exercise IDs found.
         """
-        exercises = []
+        exercises: list[str] = []
         construct_dir = self.exercises_dir / construct
 
         if construct_dir.exists():
@@ -101,7 +101,7 @@ class ExerciseSelector:
         Returns:
             List of exercise IDs found.
         """
-        exercises = []
+        exercises: list[str] = []
 
         for construct_dir in self.exercises_dir.iterdir():
             if construct_dir.is_dir():
@@ -127,7 +127,7 @@ class ExerciseSelector:
         """
         self._validate_constructs(constructs)
 
-        exercises = []
+        exercises: list[str] = []
         for construct in constructs:
             exercises.extend(self._find_exercises_in_construct(construct))
 
@@ -147,7 +147,7 @@ class ExerciseSelector:
         """
         self._validate_types(types)
 
-        exercises = []
+        exercises: list[str] = []
         for type_name in types:
             exercises.extend(self._find_exercises_by_type(type_name))
 
@@ -163,7 +163,7 @@ class ExerciseSelector:
         Returns:
             List of exercise IDs found.
         """
-        exercises = []
+        exercises: list[str] = []
         construct_dir = self.exercises_dir / construct
 
         if not construct_dir.exists():
@@ -192,7 +192,7 @@ class ExerciseSelector:
         self._validate_constructs(constructs)
         self._validate_types(types)
 
-        exercises = []
+        exercises: list[str] = []
         for construct in constructs:
             for type_name in types:
                 exercises.extend(self._find_exercises_in_type_dir(construct, type_name))

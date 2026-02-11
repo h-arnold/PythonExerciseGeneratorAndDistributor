@@ -66,7 +66,7 @@ class FileCollector:
         if not exercise_ids:
             return {}
 
-        all_files = {}
+        all_files: dict[str, ExerciseFiles] = {}
         for exercise_id in exercise_ids:
             all_files[exercise_id] = self.collect_files(exercise_id)
 
