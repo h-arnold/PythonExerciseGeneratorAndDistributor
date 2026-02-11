@@ -78,5 +78,9 @@
   {
     "text": "TCR metadata hook review - automated+manual",
     "status": "done"
+  },
+  {
+    "text": "TCR metadata cleaning hook review: automated+manual",
+    "status": "in-progress"
   }
 ]

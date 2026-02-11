@@ -15,7 +15,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     target = str(hooks_dir.relative_to(repo_root))
     try:
-        subprocess.run(["git", "config", "core.hooksPath", target], check=True)
+        subprocess.run(
+            ["git", "config", "core.hooksPath", target],
+            check=True,
+            cwd=repo_root,
+        )
     except subprocess.CalledProcessError as exc:
         print("Failed to set core.hooksPath", exc)
         return exc.returncode or 1

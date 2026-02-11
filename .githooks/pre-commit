@@ -11,4 +11,8 @@ run_uv() {
 
 run_uv python scripts/clear_notebook_metadata.py --paths notebooks
 run_uv ruff format
+if ! git diff --quiet --exit-code -- .; then
+  echo "[pre-commit] Formatting changed tracked files; review and restage." >&2
+  exit 1
+fi
 run_uv ruff check .
