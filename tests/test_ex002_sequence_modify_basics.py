@@ -47,20 +47,10 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
     return ast.parse(_exercise_code(exercise_no))
 
 
-def _print_call_count(tree: ast.AST) -> int:
-    return sum(
-        1
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    )
-
-
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    assert "Hello World" not in output, "Should not print 'Hello World' - change it to 'Hello Python!'"
+    assert "Hello World" not in output, "Old greeting 'Hello World' should be replaced"
     assert "Hello Python!" in output, "Should print 'Hello Python!' instead"
 
 
@@ -92,6 +82,7 @@ def test_exercise1_construct() -> None:
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
     assert "Hello Python!" in strings, "The string 'Hello Python!' should appear in your code"
+    assert "Hello World!" not in strings, "Old string 'Hello World!' should be replaced"
 
 
 @pytest.mark.task(taskno=2)
@@ -128,7 +119,10 @@ def test_exercise2_construct() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert any("Bassaleg School" in s for s in strings), "The text 'Bassaleg School' should appear in your code"
+    assert any(
+        "Bassaleg School" in s for s in strings), "The text 'Bassaleg School' should appear in your code"
+    assert not any(
+        "Greenfield" in s for s in strings), "Old value 'Greenfield' should be replaced"
 
 
 @pytest.mark.task(taskno=3)
@@ -154,14 +148,19 @@ def test_exercise3_construct() -> None:
     has_multiplication = any(
         isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
-    assert has_multiplication
+    has_addition = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add) for node in ast.walk(tree)
+    )
+    assert has_multiplication, "Must use multiplication (*) operator"
+    assert not has_addition, "Should replace addition (+) with multiplication"
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
     output = _exercise_output(4)
     words = output.strip().split()
-    assert words == ["Good", "Morning", "Everyone"], f"Expected 'Good Morning Everyone', but got '{output.strip()}'"
+    assert words == ["Good", "Morning",
+                     "Everyone"], f"Expected 'Good Morning Everyone', but got '{output.strip()}'"
 
 
 @pytest.mark.task(taskno=4)
@@ -197,15 +196,17 @@ def test_exercise4_construct() -> None:
         4,
         expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
     )
-    # Verify string content includes required words
+    # Verify exact string content
     strings = {
         node.value
         for node in ast.walk(tree)
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert any("Good" in s for s in strings), "Missing 'Good' in string constants"
-    assert any("Morning" in s for s in strings), "Missing 'Morning' in string constants"
-    assert any("Everyone" in s for s in strings), "Missing 'Everyone' in string constants"
+    assert "Good Morning Everyone" in strings, "Should build the message 'Good Morning Everyone'"
+    assert not any(
+        "Hello" in s for s in strings), "Old value 'Hello' should be removed"
+    assert not any(
+        "World" in s for s in strings), "Old value 'World' should be removed"
 
 
 @pytest.mark.task(taskno=5)
@@ -231,7 +232,11 @@ def test_exercise5_construct() -> None:
     has_division = any(
         isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div) for node in ast.walk(tree)
     )
-    assert has_division
+    has_subtraction = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub) for node in ast.walk(tree)
+    )
+    assert has_division, "Must use division (/) operator"
+    assert not has_subtraction, "Should replace subtraction (-) with division"
 
 
 @pytest.mark.task(taskno=6)
@@ -310,12 +315,22 @@ def test_exercise7_construct() -> None:
     )
 
     tree = _exercise_ast(7)
+    # Check for concatenation operation
+    has_concat = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add)
+        for node in ast.walk(tree)
+    )
+    assert has_concat, "Should use string concatenation (+) to build the message"
+
     strings = {
         node.value
         for node in ast.walk(tree)
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert any("100" in s for s in strings), "The text '100' should appear as a string in your code (use concatenation)"
+    assert any(
+        "100" in s for s in strings), "The number 100 should appear as a string"
+    assert any("result" in s.lower()
+               for s in strings), "The word 'result' should appear in a string"
 
 
 @pytest.mark.task(taskno=8)
@@ -341,7 +356,11 @@ def test_exercise8_construct() -> None:
     has_multiplication = any(
         isinstance(node, ast.BinOp) and isinstance(node.op, ast.Mult) for node in ast.walk(tree)
     )
-    assert has_multiplication
+    has_addition = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add) for node in ast.walk(tree)
+    )
+    assert has_multiplication, "Must use multiplication (*) operator"
+    assert not has_addition, "Should replace addition (+) with multiplication"
 
 
 @pytest.mark.task(taskno=9)
@@ -429,9 +448,19 @@ def test_exercise10_construct() -> None:
     )
 
     tree = _exercise_ast(10)
+    # Check for concatenation operation
+    has_concat = any(
+        isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add)
+        for node in ast.walk(tree)
+    )
+    assert has_concat, "Should use string concatenation (+) to join the message parts"
+
     strings = {
         node.value
         for node in ast.walk(tree)
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert "Welcome to Python programming!" in strings, "Should build the complete message using string concatenation (+)"
+    assert any(
+        "Welcome" in s for s in strings), "Should include 'Welcome' in string constants"
+    assert any(
+        "Python programming" in s for s in strings), "Should include 'Python programming' in string constants"
