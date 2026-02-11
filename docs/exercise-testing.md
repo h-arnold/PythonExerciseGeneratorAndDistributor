@@ -52,6 +52,7 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 If the exercise teaches a specific Python feature, you MUST include a construct test.
 
 Examples:
+
 - Casting lesson → Check for `int()`, `float()`, or `str()` calls
 - Input lesson → Check for `input()` assignment and variable usage in print
 - Loop lesson → Check for `for` or `while` syntax
@@ -63,6 +64,7 @@ Examples:
 When modifying existing code, verify the original value is gone.
 
 Examples:
+
 - Changing `"pasta"` to `"sushi"` → Assert `"pasta"` not in output
 - Updating a prompt → Assert old prompt text not in code constants
 - Fixing a calculation → Assert the wrong answer doesn't appear
@@ -118,6 +120,7 @@ print(int(num) * 2)
 ```
 
 **Inadequate test (only checks output):**
+
 ```python
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic():
@@ -126,6 +129,7 @@ def test_exercise1_logic():
 ```
 
 **Complete test suite:**
+
 ```python
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic():
@@ -144,6 +148,7 @@ def test_exercise1_construct():
 **Exercise:** Ask for name with input() and print it
 
 **Inadequate test:**
+
 ```python
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic():
@@ -152,6 +157,7 @@ def test_exercise2_logic():
 ```
 
 **Complete test:**
+
 ```python
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic():
@@ -171,6 +177,7 @@ def test_exercise2_construct():
 **Exercise:** Change the greeting from "Hello" to "Hi"
 
 **Inadequate test:**
+
 ```python
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic():
@@ -179,6 +186,7 @@ def test_exercise3_logic():
 ```
 
 **Complete test:**
+
 ```python
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic():
@@ -203,6 +211,7 @@ Apply the decision framework above to determine test count. These examples from 
 Use one test where there is a single clear success criterion.
 
 **Starter code (student notebook):**
+
 ```python
 # Exercise 7 — YOUR CODE
 print("Enter price:")
@@ -211,6 +220,7 @@ print("Two items cost: " + price + price)
 ```
 
 **Grading test:**
+
 ```python
 @pytest.mark.task(taskno=7)
 def test_exercise7_logic() -> None:
@@ -228,6 +238,7 @@ def test_exercise7_logic() -> None:
 Use three tests when logic, formatting, and construct are all distinct learning goals.
 
 **Starter code (student notebook):**
+
 ```python
 # Exercise 4 — YOUR CODE
 # Update the prompt to the new wording and the final message
@@ -237,6 +248,7 @@ print("My favourite fruit is " + fruit)
 ```
 
 **Grading tests:**
+
 ```python
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
@@ -270,6 +282,7 @@ def test_exercise4_construct() -> None:
 Use more than three tests only when the task genuinely has extra criteria.
 
 **Starter code + explanation prompt (student notebook):**
+
 ```python
 print("Hello World!"
 ```
@@ -280,6 +293,7 @@ Describe what error you got and why. Fix the code above.
 ```
 
 **Grading tests:**
+
 ```python
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
@@ -322,6 +336,7 @@ If you cannot justify extra tests with a clear learning objective, do not add th
 A test is only useful for grading if it distinguishes an unattempted notebook from a completed one.
 
 **Good examples (useful tests):**
+
 - Checking exact required output against scaffold text that is intentionally wrong.
 
 ```python
@@ -356,6 +371,7 @@ assert is_valid_explanation(...)
 ```
 
 **Non-examples (useless tests):**
+
 - A test that checks only for `print(` when scaffold code already contains `print(...)`.
 
 ```python
