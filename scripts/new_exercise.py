@@ -151,6 +151,7 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
 
 def _make_check_answers_cell(notebook_path: str) -> dict[str, Any]:
     """Return the auto-generated check-your-answers cell for the notebook."""
+    notebook_name = Path(notebook_path).name
     return {
         "cell_type": "code",
         "metadata": _make_meta("python"),
@@ -159,7 +160,7 @@ def _make_check_answers_cell(notebook_path: str) -> dict[str, Any]:
         "source": [
             "from tests.student_checker import run_notebook_checks\n",
             "\n",
-            f"run_notebook_checks({notebook_path!r})\n",
+            f"run_notebook_checks({notebook_name!r})\n",
         ],
     }
 

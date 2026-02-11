@@ -211,3 +211,5 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     joined_source = "".join(_ensure_source_lines(check_answers_cell))
     assert "from tests.student_checker import run_notebook_checks" in joined_source
     assert "run_notebook_checks(" in joined_source
+    assert "notebooks/" not in joined_source
+    assert "run_notebook_checks('ex001_dummy.ipynb')" in joined_source

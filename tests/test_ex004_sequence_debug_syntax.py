@@ -103,17 +103,6 @@ def _print_uses_name(tree: ast.AST, name: str) -> bool:
     return False
 
 
-def _has_call(tree: ast.AST, func_name: str) -> bool:
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id == func_name
-        ):
-            return True
-    return False
-
-
 def _assigns_call(tree: ast.AST, name: str, func_name: str) -> bool:
     for node in ast.walk(tree):
         if not isinstance(node, ast.Assign):
@@ -133,30 +122,6 @@ def _assigns_call(tree: ast.AST, name: str, func_name: str) -> bool:
             and isinstance(value.args[0], ast.Call)
             and isinstance(value.args[0].func, ast.Name)
             and value.args[0].func.id == func_name
-        ):
-            return True
-    return False
-
-
-def _is_name(node: ast.AST, name: str) -> bool:
-    return isinstance(node, ast.Name) and node.id == name
-
-
-def _is_constant(node: ast.AST, value: int) -> bool:
-    return isinstance(node, ast.Constant) and node.value == value
-
-
-def _assigns_binop_sum(tree: ast.AST, target_name: str, variable: str, constant: int) -> bool:
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Assign):
-            continue
-        if not any(_is_name(target, target_name) for target in node.targets):
-            continue
-        value = node.value
-        if not isinstance(value, ast.BinOp) or not isinstance(value.op, ast.Add):
-            continue
-        if (_is_name(value.left, variable) or _is_name(value.right, variable)) and (
-            _is_constant(value.left, constant) or _is_constant(value.right, constant)
         ):
             return True
     return False

@@ -13,6 +13,7 @@ dependencies = [
   "ipykernel>=7.1.0",
   "jupyterlab>=4.5.2",
   "tabulate>=0.9.0",
+  "pyright>=1.1.408",
 ]
 
 [build-system]

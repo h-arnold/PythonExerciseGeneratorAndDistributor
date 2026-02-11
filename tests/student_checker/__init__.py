@@ -4,6 +4,7 @@ from .api import (
     check_ex002_notebook,
     check_ex003_notebook,
     check_ex004_notebook,
+    check_ex007_notebook,
     check_exercises,
     check_notebook,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "check_ex002_notebook",
     "check_ex003_notebook",
     "check_ex004_notebook",
+    "check_ex007_notebook",
     "check_exercises",
     "check_notebook",
     "run_notebook_checks",
