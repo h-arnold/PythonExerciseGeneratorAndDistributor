@@ -16,6 +16,28 @@ from scripts.template_repo_cli.utils.filesystem import (
 class TemplatePackager:
     """Package templates for GitHub."""
 
+    COPY_EXCLUDE_PATTERNS: tuple[str, ...] = (
+        "__pycache__",
+        "*.pyc",
+        "test_*.py",
+        "*_test.py",
+    )
+
+    REQUIRED_TEST_FILES: tuple[str, ...] = (
+        "__init__.py",
+        "autograde_plugin.py",
+        "helpers.py",
+        "notebook_grader.py",
+        "test_autograde_plugin.py",
+        "test_build_autograde_payload.py",
+    )
+
+    REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = (
+        "exercise_expectations",
+        "exercise_framework",
+        "student_checker",
+    )
+
     def __init__(self, repo_root: Path):
         """Initialize packager.
 
@@ -68,6 +90,34 @@ class TemplatePackager:
         if src.exists():
             safe_copy_directory(src, workspace / dirname)
 
+    def _get_missing_required_sources(self) -> list[Path]:
+        """Return missing source paths required for packaging."""
+        tests_source_dir = self.repo_root / "tests"
+        required_paths: list[Path] = [
+            self.template_files_dir / "pyproject.toml",
+            self.template_files_dir / "pytest.ini",
+            self.template_files_dir / ".gitignore",
+            self.template_files_dir / ".github" / "workflows" / "classroom.yml",
+            self.repo_root / "scripts" / "build_autograde_payload.py",
+        ]
+        required_paths.extend(
+            tests_source_dir / required_file for required_file in self.REQUIRED_TEST_FILES
+        )
+        required_paths.extend(
+            tests_source_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
+        )
+        return [path for path in required_paths if not path.exists()]
+
+    def _raise_for_missing_required_sources(self) -> None:
+        """Raise with all missing required source paths."""
+        missing_paths = self._get_missing_required_sources()
+        if not missing_paths:
+            return
+
+        missing_list = "\n".join(f"- {path}" for path in missing_paths)
+        raise FileNotFoundError(
+            f"Missing required packaging source assets:\n{missing_list}")
+
     def copy_template_base_files(self, workspace: Path) -> None:
         """Copy base template files.
 
@@ -80,6 +130,8 @@ class TemplatePackager:
                 f" {self.template_files_dir}. Run the repository setup so"
                 " template_repo_files/ is populated before packaging."
             )
+
+        self._raise_for_missing_required_sources()
 
         file_pairs = [
             (
@@ -95,26 +147,38 @@ class TemplatePackager:
                 workspace / ".gitignore",
             ),
             (
-                self.template_files_dir / "INSTRUCTIONS.md",
-                workspace / "INSTRUCTIONS.md",
-            ),
-            (
-                self.repo_root / "tests" / "notebook_grader.py",
-                workspace / "tests" / "notebook_grader.py",
-            ),
-            (
                 self.repo_root / "scripts" / "build_autograde_payload.py",
                 workspace / "scripts" / "build_autograde_payload.py",
             ),
+        ]
+
+        optional_file_pairs = [
             (
-                self.repo_root / "tests" / "autograde_plugin.py",
-                workspace / "tests" / "autograde_plugin.py",
+                self.template_files_dir / "INSTRUCTIONS.md",
+                workspace / "INSTRUCTIONS.md",
             ),
         ]
 
+        tests_source_dir = self.repo_root / "tests"
+        tests_dest_dir = workspace / "tests"
+        for required_file in self.REQUIRED_TEST_FILES:
+            file_pairs.append(
+                (tests_source_dir / required_file, tests_dest_dir / required_file))
+
         for src, dest in file_pairs:
+            safe_copy_file(src, dest)
+
+        for src, dest in optional_file_pairs:
             if src.exists():
                 safe_copy_file(src, dest)
+
+        for required_dir in self.REQUIRED_TEST_DIRECTORIES:
+            source_dir = tests_source_dir / required_dir
+            safe_copy_directory(
+                source_dir,
+                tests_dest_dir / required_dir,
+                ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
+            )
 
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
@@ -162,9 +226,12 @@ class TemplatePackager:
             workspace / "pytest.ini",
             workspace / "README.md",
             workspace / "scripts" / "build_autograde_payload.py",
-            workspace / "tests" / "autograde_plugin.py",
             workspace / ".github" / "workflows" / "classroom.yml",
         ]
+
+        tests_dir = workspace / "tests"
+        required_files.extend(
+            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
 
         for required_file in required_files:
             if not required_file.exists():
@@ -173,8 +240,10 @@ class TemplatePackager:
         # Check required directories exist
         required_dirs = [
             workspace / "notebooks",
-            workspace / "tests",
+            tests_dir,
         ]
+        required_dirs.extend(
+            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
 
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():

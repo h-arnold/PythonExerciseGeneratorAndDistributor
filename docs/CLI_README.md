@@ -197,11 +197,25 @@ Each generated template repository includes:
 ### Development Setup
 
 - `.devcontainer/devcontainer.json` - VS Code dev container configuration with all settings and extensions
-- `.github/workflows/tests.yml` - CI/CD for autograding
+- `.github/workflows/classroom.yml` - GitHub Classroom autograding workflow
 
 ### Testing Framework
 
-The template includes only the selected test files for the exercises. The full grading framework (for example, `tests/exercise_framework/`, `tests/exercise_expectations/`, and other infrastructure) is **not** included by default. Many current tests import those modules, so if you package exercises that depend on the framework you must include those directories in `template_repo_files/` (or extend the packager to copy them). See `template_repo_files/README.md.template` for guidance on what to include.
+Generated templates include the selected exercise tests and the required shared test infrastructure used by the current checks and notebook self-check API:
+
+- `tests/__init__.py`
+- `tests/notebook_grader.py`
+- `tests/autograde_plugin.py`
+- `tests/helpers.py`
+- `tests/test_autograde_plugin.py`
+- `tests/test_build_autograde_payload.py`
+- `tests/exercise_framework/` (runtime files only)
+- `tests/exercise_expectations/` (runtime files only)
+- `tests/student_checker/` (runtime files only)
+
+When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py`/`*_test.py`).
+
+This set is sufficient for exercise test imports, autograde payload/plugin checks, and notebook self-check usage via `from tests.student_checker import check_notebook`.
 
 ## Available Constructs
 

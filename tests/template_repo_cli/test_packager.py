@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import TypeAlias
@@ -76,6 +80,41 @@ def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
         assert not plugin_dest.exists()
 
 
+def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -> None:
+    """Verify required test infrastructure files and directories are copied."""
+
+    required_files = (
+        "__init__.py",
+        "autograde_plugin.py",
+        "helpers.py",
+        "notebook_grader.py",
+        "test_autograde_plugin.py",
+        "test_build_autograde_payload.py",
+    )
+    required_directories = (
+        "exercise_expectations",
+        "exercise_framework",
+        "student_checker",
+    )
+
+    for filename in required_files:
+        src = repo_root / "tests" / filename
+        dest = temp_dir / "tests" / filename
+        if src.exists():
+            assert dest.exists()
+        else:
+            assert not dest.exists()
+
+    for dirname in required_directories:
+        src = repo_root / "tests" / dirname
+        dest = temp_dir / "tests" / dirname
+        if src.exists():
+            assert dest.exists()
+            assert dest.is_dir()
+        else:
+            assert not dest.exists()
+
+
 class TestCreateTempDirectory:
     """Tests for temporary directory creation."""
 
@@ -132,6 +171,24 @@ class TestCopyFiles:
         _assert_base_template_files(temp_dir)
         _assert_autograde_script_copy(repo_root, temp_dir)
         _assert_autograde_plugin_copy(repo_root, temp_dir)
+        _assert_required_test_infrastructure_copy(repo_root, temp_dir)
+
+    def test_required_test_directories_exclude_non_runtime_artefacts(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Test copied required test directories exclude tests and cache artefacts."""
+
+        template_packager.copy_template_base_files(temp_dir)
+
+        for dirname in template_packager.REQUIRED_TEST_DIRECTORIES:
+            copied_dir = temp_dir / "tests" / dirname
+            assert copied_dir.exists()
+            assert not list(copied_dir.rglob("__pycache__"))
+            assert not list(copied_dir.rglob("*.pyc"))
+            assert not list(copied_dir.rglob("test_*.py"))
+            assert not list(copied_dir.rglob("*_test.py"))
 
     def test_copy_preserves_structure(
         self,
@@ -248,6 +305,49 @@ class TestPackageIntegrity:
         plugin_path.unlink()
         assert not template_packager.validate_package(temp_dir)
 
+    @pytest.mark.parametrize(
+        "missing_path",
+        [
+            pytest.param("tests/exercise_framework", id="exercise-framework"),
+            pytest.param("tests/exercise_expectations",
+                         id="exercise-expectations"),
+            pytest.param("tests/student_checker", id="student-checker"),
+            pytest.param("tests/helpers.py", id="helpers"),
+            pytest.param("tests/test_autograde_plugin.py",
+                         id="autograde-test"),
+            pytest.param(
+                "tests/test_build_autograde_payload.py",
+                id="payload-test",
+            ),
+        ],
+    )
+    def test_package_integrity_missing_required_test_infrastructure(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+        missing_path: str,
+    ) -> None:
+        """Test validation fails when required test infrastructure is removed."""
+
+        files = build_exercise_file_map("ex001_sanity")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+
+        path_to_remove = temp_dir / missing_path
+        if not path_to_remove.exists():
+            pytest.skip(
+                f"Required path not available in template copy: {missing_path}")
+
+        if path_to_remove.is_dir():
+            shutil.rmtree(path_to_remove)
+        else:
+            path_to_remove.unlink()
+
+        assert not template_packager.validate_package(temp_dir)
+
     def test_package_has_notebook_grader(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
@@ -261,6 +361,73 @@ class TestPackageIntegrity:
             assert grader.read_text() == repo_grader.read_text()
         else:
             assert not grader.exists()
+
+    def test_copy_template_base_files_fails_fast_for_missing_required_sources(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test missing required source files and directories fail before copy."""
+
+        missing_file = "test_missing_required_asset.py"
+        missing_dir = "missing_required_directory"
+        monkeypatch.setattr(
+            template_packager,
+            "REQUIRED_TEST_FILES",
+            (*template_packager.REQUIRED_TEST_FILES, missing_file),
+        )
+        monkeypatch.setattr(
+            template_packager,
+            "REQUIRED_TEST_DIRECTORIES",
+            (*template_packager.REQUIRED_TEST_DIRECTORIES, missing_dir),
+        )
+
+        with pytest.raises(FileNotFoundError) as exc_info:
+            template_packager.copy_template_base_files(temp_dir)
+
+        error_text = str(exc_info.value)
+        assert f"tests/{missing_file}" in error_text
+        assert f"tests/{missing_dir}" in error_text
+
+    def test_packaged_workspace_pytest_smoke(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test minimal packaged workspace passes a focused pytest run."""
+
+        files = build_exercise_file_map("ex001_sanity")
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(
+            temp_dir, "Smoke Test Template", ["ex001_sanity"])
+
+        assert template_packager.validate_package(temp_dir)
+
+        env = os.environ.copy()
+        env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "-q",
+                "tests/test_ex001_sanity.py",
+            ],
+            cwd=temp_dir,
+            capture_output=True,
+            check=False,
+            text=True,
+            env=env,
+        )
+
+        assert result.returncode == 0, (
+            "Packaged workspace smoke pytest failed:\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
 
     def test_copies_notebook_grader_when_present(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
@@ -324,7 +491,8 @@ class TestPackageOptions:
         template_packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert not (
+            temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
 
 class TestPackageMultipleExercises:

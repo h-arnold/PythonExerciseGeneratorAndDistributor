@@ -31,7 +31,7 @@ Why teachers will care:
 
 [Read about the pedagogical approach here](docs/pedagogy.md).
 
-## How it works (plain‑English overview)
+## How it works
 
 <figure style="display:inline-block;">
   <img src="docs/images/exercise-print-message.png" alt="Notebook editor showing a tagged exercise cell with expected output and a syntax error" style="transform:scale(0.75); transform-origin:top left; display:block;">
@@ -42,6 +42,13 @@ Why teachers will care:
 2. Tests in [tests/](tests/) use the exercise framework to extract tagged cells and run them automatically.
 3. Solution notebooks live in [notebooks/solutions/](notebooks/solutions/) and are used to verify the tests.
 4. A CLI can bundle selected exercises into a GitHub Classroom template repo.
+5. You set up a [GitHub Classroom Assignment](https://classroom.github.com/) using the generated template repo, and students can accept the assignment and start working immediately.
+
+### Feedback and reporting
+
+At the end of each student notebook, there is a self-check cell that runs a simple check and reports the results in a table. The exercise generation agent has detailed instruction on how to create pedagocially appropriate tests that guide students towards the solution without giving too much away. They can expect a table like this:
+
+
 
 ## Status
 
@@ -54,15 +61,14 @@ What works (mostly):
 
 Known gaps / not fully working yet:
 
-- The template repo currently includes solution notebooks (not suitable for students)
-- Parts of the template‑repo population flow are untested
 - Full VS Code for Web support needs a Pyodide‑based Python kernel integration
+- There's work to be done on optimising the student devcontainer - currently students still need to select the Jupyter kernel manually after opening the repo in Codespaces.
+- Tweaks and formatting changes for the layout of the exercise notebooks as they could be clearer.
 
 Where help is needed:
 
-- Excluding solutions from student template repos
-- Hardening the template‑repo CLI and improving test coverage
 - VS Code for Web: building a Pyodide‑backed kernel that works with the official Jupyter extension
+- Tweaking the student devcontainer config for a smoother and more minimal experience.
 
 ## Quickstart (exercise generation via Copilot Chat)
 

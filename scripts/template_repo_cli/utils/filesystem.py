@@ -28,12 +28,18 @@ def safe_copy_file(source: Path, dest: Path) -> None:
     shutil.copy2(source, dest)
 
 
-def safe_copy_directory(source: Path, dest: Path) -> None:
+def safe_copy_directory(
+    source: Path,
+    dest: Path,
+    *,
+    ignore_patterns: tuple[str, ...] | None = None,
+) -> None:
     """Copy a directory recursively.
 
     Args:
         source: Source directory path.
         dest: Destination directory path.
+        ignore_patterns: Optional glob patterns to exclude while copying.
 
     Raises:
         FileNotFoundError: If source directory doesn't exist.
@@ -42,7 +48,10 @@ def safe_copy_directory(source: Path, dest: Path) -> None:
         raise FileNotFoundError(f"Source directory not found: {source}")
 
     # Copy the entire directory tree
-    shutil.copytree(source, dest, dirs_exist_ok=True)
+    ignore = None
+    if ignore_patterns:
+        ignore = shutil.ignore_patterns(*ignore_patterns)
+    shutil.copytree(source, dest, dirs_exist_ok=True, ignore=ignore)
 
 
 def resolve_notebook_path(notebook_path: str) -> Path:

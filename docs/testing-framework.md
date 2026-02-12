@@ -55,7 +55,7 @@ Integration tests for the template repository CLI. These tests verify:
 - Filesystem operations (copying files and directories, workspace creation/cleanup).
 - GitHub interactions (via mocked `subprocess.run` or `gh` command outputs).
 - Configuration parsing and selection logic.
-- Packaging behaviour (e.g., that `TemplatePackager` copies the required base files and the `.github` workflow directory when present). Note that `tests/exercise_framework/` is not copied unless it is included under `template_repo_files/`.
+- Packaging behaviour (e.g., that `TemplatePackager` copies the required base files, runtime-only shared `tests/` infrastructure for exercise checks and notebook self-checks, and the `.github` workflow directory).
 
 > **Tip:** The `tests/template_repo_cli/conftest.py` file exposes useful pytest fixtures (e.g., `repo_root`, `temp_dir`, `sample_exercises`, and `mock_gh_*`) that are intentionally reusable for new tests.
 
