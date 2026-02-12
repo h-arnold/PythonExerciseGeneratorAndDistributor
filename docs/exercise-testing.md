@@ -2,6 +2,14 @@
 
 This document outlines the testing philosophy and conventions for verifying student notebook exercises.
 
+## Source of Truth Policy
+
+This file is the **canonical** testing standard for this repository.
+
+- Agent prompts (generation/verifier) should reference this document and avoid duplicating its detailed rules.
+- If there is any mismatch between an agent prompt and this file, follow this file.
+- Keep testing detail updates here first, then update agent prompts only to point back to this policy.
+
 ## Philosophy: "Task Completion" with Good Habits
 
 The goal of our tests is to verify that a student has **achieved the learning objective** while fostering precise coding habits.
@@ -45,9 +53,9 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 - **Only test edge cases requested in the prompt.**
 - Do not test for defensive coding unless specifically asked for.
 
-### 4. Semantic Start Gate for Modify Exercises
+### 4. Semantic Start Gate for Scaffolded Exercises
 
-Modify exercises must include a **semantic start gate** to prevent untouched starter cells from passing.
+Scaffolded exercises that start from provided code (including modify tasks and eligible debug tasks) must include a **semantic start gate** to prevent untouched starter cells from passing.
 
 - Compare each tagged student cell to the canonical starter baseline for that exercise tag.
 - Treat the cell as **NOT STARTED** when the only differences are comments and/or whitespace.
@@ -56,13 +64,13 @@ Modify exercises must include a **semantic start gate** to prevent untouched sta
 Implementation requirements:
 
 - Keep the gate deterministic and simple (AST/token-based normalisation, no heuristics).
-- For checker output, an untouched modify task must show `NOT STARTED`.
+- For checker output, an untouched scaffolded task must show `NOT STARTED`.
 - When a task is `NOT STARTED`, short-circuit all other checks for that exercise and report only the gate result.
 
 Autograding requirements:
 
 - Keep the existing pytest pass/fail model unchanged.
-- Add explicit gate assertions in modify exercise test files so untouched student cells fail clearly.
+- Add explicit gate assertions in exercise test files so untouched student cells fail clearly.
 - Run development validation against solution notebooks (`PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`) so expected completed work still passes.
 
 ### 5. Mandatory Testing Rules

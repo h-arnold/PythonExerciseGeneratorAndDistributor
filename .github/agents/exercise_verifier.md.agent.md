@@ -122,36 +122,10 @@ Note: existing notebooks may also include a top-level `id` field on cells; prese
 
 **Read** `/docs/exercise-testing.md` using (`read_file`) for the complete testing framework and philosophy. **DO THIS FIRST**
 
-All tests must follow the **"Task Completion"** model: (1) code runs without errors, (2) output is correct, (3) required constructs are used.
-
-**Performance & Determinism:**
-- Tests are deterministic (no randomness, timing, or network).
-- Tests are fast (<1s per test).
-
-**Output Matching (Strictness):**
-- Default to **strict checks**: exact casing, whitespace, and punctuation.
-- **Model best practice**: Ensure variable names are descriptive, whitespacing conventions are adhered to etc.
-- Exceptions allowed only for specific task types (e.g., "Make" tasks) or when pedagogical reason is documented.
-- Rationale: Developing precise coding habits (correct formatting matters) is part of the learning objective.
-
-**Coverage Requirements:**
-Tests cases should be written that answer these questions for each of the exercises:
-
- 1. **Does the code run?** (No syntax/runtime/logic errors)
- 2. **Does it produce the correct outcome?** (Output matches expectation **strictly** by default)
- 3. **Does it use the required constructs?** (e.g., If the lesson teaches `for` loops, a `for` loop is mandatory)
-
-**Test Grouping & Granularity:**
-- Every test must be marked with `@pytest.mark.task(taskno=N)`.
-- Group related criteria (logic, constructs, formatting) within the same taskno for GitHub Classroom partial credit.
-- Where possible, split logic, construct checks, and formatting into separate tests under the same taskno for better feedback.
-
-**Helper Functions:**
-- Use `tests.exercise_framework.runtime.run_cell_and_capture_output()` for simple output capture.
-- Use `tests.exercise_framework.runtime.run_cell_with_input()` for exercises with `input()` prompts.
-- Use `tests.exercise_framework.runtime.extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
-- Use `tests.exercise_framework.runtime.get_explanation_cell()` to verify reflection cells are non-empty.
-- Pull expected outputs and prompts from `tests/exercise_expectations/` rather than hard-coding them.
+This file is the **single source of truth** for testing standards.
+- Do not apply alternate or abbreviated rules when verifying.
+- Use it to validate strictness, construct checks, semantic start-gate behaviour, task markers, and initial-failure expectations.
+- When guidance conflicts, follow `/docs/exercise-testing.md`.
 
 **Validation:**
 - Tests must pass against solution notebooks:

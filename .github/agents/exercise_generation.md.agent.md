@@ -184,14 +184,11 @@ Only once the verifier is happy should you start writing/refining the pytest tes
 
 6) Write / refine tests
 
-Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testing philosophy and patterns. Key points:
+Read `/docs/exercise-testing.md` first using `read_file` and treat it as the **single source of truth** for all testing standards.
 
-- **Philosophy**: "Task Completion" model verifies (1) code runs without errors, (2) produces correct output (strict by default), (3) uses required constructs.
-- **Strict output matching**: Enforce exact casing, whitespace, and punctuation unless there's a strong pedagogical reason not to (e.g., "Make" tasks may be looser).
-- **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
-- **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
-- **Input simulation**: Use `runtime.run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` to mock `input()` calls.
-- **Expectations data**: Store expected outputs, prompts, and inputs in `tests/exercise_expectations/` and import them into tests.
+- Do not duplicate or invent alternate testing rules in this agent workflow.
+- Follow the document for strictness, construct checks, semantic start-gate policy, task markers, and initial-failure expectations.
+- Use it as the authority when deciding test scope, structure, and pass/fail expectations.
 
 7) Verify
 - Run `uv run pytest -q` locally.
