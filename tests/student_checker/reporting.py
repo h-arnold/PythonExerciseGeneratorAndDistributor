@@ -13,6 +13,7 @@ from tests.exercise_framework.reporting import (
 from tests.notebook_grader import NotebookGradingError
 
 from .models import (
+    CheckStatus,
     DetailedCheckResult,
     Ex002CheckResult,
     Ex006CheckResult,
@@ -36,6 +37,10 @@ class _ExerciseCheckResult(Protocol):
 
     @property
     def passed(self) -> bool:  # pragma: no cover - protocol definition
+        ...
+
+    @property
+    def status(self) -> CheckStatus | None:  # pragma: no cover - protocol definition
         ...
 
     @property
@@ -81,7 +86,8 @@ def print_results(results: list[CheckResult]) -> None:
     table = render_table([(label, passed) for label, passed, _ in results])
     print(table)
 
-    failures = [(label, issues) for label, passed, issues in results if not passed]
+    failures = [(label, issues)
+                for label, passed, issues in results if not passed]
     if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
 
@@ -134,6 +140,7 @@ def _grouped_exercise_rows(
                 check_label=result.title,
                 passed=result.passed,
                 issues=result.issues,
+                status=result.status,
             )
         )
         last_exercise = result.exercise_no
@@ -150,7 +157,7 @@ def print_detailed_results(
         (
             item.exercise_label,
             item.check_label,
-            item.passed,
+            "FAILED" if item.status is None else item.status.value,
             "" if item.passed else normalise_issue_text(item.issues),
         )
         for item in detailed_results

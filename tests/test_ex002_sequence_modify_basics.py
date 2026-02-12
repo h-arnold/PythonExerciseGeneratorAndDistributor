@@ -15,6 +15,7 @@ from tests.exercise_framework import (
     expected_output_text,
     expected_print_call_count,
     extract_tagged_code,
+    is_tagged_cell_semantically_modified,
     resolve_notebook_path,
     run_cell_and_capture_output,
 )
@@ -45,6 +46,32 @@ def _exercise_code(exercise_no: int) -> str:
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     return ast.parse(_exercise_code(exercise_no))
+
+
+@pytest.mark.parametrize(
+    ("exercise_no", "tag"),
+    [
+        pytest.param(1, "exercise1", marks=pytest.mark.task(taskno=1)),
+        pytest.param(2, "exercise2", marks=pytest.mark.task(taskno=2)),
+        pytest.param(3, "exercise3", marks=pytest.mark.task(taskno=3)),
+        pytest.param(4, "exercise4", marks=pytest.mark.task(taskno=4)),
+        pytest.param(5, "exercise5", marks=pytest.mark.task(taskno=5)),
+        pytest.param(6, "exercise6", marks=pytest.mark.task(taskno=6)),
+        pytest.param(7, "exercise7", marks=pytest.mark.task(taskno=7)),
+        pytest.param(8, "exercise8", marks=pytest.mark.task(taskno=8)),
+        pytest.param(9, "exercise9", marks=pytest.mark.task(taskno=9)),
+        pytest.param(10, "exercise10", marks=pytest.mark.task(taskno=10)),
+    ],
+)
+def test_exercise_semantic_start_gate(exercise_no: int, tag: str) -> None:
+    assert is_tagged_cell_semantically_modified(
+        _resolved_notebook_path(),
+        tag=tag,
+        starter_code=ex002.EX002_MODIFY_STARTER_BASELINES[tag],
+    ), (
+        f"Exercise {exercise_no}: NOT STARTED. "
+        "You must make a real code change, not only comments or whitespace."
+    )
 
 
 @pytest.mark.task(taskno=1)
@@ -124,7 +151,8 @@ def test_exercise2_construct() -> None:
     assert any("Bassaleg School" in s for s in strings), (
         "The text 'Bassaleg School' should appear in your code"
     )
-    assert not any("Greenfield" in s for s in strings), "Old value 'Greenfield' should be replaced"
+    assert not any(
+        "Greenfield" in s for s in strings), "Old value 'Greenfield' should be replaced"
 
 
 @pytest.mark.task(taskno=3)
@@ -206,8 +234,10 @@ def test_exercise4_construct() -> None:
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
     assert "Good Morning Everyone" in strings, "Should build the message 'Good Morning Everyone'"
-    assert not any("Hello" in s for s in strings), "Old value 'Hello' should be removed"
-    assert not any("World" in s for s in strings), "Old value 'World' should be removed"
+    assert not any(
+        "Hello" in s for s in strings), "Old value 'Hello' should be removed"
+    assert not any(
+        "World" in s for s in strings), "Old value 'World' should be removed"
 
 
 @pytest.mark.task(taskno=5)
@@ -327,7 +357,8 @@ def test_exercise7_construct() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert any("100" in s for s in strings), "The number 100 should appear as a string"
+    assert any(
+        "100" in s for s in strings), "The number 100 should appear as a string"
     assert any("result" in s.lower() for s in strings), (
         "The word 'result' should appear in a string"
     )
@@ -459,7 +490,8 @@ def test_exercise10_construct() -> None:
         for node in ast.walk(tree)
         if isinstance(node, ast.Constant) and isinstance(node.value, str)
     }
-    assert any("Welcome" in s for s in strings), "Should include 'Welcome' in string constants"
+    assert any(
+        "Welcome" in s for s in strings), "Should include 'Welcome' in string constants"
     assert any("Python programming" in s for s in strings), (
         "Should include 'Python programming' in string constants"
     )

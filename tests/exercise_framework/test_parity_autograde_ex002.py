@@ -7,8 +7,8 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-EXPECTED_EX002_TEST_COUNT = 60
-EXPECTED_TASK_DISTRIBUTION = {task: 6 for task in range(1, 11)}
+EXPECTED_EX002_TEST_COUNT = 70
+EXPECTED_TASK_DISTRIBUTION = {task: 7 for task in range(1, 11)}
 PLUGIN_NAME = "tests.autograde_plugin"
 
 
@@ -29,7 +29,8 @@ def test_ex002_autograde_task_distribution_and_count_parity(tmp_path: Path) -> N
         "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
     ]
 
-    completed = subprocess.run(command, check=False, capture_output=True, text=True, env=env)
+    completed = subprocess.run(
+        command, check=False, capture_output=True, text=True, env=env)
     assert completed.returncode == 0, completed.stdout + completed.stderr
     assert results_path.exists()
 

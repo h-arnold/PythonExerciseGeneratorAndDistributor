@@ -54,3 +54,79 @@ EX003_EXERCISE10_REQUIRED_PHRASES: Final[dict[str, str]] = {
     "part_two": "strings",
     "part_three": "message",
 }
+
+EX003_MODIFY_STARTER_BASELINES: Final[dict[str, str]] = {
+    "exercise1": (
+        "# Exercise 1 — YOUR CODE\n"
+        "# Modify the greeting assignment below\n"
+        "greeting = \"Hello from Python!\"\n"
+        "print(greeting)\n"
+    ),
+    "exercise2": (
+        "# Exercise 2 — YOUR CODE\n"
+        "# Change the subject variable to a different string\n"
+        "subject = \"math\"\n"
+        "print(\"I enjoy \" + subject + \" lessons.\")\n"
+    ),
+    "exercise3": (
+        "# Exercise 3 — YOUR CODE\n"
+        "# Use a new favourite food below\n"
+        "food = \"pasta\"\n"
+        "print(\"My favourite food is \" + food)\n"
+    ),
+    "exercise4": (
+        "# Exercise 4 — YOUR CODE\n"
+        "# Update the prompt to the new wording and the final message\n"
+        "print(\"What is your favourite fruit?\")\n"
+        "fruit = input()\n"
+        "print(\"My favourite fruit is \" + fruit)"
+    ),
+    "exercise5": (
+        "# Exercise 5 — YOUR CODE\n"
+        "# Update the prompt and final message\n"
+        "print(\"Tell me your favourite place:\")\n"
+        "place = input()\n"
+        "print(\"I love visiting \" + place)\n"
+    ),
+    "exercise6": (
+        "# Exercise 6 — YOUR CODE\n"
+        "# Update the prompt and the final message\n"
+        "print(\"Enter your name:\")\n"
+        "name = input()\n"
+        "print(\"Hello there, \" + name)\n"
+    ),
+    "exercise7": (
+        "# Exercise 7 — YOUR CODE\n"
+        "# Replace the literal strings with input() calls for `first_word` and `second_word`.\n"
+        "first_word = \"Learning\"\n"
+        "second_word = \"Python\"\n"
+        "# e.g., first_word = input(\"Enter first word:\")\n"
+        "print(first_word + \" \" + second_word)\n"
+    ),
+    "exercise8": (
+        "# Exercise 8 — YOUR CODE\n"
+        "# Use two input() calls to collect an action and an object, then print them.\n"
+        "part1 = \"Keep\"\n"
+        "part2 = \"coding\"\n"
+        "# e.g., part1 = input(\"Enter an action:\")\n"
+        "print(part1 + \" \" + part2)\n"
+    ),
+    "exercise9": (
+        "# Exercise 9 — YOUR CODE\n"
+        "# Use input() to collect `greeting`, `time_of_day`, and `audience`, then print them together.\n"
+        "greeting = \"Good\"\n"
+        "time_of_day = \"morning\"\n"
+        "audience = \"students\"\n"
+        "# e.g., greeting = input(\"Enter a greeting:\")\n"
+        "print(greeting + \" \" + time_of_day + \" \" + audience)\n"
+    ),
+    "exercise10": (
+        "# Exercise 10 — YOUR CODE\n"
+        "# Collect three parts using input() and then print them joined into a sentence.\n"
+        "part_one = \"Python\"\n"
+        "part_two = \"strings\"\n"
+        "part_three = \"matter\"\n"
+        "# e.g., part_one = input(\"Enter part one:\")\n"
+        "print(part_one + \" \" + part_two + \" \" + part_three)\n"
+    ),
+}

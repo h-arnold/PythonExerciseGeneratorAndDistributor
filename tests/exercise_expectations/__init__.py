@@ -12,12 +12,14 @@ from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectati
     EX002_EXPECTED_NUMERIC,
     EX002_EXPECTED_PRINT_CALLS,
     EX002_EXPECTED_SINGLE_LINE,
+    EX002_MODIFY_STARTER_BASELINES,
     EX002_NOTEBOOK_PATH,
 )
 from tests.exercise_expectations.ex003_sequence_modify_variables import (
     EX003_EXPECTED_INPUT_MESSAGES,
     EX003_EXPECTED_PROMPTS,
     EX003_EXPECTED_STATIC_OUTPUT,
+    EX003_MODIFY_STARTER_BASELINES,
     EX003_NOTEBOOK_PATH,
     EX003_ORIGINAL_PROMPTS,
 )
@@ -43,6 +45,7 @@ from tests.exercise_expectations.ex005_sequence_debug_logic import (
 from tests.exercise_expectations.ex006_sequence_modify_casting import (
     EX006_EXPECTED_OUTPUTS,
     EX006_INPUT_EXPECTATIONS,
+    EX006_MODIFY_STARTER_BASELINES,
     EX006_NOTEBOOK_PATH,
 )
 from tests.exercise_expectations.types import Ex006InputExpectation
@@ -55,10 +58,12 @@ __all__ = [
     "EX002_EXPECTED_NUMERIC",
     "EX002_EXPECTED_PRINT_CALLS",
     "EX002_EXPECTED_SINGLE_LINE",
+    "EX002_MODIFY_STARTER_BASELINES",
     "EX002_NOTEBOOK_PATH",
     "EX003_EXPECTED_INPUT_MESSAGES",
     "EX003_EXPECTED_PROMPTS",
     "EX003_EXPECTED_STATIC_OUTPUT",
+    "EX003_MODIFY_STARTER_BASELINES",
     "EX003_NOTEBOOK_PATH",
     "EX003_ORIGINAL_PROMPTS",
     "EX004_EXPECTED_SINGLE_LINE",
@@ -78,6 +83,7 @@ __all__ = [
     "EX005_PROFILE_EXERCISE",
     "EX006_EXPECTED_OUTPUTS",
     "EX006_INPUT_EXPECTATIONS",
+    "EX006_MODIFY_STARTER_BASELINES",
     "EX006_NOTEBOOK_PATH",
     "Ex006InputExpectation",
 ]

@@ -16,7 +16,8 @@ EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS = 2
 
 
 class InputRunner(Protocol):
-    def __call__(self, notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str: ...
+    def __call__(self, notebook_path: str | Path, *,
+                 tag: str, inputs: list[str]) -> str: ...
 
 
 def _make_fake_input_runner() -> tuple[InputRunner, Callable[[], int]]:
@@ -38,7 +39,8 @@ def test_runtime_output_helper_matches_notebook_grader(
 ) -> None:
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
 
-    from_runtime = runtime.run_cell_and_capture_output(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
+    from_runtime = runtime.run_cell_and_capture_output(
+        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
     from_grader = notebook_grader.run_cell_and_capture_output(
         EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG
     )
@@ -51,8 +53,10 @@ def test_runtime_extract_helper_matches_notebook_grader(
 ) -> None:
     monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
 
-    from_runtime = runtime.extract_tagged_code(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
-    from_grader = notebook_grader.extract_tagged_code(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
+    from_runtime = runtime.extract_tagged_code(
+        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
+    from_grader = notebook_grader.extract_tagged_code(
+        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG)
 
     assert from_runtime == from_grader
 
@@ -96,7 +100,8 @@ def test_runtime_output_cache_reuses_result_for_same_path_and_tag(
         notebook_grader, "run_cell_and_capture_output", fake_run_cell_and_capture_output
     )
 
-    first = runtime.run_cell_and_capture_output(EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG, cache=cache)
+    first = runtime.run_cell_and_capture_output(
+        EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG, cache=cache)
     second = runtime.run_cell_and_capture_output(
         EX002_NOTEBOOK_PATH, tag=EXERCISE1_TAG, cache=cache
     )
@@ -157,3 +162,41 @@ def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
 
     assert first != second
     assert get_call_count() == EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS
+
+
+def test_is_code_semantically_modified_ignores_comments_and_whitespace() -> None:
+    starter = 'print("Hello")\n'
+    comment_only_edit = '# comment only\nprint("Hello")\n\n'
+
+    assert runtime.is_code_semantically_modified(
+        comment_only_edit, starter) is False
+
+
+def test_is_code_semantically_modified_detects_real_change() -> None:
+    starter = 'print("Hello")\n'
+    modified = 'print("Hello!")\n'
+
+    assert runtime.is_code_semantically_modified(modified, starter) is True
+
+
+def test_tagged_cell_semantic_helper_treats_comment_only_edit_as_unchanged(tmp_path: Path) -> None:
+    notebook_path = tmp_path / "exercise.ipynb"
+    notebook = {
+        "cells": [
+            {
+                "cell_type": "code",
+                "metadata": {"tags": ["exercise1"]},
+                "source": ['# Extra note\n', 'print("Hello")\n'],
+            }
+        ]
+    }
+    notebook_path.write_text(json.dumps(notebook), encoding="utf-8")
+
+    assert (
+        runtime.is_tagged_cell_semantically_modified(
+            notebook_path,
+            tag="exercise1",
+            starter_code='print("Hello")\n',
+        )
+        is False
+    )

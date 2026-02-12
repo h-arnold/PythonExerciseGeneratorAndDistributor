@@ -21,6 +21,8 @@ __all__ = [
     "expected_print_call_count",
     "extract_tagged_code",
     "get_explanation_cell",
+    "is_code_semantically_modified",
+    "is_tagged_cell_semantically_modified",
     "resolve_notebook_path",
     "run_all_checks",
     "run_cell_and_capture_output",
@@ -42,6 +44,8 @@ expected_output_text: Callable[..., Any]
 expected_print_call_count: Callable[..., Any]
 extract_tagged_code: Callable[..., Any]
 get_explanation_cell: Callable[..., Any]
+is_code_semantically_modified: Callable[..., Any]
+is_tagged_cell_semantically_modified: Callable[..., Any]
 resolve_notebook_path: Callable[..., Any]
 run_all_checks: Callable[..., Any]
 run_cell_and_capture_output: Callable[..., Any]
@@ -63,6 +67,8 @@ _ATTRIBUTE_MODULES: dict[str, str] = {
     "expected_print_call_count": "tests.exercise_framework.expectations",
     "extract_tagged_code": "tests.exercise_framework.runtime",
     "get_explanation_cell": "tests.exercise_framework.runtime",
+    "is_code_semantically_modified": "tests.exercise_framework.runtime",
+    "is_tagged_cell_semantically_modified": "tests.exercise_framework.runtime",
     "resolve_notebook_path": "tests.exercise_framework.paths",
     "run_all_checks": "tests.exercise_framework.api",
     "run_cell_and_capture_output": "tests.exercise_framework.runtime",

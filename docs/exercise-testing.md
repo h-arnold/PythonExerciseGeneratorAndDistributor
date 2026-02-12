@@ -23,7 +23,7 @@ Developing the habit of precise output (casing, whitespace, punctuation) is crit
 - **Why**: "Close enough" is often a bug in the real world.
 
 **Example:**
-*Exercise: Ask for a name and print "Hello <name>!"*
+*Exercise: Ask for a name and print "Hello [name]!"*
 
 ```python
 # PREFERRED: Strict logic
@@ -45,9 +45,29 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 - **Only test edge cases requested in the prompt.**
 - Do not test for defensive coding unless specifically asked for.
 
-### 4. Mandatory Testing Rules
+### 4. Semantic Start Gate for Modify Exercises
 
-**Rule 1: Always test the taught construct**
+Modify exercises must include a **semantic start gate** to prevent untouched starter cells from passing.
+
+- Compare each tagged student cell to the canonical starter baseline for that exercise tag.
+- Treat the cell as **NOT STARTED** when the only differences are comments and/or whitespace.
+- Treat the cell as **started** only when there is a semantic code change.
+
+Implementation requirements:
+
+- Keep the gate deterministic and simple (AST/token-based normalisation, no heuristics).
+- For checker output, an untouched modify task must show `NOT STARTED`.
+- When a task is `NOT STARTED`, short-circuit all other checks for that exercise and report only the gate result.
+
+Autograding requirements:
+
+- Keep the existing pytest pass/fail model unchanged.
+- Add explicit gate assertions in modify exercise test files so untouched student cells fail clearly.
+- Run development validation against solution notebooks (`PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`) so expected completed work still passes.
+
+### 5. Mandatory Testing Rules
+
+#### Rule 1: Always test the taught construct
 
 If the exercise teaches a specific Python feature, you MUST include a construct test.
 
@@ -59,7 +79,7 @@ Examples:
 - Concatenation lesson → Check variables are used in the print statement
 - Arithmetic lesson → Check for the required operator (`+`, `*`, etc.)
 
-**Rule 2: Test for absence of old/incorrect values**
+#### Rule 2: Test for absence of old/incorrect values
 
 When modifying existing code, verify the original value is gone.
 
@@ -87,7 +107,7 @@ Each exercise should have tests for its **distinct success criteria**. Every tes
 **Test count by exercise type:**
 
 | Exercise Type | Typical Tests | Criteria |
-|--------------|---------------|----------|
+| ------------- | ------------- | -------- |
 | Static output change | 2 | Logic + Construct |
 | Input/output with construct | 3 | Logic + Formatting + Construct |
 | Debug with explanation | 4+ | Logic + Formatting + Construct + Explanation |

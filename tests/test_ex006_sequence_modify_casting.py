@@ -8,6 +8,7 @@ from tests.exercise_expectations import ex006_sequence_modify_casting as ex006
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
+    is_tagged_cell_semantically_modified,
     resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
@@ -50,7 +51,8 @@ def _ast(n: int) -> ast.Module:
 
 def _has_call(tree: ast.AST, func_name: str) -> bool:
     return any(
-        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name
+        isinstance(node, ast.Call) and isinstance(
+            node.func, ast.Name) and node.func.id == func_name
         for node in ast.walk(tree)
     )
 
@@ -59,6 +61,32 @@ def _has_binop(tree: ast.AST, operator_type: type[ast.operator]) -> bool:
     return any(
         isinstance(node, ast.BinOp) and isinstance(node.op, operator_type)
         for node in ast.walk(tree)
+    )
+
+
+@pytest.mark.parametrize(
+    ("exercise_no", "tag"),
+    [
+        pytest.param(1, "exercise1", marks=pytest.mark.task(taskno=1)),
+        pytest.param(2, "exercise2", marks=pytest.mark.task(taskno=2)),
+        pytest.param(3, "exercise3", marks=pytest.mark.task(taskno=3)),
+        pytest.param(4, "exercise4", marks=pytest.mark.task(taskno=4)),
+        pytest.param(5, "exercise5", marks=pytest.mark.task(taskno=5)),
+        pytest.param(6, "exercise6", marks=pytest.mark.task(taskno=6)),
+        pytest.param(7, "exercise7", marks=pytest.mark.task(taskno=7)),
+        pytest.param(8, "exercise8", marks=pytest.mark.task(taskno=8)),
+        pytest.param(9, "exercise9", marks=pytest.mark.task(taskno=9)),
+        pytest.param(10, "exercise10", marks=pytest.mark.task(taskno=10)),
+    ],
+)
+def test_exercise_semantic_start_gate(exercise_no: int, tag: str) -> None:
+    assert is_tagged_cell_semantically_modified(
+        _NOTEBOOK_PATH,
+        tag=tag,
+        starter_code=ex006.EX006_MODIFY_STARTER_BASELINES[tag],
+    ), (
+        f"Exercise {exercise_no}: NOT STARTED. "
+        "You must make a real code change, not only comments or whitespace."
     )
 
 
@@ -124,7 +152,8 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
-    output = _run_with_inputs(6, list(ex006.EX006_INPUT_EXPECTATIONS[6]["inputs"]))
+    output = _run_with_inputs(
+        6, list(ex006.EX006_INPUT_EXPECTATIONS[6]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[6]["prompt_contains"] in output
     # final line should be 12
     last = output.strip().splitlines()[-1]
@@ -141,7 +170,8 @@ def test_exercise6_construct() -> None:
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_logic() -> None:
-    output = _run_with_inputs(7, list(ex006.EX006_INPUT_EXPECTATIONS[7]["inputs"]))
+    output = _run_with_inputs(
+        7, list(ex006.EX006_INPUT_EXPECTATIONS[7]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[7]["prompt_contains"] in output
     expected_output = ex006.EX006_INPUT_EXPECTATIONS[7].get("output_contains")
     assert expected_output is not None
@@ -188,7 +218,8 @@ def test_exercise9_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_logic() -> None:
-    output = _run_with_inputs(10, list(ex006.EX006_INPUT_EXPECTATIONS[10]["inputs"]))
+    output = _run_with_inputs(
+        10, list(ex006.EX006_INPUT_EXPECTATIONS[10]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[10]["prompt_contains"] in output
     expected_output = ex006.EX006_INPUT_EXPECTATIONS[10].get("output_contains")
     assert expected_output is not None

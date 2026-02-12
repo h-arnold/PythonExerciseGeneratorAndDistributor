@@ -5,6 +5,7 @@ from pytest import CaptureFixture, MonkeyPatch
 import tests.student_checker.checks as student_checks
 from tests.notebook_grader import NotebookGradingError
 from tests.student_checker import (
+    CheckStatus,
     DetailedCheckResult,
     Ex002CheckResult,
     Ex006CheckResult,
@@ -56,7 +57,8 @@ def test_print_ex002_results_still_reports_success_message(
 ) -> None:
     results = [
         Ex002CheckResult(exercise_no=1, title="Logic", passed=True, issues=[]),
-        Ex002CheckResult(exercise_no=2, title="Formatting", passed=True, issues=[]),
+        Ex002CheckResult(exercise_no=2, title="Formatting",
+                         passed=True, issues=[]),
     ]
 
     print_ex002_results(results)
@@ -91,8 +93,10 @@ def test_print_ex006_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        Ex006CheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        Ex006CheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        Ex006CheckResult(exercise_no=1, title="Static output",
+                         passed=True, issues=[]),
+        Ex006CheckResult(exercise_no=10, title="Prompt flow",
+                         passed=False, issues=["Oops"]),
     ]
 
     print_ex006_results(results)
@@ -141,8 +145,10 @@ def test_print_ex003_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=10, title="Prompt flow",
+                            passed=False, issues=["Oops"]),
     ]
 
     print_ex003_results(results)
@@ -152,11 +158,31 @@ def test_print_ex003_results_shows_per_exercise_labels(
     assert "Exercise 10" in output
 
 
+def test_print_ex003_results_renders_not_started_status(
+    capsys: CaptureFixture[str],
+) -> None:
+    results = [
+        ExerciseCheckResult(
+            exercise_no=4,
+            title="Started",
+            passed=False,
+            issues=["Exercise 4: NOT STARTED."],
+            status=CheckStatus.NOT_STARTED,
+        )
+    ]
+
+    print_ex003_results(results)
+    output = capsys.readouterr().out
+
+    assert "🟡 NOT STARTED" in output
+
+
 def test_print_ex004_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
         ExerciseCheckResult(
             exercise_no=10, title="Explanation", passed=False, issues=["Needs detail"]
         ),
@@ -173,8 +199,10 @@ def test_print_ex005_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=10, title="Prompt flow",
+                            passed=False, issues=["Oops"]),
     ]
 
     print_ex005_results(results)

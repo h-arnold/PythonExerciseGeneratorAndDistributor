@@ -24,13 +24,14 @@ EX002_TEST_FILES = (
     "tests/test_ex002_sequence_modify_basics.py",
     "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
 )
-EXPECTED_EX002_TEST_COUNT = 60
+EXPECTED_EX002_TEST_COUNT = 70
 MIN_STATUS_MUTATION_TESTS = 2
 
 
 def _run_ex002_autograde(tmp_path: Path) -> AutogradeResults:
     results_path = tmp_path / "autograde-results.json"
-    env = build_autograde_env(overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"})
+    env = build_autograde_env(
+        overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"})
     command = [
         sys.executable,
         "-m",

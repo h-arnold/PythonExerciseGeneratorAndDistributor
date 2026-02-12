@@ -4,6 +4,21 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from enum import StrEnum
+
+
+class CheckStatus(StrEnum):
+    """Explicit checker status used in student-facing tables."""
+
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    NOT_STARTED = "NOT STARTED"
+
+
+def _derive_status(passed: bool, issues: list[str]) -> CheckStatus:
+    if passed:
+        return CheckStatus.PASSED
+    return CheckStatus.FAILED
 
 
 @dataclass(frozen=True)
@@ -23,6 +38,12 @@ class ExerciseCheckResult:
     title: str
     passed: bool
     issues: list[str]
+    status: CheckStatus | None = None
+
+    def __post_init__(self) -> None:
+        if self.status is None:
+            object.__setattr__(self, "status", _derive_status(
+                self.passed, self.issues))
 
 
 @dataclass(frozen=True)
@@ -33,6 +54,12 @@ class Ex002CheckResult:
     title: str
     passed: bool
     issues: list[str]
+    status: CheckStatus | None = None
+
+    def __post_init__(self) -> None:
+        if self.status is None:
+            object.__setattr__(self, "status", _derive_status(
+                self.passed, self.issues))
 
 
 @dataclass(frozen=True)
@@ -47,6 +74,12 @@ class NotebookTagCheckResult:
     tag: str
     passed: bool
     message: str
+    status: CheckStatus | None = None
+
+    def __post_init__(self) -> None:
+        if self.status is None:
+            object.__setattr__(self, "status", _derive_status(
+                self.passed, [self.message]))
 
 
 @dataclass(frozen=True)
@@ -57,3 +90,9 @@ class DetailedCheckResult:
     check_label: str
     passed: bool
     issues: list[str]
+    status: CheckStatus | None = None
+
+    def __post_init__(self) -> None:
+        if self.status is None:
+            object.__setattr__(self, "status", _derive_status(
+                self.passed, self.issues))

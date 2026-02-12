@@ -8,10 +8,17 @@ from .api import (
     check_exercises,
     check_notebook,
 )
-from .models import DetailedCheckResult, Ex002CheckResult, Ex006CheckResult, ExerciseCheckResult
+from .models import (
+    CheckStatus,
+    DetailedCheckResult,
+    Ex002CheckResult,
+    Ex006CheckResult,
+    ExerciseCheckResult,
+)
 from .notebook_runtime import run_notebook_checks
 
 __all__ = [
+    "CheckStatus",
     "DetailedCheckResult",
     "Ex002CheckResult",
     "Ex006CheckResult",

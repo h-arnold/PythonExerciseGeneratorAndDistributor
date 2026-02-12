@@ -35,3 +35,69 @@ EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {
         "output_contains": "Total: 30.0",
     },
 }
+
+EX006_MODIFY_STARTER_BASELINES: Final[dict[str, str]] = {
+    "exercise1": (
+        "# Exercise 1 — YOUR CODE\n"
+        "# Cast a and b to ints so the print shows 15\n"
+        "a = \"5\"\n"
+        "b = \"10\"\n"
+        "print(a + b)\n"
+    ),
+    "exercise2": (
+        "# Exercise 2 — YOUR CODE\n"
+        "price_1 = \"2.5\"\n"
+        "price_2 = \"3.5\"\n"
+        "print(price_1 + price_2)\n"
+    ),
+    "exercise3": (
+        "# Exercise 3 — YOUR CODE\n"
+        "# Cast days to int so the multiplication gives 28\n"
+        "days = \"7\"\n"
+        "weeks = 4\n"
+        "print(days * weeks)\n"
+    ),
+    "exercise4": (
+        "# Exercise 4 — YOUR CODE\n"
+        "score = 500\n"
+        "print(\"Your score is\", score)\n"
+    ),
+    "exercise5": (
+        "# Exercise 5 — YOUR CODE\n"
+        "temperature = 25.9\n"
+        "print(temperature)\n"
+    ),
+    "exercise6": (
+        "# Exercise 6 — YOUR CODE\n"
+        "# Print the prompt then read an answer with input()\n"
+        "print(\"Enter number:\")\n"
+        "num = input()\n"
+        "print(num + num)\n"
+    ),
+    "exercise7": (
+        "# Exercise 7 — YOUR CODE\n"
+        "print(\"Enter price:\")\n"
+        "price = input()\n"
+        "print(\"Two items cost: \" + price + price)\n"
+    ),
+    "exercise8": (
+        "# Exercise 8 — YOUR CODE\n"
+        "width = \"10\"\n"
+        "height = \"5\"\n"
+        "print(\"Dimensions: \" + width + \" by \" + height)\n"
+    ),
+    "exercise9": (
+        "# Exercise 9 — YOUR CODE\n"
+        "item = \"Burger\"\n"
+        "cost = 5.50\n"
+        "print(\"The \" + item + \" costs £\" + cost)\n"
+    ),
+    "exercise10": (
+        "# Exercise 10 — YOUR CODE\n"
+        "print(\"Enter item 1:\")\n"
+        "p1 = input()\n"
+        "print(\"Enter item 2:\")\n"
+        "p2 = input()\n"
+        "print(\"Total: \" + p1 + p2)\n"
+    ),
+}
