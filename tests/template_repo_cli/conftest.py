@@ -24,12 +24,12 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
     return {
         "ex001_sanity": ExerciseFiles(
             notebook=repo_root / "notebooks/ex001_sanity.ipynb",
-            test=repo_root / "tests/test_ex001_sanity.py",
+            test=repo_root / "tests/notebooks/ex001_sanity/test_notebook.py",
         ),
         "ex002_sequence_modify_basics": ExerciseFiles(
             notebook=repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
             test=repo_root
-            / "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+            / "tests/notebooks/ex002_sequence_modify_basics/test_notebook.py",
         ),
     }
 

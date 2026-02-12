@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from tests.exercise_expectations import ex001_sanity as ex001
 from tests.exercise_framework import exec_tagged_code, resolve_notebook_path
+from tests.notebooks.ex001_sanity import expectations as ex001
 
 _NOTEBOOK_PATH = resolve_notebook_path(ex001.EX001_NOTEBOOK_PATH)
 

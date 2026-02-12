@@ -4,38 +4,40 @@ import pytest
 
 from tests.student_checker import CheckStatus
 from tests.student_checker import checks as student_checks
-from tests.student_checker.checks import ex006 as ex006_checks
+from tests.student_checker.checks import ex004 as ex004_checks
+from tests.student_checker.test_helpers_modify_gate import (
+    check_with_counter,
+    not_started_gate,
+)
 
-from .test_helpers_modify_gate import check_with_counter, not_started_gate
 
-
-def test_ex006_untouched_cell_returns_not_started_and_short_circuits(
+def test_ex004_untouched_cell_returns_not_started_and_short_circuits(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     counter = {"calls": 0}
     monkeypatch.setattr(
-        ex006_checks,
-        "_EX006_CHECKS",
+        ex004_checks,
+        "_EX004_CHECKS",
         [
-            student_checks.Ex006CheckDefinition(
+            student_checks.ExerciseCheckDefinition(
                 exercise_no=3,
                 title="Static output",
                 check=check_with_counter(counter),
             ),
-            student_checks.Ex006CheckDefinition(
+            student_checks.ExerciseCheckDefinition(
                 exercise_no=3,
-                title="Construct",
+                title="Explanation",
                 check=check_with_counter(counter),
             ),
         ],
     )
     monkeypatch.setattr(
-        ex006_checks,
+        ex004_checks,
         "check_modify_exercise_started",
         not_started_gate,
     )
 
-    results = student_checks.run_ex006_checks()
+    results = student_checks.run_ex004_checks()
 
     assert len(results) == 1
     assert results[0].title == "Started"

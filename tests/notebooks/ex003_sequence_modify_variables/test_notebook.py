@@ -5,7 +5,6 @@ from collections.abc import Callable
 
 import pytest
 
-from tests.exercise_expectations import ex003_sequence_modify_variables as ex003
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -14,6 +13,7 @@ from tests.exercise_framework import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+from tests.notebooks.ex003_sequence_modify_variables import expectations as ex003
 
 
 def _tag(exercise_no: int) -> str:

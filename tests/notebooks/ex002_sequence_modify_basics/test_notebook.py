@@ -5,9 +5,6 @@ from pathlib import Path
 
 import pytest
 
-from tests.exercise_expectations import (
-    ex002_sequence_modify_basics_exercise_expectations as ex002,
-)
 from tests.exercise_framework import (
     assertions,
     constructs,
@@ -19,7 +16,7 @@ from tests.exercise_framework import (
     resolve_notebook_path,
     run_cell_and_capture_output,
 )
-from tests.exercise_framework.expectations import EX002_NOTEBOOK_PATH
+from tests.notebooks.ex002_sequence_modify_basics import expectations as ex002
 
 
 def _exercise_tag(exercise_no: int) -> str:
@@ -27,7 +24,7 @@ def _exercise_tag(exercise_no: int) -> str:
 
 
 def _resolved_notebook_path() -> Path:
-    return resolve_notebook_path(EX002_NOTEBOOK_PATH)
+    return resolve_notebook_path(ex002.EX002_NOTEBOOK_PATH)
 
 
 def _exercise_output(exercise_no: int) -> str:

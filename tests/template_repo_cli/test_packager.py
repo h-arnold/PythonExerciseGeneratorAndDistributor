@@ -37,7 +37,7 @@ def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
         return {
             exercise_id: ExerciseFiles(
                 notebook=repo_root / f"notebooks/{exercise_id}.ipynb",
-                test=repo_root / f"tests/test_{exercise_id}.py",
+                test=repo_root / f"tests/notebooks/{exercise_id}/test_notebook.py",
             )
             for exercise_id in exercise_ids
         }
@@ -94,6 +94,7 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
     required_directories = (
         "exercise_expectations",
         "exercise_framework",
+        "notebooks",
         "student_checker",
     )
     required_student_checker_test_modules = (
@@ -151,7 +152,7 @@ class TestCopyFiles:
         "expected_relative_path",
         [
             pytest.param("notebooks/ex001_sanity.ipynb", id="notebook"),
-            pytest.param("tests/test_ex001_sanity.py", id="test"),
+            pytest.param("tests/notebooks/ex001_sanity/test_notebook.py", id="test"),
         ],
     )
     def test_copy_exercise_files(
@@ -440,7 +441,7 @@ class TestPackageIntegrity:
                 "-m",
                 "pytest",
                 "-q",
-                "tests/test_ex001_sanity.py",
+                "tests/notebooks/ex001_sanity/test_notebook.py",
             ],
             cwd=temp_dir,
             capture_output=True,

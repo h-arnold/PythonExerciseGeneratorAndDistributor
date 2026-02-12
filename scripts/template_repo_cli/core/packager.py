@@ -35,18 +35,13 @@ class TemplatePackager:
     REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = (
         "exercise_expectations",
         "exercise_framework",
+        "notebooks",
         "student_checker",
     )
 
     REQUIRED_STUDENT_CHECKER_TEST_MODULES: tuple[str, ...] = (
         "test_helpers_modify_gate.py",
         "test_modify_gate_runtime.py",
-        "test_modify_gate_ex002.py",
-        "test_modify_gate_ex003.py",
-        "test_modify_gate_ex004.py",
-        "test_modify_gate_ex005.py",
-        "test_modify_gate_ex006.py",
-        "test_modify_gate_ex007.py",
     )
 
     def __init__(self, repo_root: Path):
@@ -87,7 +82,9 @@ class TemplatePackager:
 
             # Copy test file
             if file_dict.get("test"):
-                dest = workspace / "tests" / f"test_{exercise_id}.py"
+                test_path = file_dict["test"]
+                test_relative = test_path.relative_to(self.repo_root / "tests")
+                dest = workspace / "tests" / test_relative
                 safe_copy_file(file_dict["test"], dest)
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:

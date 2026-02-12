@@ -4,7 +4,6 @@ import ast
 
 import pytest
 
-from tests.exercise_expectations import ex007_data_types_debug_casting as ex007
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -14,6 +13,7 @@ from tests.exercise_framework import (
     run_cell_with_input,
 )
 from tests.exercise_framework.expectations_helpers import is_valid_explanation
+from tests.notebooks.ex007_data_types_debug_casting import expectations as ex007
 
 _NOTEBOOK_PATH = resolve_notebook_path(ex007.EX007_NOTEBOOK_PATH)
 _CACHE = RuntimeCache()

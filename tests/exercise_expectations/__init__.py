@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from tests.exercise_expectations.ex001_sanity import (
+from tests.exercise_expectations.types import Ex006InputExpectation
+from tests.notebooks.ex001_sanity.expectations import (
     EX001_FUNCTION_NAME,
     EX001_NOTEBOOK_PATH,
     EX001_TAG,
 )
-from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
+from tests.notebooks.ex002_sequence_modify_basics.expectations import (
     EX002_EXPECTED_MULTI_LINE,
     EX002_EXPECTED_NUMERIC,
     EX002_EXPECTED_PRINT_CALLS,
@@ -15,7 +16,7 @@ from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectati
     EX002_MODIFY_STARTER_BASELINES,
     EX002_NOTEBOOK_PATH,
 )
-from tests.exercise_expectations.ex003_sequence_modify_variables import (
+from tests.notebooks.ex003_sequence_modify_variables.expectations import (
     EX003_EXPECTED_INPUT_MESSAGES,
     EX003_EXPECTED_PROMPTS,
     EX003_EXPECTED_STATIC_OUTPUT,
@@ -23,7 +24,7 @@ from tests.exercise_expectations.ex003_sequence_modify_variables import (
     EX003_NOTEBOOK_PATH,
     EX003_ORIGINAL_PROMPTS,
 )
-from tests.exercise_expectations.ex004_sequence_debug_syntax import (
+from tests.notebooks.ex004_sequence_debug_syntax.expectations import (
     EX004_EXPECTED_SINGLE_LINE,
     EX004_FORMAT_VALIDATION,
     EX004_MIN_EXPLANATION_LENGTH,
@@ -32,7 +33,7 @@ from tests.exercise_expectations.ex004_sequence_debug_syntax import (
     EX004_PLACEHOLDER_PHRASES,
     EX004_PROMPT_STRINGS,
 )
-from tests.exercise_expectations.ex005_sequence_debug_logic import (
+from tests.notebooks.ex005_sequence_debug_logic.expectations import (
     EX005_AVERAGE_DIVISOR,
     EX005_EXERCISE_INPUTS,
     EX005_EXPECTED_SINGLE_LINE,
@@ -44,13 +45,13 @@ from tests.exercise_expectations.ex005_sequence_debug_logic import (
     EX005_PLACEHOLDER_PHRASES,
     EX005_PROFILE_EXERCISE,
 )
-from tests.exercise_expectations.ex006_sequence_modify_casting import (
+from tests.notebooks.ex006_sequence_modify_casting.expectations import (
     EX006_EXPECTED_OUTPUTS,
     EX006_INPUT_EXPECTATIONS,
     EX006_MODIFY_STARTER_BASELINES,
     EX006_NOTEBOOK_PATH,
 )
-from tests.exercise_expectations.ex007_data_types_debug_casting import (
+from tests.notebooks.ex007_data_types_debug_casting.expectations import (
     EX007_EXPECTED_STATIC_OUTPUTS,
     EX007_INPUT_CASES,
     EX007_MIN_EXPLANATION_LENGTH,
@@ -58,7 +59,6 @@ from tests.exercise_expectations.ex007_data_types_debug_casting import (
     EX007_NOTEBOOK_PATH,
     EX007_PLACEHOLDER_PHRASES,
 )
-from tests.exercise_expectations.types import Ex006InputExpectation
 
 __all__ = [
     "EX001_FUNCTION_NAME",

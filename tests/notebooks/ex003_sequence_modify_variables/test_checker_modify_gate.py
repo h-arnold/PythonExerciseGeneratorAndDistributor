@@ -4,8 +4,7 @@ import pytest
 
 from tests.student_checker import checks as student_checks
 from tests.student_checker.checks import ex003 as ex003_checks
-
-from .test_helpers_modify_gate import (
+from tests.student_checker.test_helpers_modify_gate import (
     EXPECTED_CHECK_CALLS,
     check_with_counter,
     started_gate,

@@ -18,9 +18,7 @@ from tests.notebook_grader import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-
-from ..models import CheckStatus, ExerciseCheckResult
-from .base import (
+from tests.student_checker.checks.base import (
     MODIFY_START_GATE_TITLE,
     ExerciseCheckDefinition,
     build_exercise_check,
@@ -28,6 +26,7 @@ from .base import (
     check_modify_exercise_started,
     exercise_tag,
 )
+from tests.student_checker.models import CheckStatus, ExerciseCheckResult
 
 
 def check_ex007() -> list[str]:

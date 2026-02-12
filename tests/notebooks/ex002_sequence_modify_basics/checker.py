@@ -8,9 +8,11 @@ from tests.exercise_framework.paths import (
     resolve_notebook_path as resolve_framework_notebook_path,
 )
 from tests.notebook_grader import NotebookGradingError
-
-from ..models import CheckStatus, Ex002CheckResult
-from .base import MODIFY_START_GATE_TITLE, check_modify_exercise_started
+from tests.student_checker.checks.base import (
+    MODIFY_START_GATE_TITLE,
+    check_modify_exercise_started,
+)
+from tests.student_checker.models import CheckStatus, Ex002CheckResult
 
 
 def check_ex002_summary() -> list[str]:

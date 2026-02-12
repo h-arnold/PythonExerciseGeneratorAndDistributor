@@ -5,14 +5,14 @@ from __future__ import annotations
 import copy
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
 
-from tests.exercise_framework.expectations import EX002_CHECKS
 from tests.helpers import build_autograde_env
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -21,10 +21,9 @@ from scripts.build_autograde_payload import AutogradeResults  # noqa: E402
 
 PLUGIN_NAME = "tests.autograde_plugin"
 EX002_TEST_FILES = (
-    "tests/test_ex002_sequence_modify_basics.py",
-    "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+    "tests/notebooks/ex002_sequence_modify_basics/test_notebook.py",
 )
-EXPECTED_EX002_TEST_COUNT = 70
+EXPECTED_EX002_TEST_COUNT = 40
 MIN_STATUS_MUTATION_TESTS = 2
 
 
@@ -62,10 +61,6 @@ def ex002_autograde_results(
     return _run_ex002_autograde(tmp_path)
 
 
-def _expected_task_names() -> set[str]:
-    return {f"Exercise {check.exercise_no}: {check.title}" for check in EX002_CHECKS}
-
-
 def _mutate_statuses(raw_results: AutogradeResults) -> AutogradeResults:
     mutated: AutogradeResults = copy.deepcopy(raw_results)
     tests = mutated.get("tests", [])
@@ -97,9 +92,7 @@ def test_autograde_plugin_ex002_status_and_task_metadata(
     task_numbers = [test.get("taskno") for test in tests]
     assert all(isinstance(taskno, int) for taskno in task_numbers)
     assert set(task_numbers) == set(range(1, 11))
-
-    names = {test.get("name") for test in tests}
-    assert _expected_task_names().issubset(names)
+    assert Counter(task_numbers) == {task: 4 for task in range(1, 11)}
 
 
 def test_payload_builder_full_preserves_status_and_task_metadata(

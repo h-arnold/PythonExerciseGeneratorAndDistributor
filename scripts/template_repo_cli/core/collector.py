@@ -48,7 +48,7 @@ class FileCollector:
             raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
 
         # Test file (required)
-        test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
+        test_path: Path = self.tests_dir / "notebooks" / exercise_id / "test_notebook.py"
         if not test_path.exists():
             raise FileNotFoundError(f"Test file not found: {exercise_id}")
 

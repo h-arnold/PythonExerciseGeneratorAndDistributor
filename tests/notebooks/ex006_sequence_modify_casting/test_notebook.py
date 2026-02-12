@@ -4,7 +4,6 @@ import ast
 
 import pytest
 
-from tests.exercise_expectations import ex006_sequence_modify_casting as ex006
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -13,6 +12,7 @@ from tests.exercise_framework import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+from tests.notebooks.ex006_sequence_modify_casting import expectations as ex006
 
 
 def _tag(n: int) -> str:

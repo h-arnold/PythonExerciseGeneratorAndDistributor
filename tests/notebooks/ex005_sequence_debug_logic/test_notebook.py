@@ -4,7 +4,6 @@ import ast
 
 import pytest
 
-from tests.exercise_expectations import ex005_sequence_debug_logic as ex005
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -14,6 +13,7 @@ from tests.exercise_framework import (
     run_cell_with_input,
 )
 from tests.exercise_framework.expectations_helpers import is_valid_explanation
+from tests.notebooks.ex005_sequence_debug_logic import expectations as ex005
 
 
 def _tag(exercise_no: int) -> str:
