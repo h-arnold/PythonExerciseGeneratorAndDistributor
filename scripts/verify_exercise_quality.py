@@ -15,6 +15,7 @@ It is not a replacement for reading the exercise prompts.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 from dataclasses import dataclass
@@ -129,7 +130,8 @@ def _load_notebook(path: Path) -> NotebookDocument:
         raise SystemExit(f"Invalid JSON in notebook: {path}: {exc}") from exc
 
     if not _is_notebook_document(raw):
-        raise SystemExit(f"Notebook {path} is missing a top-level 'cells' list.")
+        raise SystemExit(
+            f"Notebook {path} is missing a top-level 'cells' list.")
     return raw
 
 
@@ -251,6 +253,237 @@ def _check_order_of_teaching(ex_dir: Path, *, repo_root: Path, notebook_name: st
         )
 
     return findings
+
+
+_EXERCISE_ID_RE = re.compile(r"^(ex\d{3})")
+
+
+def _infer_exercise_id(slug: str) -> str | None:
+    match = _EXERCISE_ID_RE.match(slug)
+    if match is None:
+        return None
+    return match.group(1)
+
+
+def _assign_binds_symbol(node: ast.Assign, symbol_name: str) -> bool:
+    return any(
+        isinstance(target, ast.Name) and target.id == symbol_name
+        for target in node.targets
+    )
+
+
+def _ann_assign_binds_symbol(node: ast.AnnAssign, symbol_name: str) -> bool:
+    return isinstance(node.target, ast.Name) and node.target.id == symbol_name
+
+
+def _import_from_binds_symbol(node: ast.ImportFrom, symbol_name: str) -> bool:
+    return any((alias.asname or alias.name) == symbol_name for alias in node.names)
+
+
+def _node_binds_symbol(node: ast.stmt, symbol_name: str) -> bool:
+    if isinstance(node, ast.Assign):
+        return _assign_binds_symbol(node, symbol_name)
+    if isinstance(node, ast.AnnAssign):
+        return _ann_assign_binds_symbol(node, symbol_name)
+    if isinstance(node, ast.ImportFrom):
+        return _import_from_binds_symbol(node, symbol_name)
+    return False
+
+
+def _module_contains_symbol_binding(module: ast.Module, symbol_name: str) -> bool:
+    return any(_node_binds_symbol(node, symbol_name) for node in module.body)
+
+
+def _ast_contains_assigned_name(module_path: Path, symbol_name: str) -> bool:
+    try:
+        source_text = module_path.read_text(encoding="utf-8")
+        module = ast.parse(source_text)
+    except (FileNotFoundError, SyntaxError):
+        return False
+    return _module_contains_symbol_binding(module, symbol_name)
+
+
+def _call_name(node: ast.Call) -> str | None:
+    func_node = node.func
+    if isinstance(func_node, ast.Name):
+        return func_node.id
+    if isinstance(func_node, ast.Attribute):
+        return func_node.attr
+    return None
+
+
+def _is_name(node: ast.AST, value: str) -> bool:
+    return isinstance(node, ast.Name) and node.id == value
+
+
+def _checker_uses_modify_gate(checker_module_path: Path) -> bool:
+    try:
+        source_text = checker_module_path.read_text(encoding="utf-8")
+        module = ast.parse(source_text)
+    except (FileNotFoundError, SyntaxError):
+        return False
+
+    for node in ast.walk(module):
+        if not isinstance(node, ast.Call):
+            continue
+        if _call_name(node) != "check_modify_exercise_started":
+            continue
+        return True
+    return False
+
+
+def _checker_has_modify_gate_baseline_wiring(
+    checker_module_path: Path,
+    baseline_symbol: str,
+) -> bool:
+    try:
+        source_text = checker_module_path.read_text(encoding="utf-8")
+        module = ast.parse(source_text)
+    except (FileNotFoundError, SyntaxError):
+        return False
+
+    for node in ast.walk(module):
+        if not isinstance(node, ast.Call):
+            continue
+        if _call_name(node) != "check_modify_exercise_started":
+            continue
+        if any(_is_name(arg, baseline_symbol) for arg in node.args):
+            return True
+        if any(_is_name(keyword.value, baseline_symbol) for keyword in node.keywords):
+            return True
+    return False
+
+
+def _check_checker_module_exists(exercise_id: str, repo_root: Path) -> list[Finding]:
+    checker_module_path = repo_root / "tests" / \
+        "student_checker" / "checks" / f"{exercise_id}.py"
+    if checker_module_path.exists():
+        return []
+    return [
+        Finding(
+            "ERROR",
+            f"Missing student checker module: tests/student_checker/checks/{exercise_id}.py",
+            path=checker_module_path,
+        )
+    ]
+
+
+def _check_expectations_baseline_export(
+    *,
+    exercise_id: str,
+    repo_root: Path,
+    baseline_symbol: str,
+) -> list[Finding]:
+    expectations_dir = repo_root / "tests" / "exercise_expectations"
+    expectation_candidates = sorted(
+        expectations_dir.glob(f"{exercise_id}_*.py"))
+    if not expectation_candidates:
+        return [
+            Finding(
+                "ERROR",
+                f"Missing expectations module matching tests/exercise_expectations/{exercise_id}_*.py",
+                path=expectations_dir,
+            )
+        ]
+
+    if any(_ast_contains_assigned_name(path, baseline_symbol) for path in expectation_candidates):
+        return []
+
+    return [
+        Finding(
+            "ERROR",
+            f"No expectations module exports {baseline_symbol}",
+            path=expectation_candidates[0],
+        )
+    ]
+
+
+def _check_checker_modify_gate_wiring(
+    *,
+    checker_module_path: Path,
+    baseline_symbol: str,
+) -> list[Finding]:
+    if _checker_has_modify_gate_baseline_wiring(checker_module_path, baseline_symbol):
+        return []
+    return [
+        Finding(
+            "ERROR",
+            f"Checker wiring must call check_modify_exercise_started with {baseline_symbol}",
+            path=checker_module_path,
+        )
+    ]
+
+
+def _check_modify_gate_test_module_exists(exercise_id: str, repo_root: Path) -> list[Finding]:
+    modify_gate_test_module_path = (
+        repo_root / "tests" / "student_checker" /
+        f"test_modify_gate_{exercise_id}.py"
+    )
+    if modify_gate_test_module_path.exists():
+        return []
+    return [
+        Finding(
+            "ERROR",
+            f"Missing modify-gate test module: tests/student_checker/test_modify_gate_{exercise_id}.py",
+            path=modify_gate_test_module_path,
+        )
+    ]
+
+
+def _check_modify_gate_semantic_wiring(
+    *,
+    ex_slug: str,
+    repo_root: Path,
+    ex_type: str | None,
+) -> list[Finding]:
+    findings: list[Finding] = []
+    exercise_id = _infer_exercise_id(ex_slug)
+    if exercise_id is None:
+        return findings
+
+    baseline_symbol = f"{exercise_id.upper()}_MODIFY_STARTER_BASELINES"
+    checker_module_path = repo_root / "tests" / \
+        "student_checker" / "checks" / f"{exercise_id}.py"
+
+    should_check = ex_type == "modify"
+    if checker_module_path.exists() and _checker_uses_modify_gate(checker_module_path):
+        should_check = True
+
+    if not should_check:
+        return findings
+
+    findings.extend(_check_checker_module_exists(exercise_id, repo_root))
+    findings.extend(
+        _check_expectations_baseline_export(
+            exercise_id=exercise_id,
+            repo_root=repo_root,
+            baseline_symbol=baseline_symbol,
+        )
+    )
+    findings.extend(
+        _check_checker_modify_gate_wiring(
+            checker_module_path=checker_module_path,
+            baseline_symbol=baseline_symbol,
+        )
+    )
+    findings.extend(_check_modify_gate_test_module_exists(
+        exercise_id, repo_root))
+
+    return findings
+
+
+def check_modify_gate_semantic_wiring(
+    *,
+    ex_slug: str,
+    repo_root: Path,
+    ex_type: str | None,
+) -> list[Finding]:
+    """Check semantic start-gate wiring for scaffolded exercises."""
+    return _check_modify_gate_semantic_wiring(
+        ex_slug=ex_slug,
+        repo_root=repo_root,
+        ex_type=ex_type,
+    )
 
 
 def _check_cell_language(cell_index: int, cell: NotebookCell, nb_path: Path) -> list[Finding]:
@@ -382,7 +615,8 @@ def _check_notebook_structure(
 
     for idx, cell in enumerate(cells_list, start=1):
         if not isinstance(cell, dict):
-            findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
+            findings.append(
+                Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
         cell_mapping = cast(dict[str, Any], cell)
         if not _is_notebook_cell(cell_mapping):
@@ -501,13 +735,14 @@ def _scan_for_progression_violations(  # noqa: C901
         ]
 
     # If we're in construct K, then constructs strictly after K are disallowed.
-    disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
+    disallowed = CONSTRUCT_ORDER[allowed_idx + 1:]
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(re.finditer(
+                    r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -528,9 +763,11 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
+                        e = func_defs[idx + 1].start() if idx + \
+                            1 < len(func_defs) else len(text)
                         regions.append((s, e))
-                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [m.start()
+                                        for m in re.finditer(r"\breturn\b", text)]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
@@ -630,24 +867,36 @@ def main(argv: list[str] | None = None) -> int:
     else:
         findings.extend(_check_teacher_files(ex_dir))
         findings.extend(
-            _check_order_of_teaching(ex_dir, repo_root=repo_root, notebook_name=nb_path.name)
+            _check_order_of_teaching(
+                ex_dir, repo_root=repo_root, notebook_name=nb_path.name)
         )
+
+    findings.extend(
+        check_modify_gate_semantic_wiring(
+            ex_slug=slug,
+            repo_root=repo_root,
+            ex_type=ex_type,
+        )
+    )
 
     # Notebook structure (student)
     nb_student = _load_notebook(nb_path)
     expect_debug = ex_type == "debug"
-    findings.extend(_check_notebook_structure(nb_path, nb_student, expect_debug=expect_debug))
+    findings.extend(_check_notebook_structure(
+        nb_path, nb_student, expect_debug=expect_debug))
 
     # Notebook structure (solutions mirror) if present
     nb_solution_path = repo_root / "notebooks" / "solutions" / nb_path.name
     if nb_solution_path.exists():
         nb_solution = _load_notebook(nb_solution_path)
         findings.extend(
-            _check_notebook_structure(nb_solution_path, nb_solution, expect_debug=expect_debug)
+            _check_notebook_structure(
+                nb_solution_path, nb_solution, expect_debug=expect_debug)
         )
     else:
         findings.append(
-            Finding("WARN", "Solution mirror notebook not found", path=nb_solution_path)
+            Finding("WARN", "Solution mirror notebook not found",
+                    path=nb_solution_path)
         )
 
     # Progression scan (student + solution)
@@ -668,7 +917,8 @@ def main(argv: list[str] | None = None) -> int:
         )
 
         if nb_solution_path.exists():
-            solution_text = _collect_code_cell_text(_load_notebook(nb_solution_path))
+            solution_text = _collect_code_cell_text(
+                _load_notebook(nb_solution_path))
             findings.extend(
                 _scan_for_progression_violations(
                     text=solution_text,

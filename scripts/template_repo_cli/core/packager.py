@@ -38,6 +38,17 @@ class TemplatePackager:
         "student_checker",
     )
 
+    REQUIRED_STUDENT_CHECKER_TEST_MODULES: tuple[str, ...] = (
+        "test_helpers_modify_gate.py",
+        "test_modify_gate_runtime.py",
+        "test_modify_gate_ex002.py",
+        "test_modify_gate_ex003.py",
+        "test_modify_gate_ex004.py",
+        "test_modify_gate_ex005.py",
+        "test_modify_gate_ex006.py",
+        "test_modify_gate_ex007.py",
+    )
+
     def __init__(self, repo_root: Path):
         """Initialize packager.
 
@@ -105,6 +116,10 @@ class TemplatePackager:
         )
         required_paths.extend(
             tests_source_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
+        )
+        required_paths.extend(
+            tests_source_dir / "student_checker" / required_module
+            for required_module in self.REQUIRED_STUDENT_CHECKER_TEST_MODULES
         )
         return [path for path in required_paths if not path.exists()]
 
@@ -180,6 +195,11 @@ class TemplatePackager:
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
+        for required_module in self.REQUIRED_STUDENT_CHECKER_TEST_MODULES:
+            source_module = tests_source_dir / "student_checker" / required_module
+            dest_module = tests_dest_dir / "student_checker" / required_module
+            safe_copy_file(source_module, dest_module)
+
         # Copy directories
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
@@ -232,6 +252,10 @@ class TemplatePackager:
         tests_dir = workspace / "tests"
         required_files.extend(
             tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
+        required_files.extend(
+            tests_dir / "student_checker" / required_module
+            for required_module in self.REQUIRED_STUDENT_CHECKER_TEST_MODULES
+        )
 
         for required_file in required_files:
             if not required_file.exists():

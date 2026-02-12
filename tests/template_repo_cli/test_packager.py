@@ -96,6 +96,9 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         "exercise_framework",
         "student_checker",
     )
+    required_student_checker_test_modules = (
+        TemplatePackager.REQUIRED_STUDENT_CHECKER_TEST_MODULES
+    )
 
     for filename in required_files:
         src = repo_root / "tests" / filename
@@ -111,6 +114,14 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         if src.exists():
             assert dest.exists()
             assert dest.is_dir()
+        else:
+            assert not dest.exists()
+
+    for module_name in required_student_checker_test_modules:
+        src = repo_root / "tests" / "student_checker" / module_name
+        dest = temp_dir / "tests" / "student_checker" / module_name
+        if src.exists():
+            assert dest.exists()
         else:
             assert not dest.exists()
 
@@ -180,6 +191,10 @@ class TestCopyFiles:
     ) -> None:
         """Test copied required test directories exclude tests and cache artefacts."""
 
+        allowed_student_checker_tests = set(
+            template_packager.REQUIRED_STUDENT_CHECKER_TEST_MODULES
+        )
+
         template_packager.copy_template_base_files(temp_dir)
 
         for dirname in template_packager.REQUIRED_TEST_DIRECTORIES:
@@ -187,7 +202,14 @@ class TestCopyFiles:
             assert copied_dir.exists()
             assert not list(copied_dir.rglob("__pycache__"))
             assert not list(copied_dir.rglob("*.pyc"))
-            assert not list(copied_dir.rglob("test_*.py"))
+            copied_tests = {
+                path.relative_to(copied_dir).as_posix()
+                for path in copied_dir.rglob("test_*.py")
+            }
+            if dirname == "student_checker":
+                assert copied_tests == allowed_student_checker_tests
+            else:
+                assert not copied_tests
             assert not list(copied_dir.rglob("*_test.py"))
 
     def test_copy_preserves_structure(
@@ -318,6 +340,10 @@ class TestPackageIntegrity:
             pytest.param(
                 "tests/test_build_autograde_payload.py",
                 id="payload-test",
+            ),
+            pytest.param(
+                "tests/student_checker/test_modify_gate_runtime.py",
+                id="student-checker-modify-gate-runtime",
             ),
         ],
     )
