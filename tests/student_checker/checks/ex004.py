@@ -8,6 +8,7 @@ from tests.exercise_expectations import (
     EX004_EXPECTED_SINGLE_LINE,
     EX004_FORMAT_VALIDATION,
     EX004_MIN_EXPLANATION_LENGTH,
+    EX004_MODIFY_STARTER_BASELINES,
     EX004_NOTEBOOK_PATH,
     EX004_PLACEHOLDER_PHRASES,
     EX004_PROMPT_STRINGS,
@@ -21,11 +22,13 @@ from tests.notebook_grader import (
     run_cell_with_input,
 )
 
-from ..models import ExerciseCheckResult
+from ..models import CheckStatus, ExerciseCheckResult
 from .base import (
+    MODIFY_START_GATE_TITLE,
     ExerciseCheckDefinition,
     build_exercise_check,
     check_explanation_cell,
+    check_modify_exercise_started,
     exercise_tag,
 )
 
@@ -38,7 +41,36 @@ def check_ex004() -> list[str]:
 def run_ex004_checks() -> list[ExerciseCheckResult]:
     """Run detailed checks for ex004."""
     results: list[ExerciseCheckResult] = []
+    untouched_exercises: set[int] = set()
+    seen_exercises: set[int] = set()
+    notebook_path = _resolve_ex004_notebook_path()
     for check in _EX004_CHECKS:
+        if check.exercise_no in untouched_exercises:
+            continue
+        if check.exercise_no not in seen_exercises:
+            seen_exercises.add(check.exercise_no)
+            gate_issues = check_modify_exercise_started(
+                notebook_path,
+                check.exercise_no,
+                EX004_MODIFY_STARTER_BASELINES,
+            )
+            if gate_issues:
+                gate_status = (
+                    CheckStatus.NOT_STARTED
+                    if any("NOT STARTED" in issue for issue in gate_issues)
+                    else CheckStatus.FAILED
+                )
+                untouched_exercises.add(check.exercise_no)
+                results.append(
+                    ExerciseCheckResult(
+                        exercise_no=check.exercise_no,
+                        title=MODIFY_START_GATE_TITLE,
+                        passed=False,
+                        issues=gate_issues,
+                        status=gate_status,
+                    )
+                )
+                continue
         try:
             issues = check.check()
         except NotebookGradingError as exc:
@@ -58,21 +90,24 @@ def _check_ex004_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
     notebook_path = _resolve_ex004_notebook_path()
     expected = EX004_EXPECTED_SINGLE_LINE[exercise_no]
-    output = run_cell_and_capture_output(notebook_path, tag=exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(
+        notebook_path, tag=exercise_tag(exercise_no))
     if output != f"{expected}\n":
         errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
     return errors
 
 
 def _validate_ex004_prompt_7(notebook_path: str) -> list[str]:
-    output = run_cell_with_input(notebook_path, tag=exercise_tag(7), inputs=["5"])
+    output = run_cell_with_input(
+        notebook_path, tag=exercise_tag(7), inputs=["5"])
     if EX004_PROMPT_STRINGS[7] not in output or EX004_FORMAT_VALIDATION[7] not in output:
         return ["Exercise 7: output does not match the expected prompt or total."]
     return []
 
 
 def _validate_ex004_prompt_8(notebook_path: str) -> list[str]:
-    output = run_cell_with_input(notebook_path, tag=exercise_tag(8), inputs=["Alice"])
+    output = run_cell_with_input(
+        notebook_path, tag=exercise_tag(8), inputs=["Alice"])
     expected = f"{EX004_PROMPT_STRINGS[8]} {EX004_FORMAT_VALIDATION[8]}\n"
     if output != expected:
         return ["Exercise 8: output does not match the expected greeting."]
@@ -80,7 +115,8 @@ def _validate_ex004_prompt_8(notebook_path: str) -> list[str]:
 
 
 def _validate_ex004_prompt_10(notebook_path: str) -> list[str]:
-    output = run_cell_with_input(notebook_path, tag=exercise_tag(10), inputs=["Blue"])
+    output = run_cell_with_input(
+        notebook_path, tag=exercise_tag(10), inputs=["Blue"])
     expected = f"{EX004_PROMPT_STRINGS[10]} {EX004_FORMAT_VALIDATION[10]}\n"
     if output != expected:
         return ["Exercise 10: output does not match the expected response."]
@@ -121,13 +157,16 @@ def _build_ex004_checks() -> list[ExerciseCheckDefinition]:
     for exercise_no in range(1, 11):
         if exercise_no in EX004_EXPECTED_SINGLE_LINE:
             checks.append(
-                build_exercise_check(exercise_no, "Static output", _check_ex004_static_output)
+                build_exercise_check(
+                    exercise_no, "Static output", _check_ex004_static_output)
             )
         if exercise_no in prompt_exercises:
             checks.append(
-                build_exercise_check(exercise_no, "Prompt flow", _check_ex004_prompt_flow)
+                build_exercise_check(
+                    exercise_no, "Prompt flow", _check_ex004_prompt_flow)
             )
-        checks.append(build_exercise_check(exercise_no, "Explanation", _check_ex004_explanation))
+        checks.append(build_exercise_check(
+            exercise_no, "Explanation", _check_ex004_explanation))
     return checks
 
 

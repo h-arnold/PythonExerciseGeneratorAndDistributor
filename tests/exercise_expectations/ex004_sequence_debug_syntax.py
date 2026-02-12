@@ -37,3 +37,22 @@ EX004_FORMAT_VALIDATION: Final[dict[int, str]] = {
     8: "Hello Alice",
     10: "My favourite colour is Blue",
 }
+
+EX004_MODIFY_STARTER_BASELINES: Final[dict[str, str]] = {
+    "exercise1": 'print("Hello World!"',
+    "exercise2": "print(I like Python)",
+    "exercise3": 'print("Learning" "Python")',
+    "exercise4": "print(5 + 10)",
+    "exercise5": 'name = "Alice"\nprint("Hello " + nam)',
+    "exercise6": 'greeting = Welcome to school"\nprint(greeting',
+    "exercise7": (
+        'apples = input("How many apples? ")\n'
+        'print("You have " apples " apples")'
+    ),
+    "exercise8": "name = input\nprint(\"Hello \" + name)",
+    "exercise9": "print('It's amazing')",
+    "exercise10": (
+        'colour = input("What is your favourite colour?\n'
+        'print("My favourite colour is " colour)'
+    ),
+}

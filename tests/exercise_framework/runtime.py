@@ -35,7 +35,10 @@ def semantic_code_signature(code: str) -> str:
     try:
         tree = ast.parse(code)
     except SyntaxError:
-        return _token_signature(code)
+        try:
+            return _token_signature(code)
+        except tokenize.TokenError:
+            return code
     return ast.dump(tree, annotate_fields=True, include_attributes=False)
 
 

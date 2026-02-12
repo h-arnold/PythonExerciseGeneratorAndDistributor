@@ -6,6 +6,23 @@ from typing import TypeVar
 import pytest
 
 import tests.student_checker.checks as student_checks
+from tests.student_checker.checks import (
+    ex003 as ex003_checks,
+)
+from tests.student_checker.checks import (
+    ex004 as ex004_checks,
+)
+from tests.student_checker.checks import (
+    ex005 as ex005_checks,
+)
+from tests.student_checker.checks import (
+    ex006 as ex006_checks,
+)
+from tests.student_checker.checks import (
+    ex007 as ex007_checks,
+)
+
+from .test_helpers_modify_gate import started_gate
 
 CheckDef = TypeVar(
     "CheckDef", student_checks.ExerciseCheckDefinition, student_checks.Ex006CheckDefinition
@@ -39,6 +56,19 @@ def test_private_alias_assignment_updates_submodule_checks(
     def_cls: Callable[..., CheckDef],
     runner_name: str,
 ) -> None:
+    check_modules = {
+        "run_ex003_checks": ex003_checks,
+        "run_ex004_checks": ex004_checks,
+        "run_ex005_checks": ex005_checks,
+        "run_ex006_checks": ex006_checks,
+        "run_ex007_checks": ex007_checks,
+    }
+    monkeypatch.setattr(
+        check_modules[runner_name],
+        "check_modify_exercise_started",
+        started_gate,
+    )
+
     sentinel_title = f"Sentinel {attr_name}"
     sentinel_no = 999
     sentinel_checks = [_make_check(def_cls, sentinel_no, sentinel_title)]

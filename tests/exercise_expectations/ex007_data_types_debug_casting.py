@@ -64,3 +64,85 @@ EX007_INPUT_CASES: Final[dict[int, Ex007InputCase]] = {
         "last_line": "Each person pays: £33.0",
     },
 }
+
+EX007_MODIFY_STARTER_BASELINES: Final[dict[str, str]] = {
+    "exercise1": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "count = 3\n"
+        "message = \"You have \" + count + \" pens\"\n"
+        "print(message)\n"
+    ),
+    "exercise2": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "price_pounds = 7.5\n"
+        "label = \"Total price: £\"\n"
+        "print(label + int(price_pounds))\n"
+    ),
+    "exercise3": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "age_text = input(\"Enter your age: \")\n"
+        "next_age = age_text + 1\n"
+        "print(\"Next year you will be \" + str(next_age))\n"
+    ),
+    "exercise4": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "total_distance = 7\n"
+        "days = 2\n"
+        "average = total_distance // days\n"
+        "print(\"Average per day: \" + str(average) + \" km\")\n"
+    ),
+    "exercise5": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "word = input(\"Word to repeat: \")\n"
+        "repeat_text = input(\"How many times? \")\n"
+        "print(word * repeat_text)\n"
+    ),
+    "exercise6": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "temp_celsius = input(\"Enter temperature in Celsius: \")\n"
+        "fahrenheit = temp_celsius * 9 / 5 + \"32\"\n"
+        "print(\"Temperature in Fahrenheit: \" + str(fahrenheit))\n"
+    ),
+    "exercise7": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "price_text = input(\"Enter price per item (£): \")\n"
+        "quantity_text = input(\"Enter quantity: \")\n"
+        "total_cost = price_text * quantity_text\n"
+        "print(\"Total cost: £\" + total_cost)\n"
+    ),
+    "exercise8": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "score1 = input(\"Enter score 1: \")\n"
+        "score2 = input(\"Enter score 2: \")\n"
+        "score3 = input(\"Enter score 3: \")\n"
+        "total_score = score1 + score2 + score3\n"
+        "average_score = total_score // 3\n"
+        "print(\"Average score: \" + str(average_score))\n"
+    ),
+    "exercise9": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "pounds_text = input(\"Pounds: \")\n"
+        "pence_text = input(\"Pence: \")\n"
+        "total_pence = pounds_text * 100 + pence_text\n"
+        "print(\"Total pence: \" + total_pence)\n"
+    ),
+    "exercise10": (
+        "# BUGGY CODE (students edit this tagged cell)\n"
+        "# Fix the code below and run the cell.\n\n"
+        "total_bill_text = input(\"Total bill (£): \")\n"
+        "people_text = input(\"Number of people: \")\n"
+        "tip_rate = 0.1\n"
+        "total_with_tip = total_bill_text + total_bill_text * tip_rate\n"
+        "per_person = total_with_tip // people_text\n"
+        "print(\"Each person pays: £\" + str(per_person))\n"
+    ),
+}

@@ -35,3 +35,33 @@ EX005_INPUT_PROMPTS: Final[dict[int, tuple[str, str]]] = {
     EX005_FULL_NAME_EXERCISE: ("Enter first name: ", "Enter last name: "),
     EX005_PROFILE_EXERCISE: ("Enter your age: ", "Enter your city: "),
 }
+
+EX005_MODIFY_STARTER_BASELINES: Final[dict[str, str]] = {
+    "exercise1": "price = 10\nquantity = 5\ntotal = price + quantity\nprint(total)",
+    "exercise2": 'name = "Alice"\nusername = "Bob"\nprint(username)',
+    "exercise3": "width = 6\nheight = 4\narea = width / height\nprint(area)",
+    "exercise4": 'word1 = "Hello"\nword2 = "World"\nmessage = word1 + word2\nprint(message)',
+    "exercise5": (
+        'first_name = input("Enter first name: ")\n'
+        'last_name = input("Enter last name: ")\n'
+        'full_name = first_name + last_name\n'
+        'print(full_name)'
+    ),
+    "exercise6": "paid = 20\ncost = 15\nchange = cost - paid\nprint(paid)",
+    "exercise7": "score1 = 20\nscore2 = 30\ntotal = score1 * score2\naverage = total + 2\nprint(average)",
+    "exercise8": (
+        'word1 = "I"\n'
+        'word2 = "love"\n'
+        'word3 = "learning"\n'
+        'word4 = "Python"\n'
+        'sentence = word1 + word2 + word3 + word4\n'
+        'print(sentence)'
+    ),
+    "exercise9": "length = 10\nwidth = 5\nperimeter = length + length + width\nprint(length)",
+    "exercise10": (
+        'age = input("Enter your age: ")\n'
+        'city = input("Enter your city: ")\n'
+        'message = "You are " + age + " years old and live in" + city\n'
+        'print(message)'
+    ),
+}
