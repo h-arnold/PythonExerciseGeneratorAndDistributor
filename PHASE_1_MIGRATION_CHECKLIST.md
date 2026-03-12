@@ -70,7 +70,7 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 | `ex003_sequence_modify_variables` | `exercises/sequence/modify/ex003_sequence_modify_variables/` | `notebooks/ex003_sequence_modify_variables.ipynb` | `notebooks/solutions/ex003_sequence_modify_variables.ipynb` | `tests/test_ex003_sequence_modify_variables.py` | Teacher docs include an extra `solutions.md`; otherwise this is a relatively clean structured example. |
 | `ex004_sequence_debug_syntax` | `exercises/sequence/debug/ex004_sequence_debug_syntax/` | `notebooks/ex004_sequence_debug_syntax.ipynb` | `notebooks/solutions/ex004_sequence_debug_syntax.ipynb` | `tests/test_ex004_sequence_debug_syntax.py` | Clean structured example with `README.md`, `OVERVIEW.md`, and matching notebook/test names. Strong pilot candidate. |
 | `ex005_sequence_debug_logic` | `exercises/sequence/debug/ex005_sequence_debug_logic/` | `notebooks/ex005_sequence_debug_logic.ipynb` | `notebooks/solutions/ex005_sequence_debug_logic.ipynb` | `tests/test_ex005_sequence_debug_logic.py` | Clean structured example with matching teacher/notebook/test naming. Strong pilot candidate. |
-| `ex006_sequence_modify_casting` | `exercises/ex006_sequence_modify_casting/`; `exercises/sequence/modify/ex006_sequence_modify_casting/` | `notebooks/ex006_sequence_modify_casting.ipynb` | `notebooks/solutions/ex006_sequence_modify_casting.ipynb` | `tests/test_ex006_sequence_modify_casting.py` | Duplicate teacher directories for the same exercise key. Decision: `exercises/sequence/modify/ex006_sequence_modify_casting/` is canonical; the root-level duplicate should be removed. |
+| `ex006_sequence_modify_casting` | `exercises/ex006_sequence_modify_casting/`; `exercises/sequence/modify/ex006_sequence_modify_casting/` | `notebooks/ex006_sequence_modify_casting.ipynb` | `notebooks/solutions/ex006_sequence_modify_casting.ipynb` | `tests/test_ex006_sequence_modify_casting.py` | Duplicate teacher directories for the same exercise key. The authoritative current legacy home is `exercises/sequence/modify/ex006_sequence_modify_casting/`, and the later canonical target is `exercises/sequence/ex006_sequence_modify_casting/`; the root-level duplicate should be removed during migration. |
 | `ex007_sequence_debug_casting` | `exercises/sequence/debug/ex007_sequence_debug_casting/` | `notebooks/ex007_sequence_debug_casting.ipynb` | **No matching file**; current file is `notebooks/solutions/ex007_data_types_debug_casting.ipynb` | `tests/test_ex007_sequence_debug_casting.py`; `tests/test_ex007_construct_checks.py` | Decision: canonical key is `ex007_sequence_debug_casting`. The solution notebook, self-check references, expectation imports, and test target names must all be normalised to that key, with `data_types` references removed entirely. |
 
 ### Repository-Wide Anomalies Already Confirmed
@@ -255,6 +255,8 @@ Break Phase 1 into concrete deliverables. This is inventory and model definition
 
 ### Test Changes
 
+The unchecked items in this section and the next section are deliberate later-phase backlog captured during Phase 1. They do not block Phase 1 completion.
+
 List both existing tests to update later and any new tests that Phase 1 may add to keep the inventory honest.
 
 - [ ] Update existing unit tests later:
@@ -350,7 +352,7 @@ source .venv/bin/activate
 find exercises -type d -name 'ex*' | sort
 find notebooks -maxdepth 2 -type f -name 'ex*.ipynb' | sort
 find tests -type f -name 'test_ex*.py' | sort
-rg -n "exercise_key|exercise_id|resolve_notebook_path|check_notebook|exercise\.json|notebooks/solutions|tests/test_ex|exercises/" scripts tests docs .github template_repo_files
+command -v rg >/dev/null && rg -n "exercise_key|exercise_id|resolve_notebook_path|check_notebook|exercise\.json|notebooks/solutions|tests/test_ex|exercises/" scripts tests docs .github template_repo_files
 ```
 
 ### Baseline Behaviour Commands

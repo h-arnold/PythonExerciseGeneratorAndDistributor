@@ -45,7 +45,7 @@ PythonExerciseGeneratorAndDistributor/
 │   ├── sequence/
 │   │   ├── OrderOfTeaching.md
 │   │   ├── README.md                  # optional construct overview
-│   │   ├── ex001_sanity/ (obsolete, reserved for removal before later phases)
+│   │   ├── ex004_sequence_debug_syntax/
 │   │   │   ├── exercise.json
 │   │   │   ├── README.md
 │   │   │   ├── OVERVIEW.md
@@ -57,7 +57,7 @@ PythonExerciseGeneratorAndDistributor/
 │   │   │   │   ├── student.ipynb
 │   │   │   │   └── solution.ipynb
 │   │   │   └── tests/
-│   │   │       ├── test_ex001_sanity.py
+│   │   │       ├── test_ex004_sequence_debug_syntax.py
 │   │   │       └── fixtures.py        # optional
 │   │   └── ex006_sequence_modify_casting/
 │   │       ├── exercise.json
@@ -197,44 +197,52 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 ### Phase 1: Repository Inventory And Canonical Model
 
+#### Progress Update
+
+- [x] Phase 1 completed on `2026-03-12`.
+- [x] Inventory captured in [PHASE_1_REPOSITORY_INVENTORY.md](PHASE_1_REPOSITORY_INVENTORY.md).
+- [x] Repo-specific Phase 1 execution status recorded in [PHASE_1_MIGRATION_CHECKLIST.md](PHASE_1_MIGRATION_CHECKLIST.md), with the completed Phase 1 work checked off and later-phase follow-up backlog kept in that file for future phases.
+- [x] Phase 2 live pilot confirmed as `ex004_sequence_debug_syntax`.
+- [x] Later-phase blockers recorded: obsolete `ex001_sanity`, duplicate `ex006_sequence_modify_casting` teacher-doc homes, unresolved ex002 split test-surface contract, ex007 naming and registry drift, and the stray placeholder tree under [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor).
+
 #### Constraints And Acceptance Criteria
 
-- [ ] Do not begin resolver implementation until the repository inventory is complete enough to identify duplicate or ambiguous exercise identities.
-- [ ] The phase is only complete once there is a written inventory of current exercise identities, locations, and known anomalies that later phases can refer to.
-- [ ] Do not choose a pilot construct for migration until the inventory confirms it is suitable for a safe first cut.
-- [ ] The phase is not complete until duplicate exercise ownership is either resolved directly or represented explicitly in the migration manifest with one canonical target per exercise.
-- [ ] Identity normalisation rules must be written down explicitly, not inferred informally from current file names.
+- [x] Do not begin resolver implementation until the repository inventory is complete enough to identify duplicate or ambiguous exercise identities.
+- [x] The phase is only complete once there is a written inventory of current exercise identities, locations, and known anomalies that later phases can refer to.
+- [x] Do not choose a pilot construct for migration until the inventory confirms it is suitable for a safe first cut.
+- [x] The phase is not complete until duplicate exercise ownership is either resolved directly or represented explicitly in the Phase 1 inventory artefacts, with one canonical target decision recorded per exercise ahead of the later migration manifest work.
+- [x] Identity normalisation rules must be written down explicitly, not inferred informally from current file names.
 
-- [ ] Inventory every current exercise key and record its current teacher docs path, notebook path, solution notebook path, and test path.
-- [ ] Record duplicate directories, stale exercise folders, construct mismatches, slug mismatches, and other naming anomalies that could make migration ambiguous.
-- [ ] Identify which current modules treat exercise identity as a filename, a slug, a path, or a directory name.
-- [ ] Use this inventory to define the canonical exercise identity that later resolvers and migration manifests will rely on.
-- [ ] Use this inventory to identify the safest pilot construct rather than assuming `sequence` is automatically the best first migration target.
-- [ ] Document the Phase 2 live pilot exercise as `ex004_sequence_debug_syntax` because the Phase 1 inventory highlighted its clean teacher docs, matching notebook/test names, and lack of duplicate artefacts.
-- [ ] Keep a running list of likely pain points in: [exercises](exercises), [notebooks](notebooks), [tests](tests), [docs](docs), and [.github/agents](.github/agents).
-- [ ] Agree that `exercises/<construct>/<exercise_key>/` is the canonical location for all exercise-specific assets.
-- [ ] Confirm that exercise type is moving from the folder hierarchy into `exercise.json`.
-- [ ] Confirm standard notebook names: `student.ipynb` and `solution.ipynb`.
-- [ ] Confirm shared grading/runtime helpers live in `exercise_runtime_support` and that top-level `tests/` contains only executed test suites; teach contributors to import support features from the new package.
-- [ ] Confirm whether template exports should flatten notebooks and tests during the transition.
-- [ ] Record the early identity-normalisation blockers explicitly and decide their target canonical forms before Phase 2 starts.
+- [x] Inventory every current exercise key and record its current teacher docs path, notebook path, solution notebook path, and test path.
+- [x] Record duplicate directories, stale exercise folders, construct mismatches, slug mismatches, and other naming anomalies that could make migration ambiguous.
+- [x] Identify which current modules treat exercise identity as a filename, a slug, a path, or a directory name.
+- [x] Use this inventory to define the canonical exercise identity that later resolvers and migration manifests will rely on.
+- [x] Use this inventory to identify the safest pilot construct rather than assuming `sequence` is automatically the best first migration target.
+- [x] Document the Phase 2 live pilot exercise as `ex004_sequence_debug_syntax` because the Phase 1 inventory highlighted its clean teacher docs, matching notebook/test names, and lack of duplicate artefacts.
+- [x] Keep a running list of likely pain points in: [exercises](exercises), [notebooks](notebooks), [tests](tests), [docs](docs), and [.github/agents](.github/agents).
+- [x] Agree that `exercises/<construct>/<exercise_key>/` is the canonical location for all exercise-specific assets.
+- [x] Confirm that exercise type is moving from the folder hierarchy into `exercise.json`.
+- [x] Confirm standard notebook names: `student.ipynb` and `solution.ipynb`.
+- [x] Confirm shared grading/runtime helpers live in `exercise_runtime_support` and that top-level `tests/` contains only executed test suites; teach contributors to import support features from the new package.
+- [x] Confirm whether template exports should flatten notebooks and tests during the transition.
+- [x] Record the early identity-normalisation blockers explicitly and decide their target canonical forms before Phase 2 starts.
 
 #### Identity Normalisation Rules
 
-- [ ] Normalise duplicate exercise homes so each exercise has one canonical target directory under `exercises/<construct>/<exercise_key>/`.
-- [ ] Normalise mixed key families so construct naming stays consistent. For example, `ex007` is a `sequence` exercise and should remain `ex007_sequence_debug_casting`, not `ex007_data_types_debug_casting`.
-- [ ] Remove obsolete root-level exercises that no longer serve a real repository purpose, and normalise any remaining legacy root-level exercise directories such as `exercises/ex006_sequence_modify_casting/` into the agreed construct-based canonical tree during migration planning.
-- [ ] Normalise self-check references, expectation-module names, and notebook stems so they all match the canonical `exercise_key`.
-- [ ] Treat stray or non-exercise trees such as [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor) as anomalies to be removed, relocated, or explicitly documented before the canonical inventory is considered trustworthy.
+- [x] Normalise duplicate exercise homes so each exercise has one canonical target directory under `exercises/<construct>/<exercise_key>/`.
+- [x] Normalise mixed key families so construct naming stays consistent. For example, `ex007` is a `sequence` exercise and should remain `ex007_sequence_debug_casting`, not `ex007_data_types_debug_casting`.
+- [x] Remove obsolete root-level exercises that no longer serve a real repository purpose, and normalise any remaining legacy root-level exercise directories such as `exercises/ex006_sequence_modify_casting/` into the agreed construct-based canonical tree during migration planning.
+- [x] Normalise self-check references, expectation-module names, and notebook stems so they all match the canonical `exercise_key`.
+- [x] Treat stray or non-exercise trees such as [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor) as anomalies to be removed, relocated, or explicitly documented before the canonical inventory is considered trustworthy.
 
 #### Verified Early Blockers
 
-- [ ] `ex001_sanity` is obsolete, reserved for removal, and must be deleted before later phases can proceed; it should not be migrated into the canonical exercise tree.
-- [ ] Duplicate `ex006_sequence_modify_casting` exercise homes currently exist at [exercises/ex006_sequence_modify_casting](exercises/ex006_sequence_modify_casting) and [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting); the authoritative current legacy home is [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting), and the root-level duplicate should be removed during migration into the canonical target `exercises/sequence/ex006_sequence_modify_casting/`.
-- [ ] `ex007` currently mixes `sequence` and `data_types` naming across notebooks, tests, and self-check references; this must be normalised fully to `ex007_sequence_debug_casting`, with all `data_types` references removed.
-- [ ] `tests/test_ex007_sequence_debug_casting.py` still imports the legacy expectations alias `tests.exercise_expectations.ex007_data_types_debug_casting`, while [tests/exercise_framework/api.py](tests/exercise_framework/api.py) and [tests/exercise_expectations/__init__.py](tests/exercise_expectations/__init__.py) both stop short of a clean ex007 registry/export surface; this registry drift must be normalised before ex007 can be trusted as a canonical identity example.
-- [ ] The repository currently contains mixed exercise directory shapes such as `exercises/<exercise_key>/` and `exercises/<construct>/<type>/<exercise_key>/`; these must not be treated as equally canonical.
-- [ ] A stray tree exists under [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor); this must be classified and removed or relocated before structure docs are finalised.
+- [x] `ex001_sanity` is obsolete, reserved for removal, and must be deleted before later phases can proceed; it should not be migrated into the canonical exercise tree.
+- [x] Duplicate `ex006_sequence_modify_casting` exercise homes currently exist at [exercises/ex006_sequence_modify_casting](exercises/ex006_sequence_modify_casting) and [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting); the authoritative current legacy home is [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting), and the root-level duplicate should be removed during migration into the canonical target `exercises/sequence/ex006_sequence_modify_casting/`.
+- [x] `ex007` currently mixes `sequence` and `data_types` naming across notebooks, tests, and self-check references; this must be normalised fully to `ex007_sequence_debug_casting`, with all `data_types` references removed.
+- [x] `tests/test_ex007_sequence_debug_casting.py` still imports the legacy expectations alias `tests.exercise_expectations.ex007_data_types_debug_casting`, while [tests/exercise_framework/api.py](tests/exercise_framework/api.py) and [tests/exercise_expectations/__init__.py](tests/exercise_expectations/__init__.py) both stop short of a clean ex007 registry/export surface; this registry drift must be normalised before ex007 can be trusted as a canonical identity example.
+- [x] The repository currently contains mixed exercise directory shapes such as `exercises/<exercise_key>/` and `exercises/<construct>/<type>/<exercise_key>/`; these must not be treated as equally canonical.
+- [x] A stray tree exists under [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor); this must be classified and removed or relocated before structure docs are finalised.
 
 ### Phase 2: Metadata And Resolution Layer
 
