@@ -22,7 +22,7 @@ These rules come directly from `ACTION_PLAN.md` and must be treated as non-negot
 - Related action-plan phase or stream: `Phase 1: Repository Inventory And Canonical Model`
 - Author: `Codex Implementer Agent`
 - Date: `2026-03-12`
-- Status: `ready`
+- Status: `draft`
 - Scope summary: Produce a verified inventory of every current exercise identity, location, and naming anomaly; catalogue every path-based assumption in code/docs/workflows; and write down the canonical Phase 1 model that later resolver and migration phases will rely on.
 - Explicitly out of scope: Implementing resolver changes, adding `exercise.json`, moving directories, renaming notebooks, editing any `.ipynb` file, changing export packaging, or changing public APIs.
 
@@ -41,7 +41,7 @@ When this checklist has been executed successfully, the repository should have a
 - [x] Dependencies from earlier phases are complete or explicitly waived. Phase 1 is the starting phase.
 - [x] Required decisions from `ACTION_PLAN.md` are settled enough to inventory against: canonical input is `exercise_key`, compatibility fallbacks are forbidden, export remains metadata-free, and `exercise.json` must stay small.
 - [x] Scope boundaries are clear enough to avoid accidental spill into resolver implementation, metadata introduction, or filesystem migration.
-- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly.
+- [x] Any pilot construct or target exercise(s) for this checklist are outputs of this phase rather than preconditions.
 
 Notes:
 
@@ -52,7 +52,9 @@ Notes:
 - Open assumptions:
   - `sequence` is the only currently populated construct tree under `exercises/<construct>/<type>/`, but that does **not** automatically make the whole construct the safest pilot.
   - Based on the current repo scan, the least ambiguous candidate exercises are `ex004_sequence_debug_syntax` and `ex005_sequence_debug_logic`.
-  - `ex001_sanity`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting` currently look unsuitable as first migration examples because they contain path or naming anomalies.
+  - `ex001_sanity` is obsolete and should be removed rather than considered for migration.
+  - `ex006_sequence_modify_casting` and `ex007_sequence_debug_casting` currently look unsuitable as first migration examples because they contain path or naming anomalies.
+  - This phase must end by naming a pilot recommendation and recording rejected alternatives with reasons; do not leave pilot choice as an open assumption.
 
 ## Affected Surfaces Inventory
 
@@ -62,7 +64,7 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 
 | Exercise key | Teacher docs path(s) today | Student notebook | Solution notebook | Primary test surface(s) today | Inventory notes |
 | --- | --- | --- | --- | --- | --- |
-| `ex001_sanity` | `exercises/ex001_sanity/` | `notebooks/ex001_sanity.ipynb` | `notebooks/solutions/ex001_sanity.ipynb` | `tests/test_ex001_sanity.py` | Teacher docs live at repo-root level under `exercises/` rather than under a construct/type path; folder only contains `README.md` and `__init__.py`; no `OVERVIEW.md`. |
+| `ex001_sanity` | `exercises/ex001_sanity/` | `notebooks/ex001_sanity.ipynb` | `notebooks/solutions/ex001_sanity.ipynb` | `tests/test_ex001_sanity.py` | Obsolete sanity-check exercise. Decision: remove entirely rather than migrate into the canonical structure. |
 | `ex002_sequence_modify_basics` | `exercises/sequence/modify/ex002_sequence_modify_basics/` | `notebooks/ex002_sequence_modify_basics.ipynb` | `notebooks/solutions/ex002_sequence_modify_basics.ipynb` | `tests/test_ex002_sequence_modify_basics.py`; `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` | Duplicate exercise-specific test locations; template CLI fixture data points at the nested test path while the collector code points at the top-level test path. |
 | `ex003_sequence_modify_variables` | `exercises/sequence/modify/ex003_sequence_modify_variables/` | `notebooks/ex003_sequence_modify_variables.ipynb` | `notebooks/solutions/ex003_sequence_modify_variables.ipynb` | `tests/test_ex003_sequence_modify_variables.py` | Teacher docs include an extra `solutions.md`; otherwise this is a relatively clean structured example. |
 | `ex004_sequence_debug_syntax` | `exercises/sequence/debug/ex004_sequence_debug_syntax/` | `notebooks/ex004_sequence_debug_syntax.ipynb` | `notebooks/solutions/ex004_sequence_debug_syntax.ipynb` | `tests/test_ex004_sequence_debug_syntax.py` | Clean structured example with `README.md`, `OVERVIEW.md`, and matching notebook/test names. Strong pilot candidate. |
@@ -73,7 +75,8 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 ### Repository-Wide Anomalies Already Confirmed
 
 - [ ] `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` exists as a repository-level placeholder and explicitly states that it exists to satisfy verifier checks. This is not a canonical construct folder.
-- [ ] `ex001_sanity` and one copy of `ex006_sequence_modify_casting` still live directly under `exercises/` instead of beneath a construct path.
+- [ ] `ex001_sanity` still lives directly under `exercises/`, but it is now classified as obsolete and should be removed rather than normalised into the canonical tree.
+- [ ] One copy of `ex006_sequence_modify_casting` still lives directly under `exercises/` instead of beneath a construct path.
 - [ ] `ex006_sequence_modify_casting` has two teacher-doc roots, making the current repository ambiguous if a future resolver only accepts `exercise_key`.
 - [ ] `ex007_sequence_debug_casting` has no matching solution notebook path; the existing solution notebook is `notebooks/solutions/ex007_data_types_debug_casting.ipynb`.
 - [ ] `tests/test_ex007_sequence_debug_casting.py` imports `tests.exercise_expectations.ex007_data_types_debug_casting` while `tests/test_ex007_construct_checks.py` imports `tests.exercise_expectations.ex007_sequence_debug_casting`.
@@ -225,22 +228,23 @@ Break Phase 1 into concrete deliverables. This is inventory and model definition
 - [ ] Write down the future notebook naming rule: `student.ipynb` and `solution.ipynb` inside the canonical exercise directory.
 - [ ] Write down the future metadata rule: exercise type leaves the folder hierarchy and moves into `exercise.json`.
 - [ ] Write down the shared-testing rule: top-level `tests/` remains for shared grading infrastructure only.
-- [ ] Write down the export rule: Classroom repositories remain metadata-free and may stay flattened during the migration transition.
+- [ ] Confirm and write down the export rule: Classroom repositories remain metadata-free and continue to use flattened exported exercise-key paths during the migration transition.
 - [ ] Write down the public-API deferral rule: notebook/self-check interfaces remain unchanged until later phases prove the replacement execution model.
+- [ ] Record the canonical target path and canonical identity for every ambiguous exercise or anomaly, and explicitly record when the correct action is deletion rather than migration, including `ex001_sanity`, `ex006_sequence_modify_casting`, `ex007_sequence_debug_casting`, and `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md`.
 
 ### Pilot Suitability Analysis Tasks
 
 - [ ] Score every current exercise or sub-tree for pilot suitability using objective criteria: duplicate directories, missing solution mirror, test duplication, manual registry drift, and docs/workflow drift.
 - [ ] Confirm whether the safest pilot should be a whole construct, a construct subset, or a single exercise.
 - [ ] Record the rationale if `sequence` is still chosen, and record the rationale if only a subset such as `ex004_sequence_debug_syntax` / `ex005_sequence_debug_logic` is chosen instead.
-- [ ] Explicitly reject high-risk candidates in writing if they remain ambiguous after inventory (`ex001_sanity`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting` are the current likely rejects).
+- [ ] Explicitly reject high-risk or obsolete candidates in writing if they remain unsuitable after inventory (`ex001_sanity` should be removed; `ex006_sequence_modify_casting` and `ex007_sequence_debug_casting` are current likely migration rejects).
 
 ### Data And Metadata Changes
 
 - [ ] `exercise.json` changes: do **not** add files yet; only record the minimal field shortlist that later phases need.
 - [ ] Derived-data/index changes: if a machine-readable inventory companion is created, keep it advisory only and do not make runtime code depend on it.
 - [ ] Registry replacement work: identify the current pseudo-registries to replace later (`tests/student_checker/api.py`, `tests/exercise_framework/api.py`, `tests/exercise_expectations/__init__.py`, and the template CLI selector/collector split).
-- [ ] Migration manifest updates: prepare a provisional list of exercises that will require manual migration handling because of current anomalies.
+- [ ] Migration manifest updates: prepare a provisional list of exercises that will require manual migration handling because of current anomalies, and include the canonical target path each one should resolve to later.
 
 ### Test Changes
 
@@ -282,12 +286,12 @@ Every new test case below should prove a concrete migration fact rather than mer
 
 - [ ] Positive case: a repository-inventory test or validation command enumerates all **seven** current student exercise keys and maps each one to its current teacher docs path(s), student notebook, solution notebook, and primary test surface(s).
 - [ ] Failure case: duplicate teacher directories for `ex006_sequence_modify_casting` fail with a clear report naming both `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`.
-- [ ] Failure case: root-level teacher-doc directories without construct classification fail clearly for `ex001_sanity`.
+- [ ] Failure case: obsolete exercises such as `ex001_sanity` are reported clearly as removal targets rather than being mistaken for canonical migration candidates.
 - [ ] Failure case: solution notebook mismatch is reported clearly for `ex007_sequence_debug_casting`, naming `notebooks/solutions/ex007_data_types_debug_casting.ipynb` as the conflicting path.
 - [ ] Failure case: placeholder construct path `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` is reported as a non-canonical anomaly.
 - [ ] Regression case: the recorded primary test path for `ex002_sequence_modify_basics` is consistent across the inventory artefact, `tests/template_repo_cli/conftest.py`, and the template CLI collector contract.
 - [ ] Regression case: manual slug registries in `tests/student_checker/api.py` and `tests/exercise_framework/api.py` are checked against the filesystem inventory so future drift is visible immediately.
-- [ ] Export/package case: exported template repos remain metadata-free and still place files at flat paths such as `notebooks/ex001_sanity.ipynb` and `tests/test_ex001_sanity.py` until a later phase explicitly changes that public contract.
+- [ ] Export/package case: exported template repos remain metadata-free and do not accidentally retain obsolete exercises such as `ex001_sanity` once they have been removed from the source inventory.
 - [ ] Student-mode case: `PYTUTOR_NOTEBOOKS_DIR=notebooks` grading still resolves notebooks from the student tree and does not depend on yet-to-be-added metadata files.
 - [ ] Solution-mode case: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` grading still resolves solution notebooks and fails clearly when a mirrored slug is missing or renamed.
 - [ ] Documentation case: examples in `.github/agents/exercise_generation.md.agent.md`, `docs/exercise-generation-cli.md`, and related docs are checked for stale exercise-name examples such as `ex007_data_types_debug_casting`.
@@ -303,6 +307,11 @@ Phase 1 should at least catalogue these updates, even if some wording changes wa
   - `docs/development.md`
   - `docs/setup.md`
   - `docs/testing-framework.md`
+  - `docs/exercise-generation.md`
+  - `docs/exercise-generation-cli.md`
+  - `docs/CLI_README.md`
+  - `docs/autograding-cli.md`
+  - `docs/exercise-testing.md`
 - [ ] Teaching docs:
   - `exercises/sequence/OrderOfTeaching.md`
   - `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md`
@@ -310,6 +319,8 @@ Phase 1 should at least catalogue these updates, even if some wording changes wa
 - [ ] Agent docs:
   - `.github/agents/exercise_generation.md.agent.md`
   - `.github/agents/exercise_verifier.md.agent.md`
+  - `.github/agents/implementer.md.agent.md`
+  - `.github/agents/tidy_code_review.md.agent.md`
   - `docs/agents/tidy_code_review/automated_review.md`
   - `docs/agents/tidy_code_review/manual_review.md`
 - [ ] Repository workflows:
@@ -395,6 +406,6 @@ This is not the final decision, but it is the current evidence-based shortlist t
 
 - `ex004_sequence_debug_syntax` — clean construct/type path, matching student and solution notebook stems, single top-level test, and matching teacher docs.
 - `ex005_sequence_debug_logic` — same strengths as `ex004`, with no confirmed duplicate paths.
-- Avoid `ex001_sanity` for the first cut because it has no construct/type home yet.
+- Remove `ex001_sanity` rather than trying to give it a canonical construct/type home.
 - Avoid `ex006_sequence_modify_casting` for the first cut because it has duplicate teacher directories.
 - Avoid `ex007_sequence_debug_casting` for the first cut because the solution notebook slug and ex007 documentation/import surfaces are inconsistent.

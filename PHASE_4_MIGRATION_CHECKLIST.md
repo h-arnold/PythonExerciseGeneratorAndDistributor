@@ -19,7 +19,7 @@ These rules are restated from [ACTION_PLAN.md](./ACTION_PLAN.md) and apply throu
 - Author: Codex Implementer Agent
 - Date: 2026-03-12
 - Status: `draft`
-- Scope summary: Define, document, and then implement the repository execution model for exercise discovery, notebook variant selection, shared grading/runtime imports, repository pytest discovery, and source-to-export packaging so later migration phases can move exercise-local tests and canonical authoring files without ambiguity.
+- Scope summary: Define and pin the repository execution model for exercise discovery, notebook variant selection, shared grading/runtime imports, repository pytest discovery, and source-to-export packaging, with only the minimum proof wiring needed to make later implementation phases unambiguous.
 - Explicitly out of scope: bulk migration of every exercise into the future canonical `exercises/<construct>/<exercise_key>/...` layout; adding new metadata fields beyond the agreed minimal schema; final public API renames in student-facing helpers; moving all top-level tests immediately; authoring new notebook exercises; changing student notebook content; cutting over all legacy callers before the replacement model is proven.
 
 ## Objective
@@ -56,7 +56,6 @@ Notes:
 - Open assumptions:
   - Phase 2 will provide the shared resolver and migration-manifest layer that Phase 4 execution code can call.
   - Phase 3 will provide metadata-driven exercise identity and catalogue information so Phase 4 does not need to maintain a second registry.
-  - A sensible pilot should include at least `ex002_sequence_modify_basics` and `ex007_sequence_debug_casting`, because the current repo already uses both a top-level exercise test and a nested `tests/ex002_sequence_modify_basics/` parity surface, plus interactive/debug self-check behaviour.
   - The current repo still contains duplicate and inconsistent legacy artefacts, so Phase 4 implementation must expect pre-clean-up states until earlier phases are complete.
 
 ## Affected Surfaces Inventory
@@ -102,7 +101,7 @@ Notes:
   - `tests/test_build_autograde_payload.py` — currently asserts environment validation and autograde payload logic under the old variant-selection contract.
   - `tests/test_integration_autograding.py` — repository-to-autograde integration surface.
   - `tests/test_new_exercise.py` — will need updates once the scaffold target layout is decided in later phases, but Phase 4 must list the required contract changes now.
-  - `tests/test_ex001_sanity.py`, `tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex004_sequence_debug_syntax.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_construct_checks.py`, `tests/test_ex007_sequence_debug_casting.py` — current exercise-specific tests that still rely on flattened notebook paths.
+  - `tests/test_ex001_sanity.py`, `tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex004_sequence_debug_syntax.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_construct_checks.py`, `tests/test_ex007_sequence_debug_casting.py` — current top-level exercise-specific tests; `ex001_sanity` should now be treated as an obsolete removal target rather than a migrated exercise candidate.
   - `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` — existing nested exercise-specific parity test surface that should inform the future discovery model.
 - [ ] Docs:
   - `docs/CLI_README.md` — explicitly documents flattened template contents under "What Gets Included in Templates".
@@ -132,7 +131,8 @@ Notes:
   - `exercises/sequence/debug/ex005_sequence_debug_logic/`
   - `exercises/sequence/modify/ex006_sequence_modify_casting/`
   - `exercises/sequence/debug/ex007_sequence_debug_casting/`
-  - `exercises/ex001_sanity/` and `exercises/ex006_sequence_modify_casting/` — currently non-canonical duplicate roots that must be accounted for in migration planning.
+  - `exercises/ex001_sanity/` — obsolete exercise directory that should be removed rather than accounted for as a canonical discovery source.
+  - `exercises/ex006_sequence_modify_casting/` — non-canonical duplicate root that must be accounted for in migration planning.
 
 ### Modules, Functions, Classes, Commands, And Contracts
 
@@ -218,7 +218,7 @@ Notes:
   - legacy assumptions in template packager code that top-level source layout is canonical
   - documentation and agent guidance that instructs `PYTUTOR_NOTEBOOKS_DIR` as a long-term layout selector
 - [ ] Rename or relocate:
-  - move or rename shared runtime helpers only if the Phase 4 decision is to stop using top-level `tests` as the support package; if this decision changes the current high-level plan, update [ACTION_PLAN.md](./ACTION_PLAN.md) first
+  - move shared runtime helpers into the dedicated support package chosen by earlier phases; if that package path/name is still not recorded, treat that as a blocker rather than deciding it during implementation
   - relocate exercise-specific test files only after the repository discovery model has been proved on a pilot exercise set
 - [ ] Fail-fast behaviour to add:
   - path-based resolver inputs fail with a clear error naming the replacement `exercise_key` contract
@@ -378,7 +378,7 @@ python -m pytest -q
 
 Recommended additions during implementation:
 
-- once the final variant selector name is chosen, add one repository-mode command and one exported-student-mode command that use the exact supported selector entry point and remove obsolete `PYTUTOR_NOTEBOOKS_DIR` examples from this section
+- replace any remaining generic selector wording here with the exact agreed CLI flag syntax before treating the checklist as implementation-ready
 
 ### Expected Results
 
@@ -414,7 +414,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 - [ ] Risk: template packaging may appear to work even when canonical source files are wrong if collector and packager code are not forced through the same resolver path.
 - [ ] Risk: student self-check behaviour could drift away from repository grading behaviour if `tests.student_checker` and `tests.exercise_framework` are migrated on different timelines.
 
-### Open Questions
+### Decisions
 
 - [x] Decision: shared grading/runtime helpers should move into a dedicated support package before exercise-local test discovery changes land.
 - [x] Decision: the public selector for student versus solution execution is an explicit `variant` argument in Python APIs plus a matching CLI flag for scripts and workflows.
@@ -424,9 +424,12 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 ### Blockers
 
 - [ ] Blocker: earlier resolver and metadata phases are not yet implemented, so Phase 4 execution code cannot be finalised until the shared resolver/manifests exist.
-- [ ] Blocker: the live repo still contains non-canonical duplicate exercise directories at `exercises/ex001_sanity/` and `exercises/ex006_sequence_modify_casting/`, which could confuse any discovery or source-selection implementation.
+- [ ] Blocker: the live repo still contains the obsolete `exercises/ex001_sanity/` tree, which should be removed before discovery/source-selection rules are treated as authoritative.
+- [ ] Blocker: the live repo still contains a non-canonical duplicate exercise directory at `exercises/ex006_sequence_modify_casting/`, which could confuse discovery or source-selection implementation.
 - [ ] Blocker: the live repo has an `ex007` naming inconsistency between `notebooks/ex007_sequence_debug_casting.ipynb` and `notebooks/solutions/ex007_data_types_debug_casting.ipynb`, which must be resolved or explicitly handled before the variant-selection contract is treated as authoritative.
 - [ ] Blocker: the current repo already contains duplicate exercise test surfaces for `ex002_sequence_modify_basics`, which makes it unsafe to change pytest discovery without an explicit duplicate-collection strategy.
+- [ ] Blocker: mixed legacy directory shapes under `exercises/` must not be treated as equally canonical when defining discovery or source-selection rules.
+- [ ] Blocker: the stray `exercises/PythonExerciseGeneratorAndDistributor/` tree must be excluded explicitly from discovery/source-selection rules.
 
 ## Action Plan Feedback
 

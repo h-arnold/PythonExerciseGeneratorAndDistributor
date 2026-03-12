@@ -214,13 +214,13 @@ The current repository has a number of path assumptions wired into tooling, docs
 
 - [ ] Normalise duplicate exercise homes so each exercise has one canonical target directory under `exercises/<construct>/<exercise_key>/`.
 - [ ] Normalise mixed key families so construct naming stays consistent. For example, `ex007` is a `sequence` exercise and should remain `ex007_sequence_debug_casting`, not `ex007_data_types_debug_casting`.
-- [ ] Normalise legacy root-level exercise directories such as `exercises/ex001_sanity/` and `exercises/ex006_sequence_modify_casting/` into the agreed construct-based canonical tree during migration planning.
+- [ ] Remove obsolete root-level exercises that no longer serve a real repository purpose, and normalise any remaining legacy root-level exercise directories such as `exercises/ex006_sequence_modify_casting/` into the agreed construct-based canonical tree during migration planning.
 - [ ] Normalise self-check references, expectation-module names, and notebook stems so they all match the canonical `exercise_key`.
 - [ ] Treat stray or non-exercise trees such as [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor) as anomalies to be removed, relocated, or explicitly documented before the canonical inventory is considered trustworthy.
 
 #### Verified Early Blockers
 
-- [ ] Duplicate `ex001_sanity` exercise homes currently exist in both root-level and nested legacy locations; this must resolve to one canonical exercise identity before discovery or packaging rules are treated as authoritative.
+- [ ] `ex001_sanity` is obsolete and should be removed entirely rather than migrated into the canonical exercise tree.
 - [ ] Duplicate `ex006_sequence_modify_casting` exercise homes currently exist at [exercises/ex006_sequence_modify_casting](exercises/ex006_sequence_modify_casting) and [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting); this must resolve to one canonical exercise identity.
 - [ ] `ex007` currently mixes `sequence` and `data_types` naming across notebooks, tests, and self-check references; this must be normalised to the canonical `sequence` key family before later migration phases rely on identity matching.
 - [ ] The repository currently contains mixed exercise directory shapes such as `exercises/<exercise_key>/` and `exercises/<construct>/<type>/<exercise_key>/`; these must not be treated as equally canonical.

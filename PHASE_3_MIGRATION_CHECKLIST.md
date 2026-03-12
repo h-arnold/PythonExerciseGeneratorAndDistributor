@@ -51,7 +51,7 @@ Notes:
   - Deliberate breakage is preferred over compatibility layers once replacement contracts exist.
 - Open assumptions:
   - The shared metadata/resolver module created in Phase 2 will exist before this phase is implemented; this checklist assumes all new metadata loading goes through that single module.
-  - The pilot set has not yet been confirmed. The current live exercise set is almost entirely under `exercises/sequence/**`, but there are duplicate and non-canonical exercise directories that must be resolved before metadata indexing is treated as authoritative.
+  - The pilot set has not yet been confirmed. Treat that as a blocker, not as an implementer choice.
   - Phase 3 must not invent a second registry layer; if a derived index is needed, it must be produced from `exercise.json` rather than hand-maintained lists.
 
 ## Affected Surfaces Inventory
@@ -83,8 +83,8 @@ Notes:
   - `tests/exercise_expectations/ex007_sequence_debug_casting.py`
     — each currently embeds an `EX00X_NOTEBOOK_PATH` constant.
   - `scripts/template_repo_cli/core/selector.py` — currently derives construct/type membership from the `exercises/<construct>/<type>/<exercise_key>/` tree and derives notebook availability from top-level `notebooks/*.ipynb`.
-  - `scripts/template_repo_cli/core/collector.py` — currently constructs notebook and test paths as `notebooks/<exercise_key>.ipynb` and `tests/test_<exercise_key>.py` instead of using shared metadata-derived resolution.
-  - `scripts/template_repo_cli/core/packager.py` — must keep packaging metadata-free even once source selection becomes metadata-driven.
+  - `scripts/template_repo_cli/core/collector.py` — adjacent dependency only; Phase 3 should update it only where metadata-driven selection is needed to remove duplicated registry data.
+  - `scripts/template_repo_cli/core/packager.py` — adjacent dependency only; keep the metadata-free export contract visible, but leave broad packaging cutover to later phases.
   - `scripts/template_repo_cli/cli.py` — command entry points use selector/collector behaviour and will need to stay aligned with the new metadata-driven source model.
   - `scripts/template_repo_cli/utils/validation.py` — `VALID_TYPES` should remain the enum of allowed values, but any per-exercise grouping logic should move out of path assumptions.
   - `scripts/verify_exercise_quality.py` — not a Phase 3 implementation target, but must be recorded as an adjacent surface because it still reflects current construct/type path assumptions.
@@ -221,7 +221,7 @@ Notes:
 
 - [ ] `exercise.json` changes:
   - add `exercise.json` to each exercise that participates in the Phase 3 pilot, using only the agreed minimal schema
-  - populate `title`, `exercise_id`, `construct`, `exercise_type`, and `parts` from the real exercise data rather than from duplicated code constants
+  - populate `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts` from the real exercise data rather than from duplicated code constants
   - do not add notebook paths, test paths, tag names, self-check flags, ordering lists, or checker wiring to `exercise.json`
 - [ ] Derived-data/index changes:
   - add a derived exercise index sorted by `exercise_id`
@@ -234,7 +234,7 @@ Notes:
   - keep checker wiring out of metadata; it may remain a code-owned mapping keyed by `exercise_key`
   - decide whether `tests/exercise_expectations` keeps per-exercise modules only for behavioural assertions or whether some identity helpers move entirely into the shared metadata/index layer
 - [ ] Migration manifest updates:
-  - use the Phase 2 migration manifest, if it exists, to exclude unresolved legacy/duplicate exercises from the metadata pilot rather than silently indexing them
+  - use the Phase 2 migration manifest to exclude unresolved legacy/duplicate exercises from the metadata pilot rather than silently indexing them
   - if the current manifest model cannot express duplicate or ambiguous homes, record that as a blocker back into `ACTION_PLAN.md`
 
 ### Test Changes
@@ -382,18 +382,19 @@ Only include broader test runs after the targeted metadata and template-selectio
 - [ ] `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match the student notebook and exercise directory key `ex007_sequence_debug_casting`, so any metadata-derived identity check will expose this mismatch immediately.
 - [ ] The placeholder tree `exercises/PythonExerciseGeneratorAndDistributor/` may confuse naive metadata or exercise-directory scanners.
 
-### Open Questions
+### Decisions And Blockers
 
-- [ ] Should Phase 3 create metadata in the current legacy exercise directories first, or must it wait for canonical directory migration under `exercises/<construct>/<exercise_key>/`?
 - [x] Decision: framework and student-checker display labels should be derived by a tiny shared formatter that consumes metadata objects rather than stored separately.
 - [x] Decision: `tests/exercise_expectations` should become purely behavioural data plus types, not an identity/path registry.
 - [x] Decision: template selection should allow a mixed mode controlled by the Phase 2 migration manifest rather than requiring metadata-valid-only exercises.
+- [ ] Blocker: Phase 3 must not choose ad hoc temporary metadata locations during implementation. If metadata cannot yet live at the canonical target path for the pilot set, stop and update the earlier-phase plan/checklists first.
 
 ### Blockers
 
 - [ ] A sequencing gap exists between the planned canonical `exercise.json` location and the current on-disk exercise layout; this must be resolved or explicitly documented before implementation starts.
 - [ ] The ex006 duplicate-home situation must be resolved or represented in the migration manifest before metadata indexing can be trusted.
 - [ ] The ex007 solution notebook naming mismatch must be resolved or represented in the migration manifest before metadata-derived identity checks can be enabled safely.
+- [ ] Blocker: the repository currently disagrees about whether `ex007` belongs in the active exercise set; do not replace registry ownership until that disagreement is resolved or represented explicitly.
 
 ## Action Plan Feedback
 

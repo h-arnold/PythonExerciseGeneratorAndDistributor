@@ -22,7 +22,7 @@ These rules come from [ACTION_PLAN.md](./ACTION_PLAN.md) and remain mandatory du
 - Related action-plan phase or stream: `Phase 11: Validation, Cutover, And Cleanup`
 - Author: `OpenAI Codex`
 - Date: `2026-03-12`
-- Status: `ready`
+- Status: `draft`
 - Scope summary: Final repository-wide validation of the canonical `exercise_key` model, final cutover of runtime/workflow/template selection to the agreed post-migration contract, and removal or repurposing of legacy top-level exercise-specific notebooks and tests once they are no longer sources of truth.
 - Explicitly out of scope: Designing the canonical resolver, inventing the final variant-selection mechanism, migrating individual exercises for the first time, editing notebooks by hand, or changing [ACTION_PLAN.md](./ACTION_PLAN.md) as part of this planning task.
 
@@ -60,9 +60,8 @@ Notes:
   - Phase 10 has already updated maintained docs, workflows, and agent guidance.
 - Open assumptions:
   - Exported Classroom repositories still flatten exercise outputs to top-level `notebooks/` and `tests/` paths even though authoring moves under `exercises/`.
-  - Shared grading helpers remain importable in exported repositories, either from the top-level `tests` package or from the support package agreed in Phase 4.
-  - The future implementation agent will replace the placeholders “final variant selector” and “migration manifest path” below with the exact names chosen in earlier phases.
-  - The full current exercise set to validate is: `ex001_sanity`, `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax`, `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
+  - `ex001_sanity` is obsolete and should be removed rather than included in the final canonical validation set.
+  - The canonical exercise set to validate after that removal is: `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax`, `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
 
 ## Affected Surfaces Inventory
 
@@ -98,7 +97,6 @@ List every surface this migration unit touches. This section is intentionally ex
   - `tests/test_build_autograde_payload.py` — explicitly validates `PYTUTOR_NOTEBOOKS_DIR` handling.
   - `tests/test_integration_autograding.py` — verifies the end-to-end autograding flow.
   - `tests/test_autograde_plugin.py` — plugin-facing contract must remain valid after cutover.
-  - `tests/test_ex001_sanity.py`
   - `tests/test_ex002_sequence_modify_basics.py`
   - `tests/test_ex003_sequence_modify_variables.py`
   - `tests/test_ex004_sequence_debug_syntax.py`
@@ -142,7 +140,7 @@ List every surface this migration unit touches. This section is intentionally ex
   - `exercises/sequence/debug/ex004_sequence_debug_syntax/`
   - `exercises/sequence/debug/ex005_sequence_debug_logic/`
   - `exercises/sequence/debug/ex007_sequence_debug_casting/`
-  - `exercises/ex001_sanity/` — current mixed-layout holdout that is not yet under a construct/type directory.
+  - `exercises/ex001_sanity/` — obsolete directory that should be removed before final cutover.
   - `exercises/ex006_sequence_modify_casting/` — duplicate or partially migrated home that must not survive into final cutover unnoticed.
   - `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` — placeholder path that may need repurposing or removal once verifier expectations are updated.
   - `notebooks/` — current legacy top-level student notebook source location.
@@ -202,7 +200,7 @@ List every surface this migration unit touches. This section is intentionally ex
   - `python -m scripts.template_repo_cli update-repo --repo-name ...`
   - `python scripts/build_autograde_payload.py --pytest-args ... --output ... --summary ... --minimal`
 - [ ] Environment variables:
-  - `PYTUTOR_NOTEBOOKS_DIR` — transitional and currently widely used; Phase 11 should remove or explicitly freeze it only if earlier phases decided it remains public.
+  - `PYTUTOR_NOTEBOOKS_DIR` — transitional and currently widely used; Phase 11 should remove it from the canonical public contract rather than preserving it conditionally.
   - `PYTHONPATH` — injected by `tests.helpers.build_autograde_env()` for autograding helper runs.
   - `PYTEST_DISABLE_PLUGIN_AUTOLOAD` — part of the current autograde test harness.
 - [ ] Workflow jobs or steps:
@@ -238,7 +236,7 @@ Break this phase into explicit validation, cutover, and cleanup work. Keep the o
 - [ ] Update: `.github/workflows/tests.yml`, `.github/workflows/tests-solutions.yml`, and `template_repo_files/.github/workflows/classroom.yml` to use the final variant-selection mechanism and final source-to-export contract.
 - [ ] Update: notebook self-check entry points in `tests/student_checker/api.py` and `tests/student_checker/notebook_runtime.py` so they validate canonical identities consistently.
 - [ ] Remove: any remaining top-level source lookup logic that treats `notebooks/<exercise>.ipynb` or `tests/test_<exercise>.py` as authoritative inputs.
-- [ ] Remove: transitional env-var validation that hard-codes `PYTUTOR_NOTEBOOKS_DIR` to `notebooks` or `notebooks/solutions`, unless earlier phases explicitly choose to keep it public.
+- [ ] Remove: transitional env-var validation that hard-codes `PYTUTOR_NOTEBOOKS_DIR` to `notebooks` or `notebooks/solutions`.
 - [ ] Rename or relocate: any legacy exercise-specific tests moved under exercise-local test directories, once pytest discovery is already proven.
 - [ ] Rename or relocate: top-level notebook mirrors only if they still serve a clearly documented export fixture purpose; otherwise delete them after validation.
 - [ ] Fail-fast behaviour to add: explicit errors when callers pass legacy notebook paths, legacy test paths, or mismatched slugs instead of canonical `exercise_key` inputs.
@@ -248,7 +246,7 @@ Break this phase into explicit validation, cutover, and cleanup work. Keep the o
 - [ ] `exercise.json` changes: none beyond verifying that the agreed minimal schema is sufficient; do not expand metadata in Phase 11 just to paper over unresolved path conventions.
 - [ ] Derived-data/index changes: ensure any runtime index or derived registry introduced earlier reflects that all exercises are now canonical and none remain in a legacy state.
 - [ ] Registry replacement work: remove or update hard-coded registries that still point at legacy paths, especially `_NOTEBOOK_ORDER` in `tests/student_checker/api.py` and any legacy notebook-name inventories in `scripts/template_repo_cli/core/selector.py`.
-- [ ] Migration manifest updates: set every exercise to its final post-migration state in the manifest agreed in Phase 2; no manifest file exists in the current codebase yet, so the implementing agent must name the real manifest path before execution.
+- [ ] Migration manifest updates: set every exercise to its final post-migration state in `exercises/migration_manifest.json`.
 
 ### Test Changes
 
@@ -273,7 +271,6 @@ List both existing tests to update and new tests to add.
   - `tests/test_build_autograde_payload.py`
   - any workflow smoke harnesses added in earlier phases for `.github/workflows/tests.yml`, `.github/workflows/tests-solutions.yml`, and `template_repo_files/.github/workflows/classroom.yml`
 - [ ] Remove obsolete tests:
-  - `tests/test_ex001_sanity.py`
   - `tests/test_ex002_sequence_modify_basics.py`
   - `tests/test_ex003_sequence_modify_variables.py`
   - `tests/test_ex004_sequence_debug_syntax.py`
@@ -344,9 +341,9 @@ python -m pytest -q \
 
 ```bash
 source .venv/bin/activate
-python -m scripts.template_repo_cli validate --notebooks ex001_sanity ex002_sequence_modify_basics
+python -m scripts.template_repo_cli validate --notebooks ex002_sequence_modify_basics ex003_sequence_modify_variables
 python -m scripts.template_repo_cli create \
-  --notebooks ex001_sanity ex002_sequence_modify_basics \
+  --notebooks ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name phase11-smoke \
   --dry-run \
   --output-dir /tmp/phase11-template
@@ -377,13 +374,12 @@ rg -n "PYTUTOR_NOTEBOOKS_DIR|notebooks/solutions|tests/test_ex[0-9]|notebooks/ex
 
 ```bash
 source .venv/bin/activate
-# Replace <FINAL_VARIANT_SELECTOR> with the exact mechanism chosen in Phases 4 and 8.
-# Do not ship both the final selector and a silent legacy fallback.
-<FINAL_VARIANT_SELECTOR_FOR_SOLUTION_MODE> python -m pytest -q
-<FINAL_VARIANT_SELECTOR_FOR_STUDENT_MODE> python -m pytest -q <STUDENT_MODE_SMOKE_TARGETS>
+python -m pytest -q
+python -m pytest -q <STUDENT_MODE_SMOKE_TARGETS> --variant student
+python -m pytest -q --variant solution
 ```
 
-Only include commands that remain relevant once the earlier-phase execution-model decisions are final. If the final selector has not been chosen yet, Phase 11 cannot be executed safely.
+Only include commands that remain relevant once the earlier-phase execution-model decisions are final. If the final support-package location or final CLI flag syntax is still not implemented in code, Phase 11 cannot be executed safely.
 
 ### Expected Results
 
@@ -431,9 +427,11 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Blockers
 
-- [ ] Blocker: the current repository contains mixed exercise locations under `exercises/`, including `exercises/ex001_sanity/` and both `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`; final cleanup must not proceed until ownership is unambiguous.
+- [ ] Blocker: the obsolete `exercises/ex001_sanity/` tree must be removed before final cleanup proceeds.
+- [ ] Blocker: the current repository contains mixed exercise locations under `exercises/`, including both `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`; final cleanup must not proceed until ownership is unambiguous.
 - [ ] Blocker: the current `ex007` identity is inconsistent across source files. The student notebook stem is `ex007_sequence_debug_casting`, the solution notebook stem is `ex007_data_types_debug_casting`, notebook self-checks reference `check_notebook('ex007_data_types_debug_casting')`, and `tests/test_ex007_sequence_debug_casting.py` imports a non-existent `tests.exercise_expectations.ex007_data_types_debug_casting` module.
 - [ ] Blocker: Phase 11 cannot execute safely until the final selector and manifest decisions from earlier phases are written down in code and docs, not just implied.
+- [ ] Blocker: Phase 11 cannot execute safely until the dedicated support-package location for shared grading/runtime helpers is implemented and referenced consistently by packaging, docs, and workflows.
 
 ## Action Plan Feedback
 

@@ -61,10 +61,9 @@ Notes:
   - `exercise.json` fields are limited to `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts`.
   - Exported repositories must remain metadata-free even after authoring-side metadata is introduced.
 - Open assumptions:
-  - Preferred shared-module home is a new top-level package such as `exercise_metadata/` so that `tests/`, `scripts/`, and future export-aware code can import the same implementation cleanly.
-  - The initial live repository may keep all exercises marked as `legacy` in the migration manifest, with canonical resolution proved first through isolated test fixtures rather than an immediate in-repo pilot migration.
+  - The shared module/package name for this phase is `exercise_metadata/`.
+  - Phase 2 must prove canonical behaviour with isolated fixtures and one live migrated pilot exercise.
   - If a live pilot is required in this phase, do **not** choose `ex006_sequence_modify_casting` or `ex007_sequence_debug_casting` until the blockers in this checklist have been resolved and fed back into [ACTION_PLAN.md](./ACTION_PLAN.md).
-  - Best current pilot candidates are fixture-only exercises or a future cleaned-up `sequence` exercise once duplicate identities are removed.
 
 ## Affected Surfaces Inventory
 
@@ -146,6 +145,7 @@ List every surface this migration unit touches. Be concrete.
     - `exercise_metadata/metadata.py` — `exercise.json` loading and schema validation.
     - `exercise_metadata/manifest.py` — migration manifest loading and validation.
     - `exercise_metadata/resolver.py` — `exercise_key`-based resolution helpers.
+    - `exercise_metadata/errors.py` — explicit resolver/metadata exception types for later call-site migration.
     - `exercise_metadata/_typeguards.py` or `exercise_metadata/types.py` — TypeGuards and small shared types.
   - Existing duplicated-resolver modules to converge later:
     - `tests.notebook_grader`
@@ -226,8 +226,7 @@ Break work into concrete tasks. Group by concern, not by person.
 
 - [ ] `exercise.json` changes:
   - Add the loader and schema validation in code first.
-  - If no live exercise is migrated during Phase 2, keep `exercise.json` coverage in test fixtures only and record that choice in implementation notes.
-  - If a live pilot is migrated, create `exercise.json` only in the pilot canonical directory and use the exact minimal field set from [ACTION_PLAN.md](./ACTION_PLAN.md).
+  - Create `exercise.json` only in the live pilot canonical directory and use the exact minimal field set from [ACTION_PLAN.md](./ACTION_PLAN.md).
   - Do **not** add notebook paths, test paths, tag names, ordering, self-check flags, or other convention-based data to `exercise.json`.
 - [ ] Derived-data/index changes:
   - Add a single migration manifest, recommended path: `exercises/migration_manifest.json`.
@@ -239,8 +238,7 @@ Break work into concrete tasks. Group by concern, not by person.
 - [ ] Migration manifest updates:
   - The manifest must make legacy-vs-migrated state explicit.
   - The manifest must not auto-discover layout state by scanning for files.
-  - If a live pilot is not chosen, keep all real-repo entries `legacy` and prove migrated behaviour with isolated fixtures.
-  - If a live pilot is chosen, update only that exercise entry to `migrated` once the canonical files exist.
+  - Update only the nominated live pilot entry to `migrated` once the canonical files exist.
 
 ### Test Changes
 
@@ -378,12 +376,12 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 - [ ] Risk: Fixture-only proof of canonical resolution may be technically sufficient for Phase 2, but later phases could stall if no real pilot exercise is nominated soon afterwards.
 - [ ] Risk: The current `scripts/verify_exercise_quality.py` logic still encodes the old `exercises/<construct>/<type>/<exercise_key>/` structure and could mislead future work if left untracked.
 
-### Open Questions
+### Decisions
 
-- [ ] Question: Should the shared package be named `exercise_metadata`, `exercise_repo`, or something else? Choose one and keep it stable.
+- [x] Decision: The shared package name for this phase is `exercise_metadata`.
 - [x] Decision: Phase 2 should prove canonical behaviour with isolated fixtures and one live migrated pilot exercise.
-- [ ] Question: What exact error taxonomy should the shared resolver expose to keep later call-site migration straightforward?
 - [x] Decision: The manifest lives at `exercises/migration_manifest.json`.
+- [x] Decision: The shared resolver exposes explicit errors for invalid `exercise_key`, unknown exercise, legacy-only exercise, duplicate exercise identity, invalid metadata schema, and missing canonical files.
 
 ### Blockers
 
@@ -392,6 +390,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 - [ ] Blocker: `ex007` has inconsistent identity strings — the student notebook and tests use `ex007_sequence_debug_casting`, but both `notebooks/ex007_sequence_debug_casting.ipynb` and `notebooks/solutions/ex007_data_types_debug_casting.ipynb` reference `ex007_data_types_debug_casting` in self-check code or file names.
 - [ ] Blocker: No `exercise.json` files currently exist anywhere in the repository, so any live migrated exercise must be created deliberately rather than inferred.
 - [ ] Blocker: `scripts/verify_exercise_quality.py` currently prefers the old construct/type/exercise directory layout, which conflicts with the target canonical design and must not become the accidental resolver model.
+- [ ] Blocker: a live pilot exercise must be nominated from Phase 1 outputs before Phase 2 implementation starts; do not improvise the pilot during implementation.
 
 ## Action Plan Feedback
 

@@ -18,7 +18,7 @@ These rules are restated from `ACTION_PLAN.md` and apply throughout Phase 10:
 - Related action-plan phase or stream: `Phase 10: Docs, Agents, Workflows, And Contributor Guidance`
 - Author: `Codex (Implementer Agent)`
 - Date: `2026-03-12`
-- Status: `ready`
+- Status: `draft`
 - Scope summary: Align maintained contributor docs, teacher docs, agent instructions, repository workflows, template workflow guidance, and docs-backed tests with the migrated exercise-centric authoring structure and the settled resolver/execution/export contracts.
 - Explicitly out of scope:
   - Moving notebooks, tests, or exercise folders as part of this checklist alone.
@@ -55,9 +55,7 @@ Notes:
   - The export contract for Classroom repositories has been defined and proven.
   - The agent cutover sequence has been chosen: update in place first, or replace then archive.
 - Open assumptions:
-  - The `sequence` construct remains the best pilot/example set because the live repo already contains `ex002` to `ex007` there.
   - Phase 10 should not invent a new manifest path, resolver API, or workflow contract; it should document whichever contract earlier phases settled.
-  - If the `PYTUTOR_NOTEBOOKS_DIR` replacement is not ready, the docs must stay explicitly transitional rather than pretending the cutover is complete.
 
 ## Affected Surfaces Inventory
 
@@ -114,7 +112,7 @@ List every surface this migration unit touches. This inventory is based on the c
   - `template_repo_files/README.md.template` — review if exported README wording should distinguish student-facing export from authoring repo guidance.
   - `template_repo_files/pytest.ini` — review only if the documented test-discovery contract changes.
 - [ ] Exercise directories:
-  - `exercises/ex001_sanity/` — current root-level exercise directory; treat as a migration example/blocker, not a canonical layout example.
+  - `exercises/ex001_sanity/` — obsolete root-level exercise directory; treat as a removal target, not a canonical layout example.
   - `exercises/ex006_sequence_modify_casting/` — duplicate legacy root-level copy; must not be shown as canonical in docs.
   - `exercises/sequence/modify/ex002_sequence_modify_basics/`
   - `exercises/sequence/modify/ex003_sequence_modify_variables/`
@@ -286,6 +284,7 @@ Every checklist should spell out the behaviour that must be proved, not just the
   - Rewrite `docs/project-structure.md` to show the post-migration canonical tree rather than the live mixed legacy tree.
   - Rewrite `docs/setup.md` and `docs/development.md` commands and troubleshooting sections to match the final execution model.
   - Update `docs/CLI_README.md` so template CLI examples describe the correct source and export contracts.
+  - Update `docs/autograding-cli.md` and `docs/github-classroom-autograding-guide.md` so workflow-facing docs match the final execution and export contracts.
 - [ ] Teaching docs:
   - Update `docs/exercise-generation.md` and `docs/exercise-generation-cli.md` to match the post-migration scaffold and verification workflow.
   - Update any examples that name current live exercises such as `ex002_sequence_modify_basics` or `ex006_sequence_modify_casting` so they use the correct canonical paths.
@@ -296,8 +295,7 @@ Every checklist should spell out the behaviour that must be proved, not just the
   - Update `.github/agents/implementer.md.agent.md` and `.github/agents/tidy_code_review.md.agent.md` with migration warnings and cross-links where needed.
   - Update `docs/agents/tidy_code_review/automated_review.md` and `docs/agents/tidy_code_review/manual_review.md` so the linked reviewer workflow does not reintroduce stale path guidance.
 - [ ] Repository workflows:
-  - Decide whether `.github/workflows/tests.yml` remains the primary CI workflow, becomes student-mode, or remains solution-mode only.
-  - Decide whether `.github/workflows/tests-solutions.yml` stays as a separate manual workflow, becomes redundant, or needs renaming.
+  - Update `.github/workflows/tests.yml` and `.github/workflows/tests-solutions.yml` so repo workflows validate the authoring-repository contract and their roles are clearly differentiated.
   - Update workflow comments and job names so contributors can understand the difference without reading the YAML twice.
 - [ ] Template workflows:
   - Update `template_repo_files/.github/workflows/classroom.yml` comments and any env wiring so it matches the final Classroom export contract.
@@ -392,7 +390,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Blockers
 
-- [ ] Blocker: The live repo still contains mixed exercise layouts, including `exercises/ex001_sanity/`, `exercises/ex006_sequence_modify_casting/`, and nested `exercises/sequence/...` exercise folders, so docs cannot honestly present the migration as complete without calling out the transitional state.
+- [ ] Blocker: The live repo still contains the obsolete `exercises/ex001_sanity/` tree and the duplicate `exercises/ex006_sequence_modify_casting/` tree, so docs cannot honestly present the migration as complete without calling out the transitional state.
 - [ ] Blocker: `.github/workflows/tests.yml` and `.github/workflows/tests-solutions.yml` currently both run solution-mode tests with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`, so the intended workflow split is unclear.
 - [ ] Blocker: `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match `tests/test_ex007_sequence_debug_casting.py` or `exercises/sequence/debug/ex007_sequence_debug_casting/`, which is a concrete naming mismatch that could leak into docs/examples if not resolved.
 - [ ] Blocker: `scripts/new_exercise.py` and `scripts/verify_exercise_quality.py` still encode legacy path assumptions, so documentation cannot fully cut over until the earlier implementation phases land.
