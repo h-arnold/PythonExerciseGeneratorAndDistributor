@@ -470,7 +470,7 @@ Do not mark the checklist complete until all of the following are true.
 ## Checklist Notes
 
 - Current repository facts verified while preparing this checklist:
-  - `notebooks/` currently contains seven student notebooks: `ex001_sanity`, `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax`, `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
+  - `notebooks/` currently contains seven student notebooks: `ex001_sanity` (obsolete removal target), `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax`, `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
   - `notebooks/solutions/` currently contains six matching solution stems plus the mismatched `ex007_data_types_debug_casting.ipynb`.
   - Top-level exercise-specific tests currently still exist under `tests/test_ex*.py`.
   - `tests/template_repo_cli/core/collector.py` and `scripts/template_repo_cli/core/packager.py` still treat top-level notebooks and tests as source inputs.
