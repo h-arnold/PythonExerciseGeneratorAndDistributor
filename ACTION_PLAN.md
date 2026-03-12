@@ -169,6 +169,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 | Template packaging copies notebooks from `notebooks/` and tests from `tests/` | [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py), [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) | Decide whether packaging flattens exported assets or preserves nested structure, then encode that explicitly |
 | Notebook self-check cells assume filename or slug-based lookup | [scripts/new_exercise.py](scripts/new_exercise.py), [tests/student_checker/notebook_runtime.py](tests/student_checker/notebook_runtime.py), [tests/student_checker/api.py](tests/student_checker/api.py), [tests/template_repo_cli/test_integration.py](tests/template_repo_cli/test_integration.py) | Define and migrate a canonical self-check contract so generated notebooks, packaged templates, and student checker APIs resolve exercises consistently |
 | Expectation and framework modules hard-code notebook paths per exercise | [tests/exercise_expectations](tests/exercise_expectations), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/student_checker/checks](tests/student_checker/checks) | Replace raw notebook path constants with exercise-key-driven or metadata-driven resolution so the framework does not maintain a second path model |
+| Helper utilities wrap notebook-path behaviour outside the main framework modules | [tests/helpers.py](tests/helpers.py), [tests/test_integration_autograding.py](tests/test_integration_autograding.py), [tests/test_build_autograde_payload.py](tests/test_build_autograde_payload.py) | Move helper-level path handling onto the same resolver and execution-model contract rather than leaving hidden notebook-path assumptions in support code |
 | CI and exported workflow configuration assume `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` | [.github/workflows/tests.yml](.github/workflows/tests.yml), [.github/workflows/tests-solutions.yml](.github/workflows/tests-solutions.yml), [template_repo_files](template_repo_files) | Update repository and template workflows alongside the resolver changes so CI behaviour matches the new layout model |
 | Docs and tests assume the current flattened template export contract | [docs/CLI_README.md](docs/CLI_README.md), [tests/template_repo_cli](tests/template_repo_cli), [tests/exercise_framework/test_autograde_parity.py](tests/exercise_framework/test_autograde_parity.py) | Make the export contract explicit and migrate its tests and docs together with selector, collector, and packager changes |
 | Pytest discovery currently assumes exercise-specific tests live under the top-level `tests/` tree | [pyproject.toml](pyproject.toml), [tests](tests), [tests/template_repo_cli](tests/template_repo_cli) | Define the repository test discovery model explicitly before moving exercise-local tests, including whether pytest collects directly from `exercises/**/tests/` and how shared helper imports continue to work |
@@ -191,6 +192,8 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Do not begin resolver implementation until the repository inventory is complete enough to identify duplicate or ambiguous exercise identities.
 - [ ] The phase is only complete once there is a written inventory of current exercise identities, locations, and known anomalies that later phases can refer to.
 - [ ] Do not choose a pilot construct for migration until the inventory confirms it is suitable for a safe first cut.
+- [ ] The phase is not complete until duplicate exercise ownership is either resolved directly or represented explicitly in the migration manifest with one canonical target per exercise.
+- [ ] Identity normalisation rules must be written down explicitly, not inferred informally from current file names.
 
 - [ ] Inventory every current exercise key and record its current teacher docs path, notebook path, solution notebook path, and test path.
 - [ ] Record duplicate directories, stale exercise folders, construct mismatches, slug mismatches, and other naming anomalies that could make migration ambiguous.
@@ -203,6 +206,22 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Confirm standard notebook names: `student.ipynb` and `solution.ipynb`.
 - [ ] Confirm that top-level `tests/` remains for shared grading infrastructure only.
 - [ ] Confirm whether template exports should flatten notebooks and tests during the transition.
+- [ ] Record the early identity-normalisation blockers explicitly and decide their target canonical forms before Phase 2 starts.
+
+#### Identity Normalisation Rules
+
+- [ ] Normalise duplicate exercise homes so each exercise has one canonical target directory under `exercises/<construct>/<exercise_key>/`.
+- [ ] Normalise mixed key families so construct naming stays consistent. For example, `ex007` is a `sequence` exercise and should remain `ex007_sequence_debug_casting`, not `ex007_data_types_debug_casting`.
+- [ ] Normalise legacy root-level exercise directories such as `exercises/ex001_sanity/` and `exercises/ex006_sequence_modify_casting/` into the agreed construct-based canonical tree during migration planning.
+- [ ] Normalise self-check references, expectation-module names, and notebook stems so they all match the canonical `exercise_key`.
+- [ ] Treat stray or non-exercise trees such as [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor) as anomalies to be removed, relocated, or explicitly documented before the canonical inventory is considered trustworthy.
+
+#### Verified Early Blockers
+
+- [ ] Duplicate `ex006_sequence_modify_casting` exercise homes currently exist at [exercises/ex006_sequence_modify_casting](exercises/ex006_sequence_modify_casting) and [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting); this must resolve to one canonical exercise identity.
+- [ ] `ex007` currently mixes `sequence` and `data_types` naming across notebooks, tests, and self-check references; this must be normalised to the canonical `sequence` key family before later migration phases rely on identity matching.
+- [ ] The repository currently contains mixed exercise directory shapes such as `exercises/<exercise_key>/` and `exercises/<construct>/<type>/<exercise_key>/`; these must not be treated as equally canonical.
+- [ ] A stray tree exists under [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor); this must be classified and removed or relocated before structure docs are finalised.
 
 ### Phase 2: Metadata And Resolution Layer
 
@@ -212,7 +231,8 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Legacy code that still calls old path-based entry points should fail hard and clearly until it is refactored.
 - [ ] Prefer deliberate breaking changes over compatibility aliases, soft transitions, or fallback argument handling.
 - [ ] Keep the metadata schema intentionally minimal and avoid reintroducing convention-based fields as configuration.
-- [ ] The phase is only complete once the shared resolver accepts `exercise_key`, rejects legacy path inputs, and has tests that prove missing migrated files and legacy access patterns fail hard.
+- [ ] The phase is only complete once the shared resolver accepts `exercise_key`, rejects legacy path inputs, ignores `PYTUTOR_NOTEBOOKS_DIR` entirely, and has tests that prove missing migrated files and legacy access patterns fail hard.
+- [ ] The phase must state explicitly whether canonical behaviour is proved with a live migrated pilot exercise, isolated fixtures, or both.
 
 - [ ] Add an `exercise.json` loader in a central module rather than scattering path logic across scripts.
 - [ ] Add a resolver that locates an exercise directory from `exercise_key`.
@@ -224,6 +244,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Make resolvers fail hard when an exercise is marked as migrated but the canonical files are missing.
 - [ ] Make legacy callers fail clearly when they bypass the new resolver contract, rather than silently adapting legacy path inputs.
 - [ ] Add unit tests covering both legacy and canonical exercises without allowing silent cross-layout fallback.
+- [ ] Decide and document the manifest location explicitly before implementation starts.
 - [ ] Identify and list modules that will need to move onto the resolver early, especially: [tests/notebook_grader.py](tests/notebook_grader.py), [tests/exercise_framework](tests/exercise_framework), [tests/exercise_expectations](tests/exercise_expectations), [tests/student_checker](tests/student_checker), [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py), and [scripts/template_repo_cli](scripts/template_repo_cli).
 - [ ] Make the minimal target metadata schema explicit in code and docs: `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts`.
 
@@ -352,6 +373,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Do not rename current `.github/agents` files to `.old` until replacement agent instructions exist and all references have been updated.
 - [ ] During migration, keep the current agent files authoritative and mark them clearly as transitional where needed.
 - [ ] The phase is only complete once core contributor docs, classroom/export docs, workflows, and agent instructions all point at the same canonical structure and resolver contract.
+- [ ] The phase is not complete while repository workflows still present an unclear or duplicated solution-mode contract.
 
 - [ ] Update [README.md](README.md) to describe the new canonical structure.
 - [ ] Update [docs/project-structure.md](docs/project-structure.md) and [docs/setup.md](docs/setup.md).
@@ -362,6 +384,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Update all four current agent files explicitly: [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md), [.github/agents/exercise_verifier.md.agent.md](.github/agents/exercise_verifier.md.agent.md), [.github/agents/implementer.md.agent.md](.github/agents/implementer.md.agent.md), and [.github/agents/tidy_code_review.md.agent.md](.github/agents/tidy_code_review.md.agent.md).
 - [ ] Only archive superseded agent files with a suffix such as `.old` after the replacement files are complete, references have been switched, and the new guidance is confirmed to be authoritative.
 - [ ] Update repository workflows and any template workflow sources documented in the repo so CI instructions no longer teach or depend on the legacy layout contract.
+- [ ] Rationalise the current repository workflow split so `tests.yml` and `tests-solutions.yml` have clearly distinct purposes after the migration.
 - [ ] Update docs that describe the testing and autograding contract, especially: [docs/testing-framework.md](docs/testing-framework.md), [docs/exercise-testing.md](docs/exercise-testing.md), [docs/autograding-cli.md](docs/autograding-cli.md), [docs/development.md](docs/development.md), and [docs/github-classroom-autograding-guide.md](docs/github-classroom-autograding-guide.md).
 - [ ] Update examples in teacher docs that currently refer to top-level `notebooks/` and `tests/` paths.
 
@@ -371,12 +394,14 @@ The current repository has a number of path assumptions wired into tooling, docs
 
 - [ ] Do not remove legacy support until migrated constructs, CI, packaging, and docs have all been proven against the new contract.
 - [ ] Do not use “repository CI is green” as the only proof of migration success.
-- [ ] The phase is only complete once repository CI, explicit student-mode checks, solution-mode checks, packaged-template smoke tests, and docs/agent guidance all pass against the new contract, and the old top-level exercise-specific notebooks and tests are no longer required as sources of truth.
+- [ ] The phase is only complete once repository CI, explicit student-mode checks, solution-mode checks, packaged-template smoke tests, full test collection, and docs/agent guidance all pass against the new contract, and the old top-level exercise-specific notebooks and tests are no longer required as sources of truth.
+- [ ] Final cleanup must not proceed until duplicate exercise homes and naming mismatches have been resolved deterministically.
 
 - [ ] Run solution-mode tests for the migrated construct and confirm that the new resolver path is stable.
 - [ ] Run explicit student-mode validation for the migrated construct and confirm expected failure/pass behaviour still matches the intended workflow.
 - [ ] Run template packaging smoke tests for at least one migrated exercise.
 - [ ] Run repository CI and packaged-template smoke tests against the new contract before removing legacy support.
+- [ ] Run an explicit full test-collection pass before final cleanup so collection-time identity mismatches are caught, not just runtime failures.
 - [ ] Update repository workflows and exported template workflows to use the final variant-selection mechanism.
 - [ ] Define and document the minimum validation matrix required before each cutover stage, including repository student mode, repository solution mode, and packaged-template runtime checks.
 - [ ] Remove legacy path support only after every exercise and every doc set has been migrated.
