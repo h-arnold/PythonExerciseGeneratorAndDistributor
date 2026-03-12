@@ -4,12 +4,12 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 
 ## KISS & DRY (overview)
 
-- KISS (Simplicity checks):
-  - Cyclomatic complexity per function — flag when CC > 8 (too many branches or conditional paths).
-  - Function length — flag when > 120 lines (likely multiple responsibilities).
-  - Nesting depth — flag when > 3 (control flow becoming hard to follow).
-  - Look for repeated conditionals, nested loops, or complex boolean expressions that could be simplified.
+**Automated by Ruff**: Cyclomatic complexity (C901, max 8), dead code (F rules), magic values (PLR2004), too many parameters (PLR0913), bare excepts (BLE001), and code style consistency are all detected by linting. Focus manual review on *design-level* simplification.
+
+- KISS (Manual Simplicity checks):
+  - Look for repeated conditionals, nested loops, or complex boolean expressions that could be simplified or extracted.
   - Check for functions that mix data retrieval, transformation, and output — suggest extraction of concerns.
+  - Identify overly defensive guards or unnecessary complexity that Ruff's rules don't catch.
 
 - DRY (Duplication checks):
   - Manually scan for repeated logic patterns across files, especially helper functions or validation logic.
@@ -18,22 +18,20 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 
 ## Tidy code principles (prompt for reviewer)
 
-- KISS (Keep It Simple): prefer simple, explicit logic. Check CC, nesting depth, and long functions; flag complex functions for refactor.
+**Enforced by Ruff (no manual review needed)**:
+- Cyclomatic complexity (C901, max 8), dead code (F rules), bare excepts (BLE001), magic numbers/strings (PLR2004), too many parameters (PLR0913), unused imports/variables (F rules), code style consistency.
+
+**Manual Review Principles**:
 - DRY (Don't Repeat Yourself): detect duplicated blocks (>= duplication_min_lines); suggest extraction to utils/helpers.
 - Readability & naming: meaningful names, consistent formatting, short expressions. Flag unclear/one-letter names and long inline expressions.
 - Single Responsibility: functions/classes should do one thing. Flag multi-responsibility functions for extraction.
 - Small functions & modules: prefer short functions (< max_function_length) and small modules; suggest splitting where appropriate.
-- If a function needs more than 5 parameters, refactor to use a configuration object or class.
-- Explicit error handling: no silent excepts; ensure clear exceptions and helpful messages.
 - Deterministic, fast tests: require unit tests for changed code, cover edge cases, avoid randomness/time/network in tests.
-- No dead code or commented-out code: remove unused imports, variables, and unreachable statements.
-- No magic numbers/strings: replace with named constants or enums with clear names.
 - Minimise side effects & global state: prefer pure functions or clearly documented side effects; flag implicit global mutation.
 - Minimal/explicit dependencies: avoid unnecessary third-party libs; prefer stdlib or documented, pinned dependencies.
 - Documentation & docstrings: public APIs documented; update docs and README when behaviour or CLI/options change.
 - Security & input validation: validate external inputs, sanitize data, avoid insecure patterns.
 - Performance when measured: don't preoptimize; add micro-benchmarks for hotspots and document trade-offs.
-- Consistent style & linting: run and fix ruff/formatting rules; ensure CI lints pass.
 - Type hints for public APIs: prefer modern annotations; check mismatches with tests or usage.
 - Type guards must be in a separate file near the main module to avoid cluttering business logic.
 - Backwards compatibility & deprecation: document breaking changes, provide migration notes or deprecation warnings.
@@ -41,8 +39,7 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 - Testability & observability: code should be easily unit-testable; include logs/metrics where helpful for debugging.
 - Respect licences & third-party code: do not modify vendored/third-party code; check license compatibility.
 
-For each principle: note a concise rationale, an automated detection heuristic (tool/metric), and an actionable suggestion (fix, refactor, or docs).
-Defaults and thresholds are configurable via `agent-config.yml`.
+For each manual principle: note a concise rationale and an actionable suggestion (fix, refactor, or docs).
 
 ## Naming and folder organisation
 

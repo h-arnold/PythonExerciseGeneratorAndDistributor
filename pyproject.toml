@@ -55,7 +55,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "C90", "LOG", "PIE", "RUF", "SIM", "PLR"]
+select = ["E", "F", "W", "I", "UP", "B", "BLE", "C90", "LOG", "PIE", "RUF", "SIM", "PLR"]
 ignore = ["E501"]
 
 [tool.ruff.lint.mccabe]
