@@ -5,12 +5,13 @@
 Phase 2 canonical behaviour is proved by both:
 
 1. **Live pilot exercise** – `ex004_sequence_debug_syntax` has a full `exercise.json`
-   and canonical notebooks at
-   `exercises/sequence/debug/ex004_sequence_debug_syntax/notebooks/student.ipynb`
-   and `exercises/sequence/debug/ex004_sequence_debug_syntax/notebooks/solution.ipynb`.
+   and proves canonical resolver behaviour for one migrated exercise.
+   The target naming convention used by the metadata layer is
+   `exercises/<construct>/<exercise_key>/notebooks/`, as defined in
+   `ACTION_PLAN.md`.
    `resolve_notebook_path("ex004_sequence_debug_syntax", "student")` and
-   `resolve_notebook_path("ex004_sequence_debug_syntax", "solution")` return these
-   files verified to exist.
+   `resolve_notebook_path("ex004_sequence_debug_syntax", "solution")` return
+   existing notebook files for that exercise.
 
 2. **Isolated fixtures** – `tests/test_exercise_metadata.py` uses `tmp_path` fixtures
    to test error cases (missing notebooks for canonical exercise, missing exercise.json,
@@ -21,7 +22,7 @@ Phase 2 canonical behaviour is proved by both:
 `PYTUTOR_NOTEBOOKS_DIR` is deliberately **ignored** by this resolver.  It was a
 legacy mechanism for switching between student and solution notebook roots.  The
 new resolver uses an explicit `variant` argument (`"student"` or `"solution"`) and
-reads from the canonical `exercises/<construct>/<key>/notebooks/` tree.
+reads from the canonical `exercises/<construct>/<exercise_key>/notebooks/` tree.
 
 ## Modules That Need To Move Onto The Resolver
 
@@ -52,7 +53,7 @@ The following exercise-level properties MUST live in `exercise.json` for canonic
 
 These fields are deliberately excluded from `exercise.json`:
 - `tags` - derived from `parts` and `exercise_type` at runtime
-- `notebook paths` - fixed by convention: `exercises/<construct>/<key>/notebooks/`
+- `notebook paths` - fixed by convention: `exercises/<construct>/<exercise_key>/notebooks/`
 - `ordering` - derived from `exercise_id`, not configurable separately
 - `mandatory self-check cell presence` - fixed by repository convention
 
@@ -84,4 +85,3 @@ Exported Classroom repositories (GitHub Classroom student repos) remain
 - The `exercise_metadata/` package
 
 The registry is a source-repository authoring concept only.
-

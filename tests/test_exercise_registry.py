@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout
+from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout, load_migration_manifest
 from exercise_metadata.registry import (
     build_exercise_registry,
     get_all_exercise_keys,
@@ -17,15 +17,51 @@ from tests.exercise_metadata_helpers import make_manifest
 # Happy-path tests using the real manifest
 # ---------------------------------------------------------------------------
 
-TOTAL_EXERCISE_COUNT = 7
 CANONICAL_KEY = "ex004_sequence_debug_syntax"
 CANONICAL_EXERCISE_ID = 4
+
+
+def _get_manifest_exercises() -> dict[str, dict[str, str]]:
+    """Return the live manifest exercises mapping for expectation derivation."""
+    return load_migration_manifest()["exercises"]
+
+
+def _expected_all_keys() -> list[str]:
+    """Return all exercise keys from the live manifest."""
+    return list(_get_manifest_exercises())
+
+
+def _expected_canonical_keys() -> list[str]:
+    """Return canonical exercise keys from the live manifest."""
+    return [
+        key
+        for key, entry in _get_manifest_exercises().items()
+        if entry["layout"] == ExerciseLayout.CANONICAL.value
+    ]
+
+
+def _assert_canonical_before_legacy(
+    values: list[str],
+    *,
+    canonical_values: set[str],
+    legacy_values: set[str],
+    item_name: str,
+) -> None:
+    """Assert that no canonical value appears after the first legacy value."""
+    seen_legacy = False
+    for index, value in enumerate(values):
+        if value in legacy_values:
+            seen_legacy = True
+        elif value in canonical_values and seen_legacy:
+            pytest.fail(
+                f"Canonical {item_name} {value!r} found at index {index} after a legacy {item_name}"
+            )
 
 
 def test_build_exercise_registry_returns_all_exercises() -> None:
     """build_exercise_registry() returns an entry for every exercise in the manifest."""
     registry = build_exercise_registry()
-    assert len(registry) == TOTAL_EXERCISE_COUNT
+    assert {entry["exercise_key"] for entry in registry} == set(_expected_all_keys())
 
 
 def test_canonical_entry_has_correct_layout_and_metadata() -> None:
@@ -42,7 +78,10 @@ def test_legacy_entries_have_none_metadata() -> None:
     """All legacy entries have metadata=None."""
     registry = build_exercise_registry()
     legacy = [e for e in registry if e["layout"] == ExerciseLayout.LEGACY.value]
-    assert len(legacy) == TOTAL_EXERCISE_COUNT - 1
+    expected_legacy_count = sum(
+        1 for entry in _get_manifest_exercises().values() if entry["layout"] == ExerciseLayout.LEGACY.value
+    )
+    assert len(legacy) == expected_legacy_count
     for entry in legacy:
         assert entry["metadata"] is None, f"Expected metadata=None for legacy {entry['exercise_key']!r}"
 
@@ -51,37 +90,42 @@ def test_canonical_entries_come_before_legacy_entries() -> None:
     """Canonical entries appear before legacy entries in the registry."""
     registry = build_exercise_registry()
     layouts = [e["layout"] for e in registry]
-    # Find last canonical and first legacy
-    last_canonical_idx = max(
-        i for i, layout in enumerate(layouts) if layout == ExerciseLayout.CANONICAL.value
+    _assert_canonical_before_legacy(
+        layouts,
+        canonical_values={ExerciseLayout.CANONICAL.value},
+        legacy_values={ExerciseLayout.LEGACY.value},
+        item_name="entry layout",
     )
-    first_legacy_idx = min(
-        i for i, layout in enumerate(layouts) if layout == ExerciseLayout.LEGACY.value
-    )
-    assert last_canonical_idx < first_legacy_idx
 
 
 def test_get_canonical_exercise_keys_returns_only_canonical() -> None:
     """get_canonical_exercise_keys() returns only canonical exercise keys."""
     keys = get_canonical_exercise_keys()
-    assert keys == [CANONICAL_KEY]
+    assert keys == _expected_canonical_keys()
 
 
-def test_get_all_exercise_keys_returns_all_seven() -> None:
-    """get_all_exercise_keys() returns all 7 exercise keys."""
+def test_get_all_exercise_keys_returns_all_manifest_keys() -> None:
+    """get_all_exercise_keys() returns every exercise key from the live manifest."""
     keys = get_all_exercise_keys()
-    assert len(keys) == TOTAL_EXERCISE_COUNT
+    assert set(keys) == set(_expected_all_keys())
     assert CANONICAL_KEY in keys
 
 
 def test_get_all_exercise_keys_canonical_first() -> None:
     """Canonical keys appear before legacy keys in get_all_exercise_keys()."""
     keys = get_all_exercise_keys()
-    canonical_idx = keys.index(CANONICAL_KEY)
-    # All other keys are legacy, so canonical key must appear before all of them
-    for key in keys:
-        if key != CANONICAL_KEY:
-            assert canonical_idx < keys.index(key)
+    canonical_keys = set(_expected_canonical_keys())
+    legacy_keys = {
+        key
+        for key, entry in _get_manifest_exercises().items()
+        if entry["layout"] == ExerciseLayout.LEGACY.value
+    }
+    _assert_canonical_before_legacy(
+        keys,
+        canonical_values=canonical_keys,
+        legacy_values=legacy_keys,
+        item_name="key",
+    )
 
 
 def test_registry_entries_are_typed_dicts() -> None:
@@ -144,4 +188,3 @@ def test_registry_entry_keys_are_strings() -> None:
     for entry in registry:
         assert isinstance(entry["exercise_key"], str)
         assert isinstance(entry["layout"], str)
-

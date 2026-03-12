@@ -12,7 +12,7 @@ Canonical fields (all required):
 
 Convention-based fields (deliberately excluded from metadata):
     tags            - derived from parts and exercise_type at runtime
-    notebook paths  - convention: exercises/<construct>/<key>/notebooks/
+    notebook paths  - convention: exercises/<construct>/<exercise_key>/notebooks/
     ordering        - derived from exercise_id
     mandatory cells - fixed by repository convention, not per-exercise config
 """

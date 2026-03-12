@@ -4,8 +4,8 @@ This module provides the canonical resolver API for the new metadata-driven
 layout.  It accepts ONLY exercise_key as input; path-based inputs are
 rejected immediately with a TypeError.
 
-PYTUTOR_NOTEBOOKS_DIR is deliberately ignored; this resolver addresses the
-canonical exercises/ tree only.
+PYTUTOR_NOTEBOOKS_DIR is deliberately ignored; this resolver targets the
+canonical exercise home convention, `exercises/<construct>/<exercise_key>/`.
 """
 
 from __future__ import annotations
@@ -23,7 +23,8 @@ Variant = Literal["student", "solution"]
 def resolve_exercise_dir(exercise_key: object, exercises_root: Path | None = None) -> Path:
     """Return the canonical directory for the given exercise_key.
 
-    Searches the exercises/ tree for a directory whose name matches
+    The canonical exercise home is `exercises/<construct>/<exercise_key>/`.
+    This function searches the exercises/ tree for a directory whose name matches
     exercise_key.  Returns the path whether or not the exercise has been
     migrated (the caller can check layout via the manifest).
 
@@ -88,7 +89,13 @@ def resolve_notebook_path(
     if variant not in ("student", "solution"):
         raise ValueError(f"variant must be 'student' or 'solution', not {variant!r}")
 
-    layout = get_exercise_layout(exercise_key, manifest_path)
+    try:
+        layout = get_exercise_layout(exercise_key, manifest_path)
+    except KeyError as exc:
+        raise LookupError(
+            f"exercise {exercise_key!r} is not in the migration manifest. "
+            "Add it to the migration manifest before resolving notebooks."
+        ) from exc
     if layout != ExerciseLayout.CANONICAL:
         raise LookupError(
             f"exercise {exercise_key!r} has layout={layout.value!r} in the migration manifest. "

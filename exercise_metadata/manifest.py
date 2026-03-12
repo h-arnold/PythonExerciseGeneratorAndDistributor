@@ -2,7 +2,7 @@
 
 The migration manifest at exercises/migration_manifest.json records whether
 each exercise uses the legacy layout (notebooks/ tree) or has been migrated
-to the canonical layout (exercises/<construct>/<key>/ tree).
+to the canonical layout (exercises/<construct>/<exercise_key>/ tree).
 """
 
 from __future__ import annotations

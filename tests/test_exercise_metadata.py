@@ -94,6 +94,13 @@ class TestResolveNotebookPath:
         with pytest.raises(LookupError, match="layout='legacy'"):
             resolve_notebook_path("ex001_sanity", "student", manifest_path=manifest_path)
 
+    def test_raises_lookup_error_for_unknown_manifest_key(self, tmp_path: Path) -> None:
+        """Unknown exercise keys are reported as LookupError by resolve_notebook_path."""
+        manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
+
+        with pytest.raises(LookupError, match="not in the migration manifest"):
+            resolve_notebook_path("ex999_nonexistent", "student", manifest_path=manifest_path)
+
     def test_raises_value_error_for_invalid_variant(self) -> None:
         """An invalid variant string raises ValueError."""
         with pytest.raises(ValueError, match="variant must be 'student' or 'solution'"):
@@ -101,8 +108,8 @@ class TestResolveNotebookPath:
 
     def test_raises_lookup_error_when_notebook_missing_for_canonical(self, tmp_path: Path) -> None:
         """Canonical exercise with missing notebook files raises LookupError."""
-        # Create the exercise directory but NOT the notebooks sub-directory.
-        exercise_dir = tmp_path / "sequence" / "debug" / "ex004_sequence_debug_syntax"
+        # Create the canonical exercise directory but NOT the notebooks sub-directory.
+        exercise_dir = tmp_path / "sequence" / "ex004_sequence_debug_syntax"
         exercise_dir.mkdir(parents=True)
 
         manifest_path = make_manifest(
