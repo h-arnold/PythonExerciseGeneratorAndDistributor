@@ -16,9 +16,9 @@ This is intended to solve the current split-brain model where a single exercise 
 
 1. `exercises/` becomes the only canonical home for exercise-specific assets.
 2. Construct-wide material stays directly under `exercises/<construct>/`.
-3. Each exercise lives at `exercises/<construct>/<exercise_key>/`.
+3. Each exercise lives at `exercises/<construct>/<type>/<exercise_key>/`.
 4. Exercise type is stored in metadata, not encoded by an extra path segment.
-5. Shared test framework code remains in the top-level `tests/` package unless Phase 4 explicitly replaces that with a dedicated support package.
+5. Shared test framework code remains in a dedicated support package (e.g., `exercise_runtime_support`) unless Phase 4 explicitly keeps it in top-level `tests/`.
 6. Exercise-local tests live inside the exercise folder and may continue to import shared helpers from the top-level `tests/` package unless Phase 4 changes that shared-runtime decision explicitly.
 7. During migration, packaging may still flatten notebooks and tests for template repositories if that keeps downstream Classroom workflows stable.
 8. During migration, layout state must be explicit per exercise; resolvers must not silently fall back between legacy and migrated paths.
@@ -182,7 +182,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 | Exercise registry data is duplicated outside path resolution | [tests/student_checker/api.py](tests/student_checker/api.py), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/exercise_expectations](tests/exercise_expectations) | Add a dedicated metadata consolidation stream so `exercise.json` replaces duplicated exercise registry data rather than only replacing path logic |
 | Repository metadata and exported template contracts have different needs | [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py), [docs/CLI_README.md](docs/CLI_README.md), [tests/template_repo_cli/test_packager.py](tests/template_repo_cli/test_packager.py) | Keep repository metadata rich while preserving a metadata-free exported Classroom contract, and make the transformation between those models explicit in packaging |
 | Source repository assets and exported Classroom assets currently share assumptions without a clearly documented mapping contract | [scripts/template_repo_cli](scripts/template_repo_cli), [tests/template_repo_cli](tests/template_repo_cli), [docs/CLI_README.md](docs/CLI_README.md) | Define the source-to-export mapping explicitly so metadata-rich authoring exercises can produce the existing metadata-free flattened export safely and predictably |
-| Mixed-layout discovery could collect the same exercise-specific surface twice during migration | [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py), [tests/ex002_sequence_modify_basics](tests/ex002_sequence_modify_basics), [pyproject.toml](pyproject.toml) | Make duplicate-collection detection and hard failure an explicit acceptance criterion for the execution-model and pytest-discovery phases |
+| Mixed-layout discovery could collect the same exercise-specific surface twice during migration | [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py), [tests/ex002_sequence_modify_basics](tests/ex002_sequence_modify_basics), [pyproject.toml](pyproject.toml) | Make duplicate-collection detection and hard failure an explicit acceptance criterion for the execution-model and pytest-discovery phases, treat `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` as the canonical exercise-specific test surface, and retire `tests/test_ex002_sequence_modify_basics.py` before enforcing the duplicate-collection guard. |
 | Exercise metadata could become bloated again if conventions are reintroduced as configuration | [ACTION_PLAN.md](ACTION_PLAN.md), [scripts/new_exercise.py](scripts/new_exercise.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Keep the metadata schema intentionally small, derive all convention-based fields, and reject proposals that reintroduce duplicated configuration without a strong need |
 
 ## Migration Checklist
@@ -202,6 +202,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Identify which current modules treat exercise identity as a filename, a slug, a path, or a directory name.
 - [ ] Use this inventory to define the canonical exercise identity that later resolvers and migration manifests will rely on.
 - [ ] Use this inventory to identify the safest pilot construct rather than assuming `sequence` is automatically the best first migration target.
+- [ ] Document the Phase 2 live pilot exercise as `ex004_sequence_debug_syntax` because the Phase 1 inventory highlighted its clean teacher docs, matching notebook/test names, and lack of duplicate artefacts.
 - [ ] Keep a running list of likely pain points in: [exercises](exercises), [notebooks](notebooks), [tests](tests), [docs](docs), and [.github/agents](.github/agents).
 - [ ] Agree that `exercises/<construct>/<exercise_key>/` is the canonical location for all exercise-specific assets.
 - [ ] Confirm that exercise type is moving from the folder hierarchy into `exercise.json`.
@@ -235,7 +236,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Prefer deliberate breaking changes over compatibility aliases, soft transitions, or fallback argument handling.
 - [ ] Keep the metadata schema intentionally minimal and avoid reintroducing convention-based fields as configuration.
 - [ ] The phase is only complete once the shared resolver accepts `exercise_key`, rejects legacy path inputs, ignores `PYTUTOR_NOTEBOOKS_DIR` entirely, and has tests that prove missing migrated files and legacy access patterns fail hard.
-- [ ] The phase must state explicitly whether canonical behaviour is proved with a live migrated pilot exercise, isolated fixtures, or both.
+- [ ] The phase must state explicitly whether canonical behaviour is proved with a live migrated pilot exercise, isolated fixtures, or both, using the Phase 2 live pilot `ex004_sequence_debug_syntax` as the proof exemplar.
 
 - [ ] Add an `exercise.json` loader in a central module rather than scattering path logic across scripts.
 - [ ] Add a resolver that locates an exercise directory from `exercise_key`.
@@ -247,7 +248,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Add an explicit migration manifest or registry at `exercises/migration_manifest.json` that records whether each exercise still uses the legacy layout or has moved to the canonical layout.
 - [ ] Make resolvers fail hard when an exercise is marked as migrated but the canonical files are missing.
 - [ ] Make legacy callers fail clearly when they bypass the new resolver contract, rather than silently adapting legacy path inputs.
-- [ ] Add unit tests covering both legacy and canonical exercises without allowing silent cross-layout fallback, using isolated fixtures and one live pilot exercise.
+- [ ] Add unit tests covering both legacy and canonical exercises without allowing silent cross-layout fallback, using isolated fixtures and one live pilot exercise (the Phase 2 live pilot is `ex004_sequence_debug_syntax`).
 - [ ] Identify and list modules that will need to move onto the resolver early, especially: [tests/notebook_grader.py](tests/notebook_grader.py), [tests/exercise_framework](tests/exercise_framework), [tests/exercise_expectations](tests/exercise_expectations), [tests/student_checker](tests/student_checker), [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py), and [scripts/template_repo_cli](scripts/template_repo_cli).
 - [ ] Make the minimal target metadata schema explicit in code and docs: `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts`.
 
@@ -366,7 +367,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] The phase is only complete for a construct once its notebooks, exercise-local tests, local docs links, and migration state all line up with the canonical layout and no duplicate canonical-versus-legacy source of truth remains for that construct.
 
 - [ ] Write a one-off migration script that moves notebooks and exercise-specific tests into each exercise directory.
-- [ ] Choose the pilot construct based on the Phase 1 inventory rather than assuming `sequence` is the correct first target.
+- [ ] Choose the pilot construct based on the Phase 1 inventory (Phase 2 live pilot = `ex004_sequence_debug_syntax`) rather than assuming `sequence` is the correct first target.
 - [ ] Update links in construct-level teaching order files.
 - [ ] Update each exercise `README.md` and `OVERVIEW.md` so internal links point to the new local notebook and test paths.
 - [ ] Move exercise-specific tests out of the top-level `tests/` directory once the new discovery path is proven.

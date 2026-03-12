@@ -34,7 +34,7 @@ When this checklist has been executed successfully, the repository should have a
 - Every naming anomaly, duplicate directory, stale path, construct mismatch, and slug mismatch is recorded explicitly rather than left to implicit filesystem discovery.
 - Every code path that currently treats exercise identity as a filename, a slug, a directory name, or a full path is known and listed.
 - The canonical authoring model is agreed in writing: `exercise_key` is the only canonical resolver input, the canonical exercise home is `exercises/<construct>/<exercise_key>/`, notebook filenames will later become `student.ipynb` and `solution.ipynb`, exercise type moves into `exercise.json`, and top-level `tests/` remains shared infrastructure only.
-- A pilot recommendation is backed by the inventory rather than assumption.
+- A pilot recommendation is backed by the inventory rather than assumption, with `ex004_sequence_debug_syntax` tentatively chosen as the first migrated exercise.
 
 ## Preconditions
 
