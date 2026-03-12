@@ -1,8 +1,8 @@
 ---
 name: Exercise Verifier
 description: Verify generated exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
-tools: ['vscode/getProjectSetupInfo', 'vscode/openSimpleBrowser', 'vscode/runCommand', 'vscode/vscodeAPI', 'execute', 'read', 'edit/editFiles', 'edit/editNotebook', 'search', 'web', 'todo']
-infer: true
+tools: [vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, agent/runSubagent, edit/editFiles, edit/editNotebook, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/githubRepo, todo]
+user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Verifier Mode
 

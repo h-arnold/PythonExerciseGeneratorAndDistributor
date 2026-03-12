@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+import ast
+
 from tests.exercise_expectations import ex007_data_types_debug_casting as ex007
+from tests.exercise_framework.ex007_construct_checks import (
+    has_binop,
+    has_call,
+    interactive_construct_issues,
+)
 from tests.exercise_framework.paths import (
     resolve_notebook_path as resolve_framework_notebook_path,
 )
 from tests.notebook_grader import (
     NotebookGradingError,
+    extract_tagged_code,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -19,6 +27,8 @@ from .base import (
     check_explanation_cell,
     exercise_tag,
 )
+
+_AVERAGE_DISTANCE_EXERCISE = 4
 
 
 def check_ex007() -> list[str]:
@@ -49,30 +59,28 @@ def _check_ex007_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
     notebook_path = _resolve_ex007_notebook_path()
     expected = ex007.EX007_EXPECTED_STATIC_OUTPUTS[exercise_no]
-    output = run_cell_and_capture_output(notebook_path, tag=exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(
+        notebook_path, tag=exercise_tag(exercise_no))
     if output != expected:
-        errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
+        errors.append(
+            f"Exercise {exercise_no}: expected '{expected.strip()}'.")
     return errors
 
 
 def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
     errors: list[str] = []
     notebook_path = _resolve_ex007_notebook_path()
-    case = ex007.EX007_INPUT_CASES[exercise_no]
-    inputs = list(case["inputs"])
-    output = run_cell_with_input(notebook_path, tag=exercise_tag(exercise_no), inputs=inputs)
-    prompts = case["prompts"]
-    for prompt in prompts:
-        if prompt not in output:
-            errors.append(f"Exercise {exercise_no}: prompt '{prompt}' missing.")
-    stripped_output = output.strip()
-    if not stripped_output:
-        errors.append(f"Exercise {exercise_no}: no output was produced.")
-        return errors
-    last_line = stripped_output.splitlines()[-1]
-    expected_last_line = case["last_line"]
-    if not last_line.endswith(expected_last_line):
-        errors.append(f"Exercise {exercise_no}: expected last line ending '{expected_last_line}'.")
+    for case_no, case in enumerate(ex007.EX007_INPUT_CASES[exercise_no], start=1):
+        output = run_cell_with_input(
+            notebook_path,
+            tag=exercise_tag(exercise_no),
+            inputs=list(case["inputs"]),
+        )
+        expected_output = case["expected_output"]
+        if output != expected_output:
+            errors.append(
+                f"Exercise {exercise_no}: sample {case_no} does not match the expected prompt flow."
+            )
     return errors
 
 
@@ -85,6 +93,53 @@ def _check_ex007_explanation(exercise_no: int) -> list[str]:
     )
 
 
+def _check_ex007_construct(exercise_no: int) -> list[str]:
+    tree = _exercise_ast(exercise_no)
+
+    if exercise_no in {1, 2}:
+        if has_call(tree, "str"):
+            return []
+        return [
+            f"Exercise {exercise_no}: use str() so the number is turned into text before printing."
+        ]
+
+    if exercise_no == _AVERAGE_DISTANCE_EXERCISE:
+        errors: list[str] = []
+        if not has_binop(tree, ast.Div):
+            errors.append(
+                f"Exercise {_AVERAGE_DISTANCE_EXERCISE}: use / for the average calculation."
+            )
+        if has_binop(tree, ast.FloorDiv):
+            errors.append(
+                f"Exercise {_AVERAGE_DISTANCE_EXERCISE}: do not use // for the average calculation."
+            )
+        return errors
+
+    rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
+    issues = interactive_construct_issues(
+        tree,
+        expected_input_count=len(
+            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        required_calls=rules.get("required_calls", ()),
+        required_ops=rules.get("required_ops", ()),
+        forbidden_ops=rules.get("forbidden_ops", ()),
+    )
+    return [f"Exercise {exercise_no}: {issue}" for issue in issues]
+
+
+def _exercise_ast(exercise_no: int) -> ast.Module:
+    code = extract_tagged_code(
+        _resolve_ex007_notebook_path(),
+        tag=exercise_tag(exercise_no),
+    )
+    try:
+        return ast.parse(code)
+    except SyntaxError as exc:
+        raise NotebookGradingError(
+            f"Exercise {exercise_no}: code could not be parsed: {exc.msg}."
+        ) from exc
+
+
 def _resolve_ex007_notebook_path() -> str:
     return str(resolve_framework_notebook_path(ex007.EX007_NOTEBOOK_PATH))
 
@@ -95,13 +150,18 @@ def _build_ex007_checks() -> list[ExerciseCheckDefinition]:
     for exercise_no in exercise_numbers:
         if exercise_no in ex007.EX007_EXPECTED_STATIC_OUTPUTS:
             checks.append(
-                build_exercise_check(exercise_no, "Static output", _check_ex007_static_output)
+                build_exercise_check(
+                    exercise_no, "Static output", _check_ex007_static_output)
             )
         if exercise_no in ex007.EX007_INPUT_CASES:
             checks.append(
-                build_exercise_check(exercise_no, "Prompt flow", _check_ex007_prompt_flow)
+                build_exercise_check(
+                    exercise_no, "Prompt flow", _check_ex007_prompt_flow)
             )
-        checks.append(build_exercise_check(exercise_no, "Explanation", _check_ex007_explanation))
+        checks.append(build_exercise_check(
+            exercise_no, "Construct", _check_ex007_construct))
+        checks.append(build_exercise_check(
+            exercise_no, "Explanation", _check_ex007_explanation))
     return checks
 
 

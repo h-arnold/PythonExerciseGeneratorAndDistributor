@@ -1,4 +1,4 @@
-#### Debugging Exercise Formats
+# Debugging Exercise Formats
 
 Students should be presented with a mixture of syntactic and logical errors. Where possible, choose mistakes that novice programmers genuinely make when learning the targeted construct.
 
