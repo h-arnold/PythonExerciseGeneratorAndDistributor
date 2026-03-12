@@ -381,9 +381,9 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 ### Open Questions
 
 - [ ] Question: Should the shared package be named `exercise_metadata`, `exercise_repo`, or something else? Choose one and keep it stable.
-- [ ] Question: Should Phase 2 include a live migrated pilot exercise, or should the repository manifest stay all-legacy while canonical behaviour is proved in isolated fixtures?
+- [x] Decision: Phase 2 should prove canonical behaviour with isolated fixtures and one live migrated pilot exercise.
 - [ ] Question: What exact error taxonomy should the shared resolver expose to keep later call-site migration straightforward?
-- [ ] Question: Should the manifest live at `exercises/migration_manifest.json` or another root-level authoring-only path? If a different path is chosen, update [ACTION_PLAN.md](./ACTION_PLAN.md).
+- [x] Decision: The manifest lives at `exercises/migration_manifest.json`.
 
 ### Blockers
 

@@ -384,11 +384,11 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Open Questions
 
-- [ ] Question: What exact contributor-facing command replaces `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` after the execution-model cutover?
-- [ ] Question: Is the final canonical authoring path `exercises/<construct>/<exercise_key>/` exactly, or is any `type/` segment retained anywhere for teaching metadata only?
-- [ ] Question: After the export contract is finalised, what exact notebook names should docs show for exported repos: exercise-key names, `student.ipynb`/`solution.ipynb`, or another agreed mapping?
-- [ ] Question: Should `.github/workflows/tests.yml` verify authoring-repo solution notebooks, migrated canonical exercises, or something else entirely after cutover?
-- [ ] Question: When should the current `.github/agents/*.agent.md` files be archived, if at all?
+- [x] Decision: contributor-facing commands should use the final explicit `variant` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`.
+- [x] Decision: the final canonical authoring path is `exercises/<construct>/<exercise_key>/`, with no retained `type/` path segment.
+- [x] Decision: docs for exported repositories should continue to show flattened exercise-key notebook names rather than `student.ipynb` and `solution.ipynb`.
+- [x] Decision: repo workflows should validate the authoring-repository contract, while the exported Classroom workflow validates the metadata-free student export contract.
+- [x] Decision: current `.github/agents/*.agent.md` files should only be archived after replacement guidance exists and references have been switched.
 
 ### Blockers
 

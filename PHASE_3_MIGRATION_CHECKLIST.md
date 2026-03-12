@@ -385,9 +385,9 @@ Only include broader test runs after the targeted metadata and template-selectio
 ### Open Questions
 
 - [ ] Should Phase 3 create metadata in the current legacy exercise directories first, or must it wait for canonical directory migration under `exercises/<construct>/<exercise_key>/`?
-- [ ] Should framework/student-checker display labels be derived centrally in the metadata module, or via a tiny shared formatter that consumes metadata objects?
-- [ ] Should `tests/exercise_expectations` keep any identity-related exports at all, or should it become purely behavioural data plus types?
-- [ ] Should template selection list only exercises with valid metadata, or should it allow a mixed mode controlled by the Phase 2 migration manifest?
+- [x] Decision: framework and student-checker display labels should be derived by a tiny shared formatter that consumes metadata objects rather than stored separately.
+- [x] Decision: `tests/exercise_expectations` should become purely behavioural data plus types, not an identity/path registry.
+- [x] Decision: template selection should allow a mixed mode controlled by the Phase 2 migration manifest rather than requiring metadata-valid-only exercises.
 
 ### Blockers
 

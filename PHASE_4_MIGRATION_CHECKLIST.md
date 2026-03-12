@@ -416,10 +416,10 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Open Questions
 
-- [ ] Question: should shared grading/runtime helpers remain importable from top-level `tests`, or should they move into a dedicated support package before exercise-local test discovery changes land?
-- [ ] Question: what is the exact public selector for student versus solution execution in the target model: an explicit function argument, a context object, a CLI flag, a narrowly-scoped environment variable, or a combination of these?
-- [ ] Question: should repository pytest discovery move directly to collecting `exercises/**/tests/`, or should there be a short transitional period with top-level proxy test modules that import exercise-local tests explicitly?
-- [ ] Question: should exported Classroom repositories keep only student notebooks plus tests, or should any additional generated runtime index be allowed as long as it remains metadata-free from an authoring perspective?
+- [x] Decision: shared grading/runtime helpers should move into a dedicated support package before exercise-local test discovery changes land.
+- [x] Decision: the public selector for student versus solution execution is an explicit `variant` argument in Python APIs plus a matching CLI flag for scripts and workflows.
+- [x] Decision: repository pytest discovery should move directly to collecting `exercises/**/tests/`, with duplicate collection failing hard rather than using proxy modules.
+- [x] Decision: exported Classroom repositories remain metadata-free, but deliberate generated runtime artefacts are allowed if they remain metadata-free from an authoring perspective.
 
 ### Blockers
 

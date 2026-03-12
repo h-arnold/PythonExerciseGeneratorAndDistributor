@@ -424,10 +424,10 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Open Questions
 
-- [ ] Question: what is the exact final variant-selection mechanism that replaces `PYTUTOR_NOTEBOOKS_DIR` in repository tests, template workflows, and local tooling?
-- [ ] Question: will exported repositories continue to import grading helpers from the top-level `tests` package, or will an earlier phase move those helpers into a dedicated support package?
-- [ ] Question: will student-mode validation use the full suite, a dedicated smoke subset, or both before each cutover stage?
-- [ ] Question: what is the exact manifest/index path introduced earlier, since no migration manifest file exists in the current codebase yet?
+- [x] Decision: the final variant-selection mechanism is an explicit `variant` argument in Python APIs plus a matching CLI flag for scripts, workflows, and local tooling.
+- [x] Decision: shared grading helpers move into a dedicated support package rather than remaining in top-level `tests`.
+- [x] Decision: student-mode validation uses the full suite before each cutover stage.
+- [x] Decision: the manifest path is `exercises/migration_manifest.json`.
 
 ### Blockers
 
