@@ -35,6 +35,7 @@ When this checklist is complete, the repository should have one authoritative st
 - the agreed resolver contract is documented consistently as `exercise_key`-based
 - contributor guidance clearly distinguishes the authoring repository from exported Classroom repositories
 - repository and template workflows describe the same execution model that the code actually implements
+- repository and template workflows describe the CLI `--variant <student|solution>` flag as the canonical selector for student versus solution execution modes so contributors know exactly which literal to pass.
 - agent prompts no longer teach the legacy split layout as the canonical model
 - transitional warnings are present wherever the migration is still incomplete
 
@@ -65,7 +66,7 @@ List every surface this migration unit touches. This inventory is based on the c
 
 - [ ] Source files:
   - `scripts/new_exercise.py` — review and update user-facing help text, generated README text, and printed output if the scaffold contract has already changed before Phase 10 lands.
-  - `scripts/verify_exercise_quality.py` — review CLI help text and path-assumption messaging if canonical exercise paths are no longer `exercises/<construct>/<type>/<exercise_key>/`.
+  - `scripts/verify_exercise_quality.py` — review CLI help text and path-assumption messaging if canonical exercise paths are no longer `exercises/<construct>/<type>/<exercise_key>/`; note the decision to migrate this verifier to the canonical metadata/resolver so the Exercise Verifier agent still receives the same checks.
   - `scripts/build_autograde_payload.py` — review help text and environment guidance if the execution model no longer hinges on `PYTUTOR_NOTEBOOKS_DIR`.
   - `scripts/template_repo_cli/cli.py` — update command help or examples if CLI selection or export guidance changes.
   - `scripts/template_repo_cli/core/collector.py` — update only if its public contract or error messages still teach top-level notebook/test paths after earlier migration phases.
@@ -91,8 +92,8 @@ List every surface this migration unit touches. This inventory is based on the c
   - `docs/development.md` — repository architecture, grader workflow, generator workflow, CI/CD maintenance, troubleshooting.
   - `docs/exercise-generation.md` — exercise authoring workflow, verifier guidance, example paths.
   - `docs/exercise-generation-cli.md` — scaffold outputs, move/rename instructions, notebook/test examples.
-  - `docs/testing-framework.md` — framework responsibilities, runtime helper examples, CI notes.
-  - `docs/exercise-testing.md` — testing examples, runtime helper examples, environment variable guidance.
+  - `docs/testing-framework.md` — framework responsibilities, runtime helper examples that import from `exercise_runtime_support`, and CI notes.
+  - `docs/exercise-testing.md` — testing examples, runtime helper examples that mention `exercise_runtime_support`, and environment variable guidance.
   - `docs/autograding-cli.md` — local dry-run commands, workflow excerpts, output interpretation.
   - `docs/github-classroom-autograding-guide.md` — `classroom.yml` guidance and workflow wiring.
   - `docs/CLI_README.md` — template CLI behaviour, exported file list, usage examples.
@@ -126,7 +127,7 @@ List every surface this migration unit touches. This inventory is based on the c
 ### Modules, Functions, Classes, Commands, And Contracts
 
 - [ ] Python modules:
-  - `tests.notebook_grader` — current notebook runtime helpers and path redirection.
+  - `tests.notebook_grader` — current notebook runtime helpers and path redirection that should eventually re-export or delegate to `exercise_runtime_support` so docs can point there instead of top-level `tests`.
   - `tests.exercise_framework.paths` — framework-level notebook path resolver.
   - `scripts.new_exercise` — scaffolding workflow and generated instructions.
   - `scripts.verify_exercise_quality` — teacher-verification workflow and exercise-directory inference.
@@ -160,13 +161,14 @@ List every surface this migration unit touches. This inventory is based on the c
   - `scripts.template_repo_cli.core.packager.TemplatePackager.copy_exercise_files` — currently flattens selected notebooks/tests into export paths.
 - [ ] CLI commands or flags:
   - `uv run python scripts/new_exercise.py exNNN "Title" --slug slug --type <debug|modify|make>` — examples and output text must match the final canonical layout.
-  - `uv run python scripts/verify_exercise_quality.py <notebook-path> --construct <construct> --type <type>` — update command examples only after the tool contract changes.
+  - `uv run python scripts/verify_exercise_quality.py <notebook-path> --construct <construct> --type <type>` — update command examples only after the tool contract changes; once the verifier migrates to canonical metadata-driven inputs, refresh the CLI examples to reflect the new contract rather than documenting the old notebooks-based CLI.
   - `uv run ./scripts/verify_solutions.sh` — update or retire once the replacement solution-verification model is settled.
   - `template_repo_cli list` — update examples if selection is no longer notebook-name driven.
   - `template_repo_cli validate` — same.
   - `template_repo_cli create` — update packaged-file examples and README wording.
   - `template_repo_cli update-repo` — update maintenance guidance if export behaviour changes.
   - `uv run python scripts/build_autograde_payload.py --pytest-args=... --output ... --summary ... --minimal` — docs/workflows must match the final wrapper contract.
+  - `--variant <student|solution>` — document the exact CLI flag and its two literal values across contributor docs, workflows, and example commands so everyone knows which option to pass to the resolver.
 - [ ] Environment variables:
   - `PYTUTOR_NOTEBOOKS_DIR` — currently the dominant contributor-facing switch in docs, tests, agents, and workflows; either document it as transitional or replace it consistently.
   - `GITHUB_OUTPUT` — used by the autograding CLI in workflow contexts; keep docs accurate if step outputs change.
@@ -177,7 +179,7 @@ List every surface this migration unit touches. This inventory is based on the c
   - `template_repo_files/.github/workflows/classroom.yml` → `autograding` job → `Build autograde payload`, `Prepare reporter payload`, and `Report results to Classroom` steps.
 - [ ] Packaging/export contracts:
   - Exported Classroom repositories stay metadata-free and must not ship `exercise.json` or the full authoring `exercises/` tree.
-  - Template exports must continue to contain the exact workflow/runtime files the docs promise.
+  - Template exports must continue to contain the exact workflow/runtime files the docs promise, including the helpers sourced from `exercise_runtime_support`, and packaging tests should assert that those helpers remain present alongside the flattened exercise files.
   - Contributor docs must distinguish authoring paths from exported paths instead of conflating them.
 - [ ] Notebook self-check contracts:
   - The generated check-answers cell produced by `scripts.new_exercise._make_check_answers_cell` currently points at `notebooks/<exercise_key>.ipynb`; docs and agent guidance must not contradict the actual self-check path contract.
@@ -202,7 +204,7 @@ Break work into concrete tasks. Group by concern, not by person.
   - Add workflow-consistency tests that parse or inspect `.github/workflows/tests.yml`, `.github/workflows/tests-solutions.yml`, and `template_repo_files/.github/workflows/classroom.yml` against the documented contract.
 - [ ] Update:
   - Update help text, examples, and generated strings in `scripts/new_exercise.py` only if earlier phases have already changed its contract.
-  - Update help text in `scripts/verify_exercise_quality.py` only if earlier phases have changed canonical exercise paths and verifier inputs.
+  - Update help text in `scripts/verify_exercise_quality.py` only if earlier phases have changed canonical exercise paths and verifier inputs; this aligns with the decision to keep the verifier and migrate it rather than replace it.
   - Update help/output wording in `scripts/build_autograde_payload.py` and `scripts/template_repo_cli` only if the documented workflow contract has changed.
   - Update every in-scope Markdown document and agent spec listed above.
   - Update workflow YAML comments, step names, and environment handling where the workflow itself still encodes legacy guidance.
@@ -356,7 +358,7 @@ Only include broader commands after the focused tests pass.
 - [ ] Expected failure behaviour:
   - Docs/agent/workflow consistency tests fail if legacy canonical-layout wording or stale environment guidance is reintroduced.
 - [ ] Expected packaging/export behaviour:
-  - Template exports remain metadata-free and continue to include the workflow/runtime files the docs promise.
+  - Template exports remain metadata-free and continue to include the workflow/runtime files the docs promise, specifically the helpers produced by `exercise_runtime_support` and verified by packaging tests that inspect exported workspaces.
 - [ ] Expected docs/workflow outcome:
   - A contributor reading `README.md`, `AGENTS.md`, `docs/setup.md`, and `.github/workflows/tests.yml` receives one coherent story rather than mixed legacy assumptions.
 
@@ -393,7 +395,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 - [ ] Blocker: The live repo still contains the obsolete `exercises/ex001_sanity/` tree and the duplicate `exercises/ex006_sequence_modify_casting/` tree, so docs cannot honestly present the migration as complete; `exercises/ex001_sanity/` must be deleted before discovery or documentation can move past this transitional state.
 - [ ] Blocker: `.github/workflows/tests.yml` and `.github/workflows/tests-solutions.yml` currently both run solution-mode tests with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`, so the intended workflow split is unclear.
 - [ ] Blocker: `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match the canonical `ex007_sequence_debug_casting` identity, and all `data_types` references must be removed before docs/examples can be trusted.
-- [ ] Blocker: `scripts/new_exercise.py` and `scripts/verify_exercise_quality.py` still encode legacy path assumptions, so documentation cannot fully cut over until the earlier implementation phases land.
+- [ ] Blocker: `scripts/new_exercise.py` and `scripts/verify_exercise_quality.py` still encode legacy path assumptions, so documentation cannot fully cut over until the earlier implementation phases land; the agreed plan keeps the verifier and migrates it to the canonical metadata/resolver before re-documenting its CLI and help text.
 - [ ] Blocker: `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` appears to be a stray construct-like directory and should be explained or removed by an earlier phase before final structure docs are declared authoritative.
 
 ## Action Plan Feedback

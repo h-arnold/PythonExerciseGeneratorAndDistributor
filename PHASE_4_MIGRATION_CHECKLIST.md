@@ -19,7 +19,7 @@ These rules are restated from [ACTION_PLAN.md](./ACTION_PLAN.md) and apply throu
 - Author: Codex Implementer Agent
 - Date: 2026-03-12
 - Status: `draft`
-- Scope summary: Define and pin the repository execution model for exercise discovery, notebook variant selection, shared grading/runtime imports, repository pytest discovery, and source-to-export packaging, with only the minimum proof wiring needed to make later implementation phases unambiguous.
+- Scope summary: Define and pin the repository execution model for exercise discovery, CLI `--variant <student|solution>`-driven notebook variant selection (mapped to the resolver's `variant` argument), shared grading/runtime imports via `exercise_runtime_support`, repository pytest discovery, and source-to-export packaging, with only the minimum proof wiring needed to make later implementation phases unambiguous.
 - Explicitly out of scope: bulk migration of every exercise into the future canonical `exercises/<construct>/<exercise_key>/...` layout; adding new metadata fields beyond the agreed minimal schema; final public API renames in student-facing helpers; moving all top-level tests immediately; authoring new notebook exercises; changing student notebook content; cutting over all legacy callers before the replacement model is proven.
 
 ## Objective
@@ -27,7 +27,7 @@ These rules are restated from [ACTION_PLAN.md](./ACTION_PLAN.md) and apply throu
 When this checklist is complete, the repository should have one explicit, repo-specific execution contract covering four things that are currently entangled:
 
 - how repository tests are discovered when exercise-specific tests no longer live only under top-level `tests/`
-- how shared grading/runtime support is imported by repository tests and by exported Classroom repositories
+- how shared grading/runtime support from `exercise_runtime_support` is imported by repository tests and by exported Classroom repositories, including verifying TemplatePackager copies that package alongside the flattened exercise files
 - how student versus solution notebook selection works without using `PYTUTOR_NOTEBOOKS_DIR` as a layout-compatibility escape hatch
 - how canonical authoring files in `exercises/` map to the flattened export contract already used by Classroom templates
 
@@ -66,7 +66,7 @@ Notes:
   - Phase 2 shared resolver/metadata module (path to be chosen in Phase 2) — must become the only execution-path source of truth used by repository tests, student checker code, packager code, and verification scripts.
   - `pyproject.toml` — currently pins pytest discovery to `testpaths = ["tests"]`, packages `tests`, and exposes `template_repo_cli`; must encode the agreed repository discovery and import model.
   - `pytest.ini` — duplicates the current top-level `tests` discovery contract and must be kept aligned with `pyproject.toml`.
-  - `tests/notebook_grader.py` — currently accepts raw notebook paths and uses `PYTUTOR_NOTEBOOKS_DIR` root swapping with a silent `candidate.exists()` fallback; must move to the new resolver and explicit variant-selection contract.
+  - `tests/notebook_grader.py` — currently accepts raw notebook paths and uses `PYTUTOR_NOTEBOOKS_DIR` root swapping with a silent `candidate.exists()` fallback; must move to the new resolver and the explicit CLI `--variant <student|solution>` variant-selection contract.
   - `tests/helpers.py` — currently proxies notebook path resolution and autograde environment setup; must stay consistent with the new execution model.
   - `tests/exercise_framework/paths.py` — duplicates notebook-path override logic and currently treats path strings as canonical inputs.
   - `tests/exercise_framework/runtime.py` — wraps `tests.notebook_grader` and caches by notebook path; must align with the future exercise-key-driven execution model.
@@ -79,9 +79,9 @@ Notes:
   - `scripts/build_autograde_payload.py` — currently validates `PYTUTOR_NOTEBOOKS_DIR` against `notebooks` and `notebooks/solutions`, and derives failure semantics from that value.
   - `scripts/verify_solutions.sh` — hard-codes `PYTUTOR_NOTEBOOKS_DIR="notebooks/solutions"`.
   - `scripts/new_exercise.py` — currently scaffolds top-level `notebooks/<exercise_key>.ipynb`, `notebooks/solutions/<exercise_key>.ipynb`, and `tests/test_<exercise_key>.py`, and writes self-check examples against that legacy layout.
-  - `scripts/verify_exercise_quality.py` — currently infers exercise directories and notebook relationships from the flattened notebook tree and current `exercises/` shape.
+  - `scripts/verify_exercise_quality.py` — currently infers exercise directories and notebook relationships from the flattened notebook tree and current `exercises/` shape; the plan is to migrate this verifier to the canonical metadata/resolver so it stays aligned with the new layout instead of being replaced.
   - `scripts/template_repo_cli/core/collector.py` — currently assumes source notebooks live at `notebooks/<exercise_key>.ipynb` and tests at `tests/test_<exercise_key>.py`.
-  - `scripts/template_repo_cli/core/packager.py` — currently copies selected notebooks into `workspace/notebooks/` and selected tests into `workspace/tests/`, while also copying runtime support from top-level `tests/`.
+  - `scripts/template_repo_cli/core/packager.py` — currently copies selected notebooks into `workspace/notebooks/` and selected tests into `workspace/tests/`, while also copying runtime support from top-level `tests/`; the future contract should source those helpers from `exercise_runtime_support` and packaging tests must prove the exported workspaces still include the shared helpers without shipping metadata files.
   - `scripts/template_repo_cli/core/selector.py` — currently infers construct/type membership from `exercises/<construct>/<type>/<exercise_key>/` path shape.
   - `scripts/template_repo_cli/utils/filesystem.py` — currently has a separate `resolve_notebook_path()` helper that treats a bare filename as a notebook under `notebooks/`.
   - `scripts/template_repo_cli/cli.py` — should remain aligned with the new source-selection and packaging rules.
@@ -98,7 +98,7 @@ Notes:
   - `tests/template_repo_cli/test_packager.py` — pins flattened output layout and copied support assets.
   - `tests/template_repo_cli/test_integration.py` — validates dry-run template output, including notebook self-check invocation inside the packaged workspace.
   - `tests/template_repo_cli/test_selector.py` — construct/type selection tests may need updates if selection stops relying only on directory shape.
-  - `tests/test_build_autograde_payload.py` — currently asserts environment validation and autograde payload logic under the old variant-selection contract.
+  - `tests/test_build_autograde_payload.py` — currently asserts environment validation and autograde payload logic under the old `PYTUTOR_NOTEBOOKS_DIR` variant-selection contract; it must switch to the CLI `--variant <student|solution>` selector.
   - `tests/test_integration_autograding.py` — repository-to-autograde integration surface.
   - `tests/test_new_exercise.py` — will need updates once the scaffold target layout is decided in later phases, but Phase 4 must list the required contract changes now.
   - `tests/test_ex001_sanity.py`, `tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex004_sequence_debug_syntax.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_construct_checks.py`, `tests/test_ex007_sequence_debug_casting.py` — current top-level exercise-specific tests; `ex001_sanity` is explicitly obsolete, reserved for removal, and must be deleted before any later phases reuse these migration rules.
@@ -146,7 +146,7 @@ Notes:
   - `scripts.build_autograde_payload` — workflow-facing execution and autograde payload builder.
   - `scripts.new_exercise` — scaffold contract that must eventually emit canonical authoring files without breaking the current Classroom export surface.
 - [ ] Public functions or methods:
-  - `tests.notebook_grader.resolve_notebook_path()` — current behaviour: accepts notebook paths and may silently fall back to the original path if the override candidate does not exist; required change: replace or retire in favour of resolver calls keyed by `exercise_key` plus explicit variant selection.
+  - `tests.notebook_grader.resolve_notebook_path()` — current behaviour: accepts notebook paths and may silently fall back to the original path if the override candidate does not exist; required change: replace or retire in favour of resolver calls keyed by `exercise_key` plus the CLI `--variant <student|solution>` selector.
   - `tests.notebook_grader.extract_tagged_code()`, `exec_tagged_code()`, `run_cell_and_capture_output()`, `run_cell_with_input()`, `get_explanation_cell()` — current behaviour: accept path inputs; required change: agree whether public call sites switch to `exercise_key` and `variant`, or whether only an internal adapter layer remains during transition.
   - `tests.exercise_framework.paths.resolve_notebook_path()` — current behaviour: second implementation of environment-based path swapping; required change: remove duplicated path rules and call the shared execution model.
   - `tests.exercise_framework.runtime.resolve_notebook_path()` — current behaviour: thin wrapper over `tests.notebook_grader.resolve_notebook_path()`; required change: reflect the final runtime contract.
@@ -173,7 +173,7 @@ Notes:
   - `template_repo_files/.github/workflows/classroom.yml:autograding` — exported Classroom workflow must grade the student variant without requiring source metadata or source-repo path layout.
 - [ ] Packaging/export contracts:
   - Source repository contract — future canonical authoring paths are expected to live under `exercises/<construct>/<exercise_key>/...`.
-  - Exported Classroom contract — current flattened output remains `notebooks/exNNN_slug.ipynb`, `tests/test_exNNN_slug.py`, shared runtime support under `tests/`, workflow files under `.github/workflows/`, and no `exercise.json` or `exercises/` tree.
+  - Exported Classroom contract — current flattened output remains `notebooks/exNNN_slug.ipynb`, `tests/test_exNNN_slug.py`, the shared runtime helpers sourced from `exercise_runtime_support` (verify TemplatePackager copies the associated directories listed in `REQUIRED_TEST_DIRECTORIES`), workflow files under `.github/workflows/`, and no `exercise.json` or `exercises/` tree.
 - [ ] Notebook self-check contracts:
   - `from tests.student_checker import check_notebook; check_notebook('<exercise_key>')` — currently used in generated workspaces and agent guidance; must stay usable in exported repositories.
   - Optional notebook self-check cells generated by `scripts.new_exercise.py` — must not depend on source-repo metadata files being present in Classroom exports.
@@ -181,7 +181,7 @@ Notes:
 ### Current Assumptions Being Removed
 
 - [ ] The repository test suite is discoverable only because `pytest` is pinned to top-level `tests/` in both `pyproject.toml` and `pytest.ini`.
-- [ ] Shared runtime code can safely live in the importable `tests` package without an explicit decision about how that interacts with pytest collection once exercise-local tests move under `exercises/**/tests/`.
+- [ ] Shared runtime code can safely live in the importable `tests` package without an explicit decision about how that interacts with pytest collection once exercise-local tests move under `exercises/**/tests/`; this assumption is being removed because the helpers now target `exercise_runtime_support`.
 - [ ] Student versus solution selection is the same thing as changing the notebook root directory via `PYTUTOR_NOTEBOOKS_DIR`.
 - [ ] Silent fallback from `notebooks/solutions/<relative-path>` to the original notebook path is acceptable when the override file is missing.
 - [ ] Packaging source files from top-level `notebooks/` and `tests/` means the export contract is already defined.
@@ -218,7 +218,7 @@ Notes:
   - legacy assumptions in template packager code that top-level source layout is canonical
   - documentation and agent guidance that instructs `PYTUTOR_NOTEBOOKS_DIR` as a long-term layout selector
 - [ ] Rename or relocate:
-  - move shared runtime helpers into the dedicated support package chosen by earlier phases; if that package path/name is still not recorded, treat that as a blocker rather than deciding it during implementation
+  - move shared runtime helpers into `exercise_runtime_support`; if that package path/name is still not recorded, treat that as a blocker and document verification steps showing `pyproject.toml` installs the package, docs/workflows mention the new import path, and TemplatePackager copies the package directories.
   - relocate exercise-specific test files only after the repository discovery model has been proved on the Phase 2 pilot exercise `ex004_sequence_debug_syntax`
 - [ ] Fail-fast behaviour to add:
   - path-based resolver inputs fail with a clear error naming the replacement `exercise_key` contract
@@ -289,12 +289,12 @@ Every checklist should spell out the behaviour that must be proved, not just the
   - variant selection rejects invalid values rather than defaulting silently
 - [ ] Regression case:
   - existing exercise-specific checks for `ex002_sequence_modify_basics` still produce the same task metadata in autograde payloads after the execution model changes
-  - shared runtime imports used by `tests/student_checker` and `tests/exercise_framework` continue to work after repository discovery changes
+  - shared runtime imports from `exercise_runtime_support` used by `tests/student_checker` and `tests/exercise_framework` continue to work after repository discovery changes
   - duplicate collection is detected and prevented when both a legacy top-level test and a migrated exercise-local test exist for the same exercise during a transition window
 - [ ] Export/package case:
   - packaging a migrated exercise from canonical authoring files still writes `workspace/notebooks/ex002_sequence_modify_basics.ipynb` and `workspace/tests/test_ex002_sequence_modify_basics.py`
   - packaged templates exclude `exercise.json`, migration manifests, and the source `exercises/` tree
-  - packaged templates still include the required shared runtime support files copied by `TemplatePackager.REQUIRED_TEST_FILES` and `TemplatePackager.REQUIRED_TEST_DIRECTORIES`
+  - packaged templates still include the required shared runtime support files from `exercise_runtime_support` copied by `TemplatePackager.REQUIRED_TEST_FILES` and `TemplatePackager.REQUIRED_TEST_DIRECTORIES`, and add packaging tests to prove these helpers land in every exported workspace alongside the flattened notebooks/tests
 - [ ] Student-mode case:
   - the exported Classroom workflow runs the student variant and zeroes scores on failure according to the new explicit student-mode contract
   - notebook self-check commands in a packaged workspace continue to run against the student notebook variant only
@@ -383,13 +383,13 @@ Recommended additions during implementation:
 ### Expected Results
 
 - [ ] Expected passing behaviour:
-  - repository tests pass using the agreed discovery model and shared runtime import model
+  - repository tests pass using the agreed discovery model and the shared runtime import model provided by `exercise_runtime_support`
   - the Phase 2 pilot `ex004_sequence_debug_syntax` exercise-local tests are collected from their canonical location without breaking shared-framework tests
 - [ ] Expected failure behaviour:
   - legacy path-based entry points fail clearly where the new contract requires them to fail
   - missing canonical files for migrated exercises fail immediately in both repository execution and packaging
 - [ ] Expected packaging/export behaviour:
-  - exported templates still contain flattened `notebooks/` and `tests/` exercise files, shared runtime support, and no source metadata files
+  - exported templates still contain flattened `notebooks/` and `tests/` exercise files, the shared runtime helpers sourced from `exercise_runtime_support`, and no source metadata files (add assertions that the helpers stay present while metadata files stay out)
   - exported notebook self-check commands still work in the packaged workspace
 - [ ] Expected docs/workflow outcome:
   - repository docs, agent guidance, and workflows no longer describe `PYTUTOR_NOTEBOOKS_DIR` as the primary long-term execution contract
@@ -409,14 +409,14 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Known Risks
 
-- [ ] Risk: keeping shared runtime support in a package literally named `tests` may continue to blur the line between importable support code and collected test code once exercise-local tests move under `exercises/**/tests/`.
+- [ ] Risk: keeping shared runtime support in a package literally named `tests` may continue to blur the line between importable support code and collected test code once exercise-local tests move under `exercises/**/tests/`; the mitigation is to move those helpers into `exercise_runtime_support` and update TemplatePackager plus docs accordingly.
 - [ ] Risk: moving repository discovery too early could double-collect exercise-specific tests during the transition, especially where both top-level and nested parity surfaces already exist, such as `ex002_sequence_modify_basics`.
 - [ ] Risk: template packaging may appear to work even when canonical source files are wrong if collector and packager code are not forced through the same resolver path.
 - [ ] Risk: student self-check behaviour could drift away from repository grading behaviour if `tests.student_checker` and `tests.exercise_framework` are migrated on different timelines.
 
 ### Decisions
 
-- [x] Decision: shared grading/runtime helpers should move into a dedicated support package before exercise-local test discovery changes land.
+- [x] Decision: shared grading/runtime helpers should move into `exercise_runtime_support` before exercise-local test discovery changes land, and the discovery change must assume that package provides all shared helpers.
 - [x] Decision: the public selector for student versus solution execution is an explicit `variant` argument in Python APIs plus a matching CLI flag for scripts and workflows.
 - [x] Decision: repository pytest discovery should move directly to collecting `exercises/**/tests/`, with duplicate collection failing hard rather than using proxy modules.
 - [x] Decision: exported Classroom repositories remain metadata-free, but deliberate generated runtime artefacts are allowed if they remain metadata-free from an authoring perspective.
@@ -442,7 +442,7 @@ Record anything discovered while preparing or executing this checklist that shou
 - [ ] New affected surface:
   - record the existing duplicate `ex002_sequence_modify_basics` test surfaces as an execution-model discovery concern, not just a local test oddity
 - [ ] Incorrect assumption in current plan:
-  - if the final decision is to move shared runtime support out of top-level `tests`, update the current high-level assumption that shared framework code stays there
+  - if the final decision is to move shared runtime support into `exercise_runtime_support`, update the current high-level assumption that shared framework code stays in top-level `tests` and capture the verification steps that docs/workflows reference the new package, `pyproject.toml` installs it, and TemplatePackager exports its files
 - [ ] Missing acceptance criterion:
   - add an explicit acceptance criterion that repository discovery must reject duplicate collection during mixed-layout transitions
 - [ ] Missing migration stream:

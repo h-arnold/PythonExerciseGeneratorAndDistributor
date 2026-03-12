@@ -32,6 +32,7 @@ When this checklist is complete:
 
 - The repository validates the migrated exercise layout in both repository mode and packaged-template mode using the final execution contract.
 - The final variant-selection mechanism has replaced the transitional `PYTUTOR_NOTEBOOKS_DIR` contract everywhere it was only intended as an interim implementation detail.
+- The CLI `--variant <student|solution>` flag is listed in the validation commands and workflows as the sole literal for selecting student versus solution runs so that cutover proofs use the same syntax every time.
 - Packaging and autograding are proven to export the correct flattened Classroom structure from canonical authoring sources under `exercises/`.
 - Repository workflows, template workflows, docs, and agent guidance all describe the same canonical model.
 - The old top-level exercise-specific notebooks under `notebooks/` and top-level exercise-specific tests under `tests/test_ex*.py` (for example `tests/test_ex002_sequence_modify_basics.py`) are deleted or repurposed only after their canonical nested counterparts (such as `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py`) prove the new discovery contract.
@@ -200,6 +201,7 @@ List every surface this migration unit touches. This section is intentionally ex
   - `python -m scripts.template_repo_cli list --construct ... --type ... --format ...`
   - `python -m scripts.template_repo_cli update-repo --repo-name ...`
   - `python scripts/build_autograde_payload.py --pytest-args ... --output ... --summary ... --minimal`
+  - `--variant <student|solution>` — verify the final validation commands and workflow steps all pass this literal flag to the resolver and that any other values are rejected before final cutover.
 - [ ] Environment variables:
   - `PYTUTOR_NOTEBOOKS_DIR` — transitional and currently widely used; Phase 11 should remove it from the canonical public contract rather than preserving it conditionally.
   - `PYTHONPATH` — injected by `tests.helpers.build_autograde_env()` for autograding helper runs.
@@ -302,6 +304,7 @@ Every checklist should spell out the behaviour that must be proved, not just the
 - [ ] Contributor docs: verify and, if needed, update `README.md`, `AGENTS.md`, `docs/project-structure.md`, `docs/setup.md`, and `docs/development.md` so none of them describe the legacy split layout as canonical authoring.
 - [ ] Teaching docs: verify and, if needed, update `docs/testing-framework.md`, `docs/exercise-testing.md`, `docs/autograding-cli.md`, `docs/github-classroom-autograding-guide.md`, `docs/exercise-generation.md`, and `docs/exercise-generation-cli.md`.
 - [ ] Agent docs: verify and, if needed, update `.github/agents/*.md.agent.md` and `docs/agents/tidy_code_review/*.md` so future agents do not reintroduce legacy path guidance.
+- [ ] Runtime helper reference: document that the shared grading/runtime helpers live in `exercise_runtime_support` and instruct exercise code (and exported templates) to import from or ship that package rather than from top-level `tests`.
 - [ ] Repository workflows: finalise `.github/workflows/tests.yml` and `.github/workflows/tests-solutions.yml` against the agreed post-cutover selector.
 - [ ] Template workflows: finalise `template_repo_files/.github/workflows/classroom.yml` so the exported Classroom repo uses the final contract and no longer depends on transitional assumptions.
 - [ ] CLI examples: update examples in `README.md`, `docs/setup.md`, `docs/CLI_README.md`, and any template README text so commands point at the canonical model and the final validation steps.
@@ -422,7 +425,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 ### Open Questions
 
 - [x] Decision: the final variant-selection mechanism is an explicit `variant` argument in Python APIs plus a matching CLI flag for scripts, workflows, and local tooling.
-- [x] Decision: shared grading helpers move into a dedicated support package rather than remaining in top-level `tests`.
+- [x] Decision: shared grading helpers now live in `exercise_runtime_support` rather than top-level `tests`, and packaging/docs/workflows must document and verify that import path.
 - [x] Decision: student-mode validation uses the full suite before each cutover stage.
 - [x] Decision: the manifest path is `exercises/migration_manifest.json`.
 
@@ -432,7 +435,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 - [ ] Blocker: the root-level `exercises/ex006_sequence_modify_casting/` duplicate must be removed so that `exercises/sequence/modify/ex006_sequence_modify_casting/` is the only surviving `ex006` source.
 - [ ] Blocker: the current `ex007` identity is inconsistent across source files. Everything must be normalised to `ex007_sequence_debug_casting`, and all `ex007_data_types_debug_casting` references must be removed.
 - [ ] Blocker: Phase 11 cannot execute safely until the final selector and manifest decisions from earlier phases are written down in code and docs, not just implied.
-- [ ] Blocker: Phase 11 cannot execute safely until the dedicated support-package location for shared grading/runtime helpers is implemented and referenced consistently by packaging, docs, and workflows.
+- [ ] Blocker: Phase 11 cannot execute safely until `exercise_runtime_support` is implemented, `pyproject.toml` installs it, packaging/docs/workflows reference it, and exported workspaces plus exercises import or delegate to it instead of top-level `tests`.
 
 ## Action Plan Feedback
 

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Move the repository towards an exercise-centric layout where each exercise has a single canonical home under `exercises/`, while shared infrastructure remains in the existing top-level `tests/`, `scripts/`, and `docs/` directories.
+Move the repository towards an exercise-centric layout where each exercise has a single canonical home under `exercises/`, while shared infrastructure splits between `scripts/`, `docs/`, and the dedicated `exercise_runtime_support` package so that top-level `tests/` can eventually host only executed test suites.
 
 This is intended to solve the current split-brain model where a single exercise is spread across:
 
@@ -18,8 +18,8 @@ This is intended to solve the current split-brain model where a single exercise 
 2. Construct-wide material stays directly under `exercises/<construct>/`.
 3. Each exercise lives at `exercises/<construct>/<type>/<exercise_key>/`.
 4. Exercise type is stored in metadata, not encoded by an extra path segment.
-5. Shared test framework code remains in a dedicated support package (e.g., `exercise_runtime_support`) unless Phase 4 explicitly keeps it in top-level `tests/`.
-6. Exercise-local tests live inside the exercise folder and may continue to import shared helpers from the top-level `tests/` package unless Phase 4 changes that shared-runtime decision explicitly.
+5. Shared test framework code remains in the dedicated support package `exercise_runtime_support`, keeping runtime helpers out of pytest discovery modules.
+6. Exercise-local tests live inside the exercise folder and should import shared helpers from `exercise_runtime_support` once the runtime move concludes; top-level `tests/` will then focus on collected test suites only.
 7. During migration, packaging may still flatten notebooks and tests for template repositories if that keeps downstream Classroom workflows stable.
 8. During migration, layout state must be explicit per exercise; resolvers must not silently fall back between legacy and migrated paths.
 9. The canonical resolver input is `exercise_key`; path-based resolution is not part of the target API.
@@ -38,8 +38,9 @@ This is intended to solve the current split-brain model where a single exercise 
 ```text
 PythonExerciseGeneratorAndDistributor/
 ├── docs/
+├── exercise_runtime_support/          # shared grading/runtime helpers
 ├── scripts/
-├── tests/                             # shared framework and non-exercise tests only
+├── tests/                             # executed test suites only
 ├── exercises/
 │   ├── sequence/
 │   │   ├── OrderOfTeaching.md
@@ -163,9 +164,9 @@ The current repository has a number of path assumptions wired into tooling, docs
 | Current assumption | Current examples | Migration action |
 | --- | --- | --- |
 | Exercise notebooks live under `notebooks/` | [tests/notebook_grader.py](tests/notebook_grader.py), [tests/exercise_framework/paths.py](tests/exercise_framework/paths.py), many `tests/test_ex*.py` files | Introduce a central resolver that works from `exercise_key` or exercise directory rather than hard-coded top-level notebook paths |
-| Solution notebooks live under `notebooks/solutions/` and are selected with `PYTUTOR_NOTEBOOKS_DIR` | [tests/notebook_grader.py](tests/notebook_grader.py), [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py), [scripts/verify_solutions.sh](scripts/verify_solutions.sh) | Move to a variant-aware resolver that selects `student.ipynb` or `solution.ipynb` without depending on a global folder name, and do not use `PYTUTOR_NOTEBOOKS_DIR` as a layout compatibility fallback |
+| Solution notebooks live under `notebooks/solutions/` and are selected with `PYTUTOR_NOTEBOOKS_DIR` | [tests/notebook_grader.py](tests/notebook_grader.py), [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py), [scripts/verify_solutions.sh](scripts/verify_solutions.sh) | Move to a variant-aware resolver that selects `student.ipynb` or `solution.ipynb` via the CLI flag `--variant <student|solution>` (mapped to the resolver's `variant` argument) instead of depending on a global folder name, and do not use `PYTUTOR_NOTEBOOKS_DIR` as a layout compatibility fallback |
 | Exercise-specific tests live in the top-level `tests/` directory | [pytest.ini](pytest.ini), [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py), [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) | Update test discovery, packaging, and file collection to recognise `exercises/**/tests/` |
-| Exercise type is encoded in the `exercises/<construct>/<type>/<slug>/` path | [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py) | Move exercise type into `exercise.json` and update selectors and validators to read metadata |
+| Exercise type is encoded in the `exercises/<construct>/<type>/<slug>/` path | [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py) | Move exercise type into `exercise.json` and update selectors and validators to read metadata; migrate `scripts/verify_exercise_quality.py` onto the new resolver so the verifier keeps working without the old directory assumptions |
 | Scaffolding creates a split structure first and relies on manual moving | [scripts/new_exercise.py](scripts/new_exercise.py), [docs/setup.md](docs/setup.md) | Change scaffolding to create the canonical exercise directory directly |
 | Template packaging copies notebooks from `notebooks/` and tests from `tests/` | [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py), [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) | Decide whether packaging flattens exported assets or preserves nested structure, then encode that explicitly |
 | Notebook self-check cells assume filename or slug-based lookup | [scripts/new_exercise.py](scripts/new_exercise.py), [tests/student_checker/notebook_runtime.py](tests/student_checker/notebook_runtime.py), [tests/student_checker/api.py](tests/student_checker/api.py), [tests/template_repo_cli/test_integration.py](tests/template_repo_cli/test_integration.py) | Define and migrate a canonical self-check contract so generated notebooks, packaged templates, and student checker APIs resolve exercises consistently |
@@ -174,16 +175,22 @@ The current repository has a number of path assumptions wired into tooling, docs
 | CI and exported workflow configuration assume `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` | [.github/workflows/tests.yml](.github/workflows/tests.yml), [.github/workflows/tests-solutions.yml](.github/workflows/tests-solutions.yml), [template_repo_files](template_repo_files) | Update repository and template workflows alongside the resolver changes so CI behaviour matches the new layout model |
 | Docs and tests assume the current flattened template export contract | [docs/CLI_README.md](docs/CLI_README.md), [tests/template_repo_cli](tests/template_repo_cli), [tests/exercise_framework/test_autograde_parity.py](tests/exercise_framework/test_autograde_parity.py) | Make the export contract explicit and migrate its tests and docs together with selector, collector, and packager changes |
 | Pytest discovery currently assumes exercise-specific tests live under the top-level `tests/` tree | [pyproject.toml](pyproject.toml), [tests](tests), [tests/template_repo_cli](tests/template_repo_cli) | Define the repository test discovery model explicitly before moving exercise-local tests, including whether pytest collects directly from `exercises/**/tests/` and how shared helper imports continue to work |
-| Shared grading/runtime helpers currently live in an importable top-level `tests` package | [pyproject.toml](pyproject.toml), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Decide whether the shared runtime remains an importable `tests` package or moves to a dedicated support package before exercise-local tests are relocated |
+| Shared grading/runtime helpers currently live in an importable top-level `tests` package | [pyproject.toml](pyproject.toml), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Move the shared runtime into the dedicated `exercise_runtime_support` package, update `pyproject.toml` to install it, change imports/docs/workflows to reference it, and ensure TemplatePackager copies the package contents into exported templates rather than assuming they live under `tests/` |
 | Existing exercise identities are not fully clean or unique | [exercises](exercises), [notebooks](notebooks), [tests](tests), [exercises/sequence/OrderOfTeaching.md](exercises/sequence/OrderOfTeaching.md) | Inventory current exercise keys, duplicate directories, construct/type mismatches, and naming drift before relying on metadata or migration manifests |
 | Docs and agent instructions describe the split layout as canonical | [README.md](README.md), [docs/project-structure.md](docs/project-structure.md), [AGENTS.md](AGENTS.md), [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md) | Rewrite docs and agent instructions after the resolver and scaffolder are in place |
 | Current agent files will remain live during migration and therefore need transitional guidance | [.github/agents](.github/agents), [AGENTS.md](AGENTS.md), [ACTION_PLAN.md](ACTION_PLAN.md) | Keep current agent files authoritative until replacements are ready, add clear migration warning blocks that point to `ACTION_PLAN.md`, and only archive old agent files after replacement instructions and references are in place |
-| Public interfaces are currently notebook-shaped and path-oriented | [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [scripts/new_exercise.py](scripts/new_exercise.py) | Make the interface cutover explicit and favour deliberate breaking changes over compatibility aliases once the new resolver model is ready |
+| Public interfaces are currently notebook-shaped and path-oriented | [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [scripts/new_exercise.py](scripts/new_exercise.py) | Make the interface cutover explicit and favour deliberate breaking changes over compatibility aliases once the new resolver model is ready; update `scripts/verify_exercise_quality.py` to follow that new contract rather than being replaced |
 | Exercise registry data is duplicated outside path resolution | [tests/student_checker/api.py](tests/student_checker/api.py), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/exercise_expectations](tests/exercise_expectations) | Add a dedicated metadata consolidation stream so `exercise.json` replaces duplicated exercise registry data rather than only replacing path logic |
 | Repository metadata and exported template contracts have different needs | [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py), [docs/CLI_README.md](docs/CLI_README.md), [tests/template_repo_cli/test_packager.py](tests/template_repo_cli/test_packager.py) | Keep repository metadata rich while preserving a metadata-free exported Classroom contract, and make the transformation between those models explicit in packaging |
 | Source repository assets and exported Classroom assets currently share assumptions without a clearly documented mapping contract | [scripts/template_repo_cli](scripts/template_repo_cli), [tests/template_repo_cli](tests/template_repo_cli), [docs/CLI_README.md](docs/CLI_README.md) | Define the source-to-export mapping explicitly so metadata-rich authoring exercises can produce the existing metadata-free flattened export safely and predictably |
 | Mixed-layout discovery could collect the same exercise-specific surface twice during migration | [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py), [tests/ex002_sequence_modify_basics](tests/ex002_sequence_modify_basics), [pyproject.toml](pyproject.toml) | Make duplicate-collection detection and hard failure an explicit acceptance criterion for the execution-model and pytest-discovery phases, treat `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` as the canonical exercise-specific test surface, and retire `tests/test_ex002_sequence_modify_basics.py` before enforcing the duplicate-collection guard. |
-| Exercise metadata could become bloated again if conventions are reintroduced as configuration | [ACTION_PLAN.md](ACTION_PLAN.md), [scripts/new_exercise.py](scripts/new_exercise.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Keep the metadata schema intentionally small, derive all convention-based fields, and reject proposals that reintroduce duplicated configuration without a strong need |
+| Exercise metadata could become bloated again if conventions are reintroduced as configuration | [ACTION_PLAN.md](ACTION_PLAN.md), [scripts/new_exercise.py](scripts/new_exercise.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Keep the metadata schema intentionally small, derive all convention-based fields, and reject proposals that reintroduce duplicated configuration without a strong need; ensure `scripts/verify_exercise_quality.py` also respects the minimal metadata/resolver contract and does not reintroduce ad-hoc path assumptions |
+
+### Tooling decision: scripts/verify_exercise_quality.py
+
+Decision: Keep this lightweight verifier in place for the Exercise Verifier agent and fully migrate it to the canonical `exercises/<construct>/<exercise_key>/` layout and shared metadata/resolver contract rather than replacing or removing it.
+
+Criteria: the script already encodes the target checks, the agent depends on its quick feedback loop, and updating it to the new resolver is less work (and less risky) than inventing an entirely new verification tool.
 
 ## Migration Checklist
 
@@ -207,7 +214,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Agree that `exercises/<construct>/<exercise_key>/` is the canonical location for all exercise-specific assets.
 - [ ] Confirm that exercise type is moving from the folder hierarchy into `exercise.json`.
 - [ ] Confirm standard notebook names: `student.ipynb` and `solution.ipynb`.
-- [ ] Confirm that top-level `tests/` remains for shared grading infrastructure only.
+- [ ] Confirm shared grading/runtime helpers live in `exercise_runtime_support` and that top-level `tests/` contains only executed test suites; teach contributors to import support features from the new package.
 - [ ] Confirm whether template exports should flatten notebooks and tests during the transition.
 - [ ] Record the early identity-normalisation blockers explicitly and decide their target canonical forms before Phase 2 starts.
 
@@ -240,9 +247,9 @@ The current repository has a number of path assumptions wired into tooling, docs
 
 - [ ] Add an `exercise.json` loader in a central module rather than scattering path logic across scripts.
 - [ ] Add a resolver that locates an exercise directory from `exercise_key`.
-- [ ] Add a resolver that returns the student or solution notebook path for a given `exercise_key`.
+- [ ] Add a resolver that returns the student or solution notebook path for a given `exercise_key`, sourcing its `variant` argument from the CLI `--variant <student|solution>` flag so the resolver can select the matching `student.ipynb` or `solution.ipynb`.
 - [ ] Decide where the shared metadata and resolver module lives so `scripts/`, `tests/`, and packaged template code can all import it cleanly.
-- [ ] Use an explicit `variant` argument in Python APIs as the canonical student-versus-solution selector.
+- [ ] Use an explicit `variant` argument in Python APIs as the canonical student-versus-solution selector, and expose it through the CLI `--variant <student|solution>` flag so scripts and workflows forward the same literal to the shared resolver.
 - [ ] Treat `exercise_key` as the only supported resolver input in the target model.
 - [ ] Do not add compatibility APIs that accept notebook paths, test paths, or legacy folder locations as alternative resolver inputs.
 - [ ] Add an explicit migration manifest or registry at `exercises/migration_manifest.json` that records whether each exercise still uses the legacy layout or has moved to the canonical layout.
@@ -274,14 +281,14 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Do not move exercise-local tests or break public interfaces until the repository execution model is explicitly defined.
 - [ ] Do not treat source-repo authoring rules and exported Classroom rules as the same contract.
 - [ ] Do not rely on accidental pytest discovery or packaging behaviour that happens to keep legacy top-level files working.
-- [ ] Do not treat the current top-level `tests` support package as permanently fixed until Phase 4 confirms whether shared runtime code stays there or moves to a dedicated support package.
+- [ ] Do not treat the current top-level `tests` support package as permanently fixed until Phase 4 confirms that shared runtime code relocates to `exercise_runtime_support`, that `pyproject.toml` installs the package, and that docs/workflows reference the new import path.
 - [ ] The phase is only complete once the repository test discovery model, shared runtime import model, student-versus-solution selection model, and source-to-export mapping contract are all documented clearly enough to drive later implementation checklists.
 - [ ] The phase is not complete until mixed-layout repository discovery has an explicit duplicate-collection strategy and acceptance criteria proving duplicate collection fails hard rather than being collected twice silently.
-- [ ] The phase is not complete until the `ex007` naming mismatch is resolved or explicitly treated as a prerequisite blocker for authoritative variant-selection work.
+- [ ] The phase is not complete until the `ex007` naming mismatch is resolved or explicitly treated as a prerequisite blocker for trusting the CLI `--variant <student|solution>` variant-selection contract.
 
 - [ ] Define how repository pytest discovery will work once exercise-specific tests move under `exercises/**/tests/`.
-- [ ] Move shared grading/runtime helpers into a dedicated support package before broad exercise-local test relocation begins.
-- [ ] Define the long-term student-versus-solution variant-selection mechanism as an explicit `variant` argument in Python APIs plus a matching CLI flag for scripts and workflows.
+- [ ] Move shared grading/runtime helpers into `exercise_runtime_support` before broad exercise-local test relocation begins, and add verification steps showing TemplatePackager exports those files, packaging/docs reference the package, and exercises import from it instead of `tests`.
+- [ ] Define the long-term student-versus-solution variant-selection mechanism as an explicit `variant` argument in Python APIs plus a matching CLI flag `--variant <student|solution>` for scripts and workflows.
 - [ ] Define the exact source-to-export mapping from canonical authoring files such as `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` to the exported flattened Classroom paths under `notebooks/` and `tests/`.
 - [ ] Make it explicit that exported Classroom repositories remain metadata-free even though the source repository is metadata-driven.
 - [ ] Define whether any generated runtime index or support artefact is allowed in Classroom exports, and if so, require it to remain export-safe and metadata-free from an authoring perspective.
@@ -303,7 +310,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Generate `tests/test_<exercise_key>.py` inside the exercise directory.
 - [ ] Make the generated notebook self-check cell mandatory by convention rather than configurable per exercise.
 - [ ] Derive exercise tags and debug explanation tags from `parts` and `exercise_type` rather than storing them in metadata.
-- [ ] Update [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py) to validate the new structure and metadata.
+- [ ] Update [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py) to validate the new structure and metadata via the shared resolver so the existing verifier continues to work under the new canonical layout (per the tooling decision above).
 - [ ] Remove the manual move step from [docs/setup.md](docs/setup.md).
 - [ ] Keep a list of scaffold-linked docs and tests to revisit once the generator changes, especially: [tests/test_new_exercise.py](tests/test_new_exercise.py), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [docs/exercise-generation.md](docs/exercise-generation.md), and [docs/setup.md](docs/setup.md).
 
@@ -317,12 +324,12 @@ The current repository has a number of path assumptions wired into tooling, docs
 
 - [ ] Update [tests/notebook_grader.py](tests/notebook_grader.py) to resolve notebooks via the new metadata and resolver layer.
 - [ ] Update [tests/exercise_framework/paths.py](tests/exercise_framework/paths.py) to match the same behaviour.
-- [ ] Keep student-versus-solution selection separate from layout migration, using a variant selector that does not mask missing migrated files.
+- [ ] Keep student-versus-solution selection separate from layout migration by funneling both repository and workflow commands through the CLI `--variant <student|solution>` selector so missing canonical files surface immediately.
 - [ ] Update exercise expectation modules and framework APIs so they stop treating top-level notebook paths as canonical.
 - [ ] Update student checker code paths that currently resolve by notebook filename or hard-coded slug.
 - [ ] Update [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py) so production validation no longer assumes only `notebooks` and `notebooks/solutions`.
 - [ ] Update [scripts/verify_solutions.sh](scripts/verify_solutions.sh) to use the new resolution mechanism.
-- [ ] Update autograding integration tests to reflect the new variant selection model.
+- [ ] Update autograding integration tests to reflect the new CLI `--variant <student|solution>` model so they prove the resolver responds correctly to each literal.
 - [ ] Keep a pointer list for likely breakage in: [tests/exercise_framework/test_runtime.py](tests/exercise_framework/test_runtime.py), [tests/exercise_framework/test_paths.py](tests/exercise_framework/test_paths.py), [tests/exercise_framework/test_autograde_parity.py](tests/exercise_framework/test_autograde_parity.py), [tests/student_checker/notebook_runtime.py](tests/student_checker/notebook_runtime.py), and [tests/student_checker/api.py](tests/student_checker/api.py).
 
 ### Phase 7: Pytest Discovery, Packaging, And Workflow Contract
@@ -331,16 +338,16 @@ The current repository has a number of path assumptions wired into tooling, docs
 
 - [ ] Do not let packaging, CI, or pytest discovery rely on accidental continued presence of top-level exercise notebooks or tests.
 - [ ] Do not leak repository authoring metadata into exported Classroom repositories unless that contract is explicitly revised later.
-- [ ] The phase is only complete once exercise-local tests are discoverable under the chosen execution model, packaging works from canonical exercise directories, workflow behaviour matches the new variant-selection mechanism, and the exported repository remains metadata-free by design.
+- [ ] The phase is only complete once exercise-local tests are discoverable under the chosen execution model, packaging works from canonical exercise directories, workflow behaviour matches the `--variant <student|solution>` selector (forwarded to the new resolver), and the exported repository remains metadata-free by design.
 
 - [ ] Update the chosen repository pytest discovery configuration so exercise-local tests are collected intentionally rather than incidentally.
 - [ ] Update [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py) to select exercises from the new canonical tree.
 - [ ] Update [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py) to collect files from each exercise directory.
 - [ ] Update [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) to package from the exercise directory structure while exporting the existing flattened Classroom contract.
 - [ ] Make the transformation from metadata-rich source repository to metadata-free exported repository explicit in packaging design, tests, and docs.
-- [ ] Review how packaged templates will continue to include shared runtime support from the chosen shared grading package location.
+- [ ] Review how packaged templates will continue to include shared runtime support from `exercise_runtime_support`, ensure TemplatePackager's required directories cover that package, and add packaging tests that verify the exported repos still ship the runtime helpers alongside the flattened notebooks/tests while remaining metadata-free.
 - [ ] Add explicit guards and tests to ensure exported templates do not accidentally include `solution.ipynb`, `exercise.json`, or the full authoring-side `exercises/` tree.
-- [ ] Update repository workflows and exported template workflows to use the final variant-selection mechanism rather than `PYTUTOR_NOTEBOOKS_DIR`, using CLI flags rather than environment-based path swapping.
+- [ ] Update repository workflows and exported template workflows to use the final `--variant <student|solution>` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`, so they pass the literal straight through to the resolver instead of swapping notebook roots.
 - [ ] Update template CLI tests and workflow-related tests to cover the new collection and export rules.
 - [ ] Keep a pointer list for packaging and workflow pain points in: [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py), [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py), [tests/template_repo_cli](tests/template_repo_cli), [docs/CLI_README.md](docs/CLI_README.md), and [.github/workflows](.github/workflows).
 
@@ -357,7 +364,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Update public CLI and script interfaces to use the new canonical exercise identity model.
 - [ ] Remove or deliberately break legacy notebook-path-driven invocation patterns once replacement interfaces exist.
 - [ ] Update user-facing docs to describe the breaking changes and the new invocation model.
-- [ ] Keep a pointer list for interface pain points in: [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), and [scripts/new_exercise.py](scripts/new_exercise.py).
+- [ ] Keep a pointer list for interface pain points in: [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), and [scripts/new_exercise.py](scripts/new_exercise.py) and update it when the verifier migration is complete.
 
 ### Phase 9: Exercise Data Migration
 
@@ -371,7 +378,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Update links in construct-level teaching order files.
 - [ ] Update each exercise `README.md` and `OVERVIEW.md` so internal links point to the new local notebook and test paths.
 - [ ] Move exercise-specific tests out of the top-level `tests/` directory once the new discovery path is proven.
-- [ ] Leave shared framework modules in the top-level `tests/` package.
+- [ ] Ensure shared framework modules now live in `exercise_runtime_support`, leaving top-level `tests/` free for exercise-specific test suites only.
 - [ ] Keep an eye on exercises that already have duplicate or partially migrated homes so the migration script does not overwrite the wrong copy.
 
 ### Phase 10: Docs, Agents, Workflows, And Contributor Guidance
@@ -388,7 +395,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Update [docs/project-structure.md](docs/project-structure.md) and [docs/setup.md](docs/setup.md).
 - [ ] Update exercise generation and verification guidance in [docs/exercise-generation.md](docs/exercise-generation.md) and [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md).
 - [ ] Update [AGENTS.md](AGENTS.md) and the files under [.github/agents](.github/agents) so custom agents follow the new layout.
-- [ ] Update contributor-facing commands and examples to use the final explicit `variant` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`.
+- [ ] Update contributor-facing commands and examples to use the final explicit `--variant <student|solution>` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`.
 - [ ] Add short migration warning blocks to the current agent files so contributors know the repository is mid-migration and should consult [ACTION_PLAN.md](ACTION_PLAN.md) for the target structure.
 - [ ] Decide the cutover sequence for agent docs: update in place versus replace-then-archive.
 - [ ] Update all four current agent files explicitly: [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md), [.github/agents/exercise_verifier.md.agent.md](.github/agents/exercise_verifier.md.agent.md), [.github/agents/implementer.md.agent.md](.github/agents/implementer.md.agent.md), and [.github/agents/tidy_code_review.md.agent.md](.github/agents/tidy_code_review.md.agent.md).
@@ -413,7 +420,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Run template packaging smoke tests for at least one migrated exercise.
 - [ ] Run repository CI and packaged-template smoke tests against the new contract before removing legacy support.
 - [ ] Run an explicit full test-collection pass before final cleanup so collection-time identity mismatches are caught, not just runtime failures.
-- [ ] Update repository workflows and exported template workflows to use the final variant-selection mechanism.
+- [ ] Update repository workflows and exported template workflows to use the final `--variant <student|solution>` CLI flag so the literal is forwarded to the resolver instead of relying on `PYTUTOR_NOTEBOOKS_DIR`.
 - [ ] Define and document the minimum validation matrix required before each cutover stage, including repository student mode, repository solution mode, and packaged-template runtime checks.
 - [ ] Remove legacy path support only after every exercise and every doc set has been migrated.
 - [ ] Delete or repurpose the top-level `notebooks/` directory once it is no longer needed.
@@ -424,7 +431,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 1. Complete the identity inventory and choose a safe pilot scope.
 2. Build the metadata and resolver layer first.
 3. Consolidate duplicated exercise registry data into `exercise.json`.
-4. Define the execution model, shared runtime home, variant selector, and source-to-export mapping before moving exercise-local tests.
+4. Define the execution model, shared runtime home (`exercise_runtime_support`), CLI `--variant <student|solution>` selector (mapped to the resolver's `variant` argument), and source-to-export mapping before moving exercise-local tests.
 5. Update scaffolding and verification to write the new structure.
 6. Cut over internal grading and autograding code.
 7. Update packaging, pytest discovery, and workflow behaviour.
@@ -454,7 +461,7 @@ These can be written first because they define the migration model, inventory, c
 - [ ] Phase 6 checklist: Grading And Autograding
 - [ ] Phase 7 checklist: Pytest Discovery, Packaging, And Workflow Contract
 
-These depend on the earlier checklist set being stable enough to define the resolver contract, execution model, source-to-export mapping, and shared runtime expectations.
+These depend on the earlier checklist set being stable enough to define the resolver contract, execution model, source-to-export mapping, and the `exercise_runtime_support` runtime expectations.
 
 ### Wave 3: Author Last
 
@@ -477,7 +484,7 @@ These should be written last because they depend most heavily on upstream execut
 
 1. Confirm whether exercise type should remain in the exercise key for now or be removed from future slugs. **A:** Keep it in the key to make migration easier and to make searching for exercises by type using a full text search when they become more numerous easier.
 2. Confirm whether exported Classroom repositories should keep the nested layout or flatten notebooks and tests during packaging. **A:** The current behaviour is to flatten exported Classroom repositories so that student notebooks are written to `notebooks/exNNN_slug.ipynb` and exercise-specific tests are written to `tests/test_exNNN_slug.py`. That current contract is documented in [docs/CLI_README.md](docs/CLI_README.md) under "What Gets Included in Templates".
-3. Confirm whether the current `PYTUTOR_NOTEBOOKS_DIR` environment variable should be retained as a compatibility layer during the transition. **A:** No. It should not be used as a layout compatibility layer during an exercise-by-exercise migration because silent fallback could make a partial migration look successful when it is not. Migration state should be explicit per exercise, and resolution should fail hard if an exercise marked as migrated is missing its canonical files. Student-versus-solution selection should remain a separate concern, handled by a dedicated variant selector that does not hide layout mistakes.
+3. Confirm whether the current `PYTUTOR_NOTEBOOKS_DIR` environment variable should be retained as a compatibility layer during the transition. **A:** No. It should not be used as a layout compatibility layer during an exercise-by-exercise migration because silent fallback could make a partial migration look successful when it is not. Migration state should be explicit per exercise, and resolution should fail hard if an exercise marked as migrated is missing its canonical files. Student-versus-solution selection should remain a separate concern, handled by the CLI `--variant <student|solution>` selector so layout mistakes stay visible.
 4. Confirm the canonical input to the new resolver model. **A:** Standardise on `exercise_key` only. Do not support legacy path-based resolver inputs in the target model. Legacy callers should fail hard until they are refactored to use the new resolver contract.
 5. Confirm whether the migration should prefer compatibility layers or deliberate breakage when interfaces change. **A:** Prefer deliberate breaking changes over compatibility wrappers, aliases, or fallbacks. Legacy interfaces should fail hard once replacement interfaces exist.
 6. Confirm whether exported Classroom repositories should include repository-side metadata such as `exercise.json`. **A:** No. Exported Classroom repositories should remain metadata-free student repositories and should not ship the authoring-side metadata model.

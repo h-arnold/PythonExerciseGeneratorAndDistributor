@@ -35,6 +35,7 @@ When this phase is complete, the repository has a single shared metadata/resolut
 - load an explicit migration manifest that states whether an exercise is still legacy or has reached the canonical layout
 - resolve a canonical exercise directory from `exercise_key`
 - resolve the canonical student or solution notebook path from `exercise_key` plus an explicit variant selector
+- prove the CLI `--variant <student|solution>` flag maps directly to the resolver’s `variant` argument so scripts and workflows can pass the literal values without ambiguity
 - reject notebook paths, test paths, filenames, and other legacy path-shaped inputs with a clear error
 - fail hard when an exercise is marked as migrated but the canonical files are missing
 
@@ -171,6 +172,7 @@ List every surface this migration unit touches. Be concrete.
   - `uv run python scripts/build_autograde_payload.py` — current environment validation assumes only legacy notebook roots.
   - `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct ... --type ...` — currently notebook-path-shaped and depends on old exercise-directory conventions.
   - `template-repo-cli` and `template_repo_cli` — current selection logic still scans `notebooks/` and the old exercise directory shape.
+  - `--variant <student|solution>` — document the final CLI flag signature, enumerate the allowed literal values, and assert the resolver refuses any other input so the CLI contract is explicit for subsequent phases.
 - [ ] Environment variables:
   - `PYTUTOR_NOTEBOOKS_DIR` — current legacy variant selector. Phase 2 must prove that the **new shared resolver does not read this variable**.
 - [ ] Workflow jobs or steps:

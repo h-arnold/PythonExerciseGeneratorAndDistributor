@@ -31,7 +31,7 @@ More specifically:
 - hard-coded exercise order, display labels, construct grouping, and exercise-type grouping should no longer need to live in more than one code path
 - `tests/exercise_framework` and `tests/student_checker` should consume the same metadata-derived catalogue for exercise identity and display data
 - `tests/exercise_expectations` should keep behavioural expectations only, rather than also owning notebook identity data where that can be derived elsewhere
-- template selection and packaging should read exercise metadata from the source repository, but exported Classroom repositories should still contain only flattened notebooks, flattened tests, and shared runtime support files
+- template selection and packaging should read exercise metadata from the source repository, but exported Classroom repositories should still contain only flattened notebooks, flattened tests, and the shared runtime helpers packaged from `exercise_runtime_support` (verify `TemplatePackager.REQUIRED_TEST_DIRECTORIES` covers that package and that exported workspaces ship the helpers alongside the flattened files).
 - convention-based fields such as notebook file names, test file names, tag names, ordering rules, and self-check presence should remain derived conventions rather than new metadata fields
 
 ## Preconditions
@@ -87,7 +87,7 @@ Notes:
   - `scripts/template_repo_cli/core/packager.py` — adjacent dependency only; keep the metadata-free export contract visible, but leave broad packaging cutover to later phases.
   - `scripts/template_repo_cli/cli.py` — command entry points use selector/collector behaviour and will need to stay aligned with the new metadata-driven source model.
   - `scripts/template_repo_cli/utils/validation.py` — `VALID_TYPES` should remain the enum of allowed values, but any per-exercise grouping logic should move out of path assumptions.
-  - `scripts/verify_exercise_quality.py` — not a Phase 3 implementation target, but must be recorded as an adjacent surface because it still reflects current construct/type path assumptions.
+  - `scripts/verify_exercise_quality.py` — not a Phase 3 implementation target, but must be recorded as an adjacent surface because it still reflects current construct/type path assumptions; the plan keeps this verifier and migrates it onto the canonical metadata/resolver so the Exercise Verifier agent can keep using its fast checks.
 - [ ] Test files:
   - `tests/exercise_framework/test_api_contract.py` — currently asserts fixed notebook count and uses `EX002_SLUG`.
   - `tests/exercise_framework/test_expectations.py` — currently asserts `FRAMEWORK_EX002_NOTEBOOK_PATH == EX002_NOTEBOOK_PATH`.
@@ -174,7 +174,7 @@ Notes:
   - `template_repo_files/.github/workflows/classroom.yml` — packaged exports must still run without `exercise.json`.
 - [ ] Packaging/export contracts:
   - Authoring repository contract — source selection may become metadata-driven.
-  - Exported Classroom contract — packaged repositories still contain `notebooks/exNNN_slug.ipynb`, `tests/test_exNNN_slug.py`, shared runtime support, and no `exercise.json` or `exercises/` tree.
+  - Exported Classroom contract — packaged repositories still contain `notebooks/exNNN_slug.ipynb`, `tests/test_exNNN_slug.py`, the shared runtime helpers copied from `exercise_runtime_support`, and no `exercise.json` or `exercises/` tree (add packaging assertions proving those helpers stay present alongside the flattened files).
 - [ ] Notebook self-check contracts:
   - `tests.student_checker.check_notebook('<exercise_key>')` — keep the self-check entry point exercise-key-based; do not force notebook cells to import metadata files directly.
   - Student self-check labels should come from metadata-derived display data once Phase 3 lands, but the self-check mechanism itself remains code-driven.

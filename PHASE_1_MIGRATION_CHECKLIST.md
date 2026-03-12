@@ -110,6 +110,8 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 - [ ] `tests/student_checker/api.py` — manual slug registry for student self-check commands.
 - [ ] `tests/exercise_expectations/*.py` — exercise-specific notebook path constants and expectations still point at flat notebook filenames.
 
+Decision note: keep `scripts/verify_exercise_quality.py` as the Exercise Verifier agent’s lightweight checker and migrate it to the canonical `exercises/<construct>/<exercise_key>/` layout plus shared metadata/resolver contract rather than retire or replace it; the agent depends on its fast checks and updating the path inference is far less intrusive than inventing a new tool.
+
 #### Test Files And Fixtures To Audit During Phase 1
 
 - [ ] `tests/test_new_exercise.py` — hard-codes scaffold output paths.
@@ -194,7 +196,7 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 #### Packaging And Export Contracts That Must Not Be Broken In Phase 1
 
 - [ ] `template_repo_files/.github/workflows/classroom.yml` — exported templates run grading with `PYTUTOR_NOTEBOOKS_DIR=notebooks`.
-- [ ] `scripts/template_repo_cli/core/packager.py` — exported templates currently include flat student notebooks and tests only, while copying shared runtime test infrastructure.
+- [ ] `scripts/template_repo_cli/core/packager.py` — exported templates currently include flat student notebooks and tests only while copying shared runtime helpers out of `tests/`; document how `exercise_runtime_support` should replace that import path and add verification that the exported workspaces continue to include the runtime helpers alongside the flattened files.
 - [ ] `docs/CLI_README.md` and `README.md` — public documentation promises metadata-free exported template repositories.
 
 ### Current Assumptions Being Removed
@@ -217,7 +219,7 @@ Break Phase 1 into concrete deliverables. This is inventory and model definition
 - [ ] Add a path-assumption register mapping every affected module/function/command to one of: filename-based, slug-based, directory-based, or notebook-path-based identity.
 - [ ] Update or add a minimal Phase 1 validation script or test module **only if needed** to make the inventory repeatable; keep it read-only and fail-fast.
 - [ ] Update no resolver code yet. Phase 1 should document the future contract, not implement it.
-- [ ] Remove nothing from runtime code in Phase 1 unless it is purely dead inventory scaffolding created during execution and not needed afterwards.
+- [ ] Remove nothing from runtime code in Phase 1 unless it is purely dead inventory scaffolding created during execution and not needed afterwards, because the shared helpers are destined for `exercise_runtime_support` and should remain intact.
 - [ ] Rename or relocate nothing in the live exercise tree during Phase 1.
 - [ ] Add explicit fail-fast reporting to the inventory artefact for duplicate keys, missing solution mirrors, stale directories, and construct mismatches.
 
@@ -227,7 +229,7 @@ Break Phase 1 into concrete deliverables. This is inventory and model definition
 - [ ] Write down the canonical authoring location rule: all exercise-specific assets will eventually live under `exercises/<construct>/<exercise_key>/`.
 - [ ] Write down the future notebook naming rule: `student.ipynb` and `solution.ipynb` inside the canonical exercise directory.
 - [ ] Write down the future metadata rule: exercise type leaves the folder hierarchy and moves into `exercise.json`.
-- [ ] Write down the shared-testing rule: top-level `tests/` remains for shared grading infrastructure only.
+- [ ] Write down the shared-testing rule: shared grading/runtime helpers will move to `exercise_runtime_support`, leaving top-level `tests/` to host only pooled test suites.
 - [ ] Confirm and write down the export rule: Classroom repositories remain metadata-free and continue to use flattened exported exercise-key paths during the migration transition.
 - [ ] Write down the public-API deferral rule: notebook/self-check interfaces remain unchanged until later phases prove the replacement execution model.
 - [ ] Record the canonical target path and canonical identity for every ambiguous exercise or anomaly, and explicitly record when the correct action is deletion rather than migration, including `ex001_sanity` (which must be removed entirely before later phases), `ex006_sequence_modify_casting`, `ex007_sequence_debug_casting`, and `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md`.
