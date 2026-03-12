@@ -101,7 +101,7 @@ Notes:
   - `tests/test_build_autograde_payload.py` — currently asserts environment validation and autograde payload logic under the old variant-selection contract.
   - `tests/test_integration_autograding.py` — repository-to-autograde integration surface.
   - `tests/test_new_exercise.py` — will need updates once the scaffold target layout is decided in later phases, but Phase 4 must list the required contract changes now.
-  - `tests/test_ex001_sanity.py`, `tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex004_sequence_debug_syntax.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_construct_checks.py`, `tests/test_ex007_sequence_debug_casting.py` — current top-level exercise-specific tests; `ex001_sanity` should now be treated as an obsolete removal target rather than a migrated exercise candidate.
+  - `tests/test_ex001_sanity.py`, `tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex004_sequence_debug_syntax.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_construct_checks.py`, `tests/test_ex007_sequence_debug_casting.py` — current top-level exercise-specific tests; `ex001_sanity` is explicitly obsolete, reserved for removal, and must be deleted before any later phases reuse these migration rules.
   - `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` — existing nested exercise-specific parity test surface that should inform the future discovery model.
 - [ ] Docs:
   - `docs/CLI_README.md` — explicitly documents flattened template contents under "What Gets Included in Templates".
@@ -131,7 +131,7 @@ Notes:
   - `exercises/sequence/debug/ex005_sequence_debug_logic/`
   - `exercises/sequence/modify/ex006_sequence_modify_casting/`
   - `exercises/sequence/debug/ex007_sequence_debug_casting/`
-  - `exercises/ex001_sanity/` — obsolete exercise directory that should be removed rather than accounted for as a canonical discovery source.
+  - `exercises/ex001_sanity/` — obsolete exercise directory that is reserved for removal; it must be deleted rather than considered a canonical discovery source before later phases proceed.
   - `exercises/ex006_sequence_modify_casting/` — non-canonical duplicate root that must be accounted for in migration planning.
 
 ### Modules, Functions, Classes, Commands, And Contracts
@@ -185,7 +185,7 @@ Notes:
 - [ ] Student versus solution selection is the same thing as changing the notebook root directory via `PYTUTOR_NOTEBOOKS_DIR`.
 - [ ] Silent fallback from `notebooks/solutions/<relative-path>` to the original notebook path is acceptable when the override file is missing.
 - [ ] Packaging source files from top-level `notebooks/` and `tests/` means the export contract is already defined.
-- [ ] A bare notebook filename such as `ex001_sanity.ipynb` can be treated as implicitly living under `notebooks/`.
+- [ ] A bare notebook filename such as `ex001_sanity.ipynb` can be treated as implicitly living under `notebooks/`, but it should be catalogued as an obsolete removal-only asset and deleted before any later phase attempts to treat it as canonical.
 - [ ] Self-check and grading code may keep their own local `_resolve_ex00X_notebook_path()` helpers without creating a second execution model.
 - [ ] Duplicate exercise-specific test surfaces, such as the top-level `tests/test_ex002_sequence_modify_basics.py` and the nested `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py`, do not matter to future discovery design.
 
@@ -365,7 +365,7 @@ python -m scripts.template_repo_cli.cli \
   --dry-run \
   --output-dir /tmp/phase4-template-check \
   create \
-  --notebooks ex001_sanity ex002_sequence_modify_basics \
+  --notebooks ex001_sanity (obsolete removal target) ex002_sequence_modify_basics \
   --repo-name phase4-template-check
 ```
 
@@ -424,7 +424,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 ### Blockers
 
 - [ ] Blocker: earlier resolver and metadata phases are not yet implemented, so Phase 4 execution code cannot be finalised until the shared resolver/manifests exist.
-- [ ] Blocker: the live repo still contains the obsolete `exercises/ex001_sanity/` tree, which should be removed before discovery/source-selection rules are treated as authoritative.
+- [ ] Blocker: the live repo still contains the obsolete `exercises/ex001_sanity/` tree, which must be deleted before discovery/source-selection rules are treated as authoritative; it is reserved for removal rather than normalisation.
 - [ ] Blocker: the live repo still contains a non-canonical duplicate exercise directory at `exercises/ex006_sequence_modify_casting/`, which could confuse discovery or source-selection implementation.
 - [ ] Blocker: the live repo has an `ex007` naming inconsistency between `notebooks/ex007_sequence_debug_casting.ipynb` and `notebooks/solutions/ex007_data_types_debug_casting.ipynb`, which must be resolved or explicitly handled before the variant-selection contract is treated as authoritative.
 - [ ] Blocker: the current repo already contains duplicate exercise test surfaces for `ex002_sequence_modify_basics`, which makes it unsafe to change pytest discovery without an explicit duplicate-collection strategy.
@@ -438,7 +438,7 @@ Record anything discovered while preparing or executing this checklist that shou
 ### Must Be Added Or Updated In `ACTION_PLAN.md`
 
 - [ ] New blocker or sequencing issue:
-  - record the duplicate non-canonical exercise directories `exercises/ex001_sanity/` and `exercises/ex006_sequence_modify_casting/` as a concrete migration blocker for any discovery or packaging work that assumes one authoritative exercise directory per `exercise_key`
+  - record the duplicate non-canonical exercise directories `exercises/ex001_sanity/` (obsolete, removal-only) and `exercises/ex006_sequence_modify_casting/` as a concrete migration blocker for any discovery or packaging work that assumes one authoritative exercise directory per `exercise_key`
 - [ ] New affected surface:
   - record the existing duplicate `ex002_sequence_modify_basics` test surfaces as an execution-model discovery concern, not just a local test oddity
 - [ ] Incorrect assumption in current plan:

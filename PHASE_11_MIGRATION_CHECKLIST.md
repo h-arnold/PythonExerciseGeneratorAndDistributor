@@ -60,7 +60,7 @@ Notes:
   - Phase 10 has already updated maintained docs, workflows, and agent guidance.
 - Open assumptions:
   - Exported Classroom repositories still flatten exercise outputs to top-level `notebooks/` and `tests/` paths even though authoring moves under `exercises/`.
-  - `ex001_sanity` is obsolete and should be removed rather than included in the final canonical validation set.
+  - `ex001_sanity` is obsolete, reserved for removal, and must be deleted before the final canonical validation set is defined.
   - The canonical exercise set to validate after that removal is: `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax`, `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
 
 ## Affected Surfaces Inventory
@@ -140,7 +140,7 @@ List every surface this migration unit touches. This section is intentionally ex
   - `exercises/sequence/debug/ex004_sequence_debug_syntax/`
   - `exercises/sequence/debug/ex005_sequence_debug_logic/`
   - `exercises/sequence/debug/ex007_sequence_debug_casting/`
-  - `exercises/ex001_sanity/` — obsolete directory that should be removed before final cutover.
+  - `exercises/ex001_sanity/` — obsolete directory that is explicitly reserved for removal; it must be removed before the final cutover proceeds.
   - `exercises/ex006_sequence_modify_casting/` — duplicate or partially migrated home that must not survive into final cutover unnoticed.
   - `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` — placeholder path that may need repurposing or removal once verifier expectations are updated.
   - `notebooks/` — current legacy top-level student notebook source location.
@@ -427,9 +427,9 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Blockers
 
-- [ ] Blocker: the obsolete `exercises/ex001_sanity/` tree must be removed before final cleanup proceeds.
-- [ ] Blocker: the current repository contains mixed exercise locations under `exercises/`, including both `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`; final cleanup must not proceed until ownership is unambiguous.
-- [ ] Blocker: the current `ex007` identity is inconsistent across source files. The student notebook stem is `ex007_sequence_debug_casting`, the solution notebook stem is `ex007_data_types_debug_casting`, notebook self-checks reference `check_notebook('ex007_data_types_debug_casting')`, and `tests/test_ex007_sequence_debug_casting.py` imports a non-existent `tests.exercise_expectations.ex007_data_types_debug_casting` module.
+- [ ] Blocker: the obsolete `exercises/ex001_sanity/` tree must be removed before final cleanup proceeds; treat it as a reserved removal-only asset rather than a migration candidate.
+- [ ] Blocker: the root-level `exercises/ex006_sequence_modify_casting/` duplicate must be removed so that `exercises/sequence/modify/ex006_sequence_modify_casting/` is the only surviving `ex006` source.
+- [ ] Blocker: the current `ex007` identity is inconsistent across source files. Everything must be normalised to `ex007_sequence_debug_casting`, and all `ex007_data_types_debug_casting` references must be removed.
 - [ ] Blocker: Phase 11 cannot execute safely until the final selector and manifest decisions from earlier phases are written down in code and docs, not just implied.
 - [ ] Blocker: Phase 11 cannot execute safely until the dedicated support-package location for shared grading/runtime helpers is implemented and referenced consistently by packaging, docs, and workflows.
 

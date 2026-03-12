@@ -52,7 +52,7 @@ Notes:
 - Open assumptions:
   - `sequence` is the only currently populated construct tree under `exercises/<construct>/<type>/`, but that does **not** automatically make the whole construct the safest pilot.
   - Based on the current repo scan, the least ambiguous candidate exercises are `ex004_sequence_debug_syntax` and `ex005_sequence_debug_logic`.
-  - `ex001_sanity` is obsolete and should be removed rather than considered for migration.
+  - `ex001_sanity` is obsolete, reserved for removal, and must be deleted before later phases begin; it is not a migration candidate.
   - `ex006_sequence_modify_casting` and `ex007_sequence_debug_casting` currently look unsuitable as first migration examples because they contain path or naming anomalies.
   - This phase must end by naming a pilot recommendation and recording rejected alternatives with reasons; do not leave pilot choice as an open assumption.
 
@@ -64,22 +64,21 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 
 | Exercise key | Teacher docs path(s) today | Student notebook | Solution notebook | Primary test surface(s) today | Inventory notes |
 | --- | --- | --- | --- | --- | --- |
-| `ex001_sanity` | `exercises/ex001_sanity/` | `notebooks/ex001_sanity.ipynb` | `notebooks/solutions/ex001_sanity.ipynb` | `tests/test_ex001_sanity.py` | Obsolete sanity-check exercise. Decision: remove entirely rather than migrate into the canonical structure. |
+| `ex001_sanity` | `exercises/ex001_sanity/` | `notebooks/ex001_sanity.ipynb` | `notebooks/solutions/ex001_sanity.ipynb` | `tests/test_ex001_sanity.py` | Obsolete sanity-check exercise. Decision: delete this directory entirely before later phases, as it is reserved for removal rather than canonical migration. |
 | `ex002_sequence_modify_basics` | `exercises/sequence/modify/ex002_sequence_modify_basics/` | `notebooks/ex002_sequence_modify_basics.ipynb` | `notebooks/solutions/ex002_sequence_modify_basics.ipynb` | `tests/test_ex002_sequence_modify_basics.py`; `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` | Duplicate exercise-specific test locations; template CLI fixture data points at the nested test path while the collector code points at the top-level test path. |
 | `ex003_sequence_modify_variables` | `exercises/sequence/modify/ex003_sequence_modify_variables/` | `notebooks/ex003_sequence_modify_variables.ipynb` | `notebooks/solutions/ex003_sequence_modify_variables.ipynb` | `tests/test_ex003_sequence_modify_variables.py` | Teacher docs include an extra `solutions.md`; otherwise this is a relatively clean structured example. |
 | `ex004_sequence_debug_syntax` | `exercises/sequence/debug/ex004_sequence_debug_syntax/` | `notebooks/ex004_sequence_debug_syntax.ipynb` | `notebooks/solutions/ex004_sequence_debug_syntax.ipynb` | `tests/test_ex004_sequence_debug_syntax.py` | Clean structured example with `README.md`, `OVERVIEW.md`, and matching notebook/test names. Strong pilot candidate. |
 | `ex005_sequence_debug_logic` | `exercises/sequence/debug/ex005_sequence_debug_logic/` | `notebooks/ex005_sequence_debug_logic.ipynb` | `notebooks/solutions/ex005_sequence_debug_logic.ipynb` | `tests/test_ex005_sequence_debug_logic.py` | Clean structured example with matching teacher/notebook/test naming. Strong pilot candidate. |
-| `ex006_sequence_modify_casting` | `exercises/ex006_sequence_modify_casting/`; `exercises/sequence/modify/ex006_sequence_modify_casting/` | `notebooks/ex006_sequence_modify_casting.ipynb` | `notebooks/solutions/ex006_sequence_modify_casting.ipynb` | `tests/test_ex006_sequence_modify_casting.py` | Duplicate teacher directories for the same exercise key; one root-level directory and one construct/type directory coexist. |
-| `ex007_sequence_debug_casting` | `exercises/sequence/debug/ex007_sequence_debug_casting/` | `notebooks/ex007_sequence_debug_casting.ipynb` | **No matching file**; current file is `notebooks/solutions/ex007_data_types_debug_casting.ipynb` | `tests/test_ex007_sequence_debug_casting.py`; `tests/test_ex007_construct_checks.py` | Student notebook, teacher docs, and tests use `sequence_debug_casting`, but the solution notebook uses `data_types_debug_casting`; import and documentation drift exists around the same exercise. |
+| `ex006_sequence_modify_casting` | `exercises/ex006_sequence_modify_casting/`; `exercises/sequence/modify/ex006_sequence_modify_casting/` | `notebooks/ex006_sequence_modify_casting.ipynb` | `notebooks/solutions/ex006_sequence_modify_casting.ipynb` | `tests/test_ex006_sequence_modify_casting.py` | Duplicate teacher directories for the same exercise key. Decision: `exercises/sequence/modify/ex006_sequence_modify_casting/` is canonical; the root-level duplicate should be removed. |
+| `ex007_sequence_debug_casting` | `exercises/sequence/debug/ex007_sequence_debug_casting/` | `notebooks/ex007_sequence_debug_casting.ipynb` | **No matching file**; current file is `notebooks/solutions/ex007_data_types_debug_casting.ipynb` | `tests/test_ex007_sequence_debug_casting.py`; `tests/test_ex007_construct_checks.py` | Decision: canonical key is `ex007_sequence_debug_casting`. The solution notebook, self-check references, expectation imports, and test target names must all be normalised to that key, with `data_types` references removed entirely. |
 
 ### Repository-Wide Anomalies Already Confirmed
 
 - [ ] `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` exists as a repository-level placeholder and explicitly states that it exists to satisfy verifier checks. This is not a canonical construct folder.
-- [ ] `ex001_sanity` still lives directly under `exercises/`, but it is now classified as obsolete and should be removed rather than normalised into the canonical tree.
-- [ ] One copy of `ex006_sequence_modify_casting` still lives directly under `exercises/` instead of beneath a construct path.
-- [ ] `ex006_sequence_modify_casting` has two teacher-doc roots, making the current repository ambiguous if a future resolver only accepts `exercise_key`.
-- [ ] `ex007_sequence_debug_casting` has no matching solution notebook path; the existing solution notebook is `notebooks/solutions/ex007_data_types_debug_casting.ipynb`.
-- [ ] `tests/test_ex007_sequence_debug_casting.py` imports `tests.exercise_expectations.ex007_data_types_debug_casting` while `tests/test_ex007_construct_checks.py` imports `tests.exercise_expectations.ex007_sequence_debug_casting`.
+- [ ] `ex001_sanity` still lives directly under `exercises/`, but it is now classified as obsolete and must be removed before canonical migration is considered.
+- [ ] The root-level `exercises/ex006_sequence_modify_casting/` directory is a non-canonical duplicate and should be removed; `exercises/sequence/modify/ex006_sequence_modify_casting/` is the authoritative home.
+- [ ] `ex007_sequence_debug_casting` has no matching solution notebook path yet; the existing `notebooks/solutions/ex007_data_types_debug_casting.ipynb` should be renamed and normalised to the canonical `sequence` key family.
+- [ ] `tests/test_ex007_sequence_debug_casting.py`, `tests/test_ex007_construct_checks.py`, notebook self-check cells, and expectation imports must all be normalised to `ex007_sequence_debug_casting`, with all `data_types` references removed.
 - [ ] `tests/exercise_expectations/__init__.py` exports expectations up to `EX006_*` only; there is no `EX007_*` export surface there.
 - [ ] `tests/template_repo_cli/conftest.py` treats `ex002_sequence_modify_basics` as if its canonical test file were nested under `tests/ex002_sequence_modify_basics/`, while `scripts/template_repo_cli/core/collector.py` collects `tests/test_ex002_sequence_modify_basics.py`.
 - [ ] Only the `sequence` construct currently appears as a real construct subtree under `exercises/`; the repo contains no structured `selection`, `iteration`, or other construct directories yet.
@@ -230,14 +229,14 @@ Break Phase 1 into concrete deliverables. This is inventory and model definition
 - [ ] Write down the shared-testing rule: top-level `tests/` remains for shared grading infrastructure only.
 - [ ] Confirm and write down the export rule: Classroom repositories remain metadata-free and continue to use flattened exported exercise-key paths during the migration transition.
 - [ ] Write down the public-API deferral rule: notebook/self-check interfaces remain unchanged until later phases prove the replacement execution model.
-- [ ] Record the canonical target path and canonical identity for every ambiguous exercise or anomaly, and explicitly record when the correct action is deletion rather than migration, including `ex001_sanity`, `ex006_sequence_modify_casting`, `ex007_sequence_debug_casting`, and `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md`.
+- [ ] Record the canonical target path and canonical identity for every ambiguous exercise or anomaly, and explicitly record when the correct action is deletion rather than migration, including `ex001_sanity` (which must be removed entirely before later phases), `ex006_sequence_modify_casting`, `ex007_sequence_debug_casting`, and `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md`.
 
 ### Pilot Suitability Analysis Tasks
 
 - [ ] Score every current exercise or sub-tree for pilot suitability using objective criteria: duplicate directories, missing solution mirror, test duplication, manual registry drift, and docs/workflow drift.
 - [ ] Confirm whether the safest pilot should be a whole construct, a construct subset, or a single exercise.
 - [ ] Record the rationale if `sequence` is still chosen, and record the rationale if only a subset such as `ex004_sequence_debug_syntax` / `ex005_sequence_debug_logic` is chosen instead.
-- [ ] Explicitly reject high-risk or obsolete candidates in writing if they remain unsuitable after inventory (`ex001_sanity` should be removed; `ex006_sequence_modify_casting` and `ex007_sequence_debug_casting` are current likely migration rejects).
+- [ ] Explicitly reject high-risk or obsolete candidates in writing if they remain unsuitable after inventory (`ex001_sanity` must be removed before any later phase can proceed; `ex006_sequence_modify_casting` and `ex007_sequence_debug_casting` are current likely migration rejects).
 
 ### Data And Metadata Changes
 
@@ -286,7 +285,7 @@ Every new test case below should prove a concrete migration fact rather than mer
 
 - [ ] Positive case: a repository-inventory test or validation command enumerates all **seven** current student exercise keys and maps each one to its current teacher docs path(s), student notebook, solution notebook, and primary test surface(s).
 - [ ] Failure case: duplicate teacher directories for `ex006_sequence_modify_casting` fail with a clear report naming both `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`.
-- [ ] Failure case: obsolete exercises such as `ex001_sanity` are reported clearly as removal targets rather than being mistaken for canonical migration candidates.
+- [ ] Failure case: obsolete exercises such as `ex001_sanity` are reported clearly as removal targets (with explicit blocker wording) rather than being mistaken for canonical migration candidates.
 - [ ] Failure case: solution notebook mismatch is reported clearly for `ex007_sequence_debug_casting`, naming `notebooks/solutions/ex007_data_types_debug_casting.ipynb` as the conflicting path.
 - [ ] Failure case: placeholder construct path `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` is reported as a non-canonical anomaly.
 - [ ] Regression case: the recorded primary test path for `ex002_sequence_modify_basics` is consistent across the inventory artefact, `tests/template_repo_cli/conftest.py`, and the template CLI collector contract.
@@ -406,6 +405,6 @@ This is not the final decision, but it is the current evidence-based shortlist t
 
 - `ex004_sequence_debug_syntax` — clean construct/type path, matching student and solution notebook stems, single top-level test, and matching teacher docs.
 - `ex005_sequence_debug_logic` — same strengths as `ex004`, with no confirmed duplicate paths.
-- Remove `ex001_sanity` rather than trying to give it a canonical construct/type home.
+- Remove `ex001_sanity` rather than trying to give it a canonical construct/type home; treat it as a blocker that must be deleted before progressing.
 - Avoid `ex006_sequence_modify_casting` for the first cut because it has duplicate teacher directories.
 - Avoid `ex007_sequence_debug_casting` for the first cut because the solution notebook slug and ex007 documentation/import surfaces are inconsistent.

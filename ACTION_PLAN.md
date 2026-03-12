@@ -44,7 +44,7 @@ PythonExerciseGeneratorAndDistributor/
 │   ├── sequence/
 │   │   ├── OrderOfTeaching.md
 │   │   ├── README.md                  # optional construct overview
-│   │   ├── ex001_sanity/
+│   │   ├── ex001_sanity/ (obsolete, reserved for removal before later phases)
 │   │   │   ├── exercise.json
 │   │   │   ├── README.md
 │   │   │   ├── OVERVIEW.md
@@ -220,9 +220,9 @@ The current repository has a number of path assumptions wired into tooling, docs
 
 #### Verified Early Blockers
 
-- [ ] `ex001_sanity` is obsolete and should be removed entirely rather than migrated into the canonical exercise tree.
-- [ ] Duplicate `ex006_sequence_modify_casting` exercise homes currently exist at [exercises/ex006_sequence_modify_casting](exercises/ex006_sequence_modify_casting) and [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting); this must resolve to one canonical exercise identity.
-- [ ] `ex007` currently mixes `sequence` and `data_types` naming across notebooks, tests, and self-check references; this must be normalised to the canonical `sequence` key family before later migration phases rely on identity matching.
+- [ ] `ex001_sanity` is obsolete, reserved for removal, and must be deleted before later phases can proceed; it should not be migrated into the canonical exercise tree.
+- [ ] Duplicate `ex006_sequence_modify_casting` exercise homes currently exist at [exercises/ex006_sequence_modify_casting](exercises/ex006_sequence_modify_casting) and [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting); the canonical home is [exercises/sequence/modify/ex006_sequence_modify_casting](exercises/sequence/modify/ex006_sequence_modify_casting), and the root-level duplicate should be removed.
+- [ ] `ex007` currently mixes `sequence` and `data_types` naming across notebooks, tests, and self-check references; this must be normalised fully to `ex007_sequence_debug_casting`, with all `data_types` references removed.
 - [ ] The repository currently contains mixed exercise directory shapes such as `exercises/<exercise_key>/` and `exercises/<construct>/<type>/<exercise_key>/`; these must not be treated as equally canonical.
 - [ ] A stray tree exists under [exercises/PythonExerciseGeneratorAndDistributor](exercises/PythonExerciseGeneratorAndDistributor); this must be classified and removed or relocated before structure docs are finalised.
 

@@ -128,12 +128,12 @@ Notes:
 - [ ] Exercise directories:
   - `exercises/sequence/modify/ex002_sequence_modify_basics/` — current teacher-material home; will need canonical metadata.
   - `exercises/sequence/modify/ex003_sequence_modify_variables/` — current teacher-material home; will need canonical metadata.
-  - `exercises/sequence/modify/ex006_sequence_modify_casting/` — current teacher-material home; duplicates a root-level directory of the same exercise key.
+  - `exercises/sequence/modify/ex006_sequence_modify_casting/` — canonical teacher-material home for `ex006`; metadata and later migration work should point only here.
   - `exercises/sequence/debug/ex004_sequence_debug_syntax/` — current teacher-material home; will need canonical metadata.
   - `exercises/sequence/debug/ex005_sequence_debug_logic/` — current teacher-material home; will need canonical metadata.
-  - `exercises/sequence/debug/ex007_sequence_debug_casting/` — current teacher-material home; note current solution notebook naming drift.
+  - `exercises/sequence/debug/ex007_sequence_debug_casting/` — canonical teacher-material home for `ex007`; solution notebook and related identities must be normalised to the same key.
   - `exercises/ex001_sanity/` — non-canonical root-level exercise directory; must not be silently indexed as if it already matched the target layout.
-  - `exercises/ex006_sequence_modify_casting/` — duplicate root-level directory; must be resolved before metadata indexing becomes authoritative.
+  - `exercises/ex006_sequence_modify_casting/` — duplicate root-level directory; must be removed before metadata indexing becomes authoritative.
   - `exercises/sequence/OrderOfTeaching.md` — teaching-order document that will eventually need to align with metadata-derived display and ordering.
   - `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` — placeholder subtree that should not be mistaken for a construct or exercise source when scanning for metadata.
 
@@ -379,7 +379,7 @@ Only include broader test runs after the targeted metadata and template-selectio
 - [ ] No `exercise.json` files currently exist anywhere in the repository, so Phase 3 cannot be implemented without either creating pilot metadata files first or explicitly staging that work under the Phase 2/3 boundary.
 - [ ] The current repository contains duplicate or stale exercise homes, notably `exercises/ex006_sequence_modify_casting/` alongside `exercises/sequence/modify/ex006_sequence_modify_casting/`; a metadata scan could otherwise index both.
 - [ ] `tests/exercise_framework/api.py` currently covers ex001–ex006, while `tests/student_checker/api.py` covers ex001–ex007; replacing duplicated registries may surface additional inconsistencies in what the repository considers the active exercise set.
-- [ ] `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match the student notebook and exercise directory key `ex007_sequence_debug_casting`, so any metadata-derived identity check will expose this mismatch immediately.
+- [ ] `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match the canonical student notebook and exercise directory key `ex007_sequence_debug_casting`; it should be renamed and all `data_types` references removed before metadata-derived identity checks are trusted.
 - [ ] The placeholder tree `exercises/PythonExerciseGeneratorAndDistributor/` may confuse naive metadata or exercise-directory scanners.
 
 ### Decisions And Blockers

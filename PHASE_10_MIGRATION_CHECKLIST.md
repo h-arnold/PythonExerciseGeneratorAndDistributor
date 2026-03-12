@@ -112,7 +112,7 @@ List every surface this migration unit touches. This inventory is based on the c
   - `template_repo_files/README.md.template` — review if exported README wording should distinguish student-facing export from authoring repo guidance.
   - `template_repo_files/pytest.ini` — review only if the documented test-discovery contract changes.
 - [ ] Exercise directories:
-  - `exercises/ex001_sanity/` — obsolete root-level exercise directory; treat as a removal target, not a canonical layout example.
+  - `exercises/ex001_sanity/` — obsolete root-level exercise directory; treat as a removal-only blocker and delete it before later phases treat any layout as canonical.
   - `exercises/ex006_sequence_modify_casting/` — duplicate legacy root-level copy; must not be shown as canonical in docs.
   - `exercises/sequence/modify/ex002_sequence_modify_basics/`
   - `exercises/sequence/modify/ex003_sequence_modify_variables/`
@@ -390,9 +390,9 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Blockers
 
-- [ ] Blocker: The live repo still contains the obsolete `exercises/ex001_sanity/` tree and the duplicate `exercises/ex006_sequence_modify_casting/` tree, so docs cannot honestly present the migration as complete without calling out the transitional state.
+- [ ] Blocker: The live repo still contains the obsolete `exercises/ex001_sanity/` tree and the duplicate `exercises/ex006_sequence_modify_casting/` tree, so docs cannot honestly present the migration as complete; `exercises/ex001_sanity/` must be deleted before discovery or documentation can move past this transitional state.
 - [ ] Blocker: `.github/workflows/tests.yml` and `.github/workflows/tests-solutions.yml` currently both run solution-mode tests with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`, so the intended workflow split is unclear.
-- [ ] Blocker: `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match `tests/test_ex007_sequence_debug_casting.py` or `exercises/sequence/debug/ex007_sequence_debug_casting/`, which is a concrete naming mismatch that could leak into docs/examples if not resolved.
+- [ ] Blocker: `notebooks/solutions/ex007_data_types_debug_casting.ipynb` does not match the canonical `ex007_sequence_debug_casting` identity, and all `data_types` references must be removed before docs/examples can be trusted.
 - [ ] Blocker: `scripts/new_exercise.py` and `scripts/verify_exercise_quality.py` still encode legacy path assumptions, so documentation cannot fully cut over until the earlier implementation phases land.
 - [ ] Blocker: `exercises/PythonExerciseGeneratorAndDistributor/OrderOfTeaching.md` appears to be a stray construct-like directory and should be explained or removed by an earlier phase before final structure docs are declared authoritative.
 
