@@ -47,3 +47,12 @@ These exercises are intended to be taught in the following order:
 - Type: Modification exercises focused on practical casting scenarios such as reading `input()` text and converting for calculations.
 - Purpose: Help students understand why types matter and how to safely convert data for arithmetic and text output.
 
+1. [**Sequence Debug Casting**](`ex007_sequence_debug_casting`)
+
+[Supporting docs](./debug/ex007_sequence_debug_casting/)
+[Notebook](notebooks/ex007_sequence_debug_casting.ipynb)
+
+- Focus: Debugging type conversion issues with `int()`, `float()`, `str()`, and `input()` values in sequential programs.
+- Type: Debug exercises with increasing bug complexity.
+- Purpose: Build confidence identifying type-related runtime and logic errors before moving to advanced constructs.
+

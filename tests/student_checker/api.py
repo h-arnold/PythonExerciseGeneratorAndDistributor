@@ -36,7 +36,7 @@ _EX003_SLUG = "ex003_sequence_modify_variables"
 _EX004_SLUG = "ex004_sequence_debug_syntax"
 _EX005_SLUG = "ex005_sequence_debug_logic"
 _EX006_SLUG = "ex006_sequence_modify_casting"
-_EX007_SLUG = "ex007_data_types_debug_casting"
+_EX007_SLUG = "ex007_sequence_debug_casting"
 _NOTEBOOK_ORDER = [
     _EX001_SLUG,
     _EX002_SLUG,
@@ -115,7 +115,7 @@ def _get_checks() -> dict[str, NotebookCheckSpec]:
             lambda: print_ex006_results(run_ex006_checks()),
         ),
         _EX007_SLUG: NotebookCheckSpec(
-            "ex007 Data Types Debug Casting",
+            "ex007 Sequence Debug Casting",
             check_ex007,
             lambda: print_ex007_results(run_ex007_checks()),
         ),

@@ -1,4 +1,4 @@
-"""Expectations for ex007 data types debug casting."""
+"""Expectations for ex007 sequence debug casting."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ class Ex007InteractiveConstructs(TypedDict, total=False):
     forbidden_ops: tuple[type[ast.operator], ...]
 
 
-EX007_NOTEBOOK_PATH: Final[str] = "notebooks/ex007_data_types_debug_casting.ipynb"
+EX007_NOTEBOOK_PATH: Final[str] = "notebooks/ex007_sequence_debug_casting.ipynb"
 EX007_MIN_EXPLANATION_LENGTH: Final[int] = 50
 EX007_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
     "run the code first",

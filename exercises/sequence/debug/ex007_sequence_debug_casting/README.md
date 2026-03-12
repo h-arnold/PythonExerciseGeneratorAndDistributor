@@ -1,12 +1,12 @@
-# Data Types Debug Casting
+# Sequence Debug Casting
 
 - **ID**: ex007
-- **Construct**: data_types
+- **Construct**: sequence
 - **Type**: debug
 - **Difficulty**: easy-medium
-- **Learning objective**: Fix common casting and data type errors when working with numbers and text.
-- **Notebook path**: `notebooks/ex007_data_types_debug_casting.ipynb`
-- **Tests path**: `tests/test_ex007_data_types_debug_casting.py`
+- **Learning objective**: Fix common casting and data type errors when working with numbers and text in sequential code.
+- **Notebook path**: `notebooks/ex007_sequence_debug_casting.ipynb`
+- **Tests path**: `tests/test_ex007_sequence_debug_casting.py`
 
 ## Student prompt
 - Open the matching notebook in `notebooks/`.
