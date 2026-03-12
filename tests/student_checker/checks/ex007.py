@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 
-from tests.exercise_expectations import ex007_data_types_debug_casting as ex007
+from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
 from tests.exercise_framework.ex007_construct_checks import (
     has_binop,
     has_call,

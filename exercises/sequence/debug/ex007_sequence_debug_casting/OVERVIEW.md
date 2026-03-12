@@ -1,6 +1,7 @@
-# Overview - Data Types Debug Casting
+# Overview - Sequence Debug Casting
 
 ## Prerequisites
+- Understand basic sequential code execution.
 - Understand that `input()` returns a string.
 - Know the difference between `int`, `float`, and `str`.
 - Be able to use basic arithmetic and string concatenation.
