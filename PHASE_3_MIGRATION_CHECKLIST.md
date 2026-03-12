@@ -39,7 +39,7 @@ More specifically:
 - [ ] Dependencies from earlier phases are complete or explicitly waived.
 - [x] Required decisions from [ACTION_PLAN.md](./ACTION_PLAN.md) are settled.
 - [x] Scope boundaries are clear enough to avoid accidental spill into later phases.
-- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly.
+- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly (Phase 2 live pilot = `ex004_sequence_debug_syntax`).
 
 Notes:
 
@@ -51,7 +51,7 @@ Notes:
   - Deliberate breakage is preferred over compatibility layers once replacement contracts exist.
 - Open assumptions:
   - The shared metadata/resolver module created in Phase 2 will exist before this phase is implemented; this checklist assumes all new metadata loading goes through that single module.
-  - The pilot set has not yet been confirmed. Treat that as a blocker, not as an implementer choice.
+  - The Phase 2 live pilot, `ex004_sequence_debug_syntax`, is the confirmed exercise set that Phase 3 metadata work should build on rather than inventing a new pilot.
   - Phase 3 must not invent a second registry layer; if a derived index is needed, it must be produced from `exercise.json` rather than hand-maintained lists.
 
 ## Affected Surfaces Inventory
@@ -220,7 +220,7 @@ Notes:
 ### Data And Metadata Changes
 
 - [ ] `exercise.json` changes:
-  - add `exercise.json` to each exercise that participates in the Phase 3 pilot, using only the agreed minimal schema
+  - add `exercise.json` to each exercise that participates in the Phase 3 pilot (starting with the Phase 2 live pilot `ex004_sequence_debug_syntax`), using only the agreed minimal schema
   - populate `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts` from the real exercise data rather than from duplicated code constants
   - do not add notebook paths, test paths, tag names, self-check flags, ordering lists, or checker wiring to `exercise.json`
 - [ ] Derived-data/index changes:

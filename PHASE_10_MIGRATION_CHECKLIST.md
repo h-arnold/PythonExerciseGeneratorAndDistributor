@@ -45,7 +45,7 @@ This phase is documentation and guidance cutover work, not a substitute for the 
 - [ ] Dependencies from earlier phases are complete or explicitly waived.
 - [ ] Required decisions from `ACTION_PLAN.md` are settled.
 - [ ] Scope boundaries are clear enough to avoid accidental spill into later phases.
-- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly.
+- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly (Phase 2 live pilot = `ex004_sequence_debug_syntax`).
 
 Notes:
 

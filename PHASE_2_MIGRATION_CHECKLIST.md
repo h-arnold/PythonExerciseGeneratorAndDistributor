@@ -64,6 +64,7 @@ Notes:
   - The shared module/package name for this phase is `exercise_metadata/`.
   - Phase 2 must prove canonical behaviour with isolated fixtures and one live migrated pilot exercise.
   - If a live pilot is required in this phase, do **not** choose `ex006_sequence_modify_casting` or `ex007_sequence_debug_casting` until the blockers in this checklist have been resolved and fed back into [ACTION_PLAN.md](./ACTION_PLAN.md).
+  - The Phase 2 live pilot exercise is `ex004_sequence_debug_syntax`; start with that clean example when proving canonical resolver behaviour.
 
 ## Affected Surfaces Inventory
 
@@ -191,6 +192,7 @@ List every surface this migration unit touches. Be concrete.
 - [ ] Canonical exercise discovery can be inferred reliably from the current mixed directory shapes under `exercises/`.
 - [ ] Exercise type belongs in the canonical path instead of metadata.
 - [ ] It is acceptable for multiple modules to implement their own notebook-path resolution logic.
+- [ ] Duplicate exercise-specific test surfaces like `tests/test_ex002_sequence_modify_basics.py` versus `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` must be resolved: the nested path is the canonical exercise-local test and the top-level copy should not be part of the canonical discovery contract.
 
 ## Implementation Tasks
 

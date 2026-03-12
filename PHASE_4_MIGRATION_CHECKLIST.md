@@ -43,7 +43,7 @@ More specifically:
 - [ ] Dependencies from earlier phases are complete or explicitly waived.
 - [x] Required decisions from [ACTION_PLAN.md](./ACTION_PLAN.md) are settled.
 - [x] Scope boundaries are clear enough to avoid accidental spill into later phases.
-- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly.
+- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly (Phase 2 live pilot = `ex004_sequence_debug_syntax`).
 
 Notes:
 
@@ -187,7 +187,7 @@ Notes:
 - [ ] Packaging source files from top-level `notebooks/` and `tests/` means the export contract is already defined.
 - [ ] A bare notebook filename such as `ex001_sanity.ipynb` can be treated as implicitly living under `notebooks/`, but it should be catalogued as an obsolete removal-only asset and deleted before any later phase attempts to treat it as canonical.
 - [ ] Self-check and grading code may keep their own local `_resolve_ex00X_notebook_path()` helpers without creating a second execution model.
-- [ ] Duplicate exercise-specific test surfaces, such as the top-level `tests/test_ex002_sequence_modify_basics.py` and the nested `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py`, do not matter to future discovery design.
+- [ ] Duplicate exercise-specific test surfaces, such as the top-level `tests/test_ex002_sequence_modify_basics.py` and the nested `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py`, must be resolved before changing discovery; the nested file is the canonical test surface and the top-level file should be retired.
 
 ## Implementation Tasks
 
@@ -219,7 +219,7 @@ Notes:
   - documentation and agent guidance that instructs `PYTUTOR_NOTEBOOKS_DIR` as a long-term layout selector
 - [ ] Rename or relocate:
   - move shared runtime helpers into the dedicated support package chosen by earlier phases; if that package path/name is still not recorded, treat that as a blocker rather than deciding it during implementation
-  - relocate exercise-specific test files only after the repository discovery model has been proved on a pilot exercise set
+  - relocate exercise-specific test files only after the repository discovery model has been proved on the Phase 2 pilot exercise `ex004_sequence_debug_syntax`
 - [ ] Fail-fast behaviour to add:
   - path-based resolver inputs fail with a clear error naming the replacement `exercise_key` contract
   - student-versus-solution selector rejects unknown values and does not try to infer layout fallbacks
@@ -260,7 +260,7 @@ List both existing tests to update and new tests to add.
   - `tests/exercise_framework/test_parity_autograde_ex002.py`
   - `tests/template_repo_cli/test_integration.py`
   - `tests/test_integration_autograding.py`
-  - any future pilot exercise-local tests under `exercises/**/tests/`
+  - any future pilot exercise-local tests (starting with the Phase 2 pilot `ex004_sequence_debug_syntax`) under `exercises/**/tests/`
 - [ ] Update packaging/template tests:
   - `tests/template_repo_cli/test_packager.py`
   - `tests/template_repo_cli/test_integration.py`
@@ -281,7 +281,7 @@ Every checklist should spell out the behaviour that must be proved, not just the
 
 - [ ] Positive case:
   - resolving `ex002_sequence_modify_basics` in repository mode returns the canonical authoring notebook and canonical exercise-local test file once that exercise is marked as migrated
-  - repository pytest discovery collects a pilot exercise test from `exercises/**/tests/` while still collecting shared framework tests from top-level `tests/`
+  - repository pytest discovery collects the Phase 2 pilot `ex004_sequence_debug_syntax` exercise test from `exercises/**/tests/` while still collecting shared framework tests from top-level `tests/`
   - `check_notebook('ex002_sequence_modify_basics')` still works in an exported template repository without `exercise.json`
 - [ ] Failure case:
   - path-based resolver input such as `notebooks/ex002_sequence_modify_basics.ipynb` fails with a clear, non-fallback error once the public execution model has been cut over
@@ -300,7 +300,7 @@ Every checklist should spell out the behaviour that must be proved, not just the
   - notebook self-check commands in a packaged workspace continue to run against the student notebook variant only
 - [ ] Solution-mode case:
   - repository CI can run the solution variant without relying on notebook-root path swapping
-  - solution verification for pilot exercises still passes once the notebook authoring files live under canonical exercise directories
+  - solution verification for the Phase 2 pilot `ex004_sequence_debug_syntax` still passes once the notebook authoring files live under canonical exercise directories
 
 ## Docs, Agents, And Workflow Updates
 
@@ -384,7 +384,7 @@ Recommended additions during implementation:
 
 - [ ] Expected passing behaviour:
   - repository tests pass using the agreed discovery model and shared runtime import model
-  - pilot exercise-local tests are collected from their canonical location without breaking shared-framework tests
+  - the Phase 2 pilot `ex004_sequence_debug_syntax` exercise-local tests are collected from their canonical location without breaking shared-framework tests
 - [ ] Expected failure behaviour:
   - legacy path-based entry points fail clearly where the new contract requires them to fail
   - missing canonical files for migrated exercises fail immediately in both repository execution and packaging
@@ -401,7 +401,7 @@ Recommended additions during implementation:
 - [ ] Explicit proof that old path-based behaviour fails where intended
 - [ ] Explicit proof that packaged exports still match the agreed contract
 - [ ] Explicit proof that docs and workflows no longer teach the old model
-- [ ] Explicit proof that repository pytest discovery collects the intended pilot exercise-local tests and does not double-collect legacy duplicates
+- [ ] Explicit proof that repository pytest discovery collects the Phase 2 pilot `ex004_sequence_debug_syntax` exercise-local tests and does not double-collect legacy duplicates
 
 ## Risks, Ambiguities, And Blockers
 

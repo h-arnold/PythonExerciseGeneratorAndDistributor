@@ -34,7 +34,7 @@ When this checklist is complete:
 - The final variant-selection mechanism has replaced the transitional `PYTUTOR_NOTEBOOKS_DIR` contract everywhere it was only intended as an interim implementation detail.
 - Packaging and autograding are proven to export the correct flattened Classroom structure from canonical authoring sources under `exercises/`.
 - Repository workflows, template workflows, docs, and agent guidance all describe the same canonical model.
-- The old top-level exercise-specific notebooks under `notebooks/` and top-level exercise-specific tests under `tests/test_ex*.py` are either deleted or clearly repurposed as non-authoritative artefacts only after proof that they are no longer required.
+- The old top-level exercise-specific notebooks under `notebooks/` and top-level exercise-specific tests under `tests/test_ex*.py` (for example `tests/test_ex002_sequence_modify_basics.py`) are deleted or repurposed only after their canonical nested counterparts (such as `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py`) prove the new discovery contract.
 
 Old assumptions that should no longer exist:
 
@@ -48,7 +48,7 @@ Old assumptions that should no longer exist:
 - [ ] Dependencies from earlier phases are complete or explicitly waived.
 - [ ] Required decisions from [ACTION_PLAN.md](./ACTION_PLAN.md) are settled.
 - [ ] Scope boundaries are clear enough to avoid accidental spill into later phases.
-- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly.
+- [ ] Any pilot construct or target exercise(s) for this checklist are named explicitly (Phase 2 live pilot = `ex004_sequence_debug_syntax`).
 
 Notes:
 
@@ -61,7 +61,8 @@ Notes:
 - Open assumptions:
   - Exported Classroom repositories still flatten exercise outputs to top-level `notebooks/` and `tests/` paths even though authoring moves under `exercises/`.
   - `ex001_sanity` is obsolete, reserved for removal, and must be deleted before the final canonical validation set is defined.
-  - The canonical exercise set to validate after that removal is: `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax`, `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
+  - The canonical exercise set to validate after that removal is: `ex002_sequence_modify_basics`, `ex003_sequence_modify_variables`, `ex004_sequence_debug_syntax` (the Phase 2 pilot), `ex005_sequence_debug_logic`, `ex006_sequence_modify_casting`, and `ex007_sequence_debug_casting`.
+  - Resolving duplicate test surfaces for exercises such as `ex002_sequence_modify_basics` (the nested `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` file versus the legacy `tests/test_ex002_sequence_modify_basics.py`) is part of proving this canonical set before discovery cutover.
 
 ## Affected Surfaces Inventory
 
