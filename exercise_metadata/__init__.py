@@ -22,10 +22,20 @@ Contract:
 
 from exercise_metadata.loader import load_exercise_metadata
 from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout, load_migration_manifest
+from exercise_metadata.registry import (
+    RegistryEntry,
+    build_exercise_registry,
+    get_all_exercise_keys,
+    get_canonical_exercise_keys,
+)
 from exercise_metadata.resolver import resolve_exercise_dir, resolve_notebook_path
 
 __all__ = [
     "ExerciseLayout",
+    "RegistryEntry",
+    "build_exercise_registry",
+    "get_all_exercise_keys",
+    "get_canonical_exercise_keys",
     "get_exercise_layout",
     "load_exercise_metadata",
     "load_migration_manifest",

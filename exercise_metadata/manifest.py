@@ -59,6 +59,8 @@ def load_migration_manifest(manifest_path: Path | None = None) -> MigrationManif
         raise ValueError(
             f"Unsupported migration manifest schema_version: {data.get('schema_version')!r}"
         )
+    if "exercises" not in data:
+        raise ValueError(f"Migration manifest at {path} is missing required 'exercises' key")
     return data  # type: ignore[return-value]
 
 
@@ -76,7 +78,7 @@ def get_exercise_layout(exercise_key: str, manifest_path: Path | None = None) ->
         KeyError: If the exercise_key is not in the manifest.
     """
     manifest = load_migration_manifest(manifest_path)
-    exercises = manifest.get("exercises", {})
+    exercises = manifest["exercises"]
     if exercise_key not in exercises:
         raise KeyError(
             f"exercise_key {exercise_key!r} is not in the migration manifest. "

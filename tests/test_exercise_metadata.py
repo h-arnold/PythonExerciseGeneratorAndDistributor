@@ -13,9 +13,8 @@ Contract under test:
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import ClassVar
 
 import pytest
 
@@ -27,27 +26,7 @@ from exercise_metadata import (
     resolve_notebook_path,
 )
 from exercise_metadata.manifest import get_exercise_layout
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_manifest(tmp_path: Path, exercises: dict[str, Any], schema_version: int = 1) -> Path:
-    """Write a minimal migration_manifest.json to tmp_path and return its path."""
-    manifest: dict[str, Any] = {"schema_version": schema_version, "exercises": exercises}
-    path = tmp_path / "migration_manifest.json"
-    path.write_text(json.dumps(manifest), encoding="utf-8")
-    return path
-
-
-def _make_exercise_json(directory: Path, data: dict[str, Any]) -> Path:
-    """Write exercise.json into directory and return its path."""
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / "exercise.json"
-    path.write_text(json.dumps(data), encoding="utf-8")
-    return path
-
+from tests.exercise_metadata_helpers import make_exercise_json, make_manifest
 
 # ---------------------------------------------------------------------------
 # Resolver tests - resolve_exercise_dir
@@ -108,7 +87,7 @@ class TestResolveNotebookPath:
 
     def test_raises_lookup_error_for_legacy_exercise(self, tmp_path: Path) -> None:
         """Legacy exercises must cause resolve_notebook_path to fail hard."""
-        manifest_path = _make_manifest(
+        manifest_path = make_manifest(
             tmp_path,
             {"ex001_sanity": {"layout": "legacy"}},
         )
@@ -126,7 +105,7 @@ class TestResolveNotebookPath:
         exercise_dir = tmp_path / "sequence" / "debug" / "ex004_sequence_debug_syntax"
         exercise_dir.mkdir(parents=True)
 
-        manifest_path = _make_manifest(
+        manifest_path = make_manifest(
             tmp_path,
             {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
         )
@@ -161,7 +140,7 @@ class TestLoadExerciseMetadata:
 
     def test_loads_valid_exercise_json(self, tmp_path: Path) -> None:
         """load_exercise_metadata returns correct ExerciseMetadata for valid JSON."""
-        _make_exercise_json(tmp_path, self._VALID_DATA)
+        make_exercise_json(tmp_path, self._VALID_DATA)
         meta = load_exercise_metadata(tmp_path)
         assert meta["exercise_key"] == "ex004_sequence_debug_syntax"
         assert meta["exercise_id"] == 4  # noqa: PLR2004
@@ -184,14 +163,14 @@ class TestLoadExerciseMetadata:
     def test_raises_value_error_for_missing_required_field(self, tmp_path: Path) -> None:
         """exercise.json missing a required field raises ValueError."""
         incomplete = {k: v for k, v in self._VALID_DATA.items() if k != "parts"}
-        _make_exercise_json(tmp_path, incomplete)
+        make_exercise_json(tmp_path, incomplete)
         with pytest.raises(ValueError, match="missing required fields"):
             load_exercise_metadata(tmp_path)
 
     def test_raises_value_error_for_wrong_schema_version(self, tmp_path: Path) -> None:
         """exercise.json with wrong schema_version raises ValueError."""
         bad_version = {**self._VALID_DATA, "schema_version": 99}
-        _make_exercise_json(tmp_path, bad_version)
+        make_exercise_json(tmp_path, bad_version)
         with pytest.raises(ValueError, match="unsupported schema_version"):
             load_exercise_metadata(tmp_path)
 
@@ -218,9 +197,7 @@ class TestLoadMigrationManifest:
 
     def test_raises_value_error_for_wrong_schema_version(self, tmp_path: Path) -> None:
         """Manifest with wrong schema_version raises ValueError."""
-        bad_manifest: dict[str, Any] = {"schema_version": 42, "exercises": {}}
-        path = tmp_path / "migration_manifest.json"
-        path.write_text(json.dumps(bad_manifest), encoding="utf-8")
+        path = make_manifest(tmp_path, exercises={}, schema_version=42)
         with pytest.raises(ValueError, match="Unsupported migration manifest schema_version"):
             load_migration_manifest(path)
 
@@ -240,6 +217,6 @@ class TestGetExerciseLayout:
 
     def test_raises_key_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
         """Nonexistent exercise_key raises KeyError."""
-        manifest_path = _make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
+        manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
         with pytest.raises(KeyError, match="not in the migration manifest"):
             get_exercise_layout("nonexistent_xyz", manifest_path=manifest_path)

@@ -36,3 +36,52 @@ in later phases:
 - `scripts/template_repo_cli/` – path-based exercise collection
 
 These modules should fail hard once migrated; do not add silent compatibility bridges.
+
+## Phase 3: Metadata Consolidation And Registry Replacement
+
+### What Moves Into exercise.json
+
+The following exercise-level properties MUST live in `exercise.json` for canonical exercises:
+- `exercise_id` (numeric) - identity and sort order
+- `title` - human-readable name
+- `construct` - programming construct (e.g. "sequence")
+- `exercise_type` - exercise type (e.g. "debug", "modify")
+- `parts` - number of parts/tasks
+
+### What Stays Hard-Coded By Convention
+
+These fields are deliberately excluded from `exercise.json`:
+- `tags` - derived from `parts` and `exercise_type` at runtime
+- `notebook paths` - fixed by convention: `exercises/<construct>/<key>/notebooks/`
+- `ordering` - derived from `exercise_id`, not configurable separately
+- `mandatory self-check cell presence` - fixed by repository convention
+
+### Hard-Coded Registries To Replace
+
+The following locations contain hard-coded slug lists that should eventually
+derive from `exercise_metadata.registry.get_all_exercise_keys()`:
+
+| File | What to replace |
+|------|----------------|
+| `tests/exercise_framework/api.py` | `NOTEBOOK_ORDER`, `EX00X_SLUG` constants |
+| `tests/student_checker/api.py` | `_NOTEBOOK_ORDER`, `_EX00X_SLUG` constants |
+
+These have been annotated with `# TODO(Phase3)` comments and can be replaced
+once all exercises are migrated to canonical layout with `exercise.json`.
+
+### Exercise-Local vs Aggregate Views
+
+- **Exercise-local**: Each exercise's `exercise.json` owns its own identity data.
+- **Aggregate views**: `exercise_metadata.registry.build_exercise_registry()` derives
+  a sorted list at runtime; no separate aggregate file is needed.
+
+### Exported Classroom Repositories
+
+Exported Classroom repositories (GitHub Classroom student repos) remain
+**metadata-free by design**. They do NOT receive:
+- `exercises/migration_manifest.json`
+- `exercise.json` files
+- The `exercise_metadata/` package
+
+The registry is a source-repository authoring concept only.
+

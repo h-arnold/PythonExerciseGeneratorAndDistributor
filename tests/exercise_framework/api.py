@@ -25,6 +25,9 @@ from . import runtime
 
 RawNotebookResult = tuple[str, bool, list[str]]
 
+# TODO(Phase3): The slug constants and NOTEBOOK_ORDER below are hard-coded.
+# Replace with metadata-driven loading: exercise_metadata.registry.get_all_exercise_keys()
+# once all exercises have exercise.json and are marked canonical in migration_manifest.json.
 EX001_SLUG = "ex001_sanity"
 EX002_SLUG = "ex002_sequence_modify_basics"
 EX003_SLUG = "ex003_sequence_modify_variables"
