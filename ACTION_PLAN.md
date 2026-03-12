@@ -27,7 +27,8 @@ This is intended to solve the current split-brain model where a single exercise 
 11. Migration success must be demonstrated by explicit acceptance criteria at each phase rather than inferred from partial compatibility.
 12. Prefer deliberate breaking changes over compatibility wrappers, fallback resolution, or dual-interface support during this migration.
 13. Exported Classroom repositories remain metadata-free student repositories; they should not ship `exercise.json` or the full `exercises/` authoring tree unless a later explicit decision changes that contract.
-14. `exercise.json` is the full single source of truth for exercise-specific repository metadata, including structure, identity, presentation data, and feature flags that are currently duplicated elsewhere.
+14. `exercise.json` is the full single source of truth for the small set of exercise-specific metadata that should remain configurable at repository level.
+15. If a property is fixed by repository convention, it should not be duplicated in `exercise.json`.
 
 ### Target Tree
 
@@ -95,43 +96,26 @@ PythonExerciseGeneratorAndDistributor/
   "schema_version": 1,
   "exercise_key": "ex006_sequence_modify_casting",
   "exercise_id": "ex006",
-  "slug": "sequence_modify_casting",
+  "slug": "casting",
   "title": "Casting and Type Conversion",
   "construct": "sequence",
   "exercise_type": "modify",
-  "difficulty": "introductory",
-  "parts": 1,
-  "student_checker_enabled": true,
-  "tags": {
-    "exercise_cells": ["exercise1"],
-    "explanation_cells": []
-  },
-  "prerequisites": [
-    "ex003_sequence_modify_variables"
-  ],
-  "status": {
-    "draft": true,
-    "published": false
-  }
+  "parts": 1
 }
 ```
 
-### Fields To Standardise Early
+### Canonical Metadata Fields
 
 | Field | Purpose |
 | --- | --- |
 | `schema_version` | Allows future migrations without guesswork |
 | `exercise_key` | Stable identifier used by scripts and tests |
 | `exercise_id` | Short display and ordering identifier such as `ex006` |
-| `slug` | Human-readable identifier |
+| `slug` | Human-readable identifier without needing to preserve the full legacy key shape |
 | `title` | Exercise title used in docs and generated notebooks |
 | `construct` | Curriculum grouping such as `sequence` |
 | `exercise_type` | `debug`, `modify`, or `make` without requiring another folder level |
-| `parts` | Number of tagged exercise cells |
-| `student_checker_enabled` | Whether to generate or run the notebook self-check cell |
-| `tags` | Declares expected tagged cells for validation tooling |
-| `prerequisites` | Optional dependency or sequencing information |
-| `status` | Draft or publication state |
+| `parts` | Number of graded exercise parts in the notebook |
 
 ### Single Source Of Truth Scope
 
@@ -140,19 +124,34 @@ PythonExerciseGeneratorAndDistributor/
 1. Exercise identity and path assumptions
 2. Exercise title and display text used by tooling
 3. Exercise type and construct grouping
-4. Student checker enablement and similar feature flags
-5. Registry-style exercise ordering and availability data where the codebase currently hard-codes it separately
+4. The minimal structural metadata required to derive exercise-local conventions such as part count
 
 This does not mean that every downstream exported student repository must receive `exercise.json`. The repository can use metadata as the source of truth while packaging exports a flattened, metadata-free student contract.
 
-### Fields Intentionally Omitted
+### Explicit Non-Metadata Conventions
 
-These should be conventions rather than repeated metadata:
+The following are deliberate repository conventions and should not be stored in `exercise.json`:
 
 1. Student notebook path: always `notebooks/student.ipynb`
 2. Solution notebook path: always `notebooks/solution.ipynb`
 3. Primary test path: always `tests/test_<exercise_key>.py`
 4. Teacher overview path: always `OVERVIEW.md` when present
+5. Exercise ordering: derived from `exercise_id`
+6. Student self-check cell: always present as part of the notebook structure
+7. Exercise tags: derived from `parts` as `exercise1` through `exerciseN`
+8. Debug explanation tags: derived from `exercise_type == "debug"` and `parts`
+9. Display labels such as checker titles: derived from `exercise_id` and `title`
+
+### Explicitly Out Of Metadata Scope
+
+The following should remain outside `exercise.json`:
+
+1. Difficulty labels
+2. Publication or draft status
+3. Prerequisites
+4. Checker wiring and module-to-check mappings
+5. Expected outputs, prompts, inputs, and behavioural assertions
+6. Exported Classroom repository paths and packaging destinations
 
 ## Path Assumptions To Replace
 
@@ -176,6 +175,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 | Public interfaces are currently notebook-shaped and path-oriented | [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [scripts/new_exercise.py](scripts/new_exercise.py) | Make the interface cutover explicit and favour deliberate breaking changes over compatibility aliases once the new resolver model is ready |
 | Exercise registry data is duplicated outside path resolution | [tests/student_checker/api.py](tests/student_checker/api.py), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/exercise_expectations](tests/exercise_expectations) | Add a dedicated metadata consolidation stream so `exercise.json` replaces duplicated exercise registry data rather than only replacing path logic |
 | Repository metadata and exported template contracts have different needs | [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py), [docs/CLI_README.md](docs/CLI_README.md), [tests/template_repo_cli/test_packager.py](tests/template_repo_cli/test_packager.py) | Keep repository metadata rich while preserving a metadata-free exported Classroom contract, and make the transformation between those models explicit in packaging |
+| Exercise metadata could become bloated again if conventions are reintroduced as configuration | [ACTION_PLAN.md](ACTION_PLAN.md), [scripts/new_exercise.py](scripts/new_exercise.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Keep the metadata schema intentionally small, derive all convention-based fields, and reject proposals that reintroduce duplicated configuration without a strong need |
 
 ## Migration Checklist
 
@@ -206,6 +206,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Do not add path-based compatibility inputs to the resolver layer.
 - [ ] Legacy code that still calls old path-based entry points should fail hard and clearly until it is refactored.
 - [ ] Prefer deliberate breaking changes over compatibility aliases, soft transitions, or fallback argument handling.
+- [ ] Keep the metadata schema intentionally minimal and avoid reintroducing convention-based fields as configuration.
 - [ ] The phase is only complete once the shared resolver accepts `exercise_key`, rejects legacy path inputs, and has tests that prove missing migrated files and legacy access patterns fail hard.
 
 - [ ] Add an `exercise.json` loader in a central module rather than scattering path logic across scripts.
@@ -219,19 +220,21 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Make legacy callers fail clearly when they bypass the new resolver contract, rather than silently adapting legacy path inputs.
 - [ ] Add unit tests covering both legacy and canonical exercises without allowing silent cross-layout fallback.
 - [ ] Identify and list modules that will need to move onto the resolver early, especially: [tests/notebook_grader.py](tests/notebook_grader.py), [tests/exercise_framework](tests/exercise_framework), [tests/exercise_expectations](tests/exercise_expectations), [tests/student_checker](tests/student_checker), [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py), and [scripts/template_repo_cli](scripts/template_repo_cli).
+- [ ] Make the minimal target metadata schema explicit in code and docs: `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts`.
 
 ### Phase 3: Metadata Consolidation And Registry Replacement
 
 #### Constraints And Acceptance Criteria
 
 - [ ] Do not leave duplicated exercise registry data in code once `exercise.json` is capable of owning it.
-- [ ] Do not treat this as path migration only; exercise-level titles, flags, ordering, and availability data should move toward metadata ownership as well.
+- [ ] Do not treat this as path migration only; exercise-level titles and identity data should move toward metadata ownership where they are currently duplicated.
+- [ ] Do not move convention-based fields such as tags, notebook paths, ordering, or mandatory self-check presence into metadata.
 - [ ] The phase is only complete once the repository has a clear plan and initial implementation path for replacing hard-coded exercise registry data with metadata-driven loading.
 
-- [ ] Define which currently duplicated exercise properties must move into `exercise.json`.
+- [ ] Define which currently duplicated exercise properties must move into `exercise.json`, keeping the schema limited to the agreed minimal field set.
 - [ ] Identify all hard-coded exercise registries and lists that should eventually derive from metadata, especially in: [tests/student_checker/api.py](tests/student_checker/api.py), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), and [tests/exercise_expectations](tests/exercise_expectations).
 - [ ] Decide which metadata remains exercise-local versus which aggregate views should be derived at runtime or build time.
-- [ ] Decide how construct teaching order, display names, and feature flags relate to `exercise.json` and derived indexes.
+- [ ] Decide how construct teaching order and display names relate to `exercise.json` and derived indexes, while keeping order derived from `exercise_id`.
 - [ ] Make it explicit that exported Classroom repositories may remain metadata-free even if the source repository uses metadata as the single source of truth.
 
 ### Phase 4: Scaffolding And Verification
@@ -246,7 +249,8 @@ The current repository has a number of path assumptions wired into tooling, docs
 - [ ] Generate `exercise.json` as part of scaffolding.
 - [ ] Generate `notebooks/student.ipynb` and `notebooks/solution.ipynb` instead of top-level notebook files.
 - [ ] Generate `tests/test_<exercise_key>.py` inside the exercise directory.
-- [ ] Decide how generated notebook self-check cells should refer to the exercise under the new layout.
+- [ ] Make the generated notebook self-check cell mandatory by convention rather than configurable per exercise.
+- [ ] Derive exercise tags and debug explanation tags from `parts` and `exercise_type` rather than storing them in metadata.
 - [ ] Update [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py) to validate the new structure and metadata.
 - [ ] Remove the manual move step from [docs/setup.md](docs/setup.md).
 - [ ] Keep a list of scaffold-linked docs and tests to revisit once the generator changes, especially: [tests/test_new_exercise.py](tests/test_new_exercise.py), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [docs/exercise-generation.md](docs/exercise-generation.md), and [docs/setup.md](docs/setup.md).
@@ -376,4 +380,4 @@ The current repository has a number of path assumptions wired into tooling, docs
 4. Confirm the canonical input to the new resolver model. **A:** Standardise on `exercise_key` only. Do not support legacy path-based resolver inputs in the target model. Legacy callers should fail hard until they are refactored to use the new resolver contract.
 5. Confirm whether the migration should prefer compatibility layers or deliberate breakage when interfaces change. **A:** Prefer deliberate breaking changes over compatibility wrappers, aliases, or fallbacks. Legacy interfaces should fail hard once replacement interfaces exist.
 6. Confirm whether exported Classroom repositories should include repository-side metadata such as `exercise.json`. **A:** No. Exported Classroom repositories should remain metadata-free student repositories and should not ship the authoring-side metadata model.
-7. Confirm how far `exercise.json` should go as a source of truth. **A:** Go the whole way. `exercise.json` should become the single source of truth for exercise-specific metadata currently duplicated across paths, registries, titles, flags, and other exercise-level configuration.
+7. Confirm how far `exercise.json` should go as a source of truth. **A:** Go the whole way for exercise-specific metadata, but keep the schema intentionally small. The canonical field set is `schema_version`, `exercise_key`, `exercise_id`, `slug`, `title`, `construct`, `exercise_type`, and `parts`. Convention-based fields such as notebook/test paths, tag names, self-check presence, and ordering should be derived rather than stored.
