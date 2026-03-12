@@ -30,6 +30,9 @@ from .reporting import (
     run_checks,
 )
 
+# TODO(Phase3): The slug constants and _NOTEBOOK_ORDER below are hard-coded.
+# Replace with metadata-driven loading: exercise_metadata.registry.get_all_exercise_keys()
+# once all exercises have exercise.json and are marked canonical in migration_manifest.json.
 _EX001_SLUG = "ex001_sanity"
 _EX002_SLUG = "ex002_sequence_modify_basics"
 _EX003_SLUG = "ex003_sequence_modify_variables"
@@ -49,7 +52,7 @@ _NOTEBOOK_ORDER = [
 
 
 def check_exercises() -> None:
-    """Run a simple check for exercises 1-6 and print a summary table."""
+    """Run a simple check for exercises 1-7 and print a summary table."""
     checks = _get_checks()
     ordered_checks = [checks[slug] for slug in _NOTEBOOK_ORDER]
     results = run_checks(ordered_checks)

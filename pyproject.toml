@@ -36,7 +36,7 @@ template-repo-cli = "scripts.template_repo_cli.cli:main"
 template_repo_cli = "scripts.template_repo_cli.cli:main"
 
 [tool.setuptools]
-packages = ["scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
+packages = ["exercise_metadata", "scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
 
 [tool.uv]
 package = true

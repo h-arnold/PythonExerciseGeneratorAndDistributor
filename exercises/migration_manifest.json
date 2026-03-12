@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "_comment": "Records the layout state of each exercise. 'legacy' = notebooks in notebooks/ tree. 'canonical' = notebooks in exercises/<construct>/<exercise_key>/notebooks/.",
+  "exercises": {
+    "ex001_sanity": {
+      "layout": "legacy"
+    },
+    "ex002_sequence_modify_basics": {
+      "layout": "legacy"
+    },
+    "ex003_sequence_modify_variables": {
+      "layout": "legacy"
+    },
+    "ex004_sequence_debug_syntax": {
+      "layout": "canonical"
+    },
+    "ex005_sequence_debug_logic": {
+      "layout": "legacy"
+    },
+    "ex006_sequence_modify_casting": {
+      "layout": "legacy"
+    },
+    "ex007_sequence_debug_casting": {
+      "layout": "legacy"
+    }
+  }
+}

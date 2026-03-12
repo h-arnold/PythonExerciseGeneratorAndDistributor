@@ -82,5 +82,9 @@
   {
     "text": "TCR metadata cleaning hook review: automated+manual",
     "status": "done"
+  },
+  {
+    "text": "TCR Phase 2 metadata/resolution review: automated+manual pass",
+    "status": "completed"
   }
 ]
