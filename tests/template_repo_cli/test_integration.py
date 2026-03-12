@@ -191,7 +191,7 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from tests.student_checker import check_notebook; "
+            "from exercise_runtime_support.student_checker import check_notebook; "
             "check_notebook('ex001_sanity')",
         ]
 

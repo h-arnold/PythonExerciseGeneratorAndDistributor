@@ -39,7 +39,7 @@ Why teachers will care:
 </figure>
 
 1. Each exercise is a notebook in [notebooks/](notebooks/), with a tagged cell like exercise1.
-2. Tests in [tests/](tests/) use the exercise framework to extract tagged cells and run them automatically.
+2. Tests in [tests/](tests/) use the shared [exercise_runtime_support/](exercise_runtime_support/) package to extract tagged cells and run them automatically.
 3. Solution notebooks live in [notebooks/solutions/](notebooks/solutions/) and are used to verify the tests.
 4. A CLI can bundle selected exercises into a GitHub Classroom template repo.
 5. You set up a [GitHub Classroom Assignment](https://classroom.github.com/) using the generated template repo, and students can accept the assignment and start working immediately.
@@ -100,10 +100,10 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
    - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
 
-> Note: Running `pytest` without setting `PYTUTOR_NOTEBOOKS_DIR` will test the student notebooks (and will usually fail until exercises are completed). To verify instructor solutions locally, run:
+> Note: Running `pytest` directly still exercises the student notebooks by default. To verify instructor solutions locally with the explicit Phase 4 variant contract, run:
 >
 > ```bash
-> PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
+> uv run python scripts/run_pytest_variant.py --variant solution -q
 > ```
 
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
@@ -112,7 +112,8 @@ Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
 - [notebooks/](notebooks/) — student exercise notebooks (tagged cells)
 - [notebooks/solutions/](notebooks/solutions/) — instructor solutions
-- [tests/](tests/) — pytest‑based autograding
+- [tests/](tests/) — pytest discovery and exercise expectations
+- [exercise_runtime_support/](exercise_runtime_support/) — shared runtime helpers used by tests and exported templates
 - [scripts/](scripts/) — exercise generator + template‑repo CLI
 - [exercises/](exercises/) — teacher materials
 - [docs/](docs/) — documentation

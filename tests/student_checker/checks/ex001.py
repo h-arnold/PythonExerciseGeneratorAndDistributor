@@ -1,28 +1,12 @@
-"""Checks for the ex001 sanity notebook."""
+"""Compatibility wrapper for :mod:`exercise_runtime_support.student_checker.checks.ex001`."""
 
-from __future__ import annotations
+from importlib import import_module as _import_module
 
-from tests.exercise_expectations import EX001_FUNCTION_NAME, EX001_NOTEBOOK_PATH, EX001_TAG
-from tests.notebook_grader import exec_tagged_code
+_impl = _import_module("exercise_runtime_support.student_checker.checks.ex001")
 
+for _name, _value in vars(_impl).items():
+    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
+        continue
+    globals()[_name] = _value
 
-def check_ex001() -> list[str]:
-    """Run checks for ex001."""
-    errors: list[str] = []
-    ns = exec_tagged_code(EX001_NOTEBOOK_PATH, tag=EX001_TAG)
-    example = ns.get(EX001_FUNCTION_NAME)
-    if example is None:
-        errors.append("The `example` function is missing.")
-        return errors
-    if not callable(example):
-        errors.append("The `example` function must be callable.")
-        return errors
-    result = example()
-    if not isinstance(result, str):
-        errors.append("The `example` function must return a string.")
-    elif result == "":
-        errors.append("The `example` function should not return an empty string.")
-    return errors
-
-
-__all__ = ["check_ex001"]
+__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

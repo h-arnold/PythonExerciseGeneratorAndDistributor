@@ -1,16 +1,12 @@
-"""Helper utilities for exercise expectations."""
+"""Compatibility wrapper for :mod:`exercise_runtime_support.exercise_framework.expectations_helpers`."""
 
-from __future__ import annotations
+from importlib import import_module as _import_module
 
+_impl = _import_module("exercise_runtime_support.exercise_framework.expectations_helpers")
 
-def is_valid_explanation(
-    text: str,
-    *,
-    min_length: int,
-    placeholder_phrases: tuple[str, ...],
-) -> bool:
-    """Return True when an explanation is long enough and not a placeholder."""
-    stripped = text.strip().lower()
-    if len(stripped) < min_length:
-        return False
-    return not any(phrase in stripped for phrase in placeholder_phrases)
+for _name, _value in vars(_impl).items():
+    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
+        continue
+    globals()[_name] = _value
+
+__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

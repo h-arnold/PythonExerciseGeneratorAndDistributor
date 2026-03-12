@@ -5,16 +5,21 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TypedDict
 
+from exercise_metadata import ExerciseLayout, get_exercise_layout, resolve_exercise_dir
+from exercise_metadata.resolver import resolve_notebook_path
+
 
 class ExerciseFiles(TypedDict):
     """Typed mapping returned by FileCollector.collect_files()."""
 
     notebook: Path
+    notebook_export: Path
     test: Path
+    test_export: Path
 
 
 class FileCollector:
-    """Collect files for exercises."""
+    """Collect source files and export targets for exercises."""
 
     def __init__(self, repo_root: Path) -> None:
         """Initialize collector.
@@ -25,34 +30,76 @@ class FileCollector:
         self.repo_root: Path = repo_root
         self.notebooks_dir: Path = repo_root / "notebooks"
         self.tests_dir: Path = repo_root / "tests"
+        self.exercises_dir: Path = repo_root / "exercises"
+        self.manifest_path: Path = self.exercises_dir / "migration_manifest.json"
+
+    def _canonical_test_path(self, exercise_id: str) -> Path:
+        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        return exercise_dir / "tests" / f"test_{exercise_id}.py"
+
+    def _legacy_notebook_path(self, exercise_id: str) -> Path:
+        return self.notebooks_dir / f"{exercise_id}.ipynb"
+
+    def _legacy_test_path(self, exercise_id: str) -> Path:
+        return self.tests_dir / f"test_{exercise_id}.py"
+
+    def _raise_for_duplicate_test_sources(self, exercise_id: str) -> None:
+        legacy_test = self._legacy_test_path(exercise_id)
+        canonical_matches = list(self.exercises_dir.rglob(f"tests/test_{exercise_id}.py"))
+        if legacy_test.exists() and canonical_matches:
+            duplicate_list = "\n".join(str(path) for path in [legacy_test, *canonical_matches])
+            raise FileExistsError(
+                "Duplicate exercise test sources found for "
+                f"{exercise_id!r}. Keep exactly one of:\n{duplicate_list}"
+            )
 
     def collect_files(self, exercise_id: str) -> ExerciseFiles:
         """Collect all files for an exercise.
 
         Args:
-            exercise_id: The exercise ID (e.g., 'ex001_sanity').
+            exercise_id: The exercise ID (for example, ``"ex004_sequence_debug_syntax"``).
 
         Returns:
-            Dictionary with keys: 'notebook', 'test'.
+            Dictionary with source paths and flattened export paths.
 
         Raises:
-            FileNotFoundError: If notebook is not found.
+            FileNotFoundError: If required source files are missing.
             ValueError: If exercise_id is empty.
+            FileExistsError: If both legacy and canonical top-level test sources exist.
         """
         if not exercise_id:
             raise ValueError("Exercise ID cannot be empty")
 
-        # Student notebook (required)
-        notebook_path: Path = self.notebooks_dir / f"{exercise_id}.ipynb"
-        if not notebook_path.exists():
-            raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
+        self._raise_for_duplicate_test_sources(exercise_id)
+        try:
+            layout = get_exercise_layout(exercise_id, self.manifest_path)
+        except KeyError as exc:
+            raise FileNotFoundError(f"Exercise not found in migration manifest: {exercise_id}") from exc
 
-        # Test file (required)
-        test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
-        if not test_path.exists():
-            raise FileNotFoundError(f"Test file not found: {exercise_id}")
+        if layout == ExerciseLayout.CANONICAL:
+            notebook_path = resolve_notebook_path(
+                exercise_id,
+                variant="student",
+                exercises_root=self.exercises_dir,
+                manifest_path=self.manifest_path,
+            )
+            test_path = self._canonical_test_path(exercise_id)
+            if not test_path.exists():
+                raise FileNotFoundError(f"Canonical exercise test not found: {test_path}")
+        else:
+            notebook_path = self._legacy_notebook_path(exercise_id)
+            if not notebook_path.exists():
+                raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
+            test_path = self._legacy_test_path(exercise_id)
+            if not test_path.exists():
+                raise FileNotFoundError(f"Test file not found: {exercise_id}")
 
-        return ExerciseFiles(notebook=notebook_path, test=test_path)
+        return ExerciseFiles(
+            notebook=notebook_path,
+            notebook_export=Path("notebooks") / f"{exercise_id}.ipynb",
+            test=test_path,
+            test_export=Path("tests") / f"test_{exercise_id}.py",
+        )
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:
         """Collect files for multiple exercises.

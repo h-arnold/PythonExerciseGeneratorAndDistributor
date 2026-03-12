@@ -37,7 +37,9 @@ def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
         return {
             exercise_id: ExerciseFiles(
                 notebook=repo_root / f"notebooks/{exercise_id}.ipynb",
+                notebook_export=Path("notebooks") / f"{exercise_id}.ipynb",
                 test=repo_root / f"tests/test_{exercise_id}.py",
+                test_export=Path("tests") / f"test_{exercise_id}.py",
             )
             for exercise_id in exercise_ids
         }
@@ -81,7 +83,7 @@ def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
 
 
 def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -> None:
-    """Verify required test infrastructure files and directories are copied."""
+    """Verify required test infrastructure files, directories, and runtime package are copied."""
 
     required_files = (
         "__init__.py",
@@ -113,6 +115,14 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
             assert dest.is_dir()
         else:
             assert not dest.exists()
+
+    runtime_src = repo_root / "exercise_runtime_support"
+    runtime_dest = temp_dir / "exercise_runtime_support"
+    if runtime_src.exists():
+        assert runtime_dest.exists()
+        assert runtime_dest.is_dir()
+    else:
+        assert not runtime_dest.exists()
 
 
 class TestCreateTempDirectory:
@@ -407,7 +417,6 @@ class TestPackageIntegrity:
         assert template_packager.validate_package(temp_dir)
 
         env = os.environ.copy()
-        env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
         result = subprocess.run(
             [
                 sys.executable,
@@ -422,6 +431,9 @@ class TestPackageIntegrity:
             text=True,
             env=env,
         )
+
+        assert not (temp_dir / "exercise_runtime_support" / "exercise.json").exists()
+        assert not (temp_dir / "exercises").exists()
 
         assert result.returncode == 0, (
             "Packaged workspace smoke pytest failed:\n"

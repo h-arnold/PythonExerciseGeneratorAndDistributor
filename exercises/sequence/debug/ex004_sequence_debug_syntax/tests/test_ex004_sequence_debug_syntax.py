@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import ast
+import os
 
 import pytest
 
-from tests.exercise_expectations import ex004_sequence_debug_syntax as ex004
-from tests.exercise_framework import (
+from exercise_metadata.resolver import resolve_notebook_path as resolve_canonical_notebook_path
+from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,
-    resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-from tests.exercise_framework.expectations_helpers import is_valid_explanation
+from exercise_runtime_support.exercise_framework.expectations_helpers import is_valid_explanation
+from tests.exercise_expectations import ex004_sequence_debug_syntax as ex004
 
 
 def _tag(exercise_no: int) -> str:
@@ -24,7 +25,16 @@ def _explanation_tag(exercise_no: int) -> str:
     return f"explanation{exercise_no}"
 
 
-_NOTEBOOK_PATH = resolve_notebook_path(ex004.EX004_NOTEBOOK_PATH)
+
+def _current_variant() -> str:
+    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
+    return "solution" if notebooks_dir.replace("\\", "/").rstrip("/").endswith("solutions") else "student"
+
+
+_NOTEBOOK_PATH = resolve_canonical_notebook_path(
+    "ex004_sequence_debug_syntax",
+    variant=_current_variant(),
+)
 _CACHE = RuntimeCache()
 
 

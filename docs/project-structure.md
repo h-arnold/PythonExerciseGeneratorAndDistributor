@@ -139,7 +139,7 @@ The repository maintains two parallel sets of notebooks:
 The same tests can run against either set:
 
 - Default: `uv run pytest -q` (runs against student notebooks using the uv-managed environment)
-- Solutions: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q` (runs against solutions)
+- Solutions: `uv run python scripts/run_pytest_variant.py --variant solution` (runs the same repository tests against solutions)
 
 This allows verification that:
 

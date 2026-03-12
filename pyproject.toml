@@ -36,7 +36,7 @@ template-repo-cli = "scripts.template_repo_cli.cli:main"
 template_repo_cli = "scripts.template_repo_cli.cli:main"
 
 [tool.setuptools]
-packages = ["exercise_metadata", "scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
+packages = ["exercise_metadata", "exercise_runtime_support", "exercise_runtime_support.exercise_framework", "exercise_runtime_support.student_checker", "exercise_runtime_support.student_checker.checks", "scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
 
 [tool.uv]
 package = true
@@ -44,7 +44,7 @@ package = true
 [tool.pytest.ini_options]
 minversion = "8.0"
 addopts = "-q"
-testpaths = ["tests"]
+testpaths = ["tests", "exercises"]
 pythonpath = ["."]
 markers = ["task(taskno): marks the exercise task number"]
 
@@ -52,6 +52,7 @@ markers = ["task(taskno): marks the exercise task number"]
 line-length = 100
 exclude = [
   "notebooks/**",
+  "exercises/**/notebooks/**",
 ]
 
 [tool.ruff.lint]

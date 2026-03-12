@@ -158,7 +158,7 @@ def _make_check_answers_cell(notebook_path: str) -> dict[str, Any]:
         "execution_count": None,
         "outputs": [],
         "source": [
-            "from tests.student_checker import run_notebook_checks\n",
+            "from exercise_runtime_support.student_checker import run_notebook_checks\n",
             "\n",
             f"run_notebook_checks({notebook_name!r})\n",
         ],

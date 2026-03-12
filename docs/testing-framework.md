@@ -77,11 +77,11 @@ This repository provides a small set of shared helpers used across infrastructur
 Important note on similarly-named helpers:
 
 - There are three helpers named `resolve_notebook_path()` in the codebase:
-  - `tests/exercise_framework/paths.py::resolve_notebook_path` is the framework entry point and respects the `PYTUTOR_NOTEBOOKS_DIR` override.
-  - `tests/notebook_grader.py::resolve_notebook_path` is a low-level helper used by the framework runtime.
-  - `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
+- `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path` is the framework entry point and respects the current notebook-variant selection.
+- `exercise_runtime_support.notebook_grader::resolve_notebook_path` is a low-level helper used by the framework runtime.
+- `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
 
-Recommendation: Use the helper from `tests/exercise_framework/paths.py` or `tests/exercise_framework/runtime.py` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic.
+Recommendation: Use the helper from `exercise_runtime_support.exercise_framework.paths` or `exercise_runtime_support.exercise_framework.runtime` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic.
 
 ### 4. Exercise Quality (`tests/test_exercise_type_docs.py`)
 
@@ -92,7 +92,7 @@ Sanity checks for the documentation and exercise type definition files.
 The repository uses GitHub Actions to run these tests automatically.
 
 - **`tests.yml`**: Runs the full suite on every push and pull request.
-- **`tests-solutions.yml`**: Specifically runs the notebook tests against the *solution* notebooks (using `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`) to ensure the instructor solutions are valid and passing.
+- **`tests-solutions.yml`**: Specifically runs the notebook tests against the *solution* notebooks (via the explicit `--variant solution` contract) to ensure the instructor solutions are valid and passing.
 
 ## Adding New Infrastructure Tests
 
