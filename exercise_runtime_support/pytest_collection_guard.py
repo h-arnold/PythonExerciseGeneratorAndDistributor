@@ -6,6 +6,9 @@ from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
 
+_TOP_LEVEL_TEST_PATH_PARTS = 2
+_MIN_CANONICAL_TEST_PATH_PARTS = 4
+
 
 def find_duplicate_exercise_test_sources(paths: Iterable[Path]) -> dict[str, list[Path]]:
     """Return duplicate exercise test sources collected from top-level and canonical paths."""
@@ -37,10 +40,10 @@ def _exercise_key_for_path(path: Path) -> str | None:
 
 
 def _is_top_level_test_path(path: Path) -> bool:
-    return len(path.parts) == 2 and path.parts[0] == "tests"
+    return len(path.parts) == _TOP_LEVEL_TEST_PATH_PARTS and path.parts[0] == "tests"
 
 
 def _is_canonical_test_path(path: Path) -> bool:
-    if len(path.parts) < 4 or path.parts[0] != "exercises":
+    if len(path.parts) < _MIN_CANONICAL_TEST_PATH_PARTS or path.parts[0] != "exercises":
         return False
     return "tests" in path.parts[1:-1]

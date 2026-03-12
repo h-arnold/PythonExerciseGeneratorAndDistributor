@@ -109,8 +109,7 @@ def interactive_construct_issues(
         op for op in forbidden_ops if any(op in analysis.op_types for analysis in relevant_analyses)
     ]
     if used_forbidden_ops:
-        formatted_ops = ", ".join(_operator_token(op)
-                                  for op in used_forbidden_ops)
+        formatted_ops = ", ".join(_operator_token(op) for op in used_forbidden_ops)
         issues.append(f"Printed result must not use {formatted_ops}.")
 
     if not issues:

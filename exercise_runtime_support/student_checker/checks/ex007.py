@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 
-from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
 from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
     has_binop,
     has_call,
@@ -19,6 +18,7 @@ from exercise_runtime_support.notebook_grader import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
 
 from ..models import ExerciseCheckResult
 from .base import (
@@ -60,7 +60,9 @@ def _check_ex007_static_output(exercise_no: int) -> list[str]:
     notebook_path = _resolve_ex007_notebook_path()
     expected = ex007.EX007_EXPECTED_STATIC_OUTPUTS[exercise_no]
     output = run_cell_and_capture_output(
-        notebook_path, tag=exercise_tag(exercise_no))
+        notebook_path,
+        tag=exercise_tag(exercise_no),
+    )
     if output != expected:
         errors.append(
             f"Exercise {exercise_no}: expected '{expected.strip()}'.")
@@ -119,7 +121,8 @@ def _check_ex007_construct(exercise_no: int) -> list[str]:
     issues = interactive_construct_issues(
         tree,
         expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]
+        ),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
