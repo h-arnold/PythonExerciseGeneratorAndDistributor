@@ -4,7 +4,7 @@ import ast
 
 import pytest
 
-from tests.exercise_expectations import ex007_data_types_debug_casting as ex007
+from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -41,8 +41,7 @@ def _run_with_inputs(exercise_no: int, inputs: list[str]) -> str:
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
-    code = extract_tagged_code(
-        _NOTEBOOK_PATH, tag=_tag(exercise_no), cache=_CACHE)
+    code = extract_tagged_code(_NOTEBOOK_PATH, tag=_tag(exercise_no), cache=_CACHE)
     return ast.parse(code)
 
 
@@ -51,8 +50,7 @@ def _assert_interactive_constructs(exercise_no: int) -> None:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     issues = interactive_construct_issues(
         tree,
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
@@ -265,8 +263,7 @@ def test_exercise10_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
-    explanation = get_explanation_cell(
-        _NOTEBOOK_PATH, tag=_explanation_tag(10))
+    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(10))
     assert is_valid_explanation(
         explanation,
         min_length=ex007.EX007_MIN_EXPLANATION_LENGTH,
