@@ -186,8 +186,23 @@ class TestEndToEndDryRun:
         assert result == 0
         assert output_dir.exists()
 
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged notebook self-check")\n',
+            encoding="utf-8",
+        )
+
         env = os.environ.copy()
         env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
 
         command = [
             sys.executable,

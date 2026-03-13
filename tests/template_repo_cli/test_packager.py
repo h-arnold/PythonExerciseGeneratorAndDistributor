@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -12,6 +13,8 @@ from typing import TypeAlias
 
 import pytest
 
+from exercise_metadata.registry import build_exercise_catalogue
+from exercise_runtime_support.exercise_catalogue import get_catalogue_snapshot_path
 from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
@@ -121,6 +124,7 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
     if runtime_src.exists():
         assert runtime_dest.exists()
         assert runtime_dest.is_dir()
+        assert get_catalogue_snapshot_path(runtime_dest).exists()
     else:
         assert not runtime_dest.exists()
 
@@ -182,6 +186,19 @@ class TestCopyFiles:
         _assert_autograde_script_copy(repo_root, temp_dir)
         _assert_autograde_plugin_copy(repo_root, temp_dir)
         _assert_required_test_infrastructure_copy(repo_root, temp_dir)
+
+    def test_copy_template_base_files_generates_runtime_catalogue_snapshot(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Test packaging emits the metadata-derived runtime catalogue snapshot."""
+
+        template_packager.copy_template_base_files(temp_dir)
+
+        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        assert snapshot_path.exists()
+        assert json.loads(snapshot_path.read_text(encoding="utf-8")) == build_exercise_catalogue()
 
     def test_required_test_directories_exclude_non_runtime_artefacts(
         self,
@@ -315,6 +332,44 @@ class TestPackageIntegrity:
         plugin_path.unlink()
         assert not template_packager.validate_package(temp_dir)
 
+    def test_package_integrity_missing_runtime_catalogue_snapshot(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails when the generated runtime catalogue snapshot is removed."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        snapshot_path.unlink()
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_invalid_runtime_catalogue_snapshot(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails when the runtime catalogue snapshot is malformed."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        snapshot_path.write_text(json.dumps({"broken": True}) + "\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
     @pytest.mark.parametrize(
         "missing_path",
         [
@@ -434,6 +489,7 @@ class TestPackageIntegrity:
         )
 
         assert not (temp_dir / "exercise_runtime_support" / "exercise.json").exists()
+        assert get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support").exists()
         assert not (temp_dir / "exercises").exists()
 
         assert result.returncode == 0, (

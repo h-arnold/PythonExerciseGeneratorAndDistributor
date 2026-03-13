@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
+from pathlib import Path
+
 from exercise_metadata.registry import build_exercise_catalogue
 from exercise_runtime_support import exercise_catalogue
 
@@ -13,32 +16,33 @@ def test_get_exercise_catalogue_matches_metadata_catalogue() -> None:
     runtime_catalogue = exercise_catalogue.get_exercise_catalogue()
     metadata_catalogue = build_exercise_catalogue()
 
-    assert [entry.exercise_key for entry in runtime_catalogue] == [
-        entry["exercise_key"] for entry in metadata_catalogue
-    ]
-    assert [entry.display_label for entry in runtime_catalogue] == [
-        entry["display_label"] for entry in metadata_catalogue
-    ]
+    assert [asdict(entry) for entry in runtime_catalogue] == metadata_catalogue
 
-
-def test_get_exercise_catalogue_falls_back_without_metadata_import(
-    monkeypatch,
-) -> None:
-    """Packaged repositories can still use the shared catalogue without metadata."""
     exercise_catalogue.get_exercise_catalogue.cache_clear()
 
-    def raise_import_error(_module_name: str):
-        raise ImportError("metadata unavailable")
 
-    monkeypatch.setattr(exercise_catalogue,
-                        "import_module", raise_import_error)
+def test_get_exercise_catalogue_loads_generated_snapshot_without_metadata_import(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """Packaged repositories can load the generated snapshot without metadata."""
+    exercise_catalogue.get_exercise_catalogue.cache_clear()
+
+    snapshot_path = tmp_path / exercise_catalogue.CATALOGUE_SNAPSHOT_FILENAME
+    exercise_catalogue.write_catalogue_snapshot(snapshot_path)
+
+    def raise_runtime_error(_module_name: str):
+        raise RuntimeError("metadata import should not be attempted")
+
+    def resolve_snapshot_path(_runtime_package_dir: Path | None = None) -> Path:
+        return snapshot_path
+
+    monkeypatch.setattr(exercise_catalogue, "import_module", raise_runtime_error)
+    monkeypatch.setattr(exercise_catalogue, "get_catalogue_snapshot_path", resolve_snapshot_path)
 
     catalogue = exercise_catalogue.get_exercise_catalogue()
-    exercise_keys = [entry.exercise_key for entry in catalogue]
+    metadata_catalogue = build_exercise_catalogue()
 
-    assert catalogue[0].exercise_key == "ex002_sequence_modify_basics"
-    assert catalogue[-1].exercise_key == "ex007_sequence_debug_casting"
-    assert catalogue[2].display_label == "ex004 Debug Syntax Errors"
-    assert "ex001_sanity" not in exercise_keys
+    assert [asdict(entry) for entry in catalogue] == metadata_catalogue
 
     exercise_catalogue.get_exercise_catalogue.cache_clear()

@@ -6,6 +6,11 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from exercise_runtime_support.exercise_catalogue import (
+    get_catalogue_snapshot_path,
+    load_catalogue_snapshot,
+    write_catalogue_snapshot,
+)
 from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
 
@@ -166,6 +171,10 @@ class TemplatePackager:
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
+        write_catalogue_snapshot(
+            get_catalogue_snapshot_path(workspace / "exercise_runtime_support")
+        )
+
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
 
@@ -198,12 +207,14 @@ class TemplatePackager:
         Returns:
             True if package is valid, False otherwise.
         """
+        snapshot_path = get_catalogue_snapshot_path(workspace / "exercise_runtime_support")
         required_files = [
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
             workspace / "scripts" / "build_autograde_payload.py",
             workspace / ".github" / "workflows" / "classroom.yml",
+            snapshot_path,
         ]
 
         tests_dir = workspace / "tests"
@@ -218,6 +229,11 @@ class TemplatePackager:
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():
                 return False
+
+        try:
+            load_catalogue_snapshot(snapshot_path)
+        except (OSError, TypeError, ValueError, KeyError):
+            return False
 
         return True
 

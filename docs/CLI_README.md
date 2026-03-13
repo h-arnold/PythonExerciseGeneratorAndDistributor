@@ -212,10 +212,12 @@ Generated templates include the selected exercise tests and the required shared 
 - `tests/exercise_framework/` (runtime files only)
 - `tests/exercise_expectations/` (runtime files only)
 - `tests/student_checker/` (runtime files only)
+- `exercise_runtime_support/` (packaged runtime support package)
+- `exercise_runtime_support/exercise_catalogue_snapshot.json` (generated at packaging time for metadata-free catalogue lookups)
 
 When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py`/`*_test.py`).
 
-This set is sufficient for exercise test imports, autograde payload/plugin checks, and notebook self-check usage via `from tests.student_checker import check_notebook`.
+This set is sufficient for exercise test imports, autograde payload/plugin checks, and notebook self-check usage via `from exercise_runtime_support.student_checker import check_notebook`. Packaged workspaces rely on the generated `exercise_runtime_support/exercise_catalogue_snapshot.json` snapshot instead of importing `exercise_metadata` from the source repository.
 
 ## Available Constructs
 

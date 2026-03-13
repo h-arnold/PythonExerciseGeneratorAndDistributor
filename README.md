@@ -10,35 +10,8 @@ A teaching platform for secondary-school programming that keeps everything in th
  - **Fast and intelligent feedback loop**: Students get immediate feedback from autograding tests right in their notebooks. Most importantly, the tests check that students are using the correct constructs, not just that they get the right output.
  - **Easy tracking**: A custom GitHub Classroom autograder workflow reports results back to the Classroom interface on every push, so you can track student progress and identify common issues.
  - **Teaches using industry standard tools**: Students learn how to code in an industry standard development environment, learn version control and have access to a proper debugger.
- - **Built on sound pedagogical principles**: PRIMM not working for you? Check out my [Modify, Debug, Make approach.](docs/pedagogy.md)
+ - **Built on sound pedagogical principles**: PRIMM not working for you? Check out my [Modify, Debug, Make](docs/pedagogy.md) approach.
  - **Easily generate new exercises**: Use the built-in Exercise Generation assistant (a custom Copilot Chat mode) to scaffold new exercises in seconds, including student notebooks, solutions, and tests.
-
-## What this project does
-
-A teacher‑first toolchain that turns lesson plans into ready‑to‑run Python exercises—designed for secondary classrooms and low‑friction delivery.
-
-For teachers:
-
-- Generate complete, pedagogy‑aligned exercises in seconds (student notebook, solution mirror, and tests).
-- Create exercises fast using the built-in Exercise Generation assistant (see [docs/exercise-generation.md](docs/exercise-generation.md)).
-- Ship browser‑ready assignments your students can run inline (Codespaces now; Pyodide client‑side execution planned).
-- Autograde student work with pytest so learners get immediate, actionable feedback.
-- Plug the suite into GitHub Classroom autograding end-to-end (see [docs/github-classroom-autograding-guide.md](docs/github-classroom-autograding-guide.md) and [docs/autograding-cli.md](docs/autograding-cli.md)).
-- Create GitHub Classroom template repos with a CLI and consistent VS Code/devcontainer configs.
-
-For students:
-
-- Work inside a single, inline notebook cell with task, code, and debugger together.
-- Get fast feedback from tests and clear, scaffolded prompts.
-- No local installs required (when using Codespaces or the planned Pyodide runtime).
-
-Why teachers will care:
-
-- Slash setup time and eliminate “it works on my machine” problems ✅
-- Spend classroom time teaching, not troubleshooting environments ✅
-- Designed to be age‑appropriate and easy to adopt ✅
-
-[Read about the pedagogical approach here](docs/pedagogy.md).
 
 ## How it works
 
@@ -59,7 +32,10 @@ Why teachers will care:
 
 At the end of each student notebook, there is a self-check cell that runs a simple check and reports the results in a table. The exercise generation agent has detailed instruction on how to create pedagocially appropriate tests that guide students towards the solution without giving too much away. They can expect a table like this:
 
-
+<figure style="display:inline-block;">
+  <img src="docs/images/notebook-self-check.png" alt="The output from the notebook self-check tool showing some tests passed and some missing." style="transform:scale(0.75); transform-origin:top left; display:block;">
+  <figcaption>Figure: Example student activity — a tagged cell with inline feedback.</figcaption>
+</figure>
 
 ## Status
 
@@ -78,10 +54,13 @@ Known gaps / not fully working yet:
 
 Where help is needed:
 
+- Developing student and teacher friendly how-to guides and tutorials. These could be to support the delivery of different programming exercises, guidance on how to set up GitHub Classroom, or how to use the exercise generation assistant.
 - VS Code for Web: building a Pyodide‑backed kernel that works with the official Jupyter extension
 - Tweaking the student devcontainer config for a smoother and more minimal experience.
 
-## Quickstart (exercise generation via Copilot Chat)
+## Quickstart
+
+### Exercise Generation
 
 This repo includes a custom Copilot Chat mode for generating exercises.
 
@@ -89,7 +68,7 @@ This repo includes a custom Copilot Chat mode for generating exercises.
 2. Open Copilot Chat and pick the Exercise Generation mode (defined in [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md)).
 3. Describe the exercise (topic, difficulty, examples, and number of parts).
    <figure style="display:inline-block;">
-     <img src="docs/images/exercise-generation-prompt.png" alt="Screenshot showing the Copilot Chat exercise generation prompt for creating an exercise" style="transform:scale(0.75); transform-origin:top left; display:block;">
+     <img src="docs/images/exercise-generation-prompt.png" alt="Screenshot showing the Copilot Chat exercise generation prompt for creating an exercise" style="transform:scale(0.9); transform-origin:top left; display:block;">
      <figcaption>Figure: Copilot Chat prompt used to generate a new exercise.</figcaption>
    </figure>
 4. Review the generated notebook, tests, and metadata for accuracy, and keep the canonical authoring location in mind: `exercises/<construct>/<exercise_key>/`. Exercise type is metadata, not a path segment.
@@ -98,7 +77,7 @@ This repo includes a custom Copilot Chat mode for generating exercises.
 
 More detail and expected structure: [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises.
 
-## Quickstart (create a GitHub Classroom template repo)
+### Creating a GitHub Classroom template repo
 
 The template‑repo CLI packages selected exercises into a ready‑to‑use GitHub Classroom template.
 
