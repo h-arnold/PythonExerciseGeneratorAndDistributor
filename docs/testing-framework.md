@@ -13,6 +13,8 @@ The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, a
 3. **Template CLI**: The template repository tools work as expected.
 4. **Documentation**: Exercise validation rules are respected.
 
+Canonical authoring note: the source-of-truth location for exercise-specific assets is `exercises/<construct>/<exercise_key>/`, and the canonical resolver input is `exercise_key`. The current top-level `notebooks/`, `notebooks/solutions/`, and `tests/` paths are still used as transitional execution surfaces and as the flattened export contract.
+
 ## Running Tests
 
 ### Standard Execution
@@ -69,7 +71,7 @@ This repository provides a small set of shared helpers used across infrastructur
 
 - `scripts/template_repo_cli/utils/` — utility functions for the template CLI and packager, notably:
   - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`, `resolve_notebook_path`)
-  - `validation.py` (name/construct/type validators)
+  - `validation.py` (name/construct/type validators; note that exercise type is canonical metadata rather than a canonical path segment)
   - `config.py` (configuration helpers)
 
 - `scripts/template_repo_cli/core/` — core components implementing CLI behaviour: `collector.py`, `packager.py`, `selector.py`, and `github.py`.
@@ -81,7 +83,7 @@ Important note on similarly-named helpers:
 - `exercise_runtime_support.notebook_grader::resolve_notebook_path` is a low-level helper used by the framework runtime.
 - `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
 
-Recommendation: Use the helper from `exercise_runtime_support.exercise_framework.paths` or `exercise_runtime_support.exercise_framework.runtime` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic.
+Recommendation: Use the helper from `exercise_runtime_support.exercise_framework.paths` or `exercise_runtime_support.exercise_framework.runtime` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
 
 ### 4. Exercise Quality (`tests/test_exercise_type_docs.py`)
 

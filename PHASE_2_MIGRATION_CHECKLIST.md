@@ -130,13 +130,13 @@ List every surface this migration unit touches. Be concrete.
   - `scripts/template_repo_cli/core/selector.py` — still selects via notebooks and type-segmented exercise directories.
 - [ ] Exercise directories:
   - `exercises/ex001_sanity/` — legacy root-level exercise directory with no construct parent and no `exercise.json`.
-  - `exercises/ex006_sequence_modify_casting/` — legacy root-level exercise directory that duplicates the `ex006` identity; should be removed after `exercises/sequence/modify/ex006_sequence_modify_casting/` is confirmed as the canonical home.
+  - `exercises/ex006_sequence_modify_casting/` — legacy root-level exercise directory that duplicates the `ex006` identity; should be removed after `exercises/sequence/modify/ex006_sequence_modify_casting/` is confirmed as the authoritative current legacy home.
   - `exercises/sequence/modify/ex002_sequence_modify_basics/` — current teacher-material directory in the old construct/type/exercise shape.
   - `exercises/sequence/modify/ex003_sequence_modify_variables/` — same old construct/type/exercise shape.
   - `exercises/sequence/debug/ex004_sequence_debug_syntax/` — same old construct/type/exercise shape.
   - `exercises/sequence/debug/ex005_sequence_debug_logic/` — same old construct/type/exercise shape.
   - `exercises/sequence/modify/ex006_sequence_modify_casting/` — duplicate `ex006` identity in the old construct/type/exercise shape.
-  - `exercises/sequence/debug/ex007_sequence_debug_casting/` — old construct/type/exercise shape and the canonical `ex007` home; all `data_types` references should be normalised to this key family.
+  - `exercises/sequence/debug/ex007_sequence_debug_casting/` — old construct/type/exercise shape and the authoritative current legacy `ex007` home; all `data_types` references should be normalised to this key family before canonical migration to `exercises/<construct>/<exercise_key>/`.
   - `exercises/sequence/OrderOfTeaching.md` — currently links to `./modify/...` and `./debug/...` directories and notebook paths under `notebooks/`.
 
 ### Modules, Functions, Classes, Commands, And Contracts
@@ -389,7 +389,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 
 ### Blockers
 
-- [ ] Blocker: The current repository contains duplicate `ex006_sequence_modify_casting` exercise directories at `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`; the nested `sequence/modify` path is canonical, and the root-level duplicate must be removed before identity is trusted.
+- [ ] Blocker: The current repository contains duplicate `ex006_sequence_modify_casting` exercise directories at `exercises/ex006_sequence_modify_casting/` and `exercises/sequence/modify/ex006_sequence_modify_casting/`; the nested `sequence/modify` path is the authoritative current legacy home, not the target canonical layout, and the root-level duplicate must be removed before identity is trusted.
 - [ ] Blocker: The current repository contains mixed exercise directory shapes (`exercises/<exercise_key>/` and `exercises/<construct>/<type>/<exercise_key>/`) that do not match the target canonical layout `exercises/<construct>/<exercise_key>/`.
 - [ ] Blocker: `ex007` has inconsistent identity strings — the canonical key is `ex007_sequence_debug_casting`, and the solution notebook stem, self-check code, expectation imports, and test targets must all be normalised to that key with `data_types` references removed.
 - [ ] Blocker: No `exercise.json` files currently exist anywhere in the repository, so any live migrated exercise must be created deliberately rather than inferred.

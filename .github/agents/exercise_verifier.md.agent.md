@@ -162,8 +162,9 @@ Tests cases should be written that answer these questions for each of the exerci
 
 ### Gate E — Teacher guidance and solution quality
 Verify teacher materials exist and are useful:
-- `exercises/CONSTRUCT/TYPE/exNNN_slug/README.md` is filled in and accurate.
-- `exercises/CONSTRUCT/TYPE/exNNN_slug/OVERVIEW.md` exists and includes:
+- `exercises/<construct>/<exercise_key>/exercise.json` exists and accurately records the exercise metadata, including type.
+- `exercises/<construct>/<exercise_key>/README.md` is filled in and accurate.
+- `exercises/<construct>/<exercise_key>/OVERVIEW.md` exists and includes:
   - prerequisites
   - common misconceptions
   - suggested teaching approach / hints
@@ -178,11 +179,11 @@ Also check the solution notebook:
 ### Gate F — Order of teaching updated
 The exercise must be listed in the construct-level teaching order file:
 
-- `exercises/CONSTRUCT/OrderOfTeaching.md`
+- `exercises/<construct>/OrderOfTeaching.md`
 
 This ensures maintainers can see the intended progression and find notebooks quickly.
 
-**Automation helper (recommended):** the repo script checks this automatically when the exercise lives under `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
+**Automation helper (recommended):** the repo script checks the notebook/test surfaces and supporting metadata; use it alongside a manual check of the canonical authoring folder under `exercises/<construct>/<exercise_key>/`:
 - `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
 
 ## Output format (what you report back)
@@ -197,7 +198,7 @@ For FAIL:
 
 ## Recommended workflow
 1) Create a comprehensive TODO list using the `manage_todo_list` tool to help you track your progress. **You MUST do this**
-2) Identify exercise type + construct from folder path under `exercises/`.
+2) Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
 3) Open the appropriate exercise-type guide in full.
 4) Run the quick script checks (Gates B/C + teacher file presence):
   - `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`

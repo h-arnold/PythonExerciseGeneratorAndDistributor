@@ -61,9 +61,13 @@ Run it through the managed environment, for example `uv run python scripts/new_e
 
 #### 1. Exercise Directory
 
-`exercises/CONSTRUCT/TYPE/exNNN_slug/`
+Canonical authoring target: `exercises/<construct>/<exercise_key>/`
 
-The script creates a temporary folder at `exercises/exNNN_slug/`. Move this directory into the correct construct/type path after scaffolding to match the curriculum structure. Suggested destinations:
+The repository is mid-migration. The scaffolder still creates a temporary folder at `exercises/exNNN_slug/`, plus flattened notebook and test files under `notebooks/` and `tests/`. Treat that output as transitional.
+
+When you place the exercise in the authoring tree, use the canonical target `exercises/<construct>/<exercise_key>/`. Do **not** move scaffolds into `exercises/<construct>/<type>/<exercise_key>/`; exercise type is metadata in `exercise.json`, not part of the canonical path.
+
+Relevant metadata values:
 
 - **CONSTRUCT**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
 - **TYPE**: `debug`, `modify`, `make`
@@ -124,14 +128,16 @@ Contains:
 
 After running `new_exercise.py`, you must:
 
-### 1. Organise the Exercise Folder
+### 1. Organise The Exercise Folder
 
-Move `exercises/exNNN_slug/` to the correct location:
+Place the scaffold in the canonical authoring location:
 
 ```bash
-# Example: moving a sequence/modify exercise
-mv exercises/ex042_variables_and_types exercises/sequence/modify/
+# Example: placing a sequence exercise in the canonical tree
+mv exercises/ex042_variables_and_types exercises/sequence/ex042_variables_and_types
 ```
+
+If you add or update `exercise.json`, keep it in `exercises/<construct>/<exercise_key>/`. Do not create a `/<type>/` path segment for metadata placement.
 
 ### 2. Author the Notebook
 
@@ -241,7 +247,7 @@ scripts/verify_solutions.sh tests/test_exNNN_slug.py -v
 
 ### 6. Create Supporting Documentation
 
-Add to `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
+Add to `exercises/<construct>/<exercise_key>/`:
 
 **`README.md`** (update the generated template):
 
@@ -377,6 +383,15 @@ def test_exercise_behaviour(tag, input_val, expected):
     ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
     assert ns["solve"](input_val) == expected
 ```
+
+## Canonical vs Transitional Paths
+
+- Canonical authoring path: `exercises/<construct>/<exercise_key>/`
+- Exercise type: stored in `exercise.json`, not in the path
+- Canonical resolver input: `exercise_key`
+- Transitional and exported flattened paths: `notebooks/`, `notebooks/solutions/`, and top-level `tests/`
+
+The live repository still uses those flattened notebook and test paths for much of the current execution flow. Keep that distinction explicit in docs and contributor guidance.
 
 ## Best Practices
 

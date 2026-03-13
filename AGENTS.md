@@ -24,15 +24,16 @@ This repository provides notebook-based Python exercises with automated grading 
 
 ## Repository Structure
 
-```
-notebooks/              # Student exercise notebooks
-  exNNN_slug.ipynb     # One notebook per exercise
-  solutions/           # Instructor solution mirrors
-tests/                 # pytest-based automated grading
+```text
+exercises/             # Canonical authoring home for exercise-specific assets
+  <construct>/<exercise_key>/
+    exercise.json      # Exercise metadata (exercise type lives here, not in the path)
+notebooks/             # Transitional and exported flattened notebook paths
+  exNNN_slug.ipynb     # Student notebook surface used by current tooling
+  solutions/           # Instructor solution mirrors used by current tooling
+tests/                 # Shared pytest suites and grading infrastructure
   notebook_grader.py   # Core grading framework
-  test_exNNN_*.py      # Tests for each exercise
-exercises/             # Teacher materials and metadata
-  CONSTRUCT/TYPE/exNNN_slug/
+  test_exNNN_*.py      # Transitional/exported flattened exercise tests
 scripts/               # Automation utilities
   new_exercise.py      # Exercise scaffolding tool
 docs/                  # Project documentation
@@ -85,6 +86,8 @@ Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1
 
 - **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
 - **Solution notebooks** (`notebooks/solutions/`): Completed versions
+
+These are current execution and export surfaces, not the long-term canonical authoring tree. When documenting or moving exercise-specific assets, treat `exercises/<construct>/<exercise_key>/` as canonical and treat exercise type as metadata in `exercise.json`.
 
 The same tests run against both sets.
 
@@ -189,6 +192,8 @@ Do not create exercises manually. Use:
 1. The exercise generation agent for authoring
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
+
+Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`.
 
 ## Working with the Grading System
 

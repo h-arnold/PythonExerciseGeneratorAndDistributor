@@ -66,7 +66,7 @@ List every surface this migration unit touches. This inventory is based on the c
 
 - [ ] Source files:
   - `scripts/new_exercise.py` — review and update user-facing help text, generated README text, and printed output if the scaffold contract has already changed before Phase 10 lands.
-  - `scripts/verify_exercise_quality.py` — review CLI help text and path-assumption messaging if canonical exercise paths are no longer `exercises/<construct>/<type>/<exercise_key>/`; note the decision to migrate this verifier to the canonical metadata/resolver so the Exercise Verifier agent still receives the same checks.
+  - `scripts/verify_exercise_quality.py` — review CLI help text and path-assumption messaging so the canonical target is documented as `exercises/<construct>/<exercise_key>/`; any `exercises/<construct>/<type>/<exercise_key>/` references should be labelled as legacy current-state observations only. Note the decision to migrate this verifier to the canonical metadata/resolver so the Exercise Verifier agent still receives the same checks.
   - `scripts/build_autograde_payload.py` — review help text and environment guidance if the execution model no longer hinges on `PYTUTOR_NOTEBOOKS_DIR`.
   - `scripts/template_repo_cli/cli.py` — update command help or examples if CLI selection or export guidance changes.
   - `scripts/template_repo_cli/core/collector.py` — update only if its public contract or error messages still teach top-level notebook/test paths after earlier migration phases.
@@ -188,7 +188,7 @@ List every surface this migration unit touches. This inventory is based on the c
 
 - [ ] Assumption 1: The canonical authoring home for exercise-specific content is the legacy split layout across `exercises/`, `notebooks/`, and top-level `tests/`.
 - [ ] Assumption 2: Contributor guidance should always tell people to verify solutions with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`.
-- [ ] Assumption 3: New exercises begin in `exercises/exNNN_slug/` and are then moved manually into `exercises/CONSTRUCT/TYPE/exNNN_slug/`.
+- [ ] Assumption 3: New exercises begin in `exercises/exNNN_slug/` and are then moved manually into a `/<type>/` path segment.
 - [ ] Assumption 4: Agent inputs should be notebook-path-first rather than `exercise_key`-first.
 - [ ] Assumption 5: It is acceptable for docs to blur the authoring repository contract and the exported Classroom repository contract.
 
@@ -210,7 +210,7 @@ Break work into concrete tasks. Group by concern, not by person.
   - Update workflow YAML comments, step names, and environment handling where the workflow itself still encodes legacy guidance.
 - [ ] Remove:
   - Remove statements that describe top-level `notebooks/` and `tests/test_exNNN_*.py` as the canonical authoring model.
-  - Remove instructions that tell contributors to move scaffolded folders into `exercises/CONSTRUCT/TYPE/` once the scaffolder no longer requires it.
+  - Remove instructions that tell contributors to move scaffolded folders into `exercises/CONSTRUCT/TYPE/`; if any manual placement step remains, it must target `exercises/<construct>/<exercise_key>/`.
   - Remove stale examples that still pass notebook paths as the primary exercise identity when the resolver contract has moved to `exercise_key`.
 - [ ] Rename or relocate:
   - Archive superseded `.github/agents/*.agent.md` files with a suffix such as `.old` only after replacement guidance exists, every reference has been updated, and the new files are confirmed authoritative.

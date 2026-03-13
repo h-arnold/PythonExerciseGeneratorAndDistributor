@@ -30,6 +30,7 @@ uv run python -V
 
 ### Code Organisation
 
+- `exercises/<construct>/<exercise_key>/`: Canonical authoring home for exercise-specific assets and `exercise.json`
 - `exercise_runtime_support/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
 - `exercise_runtime_support/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
 - `scripts/new_exercise.py`: Exercise scaffolding tool
@@ -38,6 +39,8 @@ uv run python -V
 - `AGENTS.md`: Repo-wide Copilot context
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
+
+The live repository still uses flattened notebook and test surfaces under `notebooks/`, `notebooks/solutions/`, and top-level `tests/` for current execution and export. Treat those as transitional or export-facing paths rather than the canonical authoring model.
 
 Run the helper directly during development:
 
@@ -148,8 +151,11 @@ The generator scaffolds new exercises with consistent structure.
 # From the repository root
 uv run scripts/new_exercise.py ex999 "Test" --slug test_exercise
 
+# Place the scaffold in the canonical authoring tree if needed
+mv exercises/ex999_test_exercise exercises/sequence/ex999_test_exercise
+
 # Verify created files
-ls exercises/ex999_test_exercise/
+ls exercises/sequence/ex999_test_exercise/
 ls notebooks/ex999_test_exercise.ipynb
 ls notebooks/solutions/ex999_test_exercise.ipynb
 ls tests/test_ex999_test_exercise.py
@@ -158,7 +164,7 @@ ls tests/test_ex999_test_exercise.py
 uv run scripts/verify_exercise_quality.py notebooks/ex999_test_exercise.ipynb
 
 # Remove the scaffolding when done experimenting
-rm -rf exercises/ex999_test_exercise notebooks/ex999_test_exercise.ipynb \
+rm -rf exercises/sequence/ex999_test_exercise notebooks/ex999_test_exercise.ipynb \
     notebooks/solutions/ex999_test_exercise.ipynb tests/test_ex999_test_exercise.py
 ```
 
@@ -292,7 +298,7 @@ When updating existing exercises:
 
 If an exercise needs to be removed:
 
-1. **Don't delete**: Move to `exercises/deprecated/exNNN_slug/`
+1. **Don't delete**: Move to `exercises/deprecated/<exercise_key>/`
 2. **Update README**: Document why it was deprecated
 3. **Keep tests**: Mark with `@pytest.mark.skip` and reason
 4. **Remove from student notebooks**: But keep in repository for reference

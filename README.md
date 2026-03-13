@@ -38,9 +38,9 @@ Why teachers will care:
   <figcaption>Figure: Example student activity — a tagged cell with inline feedback.</figcaption>
 </figure>
 
-1. Each exercise is a notebook in [notebooks/](notebooks/), with a tagged cell like exercise1.
-2. Tests in [tests/](tests/) use the shared [exercise_runtime_support/](exercise_runtime_support/) package to extract tagged cells and run them automatically.
-3. Solution notebooks live in [notebooks/solutions/](notebooks/solutions/) and are used to verify the tests.
+1. The canonical authoring home for exercise-specific assets is `exercises/<construct>/<exercise_key>/`, with exercise metadata stored in `exercise.json`.
+2. The current repository still exposes flattened notebook and test surfaces under [notebooks/](notebooks/), [notebooks/solutions/](notebooks/solutions/), and [tests/](tests/) for execution, verification, and export.
+3. Tests in [tests/](tests/) use the shared [exercise_runtime_support/](exercise_runtime_support/) package to extract tagged cells and run them automatically.
 4. A CLI can bundle selected exercises into a GitHub Classroom template repo.
 5. You set up a [GitHub Classroom Assignment](https://classroom.github.com/) using the generated template repo, and students can accept the assignment and start working immediately.
 
@@ -81,7 +81,7 @@ This repo includes a custom Copilot Chat mode for generating exercises.
      <img src="docs/images/exercise-generation-prompt.png" alt="Screenshot showing the Copilot Chat exercise generation prompt for creating an exercise" style="transform:scale(0.75); transform-origin:top left; display:block;">
      <figcaption>Figure: Copilot Chat prompt used to generate a new exercise.</figcaption>
    </figure>
-4. Review the generated notebook, tests, and metadata for accuracy.
+4. Review the generated notebook, tests, and metadata for accuracy, and keep the canonical authoring location in mind: `exercises/<construct>/<exercise_key>/`. Exercise type is metadata, not a path segment.
 5. Verify the solution notebook passes tests:
    - [scripts/verify_solutions.sh](scripts/verify_solutions.sh) -q
 
@@ -110,12 +110,12 @@ Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
 ## Repository layout (high level)
 
-- [notebooks/](notebooks/) — student exercise notebooks (tagged cells)
-- [notebooks/solutions/](notebooks/solutions/) — instructor solutions
-- [tests/](tests/) — pytest discovery and exercise expectations
+- [exercises/](exercises/) — canonical authoring tree for exercise-specific assets: `exercises/<construct>/<exercise_key>/`
+- [notebooks/](notebooks/) — transitional and exported flattened student notebooks
+- [notebooks/solutions/](notebooks/solutions/) — transitional flattened instructor solutions
+- [tests/](tests/) — shared pytest discovery plus transitional/exported flattened exercise tests
 - [exercise_runtime_support/](exercise_runtime_support/) — shared runtime helpers used by tests and exported templates
 - [scripts/](scripts/) — exercise generator + template‑repo CLI
-- [exercises/](exercises/) — teacher materials
 - [docs/](docs/) — documentation
 
 ## Documentation

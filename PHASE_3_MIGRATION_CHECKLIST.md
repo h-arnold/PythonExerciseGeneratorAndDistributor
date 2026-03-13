@@ -128,10 +128,10 @@ Notes:
 - [ ] Exercise directories:
   - `exercises/sequence/modify/ex002_sequence_modify_basics/` — current teacher-material home; will need canonical metadata.
   - `exercises/sequence/modify/ex003_sequence_modify_variables/` — current teacher-material home; will need canonical metadata.
-  - `exercises/sequence/modify/ex006_sequence_modify_casting/` — canonical teacher-material home for `ex006`; metadata and later migration work should point only here.
+  - `exercises/sequence/modify/ex006_sequence_modify_casting/` — authoritative current legacy teacher-material home for `ex006`; metadata and later migration work should point here until the canonical `exercises/<construct>/<exercise_key>/` move happens.
   - `exercises/sequence/debug/ex004_sequence_debug_syntax/` — current teacher-material home; will need canonical metadata.
   - `exercises/sequence/debug/ex005_sequence_debug_logic/` — current teacher-material home; will need canonical metadata.
-  - `exercises/sequence/debug/ex007_sequence_debug_casting/` — canonical teacher-material home for `ex007`; solution notebook and related identities must be normalised to the same key.
+  - `exercises/sequence/debug/ex007_sequence_debug_casting/` — authoritative current legacy teacher-material home for `ex007`; solution notebook and related identities must be normalised to the same key before canonical migration.
   - `exercises/ex001_sanity/` — non-canonical root-level exercise directory; must not be silently indexed as if it already matched the target layout.
   - `exercises/ex006_sequence_modify_casting/` — duplicate root-level directory; must be removed before metadata indexing becomes authoritative.
   - `exercises/sequence/OrderOfTeaching.md` — teaching-order document that will eventually need to align with metadata-derived display and ordering.
@@ -403,7 +403,7 @@ Record anything discovered while preparing or executing this checklist that shou
 ### Must Be Added Or Updated In `ACTION_PLAN.md`
 
 - [ ] New blocker or sequencing issue:
-  - Phase 3 depends on a decision about where `exercise.json` lives before Phase 9 completes the canonical directory migration. The current plan names only the final canonical metadata path, but the repository still uses legacy `exercises/<construct>/<type>/<exercise_key>/` directories for most exercises.
+  - Phase 3 depends on enforcing the canonical `exercise.json` location at `exercises/<construct>/<exercise_key>/` before Phase 9 completes the directory migration. The current plan should treat legacy `exercises/<construct>/<type>/<exercise_key>/` directories as historical current-state paths only, not as an open design decision about metadata placement.
 - [ ] New affected surface:
   - `scripts/template_repo_cli/core/collector.py` and `scripts/template_repo_cli/core/packager.py` are directly affected by metadata registry replacement, not just later packaging phases, because the source-selection model and metadata-free export contract must stay aligned.
 - [ ] Incorrect assumption in current plan:
@@ -411,7 +411,7 @@ Record anything discovered while preparing or executing this checklist that shou
 - [ ] Missing acceptance criterion:
   - Phase 3 should explicitly require duplicate-home detection and clear failure messaging for conflicting metadata entries.
 - [ ] Missing migration stream:
-  - none identified yet beyond the need to clarify the metadata-file location during mixed-layout migration.
+  - none identified yet beyond the need to keep the metadata-file location unambiguous during mixed-layout migration.
 
 ### Follow-Up Action
 
