@@ -107,6 +107,59 @@ def test_resolve_exercise_notebook_path_uses_variant_selected_legacy_path() -> N
         "notebooks/solutions/ex003_sequence_modify_variables.ipynb"
 
 
+def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_exports(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    solution_mirror = (
+        tmp_path / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+    )
+    solution_mirror.parent.mkdir(parents=True)
+    solution_mirror.write_text("{}", encoding="utf-8")
+
+    def fake_repo_root() -> Path:
+        return tmp_path
+
+    def fake_catalogue_entry(exercise_key: str) -> SimpleNamespace:
+        del exercise_key
+        return SimpleNamespace(layout="canonical")
+
+    def fake_has_local_metadata_package(repo_root: Path) -> bool:
+        del repo_root
+        return False
+
+    monkeypatch.setattr(paths_impl, "_framework_repo_root", fake_repo_root)
+    monkeypatch.setattr(
+        paths_impl,
+        "get_catalogue_entry",
+        fake_catalogue_entry,
+    )
+    monkeypatch.setattr(
+        paths_impl,
+        "_has_local_metadata_package",
+        fake_has_local_metadata_package,
+    )
+
+    def fail_if_called(
+        exercise_key: str,
+        *,
+        variant: str | None = None,
+    ) -> Path:
+        raise AssertionError(
+            "canonical metadata resolver should not be used in metadata-free exports"
+        )
+
+    monkeypatch.setattr(
+        paths_impl, "_resolve_source_canonical_notebook_path", fail_if_called)
+
+    resolved = paths.resolve_exercise_notebook_path(
+        "ex004_sequence_debug_syntax",
+        variant="solution",
+    )
+
+    assert resolved == solution_mirror
+
+
 def test_resolve_exercise_notebook_path_uses_flattened_export_only_for_student_variant(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -115,14 +168,28 @@ def test_resolve_exercise_notebook_path_uses_flattened_export_only_for_student_v
     exported_notebook.parent.mkdir(parents=True)
     exported_notebook.write_text("{}", encoding="utf-8")
 
-    monkeypatch.setattr(paths_impl, "_framework_repo_root", lambda: tmp_path)
+    def fake_repo_root() -> Path:
+        return tmp_path
+
+    def fake_catalogue_entry(exercise_key: str) -> SimpleNamespace:
+        del exercise_key
+        return SimpleNamespace(layout="canonical")
+
+    def fake_has_local_metadata_package(repo_root: Path) -> bool:
+        del repo_root
+        return False
+
+    monkeypatch.setattr(paths_impl, "_framework_repo_root", fake_repo_root)
     monkeypatch.setattr(
         paths_impl,
         "get_catalogue_entry",
-        lambda exercise_key: SimpleNamespace(layout="canonical"),
+        fake_catalogue_entry,
     )
     monkeypatch.setattr(
-        paths_impl, "_has_local_metadata_package", lambda repo_root: False)
+        paths_impl,
+        "_has_local_metadata_package",
+        fake_has_local_metadata_package,
+    )
 
     def fail_if_called(
         exercise_key: str,
@@ -140,13 +207,18 @@ def test_resolve_exercise_notebook_path_uses_flattened_export_only_for_student_v
         "ex004_sequence_debug_syntax",
         variant="student",
     )
-    solution_resolved = paths.resolve_exercise_notebook_path(
-        "ex004_sequence_debug_syntax",
-        variant="solution",
+    expected_solution_mirror = (
+        tmp_path / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
     )
 
     assert student_resolved == exported_notebook
-    assert solution_resolved == (
-        tmp_path / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
-    )
-    assert solution_resolved != exported_notebook
+    with pytest.raises(FileNotFoundError) as exc_info:
+        paths.resolve_exercise_notebook_path(
+            "ex004_sequence_debug_syntax",
+            variant="solution",
+        )
+
+    message = str(exc_info.value)
+    assert "Metadata-free packaged repositories do not include solution notebooks" in message
+    assert "ex004_sequence_debug_syntax" in message
+    assert str(expected_solution_mirror) in message

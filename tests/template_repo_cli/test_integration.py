@@ -595,6 +595,255 @@ class TestEndToEndDryRun:
         assert "exercise_metadata must not be imported" not in combined_output
         assert "Exercise 1" in check.stdout
 
+    def test_dry_run_workspace_ex004_solution_variant_uses_solution_mirror(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Ex004-only exports can run solution checks from an added packaged mirror."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--notebooks",
+                "ex004_sequence_debug_syntax",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        exported_notebook = output_dir / "notebooks" / \
+            "ex004_sequence_debug_syntax.ipynb"
+        solution_mirror = (
+            output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+        )
+        solution_mirror.parent.mkdir(parents=True)
+        solution_mirror.write_bytes(exported_notebook.read_bytes())
+        exported_notebook.unlink()
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
+            encoding="utf-8",
+        )
+        (shadow_package / "resolver.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
+        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "\n".join(
+                [
+                    "from exercise_runtime_support.exercise_framework import run_notebook_check",
+                    "from exercise_runtime_support.student_checker import check_notebook",
+                    "framework_results = run_notebook_check('ex004_sequence_debug_syntax')",
+                    "assert len(framework_results) == 1, framework_results",
+                    "assert framework_results[0].label, framework_results",
+                    "check_notebook('ex004_sequence_debug_syntax')",
+                ]
+            ),
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        combined_output = f"{check.stdout}\n{check.stderr}"
+
+        assert check.returncode == 0, (
+            "Packaged ex004 solution mirror checks failed:\n"
+            f"stdout:\n{check.stdout}\n"
+            f"stderr:\n{check.stderr}"
+        )
+        assert "exercise_metadata must not be imported" not in combined_output
+        assert "Exercise 1" in check.stdout
+
+    def test_dry_run_workspace_ex004_solution_variant_fails_without_solution_mirror(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Packaged ex004 solution mode fails early when no solution mirror is exported."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--notebooks",
+                "ex004_sequence_debug_syntax",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
+            encoding="utf-8",
+        )
+        (shadow_package / "resolver.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
+        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "from exercise_runtime_support.exercise_framework import run_notebook_check; "
+            "run_notebook_check('ex004_sequence_debug_syntax')",
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        combined_output = f"{check.stdout}\n{check.stderr}"
+        expected_solution_mirror = (
+            output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+        )
+
+        assert check.returncode != 0
+        assert (
+            "Metadata-free packaged repositories do not include solution notebooks"
+            in combined_output
+        )
+        assert str(expected_solution_mirror) in combined_output
+        assert "Notebook not found:" not in combined_output
+        assert "No such file or directory" not in combined_output
+        assert "exercise_metadata must not be imported" not in combined_output
+
+    def test_dry_run_workspace_ex004_solution_variant_checker_api_fails_without_solution_mirror(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Packaged ex004 solution mode fails early through the checker API too."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--notebooks",
+                "ex004_sequence_debug_syntax",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
+            encoding="utf-8",
+        )
+        (shadow_package / "resolver.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
+        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "from exercise_runtime_support.student_checker import check_notebook; "
+            "check_notebook('ex004_sequence_debug_syntax')",
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        combined_output = f"{check.stdout}\n{check.stderr}"
+        expected_solution_mirror = (
+            output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+        )
+
+        assert check.returncode != 0
+        assert (
+            "Metadata-free packaged repositories do not include solution notebooks"
+            in combined_output
+        )
+        assert str(expected_solution_mirror) in combined_output
+        assert "Notebook not found:" not in combined_output
+        assert "No such file or directory" not in combined_output
+        assert "exercise_metadata must not be imported" not in combined_output
+
 
 class TestEndToEndErrorRecovery:
     """Tests for error handling in full flow."""

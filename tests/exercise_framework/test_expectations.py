@@ -91,11 +91,13 @@ def test_expected_helpers_return_none_for_unknown_exercise() -> None:
 
 
 def test_expectation_packages_do_not_export_notebook_paths() -> None:
-    assert "EX002_NOTEBOOK_PATH" not in exercise_expectations.__all__
-    assert "EX003_NOTEBOOK_PATH" not in exercise_expectations.__all__
-    assert "EX004_NOTEBOOK_PATH" not in exercise_expectations.__all__
-    assert "EX005_NOTEBOOK_PATH" not in exercise_expectations.__all__
-    assert "EX006_NOTEBOOK_PATH" not in exercise_expectations.__all__
-    assert not hasattr(exercise_expectations, "EX002_NOTEBOOK_PATH")
-    assert "EX002_NOTEBOOK_PATH" not in framework_expectations.__all__
-    assert not hasattr(framework_expectations, "EX002_NOTEBOOK_PATH")
+    notebook_path_names = [
+        f"EX{exercise_no:03d}_NOTEBOOK_PATH"
+        for exercise_no in range(2, 8)
+    ]
+
+    for notebook_path_name in notebook_path_names:
+        assert notebook_path_name not in exercise_expectations.__all__
+        assert not hasattr(exercise_expectations, notebook_path_name)
+        assert notebook_path_name not in framework_expectations.__all__
+        assert not hasattr(framework_expectations, notebook_path_name)

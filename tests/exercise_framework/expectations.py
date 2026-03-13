@@ -1,12 +1,19 @@
 """Compatibility wrapper for :mod:`exercise_runtime_support.exercise_framework.expectations`."""
 
-from importlib import import_module as _import_module
+from __future__ import annotations
 
-_impl = _import_module("exercise_runtime_support.exercise_framework.expectations")
+from exercise_runtime_support.exercise_framework.expectations import (
+    EX002_CHECKS,
+    Ex002CheckDefinition,
+    expected_output_lines,
+    expected_output_text,
+    expected_print_call_count,
+)
 
-for _name, _value in vars(_impl).items():
-    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
-        continue
-    globals()[_name] = _value
-
-__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])
+__all__ = [
+    "EX002_CHECKS",
+    "Ex002CheckDefinition",
+    "expected_output_lines",
+    "expected_output_text",
+    "expected_print_call_count",
+]

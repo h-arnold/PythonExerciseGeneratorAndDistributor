@@ -1,12 +1,10 @@
 """Compatibility wrapper for :mod:`exercise_runtime_support.exercise_framework.paths`."""
 
-from importlib import import_module as _import_module
+from __future__ import annotations
 
-_impl = _import_module("exercise_runtime_support.exercise_framework.paths")
+from exercise_runtime_support.exercise_framework.paths import (
+    resolve_exercise_notebook_path,
+    resolve_notebook_path,
+)
 
-for _name, _value in vars(_impl).items():
-    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
-        continue
-    globals()[_name] = _value
-
-__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])
+__all__ = ["resolve_exercise_notebook_path", "resolve_notebook_path"]
