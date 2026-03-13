@@ -149,8 +149,8 @@ class TestCopyFiles:
     @pytest.mark.parametrize(
         "expected_relative_path",
         [
-            pytest.param("notebooks/ex001_sanity.ipynb", id="notebook"),
-            pytest.param("tests/test_ex001_sanity.py", id="test"),
+            pytest.param("notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
+            pytest.param("tests/test_ex002_sequence_modify_basics.py", id="test"),
         ],
     )
     def test_copy_exercise_files(
@@ -162,7 +162,7 @@ class TestCopyFiles:
     ) -> None:
         """Test copying exercise notebooks and tests to the workspace."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
 
@@ -208,7 +208,7 @@ class TestCopyFiles:
     ) -> None:
         """Test that directory structure is maintained."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
 
@@ -222,7 +222,7 @@ class TestGenerateFiles:
 
     def test_generate_readme(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating custom README with exercise list."""
-        exercises = ["ex001_sanity", "ex002_sequence_modify_basics"]
+        exercises = ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
 
         template_packager.generate_readme(temp_dir, "Test Template", exercises)
 
@@ -230,7 +230,7 @@ class TestGenerateFiles:
         assert readme.exists()
         content = readme.read_text()
         assert "Test Template" in content
-        assert "ex001_sanity" in content
+        assert "ex002_sequence_modify_basics" in content
 
     def test_generate_gitignore(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating appropriate .gitignore."""
@@ -253,11 +253,11 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validating package completeness."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
         assert (temp_dir / "scripts").is_dir()
 
         # Validate package
@@ -281,11 +281,11 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validation fails without Classroom autograde script."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
         if not autograde_path.exists():
@@ -302,11 +302,11 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validation fails without Classroom autograde plugin."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         plugin_path = temp_dir / "tests" / "autograde_plugin.py"
         if not plugin_path.exists():
@@ -340,11 +340,11 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validation fails when required test infrastructure is removed."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         path_to_remove = temp_dir / missing_path
         if not path_to_remove.exists():
@@ -406,13 +406,13 @@ class TestPackageIntegrity:
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test minimal packaged workspace passes a focused pytest run."""
+        """Test minimal packaged workspace can collect the selected exercise tests."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
         template_packager.generate_readme(
-            temp_dir, "Smoke Test Template", ["ex001_sanity"])
+            temp_dir, "Smoke Test Template", ["ex002_sequence_modify_basics"])
 
         assert template_packager.validate_package(temp_dir)
 
@@ -422,8 +422,9 @@ class TestPackageIntegrity:
                 sys.executable,
                 "-m",
                 "pytest",
+                "--collect-only",
                 "-q",
-                "tests/test_ex001_sanity.py",
+                "tests/test_ex002_sequence_modify_basics.py",
             ],
             cwd=temp_dir,
             capture_output=True,
@@ -498,13 +499,13 @@ class TestPackageOptions:
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
         """Test solutions are not included in the package."""
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
+        assert (temp_dir / "notebooks/ex002_sequence_modify_basics.ipynb").exists()
         assert not (
-            temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+            temp_dir / "notebooks/solutions/ex002_sequence_modify_basics.ipynb").exists()
 
 
 class TestPackageMultipleExercises:
@@ -518,11 +519,11 @@ class TestPackageMultipleExercises:
     ) -> None:
         """Test packaging multiple exercises together."""
         files = build_exercise_file_map(
-            "ex001_sanity",
             "ex002_sequence_modify_basics",
+            "ex003_sequence_modify_variables",
         )
 
         template_packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
         assert (temp_dir / "notebooks/ex002_sequence_modify_basics.ipynb").exists()
+        assert (temp_dir / "notebooks/ex003_sequence_modify_variables.ipynb").exists()

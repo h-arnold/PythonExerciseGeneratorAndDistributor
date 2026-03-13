@@ -15,12 +15,12 @@ class TestCollectAllFiles:
     def test_collect_all_files_for_legacy_exercise(self, repo_root: Path) -> None:
         """Test collecting legacy files from the flattened source layout."""
         collector = FileCollector(repo_root)
-        files = collector.collect_files("ex001_sanity")
+        files = collector.collect_files("ex002_sequence_modify_basics")
 
-        assert files["notebook"] == repo_root / "notebooks/ex001_sanity.ipynb"
-        assert files["notebook_export"] == Path("notebooks/ex001_sanity.ipynb")
-        assert files["test"] == repo_root / "tests/test_ex001_sanity.py"
-        assert files["test_export"] == Path("tests/test_ex001_sanity.py")
+        assert files["notebook"] == repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
+        assert files["notebook_export"] == Path("notebooks/ex002_sequence_modify_basics.ipynb")
+        assert files["test"] == repo_root / "tests/test_ex002_sequence_modify_basics.py"
+        assert files["test_export"] == Path("tests/test_ex002_sequence_modify_basics.py")
 
     def test_collect_all_files_for_canonical_exercise(self, repo_root: Path) -> None:
         """Test collecting canonical files from the exercise source tree."""
@@ -41,11 +41,13 @@ class TestCollectAllFiles:
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
         collector = FileCollector(repo_root)
-        all_files = collector.collect_multiple(["ex001_sanity", "ex004_sequence_debug_syntax"])
+        all_files = collector.collect_multiple(
+            ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
+        )
 
         expected_count = 2
         assert len(all_files) == expected_count
-        assert "ex001_sanity" in all_files
+        assert "ex002_sequence_modify_basics" in all_files
         assert "ex004_sequence_debug_syntax" in all_files
 
 
@@ -82,14 +84,14 @@ class TestCollectValidation:
     def test_collect_returns_dict(self, repo_root: Path) -> None:
         """Test that collect_files returns a dictionary."""
         collector = FileCollector(repo_root)
-        files = collector.collect_files("ex001_sanity")
+        files = collector.collect_files("ex002_sequence_modify_basics")
 
         assert isinstance(files, dict)
 
     def test_collect_has_required_keys(self, repo_root: Path) -> None:
         """Test that returned dict has required keys."""
         collector = FileCollector(repo_root)
-        files = collector.collect_files("ex001_sanity")
+        files = collector.collect_files("ex002_sequence_modify_basics")
 
         required_keys = ["notebook", "notebook_export", "test", "test_export"]
         for key in required_keys:
@@ -98,7 +100,7 @@ class TestCollectValidation:
     def test_collect_all_paths_are_pathlib(self, repo_root: Path) -> None:
         """Test that all paths are Path objects."""
         collector = FileCollector(repo_root)
-        files = collector.collect_files("ex001_sanity")
+        files = collector.collect_files("ex002_sequence_modify_basics")
 
         for file_path in files.values():
             assert isinstance(file_path, Path)

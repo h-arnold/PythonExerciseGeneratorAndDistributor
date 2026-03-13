@@ -30,17 +30,6 @@ class ExerciseCatalogueEntry:
 
 _FALLBACK_CATALOGUE: tuple[ExerciseCatalogueEntry, ...] = (
     ExerciseCatalogueEntry(
-        exercise_key="ex001_sanity",
-        exercise_id=1,
-        slug="ex001_sanity",
-        title="Sanity",
-        display_label="ex001 Sanity",
-        construct="sequence",
-        exercise_type="make",
-        parts=1,
-        layout="legacy",
-    ),
-    ExerciseCatalogueEntry(
         exercise_key="ex002_sequence_modify_basics",
         exercise_id=2,
         slug="ex002_sequence_modify_basics",
@@ -140,8 +129,10 @@ def get_catalogue_entry(exercise_key: str) -> ExerciseCatalogueEntry:
     for entry in get_exercise_catalogue():
         if entry.exercise_key == exercise_key:
             return entry
-    available = ", ".join(item.exercise_key for item in get_exercise_catalogue())
-    raise ValueError(f"Unknown notebook '{exercise_key}'. Available: {available}")
+    available = ", ".join(
+        item.exercise_key for item in get_exercise_catalogue())
+    raise ValueError(
+        f"Unknown notebook '{exercise_key}'. Available: {available}")
 
 
 def get_catalogue_key_for_exercise_id(exercise_id: int) -> str:

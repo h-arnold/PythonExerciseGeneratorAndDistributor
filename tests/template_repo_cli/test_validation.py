@@ -162,7 +162,7 @@ class TestValidateNotebookPattern:
 
     def test_validate_specific_notebook(self) -> None:
         """Test validation of specific notebook name."""
-        assert validate_notebook_pattern("ex001_sanity") is True
+        assert validate_notebook_pattern("ex002_sequence_modify_basics") is True
 
     def test_validate_glob_pattern_asterisk(self) -> None:
         """Test validation of glob pattern with asterisk."""
@@ -178,7 +178,7 @@ class TestValidateNotebookPattern:
 
     def test_validate_pattern_with_slashes(self) -> None:
         """Test validation rejects pattern with slashes."""
-        assert validate_notebook_pattern("notebooks/ex001") is False
+        assert validate_notebook_pattern("notebooks/ex002") is False
 
     def test_validate_pattern_with_special_chars(self) -> None:
         """Test validation accepts pattern with allowed special chars."""

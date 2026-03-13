@@ -12,7 +12,7 @@ from tests.exercise_framework.api import (
     run_notebook_check,
 )
 
-EXPECTED_NOTEBOOK_CHECK_COUNT = 6
+EXPECTED_NOTEBOOK_CHECK_COUNT = 5
 EXPECTED_EX002_DETAILED_CHECK_COUNT = 30
 EXPECTED_EX002_CHECK_TITLES = {"Logic", "Formatting", "Construct"}
 
@@ -39,11 +39,11 @@ def test_run_notebook_check_returns_single_structured_result(
 ) -> None:
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
-    results = run_notebook_check("ex001_sanity")
+    results = run_notebook_check("ex004_sequence_debug_syntax")
 
     assert len(results) == 1
     assert isinstance(results[0], NotebookCheckResult)
-    assert results[0].label == "ex001 Sanity"
+    assert results[0].label == "ex004 Debug Syntax Errors"
     assert results[0].passed is True
 
 

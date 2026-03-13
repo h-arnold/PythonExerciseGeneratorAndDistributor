@@ -68,7 +68,7 @@ Current notebook and test execution still uses the flattened `notebooks/`, `note
 
 Contains the current flattened notebook surfaces used by repository execution and exported Classroom repositories. Each notebook:
 
-- Is named `exNNN_slug.ipynb` (e.g., `ex001_sanity.ipynb`)
+- Is named `exNNN_slug.ipynb` (e.g., `ex002_sequence_modify_basics.ipynb`)
 - Contains one or more code cells tagged with `exerciseN` (e.g., `exercise1`, `exercise2`)
 - Students write their solutions directly in these tagged cells
 - The notebook provides context, examples, and instructions
@@ -127,7 +127,7 @@ GitHub-specific configuration:
 
 - Exercise IDs: `exNNN` where NNN is a zero-padded number (e.g., `ex001`, `ex042`)
 - Slugs: snake_case descriptive names (e.g., `variables_and_types`)
-- Full exercise names: `exNNN_slug` (e.g., `ex001_sanity`)
+- Full exercise names: `exNNN_slug` (e.g., `ex002_sequence_modify_basics`)
 
 ## Tagged Cell System
 

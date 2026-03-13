@@ -40,23 +40,27 @@ class TestResolveExerciseDir:
         """resolve_exercise_dir finds the live ex004 directory."""
         result = resolve_exercise_dir("ex004_sequence_debug_syntax")
         assert result.is_dir()
-        assert result == Path("exercises/sequence/ex004_sequence_debug_syntax").resolve()
+        assert result == Path(
+            "exercises/sequence/ex004_sequence_debug_syntax").resolve()
 
     def test_raises_type_error_for_path_input(self) -> None:
         """Passing a Path instead of str must raise TypeError immediately."""
         with pytest.raises(TypeError, match="exercise_key must be a str"):
-            resolve_exercise_dir(Path("ex004_sequence_debug_syntax"))  # type: ignore[arg-type]
+            # type: ignore[arg-type]
+            resolve_exercise_dir(Path("ex004_sequence_debug_syntax"))
 
     def test_raises_lookup_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
         """A nonexistent exercise_key raises LookupError."""
         with pytest.raises(LookupError, match="Canonical exercise directory not found"):
-            resolve_exercise_dir("ex999_sequence_nonexistent", exercises_root=tmp_path)
+            resolve_exercise_dir(
+                "ex999_sequence_nonexistent", exercises_root=tmp_path)
 
     def test_uses_exercises_root_override(self, tmp_path: Path) -> None:
         """exercises_root override is respected for canonical path derivation."""
         exercise_dir = tmp_path / "sequence" / "ex999_sequence_fake_exercise"
         exercise_dir.mkdir(parents=True)
-        result = resolve_exercise_dir("ex999_sequence_fake_exercise", exercises_root=tmp_path)
+        result = resolve_exercise_dir(
+            "ex999_sequence_fake_exercise", exercises_root=tmp_path)
         assert result == exercise_dir
 
     def test_rejects_legacy_type_segment_path_for_canonical_resolution(
@@ -67,7 +71,8 @@ class TestResolveExerciseDir:
         legacy_dir.mkdir(parents=True)
 
         with pytest.raises(LookupError, match="must not include an exercise_type segment"):
-            resolve_exercise_dir("ex004_sequence_debug_syntax", exercises_root=tmp_path)
+            resolve_exercise_dir(
+                "ex004_sequence_debug_syntax", exercises_root=tmp_path)
 
 
 # ---------------------------------------------------------------------------
@@ -80,41 +85,57 @@ class TestResolveNotebookPath:
 
     def test_student_notebook_exists_for_pilot(self) -> None:
         """resolve_notebook_path returns an existing student.ipynb for ex004."""
-        result = resolve_notebook_path("ex004_sequence_debug_syntax", "student")
+        result = resolve_notebook_path(
+            "ex004_sequence_debug_syntax", "student")
         assert result.exists()
         assert result.name == "student.ipynb"
 
     def test_solution_notebook_exists_for_pilot(self) -> None:
         """resolve_notebook_path returns an existing solution.ipynb for ex004."""
-        result = resolve_notebook_path("ex004_sequence_debug_syntax", "solution")
+        result = resolve_notebook_path(
+            "ex004_sequence_debug_syntax", "solution")
         assert result.exists()
         assert result.name == "solution.ipynb"
 
     def test_raises_type_error_for_path_input(self) -> None:
         """Passing a Path instead of str must raise TypeError immediately."""
         with pytest.raises(TypeError, match="exercise_key must be a str"):
-            resolve_notebook_path(Path("ex004_sequence_debug_syntax"), "student")  # type: ignore[arg-type]
+            # type: ignore[arg-type]
+            resolve_notebook_path(
+                Path("ex004_sequence_debug_syntax"), "student")
 
     def test_raises_lookup_error_for_legacy_exercise(self, tmp_path: Path) -> None:
         """Legacy exercises must cause resolve_notebook_path to fail hard."""
         manifest_path = make_manifest(
             tmp_path,
-            {"ex001_sanity": {"layout": "legacy"}},
+            {"ex002_sequence_modify_basics": {"layout": "legacy"}},
         )
-        with pytest.raises(LookupError, match="layout='legacy'"):
-            resolve_notebook_path("ex001_sanity", "student", manifest_path=manifest_path)
+        with pytest.raises(LookupError) as exc_info:
+            resolve_notebook_path(
+                "ex002_sequence_modify_basics", "student", manifest_path=manifest_path)
+
+        message = str(exc_info.value)
+        assert "layout='legacy'" in message
+        assert "resolve_notebook_path() only supports canonical exercises" in message
+        assert "Legacy layouts are not valid input to this resolver" in message
+        assert "legacy notebooks/ path directly" not in message
 
     def test_raises_lookup_error_for_unknown_manifest_key(self, tmp_path: Path) -> None:
         """Unknown exercise keys are reported as LookupError by resolve_notebook_path."""
-        manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
+        manifest_path = make_manifest(
+            tmp_path,
+            {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+        )
 
         with pytest.raises(LookupError, match="not in the migration manifest"):
-            resolve_notebook_path("ex999_nonexistent", "student", manifest_path=manifest_path)
+            resolve_notebook_path("ex999_nonexistent",
+                                  "student", manifest_path=manifest_path)
 
     def test_raises_value_error_for_invalid_variant(self) -> None:
         """An invalid variant string raises ValueError."""
         with pytest.raises(ValueError, match="variant must be 'student' or 'solution'"):
-            resolve_notebook_path("ex004_sequence_debug_syntax", "invalid")  # type: ignore[arg-type]
+            # type: ignore[arg-type]
+            resolve_notebook_path("ex004_sequence_debug_syntax", "invalid")
 
     def test_raises_lookup_error_when_notebook_missing_for_canonical(self, tmp_path: Path) -> None:
         """Canonical exercise with missing notebook files raises LookupError."""
@@ -179,7 +200,8 @@ class TestLoadExerciseMetadata:
 
     def test_raises_value_error_for_missing_required_field(self, tmp_path: Path) -> None:
         """exercise.json missing a required field raises ValueError."""
-        incomplete = {k: v for k, v in self._VALID_DATA.items() if k != "parts"}
+        incomplete = {k: v for k, v in self._VALID_DATA.items()
+                      if k != "parts"}
         make_exercise_json(tmp_path, incomplete)
         with pytest.raises(ValueError, match="missing required fields"):
             load_exercise_metadata(tmp_path)
@@ -206,6 +228,7 @@ class TestLoadMigrationManifest:
         assert manifest["schema_version"] == 1
         assert "exercises" in manifest
         assert "ex004_sequence_debug_syntax" in manifest["exercises"]
+        assert "ex001_sanity" not in manifest["exercises"]
 
     def test_raises_file_not_found_for_missing_manifest(self, tmp_path: Path) -> None:
         """Missing manifest file raises FileNotFoundError."""
@@ -227,13 +250,16 @@ class TestGetExerciseLayout:
         layout = get_exercise_layout("ex004_sequence_debug_syntax")
         assert layout == ExerciseLayout.CANONICAL
 
-    def test_returns_legacy_for_ex001(self) -> None:
-        """ex001_sanity is marked legacy in the live manifest."""
-        layout = get_exercise_layout("ex001_sanity")
+    def test_returns_legacy_for_ex002(self) -> None:
+        """ex002_sequence_modify_basics is marked legacy in the live manifest."""
+        layout = get_exercise_layout("ex002_sequence_modify_basics")
         assert layout == ExerciseLayout.LEGACY
 
     def test_raises_key_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
         """Nonexistent exercise_key raises KeyError."""
-        manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
+        manifest_path = make_manifest(
+            tmp_path,
+            {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+        )
         with pytest.raises(KeyError, match="not in the migration manifest"):
             get_exercise_layout("nonexistent_xyz", manifest_path=manifest_path)

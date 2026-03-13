@@ -104,14 +104,14 @@ If you're a student working on exercises:
 3. **Open a notebook** in Jupyter Lab:
 
    ```bash
-   uv run jupyter lab notebooks/ex001_sanity.ipynb
+   uv run jupyter lab notebooks/ex002_sequence_modify_basics.ipynb
    ```
 
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)
 5. **Run tests** to check your work:
 
    ```bash
-   uv run pytest tests/test_ex001_sanity.py -v
+   uv run pytest tests/test_ex002_sequence_modify_basics.py -v
    ```
 
 6. **Repeat** until all tests pass

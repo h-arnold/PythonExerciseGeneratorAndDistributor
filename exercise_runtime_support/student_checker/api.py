@@ -9,7 +9,6 @@ from exercise_runtime_support.exercise_catalogue import (
 )
 
 from .checks import (
-    check_ex001,
     check_ex002_summary,
     check_ex003,
     check_ex004,
@@ -36,7 +35,6 @@ from .reporting import (
     run_checks,
 )
 
-_EX001_SLUG = get_catalogue_key_for_exercise_id(1)
 _EX002_SLUG = get_catalogue_key_for_exercise_id(2)
 _EX003_SLUG = get_catalogue_key_for_exercise_id(3)
 _EX004_SLUG = get_catalogue_key_for_exercise_id(4)
@@ -46,7 +44,7 @@ _EX007_SLUG = get_catalogue_key_for_exercise_id(7)
 
 
 def check_exercises() -> None:
-    """Run a simple check for exercises 1-7 and print a summary table."""
+    """Run summary checks for all supported live exercises and print a table."""
     checks = _get_checks()
     ordered_checks = [
         checks[entry.exercise_key]
@@ -64,7 +62,8 @@ def check_notebook(notebook_slug: str) -> None:
     check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
+        raise ValueError(
+            f"Unknown notebook '{notebook_slug}'. Available: {available}")
     run_check(check)
 
 
@@ -90,7 +89,6 @@ def check_ex007_notebook() -> None:
 
 def _get_checks() -> dict[str, NotebookCheckSpec]:
     configured_checks = {
-        _EX001_SLUG: (check_ex001, None),
         _EX002_SLUG: (check_ex002_summary, _print_ex002_notebook_results),
         _EX003_SLUG: (check_ex003, lambda: print_ex003_results(run_ex003_checks())),
         _EX004_SLUG: (check_ex004, lambda: print_ex004_results(run_ex004_checks())),

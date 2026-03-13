@@ -143,8 +143,8 @@ def resolve_notebook_path(
         raise LookupError(
             f"exercise {exercise_key!r} has layout={layout.value!r} in the migration manifest. "
             "resolve_notebook_path() only supports canonical exercises. "
-            "Migrate this exercise to the canonical layout first, or use the "
-            "legacy notebooks/ path directly for now."
+            "Legacy layouts are not valid input to this resolver. "
+            "Migrate this exercise to the canonical layout first."
         )
 
     exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)

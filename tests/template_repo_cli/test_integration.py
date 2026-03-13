@@ -97,7 +97,7 @@ class TestEndToEndSpecificNotebooks:
                 "--dry-run",
                 "create",
                 "--notebooks",
-                "ex001_sanity",
+                "ex002_sequence_modify_basics",
                 "--repo-name",
                 "test-repo",
             ]
@@ -177,7 +177,7 @@ class TestEndToEndDryRun:
                 str(output_dir),
                 "create",
                 "--notebooks",
-                "ex001_sanity",
+                "ex002_sequence_modify_basics",
                 "--repo-name",
                 "test-repo",
             ]
@@ -193,7 +193,7 @@ class TestEndToEndDryRun:
             sys.executable,
             "-c",
             "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex001_sanity')",
+            "check_notebook('ex002_sequence_modify_basics')",
         ]
 
         check = subprocess.run(

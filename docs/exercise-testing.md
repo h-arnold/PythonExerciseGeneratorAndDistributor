@@ -573,10 +573,10 @@ The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`,
 uv run pytest -q
 
 # Run specific test file
-uv run pytest tests/test_ex001_sanity.py -v
+uv run pytest tests/test_ex002_sequence_modify_basics.py -v
 
 # Run and show output (debug prints)
-uv run pytest tests/test_ex001_sanity.py -s
+uv run pytest tests/test_ex002_sequence_modify_basics.py -s
 ```
 
 ### CI/CD

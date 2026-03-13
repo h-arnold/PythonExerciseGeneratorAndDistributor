@@ -7,7 +7,6 @@ from types import ModuleType
 from typing import Any, Final, NamedTuple
 
 from .base import Ex006CheckDefinition, ExerciseCheckDefinition
-from .ex001 import check_ex001
 from .ex002 import check_ex002_summary, run_ex002_checks
 from .ex003 import EX003_CHECKS, check_ex003, run_ex003_checks
 from .ex004 import EX004_CHECKS, check_ex004, run_ex004_checks
@@ -29,7 +28,6 @@ __all__ = [
     "EX007_CHECKS",
     "Ex006CheckDefinition",
     "ExerciseCheckDefinition",
-    "check_ex001",
     "check_ex002_summary",
     "check_ex003",
     "check_ex004",

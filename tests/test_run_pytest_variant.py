@@ -8,10 +8,13 @@ from scripts.run_pytest_variant import main, parse_args
 
 
 def test_parse_args_collects_pytest_flags_without_double_dash() -> None:
-    args = parse_args(["--variant", "solution", "-q", "tests/test_ex001_sanity.py"])
+    args = parse_args(
+        ["--variant", "solution", "-q", "tests/test_ex002_sequence_modify_basics.py"]
+    )
 
     assert args.variant == "solution"
-    assert args.pytest_args == ["-q", "tests/test_ex001_sanity.py"]
+    assert args.pytest_args == [
+        "-q", "tests/test_ex002_sequence_modify_basics.py"]
 
 
 def test_main_passes_explicit_variant_environment(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -23,14 +26,15 @@ def test_main_passes_explicit_variant_environment(monkeypatch: pytest.MonkeyPatc
         check: bool,
         env: dict[str, str],
     ) -> subprocess.CompletedProcess[str]:
-        assert command[-1] == "tests/test_ex001_sanity.py"
+        assert command[-1] == "tests/test_ex002_sequence_modify_basics.py"
         assert check is False
         captured_env.update(env)
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr("scripts.run_pytest_variant.subprocess.run", fake_run)
 
-    exit_code = main(["--variant", "solution", "tests/test_ex001_sanity.py"])
+    exit_code = main(
+        ["--variant", "solution", "tests/test_ex002_sequence_modify_basics.py"])
 
     assert exit_code == 0
     assert captured_env["PYTUTOR_ACTIVE_VARIANT"] == "solution"

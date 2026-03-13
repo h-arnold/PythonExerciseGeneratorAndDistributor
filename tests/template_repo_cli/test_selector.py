@@ -122,15 +122,17 @@ class TestSelectBySpecificNotebooks:
     def test_select_specific_notebooks(self, repo_root: Path) -> None:
         """Test selecting explicit notebook list."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_notebooks(["ex001_sanity"])
+        exercises = selector.select_by_notebooks(["ex002_sequence_modify_basics"])
 
         assert len(exercises) == 1
-        assert "ex001_sanity" in exercises[0]
+        assert "ex002_sequence_modify_basics" in exercises[0]
 
     def test_select_multiple_notebooks(self, repo_root: Path) -> None:
         """Test selecting multiple specific notebooks."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_notebooks(["ex001_sanity", "ex002_sequence_modify_basics"])
+        exercises = selector.select_by_notebooks(
+            ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
+        )
 
         EXPECTED_SELECTION_COUNT = 2
         assert len(exercises) == EXPECTED_SELECTION_COUNT
@@ -180,7 +182,7 @@ class TestSelectByPattern:
         selector = ExerciseSelector(repo_root)
 
         with pytest.raises(ValueError, match="Invalid pattern"):
-            selector.select_by_pattern("notebooks/ex001")
+            selector.select_by_pattern("notebooks/ex002")
 
 
 class TestSelectEmptyResult:

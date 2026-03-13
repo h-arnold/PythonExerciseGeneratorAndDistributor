@@ -96,7 +96,7 @@ template_repo_cli create \
 ```bash
 # Create template with specific exercises
 template_repo_cli create \
-  --notebooks ex001_sanity ex002_sequence_modify_basics \
+  --notebooks ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name getting-started \
   --name "Getting Started with Python"
 
@@ -166,7 +166,7 @@ template_repo_cli update-repo \
 
 # Preview the update without pushing
 template_repo_cli --dry-run update-repo \
-  --notebooks ex001_sanity ex002_sequence_modify_basics \
+  --notebooks ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name organisation/sequence-exercises
 
 # Keep a local copy of the packaged workspace after the push
@@ -313,7 +313,7 @@ ruff check --fix scripts/template_repo_cli/
 
 The CLI is organized into modular components:
 
-```
+```text
 scripts/template_repo_cli/
 ├── cli.py              # Main entry point (argparse)
 ├── __main__.py         # Module execution support

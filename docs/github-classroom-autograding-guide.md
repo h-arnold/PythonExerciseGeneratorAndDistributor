@@ -126,10 +126,10 @@ The CLI wrapper orchestrates the full autograding flow so template workflows (an
 #### Example: Local Dry Run
 
 ```bash
-uv run python scripts/build_autograde_payload.py --variant student --pytest-args=-k test_ex001_sanity
+uv run python scripts/build_autograde_payload.py --variant student --pytest-args=-k test_ex002_sequence_modify_basics
 ```
 
-You can repeat `--pytest-args` to forward multiple options, for example to switch notebooks (`--pytest-args=--maxfail=1 --pytest-args=tests/test_ex001_sanity.py`). The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
+You can repeat `--pytest-args` to forward multiple options, for example to switch notebooks (`--pytest-args=--maxfail=1 --pytest-args=tests/test_ex002_sequence_modify_basics.py`). The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
 
 #### Example: GitHub Actions Integration
 

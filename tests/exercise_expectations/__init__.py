@@ -2,11 +2,6 @@
 
 from __future__ import annotations
 
-from tests.exercise_expectations.ex001_sanity import (
-    EX001_FUNCTION_NAME,
-    EX001_NOTEBOOK_PATH,
-    EX001_TAG,
-)
 from tests.exercise_expectations.ex002_sequence_modify_basics_exercise_expectations import (
     EX002_EXPECTED_MULTI_LINE,
     EX002_EXPECTED_NUMERIC,
@@ -48,9 +43,6 @@ from tests.exercise_expectations.ex006_sequence_modify_casting import (
 from tests.exercise_expectations.types import Ex006InputExpectation
 
 __all__ = [
-    "EX001_FUNCTION_NAME",
-    "EX001_NOTEBOOK_PATH",
-    "EX001_TAG",
     "EX002_EXPECTED_MULTI_LINE",
     "EX002_EXPECTED_NUMERIC",
     "EX002_EXPECTED_PRINT_CALLS",

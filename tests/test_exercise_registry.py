@@ -61,13 +61,15 @@ def _assert_canonical_before_legacy(
 def test_build_exercise_registry_returns_all_exercises() -> None:
     """``build_exercise_registry()`` returns an entry for every manifest exercise."""
     registry = build_exercise_registry()
-    assert {entry["exercise_key"] for entry in registry} == set(_expected_all_keys())
+    assert {entry["exercise_key"]
+            for entry in registry} == set(_expected_all_keys())
 
 
 def test_canonical_entry_has_correct_layout_and_metadata() -> None:
     """The canonical ex004 entry exposes its metadata."""
     registry = build_exercise_registry()
-    canonical = next(entry for entry in registry if entry["exercise_key"] == CANONICAL_KEY)
+    canonical = next(
+        entry for entry in registry if entry["exercise_key"] == CANONICAL_KEY)
     assert canonical["layout"] == ExerciseLayout.CANONICAL.value
     assert canonical["metadata"] is not None
     assert canonical["metadata"]["exercise_key"] == CANONICAL_KEY
@@ -77,7 +79,8 @@ def test_canonical_entry_has_correct_layout_and_metadata() -> None:
 def test_live_registry_loads_metadata_for_legacy_entries() -> None:
     """The live repository now provides metadata for legacy exercises too."""
     registry = build_exercise_registry()
-    legacy = [entry for entry in registry if entry["layout"] == ExerciseLayout.LEGACY.value]
+    legacy = [entry for entry in registry if entry["layout"]
+              == ExerciseLayout.LEGACY.value]
     expected_legacy_count = sum(
         1 for entry in _get_manifest_exercises().values() if entry["layout"] == ExerciseLayout.LEGACY.value
     )
@@ -131,16 +134,19 @@ def test_get_all_exercise_keys_canonical_first() -> None:
 def test_build_exercise_catalogue_orders_by_exercise_id() -> None:
     """The catalogue order follows metadata exercise IDs."""
     catalogue = build_exercise_catalogue()
-    assert [entry["exercise_id"] for entry in catalogue] == [1, 2, 3, 4, 5, 6, 7]
-    assert [entry["exercise_key"] for entry in catalogue] == _expected_all_keys()
+    assert [entry["exercise_id"] for entry in catalogue] == [2, 3, 4, 5, 6, 7]
+    assert [entry["exercise_key"]
+            for entry in catalogue] == _expected_all_keys()
 
 
 def test_build_exercise_catalogue_exposes_metadata_derived_labels() -> None:
     """Display labels come from metadata-derived titles and IDs."""
     catalogue = build_exercise_catalogue()
-    ex004 = next(entry for entry in catalogue if entry["exercise_key"] == CANONICAL_KEY)
+    ex004 = next(
+        entry for entry in catalogue if entry["exercise_key"] == CANONICAL_KEY)
     assert ex004["title"] == "Debug Syntax Errors"
-    assert ex004["display_label"] == build_display_label(4, "Debug Syntax Errors")
+    assert ex004["display_label"] == build_display_label(
+        4, "Debug Syntax Errors")
 
 
 def test_get_catalogue_exercise_keys_returns_metadata_order() -> None:
@@ -169,12 +175,16 @@ def test_canonical_exercise_with_missing_exercise_json_raises_runtime_error(
     empty_root.mkdir()
 
     with pytest.raises(RuntimeError, match="Failed to load metadata for canonical exercise"):
-        build_exercise_registry(manifest_path=manifest_path, exercises_root=empty_root)
+        build_exercise_registry(
+            manifest_path=manifest_path, exercises_root=empty_root)
 
 
 def test_unknown_exercise_key_in_manifest_raises_key_error(tmp_path: Path) -> None:
     """``get_exercise_layout()`` raises ``KeyError`` for unknown exercise keys."""
-    manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+    )
 
     with pytest.raises(KeyError, match="ex999_nonexistent"):
         get_exercise_layout("ex999_nonexistent", manifest_path)
@@ -183,13 +193,14 @@ def test_unknown_exercise_key_in_manifest_raises_key_error(tmp_path: Path) -> No
 def test_build_registry_with_only_legacy_exercises(tmp_path: Path) -> None:
     """``build_exercise_registry()`` still works when all exercises are legacy."""
     exercises = {
-        "ex001_sanity": {"layout": "legacy"},
         "ex002_sequence_modify_basics": {"layout": "legacy"},
+        "ex003_sequence_modify_variables": {"layout": "legacy"},
     }
     manifest_path = make_manifest(tmp_path, exercises)
     exercises_root = tmp_path / "exercises"
     exercises_root.mkdir()
-    registry = build_exercise_registry(manifest_path=manifest_path, exercises_root=exercises_root)
+    registry = build_exercise_registry(
+        manifest_path=manifest_path, exercises_root=exercises_root)
 
     assert len(registry) == len(exercises)
     for entry in registry:
@@ -199,47 +210,125 @@ def test_build_registry_with_only_legacy_exercises(tmp_path: Path) -> None:
 
 def test_build_exercise_catalogue_requires_legacy_metadata(tmp_path: Path) -> None:
     """The stricter catalogue fails when a manifest exercise lacks metadata."""
-    manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+    )
 
     with pytest.raises(RuntimeError, match="requires metadata"):
-        build_exercise_catalogue(manifest_path=manifest_path, exercises_root=tmp_path / "exercises")
+        build_exercise_catalogue(
+            manifest_path=manifest_path, exercises_root=tmp_path / "exercises")
 
 
-def test_build_exercise_catalogue_loads_legacy_metadata_from_matching_directory(
+def test_build_exercise_catalogue_loads_legacy_metadata_from_canonical_directory(
     tmp_path: Path,
 ) -> None:
-    """Legacy exercise metadata is discovered from its existing exercise directory."""
-    manifest_path = make_manifest(tmp_path, {"ex001_sanity": {"layout": "legacy"}})
-    exercise_dir = tmp_path / "exercises" / "ex001_sanity"
+    """Legacy exercises still load metadata when it exists in the canonical home."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+    )
+    exercise_dir = tmp_path / "exercises" / \
+        "sequence" / "ex002_sequence_modify_basics"
     make_exercise_json(
         exercise_dir,
         {
             "schema_version": 1,
-            "exercise_key": "ex001_sanity",
-            "exercise_id": 1,
-            "slug": "ex001_sanity",
-            "title": "Sanity",
+            "exercise_key": "ex002_sequence_modify_basics",
+            "exercise_id": 2,
+            "slug": "ex002_sequence_modify_basics",
+            "title": "Sequence Modify Basics",
             "construct": "sequence",
-            "exercise_type": "make",
-            "parts": 1,
+            "exercise_type": "modify",
+            "parts": 10,
         },
     )
 
-    catalogue = build_exercise_catalogue(manifest_path=manifest_path, exercises_root=tmp_path / "exercises")
+    catalogue = build_exercise_catalogue(
+        manifest_path=manifest_path, exercises_root=tmp_path / "exercises")
 
     assert catalogue == [
         {
-            "exercise_key": "ex001_sanity",
-            "exercise_id": 1,
-            "slug": "ex001_sanity",
-            "title": "Sanity",
-            "display_label": "ex001 Sanity",
+            "exercise_key": "ex002_sequence_modify_basics",
+            "exercise_id": 2,
+            "slug": "ex002_sequence_modify_basics",
+            "title": "Sequence Modify Basics",
+            "display_label": "ex002 Sequence Modify Basics",
             "construct": "sequence",
-            "exercise_type": "make",
-            "parts": 1,
+            "exercise_type": "modify",
+            "parts": 10,
             "layout": "legacy",
         }
     ]
+
+
+def test_build_registry_ignores_non_canonical_metadata_location_for_legacy_exercise(
+    tmp_path: Path,
+) -> None:
+    """Legacy metadata outside the canonical home is ignored by the registry."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+    )
+    legacy_dir = tmp_path / "exercises" / "sequence" / \
+        "modify" / "ex002_sequence_modify_basics"
+    make_exercise_json(
+        legacy_dir,
+        {
+            "schema_version": 1,
+            "exercise_key": "ex002_sequence_modify_basics",
+            "exercise_id": 2,
+            "slug": "ex002_sequence_modify_basics",
+            "title": "Sequence Modify Basics",
+            "construct": "sequence",
+            "exercise_type": "modify",
+            "parts": 10,
+        },
+    )
+
+    registry = build_exercise_registry(
+        manifest_path=manifest_path,
+        exercises_root=tmp_path / "exercises",
+    )
+
+    assert registry == [
+        {
+            "exercise_key": "ex002_sequence_modify_basics",
+            "layout": "legacy",
+            "metadata": None,
+        }
+    ]
+
+
+def test_build_exercise_catalogue_rejects_non_canonical_metadata_location(
+    tmp_path: Path,
+) -> None:
+    """The catalogue does not accept metadata discovered from legacy layout paths."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex002_sequence_modify_basics": {"layout": "legacy"}},
+    )
+    legacy_dir = tmp_path / "exercises" / "sequence" / \
+        "modify" / "ex002_sequence_modify_basics"
+    make_exercise_json(
+        legacy_dir,
+        {
+            "schema_version": 1,
+            "exercise_key": "ex002_sequence_modify_basics",
+            "exercise_id": 2,
+            "slug": "ex002_sequence_modify_basics",
+            "title": "Sequence Modify Basics",
+            "construct": "sequence",
+            "exercise_type": "modify",
+            "parts": 10,
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="requires metadata"):
+        build_exercise_catalogue(
+            manifest_path=manifest_path,
+            exercises_root=tmp_path / "exercises",
+        )
 
 
 def test_registry_entry_keys_are_strings() -> None:

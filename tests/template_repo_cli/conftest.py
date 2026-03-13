@@ -22,17 +22,26 @@ def repo_root() -> Path:
 def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
     """Sample exercise file mappings for testing."""
     return {
-        "ex001_sanity": ExerciseFiles(
-            notebook=repo_root / "notebooks/ex001_sanity.ipynb",
-            notebook_export=Path("notebooks/ex001_sanity.ipynb"),
-            test=repo_root / "tests/test_ex001_sanity.py",
-            test_export=Path("tests/test_ex001_sanity.py"),
-        ),
         "ex002_sequence_modify_basics": ExerciseFiles(
             notebook=repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
-            notebook_export=Path("notebooks/ex002_sequence_modify_basics.ipynb"),
+            notebook_export=Path(
+                "notebooks/ex002_sequence_modify_basics.ipynb"),
             test=repo_root / "tests/test_ex002_sequence_modify_basics.py",
             test_export=Path("tests/test_ex002_sequence_modify_basics.py"),
+        ),
+        "ex004_sequence_debug_syntax": ExerciseFiles(
+            notebook=(
+                repo_root
+                / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
+            ),
+            notebook_export=Path(
+                "notebooks/ex004_sequence_debug_syntax.ipynb"),
+            test=(
+                repo_root
+                / "exercises/sequence/ex004_sequence_debug_syntax/tests"
+                / "test_ex004_sequence_debug_syntax.py"
+            ),
+            test_export=Path("tests/test_ex004_sequence_debug_syntax.py"),
         ),
     }
 
@@ -48,7 +57,8 @@ def temp_dir() -> Generator[Path, None, None]:
 def mock_gh_success() -> MagicMock:
     """Mock successful gh CLI execution."""
     mock = MagicMock()
-    mock.return_value = MagicMock(returncode=0, stdout='{"name": "test-repo"}', stderr="")
+    mock.return_value = MagicMock(
+        returncode=0, stdout='{"name": "test-repo"}', stderr="")
     return mock
 
 
@@ -56,7 +66,8 @@ def mock_gh_success() -> MagicMock:
 def mock_gh_failure() -> MagicMock:
     """Mock failed gh CLI execution."""
     mock = MagicMock()
-    mock.return_value = MagicMock(returncode=1, stdout="", stderr="Error occurred")
+    mock.return_value = MagicMock(
+        returncode=1, stdout="", stderr="Error occurred")
     return mock
 
 

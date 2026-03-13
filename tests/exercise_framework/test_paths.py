@@ -10,7 +10,7 @@ from tests.notebook_grader import resolve_notebook_path as grader_resolve_notebo
 
 def test_paths_resolver_matches_notebook_grader_for_solution_variant() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    original = repo_root / "notebooks/ex001_sanity.ipynb"
+    original = repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
 
     from_framework = paths.resolve_notebook_path(original, variant="solution")
     from_grader = grader_resolve_notebook_path(original, variant="solution")
@@ -35,8 +35,10 @@ def test_paths_resolver_matches_notebook_grader_for_non_notebooks_path(
     notebook_path = tmp_path / "arbitrary" / "path" / "lesson.ipynb"
     expected = notebook_path.resolve()
 
-    from_framework = paths.resolve_notebook_path(notebook_path, variant="solution")
-    from_grader = grader_resolve_notebook_path(notebook_path, variant="solution")
+    from_framework = paths.resolve_notebook_path(
+        notebook_path, variant="solution")
+    from_grader = grader_resolve_notebook_path(
+        notebook_path, variant="solution")
 
     assert from_framework == expected
     assert from_grader == notebook_path
@@ -69,4 +71,5 @@ def test_paths_resolver_uses_solution_variant_when_cwd_is_notebooks(
         variant="solution",
     )
 
-    assert resolved == repo_root / "notebooks/solutions/ex002_sequence_modify_basics.ipynb"
+    assert resolved == repo_root / \
+        "notebooks/solutions/ex002_sequence_modify_basics.ipynb"

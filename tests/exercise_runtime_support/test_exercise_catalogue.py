@@ -30,12 +30,15 @@ def test_get_exercise_catalogue_falls_back_without_metadata_import(
     def raise_import_error(_module_name: str):
         raise ImportError("metadata unavailable")
 
-    monkeypatch.setattr(exercise_catalogue, "import_module", raise_import_error)
+    monkeypatch.setattr(exercise_catalogue,
+                        "import_module", raise_import_error)
 
     catalogue = exercise_catalogue.get_exercise_catalogue()
+    exercise_keys = [entry.exercise_key for entry in catalogue]
 
-    assert catalogue[0].exercise_key == "ex001_sanity"
+    assert catalogue[0].exercise_key == "ex002_sequence_modify_basics"
     assert catalogue[-1].exercise_key == "ex007_sequence_debug_casting"
-    assert catalogue[3].display_label == "ex004 Debug Syntax Errors"
+    assert catalogue[2].display_label == "ex004 Debug Syntax Errors"
+    assert "ex001_sanity" not in exercise_keys
 
     exercise_catalogue.get_exercise_catalogue.cache_clear()

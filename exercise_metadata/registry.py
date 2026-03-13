@@ -51,25 +51,11 @@ def build_display_label(exercise_id: int, title: str) -> str:
 
 
 def _find_metadata_directory(exercise_key: str, exercises_root: Path | None) -> Path | None:
-    """Return the exercise directory that contains ``exercise.json`` if present."""
+    """Return the canonical exercise directory when it exists."""
     try:
         return resolve_exercise_dir(exercise_key, exercises_root)
-    except LookupError as exc:
-        root = exercises_root or Path("exercises")
-        matches = [
-            path
-            for path in root.rglob(exercise_key)
-            if path.is_dir() and (path / "exercise.json").is_file()
-        ]
-        if not matches:
-            return None
-        if len(matches) > 1:
-            matches_text = ", ".join(str(path) for path in sorted(matches))
-            raise RuntimeError(
-                f"Multiple exercise directories with metadata matched {exercise_key!r}: "
-                f"{matches_text}"
-            ) from exc
-        return matches[0]
+    except LookupError:
+        return None
 
 
 def _load_registry_metadata(
@@ -89,7 +75,13 @@ def _load_registry_metadata(
 
     try:
         return load_exercise_metadata(exercise_dir)
-    except (FileNotFoundError, ValueError) as exc:
+    except FileNotFoundError as exc:
+        if layout == ExerciseLayout.LEGACY:
+            return None
+        raise RuntimeError(
+            f"Failed to load metadata for {layout.value} exercise {exercise_key!r}: {exc}"
+        ) from exc
+    except ValueError as exc:
         raise RuntimeError(
             f"Failed to load metadata for {layout.value} exercise {exercise_key!r}: {exc}"
         ) from exc
