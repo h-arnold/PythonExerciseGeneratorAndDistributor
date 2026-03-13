@@ -333,6 +333,7 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] The phase is only complete once every repository-side exercise-specific `test_exNNN*.py` file lives under its owning `exercises/<construct>/<exercise_key>/tests/` directory, pytest collects those tests from their canonical homes, and the moved tests still run as expected.
 
 - [ ] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`.
+- [ ] Refactor the `ex002` exercise tests explicitly, treating them as a clean-up target rather than a normal move: remove the experimental split structure, collapse them to the same canonical layout and naming pattern used by the other exercises, and make `ex002` the reference proof that the relocation phase can normalise messy legacy test layouts.
 - [ ] Move each remaining exercise-specific test module into its owning exercise directory and remove the legacy top-level copy rather than leaving parallel locations.
 - [ ] Update imports, fixtures, helper references, and collection configuration so moved tests run from their canonical homes without path hacks.
 - [ ] Run the relevant repository-side exercise tests after each relocation wave and confirm they still execute from the new canonical paths.
