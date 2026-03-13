@@ -74,30 +74,6 @@ docs/                  # Project documentation
   - Keep type guards and tiny helpers close to the code they protect to reduce cognitive overhead and avoid import cycles.
   - When splitting code, update and add tests at the same time and expose only the intended public API from packages.
 
-## Key Concepts
-
-### Tagged Cells
-
-Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1`, `exercise2`) in the cell metadata. Tests extract these cells using `exec_tagged_code()` from `tests/notebook_grader.py`.
-
-**Important**: Marker comments (e.g., `# STUDENT`) are deprecated. Only metadata tags are used.
-
-### Parallel Notebook Sets
-
-- **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
-- **Solution notebooks** (`notebooks/solutions/`): Completed versions
-
-These are current execution and export surfaces, not the long-term canonical authoring tree. When documenting or moving exercise-specific assets, treat `exercises/<construct>/<exercise_key>/` as canonical and treat exercise type as metadata in `exercise.json`.
-
-The same tests run against both sets.
-
-**IMPORTANT NOTE:** Always run the *Development* tests unless you are creating or verifying jupyter notebook exercises. The tests for the students notebooks are designed to fail until they are completed with the correct code.
-
-- Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
-- Student grading: run `pytest -q` (tests the student notebooks)
-
-> Note: When using the `uv`-managed environment, running `pytest -q` will use the virtual environment created by `uv sync`.
-
 ## Coding Standards
 
 ### Concise Standards
@@ -205,25 +181,6 @@ The grading system (`tests/notebook_grader.py`) provides:
 
 See Testing Framework: `docs/testing-framework.md` for details.
 
-## Constraints
-
-**Do not**:
-
-- Include full solutions in student-facing notebooks
-- Add dependencies that can't be installed via micropip (web VSCode compatibility)
-- Use network access in exercises or tests
-- Create exercises that require constructs students haven't learned
-- Use generic best practices that aren't specific to this codebase
-
-**Do**:
-
-- Keep instructions clear and age-appropriate (14-18 year olds)
-- Write concise, accurate documentation
-- Use the scaffolding tools for consistency
-- Test both student and solution notebooks
-- Follow the existing patterns in the codebase
-- Always write in British English
-
 ## Calling Sub-Agents in a Github Copilot Environment
 
 When you need to perform a task that falls under the expertise of a sub-agent, you should delegate to that agent rather than trying to handle it yourself. This ensures that the task is completed with the appropriate level of focus and expertise.
@@ -269,7 +226,8 @@ For any significant code changes (defined as adding/modifying more than 1 functi
     - *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
 3. **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
     - *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
-4. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
+4. If there are significant changes, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
+   1. If the changes are minor and can be fixed with a simple edit, you can make the change directly without going back to the implementer.
 5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 
 **ALWAYS** follow this process unless the user explicitly directs you otherwise.
