@@ -2,47 +2,27 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from tests.notebook_grader import resolve_notebook_path
 
 
-def test_resolve_notebook_path_uses_override_when_candidate_exists(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    override_root = tmp_path / "override"
-    candidate = override_root / "ex001_sanity.ipynb"
-    candidate.parent.mkdir(parents=True, exist_ok=True)
-    candidate.write_text("{}", encoding="utf-8")
+def test_resolve_notebook_path_uses_solution_variant_when_candidate_exists() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    original = repo_root / "notebooks/ex001_sanity.ipynb"
 
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(override_root))
+    resolved = resolve_notebook_path(original, variant="solution")
 
-    resolved = resolve_notebook_path("notebooks/ex001_sanity.ipynb")
-
-    assert resolved == candidate
+    assert resolved == repo_root / "notebooks/solutions/ex001_sanity.ipynb"
 
 
-def test_resolve_notebook_path_falls_back_when_override_candidate_missing(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
-
+def test_resolve_notebook_path_returns_requested_missing_variant_target() -> None:
     original = Path("notebooks/does_not_exist.ipynb")
-    resolved = resolve_notebook_path(original)
+    resolved = resolve_notebook_path(original, variant="solution")
+
+    assert resolved == Path("notebooks/solutions/does_not_exist.ipynb")
+
+
+def test_resolve_notebook_path_leaves_non_notebook_paths_unchanged(tmp_path: Path) -> None:
+    original = tmp_path / "arbitrary" / "path" / "lesson.ipynb"
+    resolved = resolve_notebook_path(original, variant="solution")
 
     assert resolved == original
-
-
-def test_resolve_notebook_path_uses_filename_when_not_under_notebooks(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    override_root = tmp_path / "override"
-    candidate = override_root / "lesson.ipynb"
-    candidate.parent.mkdir(parents=True, exist_ok=True)
-    candidate.write_text("{}", encoding="utf-8")
-
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(override_root))
-
-    resolved = resolve_notebook_path("arbitrary/path/lesson.ipynb")
-
-    assert resolved == candidate

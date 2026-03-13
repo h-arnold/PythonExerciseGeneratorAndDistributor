@@ -12,7 +12,7 @@ def test_find_duplicate_exercise_test_sources_flags_top_level_and_canonical_dupl
         [
             Path("tests/test_ex004_sequence_debug_syntax.py"),
             Path(
-                "exercises/sequence/debug/ex004_sequence_debug_syntax/tests/"
+                "exercises/sequence/ex004_sequence_debug_syntax/tests/"
                 "test_ex004_sequence_debug_syntax.py"
             ),
         ]
@@ -22,7 +22,7 @@ def test_find_duplicate_exercise_test_sources_flags_top_level_and_canonical_dupl
         "ex004_sequence_debug_syntax": [
             Path("tests/test_ex004_sequence_debug_syntax.py"),
             Path(
-                "exercises/sequence/debug/ex004_sequence_debug_syntax/tests/"
+                "exercises/sequence/ex004_sequence_debug_syntax/tests/"
                 "test_ex004_sequence_debug_syntax.py"
             ),
         ]

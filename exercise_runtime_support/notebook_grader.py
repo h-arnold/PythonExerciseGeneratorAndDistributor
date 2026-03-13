@@ -3,11 +3,12 @@ from __future__ import annotations
 import builtins
 import contextlib
 import json
-import os
 from collections.abc import Sequence
 from io import StringIO
 from pathlib import Path
 from typing import Any, TypedDict, cast
+
+from exercise_runtime_support.execution_variant import Variant, resolve_variant_notebook_path
 
 
 class NotebookCell(TypedDict, total=False):
@@ -25,46 +26,22 @@ class NotebookGradingError(RuntimeError):
     pass
 
 
-def resolve_notebook_path(notebook_path: str | Path) -> Path:
-    """Resolve a notebook path, optionally redirecting to a mirrored notebooks dir.
-
-    Set the environment variable `PYTUTOR_NOTEBOOKS_DIR` to point tests at an
-    alternate notebook root (for example: `notebooks/solutions`).
-
-    This allows the same tests to run against either student notebooks
-    (default) or solution notebooks (mirrors).
-    """
-
-    original = Path(notebook_path)
-    override_root = os.environ.get("PYTUTOR_NOTEBOOKS_DIR")
-    if not override_root:
-        return original
-
-    override_root = override_root.replace("\\", "/").strip()
-    if override_root.startswith("./"):
-        override_root = override_root[2:]
-    override_root = override_root.rstrip("/")
-    if not override_root:
-        return original
-
-    override_root_path = Path(override_root)
-    if not override_root_path.is_absolute():
-        repo_root = Path(__file__).resolve().parents[1]
-        override_root_path = (repo_root / override_root_path).resolve()
-
-    try:
-        rel = original.relative_to("notebooks")
-    except ValueError:
-        # If a caller passes something that isn't under notebooks/, we still
-        # allow overriding by using the filename.
-        rel = Path(original.name)
-
-    candidate = override_root_path / rel
-    return candidate if candidate.exists() else original
+def resolve_notebook_path(
+    notebook_path: str | Path,
+    *,
+    variant: Variant | None = None,
+) -> Path:
+    """Resolve a notebook path using the explicit notebook-variant contract."""
+    repo_root = Path(__file__).resolve().parents[1]
+    return resolve_variant_notebook_path(notebook_path, variant=variant, repo_root=repo_root)
 
 
-def _read_notebook(notebook_path: str | Path) -> dict[str, Any]:
-    path = resolve_notebook_path(notebook_path)
+def _read_notebook(
+    notebook_path: str | Path,
+    *,
+    variant: Variant | None = None,
+) -> dict[str, Any]:
+    path = resolve_notebook_path(notebook_path, variant=variant)
     if not path.exists():
         raise NotebookGradingError(f"Notebook not found: {path}")
 
@@ -115,7 +92,12 @@ def _cell_source_text(cell: NotebookCell | dict[str, Any]) -> str:
     return ""
 
 
-def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> str:
+def extract_tagged_code(
+    notebook_path: str | Path,
+    *,
+    tag: str = "student",
+    variant: Variant | None = None,
+) -> str:
     """Return the concatenated source of all code cells tagged with `tag`.
 
     The notebook is expected to be a standard `.ipynb` JSON file where each cell has:
@@ -126,7 +108,7 @@ def extract_tagged_code(notebook_path: str | Path, *, tag: str = "student") -> s
     We keep this pure-stdlib (no nbformat/nbclient dependency) to reduce classroom friction.
     """
 
-    nb = _read_notebook(notebook_path)
+    nb = _read_notebook(notebook_path, variant=variant)
     cells = nb.get("cells")
     if not isinstance(cells, list):
         raise NotebookGradingError("Notebook has no 'cells' list")
@@ -160,13 +142,17 @@ def _collect_tagged_sources(cells: Sequence[object], tag: str) -> list[str]:
 
 
 def exec_tagged_code(
-    notebook_path: str | Path, *, tag: str = "student", filename_hint: str | None = None
+    notebook_path: str | Path,
+    *,
+    tag: str = "student",
+    filename_hint: str | None = None,
+    variant: Variant | None = None,
 ) -> dict[str, Any]:
     """Execute tagged code cells and return the resulting namespace."""
 
-    code = extract_tagged_code(notebook_path, tag=tag)
+    code = extract_tagged_code(notebook_path, tag=tag, variant=variant)
 
-    path = Path(notebook_path)
+    path = resolve_notebook_path(notebook_path, variant=variant)
     filename = filename_hint or str(path)
 
     ns: dict[str, Any] = {
@@ -191,7 +177,12 @@ def exec_tagged_code(
     return ns
 
 
-def run_cell_and_capture_output(notebook_path: str | Path, *, tag: str) -> str:
+def run_cell_and_capture_output(
+    notebook_path: str | Path,
+    *,
+    tag: str,
+    variant: Variant | None = None,
+) -> str:
     """Execute a tagged cell and capture its print output.
 
     This is the primary testing pattern for notebook exercises. Students write
@@ -209,11 +200,17 @@ def run_cell_and_capture_output(notebook_path: str | Path, *, tag: str) -> str:
         >>> assert output.strip() == "Hello Python!"
     """
     with contextlib.redirect_stdout(StringIO()) as buffer:
-        exec_tagged_code(notebook_path, tag=tag)
+        exec_tagged_code(notebook_path, tag=tag, variant=variant)
         return buffer.getvalue()
 
 
-def run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str]) -> str:
+def run_cell_with_input(
+    notebook_path: str | Path,
+    *,
+    tag: str,
+    inputs: list[str],
+    variant: Variant | None = None,
+) -> str:
     """Execute a tagged cell with mocked input() and capture stdout.
 
     For exercises that require user input, this helper mocks the input()
@@ -254,13 +251,18 @@ def run_cell_with_input(notebook_path: str | Path, *, tag: str, inputs: list[str
 
     try:
         with contextlib.redirect_stdout(StringIO()) as buffer:
-            exec_tagged_code(notebook_path, tag=tag)
+            exec_tagged_code(notebook_path, tag=tag, variant=variant)
             return buffer.getvalue()
     finally:
         builtins.input = original_input
 
 
-def get_explanation_cell(notebook_path: str | Path, *, tag: str) -> str:
+def get_explanation_cell(
+    notebook_path: str | Path,
+    *,
+    tag: str,
+    variant: Variant | None = None,
+) -> str:
     """Extract explanation cell content by tag.
 
     Used to verify that students have filled in explanation/reflection cells
@@ -280,7 +282,7 @@ def get_explanation_cell(notebook_path: str | Path, *, tag: str) -> str:
         >>> explanation = get_explanation_cell("notebooks/ex001.ipynb", tag="explanation1")
         >>> assert len(explanation.strip()) > 10, "Explanation must have content"
     """
-    nb = _read_notebook(notebook_path)
+    nb = _read_notebook(notebook_path, variant=variant)
     cells = cast(Sequence[object], nb.get("cells", []))
 
     for cell in cells:

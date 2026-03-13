@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import fnmatch
+from collections.abc import Callable
 from pathlib import Path
 
+from exercise_metadata import ExerciseLayout, build_exercise_registry, load_migration_manifest
+from exercise_metadata.schema import ExerciseMetadata
 from scripts.template_repo_cli.utils.validation import (
     validate_construct_name,
     validate_notebook_pattern,
@@ -24,6 +27,7 @@ class ExerciseSelector:
         self.repo_root = repo_root
         self.notebooks_dir = repo_root / "notebooks"
         self.exercises_dir = repo_root / "exercises"
+        self.manifest_path = self.exercises_dir / "migration_manifest.json"
 
     def get_all_notebooks(self) -> list[str]:
         """Get all notebook IDs from the notebooks directory.
@@ -70,45 +74,78 @@ class ExerciseSelector:
             if not validate_type_name(type_name):
                 raise ValueError(f"Invalid type: {type_name}")
 
-    def _find_exercises_in_construct(self, construct: str) -> list[str]:
-        """Find all exercises in a construct.
+    def _legacy_exercise_keys(self) -> set[str]:
+        """Return exercise keys that still use the legacy layout."""
+        manifest = load_migration_manifest(self.manifest_path)
+        return {
+            exercise_key
+            for exercise_key, entry in manifest["exercises"].items()
+            if entry["layout"] == ExerciseLayout.LEGACY.value
+        }
+
+    def _canonical_exercise_keys(
+        self,
+        predicate: Callable[[str, ExerciseMetadata], bool],
+    ) -> list[str]:
+        """Return canonical exercise keys selected via metadata."""
+        matches: list[str] = []
+        registry = build_exercise_registry(self.manifest_path, self.exercises_dir)
+        for entry in registry:
+            metadata = entry["metadata"]
+            if entry["layout"] != ExerciseLayout.CANONICAL.value or metadata is None:
+                continue
+            if predicate(entry["exercise_key"], metadata):
+                matches.append(entry["exercise_key"])
+        return matches
+
+    def _find_legacy_exercises_in_construct(self, construct: str) -> list[str]:
+        """Find legacy exercises in a construct by scanning legacy type folders.
 
         Args:
             construct: Construct name.
 
         Returns:
-            List of exercise IDs found.
+            List of legacy exercise IDs found.
         """
         exercises: list[str] = []
         construct_dir = self.exercises_dir / construct
+        legacy_keys = self._legacy_exercise_keys()
 
         if construct_dir.exists():
-            # Find all exercise directories under this construct
             for type_dir in construct_dir.iterdir():
-                if type_dir.is_dir():
+                if type_dir.is_dir() and validate_type_name(type_dir.name):
                     for ex_dir in type_dir.iterdir():
-                        if ex_dir.is_dir() and ex_dir.name.startswith("ex"):
+                        if (
+                            ex_dir.is_dir()
+                            and ex_dir.name.startswith("ex")
+                            and ex_dir.name in legacy_keys
+                        ):
                             exercises.append(ex_dir.name)
 
         return exercises
 
-    def _find_exercises_by_type(self, type_name: str) -> list[str]:
-        """Find all exercises of a specific type.
+    def _find_legacy_exercises_by_type(self, type_name: str) -> list[str]:
+        """Find legacy exercises of a specific type.
 
         Args:
             type_name: Exercise type.
 
         Returns:
-            List of exercise IDs found.
+            List of legacy exercise IDs found.
         """
         exercises: list[str] = []
+        legacy_keys = self._legacy_exercise_keys()
 
         for construct_dir in self.exercises_dir.iterdir():
             if construct_dir.is_dir():
                 type_dir = construct_dir / type_name
                 if type_dir.exists() and type_dir.is_dir():
                     for ex_dir in type_dir.iterdir():
-                        if ex_dir.is_dir() and ex_dir.name.startswith("ex"):
+                        if (
+                            ex_dir.is_dir()
+                            and ex_dir.name.startswith("ex")
+                            and ex_dir.name in legacy_keys
+                        ):
                             exercises.append(ex_dir.name)
 
         return exercises
@@ -127,9 +164,11 @@ class ExerciseSelector:
         """
         self._validate_constructs(constructs)
 
-        exercises: list[str] = []
+        exercises = self._canonical_exercise_keys(
+            lambda _exercise_key, metadata: metadata["construct"] in constructs
+        )
         for construct in constructs:
-            exercises.extend(self._find_exercises_in_construct(construct))
+            exercises.extend(self._find_legacy_exercises_in_construct(construct))
 
         return sorted(set(exercises))
 
@@ -147,14 +186,16 @@ class ExerciseSelector:
         """
         self._validate_types(types)
 
-        exercises: list[str] = []
+        exercises = self._canonical_exercise_keys(
+            lambda _exercise_key, metadata: metadata["exercise_type"] in types
+        )
         for type_name in types:
-            exercises.extend(self._find_exercises_by_type(type_name))
+            exercises.extend(self._find_legacy_exercises_by_type(type_name))
 
         return sorted(set(exercises))
 
-    def _find_exercises_in_type_dir(self, construct: str, type_name: str) -> list[str]:
-        """Find exercises in a specific construct/type directory.
+    def _find_legacy_exercises_in_type_dir(self, construct: str, type_name: str) -> list[str]:
+        """Find legacy exercises in a specific construct/type directory.
 
         Args:
             construct: Construct name.
@@ -165,6 +206,7 @@ class ExerciseSelector:
         """
         exercises: list[str] = []
         construct_dir = self.exercises_dir / construct
+        legacy_keys = self._legacy_exercise_keys()
 
         if not construct_dir.exists():
             return exercises
@@ -174,7 +216,7 @@ class ExerciseSelector:
             return exercises
 
         for ex_dir in type_dir.iterdir():
-            if ex_dir.is_dir() and ex_dir.name.startswith("ex"):
+            if ex_dir.is_dir() and ex_dir.name.startswith("ex") and ex_dir.name in legacy_keys:
                 exercises.append(ex_dir.name)
 
         return exercises
@@ -192,10 +234,14 @@ class ExerciseSelector:
         self._validate_constructs(constructs)
         self._validate_types(types)
 
-        exercises: list[str] = []
+        exercises = self._canonical_exercise_keys(
+            lambda _exercise_key, metadata: (
+                metadata["construct"] in constructs and metadata["exercise_type"] in types
+            )
+        )
         for construct in constructs:
             for type_name in types:
-                exercises.extend(self._find_exercises_in_type_dir(construct, type_name))
+                exercises.extend(self._find_legacy_exercises_in_type_dir(construct, type_name))
 
         return sorted(set(exercises))
 

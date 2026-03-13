@@ -7,8 +7,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Final
 
+from exercise_runtime_support.exercise_catalogue import (
+    ExerciseCatalogueEntry,
+    get_catalogue_entry,
+    get_catalogue_key_for_exercise_id,
+    get_exercise_catalogue,
+)
+from exercise_runtime_support.exercise_framework.expectations import EX002_CHECKS
+from exercise_runtime_support.notebook_grader import NotebookGradingError
 from tests.exercise_expectations import (
     EX001_FUNCTION_NAME,
     EX001_NOTEBOOK_PATH,
@@ -18,31 +25,17 @@ from tests.exercise_expectations import (
     EX005_NOTEBOOK_PATH,
     EX006_NOTEBOOK_PATH,
 )
-from exercise_runtime_support.exercise_framework.expectations import EX002_CHECKS
-from exercise_runtime_support.notebook_grader import NotebookGradingError
 
 from . import runtime
 
 RawNotebookResult = tuple[str, bool, list[str]]
 
-# TODO(Phase3): The slug constants and NOTEBOOK_ORDER below are hard-coded.
-# Replace with metadata-driven loading: exercise_metadata.registry.get_all_exercise_keys()
-# once all exercises have exercise.json and are marked canonical in migration_manifest.json.
-EX001_SLUG = "ex001_sanity"
-EX002_SLUG = "ex002_sequence_modify_basics"
-EX003_SLUG = "ex003_sequence_modify_variables"
-EX004_SLUG = "ex004_sequence_debug_syntax"
-EX005_SLUG = "ex005_sequence_debug_logic"
-EX006_SLUG = "ex006_sequence_modify_casting"
-
-NOTEBOOK_ORDER: Final[list[str]] = [
-    EX001_SLUG,
-    EX002_SLUG,
-    EX003_SLUG,
-    EX004_SLUG,
-    EX005_SLUG,
-    EX006_SLUG,
-]
+EX001_SLUG = get_catalogue_key_for_exercise_id(1)
+EX002_SLUG = get_catalogue_key_for_exercise_id(2)
+EX003_SLUG = get_catalogue_key_for_exercise_id(3)
+EX004_SLUG = get_catalogue_key_for_exercise_id(4)
+EX005_SLUG = get_catalogue_key_for_exercise_id(5)
+EX006_SLUG = get_catalogue_key_for_exercise_id(6)
 
 
 @dataclass(frozen=True)
@@ -119,40 +112,46 @@ def _check_notebook_can_execute_first_exercise(notebook_path: str) -> list[str]:
     return []
 
 
-def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
+def _get_check_runners() -> dict[str, Callable[[], list[str]]]:
     return {
-        EX001_SLUG: NotebookCheckDefinition("ex001 Sanity", _check_ex001),
-        EX002_SLUG: NotebookCheckDefinition("ex002 Sequence Modify Basics", _check_ex002_summary),
-        EX003_SLUG: NotebookCheckDefinition(
-            "ex003 Sequence Modify Variables",
-            lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),
-        ),
-        EX004_SLUG: NotebookCheckDefinition(
-            "ex004 Debug Syntax Errors",
-            lambda: _check_notebook_can_execute_first_exercise(EX004_NOTEBOOK_PATH),
-        ),
-        EX005_SLUG: NotebookCheckDefinition(
-            "ex005 Debug Logical Errors",
-            lambda: _check_notebook_can_execute_first_exercise(EX005_NOTEBOOK_PATH),
-        ),
-        EX006_SLUG: NotebookCheckDefinition(
-            "ex006 Casting and Type Conversion",
-            lambda: _check_notebook_can_execute_first_exercise(EX006_NOTEBOOK_PATH),
-        ),
+        EX001_SLUG: _check_ex001,
+        EX002_SLUG: _check_ex002_summary,
+        EX003_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),
+        EX004_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX004_NOTEBOOK_PATH),
+        EX005_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX005_NOTEBOOK_PATH),
+        EX006_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX006_NOTEBOOK_PATH),
     }
+
+
+def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
+    runners = _get_check_runners()
+    definitions: dict[str, NotebookCheckDefinition] = {}
+    for entry in get_exercise_catalogue():
+        runner = runners.get(entry.exercise_key)
+        if runner is None:
+            continue
+        definitions[entry.exercise_key] = NotebookCheckDefinition(entry.display_label, runner)
+    return definitions
+
+
+def _get_supported_catalogue() -> list[ExerciseCatalogueEntry]:
+    """Return ordered catalogue entries backed by framework runners."""
+    supported_slugs = set(_get_check_runners())
+    return [entry for entry in get_exercise_catalogue() if entry.exercise_key in supported_slugs]
 
 
 def run_all_checks() -> list[NotebookCheckResult]:
     """Run all notebook checks and return structured results."""
     checks = _get_check_definitions()
-    ordered_definitions = [checks[slug] for slug in NOTEBOOK_ORDER]
+    ordered_definitions = [checks[entry.exercise_key] for entry in _get_supported_catalogue()]
     return _to_notebook_results(_run_definitions(ordered_definitions))
 
 
 def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
     """Run a single notebook-level check and return structured results."""
     checks = _get_check_definitions()
-    check = checks.get(notebook_slug)
+    catalogue_entry = get_catalogue_entry(notebook_slug)
+    check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
         raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")

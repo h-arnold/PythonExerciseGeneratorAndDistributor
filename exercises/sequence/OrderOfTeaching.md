@@ -22,7 +22,7 @@ These exercises are intended to be taught in the following order:
 
 1. [**Sequence Debug Syntax**](`ex004_sequence_debug_syntax`)
 
-[Supporting docs](./debug/ex004_sequence_debug_syntax/)
+[Supporting docs](./ex004_sequence_debug_syntax/)
 [Notebook](notebooks/ex004_sequence_debug_syntax.ipynb)
 
 - Focus: Fixing common syntax errors in `print()`, string quotes, variable names, simple arithmetic and `input()` usage.
@@ -55,4 +55,3 @@ These exercises are intended to be taught in the following order:
 - Focus: Debugging type conversion issues with `int()`, `float()`, `str()`, and `input()` values in sequential programs.
 - Type: Debug exercises with increasing bug complexity.
 - Purpose: Build confidence identifying type-related runtime and logic errors before moving to advanced constructs.
-

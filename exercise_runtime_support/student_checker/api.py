@@ -2,6 +2,12 @@
 
 from __future__ import annotations
 
+from exercise_runtime_support.exercise_catalogue import (
+    get_catalogue_entry,
+    get_catalogue_key_for_exercise_id,
+    get_exercise_catalogue,
+)
+
 from .checks import (
     check_ex001,
     check_ex002_summary,
@@ -30,31 +36,23 @@ from .reporting import (
     run_checks,
 )
 
-# TODO(Phase3): The slug constants and _NOTEBOOK_ORDER below are hard-coded.
-# Replace with metadata-driven loading: exercise_metadata.registry.get_all_exercise_keys()
-# once all exercises have exercise.json and are marked canonical in migration_manifest.json.
-_EX001_SLUG = "ex001_sanity"
-_EX002_SLUG = "ex002_sequence_modify_basics"
-_EX003_SLUG = "ex003_sequence_modify_variables"
-_EX004_SLUG = "ex004_sequence_debug_syntax"
-_EX005_SLUG = "ex005_sequence_debug_logic"
-_EX006_SLUG = "ex006_sequence_modify_casting"
-_EX007_SLUG = "ex007_sequence_debug_casting"
-_NOTEBOOK_ORDER = [
-    _EX001_SLUG,
-    _EX002_SLUG,
-    _EX003_SLUG,
-    _EX004_SLUG,
-    _EX005_SLUG,
-    _EX006_SLUG,
-    _EX007_SLUG,
-]
+_EX001_SLUG = get_catalogue_key_for_exercise_id(1)
+_EX002_SLUG = get_catalogue_key_for_exercise_id(2)
+_EX003_SLUG = get_catalogue_key_for_exercise_id(3)
+_EX004_SLUG = get_catalogue_key_for_exercise_id(4)
+_EX005_SLUG = get_catalogue_key_for_exercise_id(5)
+_EX006_SLUG = get_catalogue_key_for_exercise_id(6)
+_EX007_SLUG = get_catalogue_key_for_exercise_id(7)
 
 
 def check_exercises() -> None:
     """Run a simple check for exercises 1-7 and print a summary table."""
     checks = _get_checks()
-    ordered_checks = [checks[slug] for slug in _NOTEBOOK_ORDER]
+    ordered_checks = [
+        checks[entry.exercise_key]
+        for entry in get_exercise_catalogue()
+        if entry.exercise_key in checks
+    ]
     results = run_checks(ordered_checks)
     print_results(results)
 
@@ -62,7 +60,8 @@ def check_exercises() -> None:
 def check_notebook(notebook_slug: str) -> None:
     """Run checks for a single notebook and print a summary table."""
     checks = _get_checks()
-    check = checks.get(notebook_slug)
+    catalogue_entry = get_catalogue_entry(notebook_slug)
+    check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
         raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
@@ -90,39 +89,28 @@ def check_ex007_notebook() -> None:
 
 
 def _get_checks() -> dict[str, NotebookCheckSpec]:
-    return {
-        _EX001_SLUG: NotebookCheckSpec("ex001 Sanity", check_ex001),
-        _EX002_SLUG: NotebookCheckSpec(
-            "ex002 Sequence Modify Basics",
-            check_ex002_summary,
-            _print_ex002_notebook_results,
-        ),
-        _EX003_SLUG: NotebookCheckSpec(
-            "ex003 Sequence Modify Variables",
-            check_ex003,
-            lambda: print_ex003_results(run_ex003_checks()),
-        ),
-        _EX004_SLUG: NotebookCheckSpec(
-            "ex004 Debug Syntax Errors",
-            check_ex004,
-            lambda: print_ex004_results(run_ex004_checks()),
-        ),
-        _EX005_SLUG: NotebookCheckSpec(
-            "ex005 Debug Logical Errors",
-            check_ex005,
-            lambda: print_ex005_results(run_ex005_checks()),
-        ),
-        _EX006_SLUG: NotebookCheckSpec(
-            "ex006 Casting and Type Conversion",
-            check_ex006,
-            lambda: print_ex006_results(run_ex006_checks()),
-        ),
-        _EX007_SLUG: NotebookCheckSpec(
-            "ex007 Sequence Debug Casting",
-            check_ex007,
-            lambda: print_ex007_results(run_ex007_checks()),
-        ),
+    configured_checks = {
+        _EX001_SLUG: (check_ex001, None),
+        _EX002_SLUG: (check_ex002_summary, _print_ex002_notebook_results),
+        _EX003_SLUG: (check_ex003, lambda: print_ex003_results(run_ex003_checks())),
+        _EX004_SLUG: (check_ex004, lambda: print_ex004_results(run_ex004_checks())),
+        _EX005_SLUG: (check_ex005, lambda: print_ex005_results(run_ex005_checks())),
+        _EX006_SLUG: (check_ex006, lambda: print_ex006_results(run_ex006_checks())),
+        _EX007_SLUG: (check_ex007, lambda: print_ex007_results(run_ex007_checks())),
     }
+
+    checks: dict[str, NotebookCheckSpec] = {}
+    for entry in get_exercise_catalogue():
+        configured = configured_checks.get(entry.exercise_key)
+        if configured is None:
+            continue
+        summary_runner, detailed_printer = configured
+        checks[entry.exercise_key] = NotebookCheckSpec(
+            entry.display_label,
+            summary_runner,
+            detailed_printer,
+        )
+    return checks
 
 
 def _print_ex002_notebook_results() -> None:

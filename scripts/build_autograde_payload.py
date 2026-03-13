@@ -28,6 +28,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict, cast
 
+from exercise_runtime_support.execution_variant import configure_variant_environment
+
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
 SUMMARY_HEADER = "=== Autograde Summary ==="
@@ -182,30 +184,11 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def _variant_to_notebooks_dir(variant: Variant) -> str:
-    """Return the notebook directory used for a variant."""
-
-    return "notebooks" if variant == "student" else "notebooks/solutions"
-
-
 def validate_environment(variant: Variant) -> None:
     """Apply the explicit variant contract to the pytest environment."""
 
-    notebooks_dir = _variant_to_notebooks_dir(variant)
-    os.environ["PYTUTOR_NOTEBOOKS_DIR"] = notebooks_dir
-    print(f"Variant: {variant} (PYTUTOR_NOTEBOOKS_DIR={notebooks_dir})")
-
-
-def _normalise_notebooks_dir(value: str | None) -> str | None:
-    """Return a normalised notebooks directory value for comparison."""
-
-    if value is None:
-        return None
-    normalised = value.replace("\\", "/").strip()
-    if normalised.startswith("./"):
-        normalised = normalised[2:]
-    normalised = normalised.rstrip("/")
-    return normalised or None
+    configure_variant_environment(os.environ, variant)
+    print(f"Variant: {variant}")
 
 
 def _should_zero_scores_on_failure(variant: Variant) -> bool:
@@ -367,7 +350,9 @@ def _calculate_earned_score(
     return _ensure_float(candidate, "score in results must be numeric if provided.")
 
 
-def build_payload(raw_results: AutogradeResults, *, variant: Variant = "student") -> AutogradePayload:
+def build_payload(
+    raw_results: AutogradeResults, *, variant: Variant = "student"
+) -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
     max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
@@ -531,7 +516,7 @@ def write_outputs(
         with output_path.open("w", encoding="utf-8") as handle:
             handle.write(encoded_payload)
             handle.write("\n")
-    except Exception as exc:
+    except OSError as exc:
         print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
@@ -542,7 +527,7 @@ def write_outputs(
         with summary_path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
-    except Exception as exc:
+    except OSError as exc:
         print(
             f"Warning: failed to write summary to {summary_path}: {exc}",
             file=sys.stderr,
@@ -567,7 +552,7 @@ def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
         with Path(github_output_path).open("a", encoding="utf-8") as handle:
             for key, value in entries.items():
                 handle.write(f"{key}={value}\n")
-    except Exception as exc:
+    except OSError as exc:
         print(f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
 
 

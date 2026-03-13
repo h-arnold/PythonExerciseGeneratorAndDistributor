@@ -30,7 +30,7 @@ MIN_STATUS_MUTATION_TESTS = 2
 
 def _run_ex002_autograde(tmp_path: Path) -> AutogradeResults:
     results_path = tmp_path / "autograde-results.json"
-    env = build_autograde_env(overrides={"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"})
+    env = build_autograde_env(overrides={"PYTUTOR_ACTIVE_VARIANT": "solution"})
     command = [
         sys.executable,
         "-m",
@@ -105,7 +105,7 @@ def test_payload_builder_full_preserves_status_and_task_metadata(
     monkeypatch: pytest.MonkeyPatch,
     ex002_autograde_results: AutogradeResults,
 ) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     raw_results = _mutate_statuses(ex002_autograde_results)
     payload = build_autograde_payload.build_payload(raw_results)
@@ -122,7 +122,7 @@ def test_payload_builder_minimal_preserves_status_fields(
     monkeypatch: pytest.MonkeyPatch,
     ex002_autograde_results: AutogradeResults,
 ) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     raw_results = _mutate_statuses(ex002_autograde_results)
     payload = build_autograde_payload.build_payload(raw_results)

@@ -40,7 +40,7 @@ class TestResolveExerciseDir:
         """resolve_exercise_dir finds the live ex004 directory."""
         result = resolve_exercise_dir("ex004_sequence_debug_syntax")
         assert result.is_dir()
-        assert result.name == "ex004_sequence_debug_syntax"
+        assert result == Path("exercises/sequence/ex004_sequence_debug_syntax").resolve()
 
     def test_raises_type_error_for_path_input(self) -> None:
         """Passing a Path instead of str must raise TypeError immediately."""
@@ -49,15 +49,25 @@ class TestResolveExerciseDir:
 
     def test_raises_lookup_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
         """A nonexistent exercise_key raises LookupError."""
-        with pytest.raises(LookupError, match="No exercise directory found"):
-            resolve_exercise_dir("nonexistent_exercise_xyz", exercises_root=tmp_path)
+        with pytest.raises(LookupError, match="Canonical exercise directory not found"):
+            resolve_exercise_dir("ex999_sequence_nonexistent", exercises_root=tmp_path)
 
     def test_uses_exercises_root_override(self, tmp_path: Path) -> None:
-        """exercises_root override is respected during directory search."""
-        exercise_dir = tmp_path / "mygroup" / "ex999_fake_exercise"
+        """exercises_root override is respected for canonical path derivation."""
+        exercise_dir = tmp_path / "sequence" / "ex999_sequence_fake_exercise"
         exercise_dir.mkdir(parents=True)
-        result = resolve_exercise_dir("ex999_fake_exercise", exercises_root=tmp_path)
+        result = resolve_exercise_dir("ex999_sequence_fake_exercise", exercises_root=tmp_path)
         assert result == exercise_dir
+
+    def test_rejects_legacy_type_segment_path_for_canonical_resolution(
+        self, tmp_path: Path
+    ) -> None:
+        """Legacy construct/type paths are not accepted as canonical matches."""
+        legacy_dir = tmp_path / "sequence" / "debug" / "ex004_sequence_debug_syntax"
+        legacy_dir.mkdir(parents=True)
+
+        with pytest.raises(LookupError, match="must not include an exercise_type segment"):
+            resolve_exercise_dir("ex004_sequence_debug_syntax", exercises_root=tmp_path)
 
 
 # ---------------------------------------------------------------------------

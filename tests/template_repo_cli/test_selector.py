@@ -13,12 +13,12 @@ class TestSelectByConstruct:
     """Tests for selecting exercises by construct."""
 
     def test_select_by_single_construct(self, repo_root: Path) -> None:
-        """Test selecting all exercises in one construct."""
+        """Construct selection includes metadata-backed canonical exercises."""
         selector = ExerciseSelector(repo_root)
         exercises = selector.select_by_construct(["sequence"])
 
-        assert len(exercises) > 0
-        assert all("sequence" in str(ex).lower() for ex in exercises)
+        assert "ex004_sequence_debug_syntax" in exercises
+        assert "ex002_sequence_modify_basics" in exercises
 
     def test_select_by_multiple_constructs(self, repo_root: Path) -> None:
         """Test selecting from multiple constructs."""
@@ -47,12 +47,21 @@ class TestSelectByType:
     """Tests for selecting exercises by type."""
 
     def test_select_by_single_type(self, repo_root: Path) -> None:
-        """Test selecting exercises by single type."""
+        """Type selection includes canonical exercises via metadata, not path."""
         selector = ExerciseSelector(repo_root)
         exercises = selector.select_by_type(["modify"])
 
-        assert len(exercises) > 0
-        # All returned exercises should be modify type
+        assert "ex002_sequence_modify_basics" in exercises
+        assert "ex004_sequence_debug_syntax" not in exercises
+
+    def test_select_by_type_includes_metadata_backed_canonical_exercise(
+        self, repo_root: Path
+    ) -> None:
+        """Canonical exercises remain selectable after removing the type path segment."""
+        selector = ExerciseSelector(repo_root)
+        exercises = selector.select_by_type(["debug"])
+
+        assert "ex004_sequence_debug_syntax" in exercises
 
     def test_select_by_multiple_types(self, repo_root: Path) -> None:
         """Test selecting exercises by multiple types."""
@@ -80,12 +89,22 @@ class TestSelectByConstructAndType:
     """Tests for selecting exercises by construct AND type."""
 
     def test_select_by_construct_and_type(self, repo_root: Path) -> None:
-        """Test intersection of construct and type."""
+        """Construct/type selection intersects canonical metadata correctly."""
         selector = ExerciseSelector(repo_root)
         exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["modify"])
 
-        assert len(exercises) > 0
-        # All should be sequence AND modify
+        assert "ex002_sequence_modify_basics" in exercises
+        assert "ex004_sequence_debug_syntax" not in exercises
+
+    def test_select_by_construct_and_type_includes_canonical_metadata_match(
+        self,
+        repo_root: Path,
+    ) -> None:
+        """Construct/type selection finds canonical exercises without scanning type folders."""
+        selector = ExerciseSelector(repo_root)
+        exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["debug"])
+
+        assert "ex004_sequence_debug_syntax" in exercises
 
     def test_select_multiple_constructs_and_types(self, repo_root: Path) -> None:
         """Test multiple constructs and types."""

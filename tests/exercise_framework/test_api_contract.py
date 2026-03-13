@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from exercise_runtime_support.exercise_catalogue import get_exercise_catalogue
 from tests.exercise_framework.api import (
     EX002_SLUG,
     ExerciseCheckResult,
@@ -19,19 +20,24 @@ EXPECTED_EX002_CHECK_TITLES = {"Logic", "Formatting", "Construct"}
 def test_run_all_checks_returns_structured_results(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     results = run_all_checks()
 
     assert len(results) == EXPECTED_NOTEBOOK_CHECK_COUNT
     assert all(isinstance(result, NotebookCheckResult) for result in results)
     assert all(result.passed for result in results)
+    assert [result.label for result in results] == [
+        entry.display_label
+        for entry in get_exercise_catalogue()
+        if entry.exercise_key != "ex007_sequence_debug_casting"
+    ]
 
 
 def test_run_notebook_check_returns_single_structured_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     results = run_notebook_check("ex001_sanity")
 
@@ -49,7 +55,7 @@ def test_run_notebook_check_unknown_slug_is_explicit() -> None:
 def test_run_detailed_ex002_check_returns_detailed_structured_results(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     results = run_detailed_ex002_check()
 
@@ -62,7 +68,7 @@ def test_run_detailed_ex002_check_returns_detailed_structured_results(
 def test_run_notebook_check_supports_ex002_summary_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", "notebooks/solutions")
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     results = run_notebook_check(EX002_SLUG)
 

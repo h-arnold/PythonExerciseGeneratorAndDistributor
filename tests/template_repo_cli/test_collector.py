@@ -28,13 +28,12 @@ class TestCollectAllFiles:
         files = collector.collect_files("ex004_sequence_debug_syntax")
 
         assert files["notebook"] == (
-            repo_root
-            / "exercises/sequence/debug/ex004_sequence_debug_syntax/notebooks/student.ipynb"
+            repo_root / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
         )
         assert files["notebook_export"] == Path("notebooks/ex004_sequence_debug_syntax.ipynb")
         assert files["test"] == (
             repo_root
-            / "exercises/sequence/debug/ex004_sequence_debug_syntax/tests"
+            / "exercises/sequence/ex004_sequence_debug_syntax/tests"
             / "test_ex004_sequence_debug_syntax.py"
         )
         assert files["test_export"] == Path("tests/test_ex004_sequence_debug_syntax.py")
@@ -64,10 +63,13 @@ class TestCollectMissingFiles:
         """Test canonical exercises fail hard when the required test is missing."""
         collector = FileCollector(repo_root)
 
+        def missing_test_path(_exercise_id: str) -> Path:
+            return repo_root / "missing" / "test_ex004_sequence_debug_syntax.py"
+
         monkeypatch.setattr(
             collector,
             "_canonical_test_path",
-            lambda _exercise_id: repo_root / "missing" / "test_ex004_sequence_debug_syntax.py",
+            missing_test_path,
         )
 
         with pytest.raises(FileNotFoundError, match="Canonical exercise test not found"):
@@ -109,15 +111,13 @@ class TestCollectValidation:
         repo_root = temp_dir
         (repo_root / "notebooks").mkdir()
         (repo_root / "tests").mkdir()
-        (repo_root / "notebooks" / "ex004_sequence_debug_syntax.ipynb").write_text("{}", encoding="utf-8")
-        (repo_root / "tests" / "test_ex004_sequence_debug_syntax.py").write_text("", encoding="utf-8")
-        exercise_dir = (
-            repo_root
-            / "exercises"
-            / "sequence"
-            / "debug"
-            / "ex004_sequence_debug_syntax"
+        (repo_root / "notebooks" / "ex004_sequence_debug_syntax.ipynb").write_text(
+            "{}", encoding="utf-8"
         )
+        (repo_root / "tests" / "test_ex004_sequence_debug_syntax.py").write_text(
+            "", encoding="utf-8"
+        )
+        exercise_dir = repo_root / "exercises" / "sequence" / "ex004_sequence_debug_syntax"
         (exercise_dir / "notebooks").mkdir(parents=True)
         (exercise_dir / "tests").mkdir(parents=True)
         (exercise_dir / "notebooks" / "student.ipynb").write_text("{}", encoding="utf-8")

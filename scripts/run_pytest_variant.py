@@ -9,15 +9,17 @@ import sys
 from collections.abc import Sequence
 from typing import NamedTuple
 
-
-def _variant_to_notebooks_dir(variant: str) -> str:
-    return "notebooks" if variant == "student" else "notebooks/solutions"
+from exercise_runtime_support.execution_variant import (
+    Variant,
+    configure_variant_environment,
+    validate_variant,
+)
 
 
 class ParsedArgs(NamedTuple):
     """Parsed command-line arguments."""
 
-    variant: str
+    variant: Variant
     pytest_args: list[str]
 
 
@@ -34,14 +36,14 @@ def parse_args(argv: Sequence[str] | None = None) -> ParsedArgs:
         help="Notebook variant to expose to pytest.",
     )
     args, pytest_args = parser.parse_known_args(argv)
-    return ParsedArgs(variant=args.variant, pytest_args=pytest_args)
+    return ParsedArgs(variant=validate_variant(args.variant), pytest_args=pytest_args)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run pytest and return its exit code."""
     args = parse_args(argv)
     env = dict(os.environ)
-    env["PYTUTOR_NOTEBOOKS_DIR"] = _variant_to_notebooks_dir(args.variant)
+    configure_variant_environment(env, args.variant)
     command = [sys.executable, "-m", "pytest", *args.pytest_args]
     completed = subprocess.run(command, check=False, env=env)
     return int(completed.returncode)

@@ -211,6 +211,62 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
+    def test_repo_canonical_ex004_defaults_to_solution_in_development_mode(
+        self,
+        repo_root: Path,
+    ) -> None:
+        """Test canonical ex004 resolves to the solution notebook by default in development."""
+
+        env = os.environ.copy()
+        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
+
+        command = [
+            sys.executable,
+            "-c",
+            "\n".join(
+                [
+                    "import importlib.util",
+                    "from pathlib import Path",
+                    "module_path = (",
+                    "    Path.cwd()",
+                    "    / 'exercises'",
+                    "    / 'sequence'",
+                    "    / 'ex004_sequence_debug_syntax'",
+                    "    / 'tests'",
+                    "    / 'test_ex004_sequence_debug_syntax.py'",
+                    ").resolve()",
+                    "expected = (",
+                    "    Path.cwd()",
+                    "    / 'exercises'",
+                    "    / 'sequence'",
+                    "    / 'ex004_sequence_debug_syntax'",
+                    "    / 'notebooks'",
+                    "    / 'solution.ipynb'",
+                    ").resolve()",
+                    "spec = importlib.util.spec_from_file_location('repo_ex004_test_module', module_path)",
+                    "assert spec is not None and spec.loader is not None",
+                    "module = importlib.util.module_from_spec(spec)",
+                    "spec.loader.exec_module(module)",
+                    "assert module._NOTEBOOK_PATH == expected, (module._NOTEBOOK_PATH, expected)",
+                ]
+            ),
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=repo_root,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert check.returncode == 0, (
+            "Canonical ex004 development-mode resolution failed:\n"
+            f"stdout:\n{check.stdout}\n"
+            f"stderr:\n{check.stderr}"
+        )
+
     def test_dry_run_workspace_canonical_ex004_uses_flattened_export(
         self,
         repo_root: Path,
@@ -224,7 +280,6 @@ class TestEndToEndDryRun:
                 repo_root
                 / "exercises"
                 / "sequence"
-                / "debug"
                 / "ex004_sequence_debug_syntax"
                 / "notebooks"
                 / "student.ipynb"
@@ -316,8 +371,7 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -453,8 +507,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -465,11 +518,9 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
+            patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
-            result = main(["create", "--construct", "sequence",
-                          "--repo-name", "test-repo"])
+            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -499,8 +550,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -511,8 +561,7 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
+            patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
             result = main(
                 [
@@ -551,8 +600,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -563,8 +611,7 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
+            patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
             result = main(
                 [
@@ -759,8 +806,7 @@ class TestCliCreateCommand:
         assert result == 0
         EXPECT_CREATE_CALLS = 2
         assert mock_create.call_count == EXPECT_CREATE_CALLS
-        mock_subprocess_run.assert_any_call(
-            ["gh", "auth", "login"], check=False)
+        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(

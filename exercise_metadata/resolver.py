@@ -16,17 +16,48 @@ from typing import Literal
 from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout
 
 _EXERCISES_ROOT = Path(__file__).resolve().parents[1] / "exercises"
+_KNOWN_CONSTRUCTS = (
+    "file_handling",
+    "data_types",
+    "dictionaries",
+    "exceptions",
+    "functions",
+    "iteration",
+    "libraries",
+    "selection",
+    "sequence",
+    "lists",
+    "oop",
+)
 
 Variant = Literal["student", "solution"]
+
+
+def _derive_construct_from_exercise_key(exercise_key: str) -> str:
+    """Return the construct encoded in an exercise key."""
+    _, separator, remainder = exercise_key.partition("_")
+    if not separator:
+        raise LookupError(
+            f"exercise_key {exercise_key!r} does not match the canonical "
+            "exNNN_<construct>_<slug> format."
+        )
+
+    for construct in _KNOWN_CONSTRUCTS:
+        if remainder == construct or remainder.startswith(f"{construct}_"):
+            return construct
+
+    raise LookupError(
+        f"exercise_key {exercise_key!r} does not contain a known construct. "
+        "Cannot derive the canonical exercise directory."
+    )
 
 
 def resolve_exercise_dir(exercise_key: object, exercises_root: Path | None = None) -> Path:
     """Return the canonical directory for the given exercise_key.
 
     The canonical exercise home is `exercises/<construct>/<exercise_key>/`.
-    This function searches the exercises/ tree for a directory whose name matches
-    exercise_key.  Returns the path whether or not the exercise has been
-    migrated (the caller can check layout via the manifest).
+    This function derives the canonical path directly from the exercise_key
+    and rejects legacy `exercises/<construct>/<type>/<exercise_key>/` matches.
 
     Args:
         exercise_key: The unique exercise identifier, e.g.
@@ -38,7 +69,7 @@ def resolve_exercise_dir(exercise_key: object, exercises_root: Path | None = Non
 
     Raises:
         TypeError: If exercise_key is not a str (e.g. a Path was passed).
-        LookupError: If no directory matching exercise_key is found.
+        LookupError: If the canonical directory does not exist.
     """
     if not isinstance(exercise_key, str):
         raise TypeError(
@@ -46,12 +77,24 @@ def resolve_exercise_dir(exercise_key: object, exercises_root: Path | None = Non
             "Path-based resolution is not supported; use exercise_key only."
         )
     root = exercises_root or _EXERCISES_ROOT
-    for candidate in root.rglob(exercise_key):
-        if candidate.is_dir():
-            return candidate
+    construct = _derive_construct_from_exercise_key(exercise_key)
+    candidate = root / construct / exercise_key
+    if candidate.is_dir():
+        return candidate
+
+    legacy_matches = [
+        path for path in root.rglob(exercise_key) if path.is_dir() and path != candidate
+    ]
+    legacy_hint = ""
+    if legacy_matches:
+        matches = ", ".join(str(path) for path in legacy_matches)
+        legacy_hint = (
+            " Found non-canonical matches instead: "
+            f"{matches}. The canonical path must not include an exercise_type segment."
+        )
     raise LookupError(
-        f"No exercise directory found for exercise_key={exercise_key!r} "
-        f"under {root}. Check that the exercise exists in the exercises/ tree."
+        f"Canonical exercise directory not found for exercise_key={exercise_key!r}. "
+        f"Expected {candidate} under {root}.{legacy_hint}"
     )
 
 

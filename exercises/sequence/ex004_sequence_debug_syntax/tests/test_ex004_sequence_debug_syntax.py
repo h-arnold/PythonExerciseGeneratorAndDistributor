@@ -26,8 +26,12 @@ def _explanation_tag(exercise_no: int) -> str:
 
 
 def _current_variant() -> str:
-    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
-    return "solution" if notebooks_dir.replace("\\", "/").rstrip("/").endswith("solutions") else "student"
+    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR")
+    if not notebooks_dir:
+        return "solution"
+
+    normalised_notebooks_dir = notebooks_dir.replace("\\", "/").strip().rstrip("/")
+    return "solution" if normalised_notebooks_dir.endswith("solutions") else "student"
 
 
 def _resolve_notebook_path() -> Path:
@@ -48,7 +52,6 @@ def _resolve_notebook_path() -> Path:
         cwd
         / "exercises"
         / "sequence"
-        / "debug"
         / "ex004_sequence_debug_syntax"
         / "notebooks"
         / f"{variant}.ipynb",

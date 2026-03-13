@@ -6,6 +6,10 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+from exercise_runtime_support.execution_variant import (
+    Variant,
+    configure_variant_environment,
+)
 from exercise_runtime_support.notebook_grader import (
     get_explanation_cell as grading_get_explanation_cell,
 )
@@ -20,9 +24,13 @@ from exercise_runtime_support.notebook_grader import (
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
-def resolve_notebook_path(notebook_path: str | Path) -> Path:
+def resolve_notebook_path(
+    notebook_path: str | Path,
+    *,
+    variant: Variant | None = None,
+) -> Path:
     """Return the absolute notebook path following the grading helpers."""
-    return grading_resolve_notebook_path(notebook_path)
+    return grading_resolve_notebook_path(notebook_path, variant=variant)
 
 
 def run_tagged_cell_output(
@@ -39,8 +47,9 @@ def run_tagged_cell_output(
 
 
 def load_notebook(notebook_path: str | Path, *, use_solution: bool = False) -> dict[str, Any]:
-    """Load a notebook JSON document, optionally redirecting to the solution directory."""
-    target = resolve_notebook_path(notebook_path) if use_solution else Path(notebook_path)
+    """Load a notebook JSON document for the requested notebook variant."""
+    variant: Variant = "solution" if use_solution else "student"
+    target = resolve_notebook_path(notebook_path, variant=variant)
     with open(target, encoding="utf-8") as handle:
         return json.load(handle)
 
@@ -95,7 +104,7 @@ def build_autograde_env(
     current = env.get("PYTHONPATH")
     env["PYTHONPATH"] = f"{repo}{os.pathsep}{current}" if current else repo
     env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    env.setdefault("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
+    configure_variant_environment(env, "student")
 
     if overrides:
         for key, value in overrides.items():
