@@ -63,7 +63,7 @@ You must adhere to these standards. Code that violates them is incomplete.
 
 ## 4. Decision Tree for Blockers
 
-*   **Ambiguous Spec**: If the task description is missing critical info -> **Make a reasonable assumption**, document it in the report, and proceed. Do not stop.
+*   **Ambiguous Spec**: If the task description is missing critical info -> **Stop and ask the orchestrator for clarification**.
 *   **Environment Error**: If `uv` or `pytest` fails on environment issues -> Attempt `uv sync` once. If it fails again, report strict error details in the final report.
 *   **Test Failures**: If you cannot fix a test failure after 3 attempts -> revert the specific change causing the break, document the failure analysis, and proceed with other tasks.
 
