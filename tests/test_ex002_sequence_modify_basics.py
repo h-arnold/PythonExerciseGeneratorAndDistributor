@@ -15,10 +15,11 @@ from tests.exercise_framework import (
     expected_output_text,
     expected_print_call_count,
     extract_tagged_code,
-    resolve_notebook_path,
+    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
 )
-from tests.exercise_framework.expectations import EX002_NOTEBOOK_PATH
+
+_EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 
 
 def _exercise_tag(exercise_no: int) -> str:
@@ -26,7 +27,7 @@ def _exercise_tag(exercise_no: int) -> str:
 
 
 def _resolved_notebook_path() -> Path:
-    return resolve_notebook_path(EX002_NOTEBOOK_PATH)
+    return resolve_exercise_notebook_path(_EX002_EXERCISE_KEY)
 
 
 def _exercise_output(exercise_no: int) -> str:

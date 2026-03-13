@@ -17,7 +17,6 @@ class Ex007InteractiveConstructs(TypedDict, total=False):
     forbidden_ops: tuple[type[ast.operator], ...]
 
 
-EX007_NOTEBOOK_PATH: Final[str] = "notebooks/ex007_sequence_debug_casting.ipynb"
 EX007_MIN_EXPLANATION_LENGTH: Final[int] = 50
 EX007_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
     "run the code first",

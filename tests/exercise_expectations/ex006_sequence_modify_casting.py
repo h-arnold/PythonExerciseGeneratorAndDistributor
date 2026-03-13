@@ -6,7 +6,6 @@ from typing import Final
 
 from tests.exercise_expectations.types import Ex006InputExpectation
 
-EX006_NOTEBOOK_PATH: Final[str] = "notebooks/ex006_sequence_modify_casting.ipynb"
 EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     1: "15\n",
     2: "6.0\n",

@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass
 from functools import lru_cache
 from importlib import import_module
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeGuard, cast
 
 
 @dataclass(frozen=True)
@@ -50,6 +50,15 @@ def _to_runtime_entry(entry: Any) -> ExerciseCatalogueEntry:
     )
 
 
+def _is_snapshot_entry_list(value: object) -> TypeGuard[list[dict[str, object]]]:
+    """Return whether a parsed snapshot payload is a list of JSON objects."""
+    if not isinstance(value, list):
+        return False
+
+    entries = cast(list[object], value)
+    return all(isinstance(entry_object, dict) for entry_object in entries)
+
+
 def get_catalogue_snapshot_path(runtime_package_dir: Path | None = None) -> Path:
     """Return the path for the generated runtime catalogue snapshot."""
     package_dir = Path(__file__).resolve(
@@ -76,10 +85,12 @@ def load_catalogue_snapshot(snapshot_path: Path | None = None) -> tuple[Exercise
     """Load the runtime catalogue snapshot used in packaged exports."""
     target_path = get_catalogue_snapshot_path(
     ) if snapshot_path is None else snapshot_path
-    snapshot_entries = json.loads(target_path.read_text(encoding="utf-8"))
-    if not isinstance(snapshot_entries, list):
+    loaded_snapshot: object = json.loads(
+        target_path.read_text(encoding="utf-8"))
+    if not _is_snapshot_entry_list(loaded_snapshot):
         raise ValueError(
             f"Runtime catalogue snapshot at {target_path} must contain a list")
+    snapshot_entries = loaded_snapshot
     return tuple(_to_runtime_entry(entry) for entry in snapshot_entries)
 
 

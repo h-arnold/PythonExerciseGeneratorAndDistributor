@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Final
 
-EX004_NOTEBOOK_PATH: Final[str] = "notebooks/ex004_sequence_debug_syntax.ipynb"
 EX004_MIN_EXPLANATION_LENGTH: Final[int] = 50
 EX004_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
     "describe what",

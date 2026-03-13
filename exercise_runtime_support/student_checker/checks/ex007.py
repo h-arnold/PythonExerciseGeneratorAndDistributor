@@ -9,9 +9,7 @@ from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
     has_call,
     interactive_construct_issues,
 )
-from exercise_runtime_support.exercise_framework.paths import (
-    resolve_notebook_path as resolve_framework_notebook_path,
-)
+from exercise_runtime_support.exercise_framework.paths import resolve_exercise_notebook_path
 from exercise_runtime_support.notebook_grader import (
     NotebookGradingError,
     extract_tagged_code,
@@ -29,6 +27,7 @@ from .base import (
 )
 
 _AVERAGE_DISTANCE_EXERCISE = 4
+_EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
 
 
 def check_ex007() -> list[str]:
@@ -144,7 +143,7 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
 
 
 def _resolve_ex007_notebook_path() -> str:
-    return str(resolve_framework_notebook_path(ex007.EX007_NOTEBOOK_PATH))
+    return str(resolve_exercise_notebook_path(_EX007_EXERCISE_KEY))
 
 
 def _build_ex007_checks() -> list[ExerciseCheckDefinition]:

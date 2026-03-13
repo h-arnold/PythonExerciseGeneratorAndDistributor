@@ -324,21 +324,21 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] Make the docs explicit that exported Classroom repositories may still flatten tests to top-level `tests/`, while the source repository must not.
 - [ ] Keep a pointer list for documentation and agent guidance pain points in: [README.md](README.md), [docs/project-structure.md](docs/project-structure.md), [docs/setup.md](docs/setup.md), [docs/exercise-generation.md](docs/exercise-generation.md), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [AGENTS.md](AGENTS.md), and [.github/agents](.github/agents).
 
-### Phase 6: Exercise Test Relocation And Verification
+### Phase 6: Exercise Test Migration Preparation And Verification
 
 #### Constraints And Acceptance Criteria
 
-- [ ] Do not move exercise-specific tests in bulk until Phase 4 has defined the execution model and Phase 5 has updated the maintained docs and agent instructions.
-- [ ] Do not tolerate mixed ownership where a single exercise still has canonical repository-side `exNNN` tests both inside its exercise directory and elsewhere in the repository.
-- [ ] The phase is only complete once every repository-side exercise-specific `test_exNNN*.py` file lives under its owning `exercises/<construct>/<exercise_key>/tests/` directory, pytest collects those tests from their canonical homes, and the moved tests still run as expected.
+- [ ] Do not treat the Phase 4 `ex004_sequence_debug_syntax` migration as permission to move all remaining exercise-specific tests early; it is the pilot proof only.
+- [ ] Do not move exercise-specific tests in bulk until the broader exercise-file migration phase, where notebooks, local docs links, and exercise tests move together.
+- [ ] Use this phase to eliminate known structural blockers, prove the canonical test layout works, and make the later broad migration safer.
+- [ ] The phase is only complete once the remaining repository-side `test_exNNN*.py` surfaces have been inventoried, `ex002` has been refactored into the same canonical test structure as the other exercises, and the repository has a clear verified path for migrating the remaining exercise tests alongside the wider exercise-file moves.
 
 - [ ] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`.
-- [ ] Refactor the `ex002` exercise tests explicitly, treating them as a clean-up target rather than a normal move: remove the experimental split structure, collapse them to the same canonical layout and naming pattern used by the other exercises, and make `ex002` the reference proof that the relocation phase can normalise messy legacy test layouts.
-- [ ] Move each remaining exercise-specific test module into its owning exercise directory and remove the legacy top-level copy rather than leaving parallel locations.
-- [ ] Update imports, fixtures, helper references, and collection configuration so moved tests run from their canonical homes without path hacks.
-- [ ] Run the relevant repository-side exercise tests after each relocation wave and confirm they still execute from the new canonical paths.
-- [ ] Add an explicit repository guard or audit step that fails if any repository-side `test_exNNN*.py` file remains outside `exercises/<construct>/<exercise_key>/tests/`.
-- [ ] Record any exercises that cannot yet be moved because of unresolved ownership or naming blockers, and treat those as explicit migration blockers rather than silent exceptions.
+- [ ] Refactor the `ex002` exercise tests explicitly, treating them as a clean-up target rather than a normal move: remove the experimental split structure, collapse them to the same canonical layout and naming pattern used by the other exercises, and make `ex002` the reference proof that the migration plan can normalise messy legacy test layouts before the broad move.
+- [ ] Update imports, fixtures, helper references, and collection configuration needed so canonical exercise-local tests run from their intended homes without path hacks.
+- [ ] Run the relevant repository-side exercise tests after the `ex002` refactor and any other preparatory clean-up work, and confirm they still execute as expected.
+- [ ] Record any exercises whose tests cannot yet be migrated with their wider exercise files because of unresolved ownership or naming blockers, and treat those as explicit migration blockers rather than silent exceptions.
+- [ ] Define the audit or guard that will be enforced once the broad migration phase completes so any repository-side `test_exNNN*.py` file remaining outside `exercises/<construct>/<exercise_key>/tests/` fails clearly.
 
 ### Phase 7: Scaffolding And Verification
 
@@ -416,13 +416,14 @@ Criteria: the script already encodes the target checks, the agent depends on its
 #### Constraints And Acceptance Criteria
 
 - [ ] Do not migrate exercises ad hoc without recording what moved and what still remains in the legacy layout.
+- [ ] Do not split exercise-specific test migration from the rest of an exercise's canonical files once broad migration begins; for all non-pilot exercises, notebooks, exercise-local tests, and local exercise docs should move together.
 - [ ] The phase is only complete for a construct once its notebooks, exercise-local tests, local docs links, and migration state all line up with the canonical layout, no duplicate canonical-versus-legacy source of truth remains for that construct, and every `exNNN` test for that construct lives under `exercises/<construct>/<exercise_key>/tests/`.
 
 - [ ] Write a one-off migration script that moves notebooks and exercise-specific tests into each exercise directory.
 - [ ] Choose the pilot construct based on the Phase 1 inventory (Phase 2 live pilot = `ex004_sequence_debug_syntax`) rather than assuming `sequence` is the correct first target.
 - [ ] Update links in construct-level teaching order files.
 - [ ] Update each exercise `README.md` and `OVERVIEW.md` so internal links point to the new local notebook and test paths.
-- [ ] Move every remaining repository-side `test_exNNN*.py` file out of the top-level `tests/` directory and into its owning `exercises/<construct>/<exercise_key>/tests/` directory once the new discovery path is proven.
+- [ ] Move every remaining repository-side `test_exNNN*.py` file out of the top-level `tests/` directory and into its owning `exercises/<construct>/<exercise_key>/tests/` directory as part of the wider per-exercise file migration, rather than as a disconnected earlier sweep.
 - [ ] Ensure shared framework modules now live in `exercise_runtime_support`, leaving top-level `tests/` free for exercise-specific test suites only.
 - [ ] Keep an eye on exercises that already have duplicate or partially migrated homes so the migration script does not overwrite the wrong copy.
 
@@ -479,12 +480,12 @@ Criteria: the script already encodes the target checks, the agent depends on its
 3. Consolidate duplicated exercise registry data into `exercise.json`.
 4. Define the execution model, shared runtime home (`exercise_runtime_support`), CLI `--variant <student|solution>` selector (mapped to the resolver's `variant` argument), and source-to-export mapping before moving exercise-local tests.
 5. Update docs and agent guidance first so the canonical exercise-test layout is stated explicitly before broad relocation work begins.
-6. Relocate exercise-specific repository tests into their owning exercise directories and prove they still run from those canonical paths.
+6. Prepare the remaining exercise tests for migration by inventorying strays, normalising `ex002`, and proving the canonical local test layout works beyond the `ex004` pilot.
 7. Update scaffolding and verification to write the new structure.
 8. Cut over internal grading and autograding code.
 9. Update packaging, pytest discovery, and workflow behaviour.
-10. Migrate one construct and prove repository mode and packaged export both work end to end.
-11. Apply deliberate public interface breaking changes.
+10. Apply deliberate public interface breaking changes.
+11. Migrate the remaining exercise files, including exercise-specific tests, notebooks, and local links, together per exercise.
 12. Update docs, workflows, and agent instructions for the final cutover state.
 13. Remove legacy path support only after the repository is fully migrated.
 
@@ -506,12 +507,12 @@ These can be written first because they define the migration model, inventory, t
 
 ### Wave 2: Author After Wave 1 Is Stable
 
-- [ ] Phase 6 checklist: Exercise Test Relocation And Verification
+- [ ] Phase 6 checklist: Exercise Test Migration Preparation And Verification
 - [ ] Phase 7 checklist: Scaffolding And Verification
 - [ ] Phase 8 checklist: Grading And Autograding
 - [ ] Phase 9 checklist: Pytest Discovery, Packaging, And Workflow Contract
 
-These depend on the earlier checklist set being stable enough to define the resolver contract, execution model, source-to-export mapping, the `exercise_runtime_support` runtime expectations, and the pre-relocation docs contract.
+These depend on the earlier checklist set being stable enough to define the resolver contract, execution model, source-to-export mapping, the `exercise_runtime_support` runtime expectations, and the pre-migration docs contract.
 
 ### Wave 3: Author Last
 
@@ -525,7 +526,7 @@ These should be written last because they depend most heavily on upstream execut
 - Phase 2 depends on Phase 1 inventory being clear enough to avoid ambiguous exercise identities.
 - Phase 4 depends on Phase 1 and should stay aligned with Phase 2 because resolver shape and execution model affect each other.
 - Phase 5 depends on Phases 2 and 4 because the docs pass needs the metadata and execution-model contract to be stable enough to document clearly.
-- Phase 6 depends on Phases 4 and 5 because the broad test relocation should follow both the execution-model definition and the docs/agent alignment pass.
+- Phase 6 depends on Phases 4 and 5 because the preparation work should follow both the execution-model definition and the docs/agent alignment pass.
 - Phase 7 depends on Phases 2, 4, and 6.
 - Phase 8 depends on Phases 2, 4, and 7, and should stay aligned with Phase 6 where test relocation affects runtime assumptions.
 - Phase 9 depends heavily on Phases 4, 6, and 8.

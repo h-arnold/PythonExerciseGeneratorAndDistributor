@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import Final
 
-EX002_NOTEBOOK_PATH: Final[str] = "notebooks/ex002_sequence_modify_basics.ipynb"
 EX002_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {
     1: "Hello Python!",
     2: "I go to Bassaleg School",

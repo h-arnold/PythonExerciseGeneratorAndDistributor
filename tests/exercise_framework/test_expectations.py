@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
+import tests.exercise_framework.expectations as framework_expectations
 from tests import exercise_expectations
 from tests.exercise_expectations import (
     EX002_EXPECTED_MULTI_LINE,
     EX002_EXPECTED_PRINT_CALLS,
     EX002_EXPECTED_SINGLE_LINE,
-    EX002_NOTEBOOK_PATH,
-)
-from tests.exercise_framework.expectations import (
-    EX002_NOTEBOOK_PATH as FRAMEWORK_EX002_NOTEBOOK_PATH,
 )
 from tests.exercise_framework.expectations import (
     expected_output_lines,
@@ -93,6 +90,12 @@ def test_expected_helpers_return_none_for_unknown_exercise() -> None:
     )
 
 
-def test_framework_expectations_use_package_exports() -> None:
-    assert FRAMEWORK_EX002_NOTEBOOK_PATH == EX002_NOTEBOOK_PATH
-    assert FRAMEWORK_EX002_NOTEBOOK_PATH is exercise_expectations.EX002_NOTEBOOK_PATH
+def test_expectation_packages_do_not_export_notebook_paths() -> None:
+    assert "EX002_NOTEBOOK_PATH" not in exercise_expectations.__all__
+    assert "EX003_NOTEBOOK_PATH" not in exercise_expectations.__all__
+    assert "EX004_NOTEBOOK_PATH" not in exercise_expectations.__all__
+    assert "EX005_NOTEBOOK_PATH" not in exercise_expectations.__all__
+    assert "EX006_NOTEBOOK_PATH" not in exercise_expectations.__all__
+    assert not hasattr(exercise_expectations, "EX002_NOTEBOOK_PATH")
+    assert "EX002_NOTEBOOK_PATH" not in framework_expectations.__all__
+    assert not hasattr(framework_expectations, "EX002_NOTEBOOK_PATH")

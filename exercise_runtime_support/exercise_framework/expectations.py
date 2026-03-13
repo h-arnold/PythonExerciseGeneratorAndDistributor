@@ -4,17 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from functools import partial
+from functools import lru_cache, partial
 from pathlib import Path
 from typing import Final
 
+from exercise_runtime_support.exercise_catalogue import get_catalogue_key_for_exercise_id
 from tests.exercise_expectations import (
     EX002_EXPECTED_MULTI_LINE,
     EX002_EXPECTED_PRINT_CALLS,
     EX002_EXPECTED_SINGLE_LINE,
-)
-from tests.exercise_expectations import (
-    EX002_NOTEBOOK_PATH as EX002_NOTEBOOK_PATH_VALUE,
 )
 
 from . import assertions, constructs, paths, runtime
@@ -73,11 +71,13 @@ def _exercise_tag(exercise_no: int) -> str:
     return f"exercise{exercise_no}"
 
 
-EX002_NOTEBOOK_PATH: Final[str] = EX002_NOTEBOOK_PATH_VALUE
+@lru_cache(maxsize=1)
+def _get_ex002_exercise_key() -> str:
+    return get_catalogue_key_for_exercise_id(2)
 
 
 def _resolve_ex002_notebook_path() -> Path:
-    return paths.resolve_notebook_path(EX002_NOTEBOOK_PATH)
+    return paths.resolve_exercise_notebook_path(_get_ex002_exercise_key())
 
 
 def _check_logic(exercise_no: int) -> list[str]:
@@ -93,7 +93,8 @@ def _check_logic(exercise_no: int) -> list[str]:
         multi_line=EX002_EXPECTED_MULTI_LINE,
     )
     if expected_text is None:
-        errors.append(f"Exercise {exercise_no}: no expected output configured.")
+        errors.append(
+            f"Exercise {exercise_no}: no expected output configured.")
         return errors
 
     if output != expected_text:
@@ -103,7 +104,8 @@ def _check_logic(exercise_no: int) -> list[str]:
             multi_line=EX002_EXPECTED_MULTI_LINE,
         )
         expected_summary = " | ".join(expected_lines or [])
-        errors.append(f"Exercise {exercise_no}: expected '{expected_summary}'.")
+        errors.append(
+            f"Exercise {exercise_no}: expected '{expected_summary}'.")
     return errors
 
 

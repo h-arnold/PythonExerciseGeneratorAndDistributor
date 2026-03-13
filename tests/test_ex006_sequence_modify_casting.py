@@ -8,7 +8,7 @@ from tests.exercise_expectations import ex006_sequence_modify_casting as ex006
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
-    resolve_notebook_path,
+    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -18,7 +18,8 @@ def _tag(n: int) -> str:
     return f"exercise{n}"
 
 
-_NOTEBOOK_PATH = resolve_notebook_path(ex006.EX006_NOTEBOOK_PATH)
+_EX006_EXERCISE_KEY = "ex006_sequence_modify_casting"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX006_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 
 

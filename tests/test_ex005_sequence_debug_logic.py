@@ -9,7 +9,7 @@ from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,
-    resolve_notebook_path,
+    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -24,7 +24,8 @@ def _explanation_tag(exercise_no: int) -> str:
     return f"explanation{exercise_no}"
 
 
-_NOTEBOOK_PATH = resolve_notebook_path(ex005.EX005_NOTEBOOK_PATH)
+_EX005_EXERCISE_KEY = "ex005_sequence_debug_logic"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX005_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 _RECTANGLE_SIDE_COUNT = 2
 

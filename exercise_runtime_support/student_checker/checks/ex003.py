@@ -2,23 +2,22 @@
 
 from __future__ import annotations
 
-from tests.exercise_expectations import (
-    EX003_EXPECTED_INPUT_MESSAGES,
-    EX003_EXPECTED_PROMPTS,
-    EX003_EXPECTED_STATIC_OUTPUT,
-    EX003_NOTEBOOK_PATH,
-)
-from exercise_runtime_support.exercise_framework.paths import (
-    resolve_notebook_path as resolve_framework_notebook_path,
-)
+from exercise_runtime_support.exercise_framework.paths import resolve_exercise_notebook_path
 from exercise_runtime_support.notebook_grader import (
     NotebookGradingError,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+from tests.exercise_expectations import (
+    EX003_EXPECTED_INPUT_MESSAGES,
+    EX003_EXPECTED_PROMPTS,
+    EX003_EXPECTED_STATIC_OUTPUT,
+)
 
 from ..models import ExerciseCheckResult
 from .base import ExerciseCheckDefinition, build_exercise_check, exercise_tag
+
+_EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
 
 
 def check_ex003() -> list[str]:
@@ -49,7 +48,8 @@ def _check_ex003_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
     notebook_path = _resolve_ex003_notebook_path()
     expected = EX003_EXPECTED_STATIC_OUTPUT[exercise_no]
-    output = run_cell_and_capture_output(notebook_path, tag=exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(
+        notebook_path, tag=exercise_tag(exercise_no))
     if output != f"{expected}\n":
         errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
     return errors
@@ -66,7 +66,8 @@ def _check_ex003_prompt_flow(exercise_no: int) -> list[str]:
     )
     expected = _format_ex003_prompt_flow_output(exercise_no)
     if output != expected:
-        errors.append(f"Exercise {exercise_no}: output does not match the expected prompt flow.")
+        errors.append(
+            f"Exercise {exercise_no}: output does not match the expected prompt flow.")
     return errors
 
 
@@ -81,7 +82,7 @@ def _format_ex003_prompt_flow_output(exercise_no: int) -> str:
 
 
 def _resolve_ex003_notebook_path() -> str:
-    return str(resolve_framework_notebook_path(EX003_NOTEBOOK_PATH))
+    return str(resolve_exercise_notebook_path(_EX003_EXERCISE_KEY))
 
 
 _EX003_PROMPT_FLOW_INPUTS: dict[int, list[str]] = {
@@ -99,15 +100,18 @@ _EX003_PROMPT_FLOW_PLACEHOLDERS: dict[int, tuple[str, str]] = {
 
 def _build_ex003_checks() -> list[ExerciseCheckDefinition]:
     checks: list[ExerciseCheckDefinition] = []
-    exercise_numbers = sorted(set(EX003_EXPECTED_STATIC_OUTPUT) | set(_EX003_PROMPT_FLOW_INPUTS))
+    exercise_numbers = sorted(
+        set(EX003_EXPECTED_STATIC_OUTPUT) | set(_EX003_PROMPT_FLOW_INPUTS))
     for exercise_no in exercise_numbers:
         if exercise_no in EX003_EXPECTED_STATIC_OUTPUT:
             checks.append(
-                build_exercise_check(exercise_no, "Static output", _check_ex003_static_output)
+                build_exercise_check(
+                    exercise_no, "Static output", _check_ex003_static_output)
             )
         if exercise_no in _EX003_PROMPT_FLOW_INPUTS:
             checks.append(
-                build_exercise_check(exercise_no, "Prompt flow", _check_ex003_prompt_flow)
+                build_exercise_check(
+                    exercise_no, "Prompt flow", _check_ex003_prompt_flow)
             )
     return checks
 

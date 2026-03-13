@@ -9,7 +9,6 @@ from typing import Any
 
 __all__ = [
     "EX002_CHECKS",
-    "EX002_NOTEBOOK_PATH",
     "EX002_SLUG",
     "Ex002CheckDefinition",
     "ExerciseCheckResult",
@@ -21,6 +20,7 @@ __all__ = [
     "expected_print_call_count",
     "extract_tagged_code",
     "get_explanation_cell",
+    "resolve_exercise_notebook_path",
     "resolve_notebook_path",
     "run_all_checks",
     "run_cell_and_capture_output",
@@ -30,7 +30,6 @@ __all__ = [
 ]
 
 EX002_CHECKS: Any
-EX002_NOTEBOOK_PATH: str
 EX002_SLUG: str
 Ex002CheckDefinition: type[Any]
 ExerciseCheckResult: type[Any]
@@ -42,6 +41,7 @@ expected_output_text: Callable[..., Any]
 expected_print_call_count: Callable[..., Any]
 extract_tagged_code: Callable[..., Any]
 get_explanation_cell: Callable[..., Any]
+resolve_exercise_notebook_path: Callable[..., Any]
 resolve_notebook_path: Callable[..., Any]
 run_all_checks: Callable[..., Any]
 run_cell_and_capture_output: Callable[..., Any]
@@ -51,7 +51,6 @@ run_notebook_check: Callable[..., Any]
 
 _ATTRIBUTE_MODULES: dict[str, str] = {
     "EX002_CHECKS": "exercise_runtime_support.exercise_framework.expectations",
-    "EX002_NOTEBOOK_PATH": "exercise_runtime_support.exercise_framework.expectations",
     "EX002_SLUG": "exercise_runtime_support.exercise_framework.api",
     "Ex002CheckDefinition": "exercise_runtime_support.exercise_framework.expectations",
     "ExerciseCheckResult": "exercise_runtime_support.exercise_framework.api",
@@ -63,6 +62,7 @@ _ATTRIBUTE_MODULES: dict[str, str] = {
     "expected_print_call_count": "exercise_runtime_support.exercise_framework.expectations",
     "extract_tagged_code": "exercise_runtime_support.exercise_framework.runtime",
     "get_explanation_cell": "exercise_runtime_support.exercise_framework.runtime",
+    "resolve_exercise_notebook_path": "exercise_runtime_support.exercise_framework.paths",
     "resolve_notebook_path": "exercise_runtime_support.exercise_framework.paths",
     "run_all_checks": "exercise_runtime_support.exercise_framework.api",
     "run_cell_and_capture_output": "exercise_runtime_support.exercise_framework.runtime",

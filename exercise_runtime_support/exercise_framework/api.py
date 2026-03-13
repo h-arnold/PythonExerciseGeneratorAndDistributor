@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from functools import partial
 from typing import Any
 
 from exercise_runtime_support.exercise_catalogue import (
@@ -17,16 +18,12 @@ from exercise_runtime_support.exercise_catalogue import (
 )
 from exercise_runtime_support.exercise_framework.expectations import EX002_CHECKS
 from exercise_runtime_support.notebook_grader import NotebookGradingError
-from tests.exercise_expectations import (
-    EX003_NOTEBOOK_PATH,
-    EX004_NOTEBOOK_PATH,
-    EX005_NOTEBOOK_PATH,
-    EX006_NOTEBOOK_PATH,
-)
 
-from . import runtime
+from . import paths, runtime
 
 RawNotebookResult = tuple[str, bool, list[str]]
+_DETAILED_EX002_EXERCISE_ID = 2
+_FIRST_EXERCISE_SMOKE_CHECK_IDS = frozenset({3, 4, 5, 6})
 
 
 @dataclass(frozen=True)
@@ -89,26 +86,25 @@ def _check_ex002_summary() -> list[str]:
     return [issue for result in results for issue in result.issues]
 
 
-def _check_notebook_can_execute_first_exercise(notebook_path: str) -> list[str]:
-    runtime.run_cell_and_capture_output(notebook_path, tag="exercise1")
+def _check_notebook_can_execute_first_exercise(exercise_key: str) -> list[str]:
+    runtime.run_cell_and_capture_output(
+        paths.resolve_exercise_notebook_path(exercise_key),
+        tag="exercise1",
+    )
     return []
 
 
 def _get_check_runners() -> dict[str, Callable[[], list[str]]]:
-    configured_runners: dict[int, Callable[[], list[str]]] = {
-        2: _check_ex002_summary,
-        3: lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),
-        4: lambda: _check_notebook_can_execute_first_exercise(EX004_NOTEBOOK_PATH),
-        5: lambda: _check_notebook_can_execute_first_exercise(EX005_NOTEBOOK_PATH),
-        6: lambda: _check_notebook_can_execute_first_exercise(EX006_NOTEBOOK_PATH),
-    }
-
     runners: dict[str, Callable[[], list[str]]] = {}
     for entry in get_exercise_catalogue():
-        runner = configured_runners.get(entry.exercise_id)
-        if runner is None:
+        if entry.exercise_id == _DETAILED_EX002_EXERCISE_ID:
+            runners[entry.exercise_key] = _check_ex002_summary
             continue
-        runners[entry.exercise_key] = runner
+        if entry.exercise_id in _FIRST_EXERCISE_SMOKE_CHECK_IDS:
+            runners[entry.exercise_key] = partial(
+                _check_notebook_can_execute_first_exercise,
+                entry.exercise_key,
+            )
     return runners
 
 

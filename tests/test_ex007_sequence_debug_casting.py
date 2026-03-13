@@ -4,12 +4,12 @@ import ast
 
 import pytest
 
-from tests.exercise_expectations import ex007_data_types_debug_casting as ex007
+from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,
-    resolve_notebook_path,
+    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -20,7 +20,8 @@ from tests.exercise_framework.ex007_construct_checks import (
 )
 from tests.exercise_framework.expectations_helpers import is_valid_explanation
 
-_NOTEBOOK_PATH = resolve_notebook_path(ex007.EX007_NOTEBOOK_PATH)
+_EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX007_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 
 
