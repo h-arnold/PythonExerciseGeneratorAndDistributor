@@ -317,7 +317,6 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] Do not leave current docs or agent guidance describing top-level `tests/test_exNNN*.py` files as an acceptable authoring layout once this phase is complete.
 - [ ] The phase is only complete once the maintained docs and agent instructions consistently describe the canonical authoring test layout, the distinction between repository-side canonical locations and flattened export locations, and the requirement that stray repository-side `test_exNNN*.py` files outside exercise directories are migration debt.
 
-- [ ] Update [README.md](README.md) to describe the canonical exercise-local test layout.
 - [ ] Update [docs/project-structure.md](docs/project-structure.md) and [docs/setup.md](docs/setup.md) so they describe `exercises/<construct>/<exercise_key>/tests/` as the repository home for exercise-specific tests.
 - [ ] Update exercise generation and verification guidance in [docs/exercise-generation.md](docs/exercise-generation.md) and [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) so generated and verified exercises use local `tests/` directories.
 - [ ] Update [AGENTS.md](AGENTS.md) and the files under [.github/agents](.github/agents) so custom agents treat exercise-local `tests/` directories as the canonical repository contract.
