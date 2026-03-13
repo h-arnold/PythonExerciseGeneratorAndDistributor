@@ -92,3 +92,7 @@ Brief description of what was achieved.
 ## Next Steps
 - [ ] Reviewer needs to check edge case Z.
 ```
+
+## 6. The Golden Rule
+
+No fallbacks of any description unless explicitly requested. Fail fast and loudly always.
