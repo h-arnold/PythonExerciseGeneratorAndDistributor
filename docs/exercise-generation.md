@@ -168,19 +168,14 @@ Output:
 
 ### Recommended models — cost vs. quality 💡
 
-- **Raptor-mini (Preview)** — Tested and recommended for classroom use. The agent workflows in this repository have been validated with Raptor-mini. It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education. Raptor-mini produces perfectly workable results when used with the standard verification step (always run the Exercise Verifier after generation).
+- **Raptor-mini (Preview)** — The best of the free models available in Copilot. It can produce good results but is sometimes inconsistent. The tests is generates are less good.  It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education.
 
-- **Sonnet 4.5 / Codex 5.2** — More powerful models that tend to produce higher-quality and faster outputs, especially for complex or subtle tasks. They are, however, more costly; use them for large batches, complex exercises, or when you need higher confidence in a single pass.
-
-Practical tips:
-
-- For most classroom work, start with **Raptor-mini** and **always** run the Exercise Verifier afterwards.
-- If you repeatedly need the generator to hit edge cases in one run, consider using **Sonnet 4.5** or **Codex 5.2** for that run, then run the verifier as usual.
-- You can select the model in Copilot Chat using the model/agent selector; choose the preferred model or let the agent default to the recommended model for the workspace.
+- **GPT 5.4** — This is the best of the current line of paid models. It's precise, follows instructions well and is particularly adept at generating tests that account for the ways in which students might bypass the required construct (e.g. using a while loop instead of a for loop) so that they are only told their solution is correct when it's correct in the intended way. It is available with the Copilot Education plan, which is free for students and teachers.
+  
 
 ## Best Practices
 
-- **Small Batches:** Generate 1 exercises at a time rather than a whole chapter.
+- **Small Batches:** Generate one set of exercises at a time.
 - **Fresh Context**: Start a new chat for each exercise for best results.
 - **Be Specific about Type:**
   - **Debug**: Students fix broken code.
