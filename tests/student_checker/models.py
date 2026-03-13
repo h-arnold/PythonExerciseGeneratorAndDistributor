@@ -1,59 +1,12 @@
-"""Dataclasses used by the student checker."""
+"""Compatibility wrapper for :mod:`exercise_runtime_support.student_checker.models`."""
 
-from __future__ import annotations
+from importlib import import_module as _import_module
 
-from collections.abc import Callable
-from dataclasses import dataclass
+_impl = _import_module("exercise_runtime_support.student_checker.models")
 
+for _name, _value in vars(_impl).items():
+    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
+        continue
+    globals()[_name] = _value
 
-@dataclass(frozen=True)
-class NotebookCheckSpec:
-    """Represents a summary check and optional detailed notebook report."""
-
-    label: str
-    summary_runner: Callable[[], list[str]]
-    detailed_printer: Callable[[], None] | None = None
-
-
-@dataclass(frozen=True)
-class ExerciseCheckResult:
-    """Represents a single grouped exercise check result."""
-
-    exercise_no: int
-    title: str
-    passed: bool
-    issues: list[str]
-
-
-@dataclass(frozen=True)
-class Ex002CheckResult:
-    """Represents a single ex002 check result."""
-
-    exercise_no: int
-    title: str
-    passed: bool
-    issues: list[str]
-
-
-@dataclass(frozen=True)
-class Ex006CheckResult(ExerciseCheckResult):
-    """Represents a single ex006 check result."""
-
-
-@dataclass(frozen=True)
-class NotebookTagCheckResult:
-    """Represents the status of a tagged exercise cell."""
-
-    tag: str
-    passed: bool
-    message: str
-
-
-@dataclass(frozen=True)
-class DetailedCheckResult:
-    """Represents a single row in a grouped detailed report."""
-
-    exercise_label: str
-    check_label: str
-    passed: bool
-    issues: list[str]
+__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

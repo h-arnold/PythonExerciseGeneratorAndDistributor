@@ -1,35 +1,12 @@
-"""Checks for the ex002 notebook."""
+"""Compatibility wrapper for :mod:`exercise_runtime_support.student_checker.checks.ex002`."""
 
-from __future__ import annotations
+from importlib import import_module as _import_module
 
-from tests.exercise_framework.expectations import EX002_CHECKS
-from tests.notebook_grader import NotebookGradingError
+_impl = _import_module("exercise_runtime_support.student_checker.checks.ex002")
 
-from ..models import Ex002CheckResult
+for _name, _value in vars(_impl).items():
+    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
+        continue
+    globals()[_name] = _value
 
-
-def check_ex002_summary() -> list[str]:
-    """Run summary checks for ex002."""
-    return [issue for result in run_ex002_checks() for issue in result.issues]
-
-
-def run_ex002_checks() -> list[Ex002CheckResult]:
-    """Run detailed checks for ex002."""
-    results: list[Ex002CheckResult] = []
-    for check in EX002_CHECKS:
-        try:
-            issues = check.check()
-        except NotebookGradingError as exc:
-            issues = [str(exc)]
-        results.append(
-            Ex002CheckResult(
-                exercise_no=check.exercise_no,
-                title=check.title,
-                passed=len(issues) == 0,
-                issues=issues,
-            )
-        )
-    return results
-
-
-__all__ = ["check_ex002_summary", "run_ex002_checks"]
+__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

@@ -7,10 +7,7 @@ import tempfile
 from pathlib import Path
 
 from scripts.template_repo_cli.core.collector import ExerciseFiles
-from scripts.template_repo_cli.utils.filesystem import (
-    safe_copy_directory,
-    safe_copy_file,
-)
+from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
 
 
 class TemplatePackager:
@@ -38,6 +35,8 @@ class TemplatePackager:
         "student_checker",
     )
 
+    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = ("exercise_runtime_support",)
+
     def __init__(self, repo_root: Path):
         """Initialize packager.
 
@@ -53,7 +52,6 @@ class TemplatePackager:
         Returns:
             Path to temporary workspace directory.
         """
-        # Create a temporary directory
         temp_dir = tempfile.mkdtemp(prefix="template_repo_")
         return Path(temp_dir)
 
@@ -68,16 +66,9 @@ class TemplatePackager:
             workspace: Workspace directory.
             files: Dictionary mapping exercise ID to file paths.
         """
-        for exercise_id, file_dict in files.items():
-            # Copy student notebook
-            if file_dict.get("notebook"):
-                dest = workspace / "notebooks" / f"{exercise_id}.ipynb"
-                safe_copy_file(file_dict["notebook"], dest)
-
-            # Copy test file
-            if file_dict.get("test"):
-                dest = workspace / "tests" / f"test_{exercise_id}.py"
-                safe_copy_file(file_dict["test"], dest)
+        for file_dict in files.values():
+            safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
+            safe_copy_file(file_dict["test"], workspace / file_dict["test_export"])
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -106,6 +97,9 @@ class TemplatePackager:
         required_paths.extend(
             tests_source_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
         )
+        required_paths.extend(
+            self.repo_root / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
+        )
         return [path for path in required_paths if not path.exists()]
 
     def _raise_for_missing_required_sources(self) -> None:
@@ -115,8 +109,7 @@ class TemplatePackager:
             return
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
-        raise FileNotFoundError(
-            f"Missing required packaging source assets:\n{missing_list}")
+        raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
 
     def copy_template_base_files(self, workspace: Path) -> None:
         """Copy base template files.
@@ -134,18 +127,9 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (
-                self.template_files_dir / "pyproject.toml",
-                workspace / "pyproject.toml",
-            ),
-            (
-                self.template_files_dir / "pytest.ini",
-                workspace / "pytest.ini",
-            ),
-            (
-                self.template_files_dir / ".gitignore",
-                workspace / ".gitignore",
-            ),
+            (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
+            (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
+            (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
                 self.repo_root / "scripts" / "build_autograde_payload.py",
                 workspace / "scripts" / "build_autograde_payload.py",
@@ -153,17 +137,13 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (
-                self.template_files_dir / "INSTRUCTIONS.md",
-                workspace / "INSTRUCTIONS.md",
-            ),
+            (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
         tests_dest_dir = workspace / "tests"
         for required_file in self.REQUIRED_TEST_FILES:
-            file_pairs.append(
-                (tests_source_dir / required_file, tests_dest_dir / required_file))
+            file_pairs.append((tests_source_dir / required_file, tests_dest_dir / required_file))
 
         for src, dest in file_pairs:
             safe_copy_file(src, dest)
@@ -173,14 +153,19 @@ class TemplatePackager:
                 safe_copy_file(src, dest)
 
         for required_dir in self.REQUIRED_TEST_DIRECTORIES:
-            source_dir = tests_source_dir / required_dir
             safe_copy_directory(
-                source_dir,
+                tests_source_dir / required_dir,
                 tests_dest_dir / required_dir,
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
-        # Copy directories
+        for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES:
+            safe_copy_directory(
+                self.repo_root / required_dir,
+                workspace / required_dir,
+                ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
+            )
+
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
 
@@ -192,22 +177,15 @@ class TemplatePackager:
             template_name: Name of the template.
             exercises: List of exercise IDs.
         """
-        # Read template
         template_path = self.template_files_dir / "README.md.template"
         if template_path.exists():
             template_content = template_path.read_text(encoding="utf-8")
         else:
-            # Fallback template
             template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
 
-        # Generate exercise list
-        exercise_list = "\n".join([f"- {ex}" for ex in sorted(exercises)])
-
-        # Replace placeholders
+        exercise_list = "\n".join(f"- {ex}" for ex in sorted(exercises))
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
         content = content.replace("{EXERCISE_LIST}", exercise_list)
-
-        # Write README
         readme_path = workspace / "README.md"
         readme_path.write_text(content, encoding="utf-8")
 
@@ -220,7 +198,6 @@ class TemplatePackager:
         Returns:
             True if package is valid, False otherwise.
         """
-        # Check required files exist
         required_files = [
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
@@ -230,21 +207,14 @@ class TemplatePackager:
         ]
 
         tests_dir = workspace / "tests"
-        required_files.extend(
-            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
-
+        required_files.extend(tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
         for required_file in required_files:
             if not required_file.exists():
                 return False
 
-        # Check required directories exist
-        required_dirs = [
-            workspace / "notebooks",
-            tests_dir,
-        ]
-        required_dirs.extend(
-            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
-
+        required_dirs = [workspace / "notebooks", tests_dir]
+        required_dirs.extend(tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
+        required_dirs.extend(workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES)
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():
                 return False
@@ -252,21 +222,13 @@ class TemplatePackager:
         return True
 
     def _is_safe_workspace(self, workspace: Path) -> bool:
-        """Check whether the given path looks like a valid temporary workspace.
-
-        A safe workspace is:
-        - Located inside the system temporary directory, and
-        - Has the expected prefix used by create_workspace(), and
-        - Is an existing directory.
-        """
-        # Normalize and resolve paths to avoid traversal tricks.
+        """Check whether the given path looks like a valid temporary workspace."""
         workspace_path = Path(workspace).resolve()
         temp_root = Path(tempfile.gettempdir()).resolve()
 
         try:
             workspace_path.relative_to(temp_root)
         except ValueError:
-            # Workspace is not inside the system temp directory.
             return False
 
         if not workspace_path.name.startswith("template_repo_"):
@@ -281,10 +243,6 @@ class TemplatePackager:
             workspace: Workspace directory to remove.
         """
         workspace_path = Path(workspace)
-
-        # Only remove directories that look like workspaces created by
-        # create_workspace(). This helps prevent accidental deletion of
-        # important non-temporary directories.
         if not self._is_safe_workspace(workspace_path):
             return
 

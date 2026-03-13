@@ -26,12 +26,13 @@ from collections import defaultdict
 from collections.abc import Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, Literal, NotRequired, TypedDict, cast
 
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
 SUMMARY_HEADER = "=== Autograde Summary ==="
 MAX_AUTOGRADE_MESSAGE_LENGTH = 200
+Variant = Literal["student", "solution"]
 
 
 class AutogradeTestEntry(TypedDict):
@@ -129,6 +130,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
+        "--variant",
+        choices=("student", "solution"),
+        default="student",
+        help="Notebook variant to expose to pytest.",
+    )
+    parser.add_argument(
         "--pytest-args",
         action="append",
         default=None,
@@ -175,26 +182,18 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def validate_environment() -> None:
-    """Ensure environment variables are compatible with the autograde flow."""
+def _variant_to_notebooks_dir(variant: Variant) -> str:
+    """Return the notebook directory used for a variant."""
 
-    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR")
-    reported_value = notebooks_dir if notebooks_dir else "<unset>"
-    print(f"Environment: PYTUTOR_NOTEBOOKS_DIR={reported_value}")
-    if not notebooks_dir:
-        return
+    return "notebooks" if variant == "student" else "notebooks/solutions"
 
-    normalised_dir = _normalise_notebooks_dir(notebooks_dir)
-    allowed_dirs = {"notebooks", "notebooks/solutions"}
-    # Consider offering a CLI flag to override the notebook directory when workflows expand.
-    if normalised_dir in allowed_dirs:
-        return
 
-    allowed_display = "', '".join(sorted(allowed_dirs))
-    raise RuntimeError(
-        "PYTUTOR_NOTEBOOKS_DIR must be unset or one of "
-        f"'{allowed_display}' when building autograde payloads."
-    )
+def validate_environment(variant: Variant) -> None:
+    """Apply the explicit variant contract to the pytest environment."""
+
+    notebooks_dir = _variant_to_notebooks_dir(variant)
+    os.environ["PYTUTOR_NOTEBOOKS_DIR"] = notebooks_dir
+    print(f"Variant: {variant} (PYTUTOR_NOTEBOOKS_DIR={notebooks_dir})")
 
 
 def _normalise_notebooks_dir(value: str | None) -> str | None:
@@ -209,11 +208,10 @@ def _normalise_notebooks_dir(value: str | None) -> str | None:
     return normalised or None
 
 
-def _should_zero_scores_on_failure() -> bool:
+def _should_zero_scores_on_failure(variant: Variant) -> bool:
     """Return True when failing student notebooks should yield zero credit."""
 
-    notebooks_dir = _normalise_notebooks_dir(os.environ.get("PYTUTOR_NOTEBOOKS_DIR"))
-    return notebooks_dir == "notebooks"
+    return variant == "student"
 
 
 def _ensure_autograde_option(pytest_args: Sequence[str], results_path: Path) -> list[str]:
@@ -369,7 +367,7 @@ def _calculate_earned_score(
     return _ensure_float(candidate, "score in results must be numeric if provided.")
 
 
-def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
+def build_payload(raw_results: AutogradeResults, *, variant: Variant = "student") -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
     max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
@@ -377,7 +375,7 @@ def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
     earned_score_value = _calculate_earned_score(raw_results, normalised_tests)
-    if status != "pass" and _should_zero_scores_on_failure():
+    if status != "pass" and _should_zero_scores_on_failure(variant):
         earned_score_value = 0.0
         for test in normalised_tests:
             test["score"] = 0.0
@@ -578,7 +576,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         args = parse_args(argv)
-        validate_environment()
+        validate_environment(args.variant)
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -592,7 +590,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         raw_results = load_results(results_path)
-        payload = build_payload(raw_results)
+        payload = build_payload(raw_results, variant=args.variant)
 
         # Apply minimal mode to reduce payload size for GitHub Classroom
         if args.minimal:

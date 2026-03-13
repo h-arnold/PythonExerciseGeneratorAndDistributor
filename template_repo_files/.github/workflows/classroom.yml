@@ -37,10 +37,9 @@ jobs:
         name: Build autograde payload
         # continue-on-error lets us harvest full failure context before exiting
         continue-on-error: true
-        env:
-          PYTUTOR_NOTEBOOKS_DIR: notebooks
         run: |
           uv run python scripts/build_autograde_payload.py \
+            --variant student \
             --pytest-args="-p tests.autograde_plugin" \
             --output tmp/autograde/payload.txt \
             --summary tmp/autograde/results.json \

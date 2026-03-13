@@ -7,5 +7,4 @@ set -euo pipefail
 #   scripts/verify_solutions.sh -q
 #   scripts/verify_solutions.sh tests/test_ex003_sequence_modify_variables.py
 
-export PYTUTOR_NOTEBOOKS_DIR="notebooks/solutions"
-pytest "$@"
+python scripts/run_pytest_variant.py --variant solution "$@"

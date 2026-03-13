@@ -29,7 +29,5 @@ jobs:
           uv sync
 
       - name: Run tests
-        env:
-          PYTUTOR_NOTEBOOKS_DIR: notebooks/solutions
         run: |
-          uv run pytest -q
+          uv run python scripts/run_pytest_variant.py --variant solution -q

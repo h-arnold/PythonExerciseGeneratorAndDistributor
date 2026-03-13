@@ -30,10 +30,10 @@ uv run python -V
 
 ### Code Organisation
 
-- `tests/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
-- `tests/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
+- `exercise_runtime_support/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
+- `exercise_runtime_support/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
 - `scripts/new_exercise.py`: Exercise scaffolding tool
-- `scripts/verify_solutions.sh`: Helper to test solutions (wraps `pytest` with `PYTUTOR_NOTEBOOKS_DIR`)
+- `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
 - `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
 - `AGENTS.md`: Repo-wide Copilot context
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
@@ -73,11 +73,11 @@ expected outputs, prompts, and input data.
 
 ```bash
 # Always test against the solution notebooks first
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
 
 # Focus on a specific exercise (still targeting solutions)
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex001_sanity.py -q
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py -q
+uv run python scripts/run_pytest_variant.py --variant solution tests/test_ex001_sanity.py -q
+uv run python scripts/run_pytest_variant.py --variant solution tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py -q
 
 # Only switch to student notebooks when validating the classroom experience
 uv run pytest tests/test_ex001_sanity.py -q
@@ -111,17 +111,17 @@ The first command targets the instructor notebooks; the second intentionally hit
 
 ### Build Classroom payloads with the CLI
 
-Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow. Set `PYTUTOR_NOTEBOOKS_DIR` before the call when validating solution notebooks so pytest imports the correct files:
+Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow. Pass `--variant <student|solution>` so the same contract is used locally and in CI:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
-    uv run python scripts/build_autograde_payload.py \
+uv run python scripts/build_autograde_payload.py \
+    --variant solution \
     --pytest-args=-q \
     --pytest-args=tests/test_ex001_sanity.py \
     --results-json=tmp/autograde/results.json
 ```
 
-If you omit `PYTUTOR_NOTEBOOKS_DIR`, the script will exercise the student notebooks instead. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
+If you omit `--variant`, the script exercises the student notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
 
 ### Test workflow changes safely
 

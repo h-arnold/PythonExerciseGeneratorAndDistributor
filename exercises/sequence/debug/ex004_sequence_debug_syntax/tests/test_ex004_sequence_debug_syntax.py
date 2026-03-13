@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import ast
+import os
+from pathlib import Path
 
 import pytest
 
-from tests.exercise_expectations import ex004_sequence_debug_syntax as ex004
-from tests.exercise_framework import (
+from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,
-    resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-from tests.exercise_framework.expectations_helpers import is_valid_explanation
+from exercise_runtime_support.exercise_framework.expectations_helpers import is_valid_explanation
+from tests.exercise_expectations import ex004_sequence_debug_syntax as ex004
 
 
 def _tag(exercise_no: int) -> str:
@@ -24,7 +25,43 @@ def _explanation_tag(exercise_no: int) -> str:
     return f"explanation{exercise_no}"
 
 
-_NOTEBOOK_PATH = resolve_notebook_path(ex004.EX004_NOTEBOOK_PATH)
+def _current_variant() -> str:
+    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR", "notebooks")
+    return "solution" if notebooks_dir.replace("\\", "/").rstrip("/").endswith("solutions") else "student"
+
+
+def _resolve_notebook_path() -> Path:
+    variant = _current_variant()
+    test_dir = Path(__file__).resolve().parent
+    local_candidates = [
+        test_dir.parent / "notebooks" / "ex004_sequence_debug_syntax.ipynb",
+        test_dir.parent / "notebooks" / f"{variant}.ipynb",
+    ]
+
+    for notebook_path in local_candidates:
+        if notebook_path.exists():
+            return notebook_path
+
+    cwd = Path.cwd().resolve()
+    fallback_candidates = [
+        cwd / "notebooks" / "ex004_sequence_debug_syntax.ipynb",
+        cwd
+        / "exercises"
+        / "sequence"
+        / "debug"
+        / "ex004_sequence_debug_syntax"
+        / "notebooks"
+        / f"{variant}.ipynb",
+    ]
+
+    for notebook_path in fallback_candidates:
+        if notebook_path.exists():
+            return notebook_path
+
+    return local_candidates[0]
+
+
+_NOTEBOOK_PATH = _resolve_notebook_path()
 _CACHE = RuntimeCache()
 
 
