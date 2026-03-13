@@ -179,6 +179,114 @@ def test_canonical_exercise_with_missing_exercise_json_raises_runtime_error(
             manifest_path=manifest_path, exercises_root=empty_root)
 
 
+def test_canonical_exercise_with_mismatched_metadata_key_raises_runtime_error(
+    tmp_path: Path,
+) -> None:
+    """Canonical metadata must match the manifest exercise_key exactly."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
+    )
+    exercise_dir = tmp_path / "exercises" / \
+        "sequence" / "ex004_sequence_debug_syntax"
+    make_exercise_json(
+        exercise_dir,
+        {
+            "schema_version": 1,
+            "exercise_key": "ex999_sequence_wrong_identity",
+            "exercise_id": 4,
+            "slug": "ex004_sequence_debug_syntax",
+            "title": "Debug Syntax Errors",
+            "construct": "sequence",
+            "exercise_type": "debug",
+            "parts": 10,
+        },
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        build_exercise_registry(
+            manifest_path=manifest_path,
+            exercises_root=tmp_path / "exercises",
+        )
+
+    message = str(exc_info.value)
+    assert "Failed to load metadata for canonical exercise" in message
+    assert "has exercise_key 'ex999_sequence_wrong_identity'" in message
+    assert "expected 'ex004_sequence_debug_syntax'" in message
+
+
+def test_canonical_exercise_with_mismatched_construct_raises_runtime_error(
+    tmp_path: Path,
+) -> None:
+    """Canonical metadata construct must match the canonical directory path."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
+    )
+    exercise_dir = tmp_path / "exercises" / \
+        "sequence" / "ex004_sequence_debug_syntax"
+    make_exercise_json(
+        exercise_dir,
+        {
+            "schema_version": 1,
+            "exercise_key": "ex004_sequence_debug_syntax",
+            "exercise_id": 4,
+            "slug": "ex004_sequence_debug_syntax",
+            "title": "Debug Syntax Errors",
+            "construct": "selection",
+            "exercise_type": "debug",
+            "parts": 10,
+        },
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        build_exercise_registry(
+            manifest_path=manifest_path,
+            exercises_root=tmp_path / "exercises",
+        )
+
+    message = str(exc_info.value)
+    assert "Failed to load metadata for canonical exercise" in message
+    assert "has construct 'selection'" in message
+    assert "expected 'sequence'" in message
+
+
+def test_canonical_exercise_rejects_legacy_only_metadata_location(
+    tmp_path: Path,
+) -> None:
+    """Canonical exercises do not fall back to legacy construct/type metadata paths."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
+    )
+    legacy_dir = tmp_path / "exercises" / "sequence" / \
+        "debug" / "ex004_sequence_debug_syntax"
+    make_exercise_json(
+        legacy_dir,
+        {
+            "schema_version": 1,
+            "exercise_key": "ex004_sequence_debug_syntax",
+            "exercise_id": 4,
+            "slug": "ex004_sequence_debug_syntax",
+            "title": "Debug Syntax Errors",
+            "construct": "sequence",
+            "exercise_type": "debug",
+            "parts": 10,
+        },
+    )
+
+    with pytest.raises(RuntimeError) as exc_info:
+        build_exercise_registry(
+            manifest_path=manifest_path,
+            exercises_root=tmp_path / "exercises",
+        )
+
+    message = str(exc_info.value)
+    assert "Failed to load metadata for canonical exercise" in message
+    assert "Canonical exercise directory not found" in message
+    assert "must not include an exercise_type segment" in message
+
+
 def test_unknown_exercise_key_in_manifest_raises_key_error(tmp_path: Path) -> None:
     """``get_exercise_layout()`` raises ``KeyError`` for unknown exercise keys."""
     manifest_path = make_manifest(

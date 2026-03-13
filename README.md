@@ -1,8 +1,14 @@
-# Python Tutor Exercises (prototype)
+# Python Exercise Generator and Distributor (needs a better name)
 
-A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside notebooks, run code inline, and get autograding feedback. Teachers can generate new exercises quickly and bundle selected exercises into GitHub Classroom template repos.
+A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get autograding feedback. Teachers can generate new exercises quickly and bundle selected exercises into GitHub Classroom template repos.
 
-This is a working prototype. The core workflow exists, but several pieces are incomplete (see Status below).
+## Key Benefits and Features
+
+ - **No local setup of config**: The most your IT technician will need to do is ensure that connections to GitHub and Codespaces are allowed.
+ - **Works on any device with a browser**: Students can work on Chromebooks, tablets, or any device that can run Codespaces. A device with a keyboard and mouse is recommended however.
+ - **Fast and intelligent feedback loop**: Students get immediate feedback from autograding tests right in their notebooks and 
+ - **Free and open source**
+ - **Built on sound pedagogical principles
 
 ## What this project does
 
@@ -38,11 +44,13 @@ Why teachers will care:
   <figcaption>Figure: Example student activity — a tagged cell with inline feedback.</figcaption>
 </figure>
 
-1. The canonical authoring home for exercise-specific assets is `exercises/<construct>/<exercise_key>/`, with exercise metadata stored in `exercise.json`.
-2. The current repository still exposes flattened notebook and test surfaces under [notebooks/](notebooks/), [notebooks/solutions/](notebooks/solutions/), and [tests/](tests/) for execution, verification, and export.
-3. Tests in [tests/](tests/) use the shared [exercise_runtime_support/](exercise_runtime_support/) package to extract tagged cells and run them automatically.
-4. A CLI can bundle selected exercises into a GitHub Classroom template repo.
-5. You set up a [GitHub Classroom Assignment](https://classroom.github.com/) using the generated template repo, and students can accept the assignment and start working immediately.
+1. You generate exercises using the Exercise Generation assistant (a custom Copilot Chat mode) or use the pre-existing exercises in the repo.
+2. You use the [template repo CLI](docs/CLI_README.md) to bundle selected exercises into a GitHub Classroom template repository.
+3. You create a Github Classroom assignment using that template and distribute it to students.
+4. Students open the assignment in Codespaces, complete the exercises in the browser, and get immediate feedback from the autograding tests.
+5. When they commit and push their work, the GitHub Classroom workflow runs the autograding tests again and reports results back to the Classroom interface.
+6. ???
+7. Profit!
 
 ### Feedback and reporting
 

@@ -50,12 +50,26 @@ def build_display_label(exercise_id: int, title: str) -> str:
     return f"ex{exercise_id:03d} {title}"
 
 
-def _find_metadata_directory(exercise_key: str, exercises_root: Path | None) -> Path | None:
-    """Return the canonical exercise directory when it exists."""
-    try:
-        return resolve_exercise_dir(exercise_key, exercises_root)
-    except LookupError:
-        return None
+def _validate_metadata_identity(
+    exercise_key: str,
+    exercise_dir: Path,
+    metadata: ExerciseMetadata,
+) -> None:
+    """Fail fast when metadata identity diverges from its canonical home."""
+    metadata_path = exercise_dir / "exercise.json"
+    if metadata["exercise_key"] != exercise_key:
+        raise ValueError(
+            f"exercise.json at {metadata_path} has exercise_key "
+            f"{metadata['exercise_key']!r}; expected {exercise_key!r}"
+        )
+
+    expected_construct = exercise_dir.parent.name
+    if metadata["construct"] != expected_construct:
+        raise ValueError(
+            f"exercise.json at {metadata_path} has construct "
+            f"{metadata['construct']!r}; expected {expected_construct!r} "
+            "from the canonical directory path"
+        )
 
 
 def _load_registry_metadata(
@@ -64,17 +78,19 @@ def _load_registry_metadata(
     exercises_root: Path | None,
 ) -> ExerciseMetadata | None:
     """Load metadata for a registry entry when an ``exercise.json`` file exists."""
-    exercise_dir = _find_metadata_directory(exercise_key, exercises_root)
-    if exercise_dir is None:
+    try:
+        exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
+    except LookupError as exc:
         if layout == ExerciseLayout.CANONICAL:
             raise RuntimeError(
-                f"Failed to load metadata for canonical exercise {exercise_key!r}: "
-                "exercise.json was not found"
-            )
+                f"Failed to load metadata for canonical exercise {exercise_key!r}: {exc}"
+            ) from exc
         return None
 
     try:
-        return load_exercise_metadata(exercise_dir)
+        metadata = load_exercise_metadata(exercise_dir)
+        _validate_metadata_identity(exercise_key, exercise_dir, metadata)
+        return metadata
     except FileNotFoundError as exc:
         if layout == ExerciseLayout.LEGACY:
             return None
@@ -100,10 +116,12 @@ def build_exercise_registry(
 
     for exercise_key, entry in exercises.items():
         layout = ExerciseLayout(entry["layout"])
-        metadata = _load_registry_metadata(exercise_key, layout, exercises_root)
+        metadata = _load_registry_metadata(
+            exercise_key, layout, exercises_root)
         target = canonical_entries if layout == ExerciseLayout.CANONICAL else legacy_entries
         target.append(
-            RegistryEntry(exercise_key=exercise_key, layout=layout.value, metadata=metadata)
+            RegistryEntry(exercise_key=exercise_key,
+                          layout=layout.value, metadata=metadata)
         )
 
     canonical_entries.sort(key=lambda entry: entry["metadata"]["exercise_id"])
@@ -130,7 +148,8 @@ def build_exercise_catalogue(
                 exercise_id=metadata["exercise_id"],
                 slug=metadata["slug"],
                 title=metadata["title"],
-                display_label=build_display_label(metadata["exercise_id"], metadata["title"]),
+                display_label=build_display_label(
+                    metadata["exercise_id"], metadata["title"]),
                 construct=metadata["construct"],
                 exercise_type=metadata["exercise_type"],
                 parts=metadata["parts"],
