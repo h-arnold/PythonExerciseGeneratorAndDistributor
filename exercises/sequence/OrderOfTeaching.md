@@ -40,7 +40,7 @@ These exercises are intended to be taught in the following order:
 
 1. [**Casting and Type Conversion**](`ex006_sequence_modify_casting`)
 
-[Supporting docs](./modify/ex006_sequence_modify_casting/)
+[Supporting docs](./ex006_sequence_modify_casting/)
 [Notebook](notebooks/ex006_sequence_modify_casting.ipynb)
 
 - Focus: Converting between `str`, `int`, `float`, and `bool` using `int()`, `float()`, `str()` and comparisons.

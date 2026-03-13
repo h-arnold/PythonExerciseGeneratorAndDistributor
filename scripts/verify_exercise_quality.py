@@ -35,7 +35,9 @@ CONSTRUCT_ORDER: list[str] = [
     "oop",
 ]
 
-MIN_REL_PARTS = 3
+CANONICAL_LAYOUT_PARTS = 2
+LEGACY_LAYOUT_PARTS = 3
+EXERCISE_TYPES = frozenset({"debug", "modify", "make"})
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,12 @@ class Finding:
     severity: str  # "ERROR" or "WARN"
     message: str
     path: Path | None = None
+
+
+class _ExerciseMetadataError(ValueError):
+    def __init__(self, path: Path, message: str) -> None:
+        super().__init__(message)
+        self.path = path
 
 
 NotebookCellSource = str | list[str]
@@ -129,7 +137,8 @@ def _load_notebook(path: Path) -> NotebookDocument:
         raise SystemExit(f"Invalid JSON in notebook: {path}: {exc}") from exc
 
     if not _is_notebook_document(raw):
-        raise SystemExit(f"Notebook {path} is missing a top-level 'cells' list.")
+        raise SystemExit(
+            f"Notebook {path} is missing a top-level 'cells' list.")
     return raw
 
 
@@ -169,29 +178,114 @@ def _infer_exercise_slug_from_notebook(notebook_path: Path) -> str | None:
     return name.removesuffix(".ipynb")
 
 
+def _load_exercise_metadata(ex_dir: Path) -> dict[str, Any] | None:
+    metadata_path = ex_dir / "exercise.json"
+    if not metadata_path.is_file():
+        return None
+
+    try:
+        raw = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise _ExerciseMetadataError(
+            metadata_path,
+            "Could not read canonical exercise metadata",
+        ) from exc
+    except json.JSONDecodeError as exc:
+        raise _ExerciseMetadataError(
+            metadata_path,
+            "Invalid JSON in canonical exercise metadata",
+        ) from exc
+
+    if not isinstance(raw, dict):
+        raise _ExerciseMetadataError(
+            metadata_path,
+            "Canonical exercise metadata must be a JSON object",
+        )
+    return cast(dict[str, Any], raw)
+
+
+def _require_canonical_exercise_type(ex_dir: Path, metadata: dict[str, Any]) -> str:
+    exercise_type = metadata.get("exercise_type")
+    if isinstance(exercise_type, str) and exercise_type in EXERCISE_TYPES:
+        return exercise_type
+
+    raise _ExerciseMetadataError(
+        ex_dir / "exercise.json",
+        "Canonical exercise metadata must define a valid exercise_type",
+    )
+
+
+def _exercise_dir_priority(ex_dir: Path, *, exercises_root: Path) -> tuple[int, int, str]:
+    rel = ex_dir.relative_to(exercises_root)
+    parts = rel.parts
+
+    if len(parts) == CANONICAL_LAYOUT_PARTS and parts[0] in CONSTRUCT_ORDER:
+        has_metadata = (ex_dir / "exercise.json").is_file()
+        if has_metadata:
+            return (0, 0, rel.as_posix())
+        return (2, 0, rel.as_posix())
+
+    if (
+        len(parts) == LEGACY_LAYOUT_PARTS
+        and parts[0] in CONSTRUCT_ORDER
+        and parts[1] in EXERCISE_TYPES
+    ):
+        return (1, 0, rel.as_posix())
+
+    if len(parts) == 1:
+        return (3, 0, rel.as_posix())
+
+    return (4, len(parts), rel.as_posix())
+
+
 def _find_exercise_dir(ex_slug: str, repo_root: Path) -> Path | None:
-    # Expected: exercises/<construct>/<type>/<ex_slug>/
+    # Prefer exercises/<construct>/<exercise_key>/, but remain tolerant of
+    # legacy construct/type and root-level duplicate layouts while they exist.
     exercises_root = repo_root / "exercises"
     if not exercises_root.exists():
         return None
 
     candidates = [p for p in exercises_root.rglob(ex_slug) if p.is_dir()]
-    # Prefer the fully-qualified construct/type layout
-    for p in candidates:
-        rel = p.relative_to(exercises_root)
-        if len(rel.parts) >= MIN_REL_PARTS:
-            return p
-    return candidates[0] if candidates else None
+    if not candidates:
+        return None
+
+    return min(
+        candidates,
+        key=lambda path: _exercise_dir_priority(
+            path, exercises_root=exercises_root),
+    )
 
 
-def _infer_construct_and_type(ex_dir: Path) -> tuple[str | None, str | None]:
-    # ex_dir: exercises/<construct>/<type>/<ex_slug>
+def _infer_construct_and_type(
+    ex_dir: Path, *, repo_root: Path
+) -> tuple[str | None, str | None]:
+    exercises_root = repo_root / "exercises"
     try:
-        construct = ex_dir.parent.parent.name
-        ex_type = ex_dir.parent.name
-        return construct, ex_type
-    except Exception:
+        rel = ex_dir.relative_to(exercises_root)
+    except ValueError:
         return None, None
+
+    parts = rel.parts
+    if len(parts) == CANONICAL_LAYOUT_PARTS and parts[0] in CONSTRUCT_ORDER:
+        construct = parts[0]
+        metadata = _load_exercise_metadata(ex_dir)
+        if metadata is None:
+            return construct, None
+
+        metadata_construct = metadata.get("construct")
+        if isinstance(metadata_construct, str) and metadata_construct in CONSTRUCT_ORDER:
+            construct = metadata_construct
+
+        return construct, _require_canonical_exercise_type(ex_dir, metadata)
+
+    if (
+        len(parts) == LEGACY_LAYOUT_PARTS
+        and parts[0] in CONSTRUCT_ORDER
+        and parts[1] in EXERCISE_TYPES
+    ):
+        return parts[0], parts[1]
+
+    return None, None
 
 
 def _check_teacher_files(ex_dir: Path) -> list[Finding]:
@@ -212,10 +306,15 @@ def _check_teacher_files(ex_dir: Path) -> list[Finding]:
     return findings
 
 
-def _check_order_of_teaching(ex_dir: Path, *, repo_root: Path, notebook_name: str) -> list[Finding]:
+def _check_order_of_teaching(
+    ex_dir: Path,
+    *,
+    construct: str | None,
+    repo_root: Path,
+    notebook_name: str,
+) -> list[Finding]:
     findings: list[Finding] = []
 
-    construct, _ex_type = _infer_construct_and_type(ex_dir)
     if construct is None:
         findings.append(
             Finding(
@@ -382,7 +481,8 @@ def _check_notebook_structure(
 
     for idx, cell in enumerate(cells_list, start=1):
         if not isinstance(cell, dict):
-            findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
+            findings.append(
+                Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
         cell_mapping = cast(dict[str, Any], cell)
         if not _is_notebook_cell(cell_mapping):
@@ -501,13 +601,14 @@ def _scan_for_progression_violations(  # noqa: C901
         ]
 
     # If we're in construct K, then constructs strictly after K are disallowed.
-    disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
+    disallowed = CONSTRUCT_ORDER[allowed_idx + 1:]
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(re.finditer(
+                    r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -528,9 +629,11 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
+                        e = func_defs[idx + 1].start() if idx + \
+                            1 < len(func_defs) else len(text)
                         regions.append((s, e))
-                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [m.start()
+                                        for m in re.finditer(r"\breturn\b", text)]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
@@ -571,7 +674,7 @@ def _print_findings(findings: list[Finding]) -> None:
         print(f"{f.severity}: {f.message}{loc}")
 
 
-def main(argv: list[str] | None = None) -> int:
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "notebook",
@@ -596,88 +699,116 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Exercise type (default: inferred from exercises/)",
     )
+    return parser
 
-    args = parser.parse_args(argv)
 
-    nb_path = args.notebook
-    repo_root = args.repo_root
-
-    slug = _infer_exercise_slug_from_notebook(nb_path)
-    if slug is None:
-        print("ERROR: Notebook path must end with .ipynb")
-        return 2
-
+def _resolve_exercise_context(
+    *,
+    repo_root: Path,
+    slug: str,
+) -> tuple[Path | None, str | None, str | None, _ExerciseMetadataError | None, list[Finding]]:
     ex_dir = _find_exercise_dir(slug, repo_root)
     inferred_construct: str | None = None
     inferred_type: str | None = None
-    if ex_dir is not None:
-        inferred_construct, inferred_type = _infer_construct_and_type(ex_dir)
-
-    construct = args.construct or inferred_construct
-    ex_type = args.type or inferred_type
-
+    metadata_error: _ExerciseMetadataError | None = None
     findings: list[Finding] = []
 
-    # Teacher files
     if ex_dir is None:
-        findings.append(
+        return ex_dir, inferred_construct, inferred_type, metadata_error, findings
+
+    try:
+        inferred_construct, inferred_type = _infer_construct_and_type(
+            ex_dir,
+            repo_root=repo_root,
+        )
+    except _ExerciseMetadataError as exc:
+        metadata_error = exc
+        findings.append(Finding("ERROR", str(exc), path=exc.path))
+
+    return ex_dir, inferred_construct, inferred_type, metadata_error, findings
+
+
+def _collect_teacher_findings(
+    *,
+    construct: str | None,
+    ex_dir: Path | None,
+    metadata_error: _ExerciseMetadataError | None,
+    notebook_name: str,
+    repo_root: Path,
+) -> list[Finding]:
+    slug = notebook_name.removesuffix(".ipynb")
+    if ex_dir is None:
+        return [
             Finding(
                 "WARN",
                 f"Could not locate exercises/ directory for {slug!r} (skipping teacher-file checks)",
                 path=repo_root / "exercises",
             )
-        )
-    else:
-        findings.extend(_check_teacher_files(ex_dir))
+        ]
+
+    findings = _check_teacher_files(ex_dir)
+    if metadata_error is None or construct is not None:
         findings.extend(
-            _check_order_of_teaching(ex_dir, repo_root=repo_root, notebook_name=nb_path.name)
-        )
-
-    # Notebook structure (student)
-    nb_student = _load_notebook(nb_path)
-    expect_debug = ex_type == "debug"
-    findings.extend(_check_notebook_structure(nb_path, nb_student, expect_debug=expect_debug))
-
-    # Notebook structure (solutions mirror) if present
-    nb_solution_path = repo_root / "notebooks" / "solutions" / nb_path.name
-    if nb_solution_path.exists():
-        nb_solution = _load_notebook(nb_solution_path)
-        findings.extend(
-            _check_notebook_structure(nb_solution_path, nb_solution, expect_debug=expect_debug)
-        )
-    else:
-        findings.append(
-            Finding("WARN", "Solution mirror notebook not found", path=nb_solution_path)
-        )
-
-    # Progression scan (student + solution)
-    if construct is None:
-        findings.append(
-            Finding(
-                "WARN",
-                "Could not infer construct; pass --construct to enable progression checks",
-                path=nb_path,
+            _check_order_of_teaching(
+                ex_dir,
+                construct=construct,
+                repo_root=repo_root,
+                notebook_name=notebook_name,
             )
         )
-    else:
-        student_text = _collect_code_cell_text(nb_student)
+    return findings
+
+
+def _load_solution_notebook(
+    *,
+    expect_debug: bool,
+    notebook_name: str,
+    repo_root: Path,
+) -> tuple[Path, NotebookDocument | None, list[Finding]]:
+    nb_solution_path = repo_root / "notebooks" / "solutions" / notebook_name
+    if not nb_solution_path.exists():
+        return nb_solution_path, None, [
+            Finding("WARN", "Solution mirror notebook not found",
+                    path=nb_solution_path)
+        ]
+
+    nb_solution = _load_notebook(nb_solution_path)
+    findings = _check_notebook_structure(
+        nb_solution_path,
+        nb_solution,
+        expect_debug=expect_debug,
+    )
+    return nb_solution_path, nb_solution, findings
+
+
+def _collect_progression_findings(
+    *,
+    construct: str | None,
+    nb_path: Path,
+    nb_solution: NotebookDocument | None,
+    nb_solution_path: Path,
+    nb_student: NotebookDocument,
+) -> list[Finding]:
+    if construct is None:
+        return []
+
+    findings = _scan_for_progression_violations(
+        text=_collect_code_cell_text(nb_student),
+        allowed_construct=construct,
+        path=nb_path,
+    )
+    if nb_solution is not None:
         findings.extend(
             _scan_for_progression_violations(
-                text=student_text, allowed_construct=construct, path=nb_path
+                text=_collect_code_cell_text(nb_solution),
+                allowed_construct=construct,
+                path=nb_solution_path,
             )
         )
+    return findings
 
-        if nb_solution_path.exists():
-            solution_text = _collect_code_cell_text(_load_notebook(nb_solution_path))
-            findings.extend(
-                _scan_for_progression_violations(
-                    text=solution_text,
-                    allowed_construct=construct,
-                    path=nb_solution_path,
-                )
-            )
 
-    # Report
+def _report_findings(findings: list[Finding]) -> int:
     _print_findings(findings)
 
     error_count = sum(1 for f in findings if f.severity == "ERROR")
@@ -689,6 +820,71 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"\nOK: {warn_count} warning(s)")
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    nb_path = args.notebook
+    repo_root = args.repo_root
+
+    slug = _infer_exercise_slug_from_notebook(nb_path)
+    if slug is None:
+        print("ERROR: Notebook path must end with .ipynb")
+        return 2
+
+    ex_dir, inferred_construct, inferred_type, metadata_error, findings = _resolve_exercise_context(
+        repo_root=repo_root,
+        slug=slug,
+    )
+
+    construct = args.construct or inferred_construct
+    ex_type = args.type or inferred_type
+
+    findings.extend(
+        _collect_teacher_findings(
+            construct=construct,
+            ex_dir=ex_dir,
+            metadata_error=metadata_error,
+            notebook_name=nb_path.name,
+            repo_root=repo_root,
+        )
+    )
+
+    nb_student = _load_notebook(nb_path)
+    expect_debug = ex_type == "debug"
+    findings.extend(_check_notebook_structure(
+        nb_path, nb_student, expect_debug=expect_debug))
+
+    nb_solution_path, nb_solution, solution_findings = _load_solution_notebook(
+        expect_debug=expect_debug,
+        notebook_name=nb_path.name,
+        repo_root=repo_root,
+    )
+    findings.extend(solution_findings)
+
+    if construct is None:
+        if metadata_error is None:
+            findings.append(
+                Finding(
+                    "WARN",
+                    "Could not infer construct; pass --construct to enable progression checks",
+                    path=nb_path,
+                )
+            )
+    else:
+        findings.extend(
+            _collect_progression_findings(
+                construct=construct,
+                nb_path=nb_path,
+                nb_solution=nb_solution,
+                nb_solution_path=nb_solution_path,
+                nb_student=nb_student,
+            )
+        )
+
+    return _report_findings(findings)
 
 
 if __name__ == "__main__":

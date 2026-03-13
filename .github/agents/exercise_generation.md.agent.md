@@ -104,8 +104,8 @@ Refer to these key docs:
 
 3) Scaffold files with the generator. Consult these docs using `read_file` to find out how:
 
-[Exercise Generation CLI](/docs/exercise-generation-cli.md)
-[Exercise Generation](/docs/exercise-generation.md)
+[Exercise Generation CLI](../../docs/exercise-generation-cli.md)
+[Exercise Generation](../../docs/exercise-generation.md)
 
 This creates the current execution and authoring surfaces:
   - `exercises/<construct>/<exercise_key>/exercise.json` (canonical exercise metadata, including exercise type)
@@ -173,7 +173,7 @@ Notebook formatting requirements
 - Notebook is JSON (`.ipynb`).
 - Each cell must include `metadata.language` (`markdown`/`python`).
 - If editing existing notebook cells, preserve `metadata.id`.
-- For the optional self-check cell, call `check_notebook('<slug>')` (for example, `check_notebook('ex007_data_types_debug_casting')`) so students see grouped, notebook-specific results.
+- For the optional self-check cell, call `check_notebook('<slug>')` (for example, `check_notebook('ex007_sequence_debug_casting')`) so students see grouped, notebook-specific results.
 
 Metadata tips:
 - When you tag a cell for grading, ensure the tag exactly matches `exercise1`, `exercise2`, etc.; the grader locates cells by this metadata tag.
