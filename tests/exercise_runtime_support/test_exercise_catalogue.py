@@ -21,6 +21,62 @@ def test_get_exercise_catalogue_matches_metadata_catalogue() -> None:
     exercise_catalogue.get_exercise_catalogue.cache_clear()
 
 
+def test_get_exercise_catalogue_prefers_source_metadata_over_snapshot(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """Source repos ignore adjacent snapshots and keep live metadata authoritative."""
+    exercise_catalogue.get_exercise_catalogue.cache_clear()
+
+    snapshot_path = tmp_path / exercise_catalogue.CATALOGUE_SNAPSHOT_FILENAME
+    snapshot_path.write_text("[]\n", encoding="utf-8")
+    expected_catalogue = (
+        exercise_catalogue.ExerciseCatalogueEntry(
+            exercise_key="ex999_sequence_demo",
+            exercise_id=999,
+            slug="sequence_demo",
+            title="Demo",
+            display_label="ex999 Demo",
+            construct="sequence",
+            exercise_type="modify",
+            parts=1,
+            layout="flat",
+        ),
+    )
+
+    def resolve_snapshot_path(_runtime_package_dir: Path | None = None) -> Path:
+        return snapshot_path
+
+    def raise_if_snapshot_loaded(_snapshot_path: Path | None = None):
+        raise AssertionError(
+            "source repositories must not load the runtime snapshot")
+
+    monkeypatch.setattr(
+        exercise_catalogue,
+        "get_catalogue_snapshot_path",
+        resolve_snapshot_path,
+    )
+    monkeypatch.setattr(
+        exercise_catalogue,
+        "_has_local_metadata_package",
+        lambda _runtime_package_dir=None: True,
+    )
+    monkeypatch.setattr(
+        exercise_catalogue,
+        "load_catalogue_snapshot",
+        raise_if_snapshot_loaded,
+    )
+    monkeypatch.setattr(
+        exercise_catalogue,
+        "_build_metadata_catalogue",
+        lambda: expected_catalogue,
+    )
+
+    assert exercise_catalogue.get_exercise_catalogue() == expected_catalogue
+
+    exercise_catalogue.get_exercise_catalogue.cache_clear()
+
+
 def test_get_exercise_catalogue_loads_generated_snapshot_without_metadata_import(
     monkeypatch,
     tmp_path: Path,
@@ -37,8 +93,15 @@ def test_get_exercise_catalogue_loads_generated_snapshot_without_metadata_import
     def resolve_snapshot_path(_runtime_package_dir: Path | None = None) -> Path:
         return snapshot_path
 
-    monkeypatch.setattr(exercise_catalogue, "import_module", raise_runtime_error)
-    monkeypatch.setattr(exercise_catalogue, "get_catalogue_snapshot_path", resolve_snapshot_path)
+    monkeypatch.setattr(exercise_catalogue,
+                        "import_module", raise_runtime_error)
+    monkeypatch.setattr(exercise_catalogue,
+                        "get_catalogue_snapshot_path", resolve_snapshot_path)
+    monkeypatch.setattr(
+        exercise_catalogue,
+        "_has_local_metadata_package",
+        lambda _runtime_package_dir=None: False,
+    )
 
     catalogue = exercise_catalogue.get_exercise_catalogue()
     metadata_catalogue = build_exercise_catalogue()

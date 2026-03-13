@@ -9,4 +9,8 @@ for _name, _value in vars(_impl).items():
         continue
     globals()[_name] = _value
 
+
+def __getattr__(name: str):
+    return getattr(_impl, name)
+
 __all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

@@ -35,13 +35,6 @@ from .reporting import (
     run_checks,
 )
 
-_EX002_SLUG = get_catalogue_key_for_exercise_id(2)
-_EX003_SLUG = get_catalogue_key_for_exercise_id(3)
-_EX004_SLUG = get_catalogue_key_for_exercise_id(4)
-_EX005_SLUG = get_catalogue_key_for_exercise_id(5)
-_EX006_SLUG = get_catalogue_key_for_exercise_id(6)
-_EX007_SLUG = get_catalogue_key_for_exercise_id(7)
-
 
 def check_exercises() -> None:
     """Run summary checks for all supported live exercises and print a table."""
@@ -69,37 +62,37 @@ def check_notebook(notebook_slug: str) -> None:
 
 def check_ex002_notebook() -> None:
     """Run checks for ex002 and print a grouped summary table."""
-    check_notebook(_EX002_SLUG)
+    check_notebook(get_catalogue_key_for_exercise_id(2))
 
 
 def check_ex003_notebook() -> None:
     """Run checks for ex003 and print a notebook-specific summary table."""
-    check_notebook(_EX003_SLUG)
+    check_notebook(get_catalogue_key_for_exercise_id(3))
 
 
 def check_ex004_notebook() -> None:
     """Run checks for ex004 and print a notebook-specific summary table."""
-    check_notebook(_EX004_SLUG)
+    check_notebook(get_catalogue_key_for_exercise_id(4))
 
 
 def check_ex007_notebook() -> None:
     """Run checks for ex007 and print a notebook-specific summary table."""
-    check_notebook(_EX007_SLUG)
+    check_notebook(get_catalogue_key_for_exercise_id(7))
 
 
 def _get_checks() -> dict[str, NotebookCheckSpec]:
     configured_checks = {
-        _EX002_SLUG: (check_ex002_summary, _print_ex002_notebook_results),
-        _EX003_SLUG: (check_ex003, lambda: print_ex003_results(run_ex003_checks())),
-        _EX004_SLUG: (check_ex004, lambda: print_ex004_results(run_ex004_checks())),
-        _EX005_SLUG: (check_ex005, lambda: print_ex005_results(run_ex005_checks())),
-        _EX006_SLUG: (check_ex006, lambda: print_ex006_results(run_ex006_checks())),
-        _EX007_SLUG: (check_ex007, lambda: print_ex007_results(run_ex007_checks())),
+        2: (check_ex002_summary, _print_ex002_notebook_results),
+        3: (check_ex003, lambda: print_ex003_results(run_ex003_checks())),
+        4: (check_ex004, lambda: print_ex004_results(run_ex004_checks())),
+        5: (check_ex005, lambda: print_ex005_results(run_ex005_checks())),
+        6: (check_ex006, lambda: print_ex006_results(run_ex006_checks())),
+        7: (check_ex007, lambda: print_ex007_results(run_ex007_checks())),
     }
 
     checks: dict[str, NotebookCheckSpec] = {}
     for entry in get_exercise_catalogue():
-        configured = configured_checks.get(entry.exercise_key)
+        configured = configured_checks.get(entry.exercise_id)
         if configured is None:
             continue
         summary_runner, detailed_printer = configured

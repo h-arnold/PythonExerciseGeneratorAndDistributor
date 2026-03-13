@@ -40,7 +40,8 @@ class TemplatePackager:
         "student_checker",
     )
 
-    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = ("exercise_runtime_support",)
+    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = (
+        "exercise_runtime_support",)
 
     def __init__(self, repo_root: Path):
         """Initialize packager.
@@ -72,8 +73,10 @@ class TemplatePackager:
             files: Dictionary mapping exercise ID to file paths.
         """
         for file_dict in files.values():
-            safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
-            safe_copy_file(file_dict["test"], workspace / file_dict["test_export"])
+            safe_copy_file(file_dict["notebook"],
+                           workspace / file_dict["notebook_export"])
+            safe_copy_file(file_dict["test"],
+                           workspace / file_dict["test_export"])
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -114,13 +117,20 @@ class TemplatePackager:
             return
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
-        raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
+        raise FileNotFoundError(
+            f"Missing required packaging source assets:\n{missing_list}")
 
-    def copy_template_base_files(self, workspace: Path) -> None:
+    def copy_template_base_files(
+        self,
+        workspace: Path,
+        selected_exercise_keys: set[str] | None = None,
+    ) -> None:
         """Copy base template files.
 
         Args:
             workspace: Workspace directory.
+            selected_exercise_keys: Optional set of exercise keys to keep in the
+                packaged runtime catalogue snapshot.
         """
         if not self.template_files_dir.exists():
             raise FileNotFoundError(
@@ -132,7 +142,8 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
+            (self.template_files_dir / "pyproject.toml",
+             workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
@@ -142,13 +153,15 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
+            (self.template_files_dir / "INSTRUCTIONS.md",
+             workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
         tests_dest_dir = workspace / "tests"
         for required_file in self.REQUIRED_TEST_FILES:
-            file_pairs.append((tests_source_dir / required_file, tests_dest_dir / required_file))
+            file_pairs.append(
+                (tests_source_dir / required_file, tests_dest_dir / required_file))
 
         for src, dest in file_pairs:
             safe_copy_file(src, dest)
@@ -172,7 +185,9 @@ class TemplatePackager:
             )
 
         write_catalogue_snapshot(
-            get_catalogue_snapshot_path(workspace / "exercise_runtime_support")
+            get_catalogue_snapshot_path(
+                workspace / "exercise_runtime_support"),
+            exercise_keys=selected_exercise_keys,
         )
 
         self._copy_directory(".devcontainer", workspace)
@@ -207,7 +222,8 @@ class TemplatePackager:
         Returns:
             True if package is valid, False otherwise.
         """
-        snapshot_path = get_catalogue_snapshot_path(workspace / "exercise_runtime_support")
+        snapshot_path = get_catalogue_snapshot_path(
+            workspace / "exercise_runtime_support")
         required_files = [
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
@@ -218,14 +234,17 @@ class TemplatePackager:
         ]
 
         tests_dir = workspace / "tests"
-        required_files.extend(tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
+        required_files.extend(
+            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
         for required_file in required_files:
             if not required_file.exists():
                 return False
 
         required_dirs = [workspace / "notebooks", tests_dir]
-        required_dirs.extend(tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
-        required_dirs.extend(workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES)
+        required_dirs.extend(
+            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
+        required_dirs.extend(
+            workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES)
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():
                 return False

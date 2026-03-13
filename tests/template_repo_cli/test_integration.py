@@ -226,6 +226,144 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
+    def test_dry_run_workspace_subset_export_rejects_excluded_notebook_early(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Subset exports reject unsupported notebooks before any notebook file lookup."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--notebooks",
+                "ex002_sequence_modify_basics",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged subset checks")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "from exercise_runtime_support.student_checker import check_notebook; "
+            "check_notebook('ex003_sequence_modify_variables')",
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        combined_output = f"{check.stdout}\n{check.stderr}"
+
+        assert check.returncode != 0
+        assert (
+            "Unknown notebook 'ex003_sequence_modify_variables'. Available: "
+            "ex002_sequence_modify_basics"
+        ) in combined_output
+        assert "No such file or directory" not in combined_output
+        assert "exercise_metadata must not be imported" not in combined_output
+
+    def test_dry_run_workspace_subset_framework_api_rejects_excluded_notebook_early(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Subset exports reject unsupported notebooks through the framework API too."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--notebooks",
+                "ex002_sequence_modify_basics",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged framework checks")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "from exercise_runtime_support.exercise_framework import run_notebook_check; "
+            "run_notebook_check('ex003_sequence_modify_variables')",
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        combined_output = f"{check.stdout}\n{check.stderr}"
+
+        assert check.returncode != 0
+        assert (
+            "Unknown notebook 'ex003_sequence_modify_variables'. Available: "
+            "ex002_sequence_modify_basics"
+        ) in combined_output
+        assert "No such file or directory" not in combined_output
+        assert "exercise_metadata must not be imported" not in combined_output
+
     def test_repo_canonical_ex004_defaults_to_solution_in_development_mode(
         self,
         repo_root: Path,
@@ -315,8 +453,10 @@ class TestEndToEndDryRun:
 
             assert result == 0
             assert output_dir.exists()
-            assert (output_dir / "notebooks" / "ex004_sequence_debug_syntax.ipynb").exists()
-            assert (output_dir / "tests" / "test_ex004_sequence_debug_syntax.py").exists()
+            assert (output_dir / "notebooks" /
+                    "ex004_sequence_debug_syntax.ipynb").exists()
+            assert (output_dir / "tests" /
+                    "test_ex004_sequence_debug_syntax.py").exists()
             assert not (output_dir / "exercises").exists()
             assert source_canonical.exists()
 
@@ -386,7 +526,8 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -522,7 +663,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -533,9 +675,11 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication", return_value=True),
+            patch.object(GitHubClient, "check_authentication",
+                         return_value=True),
         ):
-            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
+            result = main(["create", "--construct", "sequence",
+                          "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -565,7 +709,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -576,7 +721,8 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication", return_value=True),
+            patch.object(GitHubClient, "check_authentication",
+                         return_value=True),
         ):
             result = main(
                 [
@@ -615,7 +761,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -626,7 +773,8 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication", return_value=True),
+            patch.object(GitHubClient, "check_authentication",
+                         return_value=True),
         ):
             result = main(
                 [
@@ -821,7 +969,8 @@ class TestCliCreateCommand:
         assert result == 0
         EXPECT_CREATE_CALLS = 2
         assert mock_create.call_count == EXPECT_CREATE_CALLS
-        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
+        mock_subprocess_run.assert_any_call(
+            ["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(

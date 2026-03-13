@@ -153,8 +153,10 @@ class TestCopyFiles:
     @pytest.mark.parametrize(
         "expected_relative_path",
         [
-            pytest.param("notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
-            pytest.param("tests/test_ex002_sequence_modify_basics.py", id="test"),
+            pytest.param(
+                "notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
+            pytest.param(
+                "tests/test_ex002_sequence_modify_basics.py", id="test"),
         ],
     )
     def test_copy_exercise_files(
@@ -196,9 +198,38 @@ class TestCopyFiles:
 
         template_packager.copy_template_base_files(temp_dir)
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
         assert snapshot_path.exists()
-        assert json.loads(snapshot_path.read_text(encoding="utf-8")) == build_exercise_catalogue()
+        assert json.loads(snapshot_path.read_text(
+            encoding="utf-8")) == build_exercise_catalogue()
+
+    def test_copy_template_base_files_filters_runtime_catalogue_snapshot_for_subset(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test packaged subset exports only publish their selected runtime catalogue entries."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(
+            temp_dir,
+            selected_exercise_keys=set(files),
+        )
+
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_entries = json.loads(
+            snapshot_path.read_text(encoding="utf-8"))
+        expected_entries = [
+            entry
+            for entry in build_exercise_catalogue()
+            if entry["exercise_key"] in files
+        ]
+
+        assert snapshot_entries == expected_entries
 
     def test_required_test_directories_exclude_non_runtime_artefacts(
         self,
@@ -239,7 +270,8 @@ class TestGenerateFiles:
 
     def test_generate_readme(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating custom README with exercise list."""
-        exercises = ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
+        exercises = ["ex002_sequence_modify_basics",
+                     "ex004_sequence_debug_syntax"]
 
         template_packager.generate_readme(temp_dir, "Test Template", exercises)
 
@@ -274,7 +306,8 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
         assert (temp_dir / "scripts").is_dir()
 
         # Validate package
@@ -302,7 +335,8 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
         if not autograde_path.exists():
@@ -323,7 +357,8 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         plugin_path = temp_dir / "tests" / "autograde_plugin.py"
         if not plugin_path.exists():
@@ -344,9 +379,11 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
         snapshot_path.unlink()
 
         assert not template_packager.validate_package(temp_dir)
@@ -363,10 +400,13 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
-        snapshot_path.write_text(json.dumps({"broken": True}) + "\n", encoding="utf-8")
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_path.write_text(json.dumps(
+            {"broken": True}) + "\n", encoding="utf-8")
 
         assert not template_packager.validate_package(temp_dir)
 
@@ -399,7 +439,8 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         path_to_remove = temp_dir / missing_path
         if not path_to_remove.exists():
@@ -488,8 +529,10 @@ class TestPackageIntegrity:
             env=env,
         )
 
-        assert not (temp_dir / "exercise_runtime_support" / "exercise.json").exists()
-        assert get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support").exists()
+        assert not (temp_dir / "exercise_runtime_support" /
+                    "exercise.json").exists()
+        assert get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support").exists()
         assert not (temp_dir / "exercises").exists()
 
         assert result.returncode == 0, (

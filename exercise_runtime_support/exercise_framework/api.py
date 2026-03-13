@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from typing import Any
 
 from exercise_runtime_support.exercise_catalogue import (
     ExerciseCatalogueEntry,
@@ -26,12 +27,6 @@ from tests.exercise_expectations import (
 from . import runtime
 
 RawNotebookResult = tuple[str, bool, list[str]]
-
-EX002_SLUG = get_catalogue_key_for_exercise_id(2)
-EX003_SLUG = get_catalogue_key_for_exercise_id(3)
-EX004_SLUG = get_catalogue_key_for_exercise_id(4)
-EX005_SLUG = get_catalogue_key_for_exercise_id(5)
-EX006_SLUG = get_catalogue_key_for_exercise_id(6)
 
 
 @dataclass(frozen=True)
@@ -59,6 +54,12 @@ class NotebookCheckDefinition:
 
     label: str
     runner: Callable[[], list[str]]
+
+
+def __getattr__(name: str) -> Any:
+    if name == "EX002_SLUG":
+        return get_catalogue_key_for_exercise_id(2)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _to_notebook_results(
@@ -94,13 +95,21 @@ def _check_notebook_can_execute_first_exercise(notebook_path: str) -> list[str]:
 
 
 def _get_check_runners() -> dict[str, Callable[[], list[str]]]:
-    return {
-        EX002_SLUG: _check_ex002_summary,
-        EX003_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),
-        EX004_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX004_NOTEBOOK_PATH),
-        EX005_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX005_NOTEBOOK_PATH),
-        EX006_SLUG: lambda: _check_notebook_can_execute_first_exercise(EX006_NOTEBOOK_PATH),
+    configured_runners: dict[int, Callable[[], list[str]]] = {
+        2: _check_ex002_summary,
+        3: lambda: _check_notebook_can_execute_first_exercise(EX003_NOTEBOOK_PATH),
+        4: lambda: _check_notebook_can_execute_first_exercise(EX004_NOTEBOOK_PATH),
+        5: lambda: _check_notebook_can_execute_first_exercise(EX005_NOTEBOOK_PATH),
+        6: lambda: _check_notebook_can_execute_first_exercise(EX006_NOTEBOOK_PATH),
     }
+
+    runners: dict[str, Callable[[], list[str]]] = {}
+    for entry in get_exercise_catalogue():
+        runner = configured_runners.get(entry.exercise_id)
+        if runner is None:
+            continue
+        runners[entry.exercise_key] = runner
+    return runners
 
 
 def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
