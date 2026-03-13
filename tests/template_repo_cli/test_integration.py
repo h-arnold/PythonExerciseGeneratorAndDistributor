@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -209,6 +210,98 @@ class TestEndToEndDryRun:
             f"stdout:\n{check.stdout}\n"
             f"stderr:\n{check.stderr}"
         )
+
+    def test_dry_run_workspace_canonical_ex004_uses_flattened_export(
+        self,
+        repo_root: Path,
+    ) -> None:
+        """Test packaged canonical ex004 prefers its own flattened export under the repo."""
+        from scripts.template_repo_cli.cli import main
+
+        with tempfile.TemporaryDirectory(dir=repo_root) as tmpdir:
+            output_dir = Path(tmpdir) / "template_output"
+            source_canonical = (
+                repo_root
+                / "exercises"
+                / "sequence"
+                / "debug"
+                / "ex004_sequence_debug_syntax"
+                / "notebooks"
+                / "student.ipynb"
+            ).resolve()
+
+            result = main(
+                [
+                    "--dry-run",
+                    "--output-dir",
+                    str(output_dir),
+                    "create",
+                    "--notebooks",
+                    "ex004_sequence_debug_syntax",
+                    "--repo-name",
+                    "test-repo",
+                ]
+            )
+
+            assert result == 0
+            assert output_dir.exists()
+            assert (output_dir / "notebooks" / "ex004_sequence_debug_syntax.ipynb").exists()
+            assert (output_dir / "tests" / "test_ex004_sequence_debug_syntax.py").exists()
+            assert not (output_dir / "exercises").exists()
+            assert source_canonical.exists()
+
+            shadow_root = Path(tmpdir) / "shadow_packages"
+            shadow_package = shadow_root / "exercise_metadata"
+            shadow_package.mkdir(parents=True)
+            (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+            (shadow_package / "resolver.py").write_text(
+                'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 test")\n',
+                encoding="utf-8",
+            )
+
+            env = os.environ.copy()
+            env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
+            existing_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = (
+                f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+                if existing_pythonpath
+                else str(shadow_root)
+            )
+
+            command = [
+                sys.executable,
+                "-c",
+                "\n".join(
+                    [
+                        "from pathlib import Path",
+                        "import tests.test_ex004_sequence_debug_syntax as module",
+                        "expected = (Path.cwd() / 'notebooks' / 'ex004_sequence_debug_syntax.ipynb').resolve()",
+                        f"source_canonical = Path({str(source_canonical)!r}).resolve()",
+                        "assert source_canonical.exists()",
+                        "assert source_canonical != expected",
+                        "assert module._NOTEBOOK_PATH == expected, (module._NOTEBOOK_PATH, expected)",
+                        "assert module._NOTEBOOK_PATH != source_canonical, (module._NOTEBOOK_PATH, source_canonical)",
+                        "explanation = module.get_explanation_cell("
+                        "module._NOTEBOOK_PATH, tag=module._explanation_tag(1))",
+                        "assert 'What actually happened' in explanation",
+                    ]
+                ),
+            ]
+
+            check = subprocess.run(
+                command,
+                cwd=output_dir,
+                env=env,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            assert check.returncode == 0, (
+                "Packaged canonical ex004 smoke check failed:\n"
+                f"stdout:\n{check.stdout}\n"
+                f"stderr:\n{check.stderr}"
+            )
 
 
 class TestEndToEndErrorRecovery:
