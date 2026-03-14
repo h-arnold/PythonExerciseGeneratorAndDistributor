@@ -5,27 +5,27 @@
 ### 1. Phase 1 inventory artefacts are stale and no longer describe the current repository state
 - **Action-plan requirement:** Phase 1 is only complete while there is a written inventory of current exercise identities, locations, anomalies, and identity assumptions that later phases can rely on.
 - **Verified evidence:**
-  - `PHASE_1_REPOSITORY_INVENTORY.md:34-40` still claims:
-    - `ex001_sanity` exists under `exercises/ex001_sanity/`
-    - `ex004_sequence_debug_syntax` lives at `exercises/sequence/debug/ex004_sequence_debug_syntax/`
-    - `ex007` still uses `notebooks/solutions/ex007_data_types_debug_casting.ipynb`
-  - Current repository state differs:
-    - `exercises/ex001_sanity/` is missing
-    - `exercises/sequence/ex004_sequence_debug_syntax/` exists and `exercises/sequence/debug/ex004_sequence_debug_syntax/` is missing
-    - `notebooks/solutions/ex007_sequence_debug_casting.ipynb` exists and `notebooks/solutions/ex007_data_types_debug_casting.ipynb` is missing
-    - `ex005` and `ex007` currently have both legacy and canonical exercise directories
+    - `PHASE_1_REPOSITORY_INVENTORY.md:34-40` still claims:
+        - `ex001_sanity` exists under `exercises/ex001_sanity/`
+        - `ex004_sequence_debug_syntax` lives at `exercises/sequence/debug/ex004_sequence_debug_syntax/`
+        - `ex007` still uses `notebooks/solutions/ex007_data_types_debug_casting.ipynb`
+    - Current repository state differs:
+        - `exercises/ex001_sanity/` is missing
+        - `exercises/sequence/ex004_sequence_debug_syntax/` exists and `exercises/sequence/debug/ex004_sequence_debug_syntax/` is missing
+        - `notebooks/solutions/ex007_sequence_debug_casting.ipynb` exists and `notebooks/solutions/ex007_data_types_debug_casting.ipynb` is missing
+        - `ex005` and `ex007` currently have both legacy and canonical exercise directories
 - **Why this blocks completion:** the written Phase 1 inventory is no longer trustworthy as the source of “current” exercise locations and anomalies.
 
 ### 2. The Phase 1 path-assumption register is also stale
 - **Action-plan requirement:** Phase 1 must identify which current modules treat exercise identity as a filename, slug, path, or directory name.
 - **Verified evidence:**
-  - `PHASE_1_REPOSITORY_INVENTORY.md:73-76` still describes `tests/student_checker/api.py` and `tests/exercise_framework/api.py` as manual slug registries.
-  - Those files are now compatibility wrappers:
-    - `tests/student_checker/api.py:1-12`
-    - `tests/exercise_framework/api.py:1-18`
-  - The actual implementation has moved into metadata/catalogue-backed modules such as:
-    - `exercise_runtime_support/student_checker/api.py:5-10,83-106`
-    - `scripts/template_repo_cli/core/collector.py:8-10,39-47,88-109`
+    - `PHASE_1_REPOSITORY_INVENTORY.md:73-76` still describes `tests/student_checker/api.py` and `tests/exercise_framework/api.py` as manual slug registries.
+    - Those files are now compatibility wrappers:
+        - `tests/student_checker/api.py:1-12`
+        - `tests/exercise_framework/api.py:1-18`
+    - The actual implementation has moved into metadata/catalogue-backed modules such as:
+        - `exercise_runtime_support/student_checker/api.py:5-10,83-106`
+        - `scripts/template_repo_cli/core/collector.py:8-10,39-47,88-109`
 - **Why this blocks completion:** the Phase 1 inventory no longer accurately maps the repo’s live identity assumptions.
 
 ## Phase 2 — Metadata And Resolution Layer
@@ -80,7 +80,7 @@
     - `_resolve_notebook_path()` probes multiple locations and falls back silently
   - Behavioural mismatch:
     - `python -m pytest -q exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` passes
-    - `python scripts/run_pytest_variant.py --variant solution -q exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` fails and executes `student.ipynb`
+    - `python scripts/run_pytest_variant.py --variant solution -q exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` fails because the test resolves and executes `student.ipynb` instead of the solution notebook
 - **Why this blocks completion:** the live pilot proof is not actually aligned with the Phase 4 execution contract.
 
 ### 9. The execution-model consumer inventory does not include all current consumers
