@@ -143,6 +143,39 @@ class TestCollectValidation:
         with pytest.raises(FileExistsError, match="Duplicate exercise test sources"):
             collector.collect_files("ex004_sequence_debug_syntax")
 
+    def test_collect_allows_noncanonical_nested_test_surface(
+        self,
+        temp_dir: Path,
+    ) -> None:
+        """Test noncanonical nested tests do not trigger duplicate-source failures."""
+        repo_root = temp_dir
+        (repo_root / "notebooks").mkdir()
+        (repo_root / "tests").mkdir()
+        (repo_root / "notebooks" / "ex002_sequence_modify_basics.ipynb").write_text(
+            "{}", encoding="utf-8"
+        )
+        (repo_root / "tests" / "test_ex002_sequence_modify_basics.py").write_text(
+            "", encoding="utf-8"
+        )
+        nested_test = (
+            repo_root
+            / "tests"
+            / "ex002_sequence_modify_basics"
+            / "test_ex002_sequence_modify_basics.py"
+        )
+        nested_test.parent.mkdir(parents=True)
+        nested_test.write_text("", encoding="utf-8")
+        (repo_root / "exercises").mkdir()
+        (repo_root / "exercises" / "migration_manifest.json").write_text(
+            '{"schema_version": 1, "exercises": {"ex002_sequence_modify_basics": {"layout": "legacy"}}}',
+            encoding="utf-8",
+        )
+
+        collector = FileCollector(repo_root)
+        files = collector.collect_files("ex002_sequence_modify_basics")
+
+        assert files["test"] == repo_root / "tests" / "test_ex002_sequence_modify_basics.py"
+
 
 class TestCollectEdgeCases:
     """Tests for edge cases in file collection."""
