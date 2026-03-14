@@ -7,6 +7,9 @@ from typing import TypedDict
 
 from exercise_metadata import ExerciseLayout, get_exercise_layout, resolve_exercise_dir
 from exercise_metadata.resolver import resolve_notebook_path
+from exercise_runtime_support.pytest_collection_guard import (
+    find_duplicate_exercise_test_sources,
+)
 
 
 class ExerciseFiles(TypedDict):
@@ -45,9 +48,20 @@ class FileCollector:
 
     def _raise_for_duplicate_test_sources(self, exercise_id: str) -> None:
         legacy_test = self._legacy_test_path(exercise_id)
-        canonical_matches = list(self.exercises_dir.rglob(f"tests/test_{exercise_id}.py"))
-        if legacy_test.exists() and canonical_matches:
-            duplicate_list = "\n".join(str(path) for path in [legacy_test, *canonical_matches])
+        candidate_paths: list[Path] = []
+        if legacy_test.exists():
+            candidate_paths.append(legacy_test.relative_to(self.repo_root))
+
+        candidate_paths.extend(
+            path.relative_to(self.repo_root)
+            for path in self.exercises_dir.rglob(f"test_{exercise_id}.py")
+            if path.is_file()
+        )
+
+        duplicates = find_duplicate_exercise_test_sources(candidate_paths)
+        duplicate_paths = duplicates.get(exercise_id)
+        if duplicate_paths:
+            duplicate_list = "\n".join(str(path) for path in duplicate_paths)
             raise FileExistsError(
                 "Duplicate exercise test sources found for "
                 f"{exercise_id!r}. Keep exactly one of:\n{duplicate_list}"

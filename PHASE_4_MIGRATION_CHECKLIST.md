@@ -401,7 +401,7 @@ Recommended additions during implementation:
 - [ ] Explicit proof that old path-based behaviour fails where intended
 - [ ] Explicit proof that packaged exports still match the agreed contract
 - [ ] Explicit proof that docs and workflows no longer teach the old model
-- [ ] Explicit proof that repository pytest discovery collects the Phase 2 pilot `ex004_sequence_debug_syntax` exercise-local tests and does not double-collect legacy duplicates
+- [x] Explicit proof that repository pytest discovery collects the Phase 2 pilot `ex004_sequence_debug_syntax` exercise-local tests and does not double-collect legacy duplicates (see `tests/test_pytest_collection_guard.py::test_pytest_collection_fails_with_usage_error_for_duplicate_exercise_test_sources`).
 
 ## Risks, Ambiguities, And Blockers
 
@@ -443,8 +443,8 @@ Record anything discovered while preparing or executing this checklist that shou
   - record the existing duplicate `ex002_sequence_modify_basics` test surfaces as an execution-model discovery concern, not just a local test oddity
 - [ ] Incorrect assumption in current plan:
   - if the final decision is to move shared runtime support into `exercise_runtime_support`, update the current high-level assumption that shared framework code stays in top-level `tests` and capture the verification steps that docs/workflows reference the new package, `pyproject.toml` installs it, and TemplatePackager exports its files
-- [ ] Missing acceptance criterion:
-  - add an explicit acceptance criterion that repository discovery must reject duplicate collection during mixed-layout transitions
+- [x] Missing acceptance criterion:
+  - add an explicit acceptance criterion that repository discovery must reject duplicate collection during mixed-layout transitions, and prove it with `tests/test_pytest_collection_guard.py::test_pytest_collection_fails_with_usage_error_for_duplicate_exercise_test_sources` (expects `pytest.UsageError` when both `tests/test_<exercise_key>.py` and `exercises/**/tests/test_<exercise_key>.py` exist)
 - [ ] Missing migration stream:
   - if resolving the live `ex007` naming mismatch requires separate clean-up before Phase 4 implementation, add that as a dedicated action-plan prerequisite rather than hiding it inside this checklist
 
