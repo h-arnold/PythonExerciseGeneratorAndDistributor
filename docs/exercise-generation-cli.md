@@ -2,6 +2,12 @@
 
 This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
 
+> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Migration status
+
+The scaffolder still emits flattened notebook/test artefacts for export compatibility. Treat these as transitional while canonical authoring remains in `exercises/<construct>/<exercise_key>/`.
+
 ## Quick Start
 
 ### Single Exercise
@@ -111,7 +117,7 @@ For `--parts N`, creates N tagged exercise cells.
 Initially identical to the student notebook. You should:
 
 - Fill in the exercise cells with correct solutions
-- Verify tests pass: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest`
+- Verify tests pass: `uv run python scripts/run_pytest_variant.py --variant solution -q`
 
 #### 4. Test File
 
@@ -239,7 +245,7 @@ Run tests locally:
 uv run pytest tests/test_exNNN_slug.py -v
 
 # Test against solution notebook (should pass)
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_exNNN_slug.py -v
+uv run python scripts/run_pytest_variant.py --variant solution tests/test_exNNN_slug.py -v
 
 # Or use the helper script
 scripts/verify_solutions.sh tests/test_exNNN_slug.py -v

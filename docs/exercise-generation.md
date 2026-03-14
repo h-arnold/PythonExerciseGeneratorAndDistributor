@@ -2,6 +2,12 @@
 
 This guide explains how to use the **Exercise Generation** assistant in GitHub Copilot to create new Python exercises for students. This tool is designed to help you quickly create pedagogically sound exercises without needing to manually write all the boilerplate code.
 
+> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Migration status
+
+Generated flattened notebooks and tests remain transitional export surfaces. Canonical exercise identity and fail-fast contracts are defined in the execution model document.
+
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
     - [What to expect after cloning (prompts \& tips)](#what-to-expect-after-cloning-prompts--tips)
@@ -134,11 +140,11 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    Run the automated checks to confirm the notebooks and tests align:
 
    ```bash
-   PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex050_my_topic.py -q
+   uv run python scripts/run_pytest_variant.py --variant solution tests/test_ex050_my_topic.py -q
    uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
    ```
 
-   The first command exercises the solutions; rerun the pytest command without `PYTUTOR_NOTEBOOKS_DIR` once you expect the student notebook to pass as well.
+   The first command exercises the solutions; rerun the pytest command with `--variant student` once you expect the student notebook to pass as well.
 
 ## Exercise Verifier — quick quality checks 🔍
 

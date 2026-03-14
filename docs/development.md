@@ -2,6 +2,12 @@
 
 This guide is for contributors and maintainers working on the Python Tutor Exercises infrastructure.
 
+> Source of truth: execution and variant contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Migration status
+
+The flattened notebook/test surfaces are still transitional. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic.
+
 ## Development Setup
 
 Follow the [Setup Guide](setup.md) to install dependencies and configure your environment.
@@ -56,7 +62,7 @@ The grading system now uses the exercise framework, which wraps the low-level no
 
 Core helpers (via `tests/exercise_framework/runtime.py`):
 
-1. **`resolve_notebook_path()`**: Redirects to alternative notebook directories via `PYTUTOR_NOTEBOOKS_DIR`
+1. **`resolve_notebook_path()`**: Resolves notebook location using the active variant contract (`--variant` / `PYTUTOR_ACTIVE_VARIANT`)
 2. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
 3. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
 4. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
@@ -102,9 +108,10 @@ When modifying grading logic:
 Always exercise the pytest plugin with an explicit results path so the Classroom payload can be inspected:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
-    uv run pytest -q \
-    --autograde-results-path tmp/autograde/solutions.json
+uv run python scripts/build_autograde_payload.py \
+    --variant solution \
+    --pytest-args=-q \
+    --results-json=tmp/autograde/solutions.json
 
 uv run pytest tests/test_ex002_sequence_modify_basics.py -q \
     --autograde-results-path tmp/autograde/student.json

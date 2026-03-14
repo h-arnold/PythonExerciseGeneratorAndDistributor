@@ -75,7 +75,7 @@ Default thresholds used by automated checks:
 3. Validate `change_summary`. If missing, reconstruct from git diff.
 4. Confirm the affected files by inspecting the diff or change list.
 5. Run tests:
-   - Set `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` and run `uv run pytest -q` to verify the solution notebooks pass.
+   - Run `uv run python scripts/run_pytest_variant.py --variant solution -q` to verify the solution notebooks pass.
    - Only run `uv run pytest -q` without the environment variable when you need to inspect student notebooks; confirm any failures are the expected pre-solution failures, not regressions.
 6. Run `uv run ruff check --fix` for lint, complexity, and simplify signals. Apply only safe edits as defined in "Safe Edits".
 7. Run `uv run ruff format` to apply formatting fixes.

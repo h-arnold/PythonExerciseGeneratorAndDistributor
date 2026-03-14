@@ -4,6 +4,12 @@ This document describes the testing framework for the **codebase itself**, ensur
 
 For details on **testing student notebooks**, see [Exercise Testing](exercise-testing.md).
 
+> Source of truth: execution/discovery/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Migration status
+
+Legacy flattened notebook paths and top-level flattened exercise tests remain supported as transitional export surfaces. Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`; use the execution model contract for canonical behaviour and fail-fast expectations.
+
 ## Overview
 
 The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, and documentation) is tested using `pytest`. These tests ensure that:
@@ -13,7 +19,7 @@ The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, a
 3. **Template CLI**: The template repository tools work as expected.
 4. **Documentation**: Exercise validation rules are respected.
 
-Canonical authoring note: the source-of-truth location for exercise-specific assets is `exercises/<construct>/<exercise_key>/`, and the canonical resolver input is `exercise_key`. The current top-level `notebooks/`, `notebooks/solutions/`, and `tests/` paths are still used as transitional execution surfaces and as the flattened export contract.
+Pytest discovery uses the configured roots in `pyproject.toml` (`testpaths = ["tests", "exercises"]`) so shared infrastructure and canonical exercise-scoped tests are both discoverable.
 
 ## Running Tests
 

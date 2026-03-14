@@ -69,7 +69,7 @@ For each manual principle: note a concise rationale and an actionable suggestion
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` and `PYTUTOR_NOTEBOOKS_DIR` as described elsewhere.
+  - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` with explicit variant selection (`--variant`) as described in the execution model contract.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
@@ -81,7 +81,7 @@ For each manual principle: note a concise rationale and an actionable suggestion
 ### MUST do (manual steps)
 
 1. Review the automated phase summary (change list, diagnostics, tests run). Capture follow-up actions in the calling agent's task list if available; otherwise record them in the review notes.
-2. Ensure the uv-managed environment is used for any commands that must be rerun (for example, `uv run pytest -q` with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`). Only rerun tooling if additional evidence is needed.
+2. Ensure the uv-managed environment is used for any commands that must be rerun (for example, `uv run python scripts/run_pytest_variant.py --variant solution -q`). Only rerun tooling if additional evidence is needed.
 3. **Trace code execution**: For each changed file, manually trace inputs → outputs. Identify assumptions, edge cases, and data flow. Check for simpler implementations or reuse of existing helpers.
 4. **Validate no re-implementation**: Ensure changes do not duplicate existing functionality elsewhere in the codebase. Flag opportunities to consolidate or reuse.
 5. **Check separation of concerns**: Verify functions/classes have clear single responsibilities. Flag functions handling multiple concerns for potential extraction.

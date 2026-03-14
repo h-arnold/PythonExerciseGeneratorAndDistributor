@@ -87,7 +87,7 @@ def test_handles_empty_list():
     assert _solve("exercise1", []) == 0
 ```
 
-- Run the suite with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q` to confirm the solution notebook passes.
+- Run the suite with `uv run python scripts/run_pytest_variant.py --variant solution -q` to confirm the solution notebook passes.
 - Keep at least three positive checks and two edge/robustness cases per exercise, following the testing framework guidance.
 - Ensure the student notebook still fails after reverting to `NotImplementedError` so learners must supply the logic.
 

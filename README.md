@@ -2,6 +2,12 @@
 
 A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get autograding feedback. Teachers can generate new exercises quickly and bundle selected exercises into GitHub Classroom template repos.
 
+> Source of truth: runtime, discovery, variant, and mapping contracts are defined in [docs/execution-model.md](docs/execution-model.md).
+
+### Migration status
+
+Canonical behaviour is defined in the execution model contract. Flattened notebook/test paths are still transitional export surfaces while migration is completed.
+
 ## Key Benefits and Features
 
  - **No local setup or config**: The most your IT technician will need to do is ensure that connections to GitHub and Codespaces are allowed.
@@ -90,7 +96,7 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
    - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
 
-> Note: Running `pytest` directly still exercises the student notebooks by default. To verify instructor solutions locally with the explicit Phase 4 variant contract, run:
+> Note: use the explicit variant contract to run instructor-solution checks:
 >
 > ```bash
 > uv run python scripts/run_pytest_variant.py --variant solution -q
