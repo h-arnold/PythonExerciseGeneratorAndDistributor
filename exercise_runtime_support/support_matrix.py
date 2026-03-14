@@ -38,6 +38,6 @@ def has_support_role(exercise_id: int, role: SupportRole) -> bool:
 
 def iter_exercise_ids_for_role(role: SupportRole) -> Iterator[int]:
     """Yield exercise IDs that support the given runtime role in sorted order."""
-    for exercise_id in sorted(_SUPPORT_MATRIX):
-        if has_support_role(exercise_id, role):
+    for exercise_id, roles in sorted(_SUPPORT_MATRIX.items()):
+        if role in roles:
             yield exercise_id
