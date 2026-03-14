@@ -161,6 +161,10 @@ def test_main_creates_debug_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 
     # Test file should include an assertion checking explanation content (>10 chars)
     txt = test_path.read_text(encoding="utf-8")
+    assert "from exercise_runtime_support.exercise_framework import runtime" in txt
+    assert "runtime.run_cell_and_capture_output" in txt
+    assert "runtime.get_explanation_cell" in txt
+    assert "from tests.notebook_grader" not in txt
     assert "Explanation must be more than 10 characters" in txt
 
 

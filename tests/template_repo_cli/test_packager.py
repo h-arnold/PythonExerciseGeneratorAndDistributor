@@ -124,6 +124,7 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
     if runtime_src.exists():
         assert runtime_dest.exists()
         assert runtime_dest.is_dir()
+        assert (runtime_dest / "exercise_framework" / "runtime.py").exists()
         assert get_catalogue_snapshot_path(runtime_dest).exists()
     else:
         assert not runtime_dest.exists()
