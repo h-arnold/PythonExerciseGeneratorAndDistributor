@@ -176,7 +176,7 @@ Replace the placeholder test with real assertions. Two common patterns:
 
 ```python
 # Option 1: assert on printed output (matches the scaffold)
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
 
@@ -189,7 +189,7 @@ def test_exercise1_greets_user() -> None:
 
 ```python
 # Option 2: execute the cell and inspect objects
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import runtime
 
 NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
 
@@ -216,7 +216,7 @@ def test_solve_handles_edge_case() -> None:
 - Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
 - For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
 
-**Note on scaffolding**: the generator's placeholder tests may still use `tests.notebook_grader` directly. Replace those with the framework runtime helpers shown above so tests are consistent across the codebase.
+**Note on scaffolding**: generated placeholder tests import `runtime` from `exercise_runtime_support.exercise_framework`. Keep this contract when editing or extending scaffolded tests so local development, CI, and packaged classroom repositories stay aligned.
 
 ### 4. Fill in the Solution Notebook
 
@@ -368,7 +368,7 @@ When creating a notebook with `--parts 10`:
 
 ```python
 import pytest
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import runtime
 
 TAGS = [f"exercise{i}" for i in range(1, 11)]
 

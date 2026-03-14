@@ -324,14 +324,14 @@ def main() -> int:
         "",
         "import pytest",
         "",
-        "from tests.notebook_grader import run_cell_and_capture_output",
+        "from exercise_runtime_support.exercise_framework import runtime",
         "",
         f"NOTEBOOK_PATH = 'notebooks/{exercise_key}.ipynb'",
         "",
         "",
         "def _run_and_capture(tag: str) -> str:",
         '    """Execute the tagged cell and capture its print output."""',
-        "    return run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)",
+        "    return runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)",
         "",
         "",
     ]
@@ -365,13 +365,12 @@ def main() -> int:
     if args.type == "debug":
         test_lines += [
             "# Explanation cell checks for debug exercises",
-            "from tests.notebook_grader import get_explanation_cell",
             "",
         ]
         if args.parts == 1:
             test_lines += [
                 "def test_explanation_has_content() -> None:",
-                "    explanation = get_explanation_cell(NOTEBOOK_PATH, tag='explanation1')",
+                "    explanation = runtime.get_explanation_cell(NOTEBOOK_PATH, tag='explanation1')",
                 "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
                 "",
             ]
@@ -380,7 +379,7 @@ def main() -> int:
                 f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {args.parts} + 1)]",
                 "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
                 "def test_explanations_have_content(tag: str) -> None:",
-                "    explanation = get_explanation_cell(NOTEBOOK_PATH, tag=tag)",
+                "    explanation = runtime.get_explanation_cell(NOTEBOOK_PATH, tag=tag)",
                 "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
                 "",
             ]

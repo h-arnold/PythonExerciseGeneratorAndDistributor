@@ -50,9 +50,12 @@ markers = ["task(taskno): marks the exercise task number"]
 
 [tool.ruff]
 line-length = 100
+force-exclude = true
 exclude = [
   "notebooks/**",
   "exercises/**/notebooks/**",
+  "*.md",
+  "docs/**",
 ]
 
 [tool.ruff.lint]
