@@ -50,7 +50,7 @@ CONSUMER_MATRIX: Final[tuple[ConsumerMatrixEntry, ...]] = (
     ConsumerMatrixEntry(
         surface="exercise scaffolder",
         files=(Path("scripts/new_exercise.py"),),
-        current_entry_point="legacy emitted import from tests.notebook_grader",
+        current_entry_point="emitted import from exercise_runtime_support.exercise_framework.runtime",
         target_entry_point="emitted import from exercise_runtime_support.exercise_framework.runtime",
     ),
     ConsumerMatrixEntry(
@@ -59,14 +59,14 @@ CONSUMER_MATRIX: Final[tuple[ConsumerMatrixEntry, ...]] = (
             Path(".github/workflows/tests.yml"),
             Path(".github/workflows/tests-solutions.yml"),
         ),
-        current_entry_point="workflow calls scripts/run_pytest_variant.py",
-        target_entry_point="scripts/run_pytest_variant.py with --variant",
+        current_entry_point="scripts/run_pytest_variant.py --variant solution",
+        target_entry_point="scripts/run_pytest_variant.py --variant solution",
     ),
     ConsumerMatrixEntry(
         surface="classroom template workflow",
         files=(Path("template_repo_files/.github/workflows/classroom.yml"),),
-        current_entry_point="workflow calls scripts/build_autograde_payload.py",
-        target_entry_point="scripts/build_autograde_payload.py with --variant",
+        current_entry_point="scripts/build_autograde_payload.py --variant student",
+        target_entry_point="scripts/build_autograde_payload.py --variant student",
     ),
     ConsumerMatrixEntry(
         surface="contributor documentation",

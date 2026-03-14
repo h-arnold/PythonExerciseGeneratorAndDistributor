@@ -78,9 +78,9 @@ The following matrix records each active consumer surface, its current entry poi
 | runtime/grading wrapper | tests.notebook_grader wrapper | exercise_runtime_support.notebook_grader |
 | framework and student-checker APIs | tests.* compatibility wrappers | exercise_runtime_support.exercise_framework.* and exercise_runtime_support.student_checker.* |
 | packager and collector CLI | scripts/template_repo_cli/core/* imports and packaging surfaces | exercise_runtime_support package copied and referenced |
-| exercise scaffolder | legacy emitted import from tests.notebook_grader | emitted import from exercise_runtime_support.exercise_framework.runtime |
-| repository workflows | workflow calls scripts/run_pytest_variant.py | scripts/run_pytest_variant.py with --variant |
-| classroom template workflow | workflow calls scripts/build_autograde_payload.py | scripts/build_autograde_payload.py with --variant |
+| exercise scaffolder | emitted import from exercise_runtime_support.exercise_framework.runtime | emitted import from exercise_runtime_support.exercise_framework.runtime |
+| repository workflows | scripts/run_pytest_variant.py --variant solution | scripts/run_pytest_variant.py --variant solution |
+| classroom template workflow | scripts/build_autograde_payload.py --variant student | scripts/build_autograde_payload.py --variant student |
 | contributor documentation | legacy and transition guidance scattered across docs | single contract documented in docs/execution-model.md |
 
 Maintenance note: `tests/exercise_runtime_support/test_consumer_matrix.py` validates this matrix, checks listed files exist, and guards against regressions that bypass the shared contract.

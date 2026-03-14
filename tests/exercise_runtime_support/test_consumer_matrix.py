@@ -10,6 +10,7 @@ from exercise_runtime_support.consumer_matrix import CONSUMER_MATRIX
 def test_consumer_matrix_has_required_surfaces() -> None:
     """The matrix tracks every required runtime contract consumer surface."""
     surfaces = {entry.surface for entry in CONSUMER_MATRIX}
+    assert len(CONSUMER_MATRIX) == len(surfaces)
     assert {
         "runtime/grading wrapper",
         "framework and student-checker APIs",
