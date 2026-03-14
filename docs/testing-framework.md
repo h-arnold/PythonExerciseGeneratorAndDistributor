@@ -19,6 +19,8 @@ The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, a
 3. **Template CLI**: The template repository tools work as expected.
 4. **Documentation**: Exercise validation rules are respected.
 
+Pytest discovery uses the configured roots in `pyproject.toml` (`testpaths = ["tests", "exercises"]`) so shared infrastructure and canonical exercise-scoped tests are both discoverable.
+
 ## Running Tests
 
 ### Standard Execution

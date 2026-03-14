@@ -8,7 +8,7 @@ All related contributor guidance must align with this document.
 
 ### Canonical discovery roots
 
-Repository pytest discovery is rooted at `tests/`.
+Repository pytest discovery uses configured roots in `pyproject.toml` via `testpaths = ["tests", "exercises"]`.
 
 The exercise test contract is:
 
@@ -43,7 +43,7 @@ Variant selection chooses which notebook surface (`student` or `solution`) is ex
 Contract:
 
 - Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py` and `scripts/build_autograde_payload.py`).
-- Runtime propagation: orchestrators expose the active value through `PYTUTOR_ACTIVE_VARIANT` for downstream runtime resolution.
+- Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `student` when no variant is provided.
 
 Compatibility note:
