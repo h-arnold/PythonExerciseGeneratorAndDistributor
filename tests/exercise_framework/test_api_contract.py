@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from exercise_runtime_support.exercise_catalogue import get_exercise_catalogue
+from exercise_runtime_support.exercise_catalogue import (
+    get_catalogue_key_for_exercise_id,
+    get_exercise_catalogue,
+)
 from tests.exercise_framework.api import (
-    EX002_SLUG,
     ExerciseCheckResult,
     NotebookCheckResult,
     run_all_checks,
@@ -70,7 +72,7 @@ def test_run_notebook_check_supports_ex002_summary_path(
 ) -> None:
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
-    results = run_notebook_check(EX002_SLUG)
+    results = run_notebook_check(get_catalogue_key_for_exercise_id(2))
 
     assert len(results) == 1
     assert results[0].label == "ex002 Sequence Modify Basics"

@@ -9,7 +9,6 @@ from typing import Any
 
 __all__ = [
     "EX002_CHECKS",
-    "EX002_SLUG",
     "Ex002CheckDefinition",
     "ExerciseCheckResult",
     "NotebookCheckResult",
@@ -30,7 +29,6 @@ __all__ = [
 ]
 
 EX002_CHECKS: Any
-EX002_SLUG: str
 Ex002CheckDefinition: type[Any]
 ExerciseCheckResult: type[Any]
 NotebookCheckResult: type[Any]
@@ -51,7 +49,6 @@ run_notebook_check: Callable[..., Any]
 
 _ATTRIBUTE_MODULES: dict[str, str] = {
     "EX002_CHECKS": "exercise_runtime_support.exercise_framework.expectations",
-    "EX002_SLUG": "exercise_runtime_support.exercise_framework.api",
     "Ex002CheckDefinition": "exercise_runtime_support.exercise_framework.expectations",
     "ExerciseCheckResult": "exercise_runtime_support.exercise_framework.api",
     "NotebookCheckResult": "exercise_runtime_support.exercise_framework.api",

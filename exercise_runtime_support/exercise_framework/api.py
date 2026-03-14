@@ -8,22 +8,19 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
-from typing import Any
 
 from exercise_runtime_support.exercise_catalogue import (
     ExerciseCatalogueEntry,
     get_catalogue_entry,
-    get_catalogue_key_for_exercise_id,
     get_exercise_catalogue,
 )
 from exercise_runtime_support.exercise_framework.expectations import EX002_CHECKS
 from exercise_runtime_support.notebook_grader import NotebookGradingError
+from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 
 from . import paths, runtime
 
 RawNotebookResult = tuple[str, bool, list[str]]
-_DETAILED_EX002_EXERCISE_ID = 2
-_FIRST_EXERCISE_SMOKE_CHECK_IDS = frozenset({3, 4, 5, 6})
 
 
 @dataclass(frozen=True)
@@ -51,12 +48,6 @@ class NotebookCheckDefinition:
 
     label: str
     runner: Callable[[], list[str]]
-
-
-def __getattr__(name: str) -> Any:
-    if name == "EX002_SLUG":
-        return get_catalogue_key_for_exercise_id(2)
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _to_notebook_results(
@@ -97,10 +88,10 @@ def _check_notebook_can_execute_first_exercise(exercise_key: str) -> list[str]:
 def _get_check_runners() -> dict[str, Callable[[], list[str]]]:
     runners: dict[str, Callable[[], list[str]]] = {}
     for entry in get_exercise_catalogue():
-        if entry.exercise_id == _DETAILED_EX002_EXERCISE_ID:
+        if has_support_role(entry.exercise_id, SupportRole.FRAMEWORK_DETAILED):
             runners[entry.exercise_key] = _check_ex002_summary
             continue
-        if entry.exercise_id in _FIRST_EXERCISE_SMOKE_CHECK_IDS:
+        if has_support_role(entry.exercise_id, SupportRole.FRAMEWORK_SMOKE):
             runners[entry.exercise_key] = partial(
                 _check_notebook_can_execute_first_exercise,
                 entry.exercise_key,
@@ -115,8 +106,7 @@ def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
         runner = runners.get(entry.exercise_key)
         if runner is None:
             continue
-        definitions[entry.exercise_key] = NotebookCheckDefinition(
-            entry.display_label, runner)
+        definitions[entry.exercise_key] = NotebookCheckDefinition(entry.display_label, runner)
     return definitions
 
 
@@ -129,8 +119,7 @@ def _get_supported_catalogue() -> list[ExerciseCatalogueEntry]:
 def run_all_checks() -> list[NotebookCheckResult]:
     """Run all notebook checks and return structured results."""
     checks = _get_check_definitions()
-    ordered_definitions = [checks[entry.exercise_key]
-                           for entry in _get_supported_catalogue()]
+    ordered_definitions = [checks[entry.exercise_key] for entry in _get_supported_catalogue()]
     return _to_notebook_results(_run_definitions(ordered_definitions))
 
 
@@ -141,8 +130,7 @@ def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
     check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(
-            f"Unknown notebook '{notebook_slug}'. Available: {available}")
+        raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
 
     return _to_notebook_results(_run_definitions([check]))
 
