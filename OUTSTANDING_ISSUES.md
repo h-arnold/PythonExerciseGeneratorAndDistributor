@@ -1,0 +1,92 @@
+# Outstanding Issues
+
+## Phase 1 — Repository Inventory And Canonical Model
+
+### 1. Phase 1 inventory artefacts are stale and no longer describe the current repository state
+- **Action-plan requirement:** Phase 1 is only complete while there is a written inventory of current exercise identities, locations, anomalies, and identity assumptions that later phases can rely on.
+- **Verified evidence:**
+    - `PHASE_1_REPOSITORY_INVENTORY.md:34-40` still claims:
+        - `ex001_sanity` exists under `exercises/ex001_sanity/`
+        - `ex004_sequence_debug_syntax` lives at `exercises/sequence/debug/ex004_sequence_debug_syntax/`
+        - `ex007` still uses `notebooks/solutions/ex007_data_types_debug_casting.ipynb`
+    - Current repository state differs:
+        - `exercises/ex001_sanity/` is missing
+        - `exercises/sequence/ex004_sequence_debug_syntax/` exists and `exercises/sequence/debug/ex004_sequence_debug_syntax/` is missing
+        - `notebooks/solutions/ex007_sequence_debug_casting.ipynb` exists and `notebooks/solutions/ex007_data_types_debug_casting.ipynb` is missing
+        - `ex005` and `ex007` currently have both legacy and canonical exercise directories
+- **Why this blocks completion:** the written Phase 1 inventory is no longer trustworthy as the source of “current” exercise locations and anomalies.
+
+### 2. The Phase 1 path-assumption register is also stale
+- **Action-plan requirement:** Phase 1 must identify which current modules treat exercise identity as a filename, slug, path, or directory name.
+- **Verified evidence:**
+    - `PHASE_1_REPOSITORY_INVENTORY.md:73-76` still describes `tests/student_checker/api.py` and `tests/exercise_framework/api.py` as manual slug registries.
+    - Those files are now compatibility wrappers:
+        - `tests/student_checker/api.py:1-12`
+        - `tests/exercise_framework/api.py:1-18`
+    - The actual implementation has moved into metadata/catalogue-backed modules such as:
+        - `exercise_runtime_support/student_checker/api.py:5-10,83-106`
+        - `scripts/template_repo_cli/core/collector.py:8-10,39-47,88-109`
+- **Why this blocks completion:** the Phase 1 inventory no longer accurately maps the repo’s live identity assumptions.
+
+## Phase 2 — Metadata And Resolution Layer
+
+### 3. `resolve_exercise_dir()` does not fail fast for string path-like legacy inputs
+- **Action-plan requirement:** the shared resolver must reject legacy path inputs and make legacy callers fail clearly rather than adapting them.
+- **Verified evidence:**
+  - `exercise_metadata/resolver.py:36-52,55-98`
+  - Probing the live resolver with `resolve_exercise_dir("notebooks/ex001_sanity.ipynb")` and `resolve_exercise_dir("ex001_sanity.ipynb")` raises a generic `LookupError` about an unknown construct, not an explicit exercise-key-only error.
+- **Why this blocks completion:** Phase 2 requires an explicit fail-fast contract for legacy path-shaped inputs, not a generic lookup failure after partial parsing.
+
+### 4. `resolve_notebook_path()` can resolve a canonical notebook even when `exercise.json` is missing
+- **Action-plan requirement:** if an exercise is marked canonical, missing canonical files must fail hard.
+- **Verified evidence:**
+  - `exercise_metadata/resolver.py:150-158`
+  - In a temporary canonical fixture with a manifest entry and `notebooks/student.ipynb` present, `resolve_notebook_path()` succeeded even though `exercise.json` was absent.
+  - Existing tests only prove missing notebook files fail: `tests/test_exercise_metadata.py:140-157`
+- **Why this blocks completion:** a canonical exercise is currently not required to have its metadata file at notebook-resolution time.
+
+### 5. The repo does not prove by test that the shared resolver ignores `PYTUTOR_NOTEBOOKS_DIR`
+- **Action-plan requirement:** Phase 2 completion must prove the shared resolver ignores `PYTUTOR_NOTEBOOKS_DIR` entirely.
+- **Verified evidence:**
+  - `tests/test_exercise_metadata.py:6-12` states the contract in comments.
+  - The same test file contains no `setenv()` / `delenv()` coverage for `PYTUTOR_NOTEBOOKS_DIR`.
+- **Why this blocks completion:** the intended behaviour may be correct, but the required proof point is missing.
+
+## Phase 3 — Metadata Consolidation And Registry Replacement
+
+### 6. Template selection still depends partly on legacy paths instead of metadata
+- **Action-plan requirement:** template selection should derive available exercises, construct grouping, and type grouping from metadata rather than `notebooks/*.ipynb` or `exercises/<construct>/<type>/...` path shape.
+- **Verified evidence:**
+  - `scripts/template_repo_cli/core/selector.py:32-43` still implements `get_all_notebooks()` by scanning `notebooks/ex*.ipynb`.
+  - `scripts/template_repo_cli/core/selector.py:77-151,153-246` still discovers legacy exercises by walking `exercises/<construct>/<type>/...`.
+  - `scripts/template_repo_cli/cli.py:778-784` still uses `get_all_notebooks()` for unfiltered listing.
+  - In a temporary repo with a manifest entry plus canonical metadata only, `ExerciseSelector.get_all_notebooks()` and `select_by_type(["modify"])` both returned empty.
+- **Why this blocks completion:** metadata is not yet the single source of truth for selector-driven exercise discovery.
+
+### 7. The metadata catalogue does not fail fast on duplicate `exercise_id` values
+- **Action-plan requirement:** Phase 3 calls for fail-fast validation for duplicate exercise identities in the metadata-backed catalogue.
+- **Verified evidence:**
+  - `exercise_metadata/registry.py:106-159`
+  - In a temporary canonical fixture with two exercises sharing the same `exercise_id`, `build_exercise_catalogue()` succeeded and returned both entries.
+- **Why this blocks completion:** the catalogue can still build inconsistent metadata-derived identity/order views.
+
+## Phase 4 — Execution Model And Source-To-Export Contract
+
+### 8. The canonical ex004 pilot test still uses legacy env/path fallback logic
+- **Action-plan requirement:** Phase 4 requires student/solution selection to follow the explicit variant contract and shared resolver, without silent path/env fallback.
+- **Verified evidence:**
+  - `exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py:28-67`
+    - `_current_variant()` reads `PYTUTOR_NOTEBOOKS_DIR`
+    - `_resolve_notebook_path()` probes multiple locations and falls back silently
+  - Behavioural mismatch:
+    - `python -m pytest -q exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` passes
+    - `python scripts/run_pytest_variant.py --variant solution -q exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` fails because the test resolves and executes `student.ipynb` instead of the solution notebook
+- **Why this blocks completion:** the live pilot proof is not actually aligned with the Phase 4 execution contract.
+
+### 9. The execution-model consumer inventory does not include all current consumers
+- **Action-plan requirement:** Phase 4 must identify every consumer that depends on the execution model, including docs and guidance surfaces.
+- **Verified evidence:**
+  - `exercise_runtime_support/consumer_matrix.py:25-81`
+  - `docs/execution-model.md:72-86`
+  - `AGENTS.md:148-180` still documents the old `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` execution path, but `AGENTS.md` is not included in the consumer matrix or the mirrored table in `docs/execution-model.md`.
+- **Why this blocks completion:** the consumer inventory is incomplete, so the repo still lacks a full execution-model dependency map.
