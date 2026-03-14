@@ -7,6 +7,7 @@ from exercise_runtime_support.exercise_catalogue import (
     get_catalogue_key_for_exercise_id,
     get_exercise_catalogue,
 )
+from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 
 from .checks import (
     check_ex002_summary,
@@ -55,8 +56,7 @@ def check_notebook(notebook_slug: str) -> None:
     check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(
-            f"Unknown notebook '{notebook_slug}'. Available: {available}")
+        raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
     run_check(check)
 
 
@@ -92,6 +92,8 @@ def _get_checks() -> dict[str, NotebookCheckSpec]:
 
     checks: dict[str, NotebookCheckSpec] = {}
     for entry in get_exercise_catalogue():
+        if not has_support_role(entry.exercise_id, SupportRole.STUDENT_CHECKER):
+            continue
         configured = configured_checks.get(entry.exercise_id)
         if configured is None:
             continue
