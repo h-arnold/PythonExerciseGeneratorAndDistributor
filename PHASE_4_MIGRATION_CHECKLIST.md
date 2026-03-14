@@ -426,7 +426,7 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 - [ ] Blocker: earlier resolver and metadata phases are not yet implemented, so Phase 4 execution code cannot be finalised until the shared resolver/manifests exist.
 - [ ] Blocker: the live repo still contains the obsolete `exercises/ex001_sanity/` tree, which must be deleted before discovery/source-selection rules are treated as authoritative; it is reserved for removal rather than normalisation.
 - [ ] Blocker: the live repo still contains a non-canonical duplicate exercise directory at `exercises/ex006_sequence_modify_casting/`, which could confuse discovery or source-selection implementation.
-- [ ] Blocker: the live repo has an `ex007` naming inconsistency between `notebooks/ex007_sequence_debug_casting.ipynb` and `notebooks/solutions/ex007_data_types_debug_casting.ipynb`, which must be resolved or explicitly handled before the variant-selection contract is treated as authoritative.
+- [x] Blocker (resolved): the prior `ex007` naming inconsistency audit now shows aligned naming across `notebooks/`, `notebooks/solutions/`, `exercises/sequence/ex007_sequence_debug_casting/`, `exercises/migration_manifest.json`, and relevant tests/docs references, so this is no longer a blocker for the variant-selection contract.
 - [ ] Blocker: the current repo already contains duplicate exercise test surfaces for `ex002_sequence_modify_basics`, which makes it unsafe to change pytest discovery without an explicit duplicate-collection strategy.
 - [ ] Blocker: mixed legacy directory shapes under `exercises/` must not be treated as equally canonical when defining discovery or source-selection rules.
 - [ ] Blocker: the stray `exercises/PythonExerciseGeneratorAndDistributor/` tree must be excluded explicitly from discovery/source-selection rules.
@@ -434,6 +434,17 @@ This section is mandatory. Do not leave it out just because nothing is blocked y
 ## Action Plan Feedback
 
 Record anything discovered while preparing or executing this checklist that should change the high-level plan.
+
+### ex007 Naming Audit Resolution Note
+
+- Completed Phase 4 scope audit for `ex007_sequence_debug_casting` across:
+  - `notebooks/`
+  - `notebooks/solutions/`
+  - `exercises/sequence/ex007_sequence_debug_casting/`
+  - `exercises/migration_manifest.json`
+  - relevant tests/docs references
+- Result: no residual naming mismatch found within this scope; all active references align to `ex007_sequence_debug_casting`.
+- Cross-link: `ACTION_PLAN.md` Phase 4 acceptance criterion at line 299 is now marked complete with a pointer back to this checklist note to avoid re-opening a resolved blocker.
 
 ### Must Be Added Or Updated In `ACTION_PLAN.md`
 
@@ -445,8 +456,8 @@ Record anything discovered while preparing or executing this checklist that shou
   - if the final decision is to move shared runtime support into `exercise_runtime_support`, update the current high-level assumption that shared framework code stays in top-level `tests` and capture the verification steps that docs/workflows reference the new package, `pyproject.toml` installs it, and TemplatePackager exports its files
 - [x] Missing acceptance criterion:
   - add an explicit acceptance criterion that repository discovery must reject duplicate collection during mixed-layout transitions, and prove it with `tests/test_pytest_collection_guard.py::test_pytest_collection_fails_with_usage_error_for_duplicate_exercise_test_sources` (expects `pytest.UsageError` when both `tests/test_<exercise_key>.py` and `exercises/**/tests/test_<exercise_key>.py` exist)
-- [ ] Missing migration stream:
-  - if resolving the live `ex007` naming mismatch requires separate clean-up before Phase 4 implementation, add that as a dedicated action-plan prerequisite rather than hiding it inside this checklist
+- [x] Missing migration stream (resolved):
+  - the dedicated prerequisite is now closed because the `ex007_sequence_debug_casting` naming audit found no residual mismatch in Phase 4 scope; see the resolved blocker entry above and `ACTION_PLAN.md` Phase 4 acceptance criterion update
 
 ### Follow-Up Action
 
