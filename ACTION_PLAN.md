@@ -294,7 +294,7 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Do not treat source-repo authoring rules and exported Classroom rules as the same contract.
 - [x] Do not rely on accidental pytest discovery or packaging behaviour that happens to keep legacy top-level files working.
 - [x] Do not treat the current top-level `tests` support package as permanently fixed until Phase 4 confirms that shared runtime code relocates to `exercise_runtime_support`, that `pyproject.toml` installs the package, and that docs/workflows reference the new import path.
-- [ ] The phase is only complete once the repository test discovery model, shared runtime import model, student-versus-solution selection model, and source-to-export mapping contract are all documented clearly enough to drive later implementation checklists.
+- [x] The phase is only complete once the repository test discovery model, shared runtime import model, student-versus-solution selection model, and source-to-export mapping contract are all documented clearly enough to drive later implementation checklists.
 - [ ] The phase is not complete until mixed-layout repository discovery has an explicit duplicate-collection strategy and acceptance criteria proving duplicate collection fails hard rather than being collected twice silently.
 - [ ] The phase is not complete until the `ex007` naming mismatch is resolved or explicitly treated as a prerequisite blocker for trusting the CLI `--variant <student|solution>` variant-selection contract.
 

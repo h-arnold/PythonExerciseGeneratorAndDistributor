@@ -2,6 +2,12 @@
 
 This document outlines the testing philosophy and conventions for verifying student notebook exercises.
 
+> Source of truth: execution behaviour and fail-fast rules are defined in [docs/execution-model.md](execution-model.md).
+
+## Migration status
+
+Legacy notebook-directory overrides are transitional only. Prefer explicit variant selection in tooling and CI.
+
 ## Philosophy: "Task Completion" with Good Habits
 
 The goal of our tests is to verify that a student has **achieved the learning objective** while fostering precise coding habits.
@@ -524,7 +530,7 @@ Low-level executor. Returns the variable namespace (dict). Useful if you need to
 
 #### `runtime.resolve_notebook_path(notebook_path) -> Path`
 
-Most tests use `NOTEBOOK_PATH` constant. This function resolves that path, strictly adhering to the `PYTUTOR_NOTEBOOKS_DIR` environment variable if set.
+Most tests use `NOTEBOOK_PATH` constant. This function resolves that path, using the active variant contract and current resolver settings.
 
 **Usage in tests**:
 Tests generally define a constant at the top:
@@ -535,15 +541,9 @@ NOTEBOOK_PATH = "notebooks/ex001_slug.ipynb"
 
 The runtime helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.
 
-#### `PYTUTOR_NOTEBOOKS_DIR`
+#### Transitional compatibility note (`PYTUTOR_NOTEBOOKS_DIR`)
 
-Environment variable to redirect tests to a different directory (e.g., solutions).
-
-```bash
-# Run tests against solution notebooks
-export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-uv run pytest -q
-```
+`PYTUTOR_NOTEBOOKS_DIR` may still be honoured in some legacy execution paths, but new tests and scripts should use explicit variant orchestration (`--variant student|solution`).
 
 ### Expectations Modules
 
@@ -581,7 +581,7 @@ uv run pytest tests/test_ex002_sequence_modify_basics.py -s
 
 ### CI/CD
 
-- **`.github/workflows/tests.yml`**: Runs tests on every push/PR with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` (verifying the instructor solutions pass).
+- **`.github/workflows/tests-solutions.yml`**: Runs tests with explicit `--variant solution` orchestration (verifying the instructor solutions pass).
 - **GitHub Classroom**: Runs tests against the student's submission (default path).
 
 ## Cell Tagging

@@ -2,6 +2,12 @@
 
 This guide covers setting up the PythonTutorExercises repository for development or use in a classroom.
 
+> Source of truth: execution/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Migration status
+
+Use `--variant` workflows as the canonical way to select student/solution notebooks. `PYTUTOR_NOTEBOOKS_DIR` is transitional compatibility only.
+
 ## Recommended environment
 
 For a consistent toolchain, open the repository in GitHub Codespaces or the supplied VS Code Dev Container (`.devcontainer/devcontainer.json`). The container image installs Python 3.11, uv, the GitHub CLI, and Git LFS, then runs `uv sync` and activates the virtual environment automatically. Wait for the post-create tasks to finish before running commands.
@@ -82,7 +88,7 @@ uv run ./scripts/verify_solutions.sh -q
 or:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
 ```
 
 All solution tests should pass.
@@ -228,7 +234,7 @@ Check that:
 
 - The notebook exists at the expected path
 - The path in the test file matches the actual notebook location
-- If using `PYTUTOR_NOTEBOOKS_DIR`, the solution notebook exists
+- If using transitional compatibility, ensure the mapped solution notebook exists
 
 ### Cell Tag Not Found
 
@@ -249,18 +255,9 @@ Students sometimes forget imports. Remind them that:
 
 ## Environment Variables
 
-### `PYTUTOR_NOTEBOOKS_DIR`
+### Transitional compatibility note (`PYTUTOR_NOTEBOOKS_DIR`)
 
-Redirects notebook lookups to a different directory.
-
-**Usage**:
-
-```bash
-export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-uv run pytest
-```
-
-**Purpose**: Run the same tests against solution notebooks to verify they're correct.
+`PYTUTOR_NOTEBOOKS_DIR` is temporarily accepted in some legacy paths, but do not use it for new workflows. Prefer `scripts/run_pytest_variant.py --variant ...` as the canonical interface.
 
 ## CI/CD Workflows
 
@@ -276,7 +273,7 @@ Runs on every push and pull request:
 
 Manual workflow (workflow_dispatch) to verify solution notebooks:
 
-- Sets `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`
+- Uses explicit `--variant solution` orchestration
 - Runs pytest against solution notebooks
 - Useful for verifying solutions are correct before releasing exercises
 
