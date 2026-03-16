@@ -2,18 +2,6 @@
 
 ## Phase 1 — Repository Inventory And Canonical Model
 
-### 2. The Phase 1 path-assumption register is also stale
-- **Action-plan requirement:** Phase 1 must identify which current modules treat exercise identity as a filename, slug, path, or directory name.
-- **Verified evidence:**
-    - `PHASE_1_REPOSITORY_INVENTORY.md:73-76` still describes `tests/student_checker/api.py` and `tests/exercise_framework/api.py` as manual slug registries.
-    - Those files are now compatibility wrappers:
-        - `tests/student_checker/api.py:1-12`
-        - `tests/exercise_framework/api.py:1-18`
-    - The actual implementation has moved into metadata/catalogue-backed modules such as:
-        - `exercise_runtime_support/student_checker/api.py:5-10,83-106`
-        - `scripts/template_repo_cli/core/collector.py:8-10,39-47,88-109`
-- **Why this blocks completion:** the Phase 1 inventory no longer accurately maps the repo’s live identity assumptions.
-
 ## Phase 2 — Metadata And Resolution Layer
 
 ### 3. `resolve_exercise_dir()` does not fail fast for string path-like legacy inputs
