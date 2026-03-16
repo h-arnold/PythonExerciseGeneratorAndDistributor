@@ -19,8 +19,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
+from _pytest.outcomes import Exit as PytestExit
+from _pytest.outcomes import OutcomeException
+
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
+
+
+def _is_fatal_control_flow_exception(error: BaseException) -> bool:
+    """Return True when an exception must escape defensive handlers."""
+
+    return isinstance(
+        error,
+        (GeneratorExit, KeyboardInterrupt, OutcomeException, PytestExit, SystemExit),
+    )
 
 
 def _empty_results() -> list[AutogradeTestResult]:
@@ -134,7 +146,9 @@ def _get_task_marker(item: Any) -> Any | None:
         return None
     try:
         return item.get_closest_marker("task")
-    except Exception:  # pragma: no cover - defensive guard
+    except BaseException as error:  # pragma: no cover - defensive guard
+        if _is_fatal_control_flow_exception(error):
+            raise
         return None
 
 
@@ -207,7 +221,9 @@ def _get_item_doc(item: Any) -> str | None:
     if hasattr(item, "obj"):
         try:
             return inspect.getdoc(item.obj)
-        except Exception:  # pragma: no cover - defensive guard
+        except BaseException as error:  # pragma: no cover - defensive guard
+            if _is_fatal_control_flow_exception(error):
+                raise
             return None
     return None
 
@@ -397,7 +413,9 @@ def pytest_configure(config: Any) -> None:
     results_option = None
     try:
         results_option = config.getoption("autograde_results_path")
-    except Exception:  # pragma: no cover - defensive for unexpected config
+    except BaseException as error:  # pragma: no cover - defensive for unexpected config
+        if _is_fatal_control_flow_exception(error):
+            raise
         results_option = None
 
     state = getattr(config, "_autograde_state", None)
@@ -567,7 +585,9 @@ def _write_json_with_fallback(payload: dict[str, Any], path: Path, state: Autogr
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
-    except Exception as exc:  # pragma: no cover - exercised in error handling tests
+    except BaseException as exc:  # pragma: no cover - exercised in error handling tests
+        if _is_fatal_control_flow_exception(exc):
+            raise
         error_message = f"Failed to write autograde results to {path}: {exc}"
         state.encountered_errors.append(error_message)
         print(
@@ -584,7 +604,9 @@ def _write_json_with_fallback(payload: dict[str, Any], path: Path, state: Autogr
         try:
             with path.open("w", encoding="utf-8") as handle:
                 json.dump(fallback, handle, ensure_ascii=False, indent=2)
-        except Exception as fallback_exc:  # pragma: no cover - defensive fallback guard
+        except BaseException as fallback_exc:  # pragma: no cover - defensive fallback guard
+            if _is_fatal_control_flow_exception(fallback_exc):
+                raise
             fallback_message = (
                 f"Fallback write for autograde results failed at {path}: {fallback_exc}"
             )

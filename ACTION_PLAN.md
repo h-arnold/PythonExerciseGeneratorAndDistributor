@@ -344,19 +344,27 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 #### Constraints And Acceptance Criteria
 
-- [ ] Do not preserve the old scaffold layout as a fallback mode once the scaffold switches.
-- [ ] The phase is only complete once newly scaffolded exercises are created directly in the canonical location, generated files use the canonical naming conventions, and the verifier checks the new structure rather than the legacy one.
+- [x] Do not preserve the old scaffold layout as a fallback mode once the scaffold switches.
+- [x] The phase is only complete once newly scaffolded exercises are created directly in the canonical location, generated files use the canonical naming conventions, and the verifier checks the new structure rather than the legacy one.
 
-- [ ] Update [scripts/new_exercise.py](scripts/new_exercise.py) to scaffold the new directory structure directly.
-- [ ] Make construct and exercise type explicit scaffold inputs.
-- [ ] Generate `exercise.json` as part of scaffolding.
-- [ ] Generate `notebooks/student.ipynb` and `notebooks/solution.ipynb` instead of top-level notebook files.
-- [ ] Generate `tests/test_<exercise_key>.py` inside the exercise directory.
-- [ ] Make the generated notebook self-check cell mandatory by convention rather than configurable per exercise.
-- [ ] Derive exercise tags and debug explanation tags from `parts` and `exercise_type` rather than storing them in metadata.
-- [ ] Update [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py) to validate the new structure and metadata via the shared resolver so the existing verifier continues to work under the new canonical layout (per the tooling decision above).
-- [ ] Remove the manual move step from [docs/setup.md](docs/setup.md).
-- [ ] Keep a list of scaffold-linked docs and tests to revisit once the generator changes, especially: [tests/test_new_exercise.py](tests/test_new_exercise.py), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [docs/exercise-generation.md](docs/exercise-generation.md), and [docs/setup.md](docs/setup.md).
+#### Progress Update
+
+- [x] Task 1 completed on `2026-03-16`: `scripts/new_exercise.py` now scaffolds directly into `exercises/<construct>/<exercise_key>/`, requires explicit `--construct` and `--type` inputs, generates `exercise.json`, and writes canonical `notebooks/student.ipynb`, `notebooks/solution.ipynb`, and `tests/test_<exercise_key>.py` outputs.
+- [x] Focused scaffold verification now covers the canonical Phase 7 generator contract in `tests/test_new_exercise.py`, including the legacy-layout duplicate-home guard.
+- [x] Task 2 completed on `2026-03-16`: `scripts/verify_exercise_quality.py` now validates canonical scaffold structure via the shared metadata/resolver layer, loads canonical sibling notebooks, and no longer falls back to legacy exercise homes.
+- [x] Focused verifier coverage now lives in `tests/test_verify_exercise_quality.py`, including canonical success plus missing/invalid canonical metadata and file failures with a legacy directory present.
+- [x] Task 3 completed on `2026-03-16`: `docs/setup.md`, `docs/exercise-generation-cli.md`, and `docs/exercise-generation.md` now describe the canonical scaffold flow, canonical verification paths, and no longer instruct contributors to move scaffold output manually.
+
+- [x] Update [scripts/new_exercise.py](scripts/new_exercise.py) to scaffold the new directory structure directly.
+- [x] Make construct and exercise type explicit scaffold inputs.
+- [x] Generate `exercise.json` as part of scaffolding.
+- [x] Generate `notebooks/student.ipynb` and `notebooks/solution.ipynb` instead of top-level notebook files.
+- [x] Generate `tests/test_<exercise_key>.py` inside the exercise directory.
+- [x] Make the generated notebook self-check cell mandatory by convention rather than configurable per exercise.
+- [x] Derive exercise tags and debug explanation tags from `parts` and `exercise_type` rather than storing them in metadata.
+- [x] Update [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py) to validate the new structure and metadata via the shared resolver so the existing verifier continues to work under the new canonical layout (per the tooling decision above).
+- [x] Remove the manual move step from [docs/setup.md](docs/setup.md).
+- [x] Keep a list of scaffold-linked docs and tests to revisit once the generator changes, especially: [tests/test_new_exercise.py](tests/test_new_exercise.py), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [docs/exercise-generation.md](docs/exercise-generation.md), and [docs/setup.md](docs/setup.md). (Revisited and updated during Task 3.)
 
 ### Phase 8: Grading And Autograding
 
@@ -508,7 +516,7 @@ These can be written first because they define the migration model, inventory, t
 ### Wave 2: Author After Wave 1 Is Stable
 
 - [x] Phase 6 checklist: Exercise Test Migration Preparation And Verification
-- [ ] Phase 7 checklist: Scaffolding And Verification
+- [x] Phase 7 checklist: Scaffolding And Verification
 - [ ] Phase 8 checklist: Grading And Autograding
 - [ ] Phase 9 checklist: Pytest Discovery, Packaging, And Workflow Contract
 

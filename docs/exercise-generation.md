@@ -6,7 +6,7 @@ This guide explains how to use the **Exercise Generation** assistant in GitHub C
 
 ## Migration status
 
-Generated flattened notebooks and tests remain transitional export surfaces. Canonical exercise identity and fail-fast contracts are defined in the execution model document.
+New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document.
 
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
@@ -124,14 +124,17 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests inside the managed environment:
 
    ```bash
-   uv run python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic --type modify
+    uv run python scripts/new_exercise.py ex050 "My New Topic" \
+      --construct sequence \
+      --type modify \
+      --slug my_topic
    ```
 
-    The scaffolder writes a placeholder test, notebooks, and an exercise folder at `exercises/ex050_my_topic/`. Move that folder into the canonical authoring path (for example, `exercises/sequence/ex050_my_topic/`). Exercise type belongs in `exercise.json`, not in a `modify/` or `debug/` path segment. In the source repository, exercise-specific tests belong under `exercises/sequence/ex050_my_topic/tests/`; any flattened `tests/test_ex050_my_topic.py` file remains a transitional execution/export surface for current tooling and Classroom packaging.
+     The scaffolder writes directly to `exercises/sequence/ex050_sequence_modify_my_topic/` with `exercise.json`, `notebooks/student.ipynb`, `notebooks/solution.ipynb`, and `tests/test_ex050_sequence_modify_my_topic.py`. Do not move the scaffold after generation. Exercise type belongs in `exercise.json`, not in an extra path segment.
 
 2. **Add the Content**:
 
-   - Open both `notebooks/ex050_my_topic.ipynb` and `notebooks/solutions/ex050_my_topic.ipynb`.
+    - Open both `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb` and `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/solution.ipynb`.
    - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-types](exercise-types/).
    - Replace any placeholder `TODO`/`pass` code with the versions supplied by the agent (student copy in the main notebook, full answer in solutions).
 
@@ -140,37 +143,44 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    Run the automated checks to confirm the notebooks and tests align:
 
    ```bash
-   uv run python scripts/run_pytest_variant.py --variant solution tests/test_ex050_my_topic.py -q
-   uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
+    uv run python scripts/run_pytest_variant.py --variant solution \
+      exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
+   uv run python scripts/verify_exercise_quality.py \
+     exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb \
+     --construct sequence --type modify
    ```
 
-   The first command exercises the solutions; rerun the pytest command with `--variant student` once you expect the student notebook to pass as well.
+    The first command exercises the solution notebook; rerun it with `--variant student` once you expect the student notebook to pass as well.
 
-    The pytest command still targets the flattened top-level test surface because current execution and Classroom packaging have not moved yet. Keep the scaffolded `tests/test_ex050_my_topic.py` compatibility file aligned with the canonical exercise-local test until that execution flow migrates, and do not create additional new top-level `test_exNNN` files in the source repository.
 
 ## Exercise Verifier — quick quality checks 🔍
 
-The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards (structure, tags, sequencing, tests, teacher guidance, and order-of-teaching). It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
+The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards for canonical scaffold structure, metadata resolution, notebook tags/metadata, sequencing heuristics, and `OrderOfTeaching.md` coverage. It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
 
 How to run it manually:
 
 - **From Copilot Chat**: Select the **Exercise Verifier** chatmode and ask something like:
-  - "Verify exercise ex050_my_topic" or
-  - "Please verify notebooks/ex050_my_topic.ipynb — construct: sequence, type: modify"
+  - "Verify exercise ex050_sequence_modify_my_topic" or
+  - "Please verify exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb — construct: sequence, type: modify"
 - **Locally (command line)**:
 
   ```bash
-  uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
+  uv run python scripts/verify_exercise_quality.py \
+    exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb \
+    --construct sequence --type modify
   ```
 
 What it checks:
 
-- Gate A–F (see repo guidelines): exercise-type compliance, construct sequencing, tags & notebook structure, tests, teacher docs, and inclusion in `OrderOfTeaching.md`.
+- Canonical scaffold structure and required file presence.
+- Canonical metadata loading and resolver-based exercise discovery.
+- Notebook tags, `metadata.language`, and debug explanation-cell structure.
+- Construct progression heuristics and inclusion in `OrderOfTeaching.md`.
 - It follows the rules in `docs/exercise-types/` and the verifier agent spec (`.github/agents/exercise_verifier.md.agent.md`).
 
 Output:
 
-- The verifier returns a concise verdict: **PASS**, **PASS WITH NITS**, or **FAIL**, plus specific, minimal fixes (file(s) and suggestions).
+- The verifier returns a concise verdict such as **OK: 0 warning(s)** or **FAIL: ...**, plus specific, minimal fixes (file(s) and suggestions).
 
 **Tip:** Provide the exercise id/slug (e.g., `ex050_my_topic`) or the notebook path when asking — the verifier needs one of these to run targeted checks.
 

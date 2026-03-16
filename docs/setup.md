@@ -110,7 +110,7 @@ If you're a student working on exercises:
 3. **Open a notebook** in Jupyter Lab:
 
    ```bash
-   uv run jupyter lab notebooks/ex002_sequence_modify_basics.ipynb
+   uv run jupyter lab exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb
    ```
 
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)
@@ -138,14 +138,18 @@ If you're creating or modifying exercises:
 3. **Create exercises** using the scaffolding script:
 
    ```bash
-   uv run python scripts/new_exercise.py ex042 "Your Title" --slug your_slug
+    uv run python scripts/new_exercise.py ex042 "Your Title" \
+      --construct sequence \
+      --type modify \
+      --slug your_slug
    ```
 
 4. **Author the exercise** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md), which documents how to use the exercise generation CLI tool to scaffold new Python exercises.
 5. **Verify solutions** pass tests:
 
    ```bash
-   uv run ./scripts/verify_solutions.sh tests/test_ex042_your_slug.py
+    uv run ./scripts/verify_solutions.sh \
+      exercises/sequence/ex042_sequence_modify_your_slug/tests/test_ex042_sequence_modify_your_slug.py
    ```
 
 ## Linting and Code Quality
@@ -189,43 +193,49 @@ Students see test results in the GitHub Actions tab of their repository.
 
 Recommended workflow for creating and testing exercises:
 
-> Warning: In the source repository, canonical exercise-specific tests belong under `exercises/<construct>/<exercise_key>/tests/`. The flattened `tests/test_exNNN_slug.py` files used by current execution and Classroom packaging are transitional compatibility surfaces only.
+> Warning: In the source repository, canonical exercise-specific tests belong under `exercises/<construct>/<exercise_key>/tests/`. Any remaining flattened `tests/test_exNNN_slug.py` files are transitional compatibility or migration-debt surfaces only; do not create new ones.
 
 ```bash
 # 1. Create a new branch
 git checkout -b add-ex042-variables
 
 # 2. Generate the exercise
-uv run python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
+uv run python scripts/new_exercise.py ex042 "Variables and Types" \
+  --construct sequence \
+  --type modify \
+  --slug variables_and_types
 
-# 3. Organise the folder and create the canonical local tests directory
-mv exercises/ex042_variables_and_types exercises/sequence/ex042_variables_and_types
-mkdir -p exercises/sequence/ex042_variables_and_types/tests
+# 3. Author the student notebook
+uv run jupyter lab \
+  exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb
 
-# 4. Author the notebook
-uv run jupyter lab notebooks/ex042_variables_and_types.ipynb
+# 4. Write exercise-local tests
+$EDITOR \
+  exercises/sequence/ex042_sequence_modify_variables_and_types/tests/test_ex042_sequence_modify_variables_and_types.py
 
-# 5. Write canonical exercise-local tests
-$EDITOR exercises/sequence/ex042_variables_and_types/tests/test_ex042_variables_and_types.py
+# 5. Complete the solution notebook
+uv run jupyter lab \
+  exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/solution.ipynb
 
-# 6. Complete the solution
-uv run jupyter lab notebooks/solutions/ex042_variables_and_types.ipynb
+# 6. Verify tests pass on the solution notebook
+uv run ./scripts/verify_solutions.sh \
+  exercises/sequence/ex042_sequence_modify_variables_and_types/tests/test_ex042_sequence_modify_variables_and_types.py -v
 
-# 7. Verify tests pass on solution
-uv run ./scripts/verify_solutions.sh tests/test_ex042_variables_and_types.py -v
+# 7. Verify the student notebook path
+uv run pytest \
+  exercises/sequence/ex042_sequence_modify_variables_and_types/tests/test_ex042_sequence_modify_variables_and_types.py -v
 
-# 8. Verify tests fail on student notebook
-uv run pytest tests/test_ex042_variables_and_types.py -v
+# 8. Run the quality checks
+uv run python scripts/verify_exercise_quality.py \
+  exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb
 
 # 9. Commit and push
-git add exercises/ notebooks/ tests/
+git add exercises/sequence/ex042_sequence_modify_variables_and_types/
 git commit -m "Add ex042: Variables and Types"
 git push origin add-ex042-variables
 
 # 10. Create a pull request
 ```
-
-Current verification commands still target `tests/test_ex042_variables_and_types.py` because the flattened top-level test surface remains the active execution/export compatibility path. Keep that scaffolded compatibility file aligned with the canonical exercise-local test until the migration completes, and do not create additional new top-level `test_exNNN` files in the source repository.
 
 ## Troubleshooting
 

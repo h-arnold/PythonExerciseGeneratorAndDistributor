@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
-import re
 
 _TOP_LEVEL_TEST_PATH_PARTS = 2
+_CANONICAL_TEST_PATH_PARTS = 5
 _MIN_CANONICAL_TEST_PATH_PARTS = 4
 
 _EXERCISE_TEST_STEM_RE = re.compile(r"^test_ex\d{3}(?:_.*)?$")
@@ -68,12 +69,15 @@ def _is_canonical_test_path(path: Path) -> bool:
     Canonical layout (per ACTION_PLAN design rules):
     exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py
     """
+    if len(path.parts) <= _MIN_CANONICAL_TEST_PATH_PARTS:
+        return False
+
     # Must live under the exercises/ root.
     if path.parts[0] != "exercises":
         return False
 
     # Expected structure: exercises, construct, exercise_key, "tests", filename
-    if len(path.parts) != 5:
+    if len(path.parts) != _CANONICAL_TEST_PATH_PARTS:
         return False
 
     _, _construct, exercise_key_dir, tests_dir, _filename = path.parts

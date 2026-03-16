@@ -15,6 +15,14 @@ class OutputFlowAnalysis:
     op_types: frozenset[type[ast.operator]]
 
 
+@dataclass(frozen=True)
+class _ExpressionAnalysisContext:
+    before_line: int
+    assignments: dict[str, list[ast.Assign]]
+    input_names: set[str]
+    seen_names: frozenset[str]
+
+
 def has_call(tree: ast.AST, func_name: str) -> bool:
     """Return True when the tree contains a call to the named function."""
 
@@ -59,64 +67,143 @@ def interactive_construct_issues(
     """Return student-friendly construct issues for ex007 interactive tasks."""
 
     input_names = input_assigned_names(tree)
-    if len(input_names) != expected_input_count:
-        return [
-            "Use a variable for each entered value before doing the calculation."
-        ]
+    input_count_issue = _input_count_issue(
+        input_names,
+        expected_input_count=expected_input_count,
+    )
+    if input_count_issue is not None:
+        return input_count_issue
 
+    relevant_analyses, print_issue = _relevant_print_analyses(tree, input_names)
+    if print_issue is not None:
+        return print_issue
+
+    return _construct_requirement_issues(
+        relevant_analyses,
+        required_calls=required_calls,
+        required_ops=required_ops,
+        forbidden_ops=forbidden_ops,
+    )
+
+
+def _input_count_issue(
+    input_names: set[str],
+    *,
+    expected_input_count: int,
+) -> list[str] | None:
+    if len(input_names) == expected_input_count:
+        return None
+    return ["Use a variable for each entered value before doing the calculation."]
+
+
+def _relevant_print_analyses(
+    tree: ast.AST,
+    input_names: set[str],
+) -> tuple[list[OutputFlowAnalysis], list[str] | None]:
     analyses = _print_output_analyses(tree, input_names)
     if not analyses:
-        return ["Print the final answer from the calculation."]
+        return [], ["Print the final answer from the calculation."]
 
     expected_inputs = frozenset(input_names)
     relevant_analyses = [
         analysis for analysis in analyses if expected_inputs.issubset(analysis.input_names)
     ]
-    if not relevant_analyses:
-        return ["Printed output must use all entered value variables."]
+    if relevant_analyses:
+        return relevant_analyses, None
+    return [], ["Printed output must use all entered value variables."]
 
+
+def _construct_requirement_issues(
+    relevant_analyses: list[OutputFlowAnalysis],
+    *,
+    required_calls: tuple[str, ...],
+    required_ops: tuple[type[ast.operator], ...],
+    forbidden_ops: tuple[type[ast.operator], ...],
+) -> list[str]:
     required_call_set = set(required_calls)
     required_op_set = set(required_ops)
 
     if any(
-        required_call_set.issubset(analysis.call_names)
-        and required_op_set.issubset(analysis.op_types)
-        and not any(op in analysis.op_types for op in forbidden_ops)
+        _analysis_satisfies_requirements(
+            analysis,
+            required_call_set=required_call_set,
+            required_op_set=required_op_set,
+            forbidden_ops=forbidden_ops,
+        )
         for analysis in relevant_analyses
     ):
         return []
 
     issues: list[str] = []
-    if required_calls and not any(
-        required_call_set.issubset(analysis.call_names)
-        for analysis in relevant_analyses
-    ):
-        formatted_calls = ", ".join(f"{name}()" for name in required_calls)
-        issues.append(
-            f"Printed result must come from calculations that use {formatted_calls}."
-        )
-
-    if required_ops and not any(
-        required_op_set.issubset(analysis.op_types)
-        for analysis in relevant_analyses
-    ):
-        formatted_ops = ", ".join(_operator_token(op) for op in required_ops)
-        issues.append(
-            f"Printed result must come from calculations that use {formatted_ops}."
-        )
-
-    used_forbidden_ops = [
-        op for op in forbidden_ops if any(op in analysis.op_types for analysis in relevant_analyses)
-    ]
-    if used_forbidden_ops:
-        formatted_ops = ", ".join(_operator_token(op) for op in used_forbidden_ops)
-        issues.append(f"Printed result must not use {formatted_ops}.")
+    _append_required_call_issue(issues, relevant_analyses, required_calls, required_call_set)
+    _append_required_op_issue(issues, relevant_analyses, required_ops, required_op_set)
+    _append_forbidden_op_issue(issues, relevant_analyses, forbidden_ops)
 
     if not issues:
         issues.append(
             "Print the final answer from one calculation that uses the entered values."
         )
     return issues
+
+
+def _analysis_satisfies_requirements(
+    analysis: OutputFlowAnalysis,
+    *,
+    required_call_set: set[str],
+    required_op_set: set[type[ast.operator]],
+    forbidden_ops: tuple[type[ast.operator], ...],
+) -> bool:
+    return (
+        required_call_set.issubset(analysis.call_names)
+        and required_op_set.issubset(analysis.op_types)
+        and not any(op in analysis.op_types for op in forbidden_ops)
+    )
+
+
+def _append_required_call_issue(
+    issues: list[str],
+    relevant_analyses: list[OutputFlowAnalysis],
+    required_calls: tuple[str, ...],
+    required_call_set: set[str],
+) -> None:
+    if not required_calls:
+        return
+    if any(required_call_set.issubset(analysis.call_names) for analysis in relevant_analyses):
+        return
+    formatted_calls = ", ".join(f"{name}()" for name in required_calls)
+    issues.append(
+        f"Printed result must come from calculations that use {formatted_calls}."
+    )
+
+
+def _append_required_op_issue(
+    issues: list[str],
+    relevant_analyses: list[OutputFlowAnalysis],
+    required_ops: tuple[type[ast.operator], ...],
+    required_op_set: set[type[ast.operator]],
+) -> None:
+    if not required_ops:
+        return
+    if any(required_op_set.issubset(analysis.op_types) for analysis in relevant_analyses):
+        return
+    formatted_ops = ", ".join(_operator_token(op) for op in required_ops)
+    issues.append(
+        f"Printed result must come from calculations that use {formatted_ops}."
+    )
+
+
+def _append_forbidden_op_issue(
+    issues: list[str],
+    relevant_analyses: list[OutputFlowAnalysis],
+    forbidden_ops: tuple[type[ast.operator], ...],
+) -> None:
+    used_forbidden_ops = [
+        op for op in forbidden_ops if any(op in analysis.op_types for analysis in relevant_analyses)
+    ]
+    if not used_forbidden_ops:
+        return
+    formatted_ops = ", ".join(_operator_token(op) for op in used_forbidden_ops)
+    issues.append(f"Printed result must not use {formatted_ops}.")
 
 
 def _print_output_analyses(
@@ -159,6 +246,36 @@ def _analyse_expression(
     input_names: set[str],
     seen_names: frozenset[str],
 ) -> OutputFlowAnalysis:
+    direct_input_names, call_names, op_types = _collect_direct_expression_details(
+        expr,
+        input_names=input_names,
+    )
+    transitive_input_names = set(direct_input_names)
+    context = _ExpressionAnalysisContext(
+        before_line=before_line,
+        assignments=assignments,
+        input_names=input_names,
+        seen_names=seen_names,
+    )
+    _merge_transitive_expression_details(
+        expr,
+        context=context,
+        transitive_input_names=transitive_input_names,
+        call_names=call_names,
+        op_types=op_types,
+    )
+    return OutputFlowAnalysis(
+        input_names=frozenset(transitive_input_names),
+        call_names=frozenset(call_names),
+        op_types=frozenset(op_types),
+    )
+
+
+def _collect_direct_expression_details(
+    expr: ast.AST,
+    *,
+    input_names: set[str],
+) -> tuple[set[str], set[str], set[type[ast.operator]]]:
     direct_input_names: set[str] = set()
     call_names: set[str] = set()
     op_types: set[type[ast.operator]] = set()
@@ -166,42 +283,54 @@ def _analyse_expression(
     for node in ast.walk(expr):
         if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and node.id in input_names:
             direct_input_names.add(node.id)
+            continue
         if isinstance(node, ast.Call):
             call_name = _call_name(node)
             if call_name is not None:
                 call_names.add(call_name)
+            continue
         if isinstance(node, ast.BinOp):
             op_types.add(type(node.op))
 
-    transitive_input_names = set(direct_input_names)
-    for node in ast.walk(expr):
-        if not isinstance(node, ast.Name) or not isinstance(node.ctx, ast.Load):
-            continue
-        if node.id in input_names or node.id in seen_names:
+    return direct_input_names, call_names, op_types
+
+
+def _merge_transitive_expression_details(
+    expr: ast.AST,
+    *,
+    context: _ExpressionAnalysisContext,
+    transitive_input_names: set[str],
+    call_names: set[str],
+    op_types: set[type[ast.operator]],
+) -> None:
+    for name_node in _iter_referenced_names(expr):
+        if name_node.id in context.input_names or name_node.id in context.seen_names:
             continue
         assignment = _last_assignment_before(
-            assignments,
-            node.id,
-            getattr(node, "lineno", before_line),
+            context.assignments,
+            name_node.id,
+            getattr(name_node, "lineno", context.before_line),
         )
         if assignment is None:
             continue
         nested = _analyse_expression(
             assignment.value,
-            before_line=getattr(assignment, "lineno", before_line),
-            assignments=assignments,
-            input_names=input_names,
-            seen_names=seen_names | {node.id},
+            before_line=getattr(assignment, "lineno", context.before_line),
+            assignments=context.assignments,
+            input_names=context.input_names,
+            seen_names=context.seen_names | {name_node.id},
         )
         transitive_input_names.update(nested.input_names)
         call_names.update(nested.call_names)
         op_types.update(nested.op_types)
 
-    return OutputFlowAnalysis(
-        input_names=frozenset(transitive_input_names),
-        call_names=frozenset(call_names),
-        op_types=frozenset(op_types),
-    )
+
+def _iter_referenced_names(expr: ast.AST) -> list[ast.Name]:
+    return [
+        node
+        for node in ast.walk(expr)
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
+    ]
 
 
 def _last_assignment_before(
@@ -218,9 +347,12 @@ def _last_assignment_before(
 def _call_name(node: ast.Call) -> str | None:
     if isinstance(node.func, ast.Name):
         return node.func.id
-    if isinstance(node.func, ast.Attribute):
-        if isinstance(node.func.value, ast.Name) and node.func.value.id == "builtins":
-            return node.func.attr
+    if (
+        isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "builtins"
+    ):
+        return node.func.attr
     return None
 
 
