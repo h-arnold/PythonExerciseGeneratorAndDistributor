@@ -26,6 +26,7 @@ _OUTPUT_DIRECTORY_EXCEPTIONS = (
     TypeError,
     ValueError,
 )
+
 def _is_fatal_control_flow_exception(error: BaseException) -> bool:
     """Return True when an exception must escape defensive handlers."""
 

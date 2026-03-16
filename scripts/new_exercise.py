@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from exercise_metadata.schema import SCHEMA_VERSION
+from scripts.template_repo_cli.utils.validation import VALID_CONSTRUCTS, validate_construct_name
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_PARTS = 20
@@ -340,6 +341,11 @@ def _validate_and_parse_args() -> argparse.Namespace:
     if not re.fullmatch(r"[a-z0-9]+(?:_[a-z0-9]+)*", construct):
         raise SystemExit(
             "--construct must be snake_case containing only a-z, 0-9, and underscores."
+        )
+    if not validate_construct_name(construct):
+        valid_constructs = ", ".join(sorted(VALID_CONSTRUCTS))
+        raise SystemExit(
+            f"Unknown construct: {construct}. Use one of: {valid_constructs}."
         )
 
     slug = args.slug.strip().lower() if args.slug else _slugify(args.title)

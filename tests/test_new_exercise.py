@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -266,6 +267,51 @@ def test_cli_requires_explicit_construct_and_type(monkeypatch: pytest.MonkeyPatc
     )
 
     with pytest.raises(SystemExit):
+        _VALIDATE_AND_PARSE_ARGS()
+
+
+def test_validate_and_parse_args_accepts_canonical_construct(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "scripts/new_exercise.py",
+            "ex010",
+            "Data Types Example",
+            "--construct",
+            "data_types",
+            "--type",
+            "modify",
+        ],
+    )
+
+    args = _VALIDATE_AND_PARSE_ARGS()
+
+    assert isinstance(args, argparse.Namespace)
+    assert args.construct == "data_types"
+
+
+def test_validate_and_parse_args_rejects_unknown_construct(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "scripts/new_exercise.py",
+            "ex010",
+            "Unknown Construct",
+            "--construct",
+            "made_up_construct",
+            "--type",
+            "modify",
+        ],
+    )
+
+    with pytest.raises(
+        SystemExit,
+        match=r"Unknown construct: made_up_construct\. Use one of:",
+    ):
         _VALIDATE_AND_PARSE_ARGS()
 
 

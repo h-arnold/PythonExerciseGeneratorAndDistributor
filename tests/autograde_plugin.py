@@ -25,6 +25,7 @@ from _pytest.outcomes import OutcomeException
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
 
+
 def _is_fatal_control_flow_exception(error: BaseException) -> bool:
     """Return True when an exception must escape defensive handlers."""
 
