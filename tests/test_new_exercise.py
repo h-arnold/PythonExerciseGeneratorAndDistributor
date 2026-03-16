@@ -25,6 +25,7 @@ class _MakeNotebookWithParts(Protocol):
         parts: int,
         exercise_type: str,
         notebook_filename: str,
+        test_target: str,
     ) -> Notebook: ...
 
 
@@ -36,9 +37,23 @@ class _ValidateAndParseArgs(Protocol):
     def __call__(self) -> object: ...
 
 
+class _BuildReadmeLines(Protocol):
+    def __call__(
+        self,
+        title: str,
+        created_date: str,
+        *,
+        exercise_type: str,
+        test_target: str,
+    ) -> list[str]: ...
+
+
+# These private helpers are part of the scaffold contract under test, but they remain
+# module-private in production code, so the focused tests bind them explicitly here.
 _MAKE_NOTEBOOK_WITH_PARTS: _MakeNotebookWithParts = getattr(ne, "_make_notebook_with_parts")  # noqa: B009
 _CHECK_EXERCISE_NOT_EXISTS: _CheckExerciseNotExists = getattr(ne, "_check_exercise_not_exists")  # noqa: B009
 _VALIDATE_AND_PARSE_ARGS: _ValidateAndParseArgs = getattr(ne, "_validate_and_parse_args")  # noqa: B009
+_BUILD_README_LINES: _BuildReadmeLines = getattr(ne, "_build_readme_lines")  # noqa: B009
 
 
 def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
@@ -89,6 +104,7 @@ def test_make_notebook_debug_structure() -> None:
         parts=2,
         exercise_type="debug",
         notebook_filename="student.ipynb",
+        test_target="exercises/sequence/ex000/tests/test_ex000.py",
     )
     cells = _require_cells(notebook)
 
@@ -109,6 +125,39 @@ def test_make_notebook_debug_structure() -> None:
         previous_cell = cells[cell_index - 1]
         assert previous_cell["cell_type"] == "markdown"
         assert "Expected output" in "".join(_ensure_source_lines(previous_cell))
+
+
+def test_build_readme_lines_uses_canonical_exercise_local_test_target() -> None:
+    exercise_key = "ex010_sequence_debug_syntax"
+    test_target = f"exercises/sequence/{exercise_key}/tests/test_{exercise_key}.py"
+
+    readme_lines = _BUILD_README_LINES(
+        "Debug Example",
+        "2026-01-01",
+        exercise_type="debug",
+        test_target=test_target,
+    )
+
+    readme = "\n".join(readme_lines)
+    assert f"Run `pytest -q {test_target}` until all tests pass." in readme
+    assert "Run `pytest -q` until all tests pass." not in readme
+
+
+def test_make_notebook_instructions_use_canonical_exercise_local_test_target() -> None:
+    test_target = (
+        "exercises/sequence/ex010_sequence_debug_syntax/tests/test_ex010_sequence_debug_syntax.py"
+    )
+    notebook = _MAKE_NOTEBOOK_WITH_PARTS(
+        "Title Debug",
+        parts=1,
+        exercise_type="debug",
+        notebook_filename="student.ipynb",
+        test_target=test_target,
+    )
+    cells = _require_cells(notebook)
+    intro_source = "".join(_ensure_source_lines(cells[0]))
+    assert f"Run `pytest -q {test_target}`" in intro_source
+    assert "- Run `pytest -q`\n" not in intro_source
 
 
 def test_main_creates_canonical_debug_scaffold(
@@ -182,6 +231,11 @@ def test_main_creates_canonical_debug_scaffold(
     readme = (exercise_dir / "README.md").read_text(encoding="utf-8")
     assert "Open `notebooks/student.ipynb`." in readme
     assert "explanation1" in readme or "explanationN" in readme
+    assert (
+        f"Run `pytest -q exercises/sequence/{exercise_key}/tests/test_{exercise_key}.py` "
+        "until all tests pass."
+    ) in readme
+    assert "Run `pytest -q` until all tests pass." not in readme
 
     test_text = test_path.read_text(encoding="utf-8")
     assert (
@@ -221,6 +275,7 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
         parts=3,
         exercise_type="modify",
         notebook_filename="student.ipynb",
+        test_target="exercises/sequence/ex000/tests/test_ex000.py",
     )
     cells = _require_cells(notebook)
 

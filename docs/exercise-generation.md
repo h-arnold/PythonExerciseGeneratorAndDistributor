@@ -155,7 +155,7 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
 
 ## Exercise Verifier — quick quality checks 🔍
 
-The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards (structure, tags, sequencing, tests, teacher guidance, and order-of-teaching). It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
+The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards for canonical scaffold structure, metadata resolution, notebook tags/metadata, sequencing heuristics, and `OrderOfTeaching.md` coverage. It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
 
 How to run it manually:
 
@@ -172,12 +172,15 @@ How to run it manually:
 
 What it checks:
 
-- Gate A–F (see repo guidelines): exercise-type compliance, construct sequencing, tags & notebook structure, tests, teacher docs, and inclusion in `OrderOfTeaching.md`.
+- Canonical scaffold structure and required file presence.
+- Canonical metadata loading and resolver-based exercise discovery.
+- Notebook tags, `metadata.language`, and debug explanation-cell structure.
+- Construct progression heuristics and inclusion in `OrderOfTeaching.md`.
 - It follows the rules in `docs/exercise-types/` and the verifier agent spec (`.github/agents/exercise_verifier.md.agent.md`).
 
 Output:
 
-- The verifier returns a concise verdict: **PASS**, **PASS WITH NITS**, or **FAIL**, plus specific, minimal fixes (file(s) and suggestions).
+- The verifier returns a concise verdict such as **OK: 0 warning(s)** or **FAIL: ...**, plus specific, minimal fixes (file(s) and suggestions).
 
 **Tip:** Provide the exercise id/slug (e.g., `ex050_my_topic`) or the notebook path when asking — the verifier needs one of these to run targeted checks.
 

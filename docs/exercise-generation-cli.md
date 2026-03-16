@@ -96,7 +96,7 @@ Created files:
 
 - `__init__.py`: Keeps the package importable
 - `README.md`: Prefilled with student prompt and teacher notes placeholders (update both sections)
-- `tests/test_<exercise_key>.py`: Canonical repository-side exercise test within the exercise folder
+- `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`: Canonical repository-side exercise test within the exercise folder
 - (Add manually) `OVERVIEW.md`: Detailed teaching notes
 
 Instructor reference solutions live beside the student notebook under `notebooks/solution.ipynb`.
@@ -110,7 +110,7 @@ Contains:
 - Markdown cell with title and instructions
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - For multi-part notebooks, a markdown prompt precedes each tagged cell
-- Optional self-check cell (not graded)
+- Self-check scratch cell (not graded)
 - Auto-appended untagged code cell that imports `exercise_runtime_support.student_checker.run_notebook_checks` and runs it against `student.ipynb` so students see grouped local check results before submitting
 
 The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
@@ -170,7 +170,7 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 2. Markdown/Code: Examples or context
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
-5. Code (untagged): Optional self-check cell
+5. Code (untagged): Self-check scratch cell
 6. Code (untagged): Auto-appended check-your-answers cell that runs `exercise_runtime_support.student_checker.run_notebook_checks('student.ipynb')` so students see grouped per-check output
 ```
 
@@ -282,7 +282,7 @@ One sentence describing what students will learn.
 
 ## Files
 - Notebook: `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
-- Tests: `tests/test_<exercise_key>.py`
+- Tests: `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
 ```
 
 **`OVERVIEW.md`** (create new):
@@ -327,8 +327,8 @@ Students fix broken code.
 
 **Notebook structure**:
 
-1. Show the buggy code in a non-graded cell
-2. Student fixes it in a tagged cell
+1. Show the expected behaviour in a markdown cell
+2. Student fixes the buggy starter code in the tagged `exerciseN` cell
 3. Tests verify the fix
 
 ### Modify Exercises

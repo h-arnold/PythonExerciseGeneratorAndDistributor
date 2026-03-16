@@ -516,7 +516,7 @@ These can be written first because they define the migration model, inventory, t
 ### Wave 2: Author After Wave 1 Is Stable
 
 - [x] Phase 6 checklist: Exercise Test Migration Preparation And Verification
-- [ ] Phase 7 checklist: Scaffolding And Verification
+- [x] Phase 7 checklist: Scaffolding And Verification
 - [ ] Phase 8 checklist: Grading And Autograding
 - [ ] Phase 9 checklist: Pytest Discovery, Packaging, And Workflow Contract
 

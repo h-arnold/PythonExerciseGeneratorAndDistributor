@@ -110,7 +110,7 @@ If you're a student working on exercises:
 3. **Open a notebook** in Jupyter Lab:
 
    ```bash
-   uv run jupyter lab notebooks/ex002_sequence_modify_basics.ipynb
+   uv run jupyter lab exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb
    ```
 
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)

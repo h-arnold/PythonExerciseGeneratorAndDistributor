@@ -137,8 +137,7 @@ def _load_notebook(path: Path) -> NotebookDocument:
         raise SystemExit(f"Invalid JSON in notebook: {path}: {exc}") from exc
 
     if not _is_notebook_document(raw):
-        raise SystemExit(
-            f"Notebook {path} is missing a top-level 'cells' list.")
+        raise SystemExit(f"Notebook {path} is missing a top-level 'cells' list.")
     return raw
 
 
@@ -284,6 +283,8 @@ def _check_order_of_teaching(
 
     text = order_path.read_text(encoding="utf-8")
     slug = ex_dir.name
+    # Accept the current legacy flattened notebook reference plus canonical exercise-local
+    # notebook references while construct teaching-order files are still mid-migration.
     notebook_refs = {
         f"notebooks/{slug}.ipynb",
         f"{slug}/notebooks/{notebook_name}",
@@ -431,8 +432,7 @@ def _check_notebook_structure(
 
     for idx, cell in enumerate(cells_list, start=1):
         if not isinstance(cell, dict):
-            findings.append(
-                Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
+            findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
         cell_mapping = cast(dict[str, Any], cell)
         if not _is_notebook_cell(cell_mapping):
@@ -551,14 +551,13 @@ def _scan_for_progression_violations(  # noqa: C901
         ]
 
     # If we're in construct K, then constructs strictly after K are disallowed.
-    disallowed = CONSTRUCT_ORDER[allowed_idx + 1:]
+    disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(
-                    r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -579,11 +578,9 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + \
-                            1 < len(func_defs) else len(text)
+                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
                         regions.append((s, e))
-                    return_positions = [m.start()
-                                        for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
@@ -714,9 +711,7 @@ def _load_solution_notebook(
     expect_debug: bool,
 ) -> tuple[Path, NotebookDocument | None, list[Finding]]:
     nb_solution_path = (
-        ex_dir / "notebooks" / "solution.ipynb"
-        if ex_dir is not None
-        else Path("solution.ipynb")
+        ex_dir / "notebooks" / "solution.ipynb" if ex_dir is not None else Path("solution.ipynb")
     )
     if not nb_solution_path.exists():
         return nb_solution_path, None, []
@@ -803,8 +798,7 @@ def main(argv: list[str] | None = None) -> int:
 
     nb_student = _load_notebook(nb_path)
     expect_debug = ex_type == "debug"
-    findings.extend(_check_notebook_structure(
-        nb_path, nb_student, expect_debug=expect_debug))
+    findings.extend(_check_notebook_structure(nb_path, nb_student, expect_debug=expect_debug))
 
     nb_solution_path, nb_solution, solution_findings = _load_solution_notebook(
         ex_dir=ex_dir,

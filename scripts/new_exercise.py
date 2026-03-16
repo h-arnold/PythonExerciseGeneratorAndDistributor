@@ -173,6 +173,7 @@ def _make_notebook_with_parts(
     parts: int,
     exercise_type: str,
     notebook_filename: str,
+    test_target: str,
 ) -> dict[str, Any]:
     """Build a scaffolded notebook with tagged exercise cells."""
     if parts < 1:
@@ -190,7 +191,7 @@ def _make_notebook_with_parts(
                 "\n",
                 "## How to work\n",
                 "- Write your solution(s) in the exercise cell(s)\n",
-                "- Run `pytest -q`\n",
+                f"- Run `pytest -q {test_target}`\n",
             ],
         }
     ]
@@ -229,7 +230,13 @@ def _make_notebook_with_parts(
     }
 
 
-def _build_readme_lines(title: str, created_date: str, *, exercise_type: str) -> list[str]:
+def _build_readme_lines(
+    title: str,
+    created_date: str,
+    *,
+    exercise_type: str,
+    test_target: str,
+) -> list[str]:
     """Build README content for a scaffolded exercise."""
     lines = [
         f"# {title}",
@@ -237,7 +244,7 @@ def _build_readme_lines(title: str, created_date: str, *, exercise_type: str) ->
         "## Student prompt",
         "- Open `notebooks/student.ipynb`.",
         "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
-        "- Run `pytest -q` until all tests pass.",
+        f"- Run `pytest -q {test_target}` until all tests pass.",
         "",
         "## Teacher notes",
         f"- Created: {created_date}",
@@ -260,14 +267,14 @@ def _build_exercise_key(
 ) -> str:
     """Build the canonical exercise key from scaffold inputs.
 
-    Returns:
-        The exercise key in ``exNNN_<construct>_<type>_<slug>`` format.
-
     Args:
         exercise_id: Exercise identifier in ``exNNN`` format.
         construct: Canonical construct name.
         exercise_type: Canonical exercise type.
         slug: Snake-case exercise slug suffix.
+
+    Returns:
+        The exercise key in ``exNNN_<construct>_<type>_<slug>`` format.
     """
     return f"{exercise_id}_{construct}_{exercise_type}_{slug}"
 
@@ -388,7 +395,12 @@ def main() -> int:
     (exercise_dir / "__init__.py").write_text("\n", encoding="utf-8")
 
     today = _dt.date.today().isoformat()
-    readme_lines = _build_readme_lines(args.title, today, exercise_type=args.exercise_type)
+    readme_lines = _build_readme_lines(
+        args.title,
+        today,
+        exercise_type=args.exercise_type,
+        test_target=test_path.relative_to(ROOT).as_posix(),
+    )
     (exercise_dir / README_FILENAME).write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
 
     exercise_metadata = _build_exercise_metadata(
@@ -401,6 +413,7 @@ def main() -> int:
     )
 
     relative_student_notebook = student_notebook_path.relative_to(ROOT).as_posix()
+    relative_test_path = test_path.relative_to(ROOT).as_posix()
     test_lines: list[str] = [
         "from __future__ import annotations",
         "",
@@ -481,6 +494,7 @@ def main() -> int:
         parts=args.parts,
         exercise_type=args.exercise_type,
         notebook_filename=STUDENT_NOTEBOOK_FILENAME,
+        test_target=relative_test_path,
     )
     student_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
     solution_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
