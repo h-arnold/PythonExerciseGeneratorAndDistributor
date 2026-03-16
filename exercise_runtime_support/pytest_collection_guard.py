@@ -5,9 +5,12 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Iterable
 from pathlib import Path
+import re
 
 _TOP_LEVEL_TEST_PATH_PARTS = 2
 _MIN_CANONICAL_TEST_PATH_PARTS = 4
+
+_EXERCISE_TEST_STEM_RE = re.compile(r"^test_ex\d{3}(?:_.*)?$")
 
 
 def find_duplicate_exercise_test_sources(paths: Iterable[Path]) -> dict[str, list[Path]]:
@@ -47,9 +50,12 @@ def find_noncanonical_exercise_test_sources(paths: Iterable[Path]) -> list[Path]
 
 
 def _exercise_key_for_path(path: Path) -> str | None:
-    if path.suffix != ".py" or not path.name.startswith("test_ex"):
+    if path.suffix != ".py":
         return None
-    return path.stem.removeprefix("test_")
+    stem = path.stem
+    if not _EXERCISE_TEST_STEM_RE.match(stem):
+        return None
+    return stem.removeprefix("test_")
 
 
 def _is_top_level_test_path(path: Path) -> bool:
@@ -57,6 +63,28 @@ def _is_top_level_test_path(path: Path) -> bool:
 
 
 def _is_canonical_test_path(path: Path) -> bool:
-    if len(path.parts) < _MIN_CANONICAL_TEST_PATH_PARTS or path.parts[0] != "exercises":
+    """Return True only for canonical exercise-local tests.
+
+    Canonical layout (per ACTION_PLAN design rules):
+    exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py
+    """
+    # Must live under the exercises/ root.
+    if path.parts[0] != "exercises":
         return False
-    return "tests" in path.parts[1:-1]
+
+    # Expected structure: exercises, construct, exercise_key, "tests", filename
+    if len(path.parts) != 5:
+        return False
+
+    _, _construct, exercise_key_dir, tests_dir, _filename = path.parts
+
+    # The immediate subdirectory must be "tests".
+    if tests_dir != "tests":
+        return False
+
+    # Filename must be a valid test_ex* file, and its key must match the directory name.
+    exercise_key = _exercise_key_for_path(path)
+    if exercise_key is None:
+        return False
+
+    return exercise_key_dir == exercise_key

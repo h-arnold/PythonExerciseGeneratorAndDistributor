@@ -63,6 +63,16 @@ def test_find_noncanonical_exercise_test_sources_flags_all_repo_side_exnnn_tests
     ]
 
 
+def test_find_noncanonical_exercise_test_sources_ignores_nonexercise_repo_tests() -> None:
+    offenders = find_noncanonical_exercise_test_sources(
+        [
+            Path("tests/test_exercise_type_docs.py"),
+        ]
+    )
+
+    assert offenders == []
+
+
 def test_find_noncanonical_exercise_test_sources_ignores_canonical_exercise_local_tests() -> None:
     offenders = find_noncanonical_exercise_test_sources(
         [
