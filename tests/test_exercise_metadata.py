@@ -156,6 +156,19 @@ class TestResolveNotebookPath:
         # Create the canonical exercise directory but NOT the notebooks sub-directory.
         exercise_dir = tmp_path / "sequence" / "ex004_sequence_debug_syntax"
         exercise_dir.mkdir(parents=True)
+        make_exercise_json(
+            exercise_dir,
+            {
+                "schema_version": 1,
+                "exercise_key": "ex004_sequence_debug_syntax",
+                "exercise_id": 4,
+                "slug": "ex004_sequence_debug_syntax",
+                "title": "Debug Syntax Errors",
+                "construct": "sequence",
+                "exercise_type": "debug",
+                "parts": 10,
+            },
+        )
 
         manifest_path = make_manifest(
             tmp_path,
@@ -169,6 +182,30 @@ class TestResolveNotebookPath:
                 exercises_root=tmp_path,
                 manifest_path=manifest_path,
             )
+
+    def test_raises_lookup_error_when_exercise_json_missing_for_canonical(self, tmp_path: Path) -> None:
+        """Canonical exercise resolution fails fast when exercise.json is missing."""
+        exercise_dir = tmp_path / "sequence" / "ex004_sequence_debug_syntax"
+        notebooks_dir = exercise_dir / "notebooks"
+        notebooks_dir.mkdir(parents=True)
+        (notebooks_dir / "student.ipynb").write_text("{}", encoding="utf-8")
+
+        manifest_path = make_manifest(
+            tmp_path,
+            {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
+        )
+
+        with pytest.raises(LookupError) as exc_info:
+            resolve_notebook_path(
+                "ex004_sequence_debug_syntax",
+                "student",
+                exercises_root=tmp_path,
+                manifest_path=manifest_path,
+            )
+
+        message = str(exc_info.value)
+        assert "exercise.json is missing or invalid" in message
+        assert "exercise.json not found" in message
 
 
 # ---------------------------------------------------------------------------

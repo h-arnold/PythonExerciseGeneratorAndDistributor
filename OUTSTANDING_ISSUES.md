@@ -4,14 +4,6 @@
 
 ## Phase 2 — Metadata And Resolution Layer
 
-### 4. `resolve_notebook_path()` can resolve a canonical notebook even when `exercise.json` is missing
-- **Action-plan requirement:** if an exercise is marked canonical, missing canonical files must fail hard.
-- **Verified evidence:**
-  - `exercise_metadata/resolver.py:150-158`
-  - In a temporary canonical fixture with a manifest entry and `notebooks/student.ipynb` present, `resolve_notebook_path()` succeeded even though `exercise.json` was absent.
-  - Existing tests only prove missing notebook files fail: `tests/test_exercise_metadata.py:140-157`
-- **Why this blocks completion:** a canonical exercise is currently not required to have its metadata file at notebook-resolution time.
-
 ### 5. The repo does not prove by test that the shared resolver ignores `PYTUTOR_NOTEBOOKS_DIR`
 - **Action-plan requirement:** Phase 2 completion must prove the shared resolver ignores `PYTUTOR_NOTEBOOKS_DIR` entirely.
 - **Verified evidence:**

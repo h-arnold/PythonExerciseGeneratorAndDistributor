@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
+from exercise_metadata.loader import load_exercise_metadata
 from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout
 
 _EXERCISES_ROOT = Path(__file__).resolve().parents[1] / "exercises"
@@ -132,8 +133,8 @@ def resolve_notebook_path(
     Raises:
         TypeError: If exercise_key is not a str.
         ValueError: If variant is not "student" or "solution".
-        LookupError: If the exercise is not in the manifest or its canonical
-            notebook files are missing.
+        LookupError: If the exercise is not in the manifest, its canonical
+            metadata is invalid, or its canonical notebook files are missing.
     """
     if not isinstance(exercise_key, str):
         raise TypeError(
@@ -159,6 +160,14 @@ def resolve_notebook_path(
         )
 
     exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
+    try:
+        load_exercise_metadata(exercise_dir)
+    except (FileNotFoundError, ValueError) as exc:
+        raise LookupError(
+            f"exercise {exercise_key!r} is marked as canonical in the migration manifest "
+            f"but its exercise.json is missing or invalid: {exc}"
+        ) from exc
+
     notebook_path = exercise_dir / "notebooks" / f"{variant}.ipynb"
     if not notebook_path.exists():
         raise LookupError(
