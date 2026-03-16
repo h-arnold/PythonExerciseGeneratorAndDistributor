@@ -4,13 +4,6 @@
 
 ## Phase 2 — Metadata And Resolution Layer
 
-### 3. `resolve_exercise_dir()` does not fail fast for string path-like legacy inputs
-- **Action-plan requirement:** the shared resolver must reject legacy path inputs and make legacy callers fail clearly rather than adapting them.
-- **Verified evidence:**
-  - `exercise_metadata/resolver.py:36-52,55-98`
-  - Probing the live resolver with `resolve_exercise_dir("notebooks/ex001_sanity.ipynb")` and `resolve_exercise_dir("ex001_sanity.ipynb")` raises a generic `LookupError` about an unknown construct, not an explicit exercise-key-only error.
-- **Why this blocks completion:** Phase 2 requires an explicit fail-fast contract for legacy path-shaped inputs, not a generic lookup failure after partial parsing.
-
 ### 4. `resolve_notebook_path()` can resolve a canonical notebook even when `exercise.json` is missing
 - **Action-plan requirement:** if an exercise is marked canonical, missing canonical files must fail hard.
 - **Verified evidence:**

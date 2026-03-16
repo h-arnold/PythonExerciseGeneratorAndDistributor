@@ -55,6 +55,20 @@ class TestResolveExerciseDir:
             resolve_exercise_dir(
                 "ex999_sequence_nonexistent", exercises_root=tmp_path)
 
+    @pytest.mark.parametrize(
+        "legacy_input",
+        ["notebooks/ex001_sanity.ipynb", "ex001_sanity.ipynb"],
+    )
+    def test_rejects_path_like_string_input(self, legacy_input: str) -> None:
+        """Path-like strings fail fast with an exercise-key-only resolver error."""
+        with pytest.raises(LookupError) as exc_info:
+            resolve_exercise_dir(legacy_input)
+
+        message = str(exc_info.value)
+        assert "resolver input must be an exercise_key" in message
+        assert "path-like string" in message
+        assert "Path-like inputs are not supported" in message
+
     def test_uses_exercises_root_override(self, tmp_path: Path) -> None:
         """exercises_root override is respected for canonical path derivation."""
         exercise_dir = tmp_path / "sequence" / "ex999_sequence_fake_exercise"
