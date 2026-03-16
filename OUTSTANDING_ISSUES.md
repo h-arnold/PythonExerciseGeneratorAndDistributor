@@ -6,13 +6,6 @@
 
 ## Phase 3 — Metadata Consolidation And Registry Replacement
 
-### 7. The metadata catalogue does not fail fast on duplicate `exercise_id` values
-- **Action-plan requirement:** Phase 3 calls for fail-fast validation for duplicate exercise identities in the metadata-backed catalogue.
-- **Verified evidence:**
-  - `exercise_metadata/registry.py:106-159`
-  - In a temporary canonical fixture with two exercises sharing the same `exercise_id`, `build_exercise_catalogue()` succeeded and returned both entries.
-- **Why this blocks completion:** the catalogue can still build inconsistent metadata-derived identity/order views.
-
 ## Phase 4 — Execution Model And Source-To-Export Contract
 
 ### 8. The canonical ex004 pilot test still uses legacy env/path fallback logic

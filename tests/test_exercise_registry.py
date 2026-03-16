@@ -370,6 +370,41 @@ def test_build_exercise_catalogue_loads_legacy_metadata_from_canonical_directory
     ]
 
 
+def test_build_exercise_catalogue_rejects_duplicate_exercise_ids(tmp_path: Path) -> None:
+    """The metadata-backed catalogue fails fast when exercise_id values collide."""
+    manifest_path = make_manifest(
+        tmp_path,
+        {
+            "ex101_sequence_first": {"layout": "canonical"},
+            "ex102_sequence_second": {"layout": "canonical"},
+        },
+    )
+    exercises_root = tmp_path / "exercises"
+
+    for exercise_key, title in (
+        ("ex101_sequence_first", "First Exercise"),
+        ("ex102_sequence_second", "Second Exercise"),
+    ):
+        make_exercise_json(
+            exercises_root / "sequence" / exercise_key,
+            {
+                "schema_version": 1,
+                "exercise_key": exercise_key,
+                "exercise_id": 101,
+                "slug": exercise_key,
+                "title": title,
+                "construct": "sequence",
+                "exercise_type": "modify",
+                "parts": 1,
+            },
+        )
+
+    with pytest.raises(RuntimeError, match="requires unique exercise_id values"):
+        build_exercise_catalogue(
+            manifest_path=manifest_path,
+            exercises_root=exercises_root,
+        )
+
 def test_build_registry_ignores_non_canonical_metadata_location_for_legacy_exercise(
     tmp_path: Path,
 ) -> None:
