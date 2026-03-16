@@ -495,11 +495,11 @@ Use this section to track which detailed migration checklist documents have been
 
 ### Wave 1: Can Be Authored First
 
-- [ ] Phase 1 checklist: Repository Inventory And Canonical Model
-- [ ] Phase 2 checklist: Metadata And Resolution Layer
-- [ ] Phase 3 checklist: Metadata Consolidation And Registry Replacement
-- [ ] Phase 4 checklist: Execution Model And Source-To-Export Contract
-- [ ] Phase 5 checklist: Docs And Agent Guidance Alignment
+- [x] Phase 1 checklist: Repository Inventory And Canonical Model
+- [x] Phase 2 checklist: Metadata And Resolution Layer
+- [x] Phase 3 checklist: Metadata Consolidation And Registry Replacement
+- [x] Phase 4 checklist: Execution Model And Source-To-Export Contract
+- [x] Phase 5 checklist: Docs And Agent Guidance Alignment
 - [ ] Phase 12 checklist: Docs, Agents, Workflows, And Contributor Guidance
 - [ ] Phase 13 checklist: Validation, Cutover, And Cleanup
 
