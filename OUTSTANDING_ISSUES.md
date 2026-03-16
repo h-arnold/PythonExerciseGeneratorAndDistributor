@@ -4,13 +4,6 @@
 
 ## Phase 2 — Metadata And Resolution Layer
 
-### 5. The repo does not prove by test that the shared resolver ignores `PYTUTOR_NOTEBOOKS_DIR`
-- **Action-plan requirement:** Phase 2 completion must prove the shared resolver ignores `PYTUTOR_NOTEBOOKS_DIR` entirely.
-- **Verified evidence:**
-  - `tests/test_exercise_metadata.py:6-12` states the contract in comments.
-  - The same test file contains no `setenv()` / `delenv()` coverage for `PYTUTOR_NOTEBOOKS_DIR`.
-- **Why this blocks completion:** the intended behaviour may be correct, but the required proof point is missing.
-
 ## Phase 3 — Metadata Consolidation And Registry Replacement
 
 ### 6. Template selection still depends partly on legacy paths instead of metadata

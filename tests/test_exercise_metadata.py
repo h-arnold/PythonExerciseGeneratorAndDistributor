@@ -77,6 +77,22 @@ class TestResolveExerciseDir:
             "ex999_sequence_fake_exercise", exercises_root=tmp_path)
         assert result == exercise_dir
 
+    def test_ignores_pytutor_notebooks_dir_for_canonical_directory_resolution(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """resolve_exercise_dir ignores PYTUTOR_NOTEBOOKS_DIR and uses canonical resolution."""
+        misleading_notebooks_dir = tmp_path / "misleading_notebooks"
+        misleading_notebooks_dir.mkdir()
+        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(misleading_notebooks_dir))
+
+        result = resolve_exercise_dir("ex004_sequence_debug_syntax")
+
+        assert result == Path(
+            "exercises/sequence/ex004_sequence_debug_syntax"
+        ).resolve()
+        assert result.parent.name == "sequence"
+        assert result != misleading_notebooks_dir
+
     def test_rejects_legacy_type_segment_path_for_canonical_resolution(
         self, tmp_path: Path
     ) -> None:
@@ -110,6 +126,24 @@ class TestResolveNotebookPath:
             "ex004_sequence_debug_syntax", "solution")
         assert result.exists()
         assert result.name == "solution.ipynb"
+
+    def test_ignores_pytutor_notebooks_dir_for_canonical_notebook_resolution(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """resolve_notebook_path ignores PYTUTOR_NOTEBOOKS_DIR and keeps canonical paths."""
+        misleading_notebooks_dir = tmp_path / "notebooks"
+        misleading_notebooks_dir.mkdir()
+        fake_solution = misleading_notebooks_dir / "solution.ipynb"
+        fake_solution.write_text('{"cells": []}', encoding="utf-8")
+        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(misleading_notebooks_dir))
+
+        result = resolve_notebook_path("ex004_sequence_debug_syntax", "solution")
+
+        assert result == Path(
+            "exercises/sequence/ex004_sequence_debug_syntax/notebooks/solution.ipynb"
+        ).resolve()
+        assert result.exists()
+        assert result != fake_solution
 
     def test_raises_type_error_for_path_input(self) -> None:
         """Passing a Path instead of str must raise TypeError immediately."""
