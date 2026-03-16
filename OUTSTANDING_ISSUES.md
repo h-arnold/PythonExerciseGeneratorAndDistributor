@@ -2,20 +2,6 @@
 
 ## Phase 1 — Repository Inventory And Canonical Model
 
-### 1. Phase 1 inventory artefacts are stale and no longer describe the current repository state
-- **Action-plan requirement:** Phase 1 is only complete while there is a written inventory of current exercise identities, locations, anomalies, and identity assumptions that later phases can rely on.
-- **Verified evidence:**
-    - `PHASE_1_REPOSITORY_INVENTORY.md:34-40` still claims:
-        - `ex001_sanity` exists under `exercises/ex001_sanity/`
-        - `ex004_sequence_debug_syntax` lives at `exercises/sequence/debug/ex004_sequence_debug_syntax/`
-        - `ex007` still uses `notebooks/solutions/ex007_data_types_debug_casting.ipynb`
-    - Current repository state differs:
-        - `exercises/ex001_sanity/` is missing
-        - `exercises/sequence/ex004_sequence_debug_syntax/` exists and `exercises/sequence/debug/ex004_sequence_debug_syntax/` is missing
-        - `notebooks/solutions/ex007_sequence_debug_casting.ipynb` exists and `notebooks/solutions/ex007_data_types_debug_casting.ipynb` is missing
-        - `ex005` and `ex007` currently have both legacy and canonical exercise directories
-- **Why this blocks completion:** the written Phase 1 inventory is no longer trustworthy as the source of “current” exercise locations and anomalies.
-
 ### 2. The Phase 1 path-assumption register is also stale
 - **Action-plan requirement:** Phase 1 must identify which current modules treat exercise identity as a filename, slug, path, or directory name.
 - **Verified evidence:**
