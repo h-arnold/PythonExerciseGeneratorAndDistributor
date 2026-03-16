@@ -81,6 +81,6 @@ The following matrix records each active consumer surface, its current entry poi
 | exercise scaffolder | emitted import from exercise_runtime_support.exercise_framework.runtime | emitted import from exercise_runtime_support.exercise_framework.runtime |
 | repository workflows | scripts/run_pytest_variant.py --variant solution | scripts/run_pytest_variant.py --variant solution |
 | classroom template workflow | scripts/build_autograde_payload.py --variant student | scripts/build_autograde_payload.py --variant student |
-| contributor documentation | legacy and transition guidance scattered across docs | single contract documented in docs/execution-model.md |
+| contributor documentation | legacy and transition guidance scattered across docs and AGENTS.md | single contract documented in docs/execution-model.md |
 
 Maintenance note: `tests/exercise_runtime_support/test_consumer_matrix.py` validates this matrix, checks listed files exist, and guards against regressions that bypass the shared contract.

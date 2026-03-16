@@ -1,8 +1,8 @@
 """Exercise path resolver.
 
 This module provides the canonical resolver API for the new metadata-driven
-layout.  It accepts ONLY exercise_key as input; path-based inputs are
-rejected immediately with a TypeError.
+layout.  It accepts ONLY exercise_key as input; non-string path objects
+raise TypeError and path-like strings fail fast with a clear resolver error.
 
 PYTUTOR_NOTEBOOKS_DIR is deliberately ignored; this resolver targets the
 canonical exercise home convention, `exercises/<construct>/<exercise_key>/`.
@@ -13,6 +13,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
+from exercise_metadata.loader import load_exercise_metadata
 from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout
 
 _EXERCISES_ROOT = Path(__file__).resolve().parents[1] / "exercises"
@@ -31,6 +32,11 @@ _KNOWN_CONSTRUCTS = (
 )
 
 Variant = Literal["student", "solution"]
+
+
+def _is_path_like_input(exercise_key: str) -> bool:
+    """Return True when a string looks like a legacy path or file name."""
+    return "/" in exercise_key or "\\" in exercise_key or Path(exercise_key).suffix != ""
 
 
 def _derive_construct_from_exercise_key(exercise_key: str) -> str:
@@ -69,12 +75,18 @@ def resolve_exercise_dir(exercise_key: object, exercises_root: Path | None = Non
 
     Raises:
         TypeError: If exercise_key is not a str (e.g. a Path was passed).
-        LookupError: If the canonical directory does not exist.
+        LookupError: If a path-like string was passed or the canonical
+            directory does not exist.
     """
     if not isinstance(exercise_key, str):
         raise TypeError(
             f"exercise_key must be a str, not {type(exercise_key).__name__!r}. "
             "Path-based resolution is not supported; use exercise_key only."
+        )
+    if _is_path_like_input(exercise_key):
+        raise LookupError(
+            f"resolver input must be an exercise_key, not a path-like string: {exercise_key!r}. "
+            "Path-like inputs are not supported."
         )
     root = exercises_root or _EXERCISES_ROOT
     construct = _derive_construct_from_exercise_key(exercise_key)
@@ -121,8 +133,8 @@ def resolve_notebook_path(
     Raises:
         TypeError: If exercise_key is not a str.
         ValueError: If variant is not "student" or "solution".
-        LookupError: If the exercise is not in the manifest or its canonical
-            notebook files are missing.
+        LookupError: If the exercise is not in the manifest, its canonical
+            metadata is invalid, or its canonical notebook files are missing.
     """
     if not isinstance(exercise_key, str):
         raise TypeError(
@@ -148,6 +160,14 @@ def resolve_notebook_path(
         )
 
     exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
+    try:
+        load_exercise_metadata(exercise_dir)
+    except (FileNotFoundError, ValueError) as exc:
+        raise LookupError(
+            f"exercise {exercise_key!r} is marked as canonical in the migration manifest "
+            f"but its exercise.json is missing or invalid: {exc}"
+        ) from exc
+
     notebook_path = exercise_dir / "notebooks" / f"{variant}.ipynb"
     if not notebook_path.exists():
         raise LookupError(
