@@ -127,7 +127,7 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    uv run python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic --type modify
    ```
 
-   The scaffolder writes a placeholder test, notebooks, and an exercise folder at `exercises/ex050_my_topic/`. Move that folder into the right curriculum path (for example, `exercises/sequence/modify/`) so it lines up with [docs/exercise-types](exercise-types/) guidance.
+    The scaffolder writes a placeholder test, notebooks, and an exercise folder at `exercises/ex050_my_topic/`. Move that folder into the canonical authoring path (for example, `exercises/sequence/ex050_my_topic/`). Exercise type belongs in `exercise.json`, not in a `modify/` or `debug/` path segment. In the source repository, exercise-specific tests belong under `exercises/sequence/ex050_my_topic/tests/`; any flattened `tests/test_ex050_my_topic.py` file remains a transitional execution/export surface for current tooling and Classroom packaging.
 
 2. **Add the Content**:
 
@@ -145,6 +145,8 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    ```
 
    The first command exercises the solutions; rerun the pytest command with `--variant student` once you expect the student notebook to pass as well.
+
+    The pytest command still targets the flattened top-level test surface because current execution and Classroom packaging have not moved yet. Keep the scaffolded `tests/test_ex050_my_topic.py` compatibility file aligned with the canonical exercise-local test until that execution flow migrates, and do not create additional new top-level `test_exNNN` files in the source repository.
 
 ## Exercise Verifier — quick quality checks 🔍
 
@@ -177,7 +179,6 @@ Output:
 - **Raptor-mini (Preview)** — The best of the free models available in Copilot. It can produce good results but is sometimes inconsistent. The tests is generates are less good.  It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education.
 
 - **GPT 5.4** — This is the best of the current line of paid models. It's precise, follows instructions well and is particularly adept at generating tests that account for the ways in which students might bypass the required construct (e.g. using a while loop instead of a for loop) so that they are only told their solution is correct when it's correct in the intended way. It is available with the Copilot Education plan, which is free for students and teachers.
-  
 
 ## Best Practices
 

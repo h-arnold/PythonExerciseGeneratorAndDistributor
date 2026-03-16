@@ -185,6 +185,8 @@ Students see test results in the GitHub Actions tab of their repository.
 
 Recommended workflow for creating and testing exercises:
 
+> Warning: In the source repository, canonical exercise-specific tests belong under `exercises/<construct>/<exercise_key>/tests/`. The flattened `tests/test_exNNN_slug.py` files used by current execution and Classroom packaging are transitional compatibility surfaces only.
+
 ```bash
 # 1. Create a new branch
 git checkout -b add-ex042-variables
@@ -192,14 +194,15 @@ git checkout -b add-ex042-variables
 # 2. Generate the exercise
 uv run python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
 
-# 3. Organise the folder
-mv exercises/ex042_variables_and_types exercises/sequence/modify/
+# 3. Organise the folder and create the canonical local tests directory
+mv exercises/ex042_variables_and_types exercises/sequence/ex042_variables_and_types
+mkdir -p exercises/sequence/ex042_variables_and_types/tests
 
 # 4. Author the notebook
 uv run jupyter lab notebooks/ex042_variables_and_types.ipynb
 
-# 5. Write tests
-$EDITOR tests/test_ex042_variables_and_types.py
+# 5. Write canonical exercise-local tests
+$EDITOR exercises/sequence/ex042_variables_and_types/tests/test_ex042_variables_and_types.py
 
 # 6. Complete the solution
 uv run jupyter lab notebooks/solutions/ex042_variables_and_types.ipynb
@@ -217,6 +220,8 @@ git push origin add-ex042-variables
 
 # 10. Create a pull request
 ```
+
+Current verification commands still target `tests/test_ex042_variables_and_types.py` because the flattened top-level test surface remains the active execution/export compatibility path. Keep that scaffolded compatibility file aligned with the canonical exercise-local test until the migration completes, and do not create additional new top-level `test_exNNN` files in the source repository.
 
 ## Troubleshooting
 

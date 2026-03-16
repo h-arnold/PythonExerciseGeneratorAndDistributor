@@ -312,17 +312,17 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 #### Constraints And Acceptance Criteria
 
-- [ ] Do not start broad exercise-test relocation until the maintained docs and agent guidance state clearly that exercise-specific `exNNN` tests belong under `exercises/<construct>/<exercise_key>/tests/`.
-- [ ] The docs and agent pass must happen before the relocation pass so the written contract leads the file moves rather than drifting behind them.
-- [ ] Do not leave current docs or agent guidance describing top-level `tests/test_exNNN*.py` files as an acceptable authoring layout once this phase is complete.
-- [ ] The phase is only complete once the maintained docs and agent instructions consistently describe the canonical authoring test layout, the distinction between repository-side canonical locations and flattened export locations, and the requirement that stray repository-side `test_exNNN*.py` files outside exercise directories are migration debt.
+- [x] Do not start broad exercise-test relocation until the maintained docs and agent guidance state clearly that exercise-specific `exNNN` tests belong under `exercises/<construct>/<exercise_key>/tests/`.
+- [x] The docs and agent pass must happen before the relocation pass so the written contract leads the file moves rather than drifting behind them.
+- [x] Do not leave current docs or agent guidance describing top-level `tests/test_exNNN*.py` files as an acceptable authoring layout once this phase is complete.
+- [x] The phase is only complete once the maintained docs and agent instructions consistently describe the canonical authoring test layout, the distinction between repository-side canonical locations and flattened export locations, and the requirement that stray repository-side `test_exNNN*.py` files outside exercise directories are migration debt.
 
-- [ ] Update [docs/project-structure.md](docs/project-structure.md) and [docs/setup.md](docs/setup.md) so they describe `exercises/<construct>/<exercise_key>/tests/` as the repository home for exercise-specific tests.
-- [ ] Update exercise generation and verification guidance in [docs/exercise-generation.md](docs/exercise-generation.md) and [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) so generated and verified exercises use local `tests/` directories.
-- [ ] Update [AGENTS.md](AGENTS.md) and the files under [.github/agents](.github/agents) so custom agents treat exercise-local `tests/` directories as the canonical repository contract.
-- [ ] Add or update migration warning blocks where needed so contributors know the repository is mid-migration and should not create new top-level `test_exNNN*.py` files.
-- [ ] Make the docs explicit that exported Classroom repositories may still flatten tests to top-level `tests/`, while the source repository must not.
-- [ ] Keep a pointer list for documentation and agent guidance pain points in: [README.md](README.md), [docs/project-structure.md](docs/project-structure.md), [docs/setup.md](docs/setup.md), [docs/exercise-generation.md](docs/exercise-generation.md), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [AGENTS.md](AGENTS.md), and [.github/agents](.github/agents).
+- [x] Update [docs/project-structure.md](docs/project-structure.md) and [docs/setup.md](docs/setup.md) so they describe `exercises/<construct>/<exercise_key>/tests/` as the repository home for exercise-specific tests.
+- [x] Update exercise generation and verification guidance in [docs/exercise-generation.md](docs/exercise-generation.md) and [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) so generated and verified exercises use local `tests/` directories.
+- [x] Update [AGENTS.md](AGENTS.md) and the files under [.github/agents](.github/agents) so custom agents treat exercise-local `tests/` directories as the canonical repository contract.
+- [x] Add or update migration warning blocks where needed so contributors know the repository is mid-migration and should not create new top-level `test_exNNN*.py` files.
+- [x] Make the docs explicit that exported Classroom repositories may still flatten tests to top-level `tests/`, while the source repository must not.
+- [x] Keep a pointer list for documentation and agent guidance pain points in: [README.md](README.md), [docs/project-structure.md](docs/project-structure.md), [docs/setup.md](docs/setup.md), [docs/exercise-generation.md](docs/exercise-generation.md), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [AGENTS.md](AGENTS.md), and [.github/agents](.github/agents).
 
 ### Phase 6: Exercise Test Migration Preparation And Verification
 

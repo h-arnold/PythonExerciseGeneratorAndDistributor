@@ -154,11 +154,16 @@ Tests cases should be written that answer these questions for each of the exerci
 - Pull expected outputs and prompts from `tests/exercise_expectations/` rather than hard-coding them.
 
 **Validation:**
+- Canonical repository-side exercise tests exist under `exercises/<construct>/<exercise_key>/tests/`.
+- Canonical exercise-local tests pass against solution notebooks:
+  - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
 - Tests must pass against solution notebooks:
   - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q tests/test_exNNN_slug.py`
 - Tests should fail against student notebooks until the student completes the work:
   - For debug: buggy student code should fail behaviour tests.
   - For modify/make: incomplete/placeholder code should fail behaviour tests.
+
+Treat `tests/test_exNNN_slug.py` as a transitional execution/export surface only. Do not accept a new exercise whose only exercise-specific test lives at top level.
 
 ### Gate E — Teacher guidance and solution quality
 Verify teacher materials exist and are useful:
@@ -205,7 +210,8 @@ For FAIL:
 5) Inspect manually:
    - student notebook
    - solution notebook
-   - test file
+  - canonical exercise-local test file
+  - flattened compatibility test file, if present
    - exercise README/OVERVIEW/solutions
 6) Run tests (Gate D).
 7) Produce verdict.

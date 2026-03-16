@@ -77,7 +77,7 @@ This repo includes a custom Copilot Chat mode for generating exercises.
      <img src="docs/images/exercise-generation-prompt.png" alt="Screenshot showing the Copilot Chat exercise generation prompt for creating an exercise" style="transform:scale(0.9); transform-origin:top left; display:block;">
      <figcaption>Figure: Copilot Chat prompt used to generate a new exercise.</figcaption>
    </figure>
-4. Review the generated notebook, tests, and metadata for accuracy, and keep the canonical authoring location in mind: `exercises/<construct>/<exercise_key>/`. Exercise type is metadata, not a path segment.
+4. Review the generated notebook, tests, and metadata for accuracy, and keep the canonical authoring layout in mind: `exercises/<construct>/<exercise_key>/`, with exercise-specific repository tests under `exercises/<construct>/<exercise_key>/tests/`. Exercise type is metadata, not a path segment.
 5. Verify the solution notebook passes tests:
    - [scripts/verify_solutions.sh](scripts/verify_solutions.sh) -q
 
@@ -106,7 +106,7 @@ Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
 ## Repository layout (high level)
 
-- [exercises/](exercises/) — canonical authoring tree for exercise-specific assets: `exercises/<construct>/<exercise_key>/`
+- [exercises/](exercises/) — canonical authoring tree for exercise-specific assets: `exercises/<construct>/<exercise_key>/`, including exercise-local tests under `exercises/<construct>/<exercise_key>/tests/`
 - [notebooks/](notebooks/) — transitional and exported flattened student notebooks
 - [notebooks/solutions/](notebooks/solutions/) — transitional flattened instructor solutions
 - [tests/](tests/) — shared pytest discovery plus transitional/exported flattened exercise tests

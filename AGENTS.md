@@ -28,10 +28,11 @@ This repository provides notebook-based Python exercises with automated grading 
 exercises/             # Canonical authoring home for exercise-specific assets
   <construct>/<exercise_key>/
     exercise.json      # Exercise metadata (exercise type lives here, not in the path)
+    tests/             # Canonical repository-side exercise-specific tests
 notebooks/             # Transitional and exported flattened notebook paths
   exNNN_slug.ipynb     # Student notebook surface used by current tooling
   solutions/           # Instructor solution mirrors used by current tooling
-tests/                 # Shared pytest suites and grading infrastructure
+tests/                 # Shared pytest suites plus transitional/exported flattened exercise tests
   notebook_grader.py   # Core grading framework
   test_exNNN_*.py      # Transitional/exported flattened exercise tests
 scripts/               # Automation utilities
@@ -67,7 +68,7 @@ docs/                  # Project documentation
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` and `PYTUTOR_NOTEBOOKS_DIR` as described elsewhere.
+  - For notebooks and exercises, canonical repository-side tests belong under `exercises/<construct>/<exercise_key>/tests/`. Top-level `tests/test_exNNN_*.py` files and `PYTUTOR_NOTEBOOKS_DIR` flows remain transitional execution/export surfaces only.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
@@ -169,7 +170,7 @@ Do not create exercises manually. Use:
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
 
-Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`.
+Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened top-level `tests/test_exNNN_*.py` files remain transitional/export-facing only.
 
 ## Working with the Grading System
 

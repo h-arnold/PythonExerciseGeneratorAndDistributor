@@ -11,6 +11,8 @@ PythonExerciseGeneratorAndDistributor/
 ├── exercises/                 # Canonical authoring tree for exercise-specific assets
 │   └── <construct>/<exercise_key>/
 │       ├── exercise.json      # Canonical metadata; exercise type lives here
+│       ├── tests/
+│       │   └── test_<exercise_key>.py  # Canonical repository-side exercise tests
 │       └── ...
 ├── notebooks/                 # Transitional and exported flattened student notebooks
 │   ├── exNNN_slug.ipynb       # Current runtime/export notebook surface
@@ -23,8 +25,9 @@ PythonExerciseGeneratorAndDistributor/
 │   ├── verify_solutions.sh
 │   └── template_repo_cli/
 ├── template_repo_files/       # Source files for generating GitHub Classroom template repos
-├── tests/                     # Automated pytest suites
+├── tests/                     # Shared pytest suites plus transitional/exported flattened exercise tests
 │   ├── autograde_plugin.py
+│   ├── test_exNNN_slug.py     # Transitional/exported flattened exercise tests
 │   └── template_repo_cli/
 ├── main.py
 ├── pyproject.toml
@@ -59,8 +62,11 @@ Each exercise folder contains:
 - `README.md`: Teacher-facing exercise notes
 - `OVERVIEW.md`: Pedagogical notes for teachers
 - `exercise.json`: Minimal exercise metadata used by the canonical resolver
+- `tests/`: Canonical repository-side home for exercise-specific pytest files (for example, `test_<exercise_key>.py`)
 
 Current notebook and test execution still uses the flattened `notebooks/`, `notebooks/solutions/`, and top-level `tests/` surfaces. Those are transitional execution and export-facing surfaces for Classroom packaging, not part of the canonical authoring tree.
+
+> Warning: In the source repository, author new exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Any top-level `tests/test_exNNN_slug.py` file that still exists is a transitional runtime/export surface or migration debt, not the canonical authoring layout.
 
 - `OrderOfTeaching.md`: (at construct level) recommended exercise sequence
 
@@ -79,12 +85,12 @@ These notebook paths are not the canonical resolver input. The canonical resolve
 
 ### `tests/`
 
-Contains pytest-based automated grading and support tooling tests:
+Contains pytest-based automated grading and support tooling tests. Canonical exercise-specific tests live under `exercises/<construct>/<exercise_key>/tests/`; the top-level `tests/` tree holds shared infrastructure plus the current flattened execution/export surfaces:
 
 - `exercise_framework/`: Core framework that extracts and executes tagged cells from notebooks
 - `notebook_grader.py`: Low-level notebook parsing and execution helpers wrapped by the framework
 - `autograde_plugin.py`: Captures test outcomes in the format required by GitHub Classroom and powers the Base64 payload CLI
-- `test_exNNN_slug.py`: Transitional/exported flattened test files for each exercise
+- `test_exNNN_slug.py`: Transitional/exported flattened test files for current runtime and Classroom packaging; repository-side copies that exist without their canonical exercise-local counterpart are migration debt
 - `test_debug_explanations.py`: Validates teacher-facing explanations that accompany debug exercises
 - `template_repo_cli/`: Ensures the template-repo packaging CLI remains stable
 

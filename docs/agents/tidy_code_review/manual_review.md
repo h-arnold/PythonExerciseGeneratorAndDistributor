@@ -19,9 +19,11 @@ This document contains the manual review instructions for the Tidy Code Reviewer
 ## Tidy code principles (prompt for reviewer)
 
 **Enforced by Ruff (no manual review needed)**:
+
 - Cyclomatic complexity (C901, max 8), dead code (F rules), bare excepts (BLE001), magic numbers/strings (PLR2004), too many parameters (PLR0913), unused imports/variables (F rules), code style consistency.
 
 **Manual Review Principles**:
+
 - DRY (Don't Repeat Yourself): detect duplicated blocks (>= duplication_min_lines); suggest extraction to utils/helpers.
 - Readability & naming: meaningful names, consistent formatting, short expressions. Flag unclear/one-letter names and long inline expressions.
 - Single Responsibility: functions/classes should do one thing. Flag multi-responsibility functions for extraction.
@@ -69,7 +71,7 @@ For each manual principle: note a concise rationale and an actionable suggestion
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` with explicit variant selection (`--variant`) as described in the execution model contract.
+  - For notebooks and exercises, canonical repository-side tests belong under `exercises/<construct>/<exercise_key>/tests/`. Top-level `tests/test_exNNN_*.py` files with explicit variant selection (`--variant`) remain transitional execution/export surfaces only.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
