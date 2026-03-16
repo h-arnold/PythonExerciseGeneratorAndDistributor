@@ -333,7 +333,7 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] Use this phase to eliminate known structural blockers, prove the canonical test layout works, and make the later broad migration safer.
 - [ ] The phase is only complete once the remaining repository-side `test_exNNN*.py` surfaces have been inventoried, `ex002` has been refactored into the same canonical test structure as the other exercises, and the repository has a clear verified path for migrating the remaining exercise tests alongside the wider exercise-file moves.
 
-- [ ] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`.
+- [x] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`. (Recorded in `PHASE_6_MIGRATION_CHECKLIST.md`.)
 - [ ] Refactor the `ex002` exercise tests explicitly, treating them as a clean-up target rather than a normal move: remove the experimental split structure, collapse them to the same canonical layout and naming pattern used by the other exercises, and make `ex002` the reference proof that the migration plan can normalise messy legacy test layouts before the broad move.
 - [ ] Update imports, fixtures, helper references, and collection configuration needed so canonical exercise-local tests run from their intended homes without path hacks.
 - [ ] Run the relevant repository-side exercise tests after the `ex002` refactor and any other preparatory clean-up work, and confirm they still execute as expected.
@@ -507,7 +507,7 @@ These can be written first because they define the migration model, inventory, t
 
 ### Wave 2: Author After Wave 1 Is Stable
 
-- [ ] Phase 6 checklist: Exercise Test Migration Preparation And Verification
+- [x] Phase 6 checklist: Exercise Test Migration Preparation And Verification
 - [ ] Phase 7 checklist: Scaffolding And Verification
 - [ ] Phase 8 checklist: Grading And Autograding
 - [ ] Phase 9 checklist: Pytest Discovery, Packaging, And Workflow Contract
