@@ -35,15 +35,22 @@ class ExerciseSelector:
             return []
         return build_exercise_registry(self.manifest_path, self.exercises_dir)
 
+    def _all_metadata_exercise_keys(self) -> list[str]:
+        """Return every exercise key backed by registry metadata."""
+        return self._filter_metadata_exercise_keys(lambda _exercise_key, _metadata: True)
+
+    @staticmethod
+    def _needs_legacy_path_fallback(entry: RegistryEntry) -> bool:
+        """Return True when a legacy manifest entry still lacks metadata."""
+        return entry["layout"] == ExerciseLayout.LEGACY.value and entry["metadata"] is None
+
     def get_all_notebooks(self) -> list[str]:
         """Get all notebook IDs from metadata or the notebooks directory.
 
         Returns:
             List of notebook IDs (without .ipynb extension).
         """
-        notebooks = self._metadata_exercise_keys(
-            lambda _exercise_key, _metadata: True,
-        )
+        notebooks = self._all_metadata_exercise_keys()
         if self.manifest_path.exists():
             return sorted(set(notebooks))
 
@@ -92,10 +99,10 @@ class ExerciseSelector:
         return {
             entry["exercise_key"]
             for entry in self._get_registry()
-            if entry["layout"] == ExerciseLayout.LEGACY.value and entry["metadata"] is None
+            if self._needs_legacy_path_fallback(entry)
         }
 
-    def _metadata_exercise_keys(
+    def _filter_metadata_exercise_keys(
         self,
         predicate: Callable[[str, ExerciseMetadata], bool],
     ) -> list[str]:
@@ -175,7 +182,7 @@ class ExerciseSelector:
         """
         self._validate_constructs(constructs)
 
-        exercises = self._metadata_exercise_keys(
+        exercises = self._filter_metadata_exercise_keys(
             lambda _exercise_key, metadata: metadata["construct"] in constructs,
         )
         if self.manifest_path.exists():
@@ -200,7 +207,7 @@ class ExerciseSelector:
         """
         self._validate_types(types)
 
-        exercises = self._metadata_exercise_keys(
+        exercises = self._filter_metadata_exercise_keys(
             lambda _exercise_key, metadata: metadata["exercise_type"] in types,
         )
         if self.manifest_path.exists():
@@ -255,7 +262,7 @@ class ExerciseSelector:
         self._validate_constructs(constructs)
         self._validate_types(types)
 
-        exercises = self._metadata_exercise_keys(
+        exercises = self._filter_metadata_exercise_keys(
             lambda _exercise_key, metadata: (
                 metadata["construct"] in constructs
                 and metadata["exercise_type"] in types

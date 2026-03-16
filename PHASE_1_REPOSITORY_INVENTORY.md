@@ -92,7 +92,6 @@ The following scoring uses the objective criteria called out during Phase 1: dup
 
 | Exercise key | Duplicate directories | Missing solution mirror | Duplicate test surfaces | Manual registry drift | Exercise-specific docs/workflow drift | Risk score | Pilot judgement |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-
 | `ex002_sequence_modify_basics` | Yes | No | Yes | No | Yes: split test contract across collector, fixture data, and parity suites | 3 | Not suitable for the first live pilot |
 | `ex003_sequence_modify_variables` | Yes | No | No | No | No | 1 | Acceptable but not preferred backup candidate |
 | `ex004_sequence_debug_syntax` | No | No | No | No | No | 0 | Recommended Phase 2 live pilot |

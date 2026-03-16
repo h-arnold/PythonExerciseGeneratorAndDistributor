@@ -55,14 +55,13 @@ def _validate_unique_exercise_ids(catalogue: list[ExerciseCatalogueEntry]) -> No
     seen_ids: dict[int, str] = {}
     for entry in catalogue:
         duplicate_key = seen_ids.get(entry["exercise_id"])
-        if duplicate_key is None:
-            seen_ids[entry["exercise_id"]] = entry["exercise_key"]
-            continue
-        raise RuntimeError(
-            "Exercise catalogue requires unique exercise_id values, but "
-            f"exercise_id {entry['exercise_id']} is claimed by both "
-            f"{duplicate_key!r} and {entry['exercise_key']!r}."
-        )
+        if duplicate_key is not None:
+            raise RuntimeError(
+                "Exercise catalogue requires unique exercise_id values, but "
+                f"exercise_id {entry['exercise_id']} is claimed by both "
+                f"{duplicate_key!r} and {entry['exercise_key']!r}."
+            )
+        seen_ids[entry["exercise_id"]] = entry["exercise_key"]
 
 
 def _validate_metadata_identity(

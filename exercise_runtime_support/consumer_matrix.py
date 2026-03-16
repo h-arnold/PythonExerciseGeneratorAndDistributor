@@ -71,11 +71,12 @@ CONSUMER_MATRIX: Final[tuple[ConsumerMatrixEntry, ...]] = (
     ConsumerMatrixEntry(
         surface="contributor documentation",
         files=(
+            Path("AGENTS.md"),
             Path("docs/testing-framework.md"),
             Path("docs/exercise-generation-cli.md"),
             Path("docs/execution-model.md"),
         ),
-        current_entry_point="legacy and transition guidance scattered across docs",
+        current_entry_point="legacy and transition guidance scattered across docs and AGENTS.md",
         target_entry_point="single contract documented in docs/execution-model.md",
     ),
 )

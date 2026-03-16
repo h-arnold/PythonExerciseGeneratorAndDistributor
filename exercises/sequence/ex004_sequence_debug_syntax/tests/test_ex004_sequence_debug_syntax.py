@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import ast
-import os
-from pathlib import Path
 
 import pytest
 
@@ -10,6 +8,7 @@ from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,
+    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -25,46 +24,8 @@ def _explanation_tag(exercise_no: int) -> str:
     return f"explanation{exercise_no}"
 
 
-def _current_variant() -> str:
-    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR")
-    if not notebooks_dir:
-        return "solution"
-
-    normalised_notebooks_dir = notebooks_dir.replace("\\", "/").strip().rstrip("/")
-    return "solution" if normalised_notebooks_dir.endswith("solutions") else "student"
-
-
-def _resolve_notebook_path() -> Path:
-    variant = _current_variant()
-    test_dir = Path(__file__).resolve().parent
-    local_candidates = [
-        test_dir.parent / "notebooks" / "ex004_sequence_debug_syntax.ipynb",
-        test_dir.parent / "notebooks" / f"{variant}.ipynb",
-    ]
-
-    for notebook_path in local_candidates:
-        if notebook_path.exists():
-            return notebook_path
-
-    cwd = Path.cwd().resolve()
-    fallback_candidates = [
-        cwd / "notebooks" / "ex004_sequence_debug_syntax.ipynb",
-        cwd
-        / "exercises"
-        / "sequence"
-        / "ex004_sequence_debug_syntax"
-        / "notebooks"
-        / f"{variant}.ipynb",
-    ]
-
-    for notebook_path in fallback_candidates:
-        if notebook_path.exists():
-            return notebook_path
-
-    return local_candidates[0]
-
-
-_NOTEBOOK_PATH = _resolve_notebook_path()
+_EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX004_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 
 

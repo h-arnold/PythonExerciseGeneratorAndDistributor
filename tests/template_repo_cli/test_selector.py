@@ -226,8 +226,6 @@ class TestMetadataBackedSelection:
         assert selector.select_by_type(["modify"]) == [exercise_key]
         assert selector.select_by_construct_and_type(["sequence"], ["modify"]) == [exercise_key]
 
-
-
     def test_selector_ignores_path_only_entries_when_manifest_exists(
         self,
         tmp_path: Path,
