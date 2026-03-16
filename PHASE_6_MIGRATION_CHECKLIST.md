@@ -75,6 +75,15 @@ Inventory result: **6** repository-side `test_exNNN*.py` files still live outsid
 - `ex007_sequence_debug_casting` is no longer blocked by the older `data_types` naming drift in the live repository-side test inventory, but it still has split exercise-home ownership and a repo-side construct-helper test that does not map 1:1 to canonical exercise-local notebook coverage.
 - The future repository guard must account for blocker-class repo-side files such as `tests/exercise_framework/test_ex002_integration.py` and `tests/test_ex007_construct_checks.py`; they cannot remain as silent `test_exNNN*.py` exceptions outside canonical exercise-local tests.
 
+## Explicit Migration Blockers
+
+- `ex003_sequence_modify_variables`: blocked for wider test migration because teacher-doc ownership is still split between `exercises/sequence/modify/ex003_sequence_modify_variables/` and `exercises/sequence/ex003_sequence_modify_variables/`.
+- `ex005_sequence_debug_logic`: blocked for wider test migration because teacher-doc ownership is still split between `exercises/sequence/debug/ex005_sequence_debug_logic/` and `exercises/sequence/ex005_sequence_debug_logic/`.
+- `ex007_sequence_debug_casting`: blocked for wider test migration because exercise ownership is still split between `exercises/sequence/debug/ex007_sequence_debug_casting/` and `exercises/sequence/ex007_sequence_debug_casting/`, and the shared expectations/export surface is still not fully tidy for `ex007`.
+- `tests/exercise_framework/test_ex002_integration.py`: explicit blocker-class repo-side file that must be renamed, relocated, or retired before the final `test_exNNN*.py` guard is enforced.
+- `tests/test_ex007_construct_checks.py`: explicit blocker-class repo-side file that must be renamed, relocated, or moved under shared runtime-support coverage before the final `test_exNNN*.py` guard is enforced.
+- `ex006_sequence_modify_casting` is intentionally not listed as a blocker here. Its remaining top-level test is a sequencing hold only, not an unresolved ownership or naming problem.
+
 ## Next Step Anchor
 
 - The dedicated `ex002_sequence_modify_basics` clean-up step is complete for the exercise-specific pytest surface.
@@ -85,3 +94,4 @@ Inventory result: **6** repository-side `test_exNNN*.py` files still live outsid
 
 - The inventory confirmed the expected exercise-ownership drift and also surfaced blocker-class repo-side `test_exNNN*.py` files that will need explicit rename, relocation, or retirement before the final repository guard can be enforced.
 - This checklist now records `ex002_sequence_modify_basics` as the completed dedicated clean-up target for Phase 6.
+- The explicit Phase 6 blocker register now identifies which exercises and repo-side files still prevent broader test migration, so later phases do not have to treat them as silent exceptions.
