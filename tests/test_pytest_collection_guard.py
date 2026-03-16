@@ -6,6 +6,7 @@ import pytest
 
 from exercise_runtime_support.pytest_collection_guard import (
     find_duplicate_exercise_test_sources,
+    find_noncanonical_exercise_test_sources,
 )
 
 pytest_plugins = ("pytester",)
@@ -42,6 +43,35 @@ def test_find_duplicate_exercise_test_sources_ignores_noncanonical_nested_tests(
     )
 
     assert duplicates == {}
+
+
+def test_find_noncanonical_exercise_test_sources_flags_all_repo_side_exnnn_tests() -> None:
+    offenders = find_noncanonical_exercise_test_sources(
+        [
+            Path("tests/test_ex003_sequence_modify_variables.py"),
+            Path("tests/ex123_example/test_ex123_example.py"),
+            Path("tests/exercise_framework/test_ex002_integration.py"),
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py"),
+            Path("tests/test_helpers.py"),
+        ]
+    )
+
+    assert offenders == [
+        Path("tests/ex123_example/test_ex123_example.py"),
+        Path("tests/exercise_framework/test_ex002_integration.py"),
+        Path("tests/test_ex003_sequence_modify_variables.py"),
+    ]
+
+
+def test_find_noncanonical_exercise_test_sources_ignores_canonical_exercise_local_tests() -> None:
+    offenders = find_noncanonical_exercise_test_sources(
+        [
+            Path("exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py"),
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py"),
+        ]
+    )
+
+    assert offenders == []
 
 
 def test_pytest_collection_fails_with_usage_error_for_duplicate_exercise_test_sources(

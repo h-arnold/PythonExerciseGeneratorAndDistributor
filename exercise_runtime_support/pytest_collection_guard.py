@@ -33,6 +33,19 @@ def find_duplicate_exercise_test_sources(paths: Iterable[Path]) -> dict[str, lis
     return duplicates
 
 
+def find_noncanonical_exercise_test_sources(paths: Iterable[Path]) -> list[Path]:
+    """Return ``test_exNNN*.py`` paths that do not live in canonical exercise-local tests."""
+
+    offenders = []
+    for path in paths:
+        if _exercise_key_for_path(path) is None:
+            continue
+        if _is_canonical_test_path(path):
+            continue
+        offenders.append(path)
+    return sorted(offenders)
+
+
 def _exercise_key_for_path(path: Path) -> str | None:
     if path.suffix != ".py" or not path.name.startswith("test_ex"):
         return None

@@ -20,7 +20,7 @@ These Phase 6 guardrails are restated from [ACTION_PLAN.md](./ACTION_PLAN.md) an
 - Related action-plan phase or stream: `Phase 6: Exercise Test Migration Preparation And Verification`
 - Author: `Codex Implementer Agent`
 - Date: `2026-03-16`
-- Status: `in progress`
+- Status: `completed`
 - Scope summary: Inventory every remaining repository-side `test_exNNN*.py` file that still sits outside canonical exercise-local test directories, record the current ownership or naming blockers attached to those files, and anchor the next clean-up step on `ex002_sequence_modify_basics`.
 - Explicitly out of scope: bulk relocation of the remaining exercise tests; moving notebooks or exercise-local docs for `ex003`, `ex005`, `ex006`, or `ex007`; implementing the final repository guard; or treating any non-`ex002` move as an approved early migration.
 
@@ -42,7 +42,7 @@ The current canonical proof remains `ex004_sequence_debug_syntax`; this checklis
 - [x] Update imports, fixtures, helper references, and collection configuration needed for canonical exercise-local tests to run cleanly.
 - [x] Run the relevant repository-side exercise tests after the `ex002` clean-up work.
 - [ ] Resolve or explicitly document the remaining blocker-class repo-side `test_exNNN*.py` files before the later repository guard is introduced.
-- [ ] Define the audit or repository guard that should fail once any `test_exNNN*.py` file still remains outside canonical exercise-local tests after the broad migration completes.
+- [x] Define the audit or repository guard that should fail once any `test_exNNN*.py` file still remains outside canonical exercise-local tests after the broad migration completes.
 
 ## Current Canonical Proof
 
@@ -84,6 +84,14 @@ Inventory result: **6** repository-side `test_exNNN*.py` files still live outsid
 - `tests/test_ex007_construct_checks.py`: explicit blocker-class repo-side file that must be renamed, relocated, or moved under shared runtime-support coverage before the final `test_exNNN*.py` guard is enforced.
 - `ex006_sequence_modify_casting` is intentionally not listed as a blocker here. Its remaining top-level test is a sequencing hold only, not an unresolved ownership or naming problem.
 
+## Future Guard Definition
+
+- Guard helper: `exercise_runtime_support.pytest_collection_guard.find_noncanonical_exercise_test_sources()`.
+- Detection rule: any repository-side `test_exNNN*.py` path that does not live under `exercises/<construct>/<exercise_key>/tests/` is an offender, including top-level exercise tests, nested parity leftovers, and blocker-class repo-side helper tests such as `tests/exercise_framework/test_ex002_integration.py`.
+- Proof surface: `tests/test_pytest_collection_guard.py` now includes focused unit tests that distinguish canonical exercise-local tests from future-guard offenders.
+- Planned enforcement point after the blocker register is cleared: extend the repository collection guard to raise a clear `pytest.UsageError` if `find_noncanonical_exercise_test_sources()` returns any paths during repository test discovery.
+- Current repository state: the helper is defined and tested now, but live enforcement remains deferred until the explicit blocker register above has been resolved.
+
 ## Next Step Anchor
 
 - The dedicated `ex002_sequence_modify_basics` clean-up step is complete for the exercise-specific pytest surface.
@@ -95,3 +103,4 @@ Inventory result: **6** repository-side `test_exNNN*.py` files still live outsid
 - The inventory confirmed the expected exercise-ownership drift and also surfaced blocker-class repo-side `test_exNNN*.py` files that will need explicit rename, relocation, or retirement before the final repository guard can be enforced.
 - This checklist now records `ex002_sequence_modify_basics` as the completed dedicated clean-up target for Phase 6.
 - The explicit Phase 6 blocker register now identifies which exercises and repo-side files still prevent broader test migration, so later phases do not have to treat them as silent exceptions.
+- The future noncanonical-test guard is now defined in code and tests, ready to be enforced once the blocker register has been cleared.
