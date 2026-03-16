@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from scripts.template_repo_cli.core.selector import ExerciseSelector
+from tests.exercise_metadata_helpers import make_exercise_json, make_manifest
 
 
 class TestSelectByConstruct:
@@ -184,6 +185,88 @@ class TestSelectByPattern:
         with pytest.raises(ValueError, match="Invalid pattern"):
             selector.select_by_pattern("notebooks/ex002")
 
+
+class TestMetadataBackedSelection:
+    """Regression tests for metadata-backed selector behaviour."""
+
+    def test_selector_uses_metadata_for_legacy_stub_without_legacy_layout_paths(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Selector falls back to registry metadata when legacy path scans cannot help."""
+        repo_root = tmp_path
+        exercises_root = repo_root / "exercises"
+        exercises_root.mkdir()
+
+        exercise_key = "ex123_sequence_modify_metadata_stub"
+        make_manifest(
+            exercises_root,
+            {exercise_key: {"layout": "legacy"}},
+        )
+        make_exercise_json(
+            exercises_root / "sequence" / exercise_key,
+            {
+                "schema_version": 1,
+                "exercise_key": exercise_key,
+                "exercise_id": 123,
+                "slug": "sequence_modify_metadata_stub",
+                "title": "Sequence Modify Metadata Stub",
+                "construct": "sequence",
+                "exercise_type": "modify",
+                "parts": 1,
+            },
+        )
+
+        selector = ExerciseSelector(repo_root)
+
+        assert not (repo_root / "notebooks").exists()
+        assert not (exercises_root / "sequence" / "modify").exists()
+        assert selector.get_all_notebooks() == [exercise_key]
+        assert selector.select_by_construct(["sequence"]) == [exercise_key]
+        assert selector.select_by_type(["modify"]) == [exercise_key]
+        assert selector.select_by_construct_and_type(["sequence"], ["modify"]) == [exercise_key]
+
+
+
+    def test_selector_ignores_path_only_entries_when_manifest_exists(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Selector stays metadata-only when a manifest is available."""
+        repo_root = tmp_path
+        exercises_root = repo_root / "exercises"
+        exercises_root.mkdir()
+        notebooks_dir = repo_root / "notebooks"
+        notebooks_dir.mkdir()
+
+        metadata_key = "ex123_sequence_modify_manifest"
+        path_only_key = "ex999_sequence_modify_path_only"
+        make_manifest(
+            exercises_root,
+            {metadata_key: {"layout": "legacy"}},
+        )
+        make_exercise_json(
+            exercises_root / "sequence" / metadata_key,
+            {
+                "schema_version": 1,
+                "exercise_key": metadata_key,
+                "exercise_id": 123,
+                "slug": "sequence_modify_manifest",
+                "title": "Sequence Modify Manifest",
+                "construct": "sequence",
+                "exercise_type": "modify",
+                "parts": 1,
+            },
+        )
+        (notebooks_dir / f"{path_only_key}.ipynb").write_text("{}", encoding="utf-8")
+        (exercises_root / "sequence" / "modify" / path_only_key).mkdir(parents=True)
+
+        selector = ExerciseSelector(repo_root)
+
+        assert selector.get_all_notebooks() == [metadata_key]
+        assert selector.select_by_construct(["sequence"]) == [metadata_key]
+        assert selector.select_by_type(["modify"]) == [metadata_key]
+        assert selector.select_by_construct_and_type(["sequence"], ["modify"]) == [metadata_key]
 
 class TestSelectEmptyResult:
     """Tests for handling empty selection results."""

@@ -6,15 +6,6 @@
 
 ## Phase 3 — Metadata Consolidation And Registry Replacement
 
-### 6. Template selection still depends partly on legacy paths instead of metadata
-- **Action-plan requirement:** template selection should derive available exercises, construct grouping, and type grouping from metadata rather than `notebooks/*.ipynb` or `exercises/<construct>/<type>/...` path shape.
-- **Verified evidence:**
-  - `scripts/template_repo_cli/core/selector.py:32-43` still implements `get_all_notebooks()` by scanning `notebooks/ex*.ipynb`.
-  - `scripts/template_repo_cli/core/selector.py:77-151,153-246` still discovers legacy exercises by walking `exercises/<construct>/<type>/...`.
-  - `scripts/template_repo_cli/cli.py:778-784` still uses `get_all_notebooks()` for unfiltered listing.
-  - In a temporary repo with a manifest entry plus canonical metadata only, `ExerciseSelector.get_all_notebooks()` and `select_by_type(["modify"])` both returned empty.
-- **Why this blocks completion:** metadata is not yet the single source of truth for selector-driven exercise discovery.
-
 ### 7. The metadata catalogue does not fail fast on duplicate `exercise_id` values
 - **Action-plan requirement:** Phase 3 calls for fail-fast validation for duplicate exercise identities in the metadata-backed catalogue.
 - **Verified evidence:**

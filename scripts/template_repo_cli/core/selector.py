@@ -6,7 +6,7 @@ import fnmatch
 from collections.abc import Callable
 from pathlib import Path
 
-from exercise_metadata import ExerciseLayout, build_exercise_registry, load_migration_manifest
+from exercise_metadata import ExerciseLayout, RegistryEntry, build_exercise_registry
 from exercise_metadata.schema import ExerciseMetadata
 from scripts.template_repo_cli.utils.validation import (
     validate_construct_name,
@@ -29,16 +29,27 @@ class ExerciseSelector:
         self.exercises_dir = repo_root / "exercises"
         self.manifest_path = self.exercises_dir / "migration_manifest.json"
 
+    def _get_registry(self) -> list[RegistryEntry]:
+        """Return the metadata-backed exercise registry when available."""
+        if not self.manifest_path.exists():
+            return []
+        return build_exercise_registry(self.manifest_path, self.exercises_dir)
+
     def get_all_notebooks(self) -> list[str]:
-        """Get all notebook IDs from the notebooks directory.
+        """Get all notebook IDs from metadata or the notebooks directory.
 
         Returns:
             List of notebook IDs (without .ipynb extension).
         """
-        notebooks: list[str] = []
+        notebooks = self._metadata_exercise_keys(
+            lambda _exercise_key, _metadata: True,
+        )
+        if self.manifest_path.exists():
+            return sorted(set(notebooks))
+
+        notebooks = []
         if self.notebooks_dir.exists():
             for nb_file in self.notebooks_dir.glob("ex*.ipynb"):
-                # Extract notebook ID (filename without extension)
                 notebooks.append(nb_file.stem)
         return notebooks
 
@@ -74,25 +85,25 @@ class ExerciseSelector:
             if not validate_type_name(type_name):
                 raise ValueError(f"Invalid type: {type_name}")
 
-    def _legacy_exercise_keys(self) -> set[str]:
-        """Return exercise keys that still use the legacy layout."""
-        manifest = load_migration_manifest(self.manifest_path)
+    def _legacy_exercise_keys(self) -> set[str] | None:
+        """Return legacy exercise keys that still need path-based fallback."""
+        if not self.manifest_path.exists():
+            return None
         return {
-            exercise_key
-            for exercise_key, entry in manifest["exercises"].items()
-            if entry["layout"] == ExerciseLayout.LEGACY.value
+            entry["exercise_key"]
+            for entry in self._get_registry()
+            if entry["layout"] == ExerciseLayout.LEGACY.value and entry["metadata"] is None
         }
 
-    def _canonical_exercise_keys(
+    def _metadata_exercise_keys(
         self,
         predicate: Callable[[str, ExerciseMetadata], bool],
     ) -> list[str]:
-        """Return canonical exercise keys selected via metadata."""
+        """Return metadata-backed exercise keys selected via the registry."""
         matches: list[str] = []
-        registry = build_exercise_registry(self.manifest_path, self.exercises_dir)
-        for entry in registry:
+        for entry in self._get_registry():
             metadata = entry["metadata"]
-            if entry["layout"] != ExerciseLayout.CANONICAL.value or metadata is None:
+            if metadata is None:
                 continue
             if predicate(entry["exercise_key"], metadata):
                 matches.append(entry["exercise_key"])
@@ -118,7 +129,7 @@ class ExerciseSelector:
                         if (
                             ex_dir.is_dir()
                             and ex_dir.name.startswith("ex")
-                            and ex_dir.name in legacy_keys
+                            and (legacy_keys is None or ex_dir.name in legacy_keys)
                         ):
                             exercises.append(ex_dir.name)
 
@@ -144,7 +155,7 @@ class ExerciseSelector:
                         if (
                             ex_dir.is_dir()
                             and ex_dir.name.startswith("ex")
-                            and ex_dir.name in legacy_keys
+                            and (legacy_keys is None or ex_dir.name in legacy_keys)
                         ):
                             exercises.append(ex_dir.name)
 
@@ -164,9 +175,12 @@ class ExerciseSelector:
         """
         self._validate_constructs(constructs)
 
-        exercises = self._canonical_exercise_keys(
-            lambda _exercise_key, metadata: metadata["construct"] in constructs
+        exercises = self._metadata_exercise_keys(
+            lambda _exercise_key, metadata: metadata["construct"] in constructs,
         )
+        if self.manifest_path.exists():
+            return sorted(set(exercises))
+
         for construct in constructs:
             exercises.extend(self._find_legacy_exercises_in_construct(construct))
 
@@ -186,9 +200,12 @@ class ExerciseSelector:
         """
         self._validate_types(types)
 
-        exercises = self._canonical_exercise_keys(
-            lambda _exercise_key, metadata: metadata["exercise_type"] in types
+        exercises = self._metadata_exercise_keys(
+            lambda _exercise_key, metadata: metadata["exercise_type"] in types,
         )
+        if self.manifest_path.exists():
+            return sorted(set(exercises))
+
         for type_name in types:
             exercises.extend(self._find_legacy_exercises_by_type(type_name))
 
@@ -216,7 +233,11 @@ class ExerciseSelector:
             return exercises
 
         for ex_dir in type_dir.iterdir():
-            if ex_dir.is_dir() and ex_dir.name.startswith("ex") and ex_dir.name in legacy_keys:
+            if (
+                ex_dir.is_dir()
+                and ex_dir.name.startswith("ex")
+                and (legacy_keys is None or ex_dir.name in legacy_keys)
+            ):
                 exercises.append(ex_dir.name)
 
         return exercises
@@ -234,11 +255,15 @@ class ExerciseSelector:
         self._validate_constructs(constructs)
         self._validate_types(types)
 
-        exercises = self._canonical_exercise_keys(
+        exercises = self._metadata_exercise_keys(
             lambda _exercise_key, metadata: (
-                metadata["construct"] in constructs and metadata["exercise_type"] in types
-            )
+                metadata["construct"] in constructs
+                and metadata["exercise_type"] in types
+            ),
         )
+        if self.manifest_path.exists():
+            return sorted(set(exercises))
+
         for construct in constructs:
             for type_name in types:
                 exercises.extend(self._find_legacy_exercises_in_type_dir(construct, type_name))
@@ -260,10 +285,8 @@ class ExerciseSelector:
         if not notebooks:
             raise ValueError("At least one notebook must be specified")
 
-        # Get all available notebooks
         available = self.get_all_notebooks()
 
-        # Validate each notebook exists
         for notebook in notebooks:
             if notebook not in available:
                 raise ValueError(f"Notebook not found: {notebook}")
@@ -285,7 +308,6 @@ class ExerciseSelector:
         if not validate_notebook_pattern(pattern):
             raise ValueError(f"Invalid pattern: {pattern}")
 
-        # Get all notebooks and filter by pattern
         all_notebooks = self.get_all_notebooks()
         matching = [nb for nb in all_notebooks if fnmatch.fnmatch(nb, pattern)]
 
