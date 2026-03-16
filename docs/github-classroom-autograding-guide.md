@@ -24,7 +24,7 @@ The custom workflow must consist of two main parts: the **Test Runner Steps** an
 
 ### A. Test Runner Steps
 
-Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array). For pytest-based projects, run the CLI wrapper so the autograde plugin is activated and payloads are generated consistently; see the [Autograding CLI guide](docs/autograding-cli.md) for the exact invocation.
+Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array). For pytest-based projects, run the CLI wrapper so the autograde plugin is activated and payloads are generated consistently; see the [Autograding CLI guide](./autograding-cli.md) for the exact invocation.
 
 The key is to assign a unique `id` to each test step and ensure it outputs the result.
 
@@ -129,7 +129,7 @@ The CLI wrapper orchestrates the full autograding flow so template workflows (an
 uv run python scripts/build_autograde_payload.py --variant student --pytest-args=-k test_ex002_sequence_modify_basics
 ```
 
-You can repeat `--pytest-args` to forward multiple options, for example to switch notebooks (`--pytest-args=--maxfail=1 --pytest-args=tests/test_ex002_sequence_modify_basics.py`). The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
+You can repeat `--pytest-args` to forward multiple options. In this source repository, for example, you can target the canonical ex002 exercise-local test with `--pytest-args=--maxfail=1 --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`. Exported Classroom repositories still use the flattened path `tests/test_ex002_sequence_modify_basics.py`. The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
 
 #### Example: GitHub Actions Integration
 

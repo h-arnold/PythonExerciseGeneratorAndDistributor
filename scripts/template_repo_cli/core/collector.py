@@ -46,6 +46,18 @@ class FileCollector:
     def _legacy_test_path(self, exercise_id: str) -> Path:
         return self.tests_dir / f"test_{exercise_id}.py"
 
+    def _preferred_test_path_for_legacy_layout(self, exercise_id: str) -> Path:
+        """Return the canonical test when available, otherwise the flat legacy test."""
+
+        try:
+            canonical_test = self._canonical_test_path(exercise_id)
+        except LookupError:
+            return self._legacy_test_path(exercise_id)
+
+        if canonical_test.exists():
+            return canonical_test
+        return self._legacy_test_path(exercise_id)
+
     def _raise_for_duplicate_test_sources(self, exercise_id: str) -> None:
         legacy_test = self._legacy_test_path(exercise_id)
         candidate_paths: list[Path] = []
@@ -79,7 +91,7 @@ class FileCollector:
         Raises:
             FileNotFoundError: If required source files are missing.
             ValueError: If exercise_id is empty.
-            FileExistsError: If both legacy and canonical top-level test sources exist.
+            FileExistsError: If both top-level and canonical exercise-local test sources exist.
         """
         if not exercise_id:
             raise ValueError("Exercise ID cannot be empty")
@@ -88,7 +100,8 @@ class FileCollector:
         try:
             layout = get_exercise_layout(exercise_id, self.manifest_path)
         except KeyError as exc:
-            raise FileNotFoundError(f"Exercise not found in migration manifest: {exercise_id}") from exc
+            raise FileNotFoundError(
+                f"Exercise not found in migration manifest: {exercise_id}") from exc
 
         if layout == ExerciseLayout.CANONICAL:
             notebook_path = resolve_notebook_path(
@@ -99,12 +112,15 @@ class FileCollector:
             )
             test_path = self._canonical_test_path(exercise_id)
             if not test_path.exists():
-                raise FileNotFoundError(f"Canonical exercise test not found: {test_path}")
+                raise FileNotFoundError(
+                    f"Canonical exercise test not found: {test_path}")
         else:
             notebook_path = self._legacy_notebook_path(exercise_id)
             if not notebook_path.exists():
-                raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
-            test_path = self._legacy_test_path(exercise_id)
+                raise FileNotFoundError(
+                    f"Student notebook not found: {exercise_id}")
+            test_path = self._preferred_test_path_for_legacy_layout(
+                exercise_id)
             if not test_path.exists():
                 raise FileNotFoundError(f"Test file not found: {exercise_id}")
 

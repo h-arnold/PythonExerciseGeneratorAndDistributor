@@ -32,7 +32,7 @@ All paths are created on demand. The script exits non-zero if pytest fails or if
 ```bash
 uv run python scripts/build_autograde_payload.py \
   --variant solution \
-  --pytest-args=tests/test_ex002_sequence_modify_basics.py
+  --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py
 ```
 
 ### Focused subset using keyword expression

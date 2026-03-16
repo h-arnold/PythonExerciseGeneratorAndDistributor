@@ -38,26 +38,29 @@ The current canonical proof remains `ex004_sequence_debug_syntax`; this checklis
 ## Phase 6 Progress Snapshot
 
 - [x] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`.
-- [ ] Refactor the `ex002` exercise tests into the canonical exercise-local layout and naming pattern.
-- [ ] Update imports, fixtures, helper references, and collection configuration needed for canonical exercise-local tests to run cleanly.
-- [ ] Run the relevant repository-side exercise tests after the `ex002` clean-up work.
+- [x] Refactor the `ex002` exercise tests into the canonical exercise-local layout and naming pattern.
+- [x] Update imports, fixtures, helper references, and collection configuration needed for canonical exercise-local tests to run cleanly.
+- [x] Run the relevant repository-side exercise tests after the `ex002` clean-up work.
 - [ ] Resolve or explicitly document the remaining blocker-class repo-side `test_exNNN*.py` files before the later repository guard is introduced.
 - [ ] Define the audit or repository guard that should fail once any `test_exNNN*.py` file still remains outside canonical exercise-local tests after the broad migration completes.
 
 ## Current Canonical Proof
 
-- `exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` is still the only `test_exNNN*.py` file already living under `exercises/<construct>/<exercise_key>/tests/`.
-- No other `test_exNNN*.py` surface currently lives under a canonical exercise-local test directory.
+- `exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py` remains the full notebook-and-test canonical proof.
+- `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` now provides the canonical repository-side ex002 test surface while `ex002` notebooks remain legacy.
+
+## Verification Evidence
+
+- `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q` -> passed (`30 passed`).
+- `uv run pytest tests/template_repo_cli/test_collector.py tests/template_repo_cli/test_packager.py tests/exercise_framework/test_ex002_integration.py tests/exercise_framework/test_autograde_parity.py tests/exercise_framework/test_parity_autograde_ex002.py tests/test_run_pytest_variant.py tests/test_pytest_collection_guard.py -q` -> passed (`54 passed`), with one existing `PytestAssertRewriteWarning` for `tests.exercise_framework.fixtures`.
 
 ## Remaining Repository-Side `test_exNNN*.py` Inventory
 
-Inventory result: **8** repository-side `test_exNNN*.py` files still live outside canonical exercise-local test directories.
+Inventory result: **6** repository-side `test_exNNN*.py` files still live outside canonical exercise-local test directories.
 
 | File | Exercise or scope | Current role | Known blocker or reason it still sits outside canonical exercise-local tests | Phase 6 handling note |
 | --- | --- | --- | --- | --- |
-| `tests/test_ex002_sequence_modify_basics.py` | `ex002_sequence_modify_basics` | Legacy top-level exercise test surface | `ex002` still has split authoring ownership between `exercises/sequence/modify/ex002_sequence_modify_basics/` and `exercises/sequence/ex002_sequence_modify_basics/`, and the live repo still treats this file as part of an unresolved split contract with the nested ex002 test file. | Dedicated next clean-up target. Retire this top-level duplicate after a canonical ex002 exercise-local test lands. |
-| `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` | `ex002_sequence_modify_basics` | Nested ex002 parity surface under the top-level `tests/` tree | This file is closer to the desired exercise-local shape, but it still lives outside `exercises/sequence/ex002_sequence_modify_basics/tests/` and coexists with the top-level ex002 test file. | Use this surface as source material for the next clean-up step, then collapse it into the canonical ex002 test home. |
-| `tests/exercise_framework/test_ex002_integration.py` | `ex002_sequence_modify_basics` transition parity | Repo-side transition test that compares the top-level and nested ex002 surfaces | This is not a canonical exercise-local notebook test. It exists only because the ex002 split contract is still live, and it would violate the future `test_exNNN*.py` guard if left in place. | Keep repo-side during the ex002 clean-up step, then rename, relocate, or retire it once the split contract is removed. |
+| `tests/exercise_framework/test_ex002_integration.py` | `ex002_sequence_modify_basics` task-metadata follow-up | Repo-side support test that validates the canonical ex002 task-mark distribution and naming | This is not a canonical exercise-local notebook test. It still carries a `test_exNNN*.py` name outside the exercise-local tree, so it would violate the future guard if left in place. | Keep repo-side for now, then rename, relocate, or retire it before the final repository guard is introduced. |
 | `tests/test_ex003_sequence_modify_variables.py` | `ex003_sequence_modify_variables` | Legacy top-level exercise test surface | `ex003` still has split ownership between the legacy docs directory `exercises/sequence/modify/ex003_sequence_modify_variables/` and the canonical metadata stub `exercises/sequence/ex003_sequence_modify_variables/`. No separate naming drift is evident in the live test file. | Keep repo-side until the wider ex003 notebooks, docs links, and tests can move together. |
 | `tests/test_ex005_sequence_debug_logic.py` | `ex005_sequence_debug_logic` | Legacy top-level exercise test surface | `ex005` still has split ownership between the legacy docs directory `exercises/sequence/debug/ex005_sequence_debug_logic/` and the canonical metadata stub `exercises/sequence/ex005_sequence_debug_logic/`. | Keep repo-side until the wider ex005 notebooks, docs links, and tests can move together. |
 | `tests/test_ex006_sequence_modify_casting.py` | `ex006_sequence_modify_casting` | Legacy top-level exercise test surface | The live inventory no longer shows a duplicate-home or naming blocker for `ex006`; its test remains top-level because Phase 6 deliberately avoids broad one-off moves outside the dedicated ex002 clean-up. | Leave repo-side for now. `ex006` is a sequencing hold, not the next clean-up target. |
@@ -66,7 +69,7 @@ Inventory result: **8** repository-side `test_exNNN*.py` files still live outsid
 
 ## Known Blockers And Sequencing Notes
 
-- `ex002_sequence_modify_basics` is the dedicated next Phase 6 clean-up target. It is the only remaining exercise with a top-level `test_exNNN*.py` surface, a second nested `test_exNNN*.py` surface, and a transition parity test that still compares the two.
+- `ex002_sequence_modify_basics` no longer has a split repository-side exercise test contract. Its remaining repo-side blocker is `tests/exercise_framework/test_ex002_integration.py`, which should be renamed, relocated, or retired before the final `test_exNNN*.py` guard lands.
 - `ex003_sequence_modify_variables` and `ex005_sequence_debug_logic` still have split legacy-docs versus canonical-stub ownership. Their tests should remain repo-side until notebooks, docs links, and tests can move together.
 - `ex006_sequence_modify_casting` is no longer blocked by a live duplicate-home or naming mismatch in the current inventory. Its remaining top-level test is a sequencing hold only.
 - `ex007_sequence_debug_casting` is no longer blocked by the older `data_types` naming drift in the live repository-side test inventory, but it still has split exercise-home ownership and a repo-side construct-helper test that does not map 1:1 to canonical exercise-local notebook coverage.
@@ -74,11 +77,11 @@ Inventory result: **8** repository-side `test_exNNN*.py` files still live outsid
 
 ## Next Step Anchor
 
-- The next Phase 6 implementation step is `ex002_sequence_modify_basics`.
-- Target clean-up outcome: collapse the current ex002 test surfaces into `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`, then retire or rename the repo-side ex002 parity-only surfaces that should not survive the final repository guard.
-- Do **not** treat this inventory as approval to start broad `ex003`, `ex005`, `ex006`, or `ex007` test relocation ahead of the later wider exercise-file migration.
+- The dedicated `ex002_sequence_modify_basics` clean-up step is complete for the exercise-specific pytest surface.
+- The next Phase 6 implementation step should decide the final home and name for blocker-class repo-side files such as `tests/exercise_framework/test_ex002_integration.py` and `tests/test_ex007_construct_checks.py`.
+- Do **not** treat this update as approval to start broad `ex003`, `ex005`, `ex006`, or `ex007` test relocation ahead of the later wider exercise-file migration.
 
 ## Action Plan Feedback
 
 - The inventory confirmed the expected exercise-ownership drift and also surfaced blocker-class repo-side `test_exNNN*.py` files that will need explicit rename, relocation, or retirement before the final repository guard can be enforced.
-- This inventory confirms that `ex002_sequence_modify_basics` should remain the dedicated next clean-up target for Phase 6.
+- This checklist now records `ex002_sequence_modify_basics` as the completed dedicated clean-up target for Phase 6.

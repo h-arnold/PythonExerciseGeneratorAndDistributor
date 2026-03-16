@@ -1,4 +1,4 @@
-"""Autograde parity checks for ex002 and payload builders."""
+"""Autograde checks for canonical ex002 and payload builders."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from exercise_runtime_support.helpers import build_autograde_env
 from tests.exercise_framework.expectations import EX002_CHECKS
-from tests.helpers import build_autograde_env
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -21,10 +21,9 @@ from scripts.build_autograde_payload import AutogradeResults  # noqa: E402
 
 PLUGIN_NAME = "tests.autograde_plugin"
 EX002_TEST_FILES = (
-    "tests/test_ex002_sequence_modify_basics.py",
-    "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+    "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
 )
-EXPECTED_EX002_TEST_COUNT = 60
+EXPECTED_EX002_TEST_COUNT = len(EX002_CHECKS)
 MIN_STATUS_MUTATION_TESTS = 2
 
 
@@ -98,7 +97,7 @@ def test_autograde_plugin_ex002_status_and_task_metadata(
     assert set(task_numbers) == set(range(1, 11))
 
     names = {test.get("name") for test in tests}
-    assert _expected_task_names().issubset(names)
+    assert names == _expected_task_names()
 
 
 def test_payload_builder_full_preserves_status_and_task_metadata(
