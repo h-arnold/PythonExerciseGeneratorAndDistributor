@@ -98,7 +98,7 @@ def _write_canonical_exercise(  # noqa: PLR0913
     return exercise_dir
 
 
-def _write_legacy_exercise(repo_root: Path, slug: str) -> None:
+def _write_legacy_exercise_directory(repo_root: Path, slug: str) -> None:
     legacy_dir = repo_root / "exercises" / "sequence" / "debug" / slug
     legacy_dir.mkdir(parents=True, exist_ok=True)
     (legacy_dir / "README.md").write_text("# Legacy README\n", encoding="utf-8")
@@ -190,7 +190,7 @@ def test_main_uses_canonical_metadata_without_legacy_fallback(
         metadata=metadata,
         include_explanation=False,
     )
-    _write_legacy_exercise(tmp_path, slug)
+    _write_legacy_exercise_directory(tmp_path, slug)
 
     exit_code = verify_exercise_quality.main(
         [

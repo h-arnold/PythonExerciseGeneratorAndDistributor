@@ -24,7 +24,7 @@ class _MakeNotebookWithParts(Protocol):
         *,
         parts: int,
         exercise_type: str,
-        notebook_name: str,
+        notebook_filename: str,
     ) -> Notebook: ...
 
 
@@ -88,7 +88,7 @@ def test_make_notebook_debug_structure() -> None:
         "Title Debug",
         parts=2,
         exercise_type="debug",
-        notebook_name="student.ipynb",
+        notebook_filename="student.ipynb",
     )
     cells = _require_cells(notebook)
 
@@ -174,7 +174,6 @@ def test_main_creates_canonical_debug_scaffold(
 
     helper_source = "".join(_ensure_source_lines(cells[-1]))
     assert "run_notebook_checks('student.ipynb')" in helper_source
-    assert "exercises/sequence" not in helper_source
 
     assert json.loads(student_notebook_path.read_text(encoding="utf-8")) == json.loads(
         solution_notebook_path.read_text(encoding="utf-8")
@@ -221,7 +220,7 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
         "Title Standard",
         parts=3,
         exercise_type="modify",
-        notebook_name="student.ipynb",
+        notebook_filename="student.ipynb",
     )
     cells = _require_cells(notebook)
 

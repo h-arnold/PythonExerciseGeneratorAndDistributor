@@ -152,7 +152,7 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
     return cells
 
 
-def _make_check_answers_cell(notebook_name: str) -> dict[str, Any]:
+def _make_check_answers_cell(notebook_filename: str) -> dict[str, Any]:
     """Return the auto-generated check-your-answers cell for the notebook."""
     return {
         "cell_type": "code",
@@ -162,7 +162,7 @@ def _make_check_answers_cell(notebook_name: str) -> dict[str, Any]:
         "source": [
             "from exercise_runtime_support.student_checker import run_notebook_checks\n",
             "\n",
-            f"run_notebook_checks({Path(notebook_name).name!r})\n",
+            f"run_notebook_checks({notebook_filename!r})\n",
         ],
     }
 
@@ -172,7 +172,7 @@ def _make_notebook_with_parts(
     *,
     parts: int,
     exercise_type: str,
-    notebook_name: str,
+    notebook_filename: str,
 ) -> dict[str, Any]:
     """Build a scaffolded notebook with tagged exercise cells."""
     if parts < 1:
@@ -212,7 +212,7 @@ def _make_notebook_with_parts(
             ],
         }
     )
-    cells.append(_make_check_answers_cell(notebook_name))
+    cells.append(_make_check_answers_cell(notebook_filename))
 
     return {
         "cells": cells,
@@ -258,7 +258,17 @@ def _build_exercise_key(
     exercise_type: str,
     slug: str,
 ) -> str:
-    """Build the canonical exercise key from scaffold inputs."""
+    """Build the canonical exercise key from scaffold inputs.
+
+    Returns:
+        The exercise key in ``exNNN_<construct>_<type>_<slug>`` format.
+
+    Args:
+        exercise_id: Exercise identifier in ``exNNN`` format.
+        construct: Canonical construct name.
+        exercise_type: Canonical exercise type.
+        slug: Snake-case exercise slug suffix.
+    """
     return f"{exercise_id}_{construct}_{exercise_type}_{slug}"
 
 
@@ -470,7 +480,7 @@ def main() -> int:
         args.title,
         parts=args.parts,
         exercise_type=args.exercise_type,
-        notebook_name=STUDENT_NOTEBOOK_FILENAME,
+        notebook_filename=STUDENT_NOTEBOOK_FILENAME,
     )
     student_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
     solution_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")

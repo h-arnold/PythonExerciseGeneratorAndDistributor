@@ -196,7 +196,7 @@ def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
     return dict(metadata)
 
 
-def _infer_construct_and_type(ex_dir: Path) -> tuple[str, str]:
+def _load_construct_and_type(ex_dir: Path) -> tuple[str, str]:
     metadata = _load_canonical_metadata(ex_dir)
     metadata_path = ex_dir / "exercise.json"
 
@@ -215,10 +215,16 @@ def _infer_construct_and_type(ex_dir: Path) -> tuple[str, str]:
         )
 
     exercise_key = metadata.get("exercise_key")
+    if not isinstance(exercise_key, str):
+        raise _ExerciseMetadataError(
+            metadata_path,
+            "Canonical exercise metadata must define exercise_key as a string",
+        )
     if exercise_key != ex_dir.name:
         raise _ExerciseMetadataError(
             metadata_path,
-            f"Canonical exercise metadata must define exercise_key {ex_dir.name!r}",
+            "Canonical exercise metadata exercise_key "
+            f"{exercise_key!r} must match directory name {ex_dir.name!r}",
         )
 
     return construct, exercise_type
@@ -278,9 +284,13 @@ def _check_order_of_teaching(
 
     text = order_path.read_text(encoding="utf-8")
     slug = ex_dir.name
-    notebook_rel = f"{slug}/notebooks/{notebook_name}"
+    notebook_refs = {
+        f"notebooks/{slug}.ipynb",
+        f"{slug}/notebooks/{notebook_name}",
+        f"{construct}/{slug}/notebooks/{notebook_name}",
+    }
 
-    if slug not in text and notebook_rel not in text:
+    if slug not in text and not any(notebook_ref in text for notebook_ref in notebook_refs):
         findings.append(
             Finding(
                 "ERROR",
@@ -666,7 +676,7 @@ def _resolve_exercise_context(
         return None, inferred_construct, inferred_type, metadata_error, findings
 
     try:
-        inferred_construct, inferred_type = _infer_construct_and_type(ex_dir)
+        inferred_construct, inferred_type = _load_construct_and_type(ex_dir)
     except _ExerciseMetadataError as exc:
         metadata_error = exc
         findings.append(Finding("ERROR", str(exc), path=exc.path))
