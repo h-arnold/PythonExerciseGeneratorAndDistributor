@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Lightweight verifier for newly generated exercises.
 
-This script is intentionally stdlib-only. It supports the Exercise Verifier
-agent by performing fast, objective checks:
+This script supports the Exercise Verifier agent by performing fast,
+objective checks:
 - Notebook structure: metadata.language, code-vs-tag consistency
 - Presence of expected tags (exerciseN, explanationN)
 - Basic concept progression scanning (heuristic keyword checks)
-- Presence of teacher-facing files (README/OVERVIEW) under exercises/
+- Presence of required canonical exercise files under exercises/
 - Construct teaching order updated (exercises/<construct>/OrderOfTeaching.md)
 
 It is not a replacement for reading the exercise prompts.
@@ -20,6 +20,8 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
+
+from exercise_metadata import load_exercise_metadata, resolve_exercise_dir
 
 CONSTRUCT_ORDER: list[str] = [
     "sequence",
@@ -35,8 +37,6 @@ CONSTRUCT_ORDER: list[str] = [
     "oop",
 ]
 
-CANONICAL_LAYOUT_PARTS = 2
-LEGACY_LAYOUT_PARTS = 3
 EXERCISE_TYPES = frozenset({"debug", "modify", "make"})
 
 
@@ -172,134 +172,74 @@ _EXPLANATION_TAG_RE = re.compile(r"^explanation(?P<n>\d+)$")
 
 
 def _infer_exercise_slug_from_notebook(notebook_path: Path) -> str | None:
-    name = notebook_path.name
-    if not name.endswith(".ipynb"):
+    if notebook_path.suffix != ".ipynb":
         return None
-    return name.removesuffix(".ipynb")
+
+    if notebook_path.name in {"student.ipynb", "solution.ipynb"}:
+        parent = notebook_path.parent
+        if parent.name != "notebooks":
+            return None
+        return parent.parent.name
+
+    return notebook_path.stem
 
 
-def _load_exercise_metadata(ex_dir: Path) -> dict[str, Any] | None:
+def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
     metadata_path = ex_dir / "exercise.json"
-    if not metadata_path.is_file():
-        return None
-
     try:
-        raw = json.loads(metadata_path.read_text(encoding="utf-8"))
-    except OSError as exc:
-        raise _ExerciseMetadataError(
-            metadata_path,
-            "Could not read canonical exercise metadata",
-        ) from exc
-    except json.JSONDecodeError as exc:
-        raise _ExerciseMetadataError(
-            metadata_path,
-            "Invalid JSON in canonical exercise metadata",
-        ) from exc
+        metadata = load_exercise_metadata(ex_dir)
+    except FileNotFoundError as exc:
+        raise _ExerciseMetadataError(metadata_path, str(exc)) from exc
+    except ValueError as exc:
+        raise _ExerciseMetadataError(metadata_path, str(exc)) from exc
 
-    if not isinstance(raw, dict):
+    return dict(metadata)
+
+
+def _infer_construct_and_type(ex_dir: Path) -> tuple[str, str]:
+    metadata = _load_canonical_metadata(ex_dir)
+    metadata_path = ex_dir / "exercise.json"
+
+    construct = metadata.get("construct")
+    if not isinstance(construct, str) or construct not in CONSTRUCT_ORDER:
         raise _ExerciseMetadataError(
             metadata_path,
-            "Canonical exercise metadata must be a JSON object",
+            "Canonical exercise metadata must define a valid construct",
         )
-    return cast(dict[str, Any], raw)
 
-
-def _require_canonical_exercise_type(ex_dir: Path, metadata: dict[str, Any]) -> str:
     exercise_type = metadata.get("exercise_type")
-    if isinstance(exercise_type, str) and exercise_type in EXERCISE_TYPES:
-        return exercise_type
+    if not isinstance(exercise_type, str) or exercise_type not in EXERCISE_TYPES:
+        raise _ExerciseMetadataError(
+            metadata_path,
+            "Canonical exercise metadata must define a valid exercise_type",
+        )
 
-    raise _ExerciseMetadataError(
-        ex_dir / "exercise.json",
-        "Canonical exercise metadata must define a valid exercise_type",
-    )
+    exercise_key = metadata.get("exercise_key")
+    if exercise_key != ex_dir.name:
+        raise _ExerciseMetadataError(
+            metadata_path,
+            f"Canonical exercise metadata must define exercise_key {ex_dir.name!r}",
+        )
 
-
-def _exercise_dir_priority(ex_dir: Path, *, exercises_root: Path) -> tuple[int, int, str]:
-    rel = ex_dir.relative_to(exercises_root)
-    parts = rel.parts
-
-    if len(parts) == CANONICAL_LAYOUT_PARTS and parts[0] in CONSTRUCT_ORDER:
-        has_metadata = (ex_dir / "exercise.json").is_file()
-        if has_metadata:
-            return (0, 0, rel.as_posix())
-        return (2, 0, rel.as_posix())
-
-    if (
-        len(parts) == LEGACY_LAYOUT_PARTS
-        and parts[0] in CONSTRUCT_ORDER
-        and parts[1] in EXERCISE_TYPES
-    ):
-        return (1, 0, rel.as_posix())
-
-    if len(parts) == 1:
-        return (3, 0, rel.as_posix())
-
-    return (4, len(parts), rel.as_posix())
+    return construct, exercise_type
 
 
-def _find_exercise_dir(ex_slug: str, repo_root: Path) -> Path | None:
-    # Prefer exercises/<construct>/<exercise_key>/, but remain tolerant of
-    # legacy construct/type and root-level duplicate layouts while they exist.
-    exercises_root = repo_root / "exercises"
-    if not exercises_root.exists():
-        return None
-
-    candidates = [p for p in exercises_root.rglob(ex_slug) if p.is_dir()]
-    if not candidates:
-        return None
-
-    return min(
-        candidates,
-        key=lambda path: _exercise_dir_priority(
-            path, exercises_root=exercises_root),
-    )
-
-
-def _infer_construct_and_type(
-    ex_dir: Path, *, repo_root: Path
-) -> tuple[str | None, str | None]:
-    exercises_root = repo_root / "exercises"
-    try:
-        rel = ex_dir.relative_to(exercises_root)
-    except ValueError:
-        return None, None
-
-    parts = rel.parts
-    if len(parts) == CANONICAL_LAYOUT_PARTS and parts[0] in CONSTRUCT_ORDER:
-        construct = parts[0]
-        metadata = _load_exercise_metadata(ex_dir)
-        if metadata is None:
-            return construct, None
-
-        metadata_construct = metadata.get("construct")
-        if isinstance(metadata_construct, str) and metadata_construct in CONSTRUCT_ORDER:
-            construct = metadata_construct
-
-        return construct, _require_canonical_exercise_type(ex_dir, metadata)
-
-    if (
-        len(parts) == LEGACY_LAYOUT_PARTS
-        and parts[0] in CONSTRUCT_ORDER
-        and parts[1] in EXERCISE_TYPES
-    ):
-        return parts[0], parts[1]
-
-    return None, None
-
-
-def _check_teacher_files(ex_dir: Path) -> list[Finding]:
+def _check_canonical_structure(ex_dir: Path) -> list[Finding]:
     findings: list[Finding] = []
 
-    required = ["README.md", "OVERVIEW.md"]
-    for filename in required:
-        p = ex_dir / filename
-        if not p.exists():
+    required = [
+        ex_dir / "README.md",
+        ex_dir / "notebooks" / "student.ipynb",
+        ex_dir / "notebooks" / "solution.ipynb",
+        ex_dir / "tests" / f"test_{ex_dir.name}.py",
+    ]
+    for required_path in required:
+        if not required_path.exists():
             findings.append(
                 Finding(
                     "ERROR",
-                    f"Missing teacher file: {p.relative_to(ex_dir)}",
-                    path=p,
+                    f"Missing canonical file: {required_path.relative_to(ex_dir)}",
+                    path=required_path,
                 )
             )
 
@@ -338,7 +278,7 @@ def _check_order_of_teaching(
 
     text = order_path.read_text(encoding="utf-8")
     slug = ex_dir.name
-    notebook_rel = f"notebooks/{notebook_name}"
+    notebook_rel = f"{slug}/notebooks/{notebook_name}"
 
     if slug not in text and notebook_rel not in text:
         findings.append(
@@ -679,7 +619,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "notebook",
         type=Path,
-        help="Path to the student notebook under notebooks/",
+        help="Path to the canonical student notebook.",
     )
     parser.add_argument(
         "--repo-root",
@@ -707,20 +647,26 @@ def _resolve_exercise_context(
     repo_root: Path,
     slug: str,
 ) -> tuple[Path | None, str | None, str | None, _ExerciseMetadataError | None, list[Finding]]:
-    ex_dir = _find_exercise_dir(slug, repo_root)
+    exercises_root = repo_root / "exercises"
     inferred_construct: str | None = None
     inferred_type: str | None = None
     metadata_error: _ExerciseMetadataError | None = None
     findings: list[Finding] = []
 
-    if ex_dir is None:
-        return ex_dir, inferred_construct, inferred_type, metadata_error, findings
+    try:
+        ex_dir = resolve_exercise_dir(slug, exercises_root)
+    except (LookupError, TypeError) as exc:
+        findings.append(
+            Finding(
+                "ERROR",
+                f"Could not resolve canonical exercise directory for {slug!r}: {exc}",
+                path=exercises_root,
+            )
+        )
+        return None, inferred_construct, inferred_type, metadata_error, findings
 
     try:
-        inferred_construct, inferred_type = _infer_construct_and_type(
-            ex_dir,
-            repo_root=repo_root,
-        )
+        inferred_construct, inferred_type = _infer_construct_and_type(ex_dir)
     except _ExerciseMetadataError as exc:
         metadata_error = exc
         findings.append(Finding("ERROR", str(exc), path=exc.path))
@@ -736,17 +682,10 @@ def _collect_teacher_findings(
     notebook_name: str,
     repo_root: Path,
 ) -> list[Finding]:
-    slug = notebook_name.removesuffix(".ipynb")
     if ex_dir is None:
-        return [
-            Finding(
-                "WARN",
-                f"Could not locate exercises/ directory for {slug!r} (skipping teacher-file checks)",
-                path=repo_root / "exercises",
-            )
-        ]
+        return []
 
-    findings = _check_teacher_files(ex_dir)
+    findings = _check_canonical_structure(ex_dir)
     if metadata_error is None or construct is not None:
         findings.extend(
             _check_order_of_teaching(
@@ -761,16 +700,16 @@ def _collect_teacher_findings(
 
 def _load_solution_notebook(
     *,
+    ex_dir: Path | None,
     expect_debug: bool,
-    notebook_name: str,
-    repo_root: Path,
 ) -> tuple[Path, NotebookDocument | None, list[Finding]]:
-    nb_solution_path = repo_root / "notebooks" / "solutions" / notebook_name
+    nb_solution_path = (
+        ex_dir / "notebooks" / "solution.ipynb"
+        if ex_dir is not None
+        else Path("solution.ipynb")
+    )
     if not nb_solution_path.exists():
-        return nb_solution_path, None, [
-            Finding("WARN", "Solution mirror notebook not found",
-                    path=nb_solution_path)
-        ]
+        return nb_solution_path, None, []
 
     nb_solution = _load_notebook(nb_solution_path)
     findings = _check_notebook_structure(
@@ -858,9 +797,8 @@ def main(argv: list[str] | None = None) -> int:
         nb_path, nb_student, expect_debug=expect_debug))
 
     nb_solution_path, nb_solution, solution_findings = _load_solution_notebook(
+        ex_dir=ex_dir,
         expect_debug=expect_debug,
-        notebook_name=nb_path.name,
-        repo_root=repo_root,
     )
     findings.extend(solution_findings)
 
