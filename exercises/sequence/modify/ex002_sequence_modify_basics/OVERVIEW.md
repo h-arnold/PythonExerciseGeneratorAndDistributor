@@ -16,24 +16,24 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
 
 ## Files Created
 
-- **Notebook**: [notebooks/ex002_sequence_modify_basics.ipynb](notebooks/ex002_sequence_modify_basics.ipynb)
+- **Notebook**: [notebooks/ex002_sequence_modify_basics.ipynb](../../../../notebooks/ex002_sequence_modify_basics.ipynb)
   - 10 exercises with tagged cells (`exercise1` through `exercise10`)
   - Clear instructions and expected output for each
   - Self-check cell for experimentation
 
-- **Tests**: [tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py](tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py)
-  - 40 test cases total (3-4 per exercise)
+- **Tests**: [exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py](../../ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py)
+  - 30 test cases total (3 per exercise)
   - Captures stdout to verify print output
   - Smoke tests verify all cells execute
   - Behavioral tests verify correct modifications
 
-- **Exercise folder**: [exercises/sequence/modify/ex002_sequence_modify_basics/](exercises/sequence/modify/ex002_sequence_modify_basics/)
+- **Exercise folder**: [exercises/sequence/modify/ex002_sequence_modify_basics/](./)
   - README.md with student/teacher notes
   - Properly placed in `sequence/modify/` hierarchy
 
 ## Test Status
 ✅ All 10 exercise cells execute without errors
-❌ 24/40 behavioral tests fail (expected - students haven't modified code yet)
+❌ 30/30 behavioral tests fail before students make the required modifications (expected for this starter state)
 
 This is the correct behavior for modification exercises:
 
@@ -68,10 +68,10 @@ Students:
 2. Read each exercise description
 3. Modify the code in tagged cells
 4. Run cells to see output
-5. Run `pytest tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` to verify
+5. Run `pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` to verify
 
 Teachers:
 
-- Reference solutions in [notebooks/solutions/ex002_sequence_modify_basics.ipynb](notebooks/solutions/ex002_sequence_modify_basics.ipynb)
+- Reference solutions in [notebooks/solutions/ex002_sequence_modify_basics.ipynb](../../../../notebooks/solutions/ex002_sequence_modify_basics.ipynb)
 - Tests are deterministic and fast (< 1s total)
 - Can be used with GitHub Classroom autograding

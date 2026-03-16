@@ -186,7 +186,7 @@ The current repository has a number of path assumptions wired into tooling, docs
 | Exercise registry data is duplicated outside path resolution | [tests/student_checker/api.py](tests/student_checker/api.py), [tests/exercise_framework/api.py](tests/exercise_framework/api.py), [tests/exercise_expectations](tests/exercise_expectations) | Add a dedicated metadata consolidation stream so `exercise.json` replaces duplicated exercise registry data rather than only replacing path logic |
 | Repository metadata and exported template contracts have different needs | [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py), [docs/CLI_README.md](docs/CLI_README.md), [tests/template_repo_cli/test_packager.py](tests/template_repo_cli/test_packager.py) | Keep repository metadata rich while preserving a metadata-free exported Classroom contract, and make the transformation between those models explicit in packaging |
 | Source repository assets and exported Classroom assets currently share assumptions without a clearly documented mapping contract | [scripts/template_repo_cli](scripts/template_repo_cli), [tests/template_repo_cli](tests/template_repo_cli), [docs/CLI_README.md](docs/CLI_README.md) | Define the source-to-export mapping explicitly so metadata-rich authoring exercises can produce the existing metadata-free flattened export safely and predictably |
-| Mixed-layout discovery could collect the same exercise-specific surface twice during migration | [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py), [tests/ex002_sequence_modify_basics](tests/ex002_sequence_modify_basics), [pyproject.toml](pyproject.toml) | Make duplicate-collection detection and hard failure an explicit acceptance criterion for the execution-model and pytest-discovery phases, treat `tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py` as the canonical exercise-specific test surface, and retire `tests/test_ex002_sequence_modify_basics.py` before enforcing the duplicate-collection guard. |
+| Mixed-layout discovery could collect the same exercise-specific surface twice during migration | [exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py](exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py), [pyproject.toml](pyproject.toml) | Make duplicate-collection detection and hard failure an explicit acceptance criterion for the execution-model and pytest-discovery phases, keep collector test-source selection independent from notebook layout during the transition, and retire duplicate top-level ex002 surfaces before enforcing the duplicate-collection guard. |
 | Exercise metadata could become bloated again if conventions are reintroduced as configuration | [ACTION_PLAN.md](ACTION_PLAN.md), [scripts/new_exercise.py](scripts/new_exercise.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), [tests/student_checker/api.py](tests/student_checker/api.py) | Keep the metadata schema intentionally small, derive all convention-based fields, and reject proposals that reintroduce duplicated configuration without a strong need; ensure `scripts/verify_exercise_quality.py` also respects the minimal metadata/resolver contract and does not reintroduce ad-hoc path assumptions |
 
 ### Tooling decision: scripts/verify_exercise_quality.py
@@ -331,14 +331,14 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] Do not treat the Phase 4 `ex004_sequence_debug_syntax` migration as permission to move all remaining exercise-specific tests early; it is the pilot proof only.
 - [ ] Do not move exercise-specific tests in bulk until the broader exercise-file migration phase, where notebooks, local docs links, and exercise tests move together.
 - [ ] Use this phase to eliminate known structural blockers, prove the canonical test layout works, and make the later broad migration safer.
-- [ ] The phase is only complete once the remaining repository-side `test_exNNN*.py` surfaces have been inventoried, `ex002` has been refactored into the same canonical test structure as the other exercises, and the repository has a clear verified path for migrating the remaining exercise tests alongside the wider exercise-file moves.
+- [x] The phase is only complete once the remaining repository-side `test_exNNN*.py` surfaces have been inventoried, `ex002` has been refactored into the same canonical test structure as the other exercises, and the repository has a clear verified path for migrating the remaining exercise tests alongside the wider exercise-file moves.
 
-- [ ] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`.
-- [ ] Refactor the `ex002` exercise tests explicitly, treating them as a clean-up target rather than a normal move: remove the experimental split structure, collapse them to the same canonical layout and naming pattern used by the other exercises, and make `ex002` the reference proof that the migration plan can normalise messy legacy test layouts before the broad move.
-- [ ] Update imports, fixtures, helper references, and collection configuration needed so canonical exercise-local tests run from their intended homes without path hacks.
-- [ ] Run the relevant repository-side exercise tests after the `ex002` refactor and any other preparatory clean-up work, and confirm they still execute as expected.
-- [ ] Record any exercises whose tests cannot yet be migrated with their wider exercise files because of unresolved ownership or naming blockers, and treat those as explicit migration blockers rather than silent exceptions.
-- [ ] Define the audit or guard that will be enforced once the broad migration phase completes so any repository-side `test_exNNN*.py` file remaining outside `exercises/<construct>/<exercise_key>/tests/` fails clearly.
+- [x] Inventory every remaining repository-side `test_exNNN*.py` file that still lives outside `exercises/<construct>/<exercise_key>/tests/`. (Recorded in `PHASE_6_MIGRATION_CHECKLIST.md`.)
+- [x] Refactor the `ex002` exercise tests explicitly, treating them as a clean-up target rather than a normal move: remove the experimental split structure, collapse them to the same canonical layout and naming pattern used by the other exercises, and make `ex002` the reference proof that the migration plan can normalise messy legacy test layouts before the broad move. (Canonical repository-side test surface: `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`; split top-level ex002 test surfaces retired.)
+- [x] Update imports, fixtures, helper references, and collection configuration needed so canonical exercise-local tests run from their intended homes without path hacks. (Recorded in `PHASE_6_MIGRATION_CHECKLIST.md`; collector test-source selection is now independent from notebook layout during the transition.)
+- [x] Run the relevant repository-side exercise tests after the `ex002` refactor and any other preparatory clean-up work, and confirm they still execute as expected. (Targeted verification recorded in `PHASE_6_MIGRATION_CHECKLIST.md`.)
+- [x] Record any exercises whose tests cannot yet be migrated with their wider exercise files because of unresolved ownership or naming blockers, and treat those as explicit migration blockers rather than silent exceptions. (Explicit blocker register recorded in `PHASE_6_MIGRATION_CHECKLIST.md`.)
+- [x] Define the audit or guard that will be enforced once the broad migration phase completes so any repository-side `test_exNNN*.py` file remaining outside `exercises/<construct>/<exercise_key>/tests/` fails clearly. (Defined as `find_noncanonical_exercise_test_sources()` in `exercise_runtime_support.pytest_collection_guard`, with Phase 6 contract recorded in `PHASE_6_MIGRATION_CHECKLIST.md`.)
 
 ### Phase 7: Scaffolding And Verification
 
@@ -495,11 +495,11 @@ Use this section to track which detailed migration checklist documents have been
 
 ### Wave 1: Can Be Authored First
 
-- [ ] Phase 1 checklist: Repository Inventory And Canonical Model
-- [ ] Phase 2 checklist: Metadata And Resolution Layer
-- [ ] Phase 3 checklist: Metadata Consolidation And Registry Replacement
-- [ ] Phase 4 checklist: Execution Model And Source-To-Export Contract
-- [ ] Phase 5 checklist: Docs And Agent Guidance Alignment
+- [x] Phase 1 checklist: Repository Inventory And Canonical Model
+- [x] Phase 2 checklist: Metadata And Resolution Layer
+- [x] Phase 3 checklist: Metadata Consolidation And Registry Replacement
+- [x] Phase 4 checklist: Execution Model And Source-To-Export Contract
+- [x] Phase 5 checklist: Docs And Agent Guidance Alignment
 - [ ] Phase 12 checklist: Docs, Agents, Workflows, And Contributor Guidance
 - [ ] Phase 13 checklist: Validation, Cutover, And Cleanup
 
@@ -507,7 +507,7 @@ These can be written first because they define the migration model, inventory, t
 
 ### Wave 2: Author After Wave 1 Is Stable
 
-- [ ] Phase 6 checklist: Exercise Test Migration Preparation And Verification
+- [x] Phase 6 checklist: Exercise Test Migration Preparation And Verification
 - [ ] Phase 7 checklist: Scaffolding And Verification
 - [ ] Phase 8 checklist: Grading And Autograding
 - [ ] Phase 9 checklist: Pytest Discovery, Packaging, And Workflow Contract

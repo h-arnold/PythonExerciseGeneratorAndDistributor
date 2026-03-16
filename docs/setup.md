@@ -116,9 +116,13 @@ If you're a student working on exercises:
 4. **Complete the exercise** in the cell tagged `exercise1` (or `exercise2`, etc.)
 5. **Run tests** to check your work:
 
+   In this source repository, run the canonical exercise-local test file:
+
    ```bash
-   uv run pytest tests/test_ex002_sequence_modify_basics.py -v
+   uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -v
    ```
+
+   Exported Classroom repositories still flatten that file to `tests/test_ex002_sequence_modify_basics.py`.
 
 6. **Repeat** until all tests pass
 

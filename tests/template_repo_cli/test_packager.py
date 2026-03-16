@@ -15,7 +15,7 @@ import pytest
 
 from exercise_metadata.registry import build_exercise_catalogue
 from exercise_runtime_support.exercise_catalogue import get_catalogue_snapshot_path
-from scripts.template_repo_cli.core.collector import ExerciseFiles
+from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
 ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
@@ -33,19 +33,13 @@ def template_packager(repo_root: Path) -> TemplatePackager:
 def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
     """Build exercise file mappings for one or more exercise identifiers."""
 
+    collector = FileCollector(repo_root)
+
     def _build(*exercise_ids: str) -> ExerciseFileMap:
         if not exercise_ids:
             msg = "At least one exercise_id is required"
             raise ValueError(msg)
-        return {
-            exercise_id: ExerciseFiles(
-                notebook=repo_root / f"notebooks/{exercise_id}.ipynb",
-                notebook_export=Path("notebooks") / f"{exercise_id}.ipynb",
-                test=repo_root / f"tests/test_{exercise_id}.py",
-                test_export=Path("tests") / f"test_{exercise_id}.py",
-            )
-            for exercise_id in exercise_ids
-        }
+        return collector.collect_multiple(list(exercise_ids))
 
     return _build
 

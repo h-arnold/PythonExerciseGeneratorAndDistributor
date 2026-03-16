@@ -13,14 +13,21 @@ class TestCollectAllFiles:
     """Tests for collecting all files for an exercise."""
 
     def test_collect_all_files_for_legacy_exercise(self, repo_root: Path) -> None:
-        """Test collecting legacy files from the flattened source layout."""
+        """Test collecting a legacy notebook plus canonical exercise-local test source."""
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex002_sequence_modify_basics")
 
-        assert files["notebook"] == repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
-        assert files["notebook_export"] == Path("notebooks/ex002_sequence_modify_basics.ipynb")
-        assert files["test"] == repo_root / "tests/test_ex002_sequence_modify_basics.py"
-        assert files["test_export"] == Path("tests/test_ex002_sequence_modify_basics.py")
+        assert files["notebook"] == repo_root / \
+            "notebooks/ex002_sequence_modify_basics.ipynb"
+        assert files["notebook_export"] == Path(
+            "notebooks/ex002_sequence_modify_basics.ipynb")
+        assert files["test"] == (
+            repo_root
+            / "exercises/sequence/ex002_sequence_modify_basics/tests"
+            / "test_ex002_sequence_modify_basics.py"
+        )
+        assert files["test_export"] == Path(
+            "tests/test_ex002_sequence_modify_basics.py")
 
     def test_collect_all_files_for_canonical_exercise(self, repo_root: Path) -> None:
         """Test collecting canonical files from the exercise source tree."""
@@ -30,13 +37,15 @@ class TestCollectAllFiles:
         assert files["notebook"] == (
             repo_root / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
         )
-        assert files["notebook_export"] == Path("notebooks/ex004_sequence_debug_syntax.ipynb")
+        assert files["notebook_export"] == Path(
+            "notebooks/ex004_sequence_debug_syntax.ipynb")
         assert files["test"] == (
             repo_root
             / "exercises/sequence/ex004_sequence_debug_syntax/tests"
             / "test_ex004_sequence_debug_syntax.py"
         )
-        assert files["test_export"] == Path("tests/test_ex004_sequence_debug_syntax.py")
+        assert files["test_export"] == Path(
+            "tests/test_ex004_sequence_debug_syntax.py")
 
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
@@ -119,11 +128,14 @@ class TestCollectValidation:
         (repo_root / "tests" / "test_ex004_sequence_debug_syntax.py").write_text(
             "", encoding="utf-8"
         )
-        exercise_dir = repo_root / "exercises" / "sequence" / "ex004_sequence_debug_syntax"
+        exercise_dir = repo_root / "exercises" / \
+            "sequence" / "ex004_sequence_debug_syntax"
         (exercise_dir / "notebooks").mkdir(parents=True)
         (exercise_dir / "tests").mkdir(parents=True)
-        (exercise_dir / "notebooks" / "student.ipynb").write_text("{}", encoding="utf-8")
-        (exercise_dir / "notebooks" / "solution.ipynb").write_text("{}", encoding="utf-8")
+        (exercise_dir / "notebooks" /
+         "student.ipynb").write_text("{}", encoding="utf-8")
+        (exercise_dir / "notebooks" /
+         "solution.ipynb").write_text("{}", encoding="utf-8")
         (exercise_dir / "tests" / "test_ex004_sequence_debug_syntax.py").write_text(
             "", encoding="utf-8"
         )
@@ -143,11 +155,11 @@ class TestCollectValidation:
         with pytest.raises(FileExistsError, match="Duplicate exercise test sources"):
             collector.collect_files("ex004_sequence_debug_syntax")
 
-    def test_collect_allows_noncanonical_nested_test_surface(
+    def test_collect_legacy_layout_falls_back_to_flat_test_when_canonical_test_is_absent(
         self,
         temp_dir: Path,
     ) -> None:
-        """Test noncanonical nested tests do not trigger duplicate-source failures."""
+        """Test legacy layouts still use the flat test when no canonical source exists."""
         repo_root = temp_dir
         (repo_root / "notebooks").mkdir()
         (repo_root / "tests").mkdir()
@@ -157,14 +169,6 @@ class TestCollectValidation:
         (repo_root / "tests" / "test_ex002_sequence_modify_basics.py").write_text(
             "", encoding="utf-8"
         )
-        nested_test = (
-            repo_root
-            / "tests"
-            / "ex002_sequence_modify_basics"
-            / "test_ex002_sequence_modify_basics.py"
-        )
-        nested_test.parent.mkdir(parents=True)
-        nested_test.write_text("", encoding="utf-8")
         (repo_root / "exercises").mkdir()
         (repo_root / "exercises" / "migration_manifest.json").write_text(
             '{"schema_version": 1, "exercises": {"ex002_sequence_modify_basics": {"layout": "legacy"}}}',
@@ -174,7 +178,8 @@ class TestCollectValidation:
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex002_sequence_modify_basics")
 
-        assert files["test"] == repo_root / "tests" / "test_ex002_sequence_modify_basics.py"
+        assert files["test"] == repo_root / "tests" / \
+            "test_ex002_sequence_modify_basics.py"
 
 
 class TestCollectEdgeCases:

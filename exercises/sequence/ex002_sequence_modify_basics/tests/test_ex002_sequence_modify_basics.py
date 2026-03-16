@@ -1,14 +1,13 @@
+"""Tests for ex002 sequence modify basics."""
+
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 
 import pytest
 
-from tests.exercise_expectations import (
-    ex002_sequence_modify_basics_exercise_expectations as ex002,
-)
-from tests.exercise_framework import (
+from exercise_runtime_support.exercise_framework import (
+    RuntimeCache,
     assertions,
     constructs,
     expected_output_lines,
@@ -18,29 +17,39 @@ from tests.exercise_framework import (
     resolve_exercise_notebook_path,
     run_cell_and_capture_output,
 )
+from tests.exercise_expectations import (
+    ex002_sequence_modify_basics_exercise_expectations as ex002,
+)
 
 _EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
+_CACHE = RuntimeCache()
 
 
-def _exercise_tag(exercise_no: int) -> str:
+def _tag(exercise_no: int) -> str:
     return f"exercise{exercise_no}"
 
 
-def _resolved_notebook_path() -> Path:
-    return resolve_exercise_notebook_path(_EX002_EXERCISE_KEY)
+def _task_mark(exercise_no: int, title: str) -> pytest.MarkDecorator:
+    return pytest.mark.task(name=f"Exercise {exercise_no}: {title}", taskno=exercise_no)
+
+
+def _resolved_notebook_path() -> str:
+    return str(resolve_exercise_notebook_path(_EX002_EXERCISE_KEY))
 
 
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
         _resolved_notebook_path(),
-        tag=_exercise_tag(exercise_no),
+        tag=_tag(exercise_no),
+        cache=_CACHE,
     )
 
 
 def _exercise_code(exercise_no: int) -> str:
     return extract_tagged_code(
         _resolved_notebook_path(),
-        tag=_exercise_tag(exercise_no),
+        tag=_tag(exercise_no),
+        cache=_CACHE,
     )
 
 
@@ -48,14 +57,32 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
     return ast.parse(_exercise_code(exercise_no))
 
 
-@pytest.mark.task(taskno=1)
+def _string_constants(tree: ast.AST) -> set[str]:
+    return {
+        node.value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+    }
+
+
+def _print_calls(tree: ast.AST) -> list[ast.Call]:
+    return [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
+    ]
+
+
+@_task_mark(1, "Logic")
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
     assert "Hello World" not in output, "Old greeting 'Hello World' should be replaced"
     assert "Hello Python!" in output, "Should print 'Hello Python!' instead"
 
 
-@pytest.mark.task(taskno=1)
+@_task_mark(1, "Formatting")
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
     assert output == expected_output_text(
@@ -65,7 +92,7 @@ def test_exercise1_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=1)
+@_task_mark(1, "Construct")
 def test_exercise1_construct() -> None:
     code = _exercise_code(1)
     assert (
@@ -76,17 +103,12 @@ def test_exercise1_construct() -> None:
         == []
     )
 
-    tree = _exercise_ast(1)
-    strings = {
-        node.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Constant) and isinstance(node.value, str)
-    }
+    strings = _string_constants(_exercise_ast(1))
     assert "Hello Python!" in strings, "The string 'Hello Python!' should appear in your code"
     assert "Hello World!" not in strings, "Old string 'Hello World!' should be replaced"
 
 
-@pytest.mark.task(taskno=2)
+@_task_mark(2, "Logic")
 def test_exercise2_logic() -> None:
     output = _exercise_output(2)
     assert "Bassaleg School" in output, "Should print 'Bassaleg School'"
@@ -95,7 +117,7 @@ def test_exercise2_logic() -> None:
     )
 
 
-@pytest.mark.task(taskno=2)
+@_task_mark(2, "Formatting")
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
     assert output == expected_output_text(
@@ -105,7 +127,7 @@ def test_exercise2_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=2)
+@_task_mark(2, "Construct")
 def test_exercise2_construct() -> None:
     code = _exercise_code(2)
     assert (
@@ -116,26 +138,23 @@ def test_exercise2_construct() -> None:
         == []
     )
 
-    tree = _exercise_ast(2)
-    strings = {
-        node.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Constant) and isinstance(node.value, str)
-    }
-    assert any("Bassaleg School" in s for s in strings), (
+    strings = _string_constants(_exercise_ast(2))
+    assert any("Bassaleg School" in string for string in strings), (
         "The text 'Bassaleg School' should appear in your code"
     )
-    assert not any("Greenfield" in s for s in strings), "Old value 'Greenfield' should be replaced"
+    assert not any("Greenfield" in string for string in strings), (
+        "Old value 'Greenfield' should be replaced"
+    )
 
 
-@pytest.mark.task(taskno=3)
+@_task_mark(3, "Logic")
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
     value = int(output.strip())
     assert value == ex002.EX002_EXPECTED_NUMERIC[3]
 
 
-@pytest.mark.task(taskno=3)
+@_task_mark(3, "Formatting")
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
     assert output == expected_output_text(
@@ -145,7 +164,7 @@ def test_exercise3_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=3)
+@_task_mark(3, "Construct")
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
     has_multiplication = any(
@@ -158,7 +177,7 @@ def test_exercise3_construct() -> None:
     assert not has_addition, "Should replace addition (+) with multiplication"
 
 
-@pytest.mark.task(taskno=4)
+@_task_mark(4, "Logic")
 def test_exercise4_logic() -> None:
     output = _exercise_output(4)
     words = output.strip().split()
@@ -167,7 +186,7 @@ def test_exercise4_logic() -> None:
     )
 
 
-@pytest.mark.task(taskno=4)
+@_task_mark(4, "Formatting")
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
     assert output == expected_output_text(
@@ -177,7 +196,7 @@ def test_exercise4_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=4)
+@_task_mark(4, "Construct")
 def test_exercise4_construct() -> None:
     code = _exercise_code(4)
     assert (
@@ -189,36 +208,26 @@ def test_exercise4_construct() -> None:
     )
 
     tree = _exercise_ast(4)
-    print_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    ]
-    assert len(print_calls) == expected_print_call_count(
+    assert len(_print_calls(tree)) == expected_print_call_count(
         4,
         expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
     )
-    # Verify exact string content
-    strings = {
-        node.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Constant) and isinstance(node.value, str)
-    }
+    strings = _string_constants(tree)
     assert "Good Morning Everyone" in strings, "Should build the message 'Good Morning Everyone'"
-    assert not any("Hello" in s for s in strings), "Old value 'Hello' should be removed"
-    assert not any("World" in s for s in strings), "Old value 'World' should be removed"
+    assert not any(
+        "Hello" in string for string in strings), "Old value 'Hello' should be removed"
+    assert not any(
+        "World" in string for string in strings), "Old value 'World' should be removed"
 
 
-@pytest.mark.task(taskno=5)
+@_task_mark(5, "Logic")
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
     value = float(output.strip())
     assert value == ex002.EX002_EXPECTED_NUMERIC[5]
 
 
-@pytest.mark.task(taskno=5)
+@_task_mark(5, "Formatting")
 def test_exercise5_formatting() -> None:
     output = _exercise_output(5)
     assert output == expected_output_text(
@@ -228,7 +237,7 @@ def test_exercise5_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=5)
+@_task_mark(5, "Construct")
 def test_exercise5_construct() -> None:
     tree = _exercise_ast(5)
     has_division = any(
@@ -241,7 +250,7 @@ def test_exercise5_construct() -> None:
     assert not has_subtraction, "Should replace subtraction (-) with division"
 
 
-@pytest.mark.task(taskno=6)
+@_task_mark(6, "Logic")
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
     lines = output.strip().splitlines()
@@ -252,18 +261,17 @@ def test_exercise6_logic() -> None:
     )
 
 
-@pytest.mark.task(taskno=6)
+@_task_mark(6, "Formatting")
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    expected = expected_output_text(
+    assert output == expected_output_text(
         6,
         single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
         multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
     )
-    assert output == expected
 
 
-@pytest.mark.task(taskno=6)
+@_task_mark(6, "Construct")
 def test_exercise6_construct() -> None:
     code = _exercise_code(6)
     assert (
@@ -275,27 +283,20 @@ def test_exercise6_construct() -> None:
     )
 
     tree = _exercise_ast(6)
-    print_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    ]
-    assert len(print_calls) == expected_print_call_count(
+    assert len(_print_calls(tree)) == expected_print_call_count(
         6,
         expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
     )
 
 
-@pytest.mark.task(taskno=7)
+@_task_mark(7, "Logic")
 def test_exercise7_logic() -> None:
     output = _exercise_output(7)
     assert "The result" in output, "Should print 'The result is 100'"
     assert "100" in output, "Should include '100' in the output"
 
 
-@pytest.mark.task(taskno=7)
+@_task_mark(7, "Formatting")
 def test_exercise7_formatting() -> None:
     output = _exercise_output(7)
     assert output == expected_output_text(
@@ -305,7 +306,7 @@ def test_exercise7_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=7)
+@_task_mark(7, "Construct")
 def test_exercise7_construct() -> None:
     code = _exercise_code(7)
     assert (
@@ -317,31 +318,27 @@ def test_exercise7_construct() -> None:
     )
 
     tree = _exercise_ast(7)
-    # Check for concatenation operation
     has_concat = any(
         isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add) for node in ast.walk(tree)
     )
     assert has_concat, "Should use string concatenation (+) to build the message"
 
-    strings = {
-        node.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Constant) and isinstance(node.value, str)
-    }
-    assert any("100" in s for s in strings), "The number 100 should appear as a string"
-    assert any("result" in s.lower() for s in strings), (
+    strings = _string_constants(tree)
+    assert any(
+        "100" in string for string in strings), "The number 100 should appear as a string"
+    assert any("result" in string.lower() for string in strings), (
         "The word 'result' should appear in a string"
     )
 
 
-@pytest.mark.task(taskno=8)
+@_task_mark(8, "Logic")
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
     value = int(output.strip())
     assert value == ex002.EX002_EXPECTED_NUMERIC[8]
 
 
-@pytest.mark.task(taskno=8)
+@_task_mark(8, "Formatting")
 def test_exercise8_formatting() -> None:
     output = _exercise_output(8)
     assert output == expected_output_text(
@@ -351,7 +348,7 @@ def test_exercise8_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=8)
+@_task_mark(8, "Construct")
 def test_exercise8_construct() -> None:
     tree = _exercise_ast(8)
     has_multiplication = any(
@@ -364,7 +361,7 @@ def test_exercise8_construct() -> None:
     assert not has_addition, "Should replace addition (+) with multiplication"
 
 
-@pytest.mark.task(taskno=9)
+@_task_mark(9, "Logic")
 def test_exercise9_logic() -> None:
     output = _exercise_output(9)
     lines = output.strip().splitlines()
@@ -372,18 +369,17 @@ def test_exercise9_logic() -> None:
     assert int(lines[1]) == ex002.EX002_EXPECTED_NUMERIC[9]
 
 
-@pytest.mark.task(taskno=9)
+@_task_mark(9, "Formatting")
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    expected = expected_output_text(
+    assert output == expected_output_text(
         9,
         single_line=ex002.EX002_EXPECTED_SINGLE_LINE,
         multi_line=ex002.EX002_EXPECTED_MULTI_LINE,
     )
-    assert output == expected
 
 
-@pytest.mark.task(taskno=9)
+@_task_mark(9, "Construct")
 def test_exercise9_construct() -> None:
     code = _exercise_code(9)
     assert (
@@ -406,28 +402,21 @@ def test_exercise9_construct() -> None:
     has_subtraction = any(
         isinstance(node, ast.BinOp) and isinstance(node.op, ast.Sub) for node in ast.walk(tree)
     )
-    print_calls = [
-        node
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-    ]
     assert has_subtraction
-    assert len(print_calls) == expected_print_call_count(
+    assert len(_print_calls(tree)) == expected_print_call_count(
         9,
         expectations=ex002.EX002_EXPECTED_PRINT_CALLS,
     )
 
 
-@pytest.mark.task(taskno=10)
+@_task_mark(10, "Logic")
 def test_exercise10_logic() -> None:
     output = _exercise_output(10)
     assert "Welcome" in output, "Should include 'Welcome' in the message"
     assert "Python programming" in output, "Should include 'Python programming' in the message"
 
 
-@pytest.mark.task(taskno=10)
+@_task_mark(10, "Formatting")
 def test_exercise10_formatting() -> None:
     output = _exercise_output(10)
     assert output == expected_output_text(
@@ -437,7 +426,7 @@ def test_exercise10_formatting() -> None:
     )
 
 
-@pytest.mark.task(taskno=10)
+@_task_mark(10, "Construct")
 def test_exercise10_construct() -> None:
     code = _exercise_code(10)
     assert (
@@ -449,18 +438,15 @@ def test_exercise10_construct() -> None:
     )
 
     tree = _exercise_ast(10)
-    # Check for concatenation operation
     has_concat = any(
         isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add) for node in ast.walk(tree)
     )
     assert has_concat, "Should use string concatenation (+) to join the message parts"
 
-    strings = {
-        node.value
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Constant) and isinstance(node.value, str)
-    }
-    assert any("Welcome" in s for s in strings), "Should include 'Welcome' in string constants"
-    assert any("Python programming" in s for s in strings), (
+    strings = _string_constants(tree)
+    assert any("Welcome" in string for string in strings), (
+        "Should include 'Welcome' in string constants"
+    )
+    assert any("Python programming" in string for string in strings), (
         "Should include 'Python programming' in string constants"
     )

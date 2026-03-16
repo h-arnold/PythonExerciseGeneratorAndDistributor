@@ -85,11 +85,11 @@ expected outputs, prompts, and input data.
 uv run python scripts/run_pytest_variant.py --variant solution -q
 
 # Focus on a specific exercise (still targeting solutions)
-uv run python scripts/run_pytest_variant.py --variant solution tests/test_ex002_sequence_modify_basics.py -q
-uv run python scripts/run_pytest_variant.py --variant solution tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py -q
+uv run python scripts/run_pytest_variant.py --variant solution \
+    exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
 
 # Only switch to student notebooks when validating the classroom experience
-uv run pytest tests/test_ex002_sequence_modify_basics.py -q
+uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
 ```
 
 ### Adding Features to the Grader
@@ -113,11 +113,11 @@ uv run python scripts/build_autograde_payload.py \
     --pytest-args=-q \
     --results-json=tmp/autograde/solutions.json
 
-uv run pytest tests/test_ex002_sequence_modify_basics.py -q \
+uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q \
     --autograde-results-path tmp/autograde/student.json
 ```
 
-The first command targets the instructor notebooks; the second intentionally hits the student notebooks to confirm failure messaging. Replace `tests/test_ex002_sequence_modify_basics.py` with focused paths as needed.
+The first command targets the instructor notebooks; the second intentionally hits the student notebooks to confirm failure messaging. Replace `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` with focused paths as needed.
 
 ### Build Classroom payloads with the CLI
 
@@ -127,7 +127,7 @@ Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow
 uv run python scripts/build_autograde_payload.py \
     --variant solution \
     --pytest-args=-q \
-    --pytest-args=tests/test_ex002_sequence_modify_basics.py \
+    --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py \
     --results-json=tmp/autograde/results.json
 ```
 
