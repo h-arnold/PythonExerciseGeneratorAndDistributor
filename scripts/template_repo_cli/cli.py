@@ -20,6 +20,17 @@ from scripts.template_repo_cli.utils.validation import (
     validate_repo_name,
 )
 
+_OUTPUT_DIRECTORY_EXCEPTIONS = (
+    OSError,
+    shutil.Error,
+    TypeError,
+    ValueError,
+)
+def _is_fatal_control_flow_exception(error: BaseException) -> bool:
+    """Return True when an exception must escape defensive handlers."""
+
+    return isinstance(error, (GeneratorExit, KeyboardInterrupt, SystemExit))
+
 
 def get_repo_root() -> Path:
     """Get repository root directory."""
@@ -203,7 +214,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
         if output_path.exists():
             shutil.rmtree(output_path)
         shutil.copytree(workspace, output_path)
-    except Exception as copy_error:
+    except _OUTPUT_DIRECTORY_EXCEPTIONS as copy_error:
         traceback.print_exception(
             type(copy_error), copy_error, copy_error.__traceback__, file=sys.stderr
         )
@@ -646,12 +657,13 @@ def _execute_template_creation(  # noqa: PLR0913
         print(f"Error: {e}", file=sys.stderr)
         packager.cleanup(workspace)
         return 1
-    # Defensive catch-all to ensure the CLI exits cleanly on truly unexpected
-    # errors. Specific, anticipated exceptions are handled above; this block
-    # is only for unexpected failures and still exposes a traceback in verbose
-    # mode to aid debugging.
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+    # Defensive broad catch to preserve the CLI's previous contract of failing
+    # cleanly on non-fatal workflow issues while still allowing fatal control-flow
+    # exceptions to propagate unchanged.
+    except BaseException as error:
+        if _is_fatal_control_flow_exception(error):
+            raise
+        print(f"Unexpected error: {error}", file=sys.stderr)
         if args.verbose:
             traceback.print_exc()
         packager.cleanup(workspace)
@@ -687,8 +699,10 @@ def _execute_template_update(  # noqa: PLR0913
         print(f"Error: {e}", file=sys.stderr)
         packager.cleanup(workspace)
         return 1
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+    except BaseException as error:
+        if _is_fatal_control_flow_exception(error):
+            raise
+        print(f"Unexpected error: {error}", file=sys.stderr)
         if args.verbose:
             traceback.print_exc()
         packager.cleanup(workspace)
