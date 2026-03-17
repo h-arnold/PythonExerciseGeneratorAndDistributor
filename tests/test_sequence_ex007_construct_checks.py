@@ -2,16 +2,17 @@ from __future__ import annotations
 
 import ast
 
+from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
+    interactive_construct_issues,
+)
 from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
-from tests.exercise_framework.ex007_construct_checks import interactive_construct_issues
 
 
 def _construct_issues(code: str, exercise_no: int) -> list[str]:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     return interactive_construct_issues(
         ast.parse(code),
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),

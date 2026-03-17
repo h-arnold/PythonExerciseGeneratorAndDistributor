@@ -5,6 +5,6 @@ set -euo pipefail
 # Usage:
 #   scripts/verify_solutions.sh
 #   scripts/verify_solutions.sh -q
-#   scripts/verify_solutions.sh tests/test_ex003_sequence_modify_variables.py
+#   scripts/verify_solutions.sh exercises/sequence/ex003_sequence_modify_variables/tests/test_ex003_sequence_modify_variables.py
 
 python scripts/run_pytest_variant.py --variant solution "$@"

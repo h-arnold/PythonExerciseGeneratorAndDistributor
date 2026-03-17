@@ -6,7 +6,7 @@
 - **Difficulty**: easy-medium
 - **Learning objective**: Fix common casting and data type errors when working with numbers and text in sequential code.
 - **Notebook path**: `notebooks/ex007_sequence_debug_casting.ipynb`
-- **Tests path**: `tests/test_ex007_sequence_debug_casting.py`
+- **Tests path**: `exercises/sequence/ex007_sequence_debug_casting/tests/test_ex007_sequence_debug_casting.py`
 
 ## Student prompt
 - Open the matching notebook in `notebooks/`.

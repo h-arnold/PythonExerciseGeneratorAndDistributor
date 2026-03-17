@@ -52,8 +52,7 @@ def _ast(n: int) -> ast.Module:
 
 def _has_call(tree: ast.AST, func_name: str) -> bool:
     return any(
-        isinstance(node, ast.Call) and isinstance(
-            node.func, ast.Name) and node.func.id == func_name
+        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name
         for node in ast.walk(tree)
     )
 
@@ -127,8 +126,7 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
-    output = _run_with_inputs(
-        6, list(ex006.EX006_INPUT_EXPECTATIONS[6]["inputs"]))
+    output = _run_with_inputs(6, list(ex006.EX006_INPUT_EXPECTATIONS[6]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[6]["prompt_contains"] in output
     # final line should be 12
     last = output.strip().splitlines()[-1]
@@ -145,8 +143,7 @@ def test_exercise6_construct() -> None:
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_logic() -> None:
-    output = _run_with_inputs(
-        7, list(ex006.EX006_INPUT_EXPECTATIONS[7]["inputs"]))
+    output = _run_with_inputs(7, list(ex006.EX006_INPUT_EXPECTATIONS[7]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[7]["prompt_contains"] in output
     expected_output = ex006.EX006_INPUT_EXPECTATIONS[7].get("output_contains")
     assert expected_output is not None
@@ -193,8 +190,7 @@ def test_exercise9_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_logic() -> None:
-    output = _run_with_inputs(
-        10, list(ex006.EX006_INPUT_EXPECTATIONS[10]["inputs"]))
+    output = _run_with_inputs(10, list(ex006.EX006_INPUT_EXPECTATIONS[10]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[10]["prompt_contains"] in output
     expected_output = ex006.EX006_INPUT_EXPECTATIONS[10].get("output_contains")
     assert expected_output is not None

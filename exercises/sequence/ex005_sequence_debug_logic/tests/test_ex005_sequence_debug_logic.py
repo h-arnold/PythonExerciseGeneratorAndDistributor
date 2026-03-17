@@ -4,6 +4,9 @@ import ast
 
 import pytest
 
+from exercise_runtime_support.exercise_framework.expectations_helpers import (
+    is_valid_explanation,
+)
 from tests.exercise_expectations import ex005_sequence_debug_logic as ex005
 from tests.exercise_framework import (
     RuntimeCache,
@@ -12,7 +15,6 @@ from tests.exercise_framework import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-from tests.exercise_framework.expectations_helpers import is_valid_explanation
 
 
 def _tag(exercise_no: int) -> str:
@@ -293,16 +295,14 @@ def test_exercise5_logic() -> None:
 def test_exercise5_formatting() -> None:
     inputs = ex005.EX005_EXERCISE_INPUTS[ex005.EX005_FULL_NAME_EXERCISE]
     output = _exercise_output(ex005.EX005_FULL_NAME_EXERCISE)
-    assert output == _expected_io_output(
-        ex005.EX005_FULL_NAME_EXERCISE, inputs)
+    assert output == _expected_io_output(ex005.EX005_FULL_NAME_EXERCISE, inputs)
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_construct() -> None:
     tree = _exercise_ast(ex005.EX005_FULL_NAME_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_FULL_NAME_EXERCISE]).issubset(
-        prompts)
+    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_FULL_NAME_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "full_name")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):
@@ -370,12 +370,10 @@ def test_exercise7_formatting() -> None:
 def test_exercise7_construct() -> None:
     tree = _exercise_ast(7)
     total_value = _assignment_value(tree, "total")
-    assert isinstance(total_value, ast.BinOp) and isinstance(
-        total_value.op, ast.Add)
+    assert isinstance(total_value, ast.BinOp) and isinstance(total_value.op, ast.Add)
     assert {"score1", "score2"} <= set(_names_in_node(total_value))
     average_value = _assignment_value(tree, "average")
-    assert isinstance(average_value, ast.BinOp) and isinstance(
-        average_value.op, ast.Div)
+    assert isinstance(average_value, ast.BinOp) and isinstance(average_value.op, ast.Div)
     assert "total" in _names_in_node(average_value)
     assert ex005.EX005_AVERAGE_DIVISOR in _number_constants(average_value)
     assert _print_uses_name(tree, "average")
@@ -387,12 +385,10 @@ def test_exercise7_negative_check() -> None:
     tree = _exercise_ast(7)
     total_value = _assignment_value(tree, "total")
     # Should NOT use multiplication for calculating total
-    assert not (isinstance(total_value, ast.BinOp)
-                and isinstance(total_value.op, ast.Mult))
+    assert not (isinstance(total_value, ast.BinOp) and isinstance(total_value.op, ast.Mult))
     average_value = _assignment_value(tree, "average")
     # Should NOT use addition for calculating average
-    assert not (isinstance(average_value, ast.BinOp)
-                and isinstance(average_value.op, ast.Add))
+    assert not (isinstance(average_value, ast.BinOp) and isinstance(average_value.op, ast.Add))
 
 
 @pytest.mark.task(taskno=7)
@@ -498,8 +494,7 @@ def test_exercise10_formatting() -> None:
 def test_exercise10_construct() -> None:
     tree = _exercise_ast(ex005.EX005_PROFILE_EXERCISE)
     prompts = _input_prompts(tree)
-    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_PROFILE_EXERCISE]).issubset(
-        prompts)
+    assert set(ex005.EX005_INPUT_PROMPTS[ex005.EX005_PROFILE_EXERCISE]).issubset(prompts)
     value = _assignment_value(tree, "message")
     assert isinstance(value, (ast.BinOp, ast.JoinedStr))
     if isinstance(value, ast.BinOp):

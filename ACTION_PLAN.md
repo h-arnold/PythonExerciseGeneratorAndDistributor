@@ -397,14 +397,19 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 ### Phase 9: Pytest Discovery, Packaging, And Workflow Contract
 
+#### Progress Update
+
+- [x] Task 1 completed on `2026-03-17`: repository-side `test_exNNN*.py` exercise tests now live under canonical exercise-local `tests/` directories for `ex003`, `ex005`, `ex006`, and `ex007`, while blocker-class shared tests were renamed so they no longer masquerade as exercise-local notebook suites.
+- [x] Repository collection now fails fast on both duplicate exercise-test sources and any noncanonical `test_exNNN*.py` path outside `exercises/<construct>/<exercise_key>/tests/`, with focused guard coverage updated in `tests/test_pytest_collection_guard.py`.
+
 #### Constraints And Acceptance Criteria
 
 - [ ] Do not let packaging, CI, or pytest discovery rely on accidental continued presence of top-level exercise notebooks or tests.
 - [ ] Do not leak repository authoring metadata into exported Classroom repositories unless that contract is explicitly revised later.
 - [ ] The phase is only complete once exercise-local tests are discoverable under the chosen execution model, packaging works from canonical exercise directories, workflow behaviour matches the `--variant <student|solution>` selector (forwarded to the new resolver), the exported repository remains metadata-free by design, and no repository-side `test_exNNN*.py` files remain outside `exercises/<construct>/<exercise_key>/tests/`.
 
-- [ ] Update the chosen repository pytest discovery configuration so exercise-local tests are collected intentionally rather than incidentally.
-- [ ] Add an explicit repository guard so any `test_exNNN*.py` file outside `exercises/<construct>/<exercise_key>/tests/` is treated as a migration failure rather than tolerated drift.
+- [x] Update the chosen repository pytest discovery configuration so exercise-local tests are collected intentionally rather than incidentally.
+- [x] Add an explicit repository guard so any `test_exNNN*.py` file outside `exercises/<construct>/<exercise_key>/tests/` is treated as a migration failure rather than tolerated drift.
 - [ ] Update [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py) to select exercises from the new canonical tree.
 - [ ] Update [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py) to collect files from each exercise directory.
 - [ ] Update [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) to package from the exercise directory structure while exporting the existing flattened Classroom contract.

@@ -24,11 +24,9 @@ def _expected_task_names() -> set[str]:
 
 
 def _load_module(module_name: str) -> ModuleType:
-    spec = importlib.util.spec_from_file_location(
-        module_name, _CANONICAL_EX002_TEST_PATH)
+    spec = importlib.util.spec_from_file_location(module_name, _CANONICAL_EX002_TEST_PATH)
     if spec is None or spec.loader is None:
-        raise RuntimeError(
-            f"Could not load ex002 test module from {_CANONICAL_EX002_TEST_PATH}")
+        raise RuntimeError(f"Could not load ex002 test module from {_CANONICAL_EX002_TEST_PATH}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -42,11 +40,9 @@ def test_ex002_task_marker_distribution_matches_expectations(
 
     canonical_marks: list[TaskMark] = task_marker_collector(canonical_module)
 
-    expected_distribution: Counter[int] = Counter(
-        check.exercise_no for check in EX002_CHECKS)
+    expected_distribution: Counter[int] = Counter(check.exercise_no for check in EX002_CHECKS)
 
-    canonical_distribution: Counter[int] = task_distribution_builder(
-        canonical_marks)
+    canonical_distribution: Counter[int] = task_distribution_builder(canonical_marks)
 
     assert canonical_distribution == expected_distribution
 
