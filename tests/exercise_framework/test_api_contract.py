@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from exercise_runtime_support.exercise_catalogue import (
     get_catalogue_key_for_exercise_id,
     get_exercise_catalogue,
 )
+from exercise_runtime_support.exercise_framework import api as framework_api
 from tests.exercise_framework.api import (
     ExerciseCheckResult,
     NotebookCheckResult,
@@ -77,3 +80,32 @@ def test_run_notebook_check_supports_ex002_summary_path(
     assert len(results) == 1
     assert results[0].label == "ex002 Sequence Modify Basics"
     assert results[0].passed is True
+
+def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_arguments: list[tuple[object, str]] = []
+
+    def fake_run_cell_and_capture_output(
+        notebook_path: object,
+        *,
+        tag: str,
+    ) -> str:
+        captured_arguments.append((notebook_path, tag))
+        assert notebook_path == "ex004_sequence_debug_syntax"
+        assert isinstance(notebook_path, str)
+        assert not isinstance(notebook_path, Path)
+        assert not notebook_path.startswith("notebooks/")
+        return ""
+
+    monkeypatch.setattr(
+        framework_api.runtime,
+        "run_cell_and_capture_output",
+        fake_run_cell_and_capture_output,
+    )
+
+    results = run_notebook_check("ex004_sequence_debug_syntax")
+
+    assert captured_arguments == [("ex004_sequence_debug_syntax", "exercise1")]
+    assert results == [NotebookCheckResult("ex004 Debug Syntax Errors", True, [])]
+

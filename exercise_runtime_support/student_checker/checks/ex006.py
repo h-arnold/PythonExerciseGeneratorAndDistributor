@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from exercise_runtime_support.exercise_framework.paths import resolve_exercise_notebook_path
 from exercise_runtime_support.notebook_grader import (
     NotebookGradingError,
     run_cell_and_capture_output,
@@ -45,9 +44,8 @@ def run_ex006_checks() -> list[Ex006CheckResult]:
 
 def _check_ex006_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    notebook_path = _resolve_ex006_notebook_path()
     output = run_cell_and_capture_output(
-        notebook_path, tag=exercise_tag(exercise_no))
+        _EX006_EXERCISE_KEY, tag=exercise_tag(exercise_no))
     expected = EX006_EXPECTED_OUTPUTS[exercise_no]
     if output != expected:
         errors.append(
@@ -57,11 +55,10 @@ def _check_ex006_static_output(exercise_no: int) -> list[str]:
 
 def _check_ex006_input_flow(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    notebook_path = _resolve_ex006_notebook_path()
     details = EX006_INPUT_EXPECTATIONS[exercise_no]
     inputs = details["inputs"]
     output = run_cell_with_input(
-        notebook_path, tag=exercise_tag(exercise_no), inputs=inputs)
+        _EX006_EXERCISE_KEY, tag=exercise_tag(exercise_no), inputs=inputs)
     prompt_contains = details["prompt_contains"]
     output_contains = details.get("output_contains")
     last_line = details.get("last_line")
@@ -80,10 +77,6 @@ def _check_ex006_input_flow(exercise_no: int) -> list[str]:
             errors.append(
                 f"Exercise {exercise_no}: expected last line '{last_line}'.")
     return errors
-
-
-def _resolve_ex006_notebook_path() -> str:
-    return str(resolve_exercise_notebook_path(_EX006_EXERCISE_KEY))
 
 
 def _build_ex006_checks() -> list[Ex006CheckDefinition]:

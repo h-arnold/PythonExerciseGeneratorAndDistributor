@@ -18,7 +18,7 @@ from exercise_runtime_support.exercise_framework.expectations import EX002_CHECK
 from exercise_runtime_support.notebook_grader import NotebookGradingError
 from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 
-from . import paths, runtime
+from . import runtime
 
 RawNotebookResult = tuple[str, bool, list[str]]
 
@@ -78,10 +78,7 @@ def _check_ex002_summary() -> list[str]:
 
 
 def _check_notebook_can_execute_first_exercise(exercise_key: str) -> list[str]:
-    runtime.run_cell_and_capture_output(
-        paths.resolve_exercise_notebook_path(exercise_key),
-        tag="exercise1",
-    )
+    runtime.run_cell_and_capture_output(exercise_key, tag="exercise1")
     return []
 
 

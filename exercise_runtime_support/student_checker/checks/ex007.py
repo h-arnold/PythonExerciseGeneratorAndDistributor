@@ -9,7 +9,6 @@ from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
     has_call,
     interactive_construct_issues,
 )
-from exercise_runtime_support.exercise_framework.paths import resolve_exercise_notebook_path
 from exercise_runtime_support.notebook_grader import (
     NotebookGradingError,
     extract_tagged_code,
@@ -56,10 +55,9 @@ def run_ex007_checks() -> list[ExerciseCheckResult]:
 
 def _check_ex007_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    notebook_path = _resolve_ex007_notebook_path()
     expected = ex007.EX007_EXPECTED_STATIC_OUTPUTS[exercise_no]
     output = run_cell_and_capture_output(
-        notebook_path,
+        _EX007_EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
     )
     if output != expected:
@@ -70,10 +68,9 @@ def _check_ex007_static_output(exercise_no: int) -> list[str]:
 
 def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    notebook_path = _resolve_ex007_notebook_path()
     for case_no, case in enumerate(ex007.EX007_INPUT_CASES[exercise_no], start=1):
         output = run_cell_with_input(
-            notebook_path,
+            _EX007_EXERCISE_KEY,
             tag=exercise_tag(exercise_no),
             inputs=list(case["inputs"]),
         )
@@ -87,7 +84,7 @@ def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
 
 def _check_ex007_explanation(exercise_no: int) -> list[str]:
     return check_explanation_cell(
-        _resolve_ex007_notebook_path(),
+        _EX007_EXERCISE_KEY,
         exercise_no,
         ex007.EX007_MIN_EXPLANATION_LENGTH,
         ex007.EX007_PLACEHOLDER_PHRASES,
@@ -131,7 +128,7 @@ def _check_ex007_construct(exercise_no: int) -> list[str]:
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
-        _resolve_ex007_notebook_path(),
+        _EX007_EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
     )
     try:
@@ -140,10 +137,6 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
         raise NotebookGradingError(
             f"Exercise {exercise_no}: code could not be parsed: {exc.msg}."
         ) from exc
-
-
-def _resolve_ex007_notebook_path() -> str:
-    return str(resolve_exercise_notebook_path(_EX007_EXERCISE_KEY))
 
 
 def _build_ex007_checks() -> list[ExerciseCheckDefinition]:
