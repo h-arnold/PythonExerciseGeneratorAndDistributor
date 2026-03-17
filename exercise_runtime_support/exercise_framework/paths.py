@@ -87,7 +87,8 @@ def _resolve_packaged_notebook_path(
     if variant == "student":
         return repo_root / relative_notebook_path
 
-    packaged_solution = repo_root / _relative_packaged_solution_path(exercise_key)
+    packaged_solution = repo_root / \
+        _relative_packaged_solution_path(exercise_key)
     if packaged_solution.exists():
         return packaged_solution
 

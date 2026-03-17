@@ -31,7 +31,8 @@ class _MakeNotebookWithParts(Protocol):
 
 
 class _CheckExerciseNotExists(Protocol):
-    def __call__(self, construct: str, exercise_type: str, exercise_key: str) -> None: ...
+    def __call__(self, construct: str, exercise_type: str,
+                 exercise_key: str) -> None: ...
 
 
 class _ValidateAndParseArgs(Protocol):
@@ -75,7 +76,8 @@ def _is_string_list(value: object) -> TypeGuard[list[str]]:
 
 def _require_cells(notebook: Notebook) -> list[NotebookCell]:
     cells = notebook.get("cells")
-    assert _is_notebook_cells(cells), "Notebook cells must be a list of dictionaries"
+    assert _is_notebook_cells(
+        cells), "Notebook cells must be a list of dictionaries"
     return cells
 
 
@@ -125,7 +127,8 @@ def test_make_notebook_debug_structure() -> None:
         assert cell_index > 0
         previous_cell = cells[cell_index - 1]
         assert previous_cell["cell_type"] == "markdown"
-        assert "Expected output" in "".join(_ensure_source_lines(previous_cell))
+        assert "Expected output" in "".join(
+            _ensure_source_lines(previous_cell))
 
 
 def test_build_readme_lines_uses_canonical_exercise_local_test_target() -> None:
@@ -199,10 +202,12 @@ def test_main_creates_canonical_debug_scaffold(
     assert test_path.exists(), "Canonical test file should be created"
 
     assert not (tmp_path / "notebooks" / f"{exercise_key}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" / f"{exercise_key}.ipynb").exists()
+    assert not (tmp_path / "notebooks" / "solutions" /
+                f"{exercise_key}.ipynb").exists()
     assert not (tmp_path / "tests" / f"test_{exercise_key}.py").exists()
 
-    exercise_metadata = json.loads(exercise_json_path.read_text(encoding="utf-8"))
+    exercise_metadata = json.loads(
+        exercise_json_path.read_text(encoding="utf-8"))
     assert exercise_metadata == {
         "schema_version": 1,
         "exercise_key": exercise_key,
@@ -214,7 +219,8 @@ def test_main_creates_canonical_debug_scaffold(
         "parts": 1,
     }
 
-    student_notebook = json.loads(student_notebook_path.read_text(encoding="utf-8"))
+    student_notebook = json.loads(
+        student_notebook_path.read_text(encoding="utf-8"))
     cells = _require_cells(student_notebook)
     tags: list[str] = []
     for cell in cells:
@@ -343,12 +349,14 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     assert self_check_cell["cell_type"] == "code"
     metadata = self_check_cell.get("metadata")
     assert not _string_tags(metadata), "Self-check cell should not be tagged"
-    assert any("Self-check" in line for line in _ensure_source_lines(self_check_cell))
+    assert any(
+        "Self-check" in line for line in _ensure_source_lines(self_check_cell))
 
     check_answers_cell = cells[-1]
     assert check_answers_cell["cell_type"] == "code"
     metadata = check_answers_cell.get("metadata")
-    assert not _string_tags(metadata), "Check-your-answers cell should remain untagged"
+    assert not _string_tags(
+        metadata), "Check-your-answers cell should remain untagged"
     joined_source = "".join(_ensure_source_lines(check_answers_cell))
     assert (
         "from exercise_runtime_support.student_checker import run_notebook_checks" in joined_source

@@ -24,8 +24,10 @@ def test_paths_resolver_matches_notebook_grader_for_canonical_exercise_key() -> 
         / "solution.ipynb"
     )
 
-    from_framework = paths.resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
-    from_grader = grader_resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
+    from_framework = paths.resolve_notebook_path(
+        EX004_EXERCISE_KEY, variant="solution")
+    from_grader = grader_resolve_notebook_path(
+        EX004_EXERCISE_KEY, variant="solution")
 
     assert from_framework == from_grader == expected
 
@@ -99,8 +101,10 @@ def test_paths_resolver_preserves_variant_switching_for_canonical_paths() -> Non
     )
     expected = student_notebook.with_name("solution.ipynb")
 
-    from_framework = paths.resolve_notebook_path(student_notebook, variant="solution")
-    from_grader = grader_resolve_notebook_path(student_notebook, variant="solution")
+    from_framework = paths.resolve_notebook_path(
+        student_notebook, variant="solution")
+    from_grader = grader_resolve_notebook_path(
+        student_notebook, variant="solution")
 
     assert from_framework == from_grader == expected
 
@@ -120,8 +124,10 @@ def test_paths_resolver_anchors_relative_canonical_paths_to_repo_root(
     )
     expected = (repo_root / student_notebook).with_name("solution.ipynb")
 
-    from_framework = paths.resolve_notebook_path(student_notebook, variant="solution")
-    from_grader = grader_resolve_notebook_path(student_notebook, variant="solution")
+    from_framework = paths.resolve_notebook_path(
+        student_notebook, variant="solution")
+    from_grader = grader_resolve_notebook_path(
+        student_notebook, variant="solution")
 
     assert from_framework == from_grader == expected
 
@@ -130,8 +136,10 @@ def test_paths_resolver_leaves_explicit_external_paths_unchanged(tmp_path: Path)
     notebook_path = tmp_path / "arbitrary" / "path" / "lesson.ipynb"
     expected = notebook_path
 
-    from_framework = paths.resolve_notebook_path(notebook_path, variant="solution")
-    from_grader = grader_resolve_notebook_path(notebook_path, variant="solution")
+    from_framework = paths.resolve_notebook_path(
+        notebook_path, variant="solution")
+    from_grader = grader_resolve_notebook_path(
+        notebook_path, variant="solution")
 
     assert from_framework == expected
     assert from_grader == expected
@@ -163,7 +171,8 @@ def test_resolve_exercise_notebook_path_uses_variant_selected_legacy_path() -> N
         variant="solution",
     )
 
-    assert resolved == repo_root / "notebooks" / "solutions" / f"{EX003_EXERCISE_KEY}.ipynb"
+    assert resolved == repo_root / "notebooks" / \
+        "solutions" / f"{EX003_EXERCISE_KEY}.ipynb"
 
 
 def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_exports(

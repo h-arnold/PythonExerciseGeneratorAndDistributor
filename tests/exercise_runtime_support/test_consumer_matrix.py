@@ -27,7 +27,8 @@ def test_consumer_matrix_lists_existing_files() -> None:
     for entry in CONSUMER_MATRIX:
         assert entry.files, f"Consumer matrix entry has no files: {entry.surface}"
         for path in entry.files:
-            assert path.exists(), f"Missing consumer matrix file for {entry.surface}: {path}"
+            assert path.exists(
+            ), f"Missing consumer matrix file for {entry.surface}: {path}"
 
 
 def test_execution_model_docs_include_consumer_matrix_rows() -> None:
@@ -55,8 +56,10 @@ def test_new_exercise_scaffolder_emits_canonical_runtime_imports() -> None:
 
 def test_workflow_consumers_use_variant_driven_scripts() -> None:
     """Workflow consumer surfaces must invoke the shared variant-aware scripts."""
-    tests_workflow = Path(".github/workflows/tests.yml").read_text(encoding="utf-8")
-    solutions_workflow = Path(".github/workflows/tests-solutions.yml").read_text(encoding="utf-8")
+    tests_workflow = Path(
+        ".github/workflows/tests.yml").read_text(encoding="utf-8")
+    solutions_workflow = Path(
+        ".github/workflows/tests-solutions.yml").read_text(encoding="utf-8")
     classroom_workflow = Path("template_repo_files/.github/workflows/classroom.yml").read_text(
         encoding="utf-8"
     )

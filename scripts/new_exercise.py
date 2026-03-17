@@ -46,7 +46,8 @@ def _slugify(text: str) -> str:
 
 def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
     """Create cell metadata dictionary."""
-    meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
+    meta: dict[str, object] = {
+        "id": uuid.uuid4().hex[:8], "language": language}
     if tags:
         meta["tags"] = tags
     return meta
@@ -300,7 +301,8 @@ def _build_exercise_metadata(
 
 def _validate_and_parse_args() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
-    parser = argparse.ArgumentParser(description="Create a new exercise skeleton")
+    parser = argparse.ArgumentParser(
+        description="Create a new exercise skeleton")
     parser.add_argument("exercise_id", help='Exercise id like "ex001"')
     parser.add_argument("title", help="Human title for the exercise")
     parser.add_argument(
@@ -331,7 +333,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
     if args.parts < 1:
         raise SystemExit("--parts must be >= 1")
     if args.parts > MAX_PARTS:
-        raise SystemExit(f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
+        raise SystemExit(
+            f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
 
     exercise_id = args.exercise_id.strip().lower()
     if not re.fullmatch(r"ex\d{3}", exercise_id):
@@ -350,7 +353,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
 
     slug = args.slug.strip().lower() if args.slug else _slugify(args.title)
     if not re.fullmatch(r"[a-z0-9]+(?:_[a-z0-9]+)*", slug):
-        raise SystemExit("Slug must be snake_case containing only a-z, 0-9, and underscores.")
+        raise SystemExit(
+            "Slug must be snake_case containing only a-z, 0-9, and underscores.")
 
     args.exercise_id = exercise_id
     args.construct = construct
@@ -386,7 +390,8 @@ def main() -> int:
         args.slug,
     )
 
-    _check_exercise_not_exists(args.construct, args.exercise_type, exercise_key)
+    _check_exercise_not_exists(
+        args.construct, args.exercise_type, exercise_key)
 
     exercise_dir = ROOT / "exercises" / args.construct / exercise_key
     notebooks_dir = exercise_dir / "notebooks"
@@ -407,7 +412,8 @@ def main() -> int:
         exercise_type=args.exercise_type,
         test_target=test_path.relative_to(ROOT).as_posix(),
     )
-    (exercise_dir / README_FILENAME).write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
+    (exercise_dir / README_FILENAME).write_text("\n".join(readme_lines) +
+                                                "\n", encoding="utf-8")
 
     exercise_metadata = _build_exercise_metadata(
         args,
@@ -454,7 +460,8 @@ def main() -> int:
             ]
         )
     else:
-        exercise_tags = ", ".join(f"'exercise{i}'" for i in range(1, args.parts + 1))
+        exercise_tags = ", ".join(
+            f"'exercise{i}'" for i in range(1, args.parts + 1))
         test_lines.extend(
             [
                 f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
@@ -505,8 +512,10 @@ def main() -> int:
         notebook_filename=STUDENT_NOTEBOOK_FILENAME,
         test_target=relative_test_path,
     )
-    student_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
-    solution_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
+    student_notebook_path.write_text(
+        json.dumps(notebook, indent=2), encoding="utf-8")
+    solution_notebook_path.write_text(
+        json.dumps(notebook, indent=2), encoding="utf-8")
 
     print(f"Created exercise: {exercise_key}")
     print(f"- {exercise_dir.relative_to(ROOT)}")
