@@ -9,7 +9,6 @@ from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
     has_call,
     interactive_construct_issues,
 )
-from exercise_runtime_support.exercise_framework.paths import resolve_exercise_notebook_path
 from exercise_runtime_support.notebook_grader import (
     NotebookGradingError,
     extract_tagged_code,
@@ -56,24 +55,21 @@ def run_ex007_checks() -> list[ExerciseCheckResult]:
 
 def _check_ex007_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    notebook_path = _resolve_ex007_notebook_path()
     expected = ex007.EX007_EXPECTED_STATIC_OUTPUTS[exercise_no]
     output = run_cell_and_capture_output(
-        notebook_path,
+        _EX007_EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
     )
     if output != expected:
-        errors.append(
-            f"Exercise {exercise_no}: expected '{expected.strip()}'.")
+        errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
     return errors
 
 
 def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    notebook_path = _resolve_ex007_notebook_path()
     for case_no, case in enumerate(ex007.EX007_INPUT_CASES[exercise_no], start=1):
         output = run_cell_with_input(
-            notebook_path,
+            _EX007_EXERCISE_KEY,
             tag=exercise_tag(exercise_no),
             inputs=list(case["inputs"]),
         )
@@ -87,7 +83,7 @@ def _check_ex007_prompt_flow(exercise_no: int) -> list[str]:
 
 def _check_ex007_explanation(exercise_no: int) -> list[str]:
     return check_explanation_cell(
-        _resolve_ex007_notebook_path(),
+        _EX007_EXERCISE_KEY,
         exercise_no,
         ex007.EX007_MIN_EXPLANATION_LENGTH,
         ex007.EX007_PLACEHOLDER_PHRASES,
@@ -119,9 +115,7 @@ def _check_ex007_construct(exercise_no: int) -> list[str]:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     issues = interactive_construct_issues(
         tree,
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]
-        ),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
@@ -131,7 +125,7 @@ def _check_ex007_construct(exercise_no: int) -> list[str]:
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
-        _resolve_ex007_notebook_path(),
+        _EX007_EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
     )
     try:
@@ -142,28 +136,20 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
         ) from exc
 
 
-def _resolve_ex007_notebook_path() -> str:
-    return str(resolve_exercise_notebook_path(_EX007_EXERCISE_KEY))
-
-
 def _build_ex007_checks() -> list[ExerciseCheckDefinition]:
     checks: list[ExerciseCheckDefinition] = []
     exercise_numbers = range(1, 11)
     for exercise_no in exercise_numbers:
         if exercise_no in ex007.EX007_EXPECTED_STATIC_OUTPUTS:
             checks.append(
-                build_exercise_check(
-                    exercise_no, "Static output", _check_ex007_static_output)
+                build_exercise_check(exercise_no, "Static output", _check_ex007_static_output)
             )
         if exercise_no in ex007.EX007_INPUT_CASES:
             checks.append(
-                build_exercise_check(
-                    exercise_no, "Prompt flow", _check_ex007_prompt_flow)
+                build_exercise_check(exercise_no, "Prompt flow", _check_ex007_prompt_flow)
             )
-        checks.append(build_exercise_check(
-            exercise_no, "Construct", _check_ex007_construct))
-        checks.append(build_exercise_check(
-            exercise_no, "Explanation", _check_ex007_explanation))
+        checks.append(build_exercise_check(exercise_no, "Construct", _check_ex007_construct))
+        checks.append(build_exercise_check(exercise_no, "Explanation", _check_ex007_explanation))
     return checks
 
 

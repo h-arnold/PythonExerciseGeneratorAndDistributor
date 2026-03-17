@@ -49,13 +49,13 @@ def build_ex006_check(
 
 
 def check_explanation_cell(
-    notebook_path: str,
+    exercise_key: str,
     exercise_no: int,
     min_length: int,
     placeholder_phrases: tuple[str, ...],
 ) -> list[str]:
     try:
-        explanation = get_explanation_cell(notebook_path, tag=f"explanation{exercise_no}")
+        explanation = get_explanation_cell(exercise_key, tag=f"explanation{exercise_no}")
     except AssertionError:
         return [f"Exercise {exercise_no}: explanation is missing."]
     if not is_valid_explanation(

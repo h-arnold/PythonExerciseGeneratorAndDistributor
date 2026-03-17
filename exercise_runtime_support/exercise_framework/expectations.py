@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from functools import lru_cache, partial
-from pathlib import Path
 from typing import Final
 
 from exercise_runtime_support.exercise_catalogue import get_catalogue_key_for_exercise_id
@@ -15,7 +14,7 @@ from tests.exercise_expectations import (
     EX002_EXPECTED_SINGLE_LINE,
 )
 
-from . import assertions, constructs, paths, runtime
+from . import assertions, constructs, runtime
 
 
 @dataclass(frozen=True)
@@ -76,14 +75,10 @@ def _get_ex002_exercise_key() -> str:
     return get_catalogue_key_for_exercise_id(2)
 
 
-def _resolve_ex002_notebook_path() -> Path:
-    return paths.resolve_exercise_notebook_path(_get_ex002_exercise_key())
-
-
 def _check_logic(exercise_no: int) -> list[str]:
     errors: list[str] = []
     output = runtime.run_cell_and_capture_output(
-        _resolve_ex002_notebook_path(),
+        _get_ex002_exercise_key(),
         tag=_exercise_tag(exercise_no),
     )
 
@@ -93,8 +88,7 @@ def _check_logic(exercise_no: int) -> list[str]:
         multi_line=EX002_EXPECTED_MULTI_LINE,
     )
     if expected_text is None:
-        errors.append(
-            f"Exercise {exercise_no}: no expected output configured.")
+        errors.append(f"Exercise {exercise_no}: no expected output configured.")
         return errors
 
     if output != expected_text:
@@ -104,8 +98,7 @@ def _check_logic(exercise_no: int) -> list[str]:
             multi_line=EX002_EXPECTED_MULTI_LINE,
         )
         expected_summary = " | ".join(expected_lines or [])
-        errors.append(
-            f"Exercise {exercise_no}: expected '{expected_summary}'.")
+        errors.append(f"Exercise {exercise_no}: expected '{expected_summary}'.")
     return errors
 
 
@@ -118,7 +111,7 @@ def _check_formatting(exercise_no: int) -> list[str]:
         return []
 
     output = runtime.run_cell_and_capture_output(
-        _resolve_ex002_notebook_path(),
+        _get_ex002_exercise_key(),
         tag=_exercise_tag(exercise_no),
     )
     actual_calls = len(output.splitlines())
@@ -130,7 +123,7 @@ def _check_formatting(exercise_no: int) -> list[str]:
 def _check_construct(exercise_no: int) -> list[str]:
     errors: list[str] = []
     code = runtime.extract_tagged_code(
-        _resolve_ex002_notebook_path(),
+        _get_ex002_exercise_key(),
         tag=_exercise_tag(exercise_no),
     )
     has_print = constructs.check_has_print_statement(code)

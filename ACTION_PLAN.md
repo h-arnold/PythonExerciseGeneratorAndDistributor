@@ -381,16 +381,19 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Framework-facing repository tests and scaffold output no longer treat top-level notebook path strings as canonical. This cutover now covers `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_sequence_debug_casting.py`, `tests/exercise_framework/test_constructs.py`, `scripts/new_exercise.py`, `tests/test_new_exercise.py`, and `tests/exercise_runtime_support/test_consumer_matrix.py`.
 - [x] Contributor docs now describe the Phase 8 resolver contract in `docs/exercise-testing.md`, `docs/exercise-generation-cli.md`, and `docs/exercise-types/debug.md` so new examples use exercise keys or canonical `Path` inputs rather than legacy notebook path strings.
 - [x] Focused validation passed on `2026-03-17`: `uv run pytest -q tests/test_ex003_sequence_modify_variables.py tests/test_ex005_sequence_debug_logic.py tests/test_ex006_sequence_modify_casting.py tests/test_ex007_sequence_debug_casting.py tests/exercise_runtime_support/test_consumer_matrix.py tests/exercise_framework/test_paths.py tests/exercise_framework/test_parity_paths.py tests/exercise_framework/test_runtime.py tests/exercise_framework/test_autograde_parity.py exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py tests/test_new_exercise.py`.
+- [x] Task 2 completed on `2026-03-17`: framework smoke checks, ex002 expectations, and student-checker detail checks now pass exercise keys all the way into the shared runtime/grader helpers instead of pre-resolved source `notebooks/...` paths, while the `tests.student_checker` compatibility wrappers still mirror monkeypatched aliases correctly.
+- [x] Focused Phase 8 regression coverage now pins the key-based contract in `tests/exercise_framework/test_api_contract.py`, `tests/student_checker/test_api.py`, `tests/student_checker/test_notebook_runtime.py`, `tests/student_checker/test_checks_aliasing.py`, and `tests/student_checker/test_reporting.py`, so those call sites fail if they regress to legacy path-like inputs.
+- [x] The repository/workflow variant funnel and autograding cutover are now confirmed in `scripts/run_pytest_variant.py`, `scripts/build_autograde_payload.py`, `scripts/verify_solutions.sh`, `tests/test_run_pytest_variant.py`, `tests/test_build_autograde_payload.py`, `tests/test_integration_autograding.py`, and `tests/exercise_runtime_support/test_consumer_matrix.py`.
 
 - [x] Update [tests/notebook_grader.py](tests/notebook_grader.py) to resolve notebooks via the new metadata and resolver layer. (The compatibility wrapper now inherits the shared resolver contract from `exercise_runtime_support/notebook_grader.py`.)
 - [x] Update [tests/exercise_framework/paths.py](tests/exercise_framework/paths.py) to match the same behaviour. (The compatibility wrapper now inherits the shared resolver contract from `exercise_runtime_support/exercise_framework/paths.py`.)
-- [ ] Keep student-versus-solution selection separate from layout migration by funneling both repository and workflow commands through the CLI `--variant <student|solution>` selector so missing canonical files surface immediately.
+- [x] Keep student-versus-solution selection separate from layout migration by funneling both repository and workflow commands through the CLI `--variant <student|solution>` selector so missing canonical files surface immediately.
 - [x] Update exercise expectation modules and framework APIs so they stop treating top-level notebook paths as canonical. (Framework-side repository tests, scaffolded test output, and documentation now use exercise keys or canonical `Path` inputs.)
-- [ ] Update student checker code paths that currently resolve by notebook filename or hard-coded slug.
-- [ ] Update [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py) so production validation no longer assumes only `notebooks` and `notebooks/solutions`.
-- [ ] Update [scripts/verify_solutions.sh](scripts/verify_solutions.sh) to use the new resolution mechanism.
-- [ ] Update autograding integration tests to reflect the new CLI `--variant <student|solution>` model so they prove the resolver responds correctly to each literal.
-- [x] Keep a pointer list for likely breakage in: [tests/exercise_framework/test_runtime.py](tests/exercise_framework/test_runtime.py), [tests/exercise_framework/test_paths.py](tests/exercise_framework/test_paths.py), [tests/exercise_framework/test_autograde_parity.py](tests/exercise_framework/test_autograde_parity.py), [tests/student_checker/notebook_runtime.py](tests/student_checker/notebook_runtime.py), and [tests/student_checker/api.py](tests/student_checker/api.py). (Used during the framework cutover; the student-checker files remain pending their later batch.)
+- [x] Update student checker code paths that currently resolve by notebook filename or hard-coded slug.
+- [x] Update [scripts/build_autograde_payload.py](scripts/build_autograde_payload.py) so production validation no longer assumes only `notebooks` and `notebooks/solutions`.
+- [x] Update [scripts/verify_solutions.sh](scripts/verify_solutions.sh) to use the new resolution mechanism.
+- [x] Update autograding integration tests to reflect the new CLI `--variant <student|solution>` model so they prove the resolver responds correctly to each literal.
+- [x] Keep a pointer list for likely breakage in: [tests/exercise_framework/test_runtime.py](tests/exercise_framework/test_runtime.py), [tests/exercise_framework/test_paths.py](tests/exercise_framework/test_paths.py), [tests/exercise_framework/test_autograde_parity.py](tests/exercise_framework/test_autograde_parity.py), [tests/student_checker/notebook_runtime.py](tests/student_checker/notebook_runtime.py), and [tests/student_checker/api.py](tests/student_checker/api.py). (Used during both the framework cutover and the later student-checker batch.)
 
 ### Phase 9: Pytest Discovery, Packaging, And Workflow Contract
 
@@ -525,7 +528,7 @@ These can be written first because they define the migration model, inventory, t
 
 - [x] Phase 6 checklist: Exercise Test Migration Preparation And Verification
 - [x] Phase 7 checklist: Scaffolding And Verification
-- [ ] Phase 8 checklist: Grading And Autograding
+- [x] Phase 8 checklist: Grading And Autograding
 - [ ] Phase 9 checklist: Pytest Discovery, Packaging, And Workflow Contract
 
 These depend on the earlier checklist set being stable enough to define the resolver contract, execution model, source-to-export mapping, the `exercise_runtime_support` runtime expectations, and the pre-migration docs contract.
