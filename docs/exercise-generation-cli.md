@@ -182,32 +182,40 @@ Replace the placeholder test with real assertions. Two common patterns:
 
 ```python
 # Option 1: assert on printed output (matches the scaffold)
-from exercise_runtime_support.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import (
+  resolve_exercise_notebook_path,
+  runtime,
+)
 
-NOTEBOOK_PATH = "exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb"
+_EXERCISE_KEY = "ex042_sequence_modify_variables_and_types"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
 
 
 def test_exercise1_greets_user() -> None:
-    output = runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
+  output = runtime.run_cell_and_capture_output(_NOTEBOOK_PATH, tag="exercise1")
     assert "Hello" in output
     assert "TODO" not in output
 ```
 
 ```python
 # Option 2: execute the cell and inspect objects
-from exercise_runtime_support.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import (
+  resolve_exercise_notebook_path,
+  runtime,
+)
 
-NOTEBOOK_PATH = "exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb"
+_EXERCISE_KEY = "ex042_sequence_modify_variables_and_types"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
 
 
 def test_solve_returns_correct_value() -> None:
-    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+  ns = runtime.exec_tagged_code(_NOTEBOOK_PATH, tag="exercise1")
     assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](5) == 10
 
 
 def test_solve_handles_edge_case() -> None:
-    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
+  ns = runtime.exec_tagged_code(_NOTEBOOK_PATH, tag="exercise1")
     assert "solve" in ns, "'solve' function not found in notebook"
     assert ns["solve"](0) == 0
 ```

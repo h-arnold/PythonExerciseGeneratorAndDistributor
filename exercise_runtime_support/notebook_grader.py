@@ -8,7 +8,10 @@ from io import StringIO
 from pathlib import Path
 from typing import Any, TypedDict, cast
 
-from exercise_runtime_support.execution_variant import Variant, resolve_variant_notebook_path
+from exercise_runtime_support.execution_variant import Variant
+from exercise_runtime_support.exercise_framework.paths import (
+    resolve_notebook_path as resolve_framework_notebook_path,
+)
 
 
 class NotebookCell(TypedDict, total=False):
@@ -31,9 +34,8 @@ def resolve_notebook_path(
     *,
     variant: Variant | None = None,
 ) -> Path:
-    """Resolve a notebook path using the explicit notebook-variant contract."""
-    repo_root = Path(__file__).resolve().parents[1]
-    return resolve_variant_notebook_path(notebook_path, variant=variant, repo_root=repo_root)
+    """Resolve an exercise_key string or explicit notebook Path."""
+    return resolve_framework_notebook_path(notebook_path, variant=variant)
 
 
 def _read_notebook(
@@ -189,14 +191,17 @@ def run_cell_and_capture_output(
     code that prints output, and tests verify the printed results.
 
     Args:
-        notebook_path: Path to the notebook file
+        notebook_path: Exercise key or explicit notebook file path
         tag: Cell metadata tag to execute (e.g., "exercise1")
 
     Returns:
         The captured stdout output as a string
 
     Example:
-        >>> output = run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
+        >>> output = run_cell_and_capture_output(
+        ...     "ex002_sequence_modify_basics",
+        ...     tag="exercise1",
+        ... )
         >>> assert output.strip() == "Hello Python!"
     """
     with contextlib.redirect_stdout(StringIO()) as buffer:
@@ -217,7 +222,7 @@ def run_cell_with_input(
     function to provide predetermined values while capturing print output.
 
     Args:
-        notebook_path: Path to the notebook file
+        notebook_path: Exercise key or explicit notebook file path
         tag: Cell metadata tag to execute (e.g., "exercise1")
         inputs: List of strings to provide as input() values
 
@@ -229,7 +234,7 @@ def run_cell_with_input(
 
     Example:
         >>> output = run_cell_with_input(
-        ...     "notebooks/ex002.ipynb",
+        ...     "ex002_sequence_modify_basics",
         ...     tag="exercise1",
         ...     inputs=["Alice"]
         ... )
@@ -269,7 +274,7 @@ def get_explanation_cell(
     in debugging and problem-solving exercises.
 
     Args:
-        notebook_path: Path to the notebook file
+        notebook_path: Exercise key or explicit notebook file path
         tag: Cell metadata tag to extract (e.g., "explanation1")
 
     Returns:
@@ -279,7 +284,10 @@ def get_explanation_cell(
         AssertionError: If no cell with the specified tag is found
 
     Example:
-        >>> explanation = get_explanation_cell("notebooks/ex001.ipynb", tag="explanation1")
+        >>> explanation = get_explanation_cell(
+        ...     "ex004_sequence_debug_syntax",
+        ...     tag="explanation1",
+        ... )
         >>> assert len(explanation.strip()) > 10, "Explanation must have content"
     """
     nb = _read_notebook(notebook_path, variant=variant)

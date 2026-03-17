@@ -9,7 +9,6 @@ from tests.exercise_expectations import ex003_sequence_modify_variables as ex003
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
-    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -20,33 +19,35 @@ def _tag(exercise_no: int) -> str:
 
 
 _EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
-_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX003_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 _EXPECTED_INPUT_CALLS = 2
 
 
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
-        _NOTEBOOK_PATH,
+        _EX003_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant="solution",
     )
 
 
 def _exercise_output_with_inputs(exercise_no: int, inputs: list[str]) -> str:
     return run_cell_with_input(
-        _NOTEBOOK_PATH,
+        _EX003_EXERCISE_KEY,
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
+        variant="solution",
     )
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
-        _NOTEBOOK_PATH,
+        _EX003_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant="solution",
     )
     return ast.parse(code)
 

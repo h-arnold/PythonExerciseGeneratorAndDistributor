@@ -474,11 +474,15 @@ Treat those modules as the canonical source of expected outputs, prompt text, an
 
 **Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
 
-- **Parameters**: `notebook_path` (str/Path), `tag` (str)
+- **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str)
 - **Returns**: Captured stdout. `input()` prompts are included.
 
 ```python
-output = runtime.run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
+output = runtime.run_cell_and_capture_output(
+    "ex002_sequence_modify_basics",
+    tag="exercise1",
+    variant="solution",
+)
 assert output.strip() == "Hello Python!"
 ```
 
@@ -486,15 +490,16 @@ assert output.strip() == "Hello Python!"
 
 For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
 
-- **Parameters**: `notebook_path` (str/Path), `tag` (str), `inputs` (list[str])
+- **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str), `inputs` (list[str])
 - **Returns**: Captured stdout (including prompts).
 - **Raises**: `RuntimeError` if code calls `input()` more times than provided.
 
 ```python
 output = runtime.run_cell_with_input(
-    "notebooks/ex002.ipynb",
+    "ex003_sequence_modify_variables",
     tag="exercise1",
-    inputs=["Alice", "Smith"]
+    inputs=["Alice", "Smith"],
+    variant="solution",
 )
 assert "Alice Smith" in output
 ```
@@ -503,11 +508,15 @@ assert "Alice Smith" in output
 
 Extracts content from markdown reflection cells.
 
-- **Parameters**: `notebook_path` (str/Path), `tag` (str)
+- **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str)
 - **Returns**: Cell content string.
 
 ```python
-expl = runtime.get_explanation_cell("notebooks/ex.ipynb", tag="explanation1")
+expl = runtime.get_explanation_cell(
+    "ex004_sequence_debug_syntax",
+    tag="explanation1",
+    variant="solution",
+)
 assert len(expl.strip()) > 10
 ```
 
@@ -518,7 +527,11 @@ assert len(expl.strip()) > 10
 Extracts raw source code from tagged cells. Useful for **AST checks** (verifying constructs).
 
 ```python
-code = runtime.extract_tagged_code(path, tag="exercise1")
+code = runtime.extract_tagged_code(
+    "ex002_sequence_modify_basics",
+    tag="exercise1",
+    variant="solution",
+)
 assert "for " in code, "Must use a for loop"
 ```
 
@@ -530,13 +543,15 @@ Low-level executor. Returns the variable namespace (dict). Useful if you need to
 
 #### `runtime.resolve_notebook_path(notebook_path) -> Path`
 
-Most tests use `NOTEBOOK_PATH` constant. This function resolves that path, using the active variant contract and current resolver settings.
+Most tests use an `EXERCISE_KEY` constant. This function resolves that key, or an explicit canonical notebook `Path`, using the active variant contract and current resolver settings.
+
+Path-like strings such as `"notebooks/ex001_slug.ipynb"` are rejected; use the exercise key instead.
 
 **Usage in tests**:
 Tests generally define a constant at the top:
 
 ```python
-NOTEBOOK_PATH = "notebooks/ex001_slug.ipynb"
+EXERCISE_KEY = "ex001_slug"
 ```
 
 The runtime helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.

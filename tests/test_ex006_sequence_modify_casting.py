@@ -8,7 +8,6 @@ from tests.exercise_expectations import ex006_sequence_modify_casting as ex006
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
-    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -19,32 +18,34 @@ def _tag(n: int) -> str:
 
 
 _EX006_EXERCISE_KEY = "ex006_sequence_modify_casting"
-_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX006_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 
 
 def _run(n: int) -> str:
     return run_cell_and_capture_output(
-        _NOTEBOOK_PATH,
+        _EX006_EXERCISE_KEY,
         tag=_tag(n),
         cache=_CACHE,
+        variant="solution",
     )
 
 
 def _run_with_inputs(n: int, inputs: list[str]) -> str:
     return run_cell_with_input(
-        _NOTEBOOK_PATH,
+        _EX006_EXERCISE_KEY,
         tag=_tag(n),
         inputs=inputs,
         cache=_CACHE,
+        variant="solution",
     )
 
 
 def _ast(n: int) -> ast.Module:
     code = extract_tagged_code(
-        _NOTEBOOK_PATH,
+        _EX006_EXERCISE_KEY,
         tag=_tag(n),
         cache=_CACHE,
+        variant="solution",
     )
     return ast.parse(code)
 

@@ -239,11 +239,14 @@ def test_main_creates_canonical_debug_scaffold(
     assert "Run `pytest -q` until all tests pass." not in readme
 
     test_text = test_path.read_text(encoding="utf-8")
-    assert (
-        f"NOTEBOOK_PATH = 'exercises/sequence/{exercise_key}/notebooks/student.ipynb'" in test_text
-    )
+    assert f"_EXERCISE_KEY = '{exercise_key}'" in test_text
+    assert "_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)" in test_text
     assert "runtime.run_cell_and_capture_output" in test_text
     assert "runtime.get_explanation_cell" in test_text
+    assert (
+        f"NOTEBOOK_PATH = 'exercises/sequence/{exercise_key}/notebooks/student.ipynb'"
+        not in test_text
+    )
 
 
 def test_check_exercise_not_exists_rejects_legacy_construct_type_layout(

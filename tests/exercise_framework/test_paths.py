@@ -9,72 +9,132 @@ import exercise_runtime_support.exercise_framework.paths as paths_impl
 from tests.exercise_framework import paths
 from tests.notebook_grader import resolve_notebook_path as grader_resolve_notebook_path
 
+EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
+EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
 
-def test_paths_resolver_matches_notebook_grader_for_solution_variant() -> None:
+
+def test_paths_resolver_matches_notebook_grader_for_canonical_exercise_key() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    original = repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
+    expected = (
+        repo_root
+        / "exercises"
+        / "sequence"
+        / EX004_EXERCISE_KEY
+        / "notebooks"
+        / "solution.ipynb"
+    )
 
-    from_framework = paths.resolve_notebook_path(original, variant="solution")
-    from_grader = grader_resolve_notebook_path(original, variant="solution")
+    from_framework = paths.resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
+    from_grader = grader_resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
 
-    assert from_framework == from_grader
+    assert from_framework == from_grader == expected
 
 
-def test_paths_resolver_matches_notebook_grader_for_missing_solution_variant() -> None:
+@pytest.mark.parametrize(
+    "notebook_path",
+    [
+        "notebooks/ex002_sequence_modify_basics.ipynb",
+        "ex002_sequence_modify_basics.ipynb",
+    ],
+)
+def test_paths_resolver_rejects_path_like_string_inputs(notebook_path: str) -> None:
+    expected_message = (
+        "resolver input must be an exercise_key, not a path-like string: "
+        f"{notebook_path!r}. Path-like inputs are not supported."
+    )
+
+    with pytest.raises(LookupError) as framework_exc:
+        paths.resolve_notebook_path(notebook_path, variant="solution")
+    with pytest.raises(LookupError) as grader_exc:
+        grader_resolve_notebook_path(notebook_path, variant="solution")
+
+    assert str(framework_exc.value) == expected_message
+    assert str(grader_exc.value) == expected_message
+
+
+def test_paths_resolver_rejects_legacy_source_path_objects() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    original = repo_root / "notebooks/does_not_exist.ipynb"
+    notebook_path = repo_root / "notebooks" / "ex002_sequence_modify_basics.ipynb"
+    expected_message = (
+        "Source-repository notebook resolution requires an exercise_key, not a "
+        f"legacy notebooks/ path: {notebook_path!r}. Pass an exercise_key "
+        "string instead."
+    )
 
-    from_framework = paths.resolve_notebook_path(original, variant="solution")
-    from_grader = grader_resolve_notebook_path(original, variant="solution")
+    with pytest.raises(LookupError) as framework_exc:
+        paths.resolve_notebook_path(notebook_path, variant="solution")
+    with pytest.raises(LookupError) as grader_exc:
+        grader_resolve_notebook_path(notebook_path, variant="solution")
 
-    assert from_framework == from_grader
-    assert from_framework == repo_root / "notebooks/solutions/does_not_exist.ipynb"
+    assert str(framework_exc.value) == expected_message
+    assert str(grader_exc.value) == expected_message
 
 
-def test_paths_resolver_matches_notebook_grader_for_non_notebooks_path(
+def test_paths_resolver_rejects_relative_legacy_source_path_objects() -> None:
+    notebook_path = Path("notebooks") / "ex002_sequence_modify_basics.ipynb"
+    expected_message = (
+        "Source-repository notebook resolution requires an exercise_key, not a "
+        f"legacy notebooks/ path: {notebook_path!r}. Pass an exercise_key "
+        "string instead."
+    )
+
+    with pytest.raises(LookupError) as framework_exc:
+        paths.resolve_notebook_path(notebook_path, variant="solution")
+    with pytest.raises(LookupError) as grader_exc:
+        grader_resolve_notebook_path(notebook_path, variant="solution")
+
+    assert str(framework_exc.value) == expected_message
+    assert str(grader_exc.value) == expected_message
+
+
+def test_paths_resolver_preserves_variant_switching_for_canonical_paths() -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    student_notebook = (
+        repo_root
+        / "exercises"
+        / "sequence"
+        / EX004_EXERCISE_KEY
+        / "notebooks"
+        / "student.ipynb"
+    )
+    expected = student_notebook.with_name("solution.ipynb")
+
+    from_framework = paths.resolve_notebook_path(student_notebook, variant="solution")
+    from_grader = grader_resolve_notebook_path(student_notebook, variant="solution")
+
+    assert from_framework == from_grader == expected
+
+
+def test_paths_resolver_anchors_relative_canonical_paths_to_repo_root(
+    monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    notebook_path = tmp_path / "arbitrary" / "path" / "lesson.ipynb"
-    expected = notebook_path.resolve()
+    repo_root = Path(__file__).resolve().parents[2]
+    monkeypatch.chdir(tmp_path)
+    student_notebook = (
+        Path("exercises")
+        / "sequence"
+        / EX004_EXERCISE_KEY
+        / "notebooks"
+        / "student.ipynb"
+    )
+    expected = (repo_root / student_notebook).with_name("solution.ipynb")
 
-    from_framework = paths.resolve_notebook_path(
-        notebook_path, variant="solution")
-    from_grader = grader_resolve_notebook_path(
-        notebook_path, variant="solution")
+    from_framework = paths.resolve_notebook_path(student_notebook, variant="solution")
+    from_grader = grader_resolve_notebook_path(student_notebook, variant="solution")
+
+    assert from_framework == from_grader == expected
+
+
+def test_paths_resolver_leaves_explicit_external_paths_unchanged(tmp_path: Path) -> None:
+    notebook_path = tmp_path / "arbitrary" / "path" / "lesson.ipynb"
+    expected = notebook_path
+
+    from_framework = paths.resolve_notebook_path(notebook_path, variant="solution")
+    from_grader = grader_resolve_notebook_path(notebook_path, variant="solution")
 
     assert from_framework == expected
-    assert from_grader == notebook_path
-
-
-def test_paths_resolver_anchors_relative_notebook_paths_to_repo_root(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    repo_root = Path(__file__).resolve().parents[2]
-    monkeypatch.chdir(repo_root / "notebooks")
-
-    resolved = paths.resolve_notebook_path(
-        "notebooks/ex002_sequence_modify_basics.ipynb",
-        variant="student",
-    )
-    expected = repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
-
-    assert resolved == expected
-    assert resolved.exists()
-
-
-def test_paths_resolver_uses_solution_variant_when_cwd_is_notebooks(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    repo_root = Path(__file__).resolve().parents[2]
-    monkeypatch.chdir(repo_root / "notebooks")
-
-    resolved = paths.resolve_notebook_path(
-        "notebooks/ex002_sequence_modify_basics.ipynb",
-        variant="solution",
-    )
-
-    assert resolved == repo_root / \
-        "notebooks/solutions/ex002_sequence_modify_basics.ipynb"
+    assert from_grader == expected
 
 
 def test_resolve_exercise_notebook_path_uses_source_canonical_path() -> None:
@@ -99,12 +159,11 @@ def test_resolve_exercise_notebook_path_uses_variant_selected_legacy_path() -> N
     repo_root = Path(__file__).resolve().parents[2]
 
     resolved = paths.resolve_exercise_notebook_path(
-        "ex003_sequence_modify_variables",
+        EX003_EXERCISE_KEY,
         variant="solution",
     )
 
-    assert resolved == repo_root / \
-        "notebooks/solutions/ex003_sequence_modify_variables.ipynb"
+    assert resolved == repo_root / "notebooks" / "solutions" / f"{EX003_EXERCISE_KEY}.ipynb"
 
 
 def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_exports(

@@ -14,7 +14,6 @@ from exercise_runtime_support.exercise_framework import (
     expected_output_text,
     expected_print_call_count,
     extract_tagged_code,
-    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
 )
 from tests.exercise_expectations import (
@@ -33,23 +32,21 @@ def _task_mark(exercise_no: int, title: str) -> pytest.MarkDecorator:
     return pytest.mark.task(name=f"Exercise {exercise_no}: {title}", taskno=exercise_no)
 
 
-def _resolved_notebook_path() -> str:
-    return str(resolve_exercise_notebook_path(_EX002_EXERCISE_KEY))
-
-
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
-        _resolved_notebook_path(),
+        _EX002_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant="solution",
     )
 
 
 def _exercise_code(exercise_no: int) -> str:
     return extract_tagged_code(
-        _resolved_notebook_path(),
+        _EX002_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant="solution",
     )
 
 

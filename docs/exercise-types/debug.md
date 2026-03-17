@@ -155,7 +155,7 @@ import pytest
 
 from tests.exercise_framework import runtime
 
-NOTEBOOK_PATH = "notebooks/ex004_sequence_debug_syntax.ipynb"
+EXERCISE_KEY = "ex004_sequence_debug_syntax"
 MIN_EXPLANATION_LENGTH = 10
 
 @pytest.mark.parametrize("tag,expected", [
@@ -163,18 +163,23 @@ MIN_EXPLANATION_LENGTH = 10
     ("exercise2", "I like Python"),
 ])
 def test_exercise_output(tag: str, expected: str) -> None:
-    output = runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)
+  output = runtime.run_cell_and_capture_output(EXERCISE_KEY, tag=tag, variant="solution")
     assert expected in output
 
 
 def test_exercise7_handles_input() -> None:
-    output = runtime.run_cell_with_input(NOTEBOOK_PATH, tag="exercise7", inputs=["5"])
+  output = runtime.run_cell_with_input(
+    EXERCISE_KEY,
+    tag="exercise7",
+    inputs=["5"],
+    variant="solution",
+  )
     assert "10" in output
 
 
 @pytest.mark.parametrize("tag", [f"explanation{i}" for i in range(1, 11)])
 def test_explanations_have_content(tag: str) -> None:
-    explanation = runtime.get_explanation_cell(NOTEBOOK_PATH, tag=tag)
+  explanation = runtime.get_explanation_cell(EXERCISE_KEY, tag=tag, variant="solution")
     assert len(explanation.strip()) > MIN_EXPLANATION_LENGTH
 ```
 

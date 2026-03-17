@@ -418,21 +418,24 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    relative_student_notebook = student_notebook_path.relative_to(ROOT).as_posix()
     relative_test_path = test_path.relative_to(ROOT).as_posix()
     test_lines: list[str] = [
         "from __future__ import annotations",
         "",
         "import pytest",
         "",
-        "from exercise_runtime_support.exercise_framework import runtime",
+        "from exercise_runtime_support.exercise_framework import (",
+        "    resolve_exercise_notebook_path,",
+        "    runtime,",
+        ")",
         "",
-        f"NOTEBOOK_PATH = {relative_student_notebook!r}",
+        f"_EXERCISE_KEY = {exercise_key!r}",
+        "_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)",
         "",
         "",
         "def _run_and_capture(tag: str) -> str:",
         '    """Execute the tagged cell and capture its print output."""',
-        "    return runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag)",
+        "    return runtime.run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag)",
         "",
         "",
     ]
@@ -476,7 +479,7 @@ def main() -> int:
             test_lines.extend(
                 [
                     "def test_explanation_has_content() -> None:",
-                    "    explanation = runtime.get_explanation_cell(NOTEBOOK_PATH, tag='explanation1')",
+                    "    explanation = runtime.get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
                     "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
                     "",
                 ]
@@ -487,7 +490,7 @@ def main() -> int:
                     f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {args.parts} + 1)]",
                     "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
                     "def test_explanations_have_content(tag: str) -> None:",
-                    "    explanation = runtime.get_explanation_cell(NOTEBOOK_PATH, tag=tag)",
+                    "    explanation = runtime.get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
                     "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
                     "",
                 ]
