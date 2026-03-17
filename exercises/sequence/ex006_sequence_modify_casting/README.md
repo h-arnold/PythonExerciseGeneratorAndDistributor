@@ -12,7 +12,7 @@
 
 - **Notebook path**: `notebooks/ex006_sequence_modify_casting.ipynb`
 - **Solution path**: `notebooks/solutions/ex006_sequence_modify_casting.ipynb`
-- **Tests path**: `tests/test_ex006_sequence_modify_casting.py`
+- **Tests path**: `exercises/sequence/ex006_sequence_modify_casting/tests/test_ex006_sequence_modify_casting.py`
 
 ## Usage Summary
 

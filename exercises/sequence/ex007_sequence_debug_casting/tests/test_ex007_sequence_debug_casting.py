@@ -4,6 +4,14 @@ import ast
 
 import pytest
 
+from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
+    has_binop,
+    has_call,
+    interactive_construct_issues,
+)
+from exercise_runtime_support.exercise_framework.expectations_helpers import (
+    is_valid_explanation,
+)
 from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
 from tests.exercise_framework import (
     RuntimeCache,
@@ -12,12 +20,6 @@ from tests.exercise_framework import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
-from tests.exercise_framework.ex007_construct_checks import (
-    has_binop,
-    has_call,
-    interactive_construct_issues,
-)
-from tests.exercise_framework.expectations_helpers import is_valid_explanation
 
 _EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
 _CACHE = RuntimeCache()
@@ -73,8 +75,7 @@ def _assert_interactive_constructs(exercise_no: int) -> None:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     issues = interactive_construct_issues(
         tree,
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
