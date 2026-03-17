@@ -217,7 +217,7 @@ Generated templates include the selected exercise tests and the required shared 
 
 When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py`/`*_test.py`).
 
-This set is sufficient for exercise test imports, autograde payload/plugin checks, and notebook self-check usage via `from exercise_runtime_support.student_checker import check_notebook`. Packaged workspaces rely on the generated `exercise_runtime_support/exercise_catalogue_snapshot.json` snapshot instead of importing `exercise_metadata` from the source repository.
+This set is sufficient for exercise test imports, autograde payload/plugin checks, and notebook self-check usage via `from exercise_runtime_support.student_checker import check_notebook`. Packaged workspaces rely on the generated `exercise_runtime_support/exercise_catalogue_snapshot.json` snapshot instead of importing `exercise_metadata` from the source repository, and the export contract explicitly rejects authoring-only assets such as `exercise.json`, `solution.ipynb`, or a top-level `exercises/` tree.
 
 ## Available Constructs
 

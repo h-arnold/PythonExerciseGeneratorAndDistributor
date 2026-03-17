@@ -401,6 +401,7 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 - [x] Task 1 completed on `2026-03-17`: repository-side `test_exNNN*.py` exercise tests now live under canonical exercise-local `tests/` directories for `ex003`, `ex005`, `ex006`, and `ex007`, while blocker-class shared tests were renamed so they no longer masquerade as exercise-local notebook suites.
 - [x] Repository collection now fails fast on both duplicate exercise-test sources and any noncanonical `test_exNNN*.py` path outside `exercises/<construct>/<exercise_key>/tests/`, with focused guard coverage updated in `tests/test_pytest_collection_guard.py`.
+- [x] Task 2 completed on `2026-03-17`: template package validation now rejects leaked authoring-only assets (`exercise.json`, `solution.ipynb`, and a top-level `exercises/` tree) while preserving the required `exercise_runtime_support` export and generated catalogue snapshot, with focused packager coverage and CLI README wording updated to make the metadata-free export contract explicit.
 
 #### Constraints And Acceptance Criteria
 
@@ -412,10 +413,10 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Add an explicit repository guard so any `test_exNNN*.py` file outside `exercises/<construct>/<exercise_key>/tests/` is treated as a migration failure rather than tolerated drift.
 - [ ] Update [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py) to select exercises from the new canonical tree.
 - [ ] Update [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py) to collect files from each exercise directory.
-- [ ] Update [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) to package from the exercise directory structure while exporting the existing flattened Classroom contract.
-- [ ] Make the transformation from metadata-rich source repository to metadata-free exported repository explicit in packaging design, tests, and docs.
-- [ ] Review how packaged templates will continue to include shared runtime support from `exercise_runtime_support`, ensure TemplatePackager's required directories cover that package, and add packaging tests that verify the exported repos still ship the runtime helpers alongside the flattened notebooks/tests while remaining metadata-free.
-- [ ] Add explicit guards and tests to ensure exported templates do not accidentally include `solution.ipynb`, `exercise.json`, or the full authoring-side `exercises/` tree.
+- [x] Update [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py) to package from the exercise directory structure while exporting the existing flattened Classroom contract.
+- [x] Make the transformation from metadata-rich source repository to metadata-free exported repository explicit in packaging design, tests, and docs.
+- [x] Review how packaged templates will continue to include shared runtime support from `exercise_runtime_support`, ensure TemplatePackager's required directories cover that package, and add packaging tests that verify the exported repos still ship the runtime helpers alongside the flattened notebooks/tests while remaining metadata-free.
+- [x] Add explicit guards and tests to ensure exported templates do not accidentally include `solution.ipynb`, `exercise.json`, or the full authoring-side `exercises/` tree.
 - [ ] Update repository workflows and exported template workflows to use the final `--variant <student|solution>` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`, so they pass the literal straight through to the resolver instead of swapping notebook roots.
 - [ ] Update template CLI tests and workflow-related tests to cover the new collection and export rules.
 - [ ] Keep a pointer list for packaging and workflow pain points in: [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/template_repo_cli/core/collector.py](scripts/template_repo_cli/core/collector.py), [scripts/template_repo_cli/core/packager.py](scripts/template_repo_cli/core/packager.py), [tests/template_repo_cli](tests/template_repo_cli), [docs/CLI_README.md](docs/CLI_README.md), and [.github/workflows](.github/workflows).

@@ -40,8 +40,12 @@ class TemplatePackager:
         "student_checker",
     )
 
-    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = (
-        "exercise_runtime_support",)
+    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = ("exercise_runtime_support",)
+
+    FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = (
+        "exercise.json",
+        "solution.ipynb",
+    )
 
     def __init__(self, repo_root: Path):
         """Initialize packager.
@@ -73,10 +77,8 @@ class TemplatePackager:
             files: Dictionary mapping exercise ID to file paths.
         """
         for file_dict in files.values():
-            safe_copy_file(file_dict["notebook"],
-                           workspace / file_dict["notebook_export"])
-            safe_copy_file(file_dict["test"],
-                           workspace / file_dict["test_export"])
+            safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
+            safe_copy_file(file_dict["test"], workspace / file_dict["test_export"])
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -117,8 +119,7 @@ class TemplatePackager:
             return
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
-        raise FileNotFoundError(
-            f"Missing required packaging source assets:\n{missing_list}")
+        raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
 
     def copy_template_base_files(
         self,
@@ -142,8 +143,7 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (self.template_files_dir / "pyproject.toml",
-             workspace / "pyproject.toml"),
+            (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
@@ -153,15 +153,13 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (self.template_files_dir / "INSTRUCTIONS.md",
-             workspace / "INSTRUCTIONS.md"),
+            (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
         tests_dest_dir = workspace / "tests"
         for required_file in self.REQUIRED_TEST_FILES:
-            file_pairs.append(
-                (tests_source_dir / required_file, tests_dest_dir / required_file))
+            file_pairs.append((tests_source_dir / required_file, tests_dest_dir / required_file))
 
         for src, dest in file_pairs:
             safe_copy_file(src, dest)
@@ -185,8 +183,7 @@ class TemplatePackager:
             )
 
         write_catalogue_snapshot(
-            get_catalogue_snapshot_path(
-                workspace / "exercise_runtime_support"),
+            get_catalogue_snapshot_path(workspace / "exercise_runtime_support"),
             exercise_keys=selected_exercise_keys,
         )
 
@@ -213,6 +210,16 @@ class TemplatePackager:
         readme_path = workspace / "README.md"
         readme_path.write_text(content, encoding="utf-8")
 
+    def _contains_authoring_only_assets(self, workspace: Path) -> bool:
+        """Return whether a packaged workspace still contains authoring-only assets."""
+        if (workspace / "exercises").exists():
+            return True
+
+        return any(
+            next(workspace.rglob(filename), None) is not None
+            for filename in self.FORBIDDEN_AUTHORING_FILENAMES
+        )
+
     def validate_package(self, workspace: Path) -> bool:
         """Validate package integrity.
 
@@ -222,8 +229,10 @@ class TemplatePackager:
         Returns:
             True if package is valid, False otherwise.
         """
-        snapshot_path = get_catalogue_snapshot_path(
-            workspace / "exercise_runtime_support")
+        if self._contains_authoring_only_assets(workspace):
+            return False
+
+        snapshot_path = get_catalogue_snapshot_path(workspace / "exercise_runtime_support")
         required_files = [
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
@@ -235,16 +244,19 @@ class TemplatePackager:
 
         tests_dir = workspace / "tests"
         required_files.extend(
-            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
+            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES
+        )
         for required_file in required_files:
             if not required_file.exists():
                 return False
 
         required_dirs = [workspace / "notebooks", tests_dir]
         required_dirs.extend(
-            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
+            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
+        )
         required_dirs.extend(
-            workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES)
+            workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
+        )
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():
                 return False
