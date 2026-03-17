@@ -44,12 +44,10 @@ def run_ex006_checks() -> list[Ex006CheckResult]:
 
 def _check_ex006_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
-    output = run_cell_and_capture_output(
-        _EX006_EXERCISE_KEY, tag=exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(_EX006_EXERCISE_KEY, tag=exercise_tag(exercise_no))
     expected = EX006_EXPECTED_OUTPUTS[exercise_no]
     if output != expected:
-        errors.append(
-            f"Exercise {exercise_no}: expected '{expected.strip()}'.")
+        errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
     return errors
 
 
@@ -57,8 +55,7 @@ def _check_ex006_input_flow(exercise_no: int) -> list[str]:
     errors: list[str] = []
     details = EX006_INPUT_EXPECTATIONS[exercise_no]
     inputs = details["inputs"]
-    output = run_cell_with_input(
-        _EX006_EXERCISE_KEY, tag=exercise_tag(exercise_no), inputs=inputs)
+    output = run_cell_with_input(_EX006_EXERCISE_KEY, tag=exercise_tag(exercise_no), inputs=inputs)
     prompt_contains = details["prompt_contains"]
     output_contains = details.get("output_contains")
     last_line = details.get("last_line")
@@ -74,24 +71,20 @@ def _check_ex006_input_flow(exercise_no: int) -> list[str]:
             return errors
         last_output_line = stripped_output.splitlines()[-1]
         if last_output_line != last_line:
-            errors.append(
-                f"Exercise {exercise_no}: expected last line '{last_line}'.")
+            errors.append(f"Exercise {exercise_no}: expected last line '{last_line}'.")
     return errors
 
 
 def _build_ex006_checks() -> list[Ex006CheckDefinition]:
     checks: list[Ex006CheckDefinition] = []
-    exercise_numbers = sorted(
-        set(EX006_EXPECTED_OUTPUTS) | set(EX006_INPUT_EXPECTATIONS))
+    exercise_numbers = sorted(set(EX006_EXPECTED_OUTPUTS) | set(EX006_INPUT_EXPECTATIONS))
     for exercise_no in exercise_numbers:
         if exercise_no in EX006_EXPECTED_OUTPUTS:
             checks.append(
-                build_ex006_check(exercise_no, "Static output",
-                                  _check_ex006_static_output)
+                build_ex006_check(exercise_no, "Static output", _check_ex006_static_output)
             )
         if exercise_no in EX006_INPUT_EXPECTATIONS:
-            checks.append(build_ex006_check(
-                exercise_no, "Prompt flow", _check_ex006_input_flow))
+            checks.append(build_ex006_check(exercise_no, "Prompt flow", _check_ex006_input_flow))
     return checks
 
 

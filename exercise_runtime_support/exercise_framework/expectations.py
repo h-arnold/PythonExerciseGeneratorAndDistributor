@@ -88,8 +88,7 @@ def _check_logic(exercise_no: int) -> list[str]:
         multi_line=EX002_EXPECTED_MULTI_LINE,
     )
     if expected_text is None:
-        errors.append(
-            f"Exercise {exercise_no}: no expected output configured.")
+        errors.append(f"Exercise {exercise_no}: no expected output configured.")
         return errors
 
     if output != expected_text:
@@ -99,8 +98,7 @@ def _check_logic(exercise_no: int) -> list[str]:
             multi_line=EX002_EXPECTED_MULTI_LINE,
         )
         expected_summary = " | ".join(expected_lines or [])
-        errors.append(
-            f"Exercise {exercise_no}: expected '{expected_summary}'.")
+        errors.append(f"Exercise {exercise_no}: expected '{expected_summary}'.")
     return errors
 
 

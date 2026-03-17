@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from importlib import import_module as _import_module
 from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 _impl = _import_module("exercise_runtime_support.student_checker.notebook_runtime")
 
@@ -14,7 +14,10 @@ for _name, _value in vars(_impl).items():
         continue
     globals()[_name] = _value
 
-__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])
+if TYPE_CHECKING:
+    __all__: list[str] = []
+else:
+    __all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])
 
 
 class _CompatibilityModule(ModuleType):

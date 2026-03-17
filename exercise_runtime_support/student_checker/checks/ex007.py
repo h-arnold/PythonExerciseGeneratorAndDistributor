@@ -61,8 +61,7 @@ def _check_ex007_static_output(exercise_no: int) -> list[str]:
         tag=exercise_tag(exercise_no),
     )
     if output != expected:
-        errors.append(
-            f"Exercise {exercise_no}: expected '{expected.strip()}'.")
+        errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
     return errors
 
 
@@ -116,9 +115,7 @@ def _check_ex007_construct(exercise_no: int) -> list[str]:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     issues = interactive_construct_issues(
         tree,
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]
-        ),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
@@ -145,18 +142,14 @@ def _build_ex007_checks() -> list[ExerciseCheckDefinition]:
     for exercise_no in exercise_numbers:
         if exercise_no in ex007.EX007_EXPECTED_STATIC_OUTPUTS:
             checks.append(
-                build_exercise_check(
-                    exercise_no, "Static output", _check_ex007_static_output)
+                build_exercise_check(exercise_no, "Static output", _check_ex007_static_output)
             )
         if exercise_no in ex007.EX007_INPUT_CASES:
             checks.append(
-                build_exercise_check(
-                    exercise_no, "Prompt flow", _check_ex007_prompt_flow)
+                build_exercise_check(exercise_no, "Prompt flow", _check_ex007_prompt_flow)
             )
-        checks.append(build_exercise_check(
-            exercise_no, "Construct", _check_ex007_construct))
-        checks.append(build_exercise_check(
-            exercise_no, "Explanation", _check_ex007_explanation))
+        checks.append(build_exercise_check(exercise_no, "Construct", _check_ex007_construct))
+        checks.append(build_exercise_check(exercise_no, "Explanation", _check_ex007_explanation))
     return checks
 
 

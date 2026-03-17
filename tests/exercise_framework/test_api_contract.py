@@ -81,6 +81,7 @@ def test_run_notebook_check_supports_ex002_summary_path(
     assert results[0].label == "ex002 Sequence Modify Basics"
     assert results[0].passed is True
 
+
 def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -108,4 +109,3 @@ def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
 
     assert captured_arguments == [("ex004_sequence_debug_syntax", "exercise1")]
     assert results == [NotebookCheckResult("ex004 Debug Syntax Errors", True, [])]
-

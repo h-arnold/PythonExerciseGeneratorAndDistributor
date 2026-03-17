@@ -6,7 +6,7 @@ from typing import Any, cast
 import pytest
 from pytest import MonkeyPatch
 
-from tests.notebook_grader import NotebookGradingError
+from exercise_runtime_support.notebook_grader import NotebookGradingError
 from tests.student_checker import notebook_runtime as _notebook_runtime
 
 notebook_runtime = cast(Any, _notebook_runtime)

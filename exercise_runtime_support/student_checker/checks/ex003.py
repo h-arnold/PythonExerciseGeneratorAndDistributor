@@ -46,8 +46,7 @@ def run_ex003_checks() -> list[ExerciseCheckResult]:
 def _check_ex003_static_output(exercise_no: int) -> list[str]:
     errors: list[str] = []
     expected = EX003_EXPECTED_STATIC_OUTPUT[exercise_no]
-    output = run_cell_and_capture_output(
-        _EX003_EXERCISE_KEY, tag=exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(_EX003_EXERCISE_KEY, tag=exercise_tag(exercise_no))
     if output != f"{expected}\n":
         errors.append(f"Exercise {exercise_no}: expected '{expected}'.")
     return errors
@@ -63,8 +62,7 @@ def _check_ex003_prompt_flow(exercise_no: int) -> list[str]:
     )
     expected = _format_ex003_prompt_flow_output(exercise_no)
     if output != expected:
-        errors.append(
-            f"Exercise {exercise_no}: output does not match the expected prompt flow.")
+        errors.append(f"Exercise {exercise_no}: output does not match the expected prompt flow.")
     return errors
 
 
@@ -93,18 +91,15 @@ _EX003_PROMPT_FLOW_PLACEHOLDERS: dict[int, tuple[str, str]] = {
 
 def _build_ex003_checks() -> list[ExerciseCheckDefinition]:
     checks: list[ExerciseCheckDefinition] = []
-    exercise_numbers = sorted(
-        set(EX003_EXPECTED_STATIC_OUTPUT) | set(_EX003_PROMPT_FLOW_INPUTS))
+    exercise_numbers = sorted(set(EX003_EXPECTED_STATIC_OUTPUT) | set(_EX003_PROMPT_FLOW_INPUTS))
     for exercise_no in exercise_numbers:
         if exercise_no in EX003_EXPECTED_STATIC_OUTPUT:
             checks.append(
-                build_exercise_check(
-                    exercise_no, "Static output", _check_ex003_static_output)
+                build_exercise_check(exercise_no, "Static output", _check_ex003_static_output)
             )
         if exercise_no in _EX003_PROMPT_FLOW_INPUTS:
             checks.append(
-                build_exercise_check(
-                    exercise_no, "Prompt flow", _check_ex003_prompt_flow)
+                build_exercise_check(exercise_no, "Prompt flow", _check_ex003_prompt_flow)
             )
     return checks
 
