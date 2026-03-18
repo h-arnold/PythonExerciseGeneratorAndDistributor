@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Lightweight verifier for newly generated exercises.
+"""Lightweight verifier for canonical exercises identified by ``exercise_key``.
 
 This script supports the Exercise Verifier agent by performing fast,
-objective checks:
+objective checks against ``exercises/<construct>/<exercise_key>/``:
 - Notebook structure: metadata.language, code-vs-tag consistency
 - Presence of expected tags (exerciseN, explanationN)
 - Basic concept progression scanning (heuristic keyword checks)
 - Presence of required canonical exercise files under exercises/
 - Construct teaching order updated (exercises/<construct>/OrderOfTeaching.md)
 
-It is not a replacement for reading the exercise prompts.
+The public CLI accepts the canonical ``exercise_key`` only. It is not a
+replacement for reading the exercise prompts.
 """
 
 from __future__ import annotations
@@ -168,19 +169,6 @@ def _cell_source_text(cell: NotebookCell) -> str:
 
 _EXERCISE_TAG_RE = re.compile(r"^exercise(?P<n>\d+)$")
 _EXPLANATION_TAG_RE = re.compile(r"^explanation(?P<n>\d+)$")
-
-
-def _infer_exercise_slug_from_notebook(notebook_path: Path) -> str | None:
-    if notebook_path.suffix != ".ipynb":
-        return None
-
-    if notebook_path.name in {"student.ipynb", "solution.ipynb"}:
-        parent = notebook_path.parent
-        if parent.name != "notebooks":
-            return None
-        return parent.parent.name
-
-    return notebook_path.stem
 
 
 def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
@@ -624,9 +612,8 @@ def _print_findings(findings: list[Finding]) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "notebook",
-        type=Path,
-        help="Path to the canonical student notebook.",
+        "exercise_key",
+        help="Canonical exercise identifier, for example ex004_sequence_debug_syntax.",
     )
     parser.add_argument(
         "--repo-root",
@@ -638,13 +625,13 @@ def _build_parser() -> argparse.ArgumentParser:
         "--construct",
         choices=CONSTRUCT_ORDER,
         default=None,
-        help="Construct to validate progression against (default: inferred from exercises/)",
+        help="Construct to validate progression against (default: inferred from canonical metadata)",
     )
     parser.add_argument(
         "--type",
         choices=["debug", "modify", "make"],
         default=None,
-        help="Exercise type (default: inferred from exercises/)",
+        help="Exercise type (default: inferred from canonical metadata)",
     )
     return parser
 
@@ -770,19 +757,17 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    nb_path = args.notebook
     repo_root = args.repo_root
-
-    slug = _infer_exercise_slug_from_notebook(nb_path)
-    if slug is None:
-        print("ERROR: Notebook path must end with .ipynb")
-        return 2
+    exercise_key = args.exercise_key
 
     ex_dir, inferred_construct, inferred_type, metadata_error, findings = _resolve_exercise_context(
         repo_root=repo_root,
-        slug=slug,
+        slug=exercise_key,
     )
+    if ex_dir is None:
+        return _report_findings(findings)
 
+    nb_path = ex_dir / "notebooks" / "student.ipynb"
     construct = args.construct or inferred_construct
     ex_type = args.type or inferred_type
 

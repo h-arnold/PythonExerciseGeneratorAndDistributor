@@ -266,9 +266,9 @@ uv run python scripts/run_pytest_variant.py --variant solution \
 uv run ./scripts/verify_solutions.sh \
   exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Run structural checks against the canonical student notebook
+# Run structural checks against the canonical exercise
 uv run python scripts/verify_exercise_quality.py \
-  exercises/<construct>/<exercise_key>/notebooks/student.ipynb
+  <exercise_key>
 ```
 
 ### 5. Create Supporting Documentation

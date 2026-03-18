@@ -424,6 +424,13 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 ### Phase 10: Public Interface Cutover
 
+#### Progress Update
+
+- [x] Batch 1 completed on `2026-03-18`: `scripts/verify_exercise_quality.py` now takes the canonical `exercise_key` as its public CLI input, resolves the canonical exercise directory before loading notebooks, and no longer accepts notebook-path inference as a public interface contract.
+- [x] Focused verifier coverage in `tests/test_verify_exercise_quality.py` now asserts the `exercise_key` contract and rejects notebook-path CLI input.
+- [x] Directly coupled verifier command examples in `docs/setup.md`, `docs/development.md`, `docs/exercise-generation.md`, and `docs/exercise-generation-cli.md` now show the Phase 10 `exercise_key` invocation model.
+- [x] The detailed Phase 10 tracker has been realigned in `PHASE_10_MIGRATION_CHECKLIST.md` so it now reflects the actual public-interface cutover scope from this phase.
+
 #### Constraints And Acceptance Criteria
 
 - [ ] Prefer deliberate breaking changes over compatibility wrappers for CLI, verifier, and helper interfaces that currently accept notebook paths or notebook-oriented terminology.
@@ -542,7 +549,7 @@ These depend on the earlier checklist set being stable enough to define the reso
 
 ### Wave 3: Author Last
 
-- [ ] Phase 10 checklist: Public Interface Cutover
+- [x] Phase 10 checklist: Public Interface Cutover
 - [ ] Phase 11 checklist: Exercise Data Migration
 
 These should be written last because they depend most heavily on upstream execution-model, relocation, packaging, grading, and scaffolding decisions remaining stable.

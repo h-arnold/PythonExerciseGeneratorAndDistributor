@@ -227,7 +227,7 @@ uv run pytest \
 
 # 8. Run the quality checks
 uv run python scripts/verify_exercise_quality.py \
-  exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb
+  ex042_sequence_modify_variables_and_types
 
 # 9. Commit and push
 git add exercises/sequence/ex042_sequence_modify_variables_and_types/

@@ -109,11 +109,11 @@ def test_main_validates_canonical_exercise_layout_successfully(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     slug = "ex004_sequence_debug_syntax"
-    exercise_dir = _write_canonical_exercise(tmp_path, slug)
+    _write_canonical_exercise(tmp_path, slug)
 
     exit_code = verify_exercise_quality.main(
         [
-            str(exercise_dir / "notebooks" / "student.ipynb"),
+            slug,
             "--repo-root",
             str(tmp_path),
         ]
@@ -143,7 +143,7 @@ def test_main_fails_when_required_canonical_files_are_missing(
     expected_message: str,
 ) -> None:
     slug = "ex004_sequence_debug_syntax"
-    exercise_dir = _write_canonical_exercise(
+    _write_canonical_exercise(
         tmp_path,
         slug,
         missing_paths={missing_path},
@@ -151,7 +151,7 @@ def test_main_fails_when_required_canonical_files_are_missing(
 
     exit_code = verify_exercise_quality.main(
         [
-            str(exercise_dir / "notebooks" / "student.ipynb"),
+            slug,
             "--repo-root",
             str(tmp_path),
         ]
@@ -183,7 +183,7 @@ def test_main_uses_canonical_metadata_without_legacy_fallback(
     expected_message: str,
 ) -> None:
     slug = "ex004_sequence_debug_syntax"
-    exercise_dir = _write_canonical_exercise(
+    _write_canonical_exercise(
         tmp_path,
         slug,
         include_metadata=metadata is not None,
@@ -191,6 +191,28 @@ def test_main_uses_canonical_metadata_without_legacy_fallback(
         include_explanation=False,
     )
     _write_legacy_exercise_directory(tmp_path, slug)
+
+    exit_code = verify_exercise_quality.main(
+        [
+            slug,
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert expected_message in captured.out
+    assert "Debug exercise expected explanationN tag(s) but none were found" not in captured.out
+    assert captured.out.strip().endswith("FAIL: 1 error(s), 0 warning(s)")
+
+
+def test_main_rejects_notebook_path_cli_input(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    slug = "ex004_sequence_debug_syntax"
+    exercise_dir = _write_canonical_exercise(tmp_path, slug)
 
     exit_code = verify_exercise_quality.main(
         [
@@ -202,6 +224,6 @@ def test_main_uses_canonical_metadata_without_legacy_fallback(
     captured = capsys.readouterr()
 
     assert exit_code == 1
-    assert expected_message in captured.out
-    assert "Debug exercise expected explanationN tag(s) but none were found" not in captured.out
+    assert "resolver input must be an exercise_key, not a path-like string" in captured.out
+    assert "Notebook not found" not in captured.out
     assert captured.out.strip().endswith("FAIL: 1 error(s), 0 warning(s)")
