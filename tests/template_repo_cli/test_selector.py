@@ -117,49 +117,49 @@ class TestSelectByConstructAndType:
         assert isinstance(exercises, list)
 
 
-class TestSelectBySpecificNotebooks:
-    """Tests for selecting specific notebooks."""
+class TestSelectBySpecificExerciseKeys:
+    """Tests for selecting specific exercise keys."""
 
-    def test_select_specific_notebooks(self, repo_root: Path) -> None:
-        """Test selecting explicit notebook list."""
+    def test_select_specific_exercise_keys(self, repo_root: Path) -> None:
+        """Test selecting an explicit exercise-key list."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_notebooks(["ex002_sequence_modify_basics"])
+        exercises = selector.select_by_exercise_keys(["ex002_sequence_modify_basics"])
 
         assert len(exercises) == 1
         assert "ex002_sequence_modify_basics" in exercises[0]
 
-    def test_select_multiple_notebooks(self, repo_root: Path) -> None:
-        """Test selecting multiple specific notebooks."""
+    def test_select_multiple_exercise_keys(self, repo_root: Path) -> None:
+        """Test selecting multiple specific exercise keys."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_notebooks(
+        exercises = selector.select_by_exercise_keys(
             ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
         )
 
         EXPECTED_SELECTION_COUNT = 2
         assert len(exercises) == EXPECTED_SELECTION_COUNT
 
-    def test_select_nonexistent_notebook(self, repo_root: Path) -> None:
-        """Test selecting nonexistent notebook raises ValueError."""
+    def test_select_nonexistent_exercise_key(self, repo_root: Path) -> None:
+        """Test selecting a nonexistent exercise key raises ValueError."""
         selector = ExerciseSelector(repo_root)
 
-        with pytest.raises(ValueError, match="not found"):
-            selector.select_by_notebooks(["ex999_nonexistent"])
+        with pytest.raises(ValueError, match="Exercise key not found"):
+            selector.select_by_exercise_keys(["ex999_nonexistent"])
 
-    def test_select_empty_notebook_list(self, repo_root: Path) -> None:
-        """Test selecting with empty notebook list raises ValueError."""
+    def test_select_empty_exercise_key_list(self, repo_root: Path) -> None:
+        """Test selecting with an empty exercise-key list raises ValueError."""
         selector = ExerciseSelector(repo_root)
 
-        with pytest.raises(ValueError, match="At least one notebook"):
-            selector.select_by_notebooks([])
+        with pytest.raises(ValueError, match="At least one exercise key"):
+            selector.select_by_exercise_keys([])
 
 
 class TestSelectByPattern:
-    """Tests for selecting notebooks by pattern."""
+    """Tests for selecting exercise keys by pattern."""
 
     def test_select_by_pattern_asterisk(self, repo_root: Path) -> None:
         """Test glob pattern matching with asterisk."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_pattern("ex00*")
+        exercises = selector.select_by_exercise_key_pattern("ex00*")
 
         assert len(exercises) > 0
         assert all(ex.startswith("ex00") for ex in exercises)
@@ -167,14 +167,14 @@ class TestSelectByPattern:
     def test_select_by_pattern_question_mark(self, repo_root: Path) -> None:
         """Test glob pattern matching with question mark."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_pattern("ex00?_*")
+        exercises = selector.select_by_exercise_key_pattern("ex00?_*")
 
         assert len(exercises) > 0
 
     def test_select_by_pattern_no_matches(self, repo_root: Path) -> None:
         """Test pattern with no matches returns empty list."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_pattern("ex999*")
+        exercises = selector.select_by_exercise_key_pattern("ex999*")
 
         assert len(exercises) == 0
 
@@ -183,7 +183,7 @@ class TestSelectByPattern:
         selector = ExerciseSelector(repo_root)
 
         with pytest.raises(ValueError, match="Invalid pattern"):
-            selector.select_by_pattern("notebooks/ex002")
+            selector.select_by_exercise_key_pattern("notebooks/ex002")
 
 
 class TestMetadataBackedSelection:
@@ -221,7 +221,7 @@ class TestMetadataBackedSelection:
 
         assert not (repo_root / "notebooks").exists()
         assert not (exercises_root / "sequence" / "modify").exists()
-        assert selector.get_all_notebooks() == [exercise_key]
+        assert selector.get_all_exercise_keys() == [exercise_key]
         assert selector.select_by_construct(["sequence"]) == [exercise_key]
         assert selector.select_by_type(["modify"]) == [exercise_key]
         assert selector.select_by_construct_and_type(["sequence"], ["modify"]) == [exercise_key]
@@ -261,10 +261,11 @@ class TestMetadataBackedSelection:
 
         selector = ExerciseSelector(repo_root)
 
-        assert selector.get_all_notebooks() == [metadata_key]
+        assert selector.get_all_exercise_keys() == [metadata_key]
         assert selector.select_by_construct(["sequence"]) == [metadata_key]
         assert selector.select_by_type(["modify"]) == [metadata_key]
         assert selector.select_by_construct_and_type(["sequence"], ["modify"]) == [metadata_key]
+
 
 class TestSelectEmptyResult:
     """Tests for handling empty selection results."""
@@ -272,7 +273,7 @@ class TestSelectEmptyResult:
     def test_select_returns_empty_gracefully(self, repo_root: Path) -> None:
         """Test empty result handled gracefully."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_pattern("nonexistent*")
+        exercises = selector.select_by_exercise_key_pattern("nonexistent*")
 
         assert exercises == []
         assert isinstance(exercises, list)

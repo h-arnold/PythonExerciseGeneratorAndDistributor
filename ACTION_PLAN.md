@@ -430,6 +430,9 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Focused verifier coverage in `tests/test_verify_exercise_quality.py` now asserts the `exercise_key` contract and rejects notebook-path CLI input.
 - [x] Directly coupled verifier command examples in `docs/setup.md`, `docs/development.md`, `docs/exercise-generation.md`, and `docs/exercise-generation-cli.md` now show the Phase 10 `exercise_key` invocation model.
 - [x] The detailed Phase 10 tracker has been realigned in `PHASE_10_MIGRATION_CHECKLIST.md` so it now reflects the actual public-interface cutover scope from this phase.
+- [x] Batch 2 completed on `2026-03-18`: the template CLI now uses `--exercise-keys` instead of `--notebooks`, and the selector public API has been renamed around exercise-key terminology rather than notebook terminology.
+- [x] Focused template CLI coverage in `tests/template_repo_cli/test_selector.py` and `tests/template_repo_cli/test_integration.py` now asserts the exercise-key-first contract and explicitly rejects the removed `--notebooks` flag.
+- [x] Directly coupled template CLI examples in `docs/CLI_README.md` now document the `--exercise-keys` contract and call out the deliberate Phase 10 breaking change.
 
 #### Constraints And Acceptance Criteria
 
