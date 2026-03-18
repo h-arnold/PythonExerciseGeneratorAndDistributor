@@ -27,6 +27,7 @@ _OUTPUT_DIRECTORY_EXCEPTIONS = (
     ValueError,
 )
 
+
 def _is_fatal_control_flow_exception(error: BaseException) -> bool:
     """Return True when an exception must escape defensive handlers."""
 
@@ -39,22 +40,22 @@ def get_repo_root() -> Path:
     return Path.cwd()
 
 
-def _select_by_notebooks(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
-    """Select exercises by notebooks or patterns.
+def _select_by_exercise_keys(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
+    """Select exercises by exercise keys or exercise-key patterns.
 
     Args:
-        args: Parsed command-line arguments with notebooks list.
+        args: Parsed command-line arguments with exercise-key patterns.
         selector: ExerciseSelector instance.
 
     Returns:
-        List of exercise IDs.
+        List of exercise keys.
     """
     exercises: list[str] = []
-    for pattern in args.notebooks:
+    for pattern in args.exercise_keys:
         if "*" in pattern or "?" in pattern or "[" in pattern:
-            exercises.extend(selector.select_by_pattern(pattern))
+            exercises.extend(selector.select_by_exercise_key_pattern(pattern))
         else:
-            exercises.extend(selector.select_by_notebooks([pattern]))
+            exercises.extend(selector.select_by_exercise_keys([pattern]))
     return exercises
 
 
@@ -66,13 +67,13 @@ def _select_exercises(args: argparse.Namespace, selector: ExerciseSelector) -> l
         selector: ExerciseSelector instance.
 
     Returns:
-        List of selected exercise IDs.
+        List of selected exercise keys.
 
     Raises:
         ValueError: If selection criteria are invalid or no criteria provided.
     """
-    if args.notebooks:
-        return _select_by_notebooks(args, selector)
+    if args.exercise_keys:
+        return _select_by_exercise_keys(args, selector)
     elif args.construct and args.type:
         return selector.select_by_construct_and_type(args.construct, args.type)
     elif args.construct:
@@ -80,7 +81,7 @@ def _select_exercises(args: argparse.Namespace, selector: ExerciseSelector) -> l
     elif args.type:
         return selector.select_by_type(args.type)
     else:
-        raise ValueError("Must specify --construct, --type, or --notebooks")
+        raise ValueError("Must specify --construct, --type, or --exercise-keys")
 
 
 def _check_github_prerequisites(github: GitHubClient) -> str | None:
@@ -219,8 +220,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
         traceback.print_exception(
             type(copy_error), copy_error, copy_error.__traceback__, file=sys.stderr
         )
-        print(
-            f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
+        print(f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
         print(f"Workspace preserved at: {workspace}", file=sys.stderr)
         return 1
 
@@ -646,8 +646,7 @@ def _execute_template_creation(  # noqa: PLR0913
             return 1
 
         # Create GitHub repository
-        result = _handle_repository_creation(
-            args, github, workspace, packager, exercises)
+        result = _handle_repository_creation(args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -689,8 +688,7 @@ def _execute_template_update(  # noqa: PLR0913
             packager.cleanup(workspace)
             return 1
 
-        result = _handle_repository_update(
-            args, github, workspace, packager, exercises)
+        result = _handle_repository_update(args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -740,14 +738,12 @@ def create_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
-    repo_root, selector, collector, packager, github = _initialize_components(
-        args)
+    repo_root, selector, collector, packager, github = _initialize_components(args)
 
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(
-        args, selector, collector, packager)
+    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
@@ -766,14 +762,12 @@ def update_repo_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
-    repo_root, selector, collector, packager, github = _initialize_components(
-        args)
+    repo_root, selector, collector, packager, github = _initialize_components(args)
 
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(
-        args, selector, collector, packager)
+    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
@@ -788,7 +782,7 @@ def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector
         selector: ExerciseSelector instance.
 
     Returns:
-        List of exercise IDs.
+        List of exercise keys.
     """
     if args.construct and args.type:
         return selector.select_by_construct_and_type([args.construct], [args.type])
@@ -796,7 +790,7 @@ def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector
         return selector.select_by_construct([args.construct])
     if args.type:
         return selector.select_by_type([args.type])
-    return selector.get_all_notebooks()
+    return selector.get_all_exercise_keys()
 
 
 def _print_exercises(exercises: list[str], args: argparse.Namespace) -> None:
@@ -809,7 +803,7 @@ def _print_exercises(exercises: list[str], args: argparse.Namespace) -> None:
     if args.format == "json":
         print(json.dumps(exercises, indent=2))
     elif args.format == "table":
-        print(f"{'Exercise ID':<40}")
+        print(f"{'Exercise Key':<40}")
         print("-" * 40)
         for ex in exercises:
             print(f"{ex:<40}")
@@ -846,13 +840,13 @@ def _select_exercises_for_validation(
         selector: ExerciseSelector instance.
 
     Returns:
-        List of exercise IDs.
+        List of exercise keys.
 
     Raises:
         ValueError: If invalid selection criteria or no criteria provided.
     """
-    if args.notebooks:
-        return _select_by_notebooks(args, selector)
+    if args.exercise_keys:
+        return _select_by_exercise_keys(args, selector)
     if args.construct and args.type:
         return selector.select_by_construct_and_type(args.construct, args.type)
     elif args.construct:
@@ -860,7 +854,7 @@ def _select_exercises_for_validation(
     elif args.type:
         return selector.select_by_type(args.type)
     else:
-        raise ValueError("Must specify --construct, --type, or --notebooks")
+        raise ValueError("Must specify --construct, --type, or --exercise-keys")
 
 
 def validate_command(args: argparse.Namespace) -> int:
@@ -926,26 +920,20 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Build and validate without executing gh commands",
     )
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Show detailed progress")
-    parser.add_argument("--output-dir", type=str,
-                        help="Local output directory (default: temp)")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
+    parser.add_argument("--output-dir", type=str, help="Local output directory (default: temp)")
 
     # Subcommands
-    subparsers = parser.add_subparsers(
-        dest="command", help="Command to execute")
+    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # Create command
-    create_parser = subparsers.add_parser(
-        "create", help="Create template repository")
+    create_parser = subparsers.add_parser("create", help="Create template repository")
+    create_parser.add_argument("--construct", nargs="+", help="One or more constructs")
+    create_parser.add_argument("--type", nargs="+", help="One or more exercise types")
     create_parser.add_argument(
-        "--construct", nargs="+", help="One or more constructs")
-    create_parser.add_argument(
-        "--type", nargs="+", help="One or more exercise types")
-    create_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns")
-    create_parser.add_argument(
-        "--name", type=str, help="Template repository name/description")
+        "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
+    )
+    create_parser.add_argument("--name", type=str, help="Template repository name/description")
     create_parser.add_argument(
         "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
     )
@@ -970,10 +958,8 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # List command
-    list_parser = subparsers.add_parser(
-        "list", help="List available exercises")
-    list_parser.add_argument("--construct", type=str,
-                             help="Filter by construct")
+    list_parser = subparsers.add_parser("list", help="List available exercises")
+    list_parser.add_argument("--construct", type=str, help="Filter by construct")
     list_parser.add_argument("--type", type=str, help="Filter by type")
     list_parser.add_argument(
         "--format",
@@ -983,27 +969,24 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # Validate command
-    validate_parser = subparsers.add_parser(
-        "validate", help="Validate selection")
-    validate_parser.add_argument(
-        "--construct", nargs="+", help="Filter by construct")
+    validate_parser = subparsers.add_parser("validate", help="Validate selection")
+    validate_parser.add_argument("--construct", nargs="+", help="Filter by construct")
     validate_parser.add_argument("--type", nargs="+", help="Filter by type")
     validate_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns")
+        "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
+    )
 
     # Update command
     update_parser = subparsers.add_parser(
         "update-repo",
         help="Update an existing template repository by pushing new contents",
     )
+    update_parser.add_argument("--construct", nargs="+", help="One or more constructs")
+    update_parser.add_argument("--type", nargs="+", help="One or more exercise types")
     update_parser.add_argument(
-        "--construct", nargs="+", help="One or more constructs")
-    update_parser.add_argument(
-        "--type", nargs="+", help="One or more exercise types")
-    update_parser.add_argument(
-        "--notebooks", nargs="+", help="Specific notebook patterns")
-    update_parser.add_argument(
-        "--name", type=str, help="Template repository name/description")
+        "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
+    )
+    update_parser.add_argument("--name", type=str, help="Template repository name/description")
     update_parser.add_argument(
         "--repo-name",
         type=str,

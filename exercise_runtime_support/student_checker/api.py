@@ -1,9 +1,8 @@
-"""Public entry points for student-friendly notebook checks."""
+"""Public entry points for student-friendly exercise checks."""
 
 from __future__ import annotations
 
 from exercise_runtime_support.exercise_catalogue import (
-    get_catalogue_entry,
     get_catalogue_key_for_exercise_id,
     get_exercise_catalogue,
 )
@@ -49,35 +48,34 @@ def check_exercises() -> None:
     print_results(results)
 
 
-def check_notebook(notebook_slug: str) -> None:
-    """Run checks for a single notebook and print a summary table."""
+def check_exercise(exercise_key: str) -> None:
+    """Run checks for a single exercise key and print a summary table."""
     checks = _get_checks()
-    catalogue_entry = get_catalogue_entry(notebook_slug)
-    check = checks.get(catalogue_entry.exercise_key)
+    check = checks.get(exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
+        raise ValueError(f"Unknown exercise key '{exercise_key}'. Available: {available}")
     run_check(check)
 
 
 def check_ex002_notebook() -> None:
     """Run checks for ex002 and print a grouped summary table."""
-    check_notebook(get_catalogue_key_for_exercise_id(2))
+    check_exercise(get_catalogue_key_for_exercise_id(2))
 
 
 def check_ex003_notebook() -> None:
-    """Run checks for ex003 and print a notebook-specific summary table."""
-    check_notebook(get_catalogue_key_for_exercise_id(3))
+    """Run checks for ex003 and print an exercise-specific summary table."""
+    check_exercise(get_catalogue_key_for_exercise_id(3))
 
 
 def check_ex004_notebook() -> None:
-    """Run checks for ex004 and print a notebook-specific summary table."""
-    check_notebook(get_catalogue_key_for_exercise_id(4))
+    """Run checks for ex004 and print an exercise-specific summary table."""
+    check_exercise(get_catalogue_key_for_exercise_id(4))
 
 
 def check_ex007_notebook() -> None:
-    """Run checks for ex007 and print a notebook-specific summary table."""
-    check_notebook(get_catalogue_key_for_exercise_id(7))
+    """Run checks for ex007 and print an exercise-specific summary table."""
+    check_exercise(get_catalogue_key_for_exercise_id(7))
 
 
 def _get_checks() -> dict[str, NotebookCheckSpec]:

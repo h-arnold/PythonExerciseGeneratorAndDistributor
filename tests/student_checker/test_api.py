@@ -50,8 +50,8 @@ def test_check_exercises_uses_catalogue_order(monkeypatch: pytest.MonkeyPatch) -
     assert seen_labels == [entry.display_label for entry in get_exercise_catalogue()]
 
 
-def test_check_notebook_uses_catalogue_label(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Single-notebook checks use the shared catalogue display label."""
+def test_check_exercise_uses_catalogue_label(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Single-exercise checks use the shared catalogue display label."""
     captured_labels: list[str] = []
 
     def fake_run_check(check: NotebookCheckSpec) -> None:
@@ -59,40 +59,40 @@ def test_check_notebook_uses_catalogue_label(monkeypatch: pytest.MonkeyPatch) ->
 
     monkeypatch.setattr(student_api, "run_check", fake_run_check)
 
-    student_api.check_notebook("ex004_sequence_debug_syntax")
+    student_api.check_exercise("ex004_sequence_debug_syntax")
 
     assert captured_labels == [get_catalogue_entry("ex004_sequence_debug_syntax").display_label]
 
 
-def test_check_notebook_unknown_slug_is_explicit() -> None:
-    """Unknown notebook keys still fail with a clear message."""
-    with pytest.raises(ValueError, match=r"Unknown notebook 'unknown_notebook'\. Available:"):
-        student_api.check_notebook("unknown_notebook")
+def test_check_exercise_unknown_key_is_explicit() -> None:
+    """Unknown exercise keys still fail with a clear message."""
+    with pytest.raises(ValueError, match=r"Unknown exercise key 'unknown_notebook'\. Available:"):
+        student_api.check_exercise("unknown_notebook")
 
 
-def test_check_notebook_passes_exercise_key_to_student_checker_helpers(
+def test_check_exercise_passes_exercise_key_to_student_checker_helpers(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     captured_paths: list[str] = []
 
-    def assert_exercise_key(notebook_path: str) -> None:
-        captured_paths.append(notebook_path)
-        assert notebook_path == "ex003_sequence_modify_variables"
-        assert not isinstance(notebook_path, Path)
-        assert not notebook_path.startswith("notebooks/")
+    def assert_exercise_key(exercise_reference: str) -> None:
+        captured_paths.append(exercise_reference)
+        assert exercise_reference == "ex003_sequence_modify_variables"
+        assert not isinstance(exercise_reference, Path)
+        assert not exercise_reference.startswith("notebooks/")
 
-    def fake_run_cell_and_capture_output(notebook_path: str, *, tag: str) -> str:
-        assert_exercise_key(notebook_path)
+    def fake_run_cell_and_capture_output(exercise_reference: str, *, tag: str) -> str:
+        assert_exercise_key(exercise_reference)
         exercise_no = int(tag.removeprefix("exercise"))
         return f"{EX003_EXPECTED_STATIC_OUTPUT[exercise_no]}\n"
 
     def fake_run_cell_with_input(
-        notebook_path: str,
+        exercise_reference: str,
         *,
         tag: str,
         inputs: list[str],
     ) -> str:
-        assert_exercise_key(notebook_path)
+        assert_exercise_key(exercise_reference)
         exercise_no = int(tag.removeprefix("exercise"))
         assert inputs == _EX003_PROMPT_FLOW_INPUTS[exercise_no]
         values = dict(zip(_EX003_PROMPT_FLOW_PLACEHOLDERS[exercise_no], inputs, strict=True))
@@ -115,6 +115,6 @@ def test_check_notebook_passes_exercise_key_to_student_checker_helpers(
     )
     monkeypatch.setattr(student_api, "print_ex003_results", fake_print_ex003_results)
 
-    student_api.check_notebook("ex003_sequence_modify_variables")
+    student_api.check_exercise("ex003_sequence_modify_variables")
 
     assert captured_paths

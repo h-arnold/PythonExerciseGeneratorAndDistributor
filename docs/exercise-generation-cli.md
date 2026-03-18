@@ -111,7 +111,7 @@ Contains:
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - For multi-part notebooks, a markdown prompt precedes each tagged cell
 - Self-check scratch cell (not graded)
-- Auto-appended untagged code cell that imports `exercise_runtime_support.student_checker.run_notebook_checks` and runs it against `student.ipynb` so students see grouped local check results before submitting
+- Auto-appended untagged code cell that imports `exercise_runtime_support.student_checker.run_notebook_checks` and runs it against the canonical `exercise_key` so students see grouped local check results before submitting
 
 The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
 
@@ -171,7 +171,7 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
 5. Code (untagged): Self-check scratch cell
-6. Code (untagged): Auto-appended check-your-answers cell that runs `exercise_runtime_support.student_checker.run_notebook_checks('student.ipynb')` so students see grouped per-check output
+6. Code (untagged): Auto-appended check-your-answers cell that runs `exercise_runtime_support.student_checker.run_notebook_checks('<exercise_key>')` so students see grouped per-check output
 ```
 
 ### 2. Write Tests
@@ -266,9 +266,9 @@ uv run python scripts/run_pytest_variant.py --variant solution \
 uv run ./scripts/verify_solutions.sh \
   exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Run structural checks against the canonical student notebook
+# Run structural checks against the canonical exercise
 uv run python scripts/verify_exercise_quality.py \
-  exercises/<construct>/<exercise_key>/notebooks/student.ipynb
+  <exercise_key>
 ```
 
 ### 5. Create Supporting Documentation

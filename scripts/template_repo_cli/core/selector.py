@@ -44,21 +44,21 @@ class ExerciseSelector:
         """Return True when a legacy manifest entry still lacks metadata."""
         return entry["layout"] == ExerciseLayout.LEGACY.value and entry["metadata"] is None
 
-    def get_all_notebooks(self) -> list[str]:
-        """Get all notebook IDs from metadata or the notebooks directory.
+    def get_all_exercise_keys(self) -> list[str]:
+        """Get all available exercise keys.
 
         Returns:
-            List of notebook IDs (without .ipynb extension).
+            List of exercise keys.
         """
-        notebooks = self._all_metadata_exercise_keys()
+        exercise_keys = self._all_metadata_exercise_keys()
         if self.manifest_path.exists():
-            return sorted(set(notebooks))
+            return sorted(set(exercise_keys))
 
-        notebooks = []
+        exercise_keys = []
         if self.notebooks_dir.exists():
-            for nb_file in self.notebooks_dir.glob("ex*.ipynb"):
-                notebooks.append(nb_file.stem)
-        return notebooks
+            for notebook_file in self.notebooks_dir.glob("ex*.ipynb"):
+                exercise_keys.append(notebook_file.stem)
+        return exercise_keys
 
     def _validate_constructs(self, constructs: list[str]) -> None:
         """Validate construct names.
@@ -123,7 +123,7 @@ class ExerciseSelector:
             construct: Construct name.
 
         Returns:
-            List of legacy exercise IDs found.
+            List of legacy exercise keys found.
         """
         exercises: list[str] = []
         construct_dir = self.exercises_dir / construct
@@ -149,7 +149,7 @@ class ExerciseSelector:
             type_name: Exercise type.
 
         Returns:
-            List of legacy exercise IDs found.
+            List of legacy exercise keys found.
         """
         exercises: list[str] = []
         legacy_keys = self._legacy_exercise_keys()
@@ -175,7 +175,7 @@ class ExerciseSelector:
             constructs: List of construct names.
 
         Returns:
-            List of exercise IDs.
+            List of exercise keys.
 
         Raises:
             ValueError: If no constructs provided or invalid construct.
@@ -200,7 +200,7 @@ class ExerciseSelector:
             types: List of exercise types.
 
         Returns:
-            List of exercise IDs.
+            List of exercise keys.
 
         Raises:
             ValueError: If no types provided or invalid type.
@@ -226,7 +226,7 @@ class ExerciseSelector:
             type_name: Exercise type name.
 
         Returns:
-            List of exercise IDs found.
+            List of exercise keys found.
         """
         exercises: list[str] = []
         construct_dir = self.exercises_dir / construct
@@ -257,15 +257,14 @@ class ExerciseSelector:
             types: List of exercise types.
 
         Returns:
-            List of exercise IDs matching both criteria.
+            List of exercise keys matching both criteria.
         """
         self._validate_constructs(constructs)
         self._validate_types(types)
 
         exercises = self._filter_metadata_exercise_keys(
             lambda _exercise_key, metadata: (
-                metadata["construct"] in constructs
-                and metadata["exercise_type"] in types
+                metadata["construct"] in constructs and metadata["exercise_type"] in types
             ),
         )
         if self.manifest_path.exists():
@@ -277,37 +276,37 @@ class ExerciseSelector:
 
         return sorted(set(exercises))
 
-    def select_by_notebooks(self, notebooks: list[str]) -> list[str]:
-        """Select specific notebooks.
+    def select_by_exercise_keys(self, exercise_keys: list[str]) -> list[str]:
+        """Select specific exercise keys.
 
         Args:
-            notebooks: List of notebook IDs.
+            exercise_keys: List of exercise keys.
 
         Returns:
-            List of exercise IDs (validated to exist).
+            List of exercise keys validated to exist.
 
         Raises:
-            ValueError: If no notebooks provided or notebook not found.
+            ValueError: If no exercise keys are provided or a key is not found.
         """
-        if not notebooks:
-            raise ValueError("At least one notebook must be specified")
+        if not exercise_keys:
+            raise ValueError("At least one exercise key must be specified")
 
-        available = self.get_all_notebooks()
+        available = self.get_all_exercise_keys()
 
-        for notebook in notebooks:
-            if notebook not in available:
-                raise ValueError(f"Notebook not found: {notebook}")
+        for exercise_key in exercise_keys:
+            if exercise_key not in available:
+                raise ValueError(f"Exercise key not found: {exercise_key}")
 
-        return sorted(notebooks)
+        return sorted(exercise_keys)
 
-    def select_by_pattern(self, pattern: str) -> list[str]:
-        """Select notebooks by pattern.
+    def select_by_exercise_key_pattern(self, pattern: str) -> list[str]:
+        """Select exercise keys by glob pattern.
 
         Args:
-            pattern: Glob pattern for matching notebooks.
+            pattern: Glob pattern for matching exercise keys.
 
         Returns:
-            List of matching exercise IDs (may be empty).
+            List of matching exercise keys.
 
         Raises:
             ValueError: If pattern is invalid.
@@ -315,7 +314,11 @@ class ExerciseSelector:
         if not validate_notebook_pattern(pattern):
             raise ValueError(f"Invalid pattern: {pattern}")
 
-        all_notebooks = self.get_all_notebooks()
-        matching = [nb for nb in all_notebooks if fnmatch.fnmatch(nb, pattern)]
+        all_exercise_keys = self.get_all_exercise_keys()
+        matching = [
+            exercise_key
+            for exercise_key in all_exercise_keys
+            if fnmatch.fnmatch(exercise_key, pattern)
+        ]
 
         return sorted(matching)

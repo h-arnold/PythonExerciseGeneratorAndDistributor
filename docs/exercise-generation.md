@@ -146,8 +146,7 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
     uv run python scripts/run_pytest_variant.py --variant solution \
       exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
    uv run python scripts/verify_exercise_quality.py \
-     exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb \
-     --construct sequence --type modify
+     ex050_sequence_modify_my_topic
    ```
 
     The first command exercises the solution notebook; rerun it with `--variant student` once you expect the student notebook to pass as well.
@@ -161,13 +160,12 @@ How to run it manually:
 
 - **From Copilot Chat**: Select the **Exercise Verifier** chatmode and ask something like:
   - "Verify exercise ex050_sequence_modify_my_topic" or
-  - "Please verify exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb — construct: sequence, type: modify"
+  - "Please verify exercise_key ex050_sequence_modify_my_topic"
 - **Locally (command line)**:
 
   ```bash
   uv run python scripts/verify_exercise_quality.py \
-    exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb \
-    --construct sequence --type modify
+    ex050_sequence_modify_my_topic
   ```
 
 What it checks:
@@ -182,7 +180,7 @@ Output:
 
 - The verifier returns a concise verdict such as **OK: 0 warning(s)** or **FAIL: ...**, plus specific, minimal fixes (file(s) and suggestions).
 
-**Tip:** Provide the exercise id/slug (e.g., `ex050_my_topic`) or the notebook path when asking — the verifier needs one of these to run targeted checks.
+**Tip:** Provide the canonical `exercise_key` (for example, `ex050_sequence_modify_my_topic`) when asking — the verifier now targets exercises by `exercise_key`, not by notebook path.
 
 ### Recommended models — cost vs. quality 💡
 

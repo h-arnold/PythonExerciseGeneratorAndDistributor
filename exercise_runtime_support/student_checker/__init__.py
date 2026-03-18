@@ -1,4 +1,4 @@
-"""Student-facing notebook checker API."""
+"""Student-facing exercise checker API."""
 
 from .api import (
     check_ex002_notebook,
@@ -6,7 +6,7 @@ from .api import (
     check_ex004_notebook,
     check_ex007_notebook,
     check_exercises,
-    check_notebook,
+    check_exercise,
 )
 from .models import DetailedCheckResult, Ex002CheckResult, Ex006CheckResult, ExerciseCheckResult
 from .notebook_runtime import run_notebook_checks
@@ -21,6 +21,6 @@ __all__ = [
     "check_ex004_notebook",
     "check_ex007_notebook",
     "check_exercises",
-    "check_notebook",
+    "check_exercise",
     "run_notebook_checks",
 ]

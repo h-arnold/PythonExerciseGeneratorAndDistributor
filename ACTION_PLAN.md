@@ -424,18 +424,31 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 ### Phase 10: Public Interface Cutover
 
+#### Progress Update
+
+- [x] Batch 1 completed on `2026-03-18`: `scripts/verify_exercise_quality.py` now takes the canonical `exercise_key` as its public CLI input, resolves the canonical exercise directory before loading notebooks, and no longer accepts notebook-path inference as a public interface contract.
+- [x] Focused verifier coverage in `tests/test_verify_exercise_quality.py` now asserts the `exercise_key` contract and rejects notebook-path CLI input.
+- [x] Directly coupled verifier command examples in `docs/setup.md`, `docs/development.md`, `docs/exercise-generation.md`, and `docs/exercise-generation-cli.md` now show the Phase 10 `exercise_key` invocation model.
+- [x] The detailed Phase 10 tracker has been realigned in `PHASE_10_MIGRATION_CHECKLIST.md` so it now reflects the actual public-interface cutover scope from this phase.
+- [x] Batch 2 completed on `2026-03-18`: the template CLI now uses `--exercise-keys` instead of `--notebooks`, and the selector public API has been renamed around exercise-key terminology rather than notebook terminology.
+- [x] Focused template CLI coverage in `tests/template_repo_cli/test_selector.py` and `tests/template_repo_cli/test_integration.py` now asserts the exercise-key-first contract and explicitly rejects the removed `--notebooks` flag.
+- [x] Directly coupled template CLI examples in `docs/CLI_README.md` now document the `--exercise-keys` contract and call out the deliberate Phase 10 breaking change.
+- [x] Batch 3 completed on `2026-03-18`: `scripts/new_exercise.py` now scaffolds notebook self-check cells that call `run_notebook_checks(<exercise_key>)`, and the focused scaffold docs/tests were updated to match that exercise-key contract.
+- [x] Batch 4 completed on `2026-03-18`: the exported student-checker API now exposes `check_exercise(<exercise_key>)` instead of `check_notebook(...)`, while maintained docs and agent guidance now distinguish that API from notebook self-check cells that continue to use `run_notebook_checks(<exercise_key>)`.
+- [x] The Phase 10 pointer-list surfaces now reflect the cutover: `docs/CLI_README.md`, `scripts/template_repo_cli/core/selector.py`, `scripts/verify_exercise_quality.py`, and `scripts/new_exercise.py` all document or implement the exercise-key-first contract directly.
+
 #### Constraints And Acceptance Criteria
 
-- [ ] Prefer deliberate breaking changes over compatibility wrappers for CLI, verifier, and helper interfaces that currently accept notebook paths or notebook-oriented terminology.
-- [ ] Do not leave notebook-shaped public interfaces as hidden aliases if the underlying model has changed to `exercise_key`.
-- [ ] Do not cut over public interfaces until the execution model and packaging contract are proven for at least one migrated exercise.
-- [ ] The phase is only complete once public-facing repository interfaces clearly use the new model, breaking changes are documented, and tests assert the new contract rather than the legacy one.
+- [x] Prefer deliberate breaking changes over compatibility wrappers for CLI, verifier, and helper interfaces that currently accept notebook paths or notebook-oriented terminology.
+- [x] Do not leave notebook-shaped public interfaces as hidden aliases if the underlying model has changed to `exercise_key`.
+- [x] Do not cut over public interfaces until the execution model and packaging contract are proven for at least one migrated exercise.
+- [x] The phase is only complete once public-facing repository interfaces clearly use the new model, breaking changes are documented, and tests assert the new contract rather than the legacy one.
 
-- [ ] Decide how public tooling should identify exercises after the cutover, especially for the template CLI, verifier, and notebook self-check surfaces.
-- [ ] Update public CLI and script interfaces to use the new canonical exercise identity model.
-- [ ] Remove or deliberately break legacy notebook-path-driven invocation patterns once replacement interfaces exist.
-- [ ] Update user-facing docs to describe the breaking changes and the new invocation model.
-- [ ] Keep a pointer list for interface pain points in: [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), and [scripts/new_exercise.py](scripts/new_exercise.py) and update it when the verifier migration is complete.
+- [x] Decide how public tooling should identify exercises after the cutover, especially for the template CLI, verifier, and notebook self-check surfaces.
+- [x] Update public CLI and script interfaces to use the new canonical exercise identity model.
+- [x] Remove or deliberately break legacy notebook-path-driven invocation patterns once replacement interfaces exist.
+- [x] Update user-facing docs to describe the breaking changes and the new invocation model.
+- [x] Keep a pointer list for interface pain points in: [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), and [scripts/new_exercise.py](scripts/new_exercise.py) and update it when the verifier migration is complete.
 
 ### Phase 11: Exercise Data Migration
 
@@ -542,7 +555,7 @@ These depend on the earlier checklist set being stable enough to define the reso
 
 ### Wave 3: Author Last
 
-- [ ] Phase 10 checklist: Public Interface Cutover
+- [x] Phase 10 checklist: Public Interface Cutover
 - [ ] Phase 11 checklist: Exercise Data Migration
 
 These should be written last because they depend most heavily on upstream execution-model, relocation, packaging, grading, and scaffolding decisions remaining stable.

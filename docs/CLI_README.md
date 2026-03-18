@@ -91,18 +91,22 @@ template_repo_cli create \
   --name "Sequence Modification Exercises"
 ```
 
-#### By Specific Notebooks
+#### By Specific Exercise Keys
+
+> Phase 10 breaking change: the old `--notebooks` selector has been removed. Use
+> `--exercise-keys` for explicit exercise selection and exercise-key glob
+> patterns.
 
 ```bash
 # Create template with specific exercises
 template_repo_cli create \
-  --notebooks ex002_sequence_modify_basics ex003_sequence_modify_variables \
+  --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name getting-started \
   --name "Getting Started with Python"
 
 # Create template with pattern matching
 template_repo_cli create \
-  --notebooks "ex00*" \
+  --exercise-keys "ex00*" \
   --repo-name first-ten \
   --name "First Ten Exercises"
 ```
@@ -166,7 +170,7 @@ template_repo_cli update-repo \
 
 # Preview the update without pushing
 template_repo_cli --dry-run update-repo \
-  --notebooks ex002_sequence_modify_basics ex003_sequence_modify_variables \
+  --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name organisation/sequence-exercises
 
 # Keep a local copy of the packaged workspace after the push

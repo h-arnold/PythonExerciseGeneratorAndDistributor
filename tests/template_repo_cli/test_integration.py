@@ -78,16 +78,16 @@ class TestEndToEndMultipleConstructs:
         assert result == 0
 
 
-class TestEndToEndSpecificNotebooks:
-    """Tests for end-to-end flow with specific notebooks."""
+class TestEndToEndSpecificExerciseKeys:
+    """Tests for end-to-end flow with specific exercise keys."""
 
     @patch("subprocess.run")
-    def test_end_to_end_specific_notebooks(
+    def test_end_to_end_specific_exercise_keys(
         self,
         mock_run: MagicMock,
         repo_root: Path,
     ) -> None:
-        """Test full flow for specific notebooks."""
+        """Test full flow for specific exercise keys."""
         from scripts.template_repo_cli.cli import main
 
         mock_run.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
@@ -96,7 +96,7 @@ class TestEndToEndSpecificNotebooks:
             [
                 "--dry-run",
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex002_sequence_modify_basics",
                 "--repo-name",
                 "test-repo",
@@ -110,12 +110,12 @@ class TestEndToEndWithPattern:
     """Tests for end-to-end flow with pattern matching."""
 
     @patch("subprocess.run")
-    def test_end_to_end_with_pattern(
+    def test_end_to_end_with_exercise_key_pattern(
         self,
         mock_run: MagicMock,
         repo_root: Path,
     ) -> None:
-        """Test full flow with pattern matching."""
+        """Test full flow with exercise-key pattern matching."""
         from scripts.template_repo_cli.cli import main
 
         mock_run.return_value = MagicMock(returncode=0, stdout="{}", stderr="")
@@ -124,7 +124,7 @@ class TestEndToEndWithPattern:
             [
                 "--dry-run",
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex00*",
                 "--repo-name",
                 "test-repo",
@@ -132,6 +132,34 @@ class TestEndToEndWithPattern:
         )
 
         assert result == 0
+
+
+class TestLegacyNotebookFlagRejection:
+    """Tests for rejecting removed notebook-oriented CLI flags."""
+
+    def test_create_rejects_removed_notebooks_flag(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Passing --notebooks should fail clearly after the public cutover."""
+        from scripts.template_repo_cli.cli import main
+
+        argparse_usage_error = 2
+
+        with pytest.raises(SystemExit) as exc_info:
+            main(
+                [
+                    "create",
+                    "--notebooks",
+                    "ex002_sequence_modify_basics",
+                    "--repo-name",
+                    "test-repo",
+                ]
+            )
+
+        captured = capsys.readouterr()
+        assert exc_info.value.code == argparse_usage_error
+        assert "unrecognized arguments: --notebooks" in captured.err
+        assert "--exercise-keys" in captured.err
 
 
 class TestEndToEndDryRun:
@@ -176,7 +204,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex002_sequence_modify_basics",
                 "--repo-name",
                 "test-repo",
@@ -208,8 +236,8 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex002_sequence_modify_basics')",
+            "from exercise_runtime_support.student_checker import check_exercise; "
+            "check_exercise('ex002_sequence_modify_basics')",
         ]
 
         check = subprocess.run(
@@ -242,7 +270,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex002_sequence_modify_basics",
                 "--repo-name",
                 "test-repo",
@@ -274,8 +302,8 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex003_sequence_modify_variables')",
+            "from exercise_runtime_support.student_checker import check_exercise; "
+            "check_exercise('ex003_sequence_modify_variables')",
         ]
 
         check = subprocess.run(
@@ -291,7 +319,7 @@ class TestEndToEndDryRun:
 
         assert check.returncode != 0
         assert (
-            "Unknown notebook 'ex003_sequence_modify_variables'. Available: "
+            "Unknown exercise key 'ex003_sequence_modify_variables'. Available: "
             "ex002_sequence_modify_basics"
         ) in combined_output
         assert "No such file or directory" not in combined_output
@@ -312,7 +340,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex002_sequence_modify_basics",
                 "--repo-name",
                 "test-repo",
@@ -447,7 +475,7 @@ class TestEndToEndDryRun:
                     "--output-dir",
                     str(output_dir),
                     "create",
-                    "--notebooks",
+                    "--exercise-keys",
                     "ex004_sequence_debug_syntax",
                     "--repo-name",
                     "test-repo",
@@ -456,10 +484,8 @@ class TestEndToEndDryRun:
 
             assert result == 0
             assert output_dir.exists()
-            assert (output_dir / "notebooks" /
-                    "ex004_sequence_debug_syntax.ipynb").exists()
-            assert (output_dir / "tests" /
-                    "test_ex004_sequence_debug_syntax.py").exists()
+            assert (output_dir / "notebooks" / "ex004_sequence_debug_syntax.ipynb").exists()
+            assert (output_dir / "tests" / "test_ex004_sequence_debug_syntax.py").exists()
             assert not (output_dir / "exercises").exists()
             assert source_canonical.exists()
 
@@ -532,7 +558,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex004_sequence_debug_syntax",
                 "--repo-name",
                 "test-repo",
@@ -571,11 +597,11 @@ class TestEndToEndDryRun:
             "\n".join(
                 [
                     "from exercise_runtime_support.exercise_framework import run_notebook_check",
-                    "from exercise_runtime_support.student_checker import check_notebook",
+                    "from exercise_runtime_support.student_checker import check_exercise",
                     "framework_results = run_notebook_check('ex004_sequence_debug_syntax')",
                     "assert len(framework_results) == 1, framework_results",
                     "assert framework_results[0].label, framework_results",
-                    "check_notebook('ex004_sequence_debug_syntax')",
+                    "check_exercise('ex004_sequence_debug_syntax')",
                 ]
             ),
         ]
@@ -614,7 +640,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex004_sequence_debug_syntax",
                 "--repo-name",
                 "test-repo",
@@ -624,8 +650,7 @@ class TestEndToEndDryRun:
         assert result == 0
         assert output_dir.exists()
 
-        exported_notebook = output_dir / "notebooks" / \
-            "ex004_sequence_debug_syntax.ipynb"
+        exported_notebook = output_dir / "notebooks" / "ex004_sequence_debug_syntax.ipynb"
         solution_mirror = (
             output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
         )
@@ -662,11 +687,11 @@ class TestEndToEndDryRun:
             "\n".join(
                 [
                     "from exercise_runtime_support.exercise_framework import run_notebook_check",
-                    "from exercise_runtime_support.student_checker import check_notebook",
+                    "from exercise_runtime_support.student_checker import check_exercise",
                     "framework_results = run_notebook_check('ex004_sequence_debug_syntax')",
                     "assert len(framework_results) == 1, framework_results",
                     "assert framework_results[0].label, framework_results",
-                    "check_notebook('ex004_sequence_debug_syntax')",
+                    "check_exercise('ex004_sequence_debug_syntax')",
                 ]
             ),
         ]
@@ -705,7 +730,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex004_sequence_debug_syntax",
                 "--repo-name",
                 "test-repo",
@@ -784,7 +809,7 @@ class TestEndToEndDryRun:
                 "--output-dir",
                 str(output_dir),
                 "create",
-                "--notebooks",
+                "--exercise-keys",
                 "ex004_sequence_debug_syntax",
                 "--repo-name",
                 "test-repo",
@@ -820,8 +845,8 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex004_sequence_debug_syntax')",
+            "from exercise_runtime_support.student_checker import check_exercise; "
+            "check_exercise('ex004_sequence_debug_syntax')",
         ]
 
         check = subprocess.run(
@@ -861,8 +886,7 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -998,8 +1022,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1010,11 +1033,9 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
+            patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
-            result = main(["create", "--construct", "sequence",
-                          "--repo-name", "test-repo"])
+            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -1044,8 +1065,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1056,8 +1076,7 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
+            patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
             result = main(
                 [
@@ -1096,8 +1115,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1108,8 +1126,7 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
+            patch.object(GitHubClient, "check_authentication", return_value=True),
         ):
             result = main(
                 [
@@ -1304,8 +1321,7 @@ class TestCliCreateCommand:
         assert result == 0
         EXPECT_CREATE_CALLS = 2
         assert mock_create.call_count == EXPECT_CREATE_CALLS
-        mock_subprocess_run.assert_any_call(
-            ["gh", "auth", "login"], check=False)
+        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(

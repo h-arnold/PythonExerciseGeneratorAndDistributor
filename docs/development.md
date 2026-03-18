@@ -168,7 +168,7 @@ ls notebooks/solutions/ex999_test_exercise.ipynb
 ls tests/test_ex999_test_exercise.py
 
 # Run static verification (fast checks for structure and metadata)
-uv run scripts/verify_exercise_quality.py notebooks/ex999_test_exercise.ipynb
+uv run scripts/verify_exercise_quality.py ex999_sequence_test_exercise
 
 # Remove the scaffolding when done experimenting
 rm -rf exercises/sequence/ex999_test_exercise notebooks/ex999_test_exercise.ipynb \
