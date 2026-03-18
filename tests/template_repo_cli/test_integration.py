@@ -159,6 +159,7 @@ class TestLegacyNotebookFlagRejection:
         captured = capsys.readouterr()
         assert exc_info.value.code == argparse_usage_error
         assert "unrecognized arguments: --notebooks" in captured.err
+        assert "--exercise-keys" in captured.err
 
 
 class TestEndToEndDryRun:

@@ -764,6 +764,8 @@ def main(argv: list[str] | None = None) -> int:
         repo_root=repo_root,
         slug=exercise_key,
     )
+    # _resolve_exercise_context() records the user-facing error in findings and
+    # returns None here when the canonical exercise directory cannot be resolved.
     if ex_dir is None:
         return _report_findings(findings)
 

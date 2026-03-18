@@ -31,7 +31,12 @@ class _MakeNotebookWithParts(Protocol):
 
 
 class _CheckExerciseNotExists(Protocol):
-    def __call__(self, construct: str, exercise_type: str, exercise_key: str) -> None: ...
+    def __call__(
+        self,
+        construct: str,
+        exercise_type: str,
+        exercise_key: str,
+    ) -> None: ...
 
 
 class _ValidateAndParseArgs(Protocol):
