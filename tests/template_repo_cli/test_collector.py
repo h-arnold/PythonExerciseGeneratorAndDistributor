@@ -12,13 +12,15 @@ from scripts.template_repo_cli.core.collector import FileCollector
 class TestCollectAllFiles:
     """Tests for collecting all files for an exercise."""
 
-    def test_collect_all_files_for_legacy_exercise(self, repo_root: Path) -> None:
-        """Test collecting a legacy notebook plus canonical exercise-local test source."""
+    def test_collect_all_files_for_migrated_exercise(self, repo_root: Path) -> None:
+        """Test collecting a migrated canonical notebook plus exercise-local test source."""
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex002_sequence_modify_basics")
 
-        assert files["notebook"] == repo_root / \
-            "notebooks/ex002_sequence_modify_basics.ipynb"
+        assert files["notebook"] == (
+            repo_root
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        )
         assert files["notebook_export"] == Path(
             "notebooks/ex002_sequence_modify_basics.ipynb")
         assert files["test"] == (

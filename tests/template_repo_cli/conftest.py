@@ -23,7 +23,10 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
     """Sample exercise file mappings for testing."""
     return {
         "ex002_sequence_modify_basics": ExerciseFiles(
-            notebook=repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
+            notebook=(
+                repo_root
+                / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+            ),
             notebook_export=Path(
                 "notebooks/ex002_sequence_modify_basics.ipynb"),
             test=(

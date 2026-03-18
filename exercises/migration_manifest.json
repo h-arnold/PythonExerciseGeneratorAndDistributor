@@ -3,22 +3,22 @@
   "_comment": "Records the layout state of each exercise. 'legacy' = notebooks in notebooks/ tree. 'canonical' = notebooks in exercises/<construct>/<exercise_key>/notebooks/.",
   "exercises": {
     "ex002_sequence_modify_basics": {
-      "layout": "legacy"
+      "layout": "canonical"
     },
     "ex003_sequence_modify_variables": {
-      "layout": "legacy"
+      "layout": "canonical"
     },
     "ex004_sequence_debug_syntax": {
       "layout": "canonical"
     },
     "ex005_sequence_debug_logic": {
-      "layout": "legacy"
+      "layout": "canonical"
     },
     "ex006_sequence_modify_casting": {
-      "layout": "legacy"
+      "layout": "canonical"
     },
     "ex007_sequence_debug_casting": {
-      "layout": "legacy"
+      "layout": "canonical"
     }
   }
 }

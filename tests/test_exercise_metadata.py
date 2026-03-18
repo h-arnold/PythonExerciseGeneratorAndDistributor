@@ -335,10 +335,10 @@ class TestGetExerciseLayout:
         layout = get_exercise_layout("ex004_sequence_debug_syntax")
         assert layout == ExerciseLayout.CANONICAL
 
-    def test_returns_legacy_for_ex002(self) -> None:
-        """ex002_sequence_modify_basics is marked legacy in the live manifest."""
+    def test_returns_canonical_for_ex002(self) -> None:
+        """ex002_sequence_modify_basics is marked canonical in the live manifest."""
         layout = get_exercise_layout("ex002_sequence_modify_basics")
-        assert layout == ExerciseLayout.LEGACY
+        assert layout == ExerciseLayout.CANONICAL
 
     def test_raises_key_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
         """Nonexistent exercise_key raises KeyError."""

@@ -1,9 +1,9 @@
 # Debug Syntax
 
 ## Student prompt
-- Open the matching notebook in `notebooks/`.
+- Open `notebooks/student.ipynb`.
 - Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).
-- Run `pytest -q` until all tests pass.
+- Run `pytest -q tests/test_ex004_sequence_debug_syntax.py` until all tests pass.
 
 - After running your corrected solution, describe what happened in the cell tagged `explanation1` (or `explanationN`).
 ## Teacher notes

@@ -163,7 +163,7 @@ def test_resolve_exercise_notebook_path_uses_source_canonical_path() -> None:
     )
 
 
-def test_resolve_exercise_notebook_path_uses_variant_selected_legacy_path() -> None:
+def test_resolve_exercise_notebook_path_uses_canonical_path_for_migrated_exercise() -> None:
     repo_root = Path(__file__).resolve().parents[2]
 
     resolved = paths.resolve_exercise_notebook_path(
@@ -171,8 +171,14 @@ def test_resolve_exercise_notebook_path_uses_variant_selected_legacy_path() -> N
         variant="solution",
     )
 
-    assert resolved == repo_root / "notebooks" / \
-        "solutions" / f"{EX003_EXERCISE_KEY}.ipynb"
+    assert resolved == (
+        repo_root
+        / "exercises"
+        / "sequence"
+        / EX003_EXERCISE_KEY
+        / "notebooks"
+        / "solution.ipynb"
+    )
 
 
 def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_exports(

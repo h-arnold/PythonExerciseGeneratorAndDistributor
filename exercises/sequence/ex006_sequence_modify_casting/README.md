@@ -6,13 +6,13 @@
 - **Title**: Casting and Type Conversion
 - **Construct**: sequence
 - **Type**: modify
-- **Learning objective**: Practice converting between strings, integers, floats, and booleans so arithmetic and text output behave as expected.
+- **Learning objective**: Practice converting between strings, integers, and floats so arithmetic and text output behave as expected.
 
 ## Files
 
-- **Notebook path**: `notebooks/ex006_sequence_modify_casting.ipynb`
-- **Solution path**: `notebooks/solutions/ex006_sequence_modify_casting.ipynb`
-- **Tests path**: `exercises/sequence/ex006_sequence_modify_casting/tests/test_ex006_sequence_modify_casting.py`
+- **Notebook path**: `notebooks/student.ipynb`
+- **Solution path**: `notebooks/solution.ipynb`
+- **Tests path**: `tests/test_ex006_sequence_modify_casting.py`
 
 ## Usage Summary
 

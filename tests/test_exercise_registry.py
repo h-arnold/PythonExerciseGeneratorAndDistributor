@@ -76,18 +76,12 @@ def test_canonical_entry_has_correct_layout_and_metadata() -> None:
     assert canonical["metadata"]["exercise_id"] == CANONICAL_EXERCISE_ID
 
 
-def test_live_registry_loads_metadata_for_legacy_entries() -> None:
-    """The live repository now provides metadata for legacy exercises too."""
+def test_live_registry_has_no_legacy_entries_after_sequence_migration() -> None:
+    """The live repository no longer exposes legacy entries after the migration."""
     registry = build_exercise_registry()
     legacy = [entry for entry in registry if entry["layout"]
               == ExerciseLayout.LEGACY.value]
-    expected_legacy_count = sum(
-        1 for entry in _get_manifest_exercises().values() if entry["layout"] == ExerciseLayout.LEGACY.value
-    )
-    assert len(legacy) == expected_legacy_count
-    for entry in legacy:
-        assert entry["metadata"] is not None
-        assert entry["metadata"]["exercise_key"] == entry["exercise_key"]
+    assert legacy == []
 
 
 def test_canonical_entries_come_before_legacy_entries() -> None:

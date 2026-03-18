@@ -11,9 +11,9 @@
 
 ## Files
 
-- **Notebook path**: `notebooks/ex005_sequence_debug_logic.ipynb`
-- **Solution path**: `notebooks/solutions/ex005_sequence_debug_logic.ipynb`
-- **Tests path**: `exercises/sequence/ex005_sequence_debug_logic/tests/test_ex005_sequence_debug_logic.py`
+- **Notebook path**: `notebooks/student.ipynb`
+- **Solution path**: `notebooks/solution.ipynb`
+- **Tests path**: `tests/test_ex005_sequence_debug_logic.py`
 
 ## Structure
 

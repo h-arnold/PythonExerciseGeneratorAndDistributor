@@ -6,10 +6,10 @@
 **Difficulty:** very easy
 
 ## Student prompt
-- Open the matching notebook in `notebooks/ex002_sequence_modify_basics.ipynb`.
+- Open the matching notebook in `notebooks/student.ipynb`.
 - Each exercise shows you working code. Your task is to **modify** it to meet the new requirements.
 - Write your solution in the notebook cells tagged `exercise1` through `exercise10`.
-- Run `pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` until all tests pass.
+- Run `pytest -q tests/test_ex002_sequence_modify_basics.py` until all tests pass.
 
 ## Teacher notes
 - Created: 2026-01-09

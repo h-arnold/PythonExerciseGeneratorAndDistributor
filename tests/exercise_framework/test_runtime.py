@@ -216,10 +216,16 @@ def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
     assert get_call_count() == EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS
 
 
-def test_runtime_solution_variant_resolves_legacy_exercise_key() -> None:
+def test_runtime_solution_variant_resolves_migrated_exercise_key() -> None:
     repo_root = Path(__file__).resolve().parents[2]
-    expected = repo_root / "notebooks" / \
-        "solutions" / f"{EX007_EXERCISE_KEY}.ipynb"
+    expected = (
+        repo_root
+        / "exercises"
+        / "sequence"
+        / EX007_EXERCISE_KEY
+        / "notebooks"
+        / "solution.ipynb"
+    )
 
     from_runtime = runtime.resolve_notebook_path(
         EX007_EXERCISE_KEY, variant="solution")
