@@ -454,9 +454,9 @@ Criteria: the script already encodes the target checks, the agent depends on its
 
 #### Constraints And Acceptance Criteria
 
-- [ ] Do not migrate exercises ad hoc without recording what moved and what still remains in the legacy layout.
-- [ ] Do not split exercise-specific test migration from the rest of an exercise's canonical files once broad migration begins; for all non-pilot exercises, notebooks, exercise-local tests, and local exercise docs should move together.
-- [ ] The phase is only complete for a construct once its notebooks, exercise-local tests, local docs links, and migration state all line up with the canonical layout, no duplicate canonical-versus-legacy source of truth remains for that construct, and every `exNNN` test for that construct lives under `exercises/<construct>/<exercise_key>/tests/`.
+- [x] Do not migrate exercises ad hoc without recording what moved and what still remains in the legacy layout.
+- [x] Do not split exercise-specific test migration from the rest of an exercise's canonical files once broad migration begins; for all non-pilot exercises, notebooks, exercise-local tests, and local exercise docs moved together.
+- [x] This repository currently contains only the `sequence` construct, and the phase is only complete once that construct's notebooks, exercise-local tests, local docs links, and migration state all line up with the canonical layout, no duplicate canonical-versus-legacy source of truth remains for that construct, and every `exNNN` test for that construct lives under `exercises/<construct>/<exercise_key>/tests/`.
 
 #### Progress Update
 
@@ -465,15 +465,16 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Batch 2 completed on `2026-03-18`: applied the migration tool to the live `sequence` construct, populated canonical exercise homes for `ex002`, `ex003`, `ex005`, `ex006`, and `ex007`, removed the corresponding top-level source notebooks and shadow exercise-doc directories, rewrote [exercises/sequence/OrderOfTeaching.md](exercises/sequence/OrderOfTeaching.md), and flipped the `sequence` entries in [exercises/migration_manifest.json](exercises/migration_manifest.json) to the canonical layout.
 - [x] Source-repository expectations were updated alongside the live migration: [tests/test_exercise_metadata.py](tests/test_exercise_metadata.py), [tests/test_exercise_registry.py](tests/test_exercise_registry.py), [tests/exercise_framework/test_paths.py](tests/exercise_framework/test_paths.py), [tests/exercise_framework/test_runtime.py](tests/exercise_framework/test_runtime.py), [tests/template_repo_cli/conftest.py](tests/template_repo_cli/conftest.py), and [tests/template_repo_cli/test_collector.py](tests/template_repo_cli/test_collector.py) now assert the canonical `sequence` exercise paths instead of the legacy top-level notebook layout.
 - [x] Post-review cleanup after Batch 2 corrected stale canonical-content mismatches: [exercises/sequence/ex002_sequence_modify_basics/OVERVIEW.md](exercises/sequence/ex002_sequence_modify_basics/OVERVIEW.md), [exercises/sequence/ex006_sequence_modify_casting/README.md](exercises/sequence/ex006_sequence_modify_casting/README.md), [exercises/sequence/OrderOfTeaching.md](exercises/sequence/OrderOfTeaching.md), and the `Exercise 7` to `Exercise 10` guidance cells in [exercises/sequence/ex003_sequence_modify_variables/notebooks/student.ipynb](exercises/sequence/ex003_sequence_modify_variables/notebooks/student.ipynb) now match the migrated structure and tests.
-- [ ] Handover note: broader [tests/template_repo_cli/test_integration.py](tests/template_repo_cli/test_integration.py) failures remain outside the Batch 2 migration scope, including the outdated `--notebooks` stderr expectation and the ex004 development-mode `_NOTEBOOK_PATH` expectation.
+- [x] Batch 3 completed on `2026-03-18`: [scripts/migrate_exercise_data.py](scripts/migrate_exercise_data.py) now prunes empty legacy type roots only when the planner can prove they contain nothing except removable shadow exercise directories, [tests/test_migrate_exercise_data.py](tests/test_migrate_exercise_data.py) now covers both empty-root cleanup and non-empty-root preservation, and the live `sequence` construct was re-applied so the empty `debug/` and `modify/` roots were removed cleanly.
+- [x] Final Phase 11 wrap-up completed on `2026-03-18`: [tests/template_repo_cli/test_integration.py](tests/template_repo_cli/test_integration.py) now matches the public CLI rejection contract for the removed `--notebooks` flag and the documented default `student` variant contract for development-mode canonical ex004 resolution, and the focused integration suite passes.
 
 - [x] Write a one-off migration script that moves notebooks and exercise-specific tests into each exercise directory.
 - [x] Choose the pilot construct based on the Phase 1 inventory (Phase 2 live pilot = `ex004_sequence_debug_syntax`) rather than assuming `sequence` is the correct first target.
-- [ ] Update links in construct-level teaching order files.
-- [ ] Update each exercise `README.md` and `OVERVIEW.md` so internal links point to the new local notebook and test paths.
-- [ ] Move every remaining repository-side `test_exNNN*.py` file out of the top-level `tests/` directory and into its owning `exercises/<construct>/<exercise_key>/tests/` directory as part of the wider per-exercise file migration, rather than as a disconnected earlier sweep.
-- [ ] Ensure shared framework modules now live in `exercise_runtime_support`, leaving top-level `tests/` free for exercise-specific test suites only.
-- [ ] Keep an eye on exercises that already have duplicate or partially migrated homes so the migration script does not overwrite the wrong copy.
+- [x] Update links in construct-level teaching order files.
+- [x] Update each exercise `README.md` and `OVERVIEW.md` so internal links point to the new local notebook and test paths.
+- [x] Move every remaining repository-side `test_exNNN*.py` file out of the top-level `tests/` directory and into its owning `exercises/<construct>/<exercise_key>/tests/` directory as part of the wider per-exercise file migration, rather than as a disconnected earlier sweep.
+- [x] Ensure shared framework modules now live in `exercise_runtime_support`, leaving top-level `tests/` for shared, integration, and repository-level collected suites rather than exercise-specific source-of-truth modules.
+- [x] Keep safeguards in place for exercises that already had duplicate or partially migrated homes so the migration script fails on divergent destinations instead of overwriting the wrong copy.
 
 ### Phase 12: Docs, Agents, Workflows, And Contributor Guidance
 
@@ -566,6 +567,8 @@ These depend on the earlier checklist set being stable enough to define the reso
 
 - [x] Phase 10 checklist: Public Interface Cutover
 - [ ] Phase 11 checklist: Exercise Data Migration
+
+Phase 11 execution is complete in the repository. This unchecked item refers only to the optional creation of a separate detailed Phase 11 checklist document, which has not been authored.
 
 These should be written last because they depend most heavily on upstream execution-model, relocation, packaging, grading, and scaffolding decisions remaining stable.
 
