@@ -83,7 +83,8 @@ class TestResolveExerciseDir:
         """resolve_exercise_dir ignores PYTUTOR_NOTEBOOKS_DIR and uses canonical resolution."""
         misleading_notebooks_dir = tmp_path / "misleading_notebooks"
         misleading_notebooks_dir.mkdir()
-        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(misleading_notebooks_dir))
+        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR",
+                           str(misleading_notebooks_dir))
 
         result = resolve_exercise_dir("ex004_sequence_debug_syntax")
 
@@ -135,9 +136,11 @@ class TestResolveNotebookPath:
         misleading_notebooks_dir.mkdir()
         fake_solution = misleading_notebooks_dir / "solution.ipynb"
         fake_solution.write_text('{"cells": []}', encoding="utf-8")
-        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR", str(misleading_notebooks_dir))
+        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR",
+                           str(misleading_notebooks_dir))
 
-        result = resolve_notebook_path("ex004_sequence_debug_syntax", "solution")
+        result = resolve_notebook_path(
+            "ex004_sequence_debug_syntax", "solution")
 
         assert result == Path(
             "exercises/sequence/ex004_sequence_debug_syntax/notebooks/solution.ipynb"

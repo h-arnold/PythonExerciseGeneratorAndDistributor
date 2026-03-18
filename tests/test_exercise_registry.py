@@ -399,6 +399,7 @@ def test_build_exercise_catalogue_rejects_duplicate_exercise_ids(tmp_path: Path)
             exercises_root=exercises_root,
         )
 
+
 def test_build_registry_ignores_non_canonical_metadata_location_for_legacy_exercise(
     tmp_path: Path,
 ) -> None:
