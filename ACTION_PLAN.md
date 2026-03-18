@@ -458,7 +458,12 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] Do not split exercise-specific test migration from the rest of an exercise's canonical files once broad migration begins; for all non-pilot exercises, notebooks, exercise-local tests, and local exercise docs should move together.
 - [ ] The phase is only complete for a construct once its notebooks, exercise-local tests, local docs links, and migration state all line up with the canonical layout, no duplicate canonical-versus-legacy source of truth remains for that construct, and every `exNNN` test for that construct lives under `exercises/<construct>/<exercise_key>/tests/`.
 
-- [ ] Write a one-off migration script that moves notebooks and exercise-specific tests into each exercise directory.
+#### Progress Update
+
+- [x] Batch 1 completed on `2026-03-18`: added `scripts/migrate_exercise_data.py`, a one-off construct migration tool with dry-run/apply modes that stages non-destructive writes before legacy cleanup, migrates legacy notebooks plus shadow exercise docs into canonical exercise homes, rewrites local exercise links plus construct teaching-order links, updates `exercises/migration_manifest.json`, and reports remaining legacy sources for the targeted construct.
+- [x] Focused Phase 11 safety coverage now lives in `tests/test_migrate_exercise_data.py`, including dry-run reporting, required-notebook failure handling, divergent destination conflict detection, duplicate cleanup, and retry-after-manifest-write-failure behaviour.
+
+- [x] Write a one-off migration script that moves notebooks and exercise-specific tests into each exercise directory.
 - [ ] Choose the pilot construct based on the Phase 1 inventory (Phase 2 live pilot = `ex004_sequence_debug_syntax`) rather than assuming `sequence` is the correct first target.
 - [ ] Update links in construct-level teaching order files.
 - [ ] Update each exercise `README.md` and `OVERVIEW.md` so internal links point to the new local notebook and test paths.
