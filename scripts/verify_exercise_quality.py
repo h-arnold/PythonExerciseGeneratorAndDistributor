@@ -758,11 +758,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     repo_root = args.repo_root
-    exercise_key = args.exercise_key
+    slug = args.exercise_key
 
     ex_dir, inferred_construct, inferred_type, metadata_error, findings = _resolve_exercise_context(
         repo_root=repo_root,
-        slug=exercise_key,
+        slug=slug,
     )
     # _resolve_exercise_context() records the user-facing error in findings and
     # returns None here when the canonical exercise directory cannot be resolved.
