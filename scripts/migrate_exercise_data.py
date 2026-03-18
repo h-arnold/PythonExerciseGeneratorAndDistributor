@@ -180,8 +180,7 @@ def _plan_file_transfer(source: Path, destination: Path, repo_root: Path) -> lis
                 Action(
                     kind="remove_file",
                     description=(
-                        "remove duplicate legacy file "
-                        f"{_relative_to_repo(source, repo_root)}"
+                        f"remove duplicate legacy file {_relative_to_repo(source, repo_root)}"
                     ),
                     source=source,
                 )
@@ -313,8 +312,7 @@ def _plan_shadow_actions(record: ExerciseRecord, repo_root: Path) -> list[Action
         Action(
             kind="cleanup_dir",
             description=(
-                "remove empty legacy directory "
-                f"{_relative_to_repo(record.shadow_dir, repo_root)}"
+                f"remove empty legacy directory {_relative_to_repo(record.shadow_dir, repo_root)}"
             ),
             source=record.shadow_dir,
         )
@@ -401,9 +399,7 @@ def _plan_doc_rewrite_actions(record: ExerciseRecord, repo_root: Path) -> list[A
         actions.append(
             Action(
                 kind="write_text",
-                description=(
-                    f"rewrite local links in {_relative_to_repo(destination, repo_root)}"
-                ),
+                description=(f"rewrite local links in {_relative_to_repo(destination, repo_root)}"),
                 destination=destination,
                 content=rewritten_text,
             )
@@ -489,6 +485,38 @@ def _plan_manifest_action(repo_root: Path, exercises: list[ExerciseRecord]) -> l
     ]
 
 
+def _plan_legacy_type_root_cleanup_actions(
+    repo_root: Path,
+    *,
+    construct: str,
+    exercises: list[ExerciseRecord],
+) -> list[Action]:
+    construct_dir = repo_root / "exercises" / construct
+
+    actions: list[Action] = []
+    for exercise_type in LEGACY_EXERCISE_TYPES:
+        legacy_root = construct_dir / exercise_type
+        if not legacy_root.is_dir():
+            continue
+        matching_shadow_dirs = {
+            record.shadow_dir
+            for record in exercises
+            if record.shadow_dir is not None and record.exercise_type == exercise_type
+        }
+        if any(path not in matching_shadow_dirs for path in legacy_root.iterdir()):
+            continue
+        actions.append(
+            Action(
+                kind="cleanup_dir",
+                description=(
+                    f"remove empty legacy directory {_relative_to_repo(legacy_root, repo_root)}"
+                ),
+                source=legacy_root,
+            )
+        )
+    return actions
+
+
 def _build_actions(
     repo_root: Path,
     *,
@@ -501,10 +529,19 @@ def _build_actions(
         actions.extend(_plan_notebook_actions(record, repo_root))
     for record in exercises:
         actions.extend(_plan_shadow_actions(record, repo_root))
+    actions.extend(
+        _plan_legacy_type_root_cleanup_actions(
+            repo_root,
+            construct=construct,
+            exercises=exercises,
+        )
+    )
     for record in exercises:
         actions.extend(_plan_doc_rewrite_actions(record, repo_root))
 
-    actions.extend(_plan_order_of_teaching_action(repo_root, construct=construct, exercises=exercises))
+    actions.extend(
+        _plan_order_of_teaching_action(repo_root, construct=construct, exercises=exercises)
+    )
     actions.extend(_plan_manifest_action(repo_root, exercises))
     return actions
 

@@ -175,15 +175,23 @@ def test_dry_run_reports_actions_without_mutating_files(
 
     assert exit_code == 0
     assert "Mode: dry-run" in captured.out
-    assert f"move notebooks/{_EX002}.ipynb -> exercises/sequence/{_EX002}/notebooks/student.ipynb" in captured.out
+    assert (
+        f"move notebooks/{_EX002}.ipynb -> exercises/sequence/{_EX002}/notebooks/student.ipynb"
+        in captured.out
+    )
+    assert "remove empty legacy directory exercises/sequence/modify" in captured.out
     assert f"rewrite local links in exercises/sequence/{_EX002}/README.md" in captured.out
-    assert "update canonical notebook/supporting-doc links in exercises/sequence/OrderOfTeaching.md" in captured.out
+    assert (
+        "update canonical notebook/supporting-doc links in exercises/sequence/OrderOfTeaching.md"
+        in captured.out
+    )
     assert "Remaining legacy sources:" in captured.out
     assert f"notebooks/{_EX002}.ipynb" in captured.out
     assert f"exercises/sequence/modify/{_EX002}" in captured.out
 
     assert _snapshot_files(tmp_path) == before_files
     assert _snapshot_directories(tmp_path) == before_directories
+    assert (tmp_path / "exercises" / "sequence" / "modify").is_dir()
     manifest = json.loads(
         (tmp_path / "exercises" / "migration_manifest.json").read_text(encoding="utf-8")
     )
@@ -191,8 +199,87 @@ def test_dry_run_reports_actions_without_mutating_files(
     assert manifest["exercises"][_EX006]["layout"] == "legacy"
 
 
+def test_apply_mode_removes_empty_legacy_type_root(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _build_repo_fixture(tmp_path)
+
+    exit_code = migrate_exercise_data.main(
+        [
+            "--construct",
+            "sequence",
+            "--repo-root",
+            str(tmp_path),
+            "--apply",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "remove empty legacy directory exercises/sequence/modify" in captured.out
+    assert not (tmp_path / "exercises" / "sequence" / "modify").exists()
 
 
+def test_dry_run_skips_type_root_cleanup_when_unrelated_legacy_content_remains(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _build_repo_fixture(tmp_path)
+    _write_text(
+        tmp_path / "exercises" / "sequence" / "modify" / "notes.txt",
+        "keep this legacy note",
+    )
+    (tmp_path / "exercises" / "sequence" / "modify" / "placeholder").mkdir()
+
+    exit_code = migrate_exercise_data.main(
+        [
+            "--construct",
+            "sequence",
+            "--repo-root",
+            str(tmp_path),
+            "--dry-run",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "- remove empty legacy directory exercises/sequence/modify\n" not in captured.out
+    assert "exercises/sequence/modify/notes.txt" in captured.out
+    assert "exercises/sequence/modify/placeholder" in captured.out
+    assert (tmp_path / "exercises" / "sequence" / "modify" / "notes.txt").is_file()
+    assert (tmp_path / "exercises" / "sequence" / "modify" / "placeholder").is_dir()
+
+
+def test_apply_mode_preserves_nonempty_legacy_type_root(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    _build_repo_fixture(tmp_path)
+    _write_text(
+        tmp_path / "exercises" / "sequence" / "modify" / "notes.txt",
+        "keep this legacy note",
+    )
+    (tmp_path / "exercises" / "sequence" / "modify" / "placeholder").mkdir()
+
+    exit_code = migrate_exercise_data.main(
+        [
+            "--construct",
+            "sequence",
+            "--repo-root",
+            str(tmp_path),
+            "--apply",
+        ]
+    )
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "- remove empty legacy directory exercises/sequence/modify\n" not in captured.out
+    assert (tmp_path / "exercises" / "sequence" / "modify").is_dir()
+    assert (tmp_path / "exercises" / "sequence" / "modify" / "notes.txt").is_file()
+    assert (tmp_path / "exercises" / "sequence" / "modify" / "placeholder").is_dir()
+    assert "exercises/sequence/modify/notes.txt" in captured.out
+    assert "exercises/sequence/modify/placeholder" in captured.out
 
 
 def test_apply_mode_migrates_notebooks_docs_manifest_and_teaching_order(
@@ -257,9 +344,9 @@ def test_apply_mode_migrates_notebooks_docs_manifest_and_teaching_order(
     assert "[notebooks/student.ipynb](notebooks/student.ipynb)" in ex006_overview
     assert f"`tests/test_{_EX006}.py`" in ex006_overview
 
-    order_of_teaching = (
-        tmp_path / "exercises" / "sequence" / "OrderOfTeaching.md"
-    ).read_text(encoding="utf-8")
+    order_of_teaching = (tmp_path / "exercises" / "sequence" / "OrderOfTeaching.md").read_text(
+        encoding="utf-8"
+    )
     assert f"[Supporting docs](./{_EX002}/)" in order_of_teaching
     assert f"[Notebook](./{_EX002}/notebooks/student.ipynb)" in order_of_teaching
     assert f"[Supporting docs](./{_EX006}/)" in order_of_teaching
@@ -387,9 +474,7 @@ def test_apply_mode_retries_successfully_after_manifest_write_failure(
         encoding="utf-8"
     )
 
-    manifest = json.loads(
-        manifest_path.read_text(encoding="utf-8")
-    )
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["exercises"][_EX002]["layout"] == "legacy"
     assert manifest["exercises"][_EX006]["layout"] == "legacy"
 
