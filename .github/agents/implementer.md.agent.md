@@ -69,6 +69,8 @@ You must adhere to these standards. Code that violates them is incomplete.
 
 ## 5. Output Format (Final Report)
 
+**IMPORTANT**: You MUST run the relevant tests and lint checks for the changed files. These MUST pass before you return your work as complete. Address any issues that come up before handing back.
+
 When your TODO list is complete, return a single message to the Orchestrator with this structure:
 
 ```markdown
