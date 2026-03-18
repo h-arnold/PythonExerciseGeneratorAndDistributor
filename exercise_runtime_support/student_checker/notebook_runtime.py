@@ -34,9 +34,9 @@ _MISSING_INPUT_ERROR_MESSAGE = "Test expected more input values"
 _MAX_AUTOMATED_INPUTS = 10
 
 
-def run_notebook_checks(notebook_path: str) -> None:
-    """Execute each tagged exercise cell and print a friendly status table."""
-    resolved_path = resolve_notebook_path(notebook_path)
+def run_notebook_checks(exercise_key: str) -> None:
+    """Execute each tagged exercise cell for the given canonical exercise key."""
+    resolved_path = resolve_notebook_path(exercise_key)
     tags = _collect_exercise_tags(resolved_path)
     if not tags:
         print(f"No exercise tags found in {resolved_path}.")

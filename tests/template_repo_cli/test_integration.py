@@ -235,8 +235,8 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex002_sequence_modify_basics')",
+            "from exercise_runtime_support.student_checker import check_exercise; "
+            "check_exercise('ex002_sequence_modify_basics')",
         ]
 
         check = subprocess.run(
@@ -301,8 +301,8 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex003_sequence_modify_variables')",
+            "from exercise_runtime_support.student_checker import check_exercise; "
+            "check_exercise('ex003_sequence_modify_variables')",
         ]
 
         check = subprocess.run(
@@ -318,7 +318,7 @@ class TestEndToEndDryRun:
 
         assert check.returncode != 0
         assert (
-            "Unknown notebook 'ex003_sequence_modify_variables'. Available: "
+            "Unknown exercise key 'ex003_sequence_modify_variables'. Available: "
             "ex002_sequence_modify_basics"
         ) in combined_output
         assert "No such file or directory" not in combined_output
@@ -596,11 +596,11 @@ class TestEndToEndDryRun:
             "\n".join(
                 [
                     "from exercise_runtime_support.exercise_framework import run_notebook_check",
-                    "from exercise_runtime_support.student_checker import check_notebook",
+                    "from exercise_runtime_support.student_checker import check_exercise",
                     "framework_results = run_notebook_check('ex004_sequence_debug_syntax')",
                     "assert len(framework_results) == 1, framework_results",
                     "assert framework_results[0].label, framework_results",
-                    "check_notebook('ex004_sequence_debug_syntax')",
+                    "check_exercise('ex004_sequence_debug_syntax')",
                 ]
             ),
         ]
@@ -686,11 +686,11 @@ class TestEndToEndDryRun:
             "\n".join(
                 [
                     "from exercise_runtime_support.exercise_framework import run_notebook_check",
-                    "from exercise_runtime_support.student_checker import check_notebook",
+                    "from exercise_runtime_support.student_checker import check_exercise",
                     "framework_results = run_notebook_check('ex004_sequence_debug_syntax')",
                     "assert len(framework_results) == 1, framework_results",
                     "assert framework_results[0].label, framework_results",
-                    "check_notebook('ex004_sequence_debug_syntax')",
+                    "check_exercise('ex004_sequence_debug_syntax')",
                 ]
             ),
         ]
@@ -844,8 +844,8 @@ class TestEndToEndDryRun:
         command = [
             sys.executable,
             "-c",
-            "from exercise_runtime_support.student_checker import check_notebook; "
-            "check_notebook('ex004_sequence_debug_syntax')",
+            "from exercise_runtime_support.student_checker import check_exercise; "
+            "check_exercise('ex004_sequence_debug_syntax')",
         ]
 
         check = subprocess.run(

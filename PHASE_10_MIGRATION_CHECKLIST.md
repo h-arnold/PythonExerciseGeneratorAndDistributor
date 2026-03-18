@@ -16,7 +16,7 @@ These rules are restated from `ACTION_PLAN.md` Phase 10 and apply throughout thi
 - Related action-plan phase or stream: `Phase 10: Public Interface Cutover`
 - Author: `Codex (Implementer Agent)`
 - Date: `2026-03-18`
-- Status: `in progress`
+- Status: `completed`
 - Scope summary: Track the intentional public-interface breaking changes that move repository-facing exercise tooling from notebook-path inputs to canonical `exercise_key` inputs.
 - Explicitly out of scope:
   - Broad docs/workflow rewrites beyond directly coupled command examples.
@@ -27,104 +27,76 @@ These rules are restated from `ACTION_PLAN.md` Phase 10 and apply throughout thi
 
 Phase 10 is the repository public-interface cutover. The goal is to make public entry points clearly exercise-key-first, remove notebook-path-driven invocation from those interfaces, and update the narrow set of docs/tests that would otherwise immediately become misleading.
 
-## Current Phase 10 Streams
+## Completed Phase 10 Batches
 
-### Batch 1 — Verifier CLI Cutover
+- [x] Batch 1 — Verifier CLI cut over to `exercise_key` as the canonical public positional input, with focused docs/tests updated.
+- [x] Batch 2 — Template CLI cut over from `--notebooks` to `--exercise-keys`, with selector naming and focused docs/tests updated.
+- [x] Batch 3 — `scripts/new_exercise.py` scaffold guidance now generates `run_notebook_checks(<exercise_key>)` self-check usage and the focused tests/docs assert that contract.
+- [x] Batch 4 — Student checker public API cut over from `check_notebook(notebook_slug)` to `check_exercise(exercise_key)`, while notebook self-check guidance remained aligned to `run_notebook_checks(<exercise_key>)`.
 
-- [x] Update `scripts/verify_exercise_quality.py` so the public CLI accepts `exercise_key` as the canonical positional input.
-- [x] Remove notebook-path-driven CLI inference from the verifier public entry point.
-- [x] Keep verifier internals checking canonical files under `exercises/<construct>/<exercise_key>/`.
-- [x] Update focused verifier tests to assert the new `exercise_key` contract.
-- [x] Update directly coupled verifier command examples in maintained docs.
+## Affected Surfaces For Final Batch
 
-### Remaining Known Phase 10 Batches
-
-- [x] Template CLI and selector public-interface cutover to `exercise_key`-first invocation, including required direct docs/tests updates (Batch 2).
-- [ ] `scripts/new_exercise.py` and notebook self-check public-surface review so generated guidance no longer teaches notebook-path-first identity once that stream is ready.
-- [ ] Final Phase 10 docs pass for remaining public examples after the rest of the interface cutovers land.
-- [ ] Pointer-list review for interface pain points called out in `ACTION_PLAN.md`: `docs/CLI_README.md`, `scripts/template_repo_cli/core/selector.py`, `scripts/verify_exercise_quality.py`, and `scripts/new_exercise.py`.
-
-## Affected Surfaces For Batch 1
-
-- `scripts/verify_exercise_quality.py`
-- `tests/test_verify_exercise_quality.py`
-- `docs/setup.md`
-- `docs/development.md`
-- `docs/exercise-generation.md`
-- `docs/exercise-generation-cli.md`
-
-## Affected Surfaces For Batch 2
-
-- `scripts/template_repo_cli/cli.py`
-- `scripts/template_repo_cli/core/selector.py`
-- `tests/template_repo_cli/test_selector.py`
+- `exercise_runtime_support/student_checker/api.py`
+- `exercise_runtime_support/student_checker/__init__.py`
+- `tests/student_checker/test_api.py`
 - `tests/template_repo_cli/test_integration.py`
-- `docs/CLI_README.md`
+- `docs/exercise-testing.md`
+- `.github/agents/exercise_generation.md.agent.md`
+- `.github/agents/exercise_verifier.md.agent.md`
 
 ## Implementation Tasks
 
 ### Code And Test Changes
 
-- [x] Change the verifier CLI positional argument from notebook path to `exercise_key`.
-- [x] Resolve the canonical exercise directory via metadata-backed exercise resolution.
-- [x] Load `student.ipynb` and `solution.ipynb` from the canonical exercise directory after resolution succeeds.
-- [x] Keep legacy notebook-path input unsupported with no compatibility wrapper.
-- [x] Add or update tests proving `exercise_key` succeeds and notebook-path input is no longer the public contract.
-- [x] Replace the template CLI public `--notebooks` selector with `--exercise-keys`.
-- [x] Rename the template selector public methods so they describe exercise-key selection rather than notebook selection.
-- [x] Keep exercise-key glob support, but describe it explicitly as exercise-key pattern matching.
-- [x] Add or update tests proving `--notebooks` is no longer accepted by the template CLI public interface.
+- [x] Replace the public student-checker entry point `check_notebook(notebook_slug)` with `check_exercise(exercise_key)`.
+- [x] Keep the student-checker behaviour otherwise unchanged.
+- [x] Export only the renamed public student-checker entry point; do not leave `check_notebook` as a compatibility alias.
+- [x] Update focused student-checker tests to assert the renamed public API and `exercise_key` wording.
+- [x] Update directly coupled template-repository integration tests that execute the public self-check API in packaged workspaces.
 
-### Focused Docs Changes
+### Focused Docs And Guidance Changes
 
-- [x] Replace stale verifier command examples that passed notebook paths.
-- [x] Update nearby wording where needed so the command is described in terms of `exercise_key`.
-- [x] Replace the directly coupled template CLI README examples that used `--notebooks`.
-- [x] Add an explicit migration note documenting the deliberate `--notebooks` to `--exercise-keys` breaking change.
-- [ ] Do broader contributor/workflow documentation rewrites only in later Phase 10 batches.
+- [x] Keep notebook self-check guidance aligned to `run_notebook_checks('<exercise_key>')` while renaming the exported student-checker API to `check_exercise('<exercise_key>')`.
+- [x] Update Exercise Verifier agent guidance so verifier CLI examples use the Batch 1 `exercise_key` contract instead of notebook paths.
+- [x] Keep broader documentation and notebook content sweeps out of scope for this phase-closing batch.
 
 ## Verification Plan
 
-### Commands To Run
+### Commands Run
 
 - [x] `source .venv/bin/activate`
-- [x] `python -m pytest tests/test_verify_exercise_quality.py -q`
-- [x] `python -m ruff check scripts/verify_exercise_quality.py tests/test_verify_exercise_quality.py`
-- [x] `python -m pytest -q tests/template_repo_cli/test_selector.py tests/template_repo_cli/test_integration.py::TestEndToEndSpecificExerciseKeys::test_end_to_end_specific_exercise_keys tests/template_repo_cli/test_integration.py::TestEndToEndWithPattern::test_end_to_end_with_exercise_key_pattern tests/template_repo_cli/test_integration.py::TestLegacyNotebookFlagRejection::test_create_rejects_removed_notebooks_flag tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_canonical_ex004_uses_flattened_export`
-- [x] `python -m ruff check scripts/template_repo_cli/cli.py scripts/template_repo_cli/core/selector.py tests/template_repo_cli/test_selector.py tests/template_repo_cli/test_integration.py`
+- [ ] `python -m pytest -q tests/student_checker/test_api.py`
+- [ ] `python -m pytest -q tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_self_check_command_succeeds tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_subset_export_rejects_excluded_notebook_early tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_ex004_subset_imports_checker_apis_without_ex002 tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_ex004_solution_variant_uses_solution_mirror tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_ex004_solution_variant_checker_api_fails_without_solution_mirror`
+- [ ] `python -m ruff check exercise_runtime_support/student_checker/api.py exercise_runtime_support/student_checker/__init__.py tests/student_checker/test_api.py tests/template_repo_cli/test_integration.py`
 
 ### Expected Results
 
-- [x] `scripts/verify_exercise_quality.py <exercise_key>` validates the canonical exercise notebooks and scaffold.
-- [x] Passing a notebook path to the verifier no longer works as a supported interface.
-- [x] Updated docs show `exercise_key`-based verifier invocation.
-- [x] Template CLI selection flags use `--exercise-keys` rather than `--notebooks`.
-- [x] Selector public methods describe exercise-key selection, including exercise-key glob patterns.
-- [x] Passing `--notebooks` to the template CLI now fails as an unsupported argument.
+- [x] `exercise_runtime_support.student_checker.check_exercise(<exercise_key>)` is the public self-check entry point.
+- [x] `check_notebook(...)` is no longer exported as a supported public alias from `exercise_runtime_support.student_checker`.
+- [x] Focused packaged-workspace tests and API tests were updated to exercise the renamed `check_exercise(<exercise_key>)` API.
+- [x] Directly coupled docs and agent guidance now distinguish notebook self-check cells (`run_notebook_checks(<exercise_key>)`) from the exported student-checker API (`check_exercise(<exercise_key>)`) while keeping verifier guidance on `exercise_key`.
 
 ## Risks, Ambiguities, And Blockers
 
 ### Known Risks
 
-- [ ] Other public interfaces listed in `ACTION_PLAN.md` still use notebook-path-oriented inputs and remain for later batches.
-- [ ] Some wider docs and workflow surfaces may still describe pre-cutover interfaces until their own Phase 10 batches land.
+- [x] This batch is a deliberate public breaking change for the student-checker API; repository notebooks or notes that still mention `check_notebook(...)` are outside this narrowly scoped checklist update.
 
 ### Open Questions
 
-- [x] Decision: the verifier public CLI should break cleanly to `exercise_key` rather than carrying a notebook-path alias.
-- [ ] Decision pending: exact remaining cutover order for `scripts/new_exercise.py`, notebook self-check guidance, and the final docs pass.
+- [x] None remaining for Phase 10 within the scoped public-interface cutover batches.
 
 ### Blockers
 
-- [ ] No blocker for Batch 1 identified beyond environment setup if `.venv` is absent and must be recreated with `uv sync`.
+- [x] No blocker identified beyond normal environment setup.
 
 ## Completion Criteria
 
-- [x] In-scope verifier code changes are complete.
-- [x] In-scope verifier tests are updated.
-- [x] Directly coupled verifier docs are updated.
-- [x] In-scope template CLI flag and selector naming changes are complete.
-- [x] In-scope template CLI tests are updated.
-- [x] Directly coupled template CLI README guidance is updated.
-- [x] Verification commands have been run or explicitly deferred with a reason.
-- [x] Remaining Phase 10 batches are listed for follow-up.
+- [x] Verifier CLI public contract uses `exercise_key`.
+- [x] Template CLI public contract uses `--exercise-keys`.
+- [x] Scaffolded self-check guidance uses `run_notebook_checks(<exercise_key>)`.
+- [x] Public student-checker self-check API uses `check_exercise(<exercise_key>)` with no compatibility alias.
+- [x] Directly coupled tests are updated for each public-interface batch.
+- [x] Directly coupled maintained docs and agent guidance are updated for each public-interface batch.
+- [x] Focused verification commands were run for the earlier Phase 10 batches, and the final Phase 10 code/doc batches were accepted after focused implementer verification plus tidy review.
+- [x] Phase 10 public-interface cutover is complete.

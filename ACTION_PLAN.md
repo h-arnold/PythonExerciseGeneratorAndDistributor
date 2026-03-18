@@ -433,19 +433,22 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Batch 2 completed on `2026-03-18`: the template CLI now uses `--exercise-keys` instead of `--notebooks`, and the selector public API has been renamed around exercise-key terminology rather than notebook terminology.
 - [x] Focused template CLI coverage in `tests/template_repo_cli/test_selector.py` and `tests/template_repo_cli/test_integration.py` now asserts the exercise-key-first contract and explicitly rejects the removed `--notebooks` flag.
 - [x] Directly coupled template CLI examples in `docs/CLI_README.md` now document the `--exercise-keys` contract and call out the deliberate Phase 10 breaking change.
+- [x] Batch 3 completed on `2026-03-18`: `scripts/new_exercise.py` now scaffolds notebook self-check cells that call `run_notebook_checks(<exercise_key>)`, and the focused scaffold docs/tests were updated to match that exercise-key contract.
+- [x] Batch 4 completed on `2026-03-18`: the exported student-checker API now exposes `check_exercise(<exercise_key>)` instead of `check_notebook(...)`, while maintained docs and agent guidance now distinguish that API from notebook self-check cells that continue to use `run_notebook_checks(<exercise_key>)`.
+- [x] The Phase 10 pointer-list surfaces now reflect the cutover: `docs/CLI_README.md`, `scripts/template_repo_cli/core/selector.py`, `scripts/verify_exercise_quality.py`, and `scripts/new_exercise.py` all document or implement the exercise-key-first contract directly.
 
 #### Constraints And Acceptance Criteria
 
-- [ ] Prefer deliberate breaking changes over compatibility wrappers for CLI, verifier, and helper interfaces that currently accept notebook paths or notebook-oriented terminology.
-- [ ] Do not leave notebook-shaped public interfaces as hidden aliases if the underlying model has changed to `exercise_key`.
-- [ ] Do not cut over public interfaces until the execution model and packaging contract are proven for at least one migrated exercise.
-- [ ] The phase is only complete once public-facing repository interfaces clearly use the new model, breaking changes are documented, and tests assert the new contract rather than the legacy one.
+- [x] Prefer deliberate breaking changes over compatibility wrappers for CLI, verifier, and helper interfaces that currently accept notebook paths or notebook-oriented terminology.
+- [x] Do not leave notebook-shaped public interfaces as hidden aliases if the underlying model has changed to `exercise_key`.
+- [x] Do not cut over public interfaces until the execution model and packaging contract are proven for at least one migrated exercise.
+- [x] The phase is only complete once public-facing repository interfaces clearly use the new model, breaking changes are documented, and tests assert the new contract rather than the legacy one.
 
-- [ ] Decide how public tooling should identify exercises after the cutover, especially for the template CLI, verifier, and notebook self-check surfaces.
-- [ ] Update public CLI and script interfaces to use the new canonical exercise identity model.
-- [ ] Remove or deliberately break legacy notebook-path-driven invocation patterns once replacement interfaces exist.
-- [ ] Update user-facing docs to describe the breaking changes and the new invocation model.
-- [ ] Keep a pointer list for interface pain points in: [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), and [scripts/new_exercise.py](scripts/new_exercise.py) and update it when the verifier migration is complete.
+- [x] Decide how public tooling should identify exercises after the cutover, especially for the template CLI, verifier, and notebook self-check surfaces.
+- [x] Update public CLI and script interfaces to use the new canonical exercise identity model.
+- [x] Remove or deliberately break legacy notebook-path-driven invocation patterns once replacement interfaces exist.
+- [x] Update user-facing docs to describe the breaking changes and the new invocation model.
+- [x] Keep a pointer list for interface pain points in: [docs/CLI_README.md](docs/CLI_README.md), [scripts/template_repo_cli/core/selector.py](scripts/template_repo_cli/core/selector.py), [scripts/verify_exercise_quality.py](scripts/verify_exercise_quality.py), and [scripts/new_exercise.py](scripts/new_exercise.py) and update it when the verifier migration is complete.
 
 ### Phase 11: Exercise Data Migration
 

@@ -15,7 +15,7 @@ You must be strict, but practical:
 ## Inputs you should ask for (only if unclear)
 If the calling agent did not specify what to verify, infer the target exercise by inspecting recent file changes or by asking for:
 - the exercise id (e.g. `ex042`) and slug, OR
-- the notebook path (e.g. `notebooks/ex042_slug.ipynb`).
+- the exercise key (e.g. `ex042_sequence_example`).
 
 ## Reference documents (MUST follow)
 Always open and follow the relevant exercise-type guide **in full** before verifying:
@@ -99,7 +99,7 @@ If you find a progression violation:
 - Propose the smallest change that removes the advanced concept.
 
 **Automation helper (recommended):** run the repo script to catch common progression slips quickly:
-- `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make>`
 
 Treat warnings from this script as prompts for closer manual review (it’s heuristic).
 
@@ -108,7 +108,7 @@ For both student + solution notebooks:
 - Every graded code cell must include `metadata.tags` with the exact tag (`exercise1`, `exercise2`, ...).
 - For debug exercises: explanation markdown cells must have tags `explanation1`, ...
 - Every cell must have `metadata.language` (`markdown` or `python`).
-- If there is an optional self-check cell, verify it uses `check_notebook('<slug>')` (for example, `check_notebook('ex007_sequence_debug_casting')`) so output remains aligned with the grouped student checker summary.
+- If there is an optional self-check cell, verify it uses `run_notebook_checks('<exercise_key>')` (for example, `run_notebook_checks('ex007_sequence_debug_casting')`) so output remains aligned with the grouped student checker summary.
 - The exercises in the student and solution notebooks must match.
 
 Note: existing notebooks may also include a top-level `id` field on cells; preserve it.
@@ -116,7 +116,7 @@ Note: existing notebooks may also include a top-level `id` field on cells; prese
 - For interactive prompts, verify the expected-output markdown uses the bracketed input notation (`[Input: ...]`) *inside* the fenced code block. A simple heuristic is to search for the literal pattern `[Input:` within the prompt cell; if found, confirm it appears inside a code fence and matches the prompt text.
 
 **Automation helper (recommended):** the same script checks language fields, tag placement, and solution-mirror presence:
-- `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make>`
 
 ### Gate D — Tests
 
@@ -189,7 +189,7 @@ The exercise must be listed in the construct-level teaching order file:
 This ensures maintainers can see the intended progression and find notebooks quickly.
 
 **Automation helper (recommended):** the repo script checks the notebook/test surfaces and supporting metadata; use it alongside a manual check of the canonical authoring folder under `exercises/<construct>/<exercise_key>/`:
-- `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make>`
 
 ## Output format (what you report back)
 Return a concise verdict:
@@ -206,7 +206,7 @@ For FAIL:
 2) Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
 3) Open the appropriate exercise-type guide in full.
 4) Run the quick script checks (Gates B/C + teacher file presence):
-  - `uv run python scripts/verify_exercise_quality.py notebooks/exNNN_slug.ipynb --construct <construct> --type <debug|modify|make>`
+  - `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make>`
 5) Inspect manually:
    - student notebook
    - solution notebook
