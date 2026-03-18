@@ -487,8 +487,10 @@ class TestEndToEndDryRun:
 
             assert result == 0
             assert output_dir.exists()
-            assert (output_dir / "notebooks" / "ex004_sequence_debug_syntax.ipynb").exists()
-            assert (output_dir / "tests" / "test_ex004_sequence_debug_syntax.py").exists()
+            assert (output_dir / "notebooks" /
+                    "ex004_sequence_debug_syntax.ipynb").exists()
+            assert (output_dir / "tests" /
+                    "test_ex004_sequence_debug_syntax.py").exists()
             assert not (output_dir / "exercises").exists()
             assert source_canonical.exists()
 
@@ -653,7 +655,8 @@ class TestEndToEndDryRun:
         assert result == 0
         assert output_dir.exists()
 
-        exported_notebook = output_dir / "notebooks" / "ex004_sequence_debug_syntax.ipynb"
+        exported_notebook = output_dir / "notebooks" / \
+            "ex004_sequence_debug_syntax.ipynb"
         solution_mirror = (
             output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
         )
@@ -889,7 +892,8 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -1025,7 +1029,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1036,9 +1041,11 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication", return_value=True),
+            patch.object(GitHubClient, "check_authentication",
+                         return_value=True),
         ):
-            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
+            result = main(["create", "--construct", "sequence",
+                          "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -1068,7 +1075,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1079,7 +1087,8 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication", return_value=True),
+            patch.object(GitHubClient, "check_authentication",
+                         return_value=True),
         ):
             result = main(
                 [
@@ -1118,7 +1127,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1129,7 +1139,8 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication", return_value=True),
+            patch.object(GitHubClient, "check_authentication",
+                         return_value=True),
         ):
             result = main(
                 [
@@ -1324,7 +1335,8 @@ class TestCliCreateCommand:
         assert result == 0
         EXPECT_CREATE_CALLS = 2
         assert mock_create.call_count == EXPECT_CREATE_CALLS
-        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
+        mock_subprocess_run.assert_any_call(
+            ["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(
