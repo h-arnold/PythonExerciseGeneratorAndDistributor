@@ -1,4 +1,4 @@
-name: tests
+name: tests (authoring repo)
 
 on:
   push:
@@ -28,6 +28,10 @@ jobs:
           python -m pip install --upgrade pip uv
           uv sync
 
-      - name: Run tests
+      - name: Validate source-repository pytest collection
+        run: |
+          uv run pytest --collect-only -q
+
+      - name: Run source-repository tests against solution notebooks
         run: |
           uv run python scripts/run_pytest_variant.py --variant solution -q

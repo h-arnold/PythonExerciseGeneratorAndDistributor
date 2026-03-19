@@ -280,17 +280,25 @@ Before submitting an exercise:
 
 ### GitHub Actions Workflows
 
+Repository CI and exported Classroom autograding are separate surfaces.
+
 **`tests.yml`**:
 
 - Runs on push/PR
-- Tests student notebooks
-- Fast feedback for contributors
+- Validates pytest collection/discovery in the source repository
+- Runs the explicit `--variant solution` authoring-repo pass
 
 **`tests-solutions.yml`**:
 
 - Manual trigger
-- Tests solution notebooks
-- Validates instructor answers
+- Maintainer-focused targeted rerun of the explicit `--variant solution` pass
+- Accepts optional pytest args for focused checks
+
+**`template_repo_files/.github/workflows/classroom.yml`**:
+
+- Exported to Classroom/template repositories
+- Runs `scripts/build_autograde_payload.py --variant student`
+- Validates the metadata-free student contract rather than the source-repository authoring contract
 
 ## Updating Exercises
 

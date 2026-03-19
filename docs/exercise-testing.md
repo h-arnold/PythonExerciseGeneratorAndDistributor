@@ -596,8 +596,11 @@ uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_s
 
 ### CI/CD
 
-- **`.github/workflows/tests-solutions.yml`**: Runs tests with explicit `--variant solution` orchestration (verifying the instructor solutions pass).
-- **GitHub Classroom**: Runs tests against the student's submission (default path).
+Source-repository validation and exported Classroom autograding are different workflows.
+
+- **`.github/workflows/tests.yml`**: Push/PR validation for the authoring repository. It checks pytest collection/discovery and then runs the explicit `scripts/run_pytest_variant.py --variant solution -q` pass.
+- **`.github/workflows/tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional pytest args for targeted solution checks.
+- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-free student contract.
 
 ## Cell Tagging
 

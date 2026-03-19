@@ -1,10 +1,17 @@
-name: tests (solutions)
+name: tests (solutions rerun)
 
 on:
   workflow_dispatch:
+    inputs:
+      pytest_args:
+        description: Optional pytest args forwarded after --variant solution for targeted maintainer reruns
+        required: false
+        default: ""
+        type: string
 
 jobs:
   pytest_solutions:
+    name: maintainer solution rerun
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,6 +34,25 @@ jobs:
           python -m pip install --upgrade pip uv
           uv sync
 
-      - name: Run tests against solution notebooks
+      - name: Run targeted tests against solution notebooks
+        env:
+          PYTEST_ARGS: ${{ inputs.pytest_args }}
         run: |
-          uv run python scripts/run_pytest_variant.py --variant solution -q
+          # Keep the explicit solution-variant contract visible: uv run python scripts/run_pytest_variant.py --variant solution
+          python - <<'PY'
+          import os
+          import shlex
+          import subprocess
+
+          extra_args = shlex.split(os.environ.get("PYTEST_ARGS", ""))
+          command = [
+              "uv",
+              "run",
+              "python",
+              "scripts/run_pytest_variant.py",
+              "--variant",
+              "solution",
+              *extra_args,
+          ]
+          raise SystemExit(subprocess.run(command, check=False).returncode)
+          PY

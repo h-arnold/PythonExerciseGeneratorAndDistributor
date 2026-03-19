@@ -31,6 +31,13 @@ Run the full suite using `uv`:
 uv run pytest -q
 ```
 
+Because raw `uv run pytest -q` exercises the default student variant, the CI-equivalent source-repository check is a collection pass plus the explicit solution-variant run:
+
+```bash
+uv run pytest --collect-only -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
+```
+
 ### Targeted Execution
 
 Run tests for specific components:
@@ -99,8 +106,9 @@ Sanity checks for the documentation and exercise type definition files.
 
 The repository uses GitHub Actions to run these tests automatically.
 
-- **`tests.yml`**: Runs the full suite on every push and pull request.
-- **`tests-solutions.yml`**: Specifically runs the notebook tests against the *solution* notebooks (via the explicit `--variant solution` contract) to ensure the instructor solutions are valid and passing.
+- **`tests.yml`**: Source-repository validation on every push and pull request. It checks pytest collection/discovery in the authoring repository and then runs `scripts/run_pytest_variant.py --variant solution -q`.
+- **`tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional forwarded pytest args for targeted solution checks.
+- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-free student contract.
 
 ## Adding New Infrastructure Tests
 

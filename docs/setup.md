@@ -170,24 +170,34 @@ Configuration is in `pyproject.toml`.
 
 ## GitHub Classroom Integration
 
-This repository is designed to work with GitHub Classroom:
+This repository uses two separate GitHub Actions surfaces:
 
-1. **Create an assignment** from this template repository
-2. **Students accept** the assignment and get their own copy
-3. **Students complete exercises** and push commits
-4. **Autograding runs** via GitHub Actions (`.github/workflows/tests.yml`)
-5. **Tests verify** student solutions automatically
+1. **Source-repository validation** in this repository checks the authoring contract before changes are merged.
+2. **Exported Classroom autograding** runs in repositories created from `template_repo_files/` and checks the student-facing contract.
 
-### Autograding Configuration
+### Source-repository workflows
 
 The `.github/workflows/tests.yml` workflow:
 
 - Triggers on every push and pull request
-- Sets up Python 3.11
-- Installs dependencies
-- Runs `pytest`
+- Validates pytest collection/discovery in the authoring repository
+- Runs `scripts/run_pytest_variant.py --variant solution -q` so exercise-local tests execute against instructor notebooks
 
-Students see test results in the GitHub Actions tab of their repository.
+The `.github/workflows/tests-solutions.yml` workflow:
+
+- Is manual (`workflow_dispatch`)
+- Keeps the explicit `--variant solution` contract
+- Accepts optional pytest args for targeted maintainer reruns
+
+### Exported Classroom workflow
+
+`template_repo_files/.github/workflows/classroom.yml` is copied into exported assignment repositories:
+
+- Triggers the student-facing autograding run
+- Runs `scripts/build_autograde_payload.py --variant student`
+- Validates the metadata-free student contract used in Classroom
+
+Students see assignment autograding results from `classroom.yml` in the GitHub Actions tab of their Classroom repository.
 
 ## Development Workflow
 
@@ -282,18 +292,26 @@ Students sometimes forget imports. Remind them that:
 
 ### `tests.yml`
 
-Runs on every push and pull request:
+Runs on every push and pull request for source-repository validation:
 
 - Installs dependencies
-- Runs pytest against student notebooks
-- Reports pass/fail status
+- Validates pytest collection/discovery
+- Runs the explicit solution-variant test pass for the authoring repository
 
 ### `tests-solutions.yml`
 
-Manual workflow (workflow_dispatch) to verify solution notebooks:
+Manual maintainer workflow (`workflow_dispatch`) for targeted solution reruns:
 
 - Uses explicit `--variant solution` orchestration
-- Runs pytest against solution notebooks
-- Useful for verifying solutions are correct before releasing exercises
+- Accepts optional forwarded pytest args for focused reruns
+- Useful when a maintainer wants to re-check specific exercise tests without re-running the full push/PR workflow
 
 Trigger manually in the GitHub Actions tab.
+
+### `template_repo_files/.github/workflows/classroom.yml`
+
+Exported GitHub Classroom autograding workflow:
+
+- Copied into assignment repositories generated from this source repo
+- Runs the student variant via `scripts/build_autograde_payload.py --variant student`
+- Validates the metadata-free student notebook contract, not the source-repository authoring contract
