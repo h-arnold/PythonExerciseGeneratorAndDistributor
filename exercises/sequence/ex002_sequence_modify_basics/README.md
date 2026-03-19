@@ -6,12 +6,14 @@
 **Difficulty:** very easy
 
 ## Student prompt
-- Open the matching notebook in `notebooks/student.ipynb`.
+
+- Open the matching notebook in `notebooks/student.ipynb` inside this exercise folder.
 - Each exercise shows you working code. Your task is to **modify** it to meet the new requirements.
 - Write your solution in the notebook cells tagged `exercise1` through `exercise10`.
-- Run `pytest -q tests/test_ex002_sequence_modify_basics.py` until all tests pass.
+- From the repository root, run `uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` until all tests pass.
 
 ## Teacher notes
+
 - Created: 2026-01-09
 - Target concepts:
   - Basic `print()` statements
@@ -27,7 +29,9 @@
 - Expected completion time: 30-45 minutes for beginners
 
 ## Key pedagogical notes
+
 This is designed as the **very first** set of exercises for students who have never programmed before. The activities focus on:
+
 1. Understanding that code can be changed and the output will change
 2. Basic syntax of `print()` statements
 3. Distinguishing between text (strings) and numbers
@@ -37,4 +41,3 @@ This is designed as the **very first** set of exercises for students who have ne
 All exercises are self-contained and require only modification of existing working code, making them less intimidating than writing from scratch.
 
 **Note:** The automated tests enforce exact output formatting (case, spacing, punctuation and final newline). Make this explicit to students when demonstrating expected output.
-
