@@ -102,26 +102,8 @@ def _make_debug_cells(parts: int) -> list[dict[str, Any]]:
 
 
 def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
-    """Create standard (non-debug) exercise cells."""
+    """Create standard non-debug exercise cells."""
     cells: list[dict[str, Any]] = []
-    if parts == 1:
-        cells.append(
-            {
-                "cell_type": "code",
-                "metadata": _make_meta("python", tags=["exercise1"]),
-                "execution_count": None,
-                "outputs": [],
-                "source": [
-                    "# Exercise 1\n",
-                    "# The tests will execute the code in this cell and verify the output.\n",
-                    "# Write your code below.\n",
-                    "\n",
-                    "print('TODO: Write your solution here')\n",
-                ],
-            }
-        )
-        return cells
-
     for i in range(1, parts + 1):
         exercise_tag = f"exercise{i}"
         cells.append(
@@ -188,11 +170,11 @@ def _make_notebook_with_parts(
                 f"# {title}\n",
                 "\n",
                 "## Goal\n",
-                "Complete each exercise cell, then run the tests.\n",
+                "Complete each exercise cell, then run the tests from the repository root.\n",
                 "\n",
                 "## How to work\n",
                 "- Write your solution(s) in the exercise cell(s)\n",
-                f"- Run `pytest -q {test_target}`\n",
+                f"- From the repository root, run `uv run pytest -q {test_target}`\n",
             ],
         }
     ]
@@ -243,9 +225,9 @@ def _build_readme_lines(
         f"# {title}",
         "",
         "## Student prompt",
-        "- Open `notebooks/student.ipynb`.",
+        "- Open `notebooks/student.ipynb` in this exercise folder.",
         "- Write your solution in the notebook cell tagged `exercise1` (or `exercise2`, …).",
-        f"- Run `pytest -q {test_target}` until all tests pass.",
+        f"- From the repository root, run `uv run pytest -q {test_target}` until all tests pass.",
         "",
         "## Teacher notes",
         f"- Created: {created_date}",
@@ -300,7 +282,8 @@ def _build_exercise_metadata(
 
 def _validate_and_parse_args() -> argparse.Namespace:
     """Parse and validate command-line arguments."""
-    parser = argparse.ArgumentParser(description="Create a new exercise skeleton")
+    parser = argparse.ArgumentParser(
+        description="Create a new exercise skeleton")
     parser.add_argument("exercise_id", help='Exercise id like "ex001"')
     parser.add_argument("title", help="Human title for the exercise")
     parser.add_argument(
@@ -331,7 +314,8 @@ def _validate_and_parse_args() -> argparse.Namespace:
     if args.parts < 1:
         raise SystemExit("--parts must be >= 1")
     if args.parts > MAX_PARTS:
-        raise SystemExit(f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
+        raise SystemExit(
+            f"--parts is capped at {MAX_PARTS} to keep notebooks manageable")
 
     exercise_id = args.exercise_id.strip().lower()
     if not re.fullmatch(r"ex\d{3}", exercise_id):
@@ -344,11 +328,13 @@ def _validate_and_parse_args() -> argparse.Namespace:
         )
     if not validate_construct_name(construct):
         valid_constructs = ", ".join(sorted(VALID_CONSTRUCTS))
-        raise SystemExit(f"Unknown construct: {construct}. Use one of: {valid_constructs}.")
+        raise SystemExit(
+            f"Unknown construct: {construct}. Use one of: {valid_constructs}.")
 
     slug = args.slug.strip().lower() if args.slug else _slugify(args.title)
     if not re.fullmatch(r"[a-z0-9]+(?:_[a-z0-9]+)*", slug):
-        raise SystemExit("Slug must be snake_case containing only a-z, 0-9, and underscores.")
+        raise SystemExit(
+            "Slug must be snake_case containing only a-z, 0-9, and underscores.")
 
     args.exercise_id = exercise_id
     args.construct = construct
@@ -374,6 +360,148 @@ def _check_exercise_not_exists(
         raise SystemExit(f"Exercise already exists: {exercise_key}")
 
 
+def _build_test_lines(
+    exercise_key: str,
+    *,
+    parts: int,
+    exercise_type: str,
+) -> list[str]:
+    """Build the repository-side test scaffold for a new exercise."""
+    test_lines: list[str] = [
+        "from __future__ import annotations",
+        "",
+    ]
+    if parts > 1:
+        test_lines.extend([
+            "import pytest",
+            "",
+        ])
+    test_lines.extend([
+        "from exercise_runtime_support.exercise_framework import (",
+        "    RuntimeCache,",
+    ])
+
+    if exercise_type == "debug":
+        test_lines.append("    get_explanation_cell,")
+    test_lines.extend(
+        [
+            "    resolve_exercise_notebook_path,",
+            "    run_cell_and_capture_output,",
+            ")",
+        ]
+    )
+    if exercise_type == "debug":
+        test_lines.extend(
+            [
+                "from exercise_runtime_support.exercise_framework.expectations_helpers import (",
+                "    is_valid_explanation,",
+                ")",
+            ]
+        )
+    test_lines.extend(
+        [
+            "",
+            f"_EXERCISE_KEY = {exercise_key!r}",
+            "_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)",
+            "_CACHE = RuntimeCache()",
+        ]
+    )
+    if exercise_type == "debug":
+        test_lines.extend(
+            [
+                "_MIN_EXPLANATION_LENGTH = 50",
+                "_PLACEHOLDER_PHRASES = (",
+                "    'describe what',",
+                "    'describe briefly',",
+                "    'your explanation',",
+                "    'explain here',",
+                "    'write your',",
+                "    'todo',",
+                "    '...',",
+                "    'include any error',",
+                ")",
+            ]
+        )
+    test_lines.extend(
+        [
+            "",
+            "",
+            "def _run_and_capture(tag: str) -> str:",
+            '    """Execute the tagged cell and capture its print output."""',
+            "    return run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)",
+            "",
+            "",
+        ]
+    )
+
+    if parts == 1:
+        test_lines.extend(
+            [
+                "def test_exercise1_output() -> None:",
+                "    output = _run_and_capture('exercise1')",
+                "    # TODO: Add assertions to verify the output",
+                "    # Placeholder guard: ensure students replace the TODO",
+                "    assert output.strip(), 'Exercise should produce output'",
+                "    assert 'TODO' not in output, 'Replace the TODO placeholder with your solution'",
+                "    # Example: assert 'expected text' in output",
+                "",
+            ]
+        )
+    else:
+        exercise_tags = ", ".join(
+            f"'exercise{i}'" for i in range(1, parts + 1))
+        test_lines.extend(
+            [
+                f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
+                "def test_exercise_cells_execute(tag: str) -> None:",
+                '    """Verify each tagged cell executes without error."""',
+                "    output = _run_and_capture(tag)",
+                "    # Placeholder guard: ensure students replace the TODO",
+                "    assert output.strip(), f'{tag} should produce output'",
+                "    assert 'TODO' not in output, f'Replace the TODO placeholder in {tag}'",
+                "",
+            ]
+        )
+
+    if exercise_type == "debug":
+        test_lines.extend(
+            [
+                "# Explanation cell checks for debug exercises",
+                "",
+            ]
+        )
+        if parts == 1:
+            test_lines.extend(
+                [
+                    "def test_explanation_has_content() -> None:",
+                    "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
+                    "    assert is_valid_explanation(",
+                    "        explanation,",
+                    "        min_length=_MIN_EXPLANATION_LENGTH,",
+                    "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
+                    "    )",
+                    "",
+                ]
+            )
+        else:
+            test_lines.extend(
+                [
+                    f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {parts} + 1)]",
+                    "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
+                    "def test_explanations_have_content(tag: str) -> None:",
+                    "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
+                    "    assert is_valid_explanation(",
+                    "        explanation,",
+                    "        min_length=_MIN_EXPLANATION_LENGTH,",
+                    "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
+                    "    )",
+                    "",
+                ]
+            )
+
+    return test_lines
+
+
 def main() -> int:
     """Create a new canonical exercise scaffold."""
     args = _validate_and_parse_args()
@@ -384,7 +512,8 @@ def main() -> int:
         args.slug,
     )
 
-    _check_exercise_not_exists(args.construct, args.exercise_type, exercise_key)
+    _check_exercise_not_exists(
+        args.construct, args.exercise_type, exercise_key)
 
     exercise_dir = ROOT / "exercises" / args.construct / exercise_key
     notebooks_dir = exercise_dir / "notebooks"
@@ -405,7 +534,8 @@ def main() -> int:
         exercise_type=args.exercise_type,
         test_target=test_path.relative_to(ROOT).as_posix(),
     )
-    (exercise_dir / README_FILENAME).write_text("\n".join(readme_lines) + "\n", encoding="utf-8")
+    (exercise_dir / README_FILENAME).write_text("\n".join(readme_lines) +
+                                                "\n", encoding="utf-8")
 
     exercise_metadata = _build_exercise_metadata(
         args,
@@ -417,82 +547,11 @@ def main() -> int:
     )
 
     relative_test_path = test_path.relative_to(ROOT).as_posix()
-    test_lines: list[str] = [
-        "from __future__ import annotations",
-        "",
-        "import pytest",
-        "",
-        "from exercise_runtime_support.exercise_framework import (",
-        "    resolve_exercise_notebook_path,",
-        "    runtime,",
-        ")",
-        "",
-        f"_EXERCISE_KEY = {exercise_key!r}",
-        "_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)",
-        "",
-        "",
-        "def _run_and_capture(tag: str) -> str:",
-        '    """Execute the tagged cell and capture its print output."""',
-        "    return runtime.run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag)",
-        "",
-        "",
-    ]
-
-    if args.parts == 1:
-        test_lines.extend(
-            [
-                "def test_exercise1_output() -> None:",
-                "    output = _run_and_capture('exercise1')",
-                "    # TODO: Add assertions to verify the output",
-                "    # Placeholder guard: ensure students replace the TODO",
-                "    assert output.strip(), 'Exercise should produce output'",
-                "    assert 'TODO' not in output, 'Replace the TODO placeholder with your solution'",
-                "    # Example: assert 'expected text' in output",
-                "",
-            ]
-        )
-    else:
-        exercise_tags = ", ".join(f"'exercise{i}'" for i in range(1, args.parts + 1))
-        test_lines.extend(
-            [
-                f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
-                "def test_exercise_cells_execute(tag: str) -> None:",
-                '    """Verify each tagged cell executes without error."""',
-                "    output = _run_and_capture(tag)",
-                "    # Placeholder guard: ensure students replace the TODO",
-                "    assert output.strip(), f'{tag} should produce output'",
-                "    assert 'TODO' not in output, f'Replace the TODO placeholder in {tag}'",
-                "",
-            ]
-        )
-
-    if args.exercise_type == "debug":
-        test_lines.extend(
-            [
-                "# Explanation cell checks for debug exercises",
-                "",
-            ]
-        )
-        if args.parts == 1:
-            test_lines.extend(
-                [
-                    "def test_explanation_has_content() -> None:",
-                    "    explanation = runtime.get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
-                    "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
-                    "",
-                ]
-            )
-        else:
-            test_lines.extend(
-                [
-                    f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {args.parts} + 1)]",
-                    "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
-                    "def test_explanations_have_content(tag: str) -> None:",
-                    "    explanation = runtime.get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
-                    "    assert len(explanation.strip()) > 10, 'Explanation must be more than 10 characters'",
-                    "",
-                ]
-            )
+    test_lines = _build_test_lines(
+        exercise_key,
+        parts=args.parts,
+        exercise_type=args.exercise_type,
+    )
 
     test_path.write_text("\n".join(test_lines), encoding="utf-8")
 
@@ -503,8 +562,10 @@ def main() -> int:
         exercise_key=exercise_key,
         test_target=relative_test_path,
     )
-    student_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
-    solution_notebook_path.write_text(json.dumps(notebook, indent=2), encoding="utf-8")
+    student_notebook_path.write_text(
+        json.dumps(notebook, indent=2), encoding="utf-8")
+    solution_notebook_path.write_text(
+        json.dumps(notebook, indent=2), encoding="utf-8")
 
     print(f"Created exercise: {exercise_key}")
     print(f"- {exercise_dir.relative_to(ROOT)}")

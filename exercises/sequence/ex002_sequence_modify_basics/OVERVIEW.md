@@ -1,6 +1,7 @@
 # Exercise ex002: Sequence Modification Basics - Overview
 
 ## Summary
+
 Created a 10-part **modification** exercise set for absolute beginners learning Python sequence (sequential execution).
 
 ## Key Features
@@ -16,12 +17,16 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
 
 ## Files Created
 
-- **Notebook**: [notebooks/student.ipynb](notebooks/student.ipynb)
+- **Student notebook in this exercise folder**: [notebooks/student.ipynb](notebooks/student.ipynb)
   - 10 exercises with tagged cells (`exercise1` through `exercise10`)
   - Clear instructions and expected output for each
   - Self-check cell for experimentation
 
-- **Tests**: [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py)
+- **Solution notebook in this exercise folder**: [notebooks/solution.ipynb](notebooks/solution.ipynb)
+  - Completed instructor version of all 10 exercises
+  - Mirrors the student notebook structure for review and modelling
+
+- **Tests in this exercise folder**: [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py)
   - 30 test cases total (3 per exercise)
   - Captures stdout to verify print output
   - Smoke tests verify all cells execute
@@ -32,6 +37,7 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
   - Properly placed in the canonical `exercises/sequence/ex002_sequence_modify_basics/` hierarchy
 
 ## Test Status
+
 ✅ All 10 exercise cells execute without errors
 ❌ 30/30 behavioral tests fail before students make the required modifications (expected for this starter state)
 
@@ -62,16 +68,17 @@ This is the correct behavior for modification exercises:
 - Students learn by changing working code, not writing from scratch
 
 ## Usage
+
 Students:
 
-1. Open `notebooks/student.ipynb`
+1. Open [notebooks/student.ipynb](notebooks/student.ipynb) in this exercise folder
 2. Read each exercise description
 3. Modify the code in tagged cells
 4. Run cells to see output
-5. Run `pytest tests/test_ex002_sequence_modify_basics.py` to verify
+5. From the repository root, run `uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` to verify
 
 Teachers:
 
-- Reference solutions in [notebooks/solution.ipynb](notebooks/solution.ipynb)
-- Tests are deterministic and fast (< 1s total)
+- Reference the solution notebook in this exercise folder: [notebooks/solution.ipynb](notebooks/solution.ipynb)
+- Exercise-local tests are deterministic and fast (< 1s total)
 - Can be used with GitHub Classroom autograding

@@ -46,7 +46,7 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
-The live repository still uses flattened notebook and test surfaces under `notebooks/`, `notebooks/solutions/`, and top-level `tests/` for current execution and export. Treat those as transitional or export-facing paths rather than the canonical authoring model.
+The canonical source-repository authoring model is now exercise-local: `exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb` with `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Flattened `notebooks/`, `notebooks/solutions/`, and top-level `tests/` paths are export or compatibility surfaces only when explicitly generated for packaged Classroom repositories.
 
 Run the helper directly during development:
 
@@ -56,18 +56,24 @@ Run the helper directly during development:
 
 ## Working on the Grading System
 
-### `tests/exercise_framework/`
+### `exercise_runtime_support.exercise_framework`
 
 The grading system now uses the exercise framework, which wraps the low-level notebook grader.
 
-Core helpers (via `tests/exercise_framework/runtime.py`):
+Import the canonical public helper surface from `exercise_runtime_support.exercise_framework`.
+The supported runtime and path helpers are re-exported from
+`exercise_runtime_support/exercise_framework/__init__.py`; treat compatibility wrappers as
+internal shims rather than the primary contributor-facing API.
 
-1. **`resolve_notebook_path()`**: Resolves notebook location using the active variant contract (`--variant` / `PYTUTOR_ACTIVE_VARIANT`)
-2. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
-3. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
-4. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
-5. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
-6. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
+Core helpers (via `exercise_runtime_support.exercise_framework`):
+
+1. **`resolve_exercise_notebook_path()`**: Resolves an exercise-local notebook from an `exercise_key`, respecting the active variant contract (`--variant` / `PYTUTOR_ACTIVE_VARIANT`)
+2. **`resolve_notebook_path()`**: Resolves an explicit notebook location using the same active variant contract
+3. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
+4. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
+5. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
+6. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
+7. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
 
 Shared expectations live in `tests/exercise_expectations/` and should be the single source of truth for
 expected outputs, prompts, and input data.
@@ -156,23 +162,19 @@ The generator scaffolds new exercises with consistent structure.
 
 ```bash
 # From the repository root
-uv run scripts/new_exercise.py ex999 "Test" --slug test_exercise
-
-# Place the scaffold in the canonical authoring tree if needed
-mv exercises/ex999_test_exercise exercises/sequence/ex999_test_exercise
+uv run scripts/new_exercise.py ex999 "Test" \
+    --construct sequence --type modify --slug test_exercise
 
 # Verify created files
-ls exercises/sequence/ex999_test_exercise/
-ls notebooks/ex999_test_exercise.ipynb
-ls notebooks/solutions/ex999_test_exercise.ipynb
-ls tests/test_ex999_test_exercise.py
+ls exercises/sequence/ex999_sequence_modify_test_exercise/
+ls exercises/sequence/ex999_sequence_modify_test_exercise/notebooks/
+ls exercises/sequence/ex999_sequence_modify_test_exercise/tests/
 
 # Run static verification (fast checks for structure and metadata)
-uv run scripts/verify_exercise_quality.py ex999_sequence_test_exercise
+uv run scripts/verify_exercise_quality.py ex999_sequence_modify_test_exercise
 
 # Remove the scaffolding when done experimenting
-rm -rf exercises/sequence/ex999_test_exercise notebooks/ex999_test_exercise.ipynb \
-    notebooks/solutions/ex999_test_exercise.ipynb tests/test_ex999_test_exercise.py
+rm -rf exercises/sequence/ex999_sequence_modify_test_exercise
 ```
 
 ### Extending the Generator
@@ -363,7 +365,7 @@ Check:
 Validate JSON:
 
 ```bash
-python -c "import json; json.load(open('notebooks/exNNN_slug.ipynb'))"
+python -c "import json; json.load(open('exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb'))"
 ```
 
 If invalid, fix manually or regenerate with the scaffolder.

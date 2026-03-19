@@ -481,33 +481,35 @@ Criteria: the script already encodes the target checks, the agent depends on its
 #### Progress Update
 
 - [x] Audit completed on `2026-03-18` against the live repository state.
-- [x] Core contributor docs have already been realigned substantially to the canonical authoring layout: [README.md](README.md), [docs/project-structure.md](docs/project-structure.md), [docs/setup.md](docs/setup.md), [docs/exercise-generation.md](docs/exercise-generation.md), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [docs/testing-framework.md](docs/testing-framework.md), [docs/exercise-testing.md](docs/exercise-testing.md), [docs/autograding-cli.md](docs/autograding-cli.md), [docs/development.md](docs/development.md), and [docs/github-classroom-autograding-guide.md](docs/github-classroom-autograding-guide.md) now mostly describe canonical exercise-local tests and the explicit `--variant` contract.
+- [x] Core contributor docs have been realigned to the canonical authoring layout: [README.md](README.md), [docs/project-structure.md](docs/project-structure.md), [docs/setup.md](docs/setup.md), [docs/exercise-generation.md](docs/exercise-generation.md), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [docs/testing-framework.md](docs/testing-framework.md), [docs/exercise-testing.md](docs/exercise-testing.md), [docs/autograding-cli.md](docs/autograding-cli.md), [docs/development.md](docs/development.md), and [docs/github-classroom-autograding-guide.md](docs/github-classroom-autograding-guide.md) now describe canonical exercise-local notebooks/tests and the explicit `--variant` contract without presenting legacy top-level authoring paths as current guidance.
 - [x] Repository and exported Classroom workflows already use explicit variant orchestration (`scripts/run_pytest_variant.py --variant solution` in repo workflows and `scripts/build_autograde_payload.py --variant student` in the Classroom workflow), so the workflow files themselves no longer depend on `PYTUTOR_NOTEBOOKS_DIR`.
-- [ ] Remaining Phase 12 doc/agent drift is concentrated in [AGENTS.md](AGENTS.md), [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md), and [.github/agents/exercise_verifier.md.agent.md](.github/agents/exercise_verifier.md.agent.md), which still describe `PYTUTOR_NOTEBOOKS_DIR`, flattened `notebooks/` execution surfaces, or transitional top-level `tests/test_exNNN_*.py` authoring patterns as if they were current contributor guidance.
-- [ ] Exercise-local teacher docs still need a cleanup pass: several exercise `README.md` and `OVERVIEW.md` files continue to point to top-level `tests/test_exNNN_*.py` paths or other pre-migration locations.
-- [ ] Repository workflow intent is still ambiguous because [.github/workflows/tests.yml](.github/workflows/tests.yml) and [.github/workflows/tests-solutions.yml](.github/workflows/tests-solutions.yml) currently run the same solution-mode command, so the repo-vs-export validation split is not yet clear in contributor-facing automation.
+- [x] Agent guidance has now been updated in place rather than via a replace-then-archive cutover: [AGENTS.md](AGENTS.md) and all four current files under [.github/agents](.github/agents) remain authoritative, include migration-status warning blocks, and describe the canonical exercise-local layout and explicit variant commands without presenting top-level `tests/test_exNNN_*.py` authoring as the current contributor contract.
+- [x] Sequence README cleanup batches 1 to 4 are complete as of `2026-03-19`: [exercises/sequence/ex002_sequence_modify_basics/README.md](exercises/sequence/ex002_sequence_modify_basics/README.md), [exercises/sequence/ex003_sequence_modify_variables/README.md](exercises/sequence/ex003_sequence_modify_variables/README.md), [exercises/sequence/ex004_sequence_debug_syntax/README.md](exercises/sequence/ex004_sequence_debug_syntax/README.md), [exercises/sequence/ex005_sequence_debug_logic/README.md](exercises/sequence/ex005_sequence_debug_logic/README.md), [exercises/sequence/ex006_sequence_modify_casting/README.md](exercises/sequence/ex006_sequence_modify_casting/README.md), and [exercises/sequence/ex007_sequence_debug_casting/README.md](exercises/sequence/ex007_sequence_debug_casting/README.md) now either label notebook/test paths as exercise-folder-local or use canonical repo-root `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` guidance.
+- [x] Repository workflow intent is now explicit: [.github/workflows/tests.yml](.github/workflows/tests.yml) validates source-repository collection plus solution-variant tests, [.github/workflows/tests-solutions.yml](.github/workflows/tests-solutions.yml) is a maintainer-targeted solution rerun entry point, and [template_repo_files/.github/workflows/classroom.yml](template_repo_files/.github/workflows/classroom.yml) remains the metadata-free student-export workflow.
+- [x] Final Phase 12 teacher-doc cleanup landed on `2026-03-19`: [exercises/sequence/ex002_sequence_modify_basics/OVERVIEW.md](exercises/sequence/ex002_sequence_modify_basics/OVERVIEW.md) now labels notebook, solution, and test references as exercise-folder-local where appropriate and replaces the legacy local pytest example with the canonical repo-root `uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` command.
+- [x] Phase 12 make-task contract guidance was corrected on `2026-03-19`: [scripts/new_exercise.py](scripts/new_exercise.py), [tests/test_new_exercise.py](tests/test_new_exercise.py), [docs/exercise-types/make.md](docs/exercise-types/make.md), [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md), [AGENTS.md](AGENTS.md), and [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md) now treat `--type make` as the same output-oriented tagged-cell scaffold and exercise-local test pattern used by other non-debug exercises, rather than as a special `solve()` or `exec_tagged_code` contract.
 
 #### Constraints And Acceptance Criteria
 
-- [ ] Do not leave any maintained docs or agent guidance describing the legacy split layout as the canonical authoring model once the corresponding code path has migrated.
-- [ ] Do not rename current `.github/agents` files to `.old` until replacement agent instructions exist and all references have been updated.
-- [ ] During migration, keep the current agent files authoritative and mark them clearly as transitional where needed.
-- [ ] The phase is only complete once core contributor docs, classroom/export docs, workflows, and agent instructions all point at the same canonical structure and resolver contract.
-- [ ] The phase is not complete while repository workflows still present an unclear or duplicated solution-mode contract.
+- [x] Do not leave any maintained docs or agent guidance describing the legacy split layout as the canonical authoring model once the corresponding code path has migrated.
+- [x] Phase 12 uses an update-in-place agent-doc cutover: keep the current `.github/agents` files authoritative, do not rename them to `.old`, and do not stage a replace-then-archive pass for this phase.
+- [x] During migration, keep the current agent files authoritative and mark them clearly as transitional where needed.
+- [x] The phase is only complete once core contributor docs, classroom/export docs, workflows, and agent instructions all point at the same canonical structure and resolver contract.
+- [x] Repository workflow intent is explicit enough for contributor guidance: source-repository CI, maintainer reruns, and exported Classroom validation are now separate documented surfaces.
 
 - [x] Update [README.md](README.md) to describe the new canonical structure.
 - [x] Update [docs/project-structure.md](docs/project-structure.md) and [docs/setup.md](docs/setup.md).
 - [x] Update exercise generation and verification guidance in [docs/exercise-generation.md](docs/exercise-generation.md) and [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md).
-- [ ] Update [AGENTS.md](AGENTS.md) and the files under [.github/agents](.github/agents) so custom agents follow the new layout.
-- [ ] Update contributor-facing commands and examples to use the final explicit `--variant <student|solution>` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`.
-- [ ] Add short migration warning blocks to the current agent files so contributors know the repository is mid-migration and should consult [ACTION_PLAN.md](ACTION_PLAN.md) for the target structure.
-- [ ] Decide the cutover sequence for agent docs: update in place versus replace-then-archive.
-- [ ] Update all four current agent files explicitly: [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md), [.github/agents/exercise_verifier.md.agent.md](.github/agents/exercise_verifier.md.agent.md), [.github/agents/implementer.md.agent.md](.github/agents/implementer.md.agent.md), and [.github/agents/tidy_code_review.md.agent.md](.github/agents/tidy_code_review.md.agent.md).
-- [ ] Only archive superseded agent files with a suffix such as `.old` after the replacement files are complete, references have been switched, and the new guidance is confirmed to be authoritative.
-- [ ] Update repository workflows and any template workflow sources documented in the repo so CI instructions no longer teach or depend on the legacy layout contract.
-- [ ] Rationalise the current repository workflow split so repo workflows validate the authoring repository contract, while the exported Classroom workflow validates the metadata-free student export contract.
+- [x] Update [AGENTS.md](AGENTS.md) and the files under [.github/agents](.github/agents) so custom agents follow the new layout.
+- [x] Update contributor-facing commands and examples to use the final explicit `--variant <student|solution>` CLI flag rather than `PYTUTOR_NOTEBOOKS_DIR`.
+- [x] Add short migration warning blocks to the current agent files so contributors know the repository is mid-migration and should consult [ACTION_PLAN.md](ACTION_PLAN.md) for the target structure.
+- [x] Decide the cutover sequence for agent docs: update in place rather than replace-then-archive.
+- [x] Update all four current agent files explicitly: [.github/agents/exercise_generation.md.agent.md](.github/agents/exercise_generation.md.agent.md), [.github/agents/exercise_verifier.md.agent.md](.github/agents/exercise_verifier.md.agent.md), [.github/agents/implementer.md.agent.md](.github/agents/implementer.md.agent.md), and [.github/agents/tidy_code_review.md.agent.md](.github/agents/tidy_code_review.md.agent.md).
+- [x] Keep the current agent files live and updated in place; do not introduce a separate archive track for Phase 12.
+- [x] Update repository workflows and the documented template workflow source so CI instructions no longer teach or depend on the legacy layout contract.
+- [x] Rationalise the current repository workflow split so repo workflows validate the authoring repository contract, while the exported Classroom workflow validates the metadata-free student export contract.
 - [x] Update docs that describe the testing and autograding contract, especially: [docs/testing-framework.md](docs/testing-framework.md), [docs/exercise-testing.md](docs/exercise-testing.md), [docs/autograding-cli.md](docs/autograding-cli.md), [docs/development.md](docs/development.md), and [docs/github-classroom-autograding-guide.md](docs/github-classroom-autograding-guide.md).
-- [ ] Update examples in teacher docs that currently refer to top-level `notebooks/` and `tests/` paths.
+- [x] Update the remaining examples in teacher docs that still refer to top-level `notebooks/` and `tests/` paths.
 
 ### Phase 13: Validation, Cutover, And Cleanup
 
@@ -517,8 +519,8 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] The top-level `notebooks/` tree is already gone from the source repository, and no top-level `tests/test_exNNN_*.py` files remain; canonical `exNNN` exercise tests now live under `exercises/<construct>/<exercise_key>/tests/`.
 - [x] An explicit collection audit now exists for the current layout: `uv run pytest --collect-only -q` completes successfully, which demonstrates that the canonical exercise-local tests are discoverable without duplicate-collection conflicts.
 - [x] Workflow definitions already pass the explicit `--variant` flag instead of depending on `PYTUTOR_NOTEBOOKS_DIR`.
-- [ ] Solution-mode validation is still blocking final cutover: `uv run python scripts/run_pytest_variant.py --variant solution -q` currently fails in [exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py](exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py), so the migrated repository is not yet stable enough for final cleanup.
-- [ ] Because the solution-mode suite is red, Phase 13 still lacks the required proof for student-mode validation, packaged-template smoke validation, and final legacy-support removal.
+- [x] Focused solution-mode validation no longer blocks the pilot cutover proof: `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py -q` now passes for the migrated ex004 pilot.
+- [ ] Broader validation still lacks the required proof for student-mode validation, full solution-mode coverage, packaged-template smoke validation, and final legacy-support removal.
 
 #### Constraints And Acceptance Criteria
 
@@ -567,7 +569,7 @@ Use this section to track which detailed migration checklist documents have been
 - [x] Phase 3 checklist: Metadata Consolidation And Registry Replacement
 - [x] Phase 4 checklist: Execution Model And Source-To-Export Contract
 - [x] Phase 5 checklist: Docs And Agent Guidance Alignment
-- [ ] Phase 12 checklist: Docs, Agents, Workflows, And Contributor Guidance
+- [x] Phase 12 checklist: Docs, Agents, Workflows, And Contributor Guidance
 - [ ] Phase 13 checklist: Validation, Cutover, And Cleanup
 
 These can be written first because they define the migration model, inventory, the early docs-and-agent alignment needed before test relocation, and end-state validation expectations.

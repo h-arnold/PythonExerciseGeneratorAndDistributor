@@ -11,9 +11,9 @@
 
 ## Files
 
-- **Notebook path**: `notebooks/student.ipynb`
-- **Solution path**: `notebooks/solution.ipynb`
-- **Tests path**: `tests/test_ex005_sequence_debug_logic.py`
+- **Notebook path inside this exercise folder**: `notebooks/student.ipynb`
+- **Solution path inside this exercise folder**: `notebooks/solution.ipynb`
+- **Tests path inside this exercise folder**: `tests/test_ex005_sequence_debug_logic.py`
 
 ## Structure
 
@@ -24,7 +24,7 @@ This is a 10-part debugging exercise focusing on **logical errors** (not syntax 
 
 ## Common Bugs Covered
 
-1. Wrong arithmetic operator (+ instead of *, / instead of *, etc.)
+1. Wrong arithmetic operator (`+` instead of `*`, `/` instead of `*`, etc.)
 2. Using the wrong variable
 3. Missing spaces in string concatenation
 4. Forgetting to convert `input()` from string to int
@@ -35,14 +35,14 @@ This is a 10-part debugging exercise focusing on **logical errors** (not syntax 
 ## Student Instructions
 
 Students should:
+
 1. Read the expected output
 2. Run the buggy code to see what actually happens
 3. Identify what's wrong
 4. Fix the code
 5. Write a brief explanation of the bug
-6. Run tests to verify the fix
+6. From the repository root, run `uv run pytest -q exercises/sequence/ex005_sequence_debug_logic/tests/test_ex005_sequence_debug_logic.py` to verify the fix
 
 ## Teaching Notes
 
 See `OVERVIEW.md` in this directory for detailed pedagogical guidance.
-

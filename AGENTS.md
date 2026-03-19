@@ -151,7 +151,7 @@ def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
 - **Format**: Standard `.ipynb` JSON
 - **Cell metadata**: Generated notebooks include `metadata.language` ("python" or "markdown")
 - **Tags**: Exact match required (e.g., `exercise1`, not `Exercise1` or `exercise_1`)
-- **Function names**: Prefer `solve()` for consistency
+- **Tagged cells**: Use `exercise1`, `exercise2`, ... tags and align tests with the actual cell behaviour; there is no repository-wide `solve()` contract.
 
 ## Common Commands
 
@@ -191,6 +191,9 @@ The grading system (`tests/notebook_grader.py`) provides:
 
 - `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
 - `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace.
+- `run_cell_and_capture_output(notebook_path, *, tag="student")` - Execute a tagged code cell and capture stdout; this is the primary helper for non-debug exercise behaviour checks.
+- `run_cell_with_input(notebook_path, *, tag="student", inputs=[...])` - Execute a tagged code cell while supplying deterministic `input()` values.
+- `get_explanation_cell(notebook_path, *, tag="explanation1")` - Read explanation or reflection markdown cells for debug-style checks.
 
 When developing or validating repository-side exercises, run the canonical exercise-local tests directly with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`, or use `uv run ./scripts/verify_solutions.sh -q` for a broader solution pass.
 

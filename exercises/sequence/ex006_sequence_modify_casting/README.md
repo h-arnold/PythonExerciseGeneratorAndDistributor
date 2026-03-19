@@ -10,13 +10,13 @@
 
 ## Files
 
-- **Notebook path**: `notebooks/student.ipynb`
-- **Solution path**: `notebooks/solution.ipynb`
-- **Tests path**: `tests/test_ex006_sequence_modify_casting.py`
+- **Notebook path inside this exercise folder**: `notebooks/student.ipynb`
+- **Solution path inside this exercise folder**: `notebooks/solution.ipynb`
+- **Tests path inside this exercise folder**: `tests/test_ex006_sequence_modify_casting.py`
 
 ## Usage Summary
 
-Students open the notebook, update the tagged `exerciseN` cells with the required casts, and run the tests until each conversion and output check passes.
+Students open `notebooks/student.ipynb` in this exercise folder, update the tagged `exerciseN` cells with the required casts, and from the repository root run `uv run pytest -q exercises/sequence/ex006_sequence_modify_casting/tests/test_ex006_sequence_modify_casting.py` until each conversion and output check passes.
 
 ## Teaching Notes
 

@@ -158,9 +158,9 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 - **Add context**: Explain the goal and provide 1-2 examples
 - **Update exercise cells**:
   - Keep the cell tagged correctly (`exercise1`, `exercise2`, etc.)
-  - Provide a clear function signature (typically `solve()`), or a clear prompt for output-based tasks
-  - Add docstrings (after Functions construct is taught)
-  - Replace placeholder prints with the intended starter code (`return "TODO"`, `raise NotImplementedError()`, or a buggy snippet for debug tasks)
+  - Provide a clear prompt, expected output, and starter code that match the construct being taught. Only require a named function when the exercise itself is about functions.
+  - Add docstrings only when the exercise deliberately teaches functions and students have reached that construct.
+  - Replace the placeholder print with the intended starter code or buggy snippet for debug tasks.
 - **Keep it focused**: Each exercise cell should target a single learning objective
 
 **Notebook structure**:
@@ -178,47 +178,26 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 
 Author the canonical repository-side test in `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
 
-Replace the placeholder test with real assertions. Two common patterns:
+Replace the placeholder test with real assertions. The default pattern matches the scaffold:
 
 ```python
-# Option 1: assert on printed output (matches the scaffold)
 from exercise_runtime_support.exercise_framework import (
+  RuntimeCache,
   resolve_exercise_notebook_path,
-  runtime,
+  run_cell_and_capture_output,
 )
 
 _EXERCISE_KEY = "ex042_sequence_modify_variables_and_types"
 _NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
+_CACHE = RuntimeCache()
 
 
 def test_exercise1_greets_user() -> None:
-  output = runtime.run_cell_and_capture_output(_NOTEBOOK_PATH, tag="exercise1")
-    assert "Hello" in output
-    assert "TODO" not in output
+  output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag="exercise1", cache=_CACHE)
+  assert output.strip() == "Hello"
 ```
 
-```python
-# Option 2: execute the cell and inspect objects
-from exercise_runtime_support.exercise_framework import (
-  resolve_exercise_notebook_path,
-  runtime,
-)
-
-_EXERCISE_KEY = "ex042_sequence_modify_variables_and_types"
-_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
-
-
-def test_solve_returns_correct_value() -> None:
-  ns = runtime.exec_tagged_code(_NOTEBOOK_PATH, tag="exercise1")
-    assert "solve" in ns, "'solve' function not found in notebook"
-    assert ns["solve"](5) == 10
-
-
-def test_solve_handles_edge_case() -> None:
-  ns = runtime.exec_tagged_code(_NOTEBOOK_PATH, tag="exercise1")
-    assert "solve" in ns, "'solve' function not found in notebook"
-    assert ns["solve"](0) == 0
-```
+If an authored exercise deliberately defines Python objects instead of printing output, you can use `exec_tagged_code(...)` in a targeted test. That is an exercise-specific choice rather than the default make or multi-part scaffolding contract.
 
 **Test requirements**:
 
@@ -230,7 +209,7 @@ def test_solve_handles_edge_case() -> None:
 - Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
 - For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
 
-**Note on scaffolding**: generated placeholder tests import `runtime` from `exercise_runtime_support.exercise_framework`. Keep this contract when editing or extending canonical exercise-local tests and any flattened compatibility tests so local development, CI, and packaged classroom repositories stay aligned.
+**Note on scaffolding**: generated placeholder tests import direct helpers from `exercise_runtime_support.exercise_framework`. Keep that contract when editing or extending canonical exercise-local tests and any flattened compatibility tests so local development, CI, and packaged classroom repositories stay aligned.
 
 ### 3. Fill in the Solution Notebook
 
@@ -363,16 +342,15 @@ Students write code from scratch.
 **Key points**:
 
 - Typically 3-5 exercises per notebook (more challenging)
-- Provide a clear function signature and docstring
-- Give 1-2 example inputs/outputs
-- Use consistent function names (`solve()` is conventional)
+- Provide clear task text and expected output examples
+- Use the same tagged-cell scaffold as other non-debug exercises
+- Only require a named function when the exercise content genuinely teaches functions
 
 **Notebook structure**:
 
-1. Explain the problem
-2. Show example inputs/outputs
-3. Student implements in tagged cell (with skeleton)
-4. Tests verify correctness
+1. Explain the problem and show expected output or worked examples
+2. Student writes the solution in a tagged cell
+3. Tests capture output or provide deterministic input
 
 ## Multi-Part Notebooks (10 exercises)
 
@@ -380,40 +358,43 @@ When creating a notebook with `--parts 10`:
 
 ### Consistent Structure
 
-- Use the same function name across parts (typically `solve()`)
 - Each part in its own tagged cell: `exercise1`, `exercise2`, ..., `exercise10`
+- For non-debug multi-part notebooks, place a short markdown prompt before each tagged cell
 - Progressive difficulty: exercises 1-3 trivial, 4-7 moderate, 8-10 challenging
+- Only standardise on a function name if a specific later-construct notebook explicitly teaches functions
 
 ### Testing Pattern
 
 ```python
 import pytest
-from exercise_runtime_support.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import (
+  RuntimeCache,
+  resolve_exercise_notebook_path,
+  run_cell_and_capture_output,
+)
 
+_EXERCISE_KEY = "ex043_sequence_modify_week1"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
+_CACHE = RuntimeCache()
 TAGS = [f"exercise{i}" for i in range(1, 11)]
 
 @pytest.mark.parametrize("tag", TAGS)
-def test_exercise_exists(tag):
-    ns = runtime.exec_tagged_code(
-        "exercises/sequence/ex043_sequence_modify_week1/notebooks/student.ipynb",
-        tag=tag,
-    )
-    assert "solve" in ns, f"Missing solve() in {tag}"
+def test_exercise_cells_execute(tag):
+  output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)
+  assert output.strip()
+  assert "TODO" not in output
 
 @pytest.mark.parametrize(
-    "tag,input_val,expected",
+  ("tag", "expected"),
     [
-        ("exercise1", 1, 2),
-        ("exercise2", 5, 10),
+    ("exercise1", "2"),
+    ("exercise2", "10"),
         # ... more cases
     ],
 )
-def test_exercise_behaviour(tag, input_val, expected):
-    ns = runtime.exec_tagged_code(
-        "exercises/sequence/ex043_sequence_modify_week1/notebooks/student.ipynb",
-        tag=tag,
-    )
-    assert ns["solve"](input_val) == expected
+def test_exercise_behaviour(tag, expected):
+  output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)
+  assert output.strip() == expected
 ```
 
 ## Canonical vs Transitional Paths
@@ -428,8 +409,8 @@ When documenting or authoring new exercises, prefer the canonical exercise-local
 ## Best Practices
 
 1. **Naming**: Use descriptive slugs that indicate the topic
-2. **Function names**: Prefer `solve()` for consistency
-3. **Docstrings**: Include after Functions construct is taught
+2. **Tagged cells**: Keep each tagged cell self-contained and aligned with its test expectations
+3. **Docstrings**: Include only when the exercise deliberately teaches functions and that construct has been taught
 4. **No network**: Avoid external dependencies or API calls
 5. **Fast tests**: Keep test execution under 1s per test
 6. **Isolation**: Each exercise cell should be self-contained

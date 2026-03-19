@@ -40,15 +40,25 @@ def test_execution_model_docs_include_consumer_matrix_rows() -> None:
         assert entry.target_entry_point in doc_text
 
 
-def test_new_exercise_scaffolder_emits_canonical_runtime_imports() -> None:
-    """The scaffolder must emit runtime imports from exercise_runtime_support."""
+def test_new_exercise_scaffolder_emits_canonical_runtime_and_explanation_helpers() -> None:
+    """The scaffolder must emit direct framework helpers and helper-based explanation checks."""
     source = Path("scripts/new_exercise.py").read_text(encoding="utf-8")
     assert "from exercise_runtime_support.exercise_framework import (" in source
+    assert "    RuntimeCache," in source
+    assert "    get_explanation_cell," in source
     assert "    resolve_exercise_notebook_path," in source
-    assert "    runtime," in source
+    assert "    run_cell_and_capture_output," in source
     assert "_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)" in source
-    assert "runtime.run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag)" in source
-    assert "runtime.get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')" in source
+    assert "_CACHE = RuntimeCache()" in source
+    assert "run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)" in source
+    assert "get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')" in source
+    assert "from exercise_runtime_support.exercise_framework.expectations_helpers import (" in source
+    assert "    is_valid_explanation," in source
+    assert "_MIN_EXPLANATION_LENGTH = 50" in source
+    assert "placeholder_phrases=_PLACEHOLDER_PHRASES" in source
+    assert "runtime.run_cell_and_capture_output" not in source
+    assert "runtime.get_explanation_cell" not in source
+    assert "len(explanation.strip()) > 10" not in source
     assert 'NOTEBOOK_PATH = "exercises/' not in source
     assert "from tests.notebook_grader import run_cell_and_capture_output" not in source
     assert "from tests.notebook_grader import get_explanation_cell" not in source

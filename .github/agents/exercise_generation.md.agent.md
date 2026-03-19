@@ -72,9 +72,9 @@ To achieve the best possible understanding, students are given exercises that fo
 #### Notes on crafting exercises for all problem types.
 - The graded cell must include the tag `exercise1` (or `exercise2`, etc.) in `metadata.tags`.
 - Each cell object includes `metadata.language` set to `python` or `markdown` to match our validator.
-- Student code should expose a small, pure function.
-- Before the Functions construct is taught, avoid requiring docstrings; after Functions, include clear docstrings with examples.
-- Tests should use exercise framework helpers with the canonical `exercise_key` and explicit variant selection, for example `exercise_runtime_support.exercise_framework.exec_tagged_code("<exercise_key>", tag="exercise1", variant="solution")`.
+- Student code in each tagged cell should be small, self-contained, and aligned with the construct being taught. Do not assume a repository-wide `solve()` contract.
+- Before the Functions construct is taught, avoid requiring docstrings or named helper functions; after Functions, include them only when the task genuinely teaches functions.
+- Tests should use exercise framework helpers with the canonical `exercise_key`, resolving the notebook path first and then using helpers such as `run_cell_and_capture_output(...)` or `run_cell_with_input(...)` for the tagged cell behaviour under test.
 - **Namespace isolation**: By default, each tagged cell is executed in isolation. If an exercise explicitly builds on previous exercises (e.g., exercise2 extends exercise1), state this clearly in the notebook instructions and design tests accordingly.
 
 ## Creating exercises - the process
@@ -166,14 +166,14 @@ Once you have completed the student notebook, you can then complete the solution
 
 Graded cell rules:
 - Must be tagged with `exercise1`, `exercise2`, etc. (exact match in `metadata.tags`)
-- Should define a small, focused function (typically `solve()` for consistency)
-- Include docstrings **only after the Functions construct is taught**; before that, keep code simple
+- Should contain a small, focused tagged solution cell. Only require a named function when the lesson explicitly teaches functions.
+- Include docstrings **only after the Functions construct is taught**, and only for exercises that deliberately require function definitions.
 - Keep the cell small (10–20 lines) and focused on a single learning objective
 
 Additional guidance:
 - Make each graded cell small (10–20 lines) and focused on a single learning objective.
-- Before the Functions construct is taught, omit docstrings; after Functions, include a docstring on the target function describing parameters, return values, and an example.
-- Keep the cell's variable and function names consistent with the test expectations (the scaffold expects `solve()` unless you update the tests).
+- Before the Functions construct is taught, omit docstrings and keep the code simple. After Functions, add docstrings only when the exercise content deliberately teaches named functions.
+- Keep the cell's names, prompts, and outputs consistent with the test expectations; the scaffolder does not impose a repository-wide function name.
 - Ensure you always use meaningful variable names e.g. 
   - ✅ `temp_celsius`
   - ❌ `c`
@@ -202,10 +202,10 @@ Only once the verifier is happy should you start writing/refining the pytest tes
 Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testing philosophy and patterns. Key points:
 
 - **Philosophy**: "Task Completion" model verifies (1) code runs without errors, (2) produces correct output (strict by default), (3) uses required constructs.
-- **Strict output matching**: Enforce exact casing, whitespace, and punctuation unless there's a strong pedagogical reason not to (e.g., "Make" tasks may be looser).
+- **Strict output matching**: Enforce exact casing, whitespace, and punctuation unless there's a strong pedagogical reason not to.
 - **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
 - **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
-- **Input simulation**: Use `runtime.run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` to mock `input()` calls.
+- **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` from `exercise_runtime_support.exercise_framework` to mock `input()` calls.
 - **Expectations data**: Store expected outputs, prompts, and inputs in `tests/exercise_expectations/` and import them into tests.
 
 7) Verify
@@ -282,6 +282,6 @@ Rules:
 - **Always use your `manage_todo_list` tool** to plan and track your progress through a task.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions -> File Handling -> Exception Handling -> Libraries -> OOP.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
-- **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.
+- **Convention**: Standardise on tagged cells plus output-oriented tests for non-debug exercises; only introduce named functions when the lesson actually teaches them. No docstrings until the Functions construct is reached.
 - **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass using the verifier subagent.
 - **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).
