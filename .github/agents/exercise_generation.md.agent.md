@@ -1,26 +1,32 @@
 ---
 name: Exercise Generation
-description: Generate notebook-first Python exercises (tagged cells + pytest grading)
+description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
 tools: [vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
 
+> **Migration status**
+> This repository is mid-migration. This agent file remains authoritative for current exercise-authoring workflow, but the target layout is still being completed. Consult `ACTION_PLAN.md` for the target structure and remaining cutover work.
+
 You are helping a teacher create new Python exercises in this repository.
 
 ## Core idea (how grading works)
 
-This repo supports two parallel notebook sets:
+This repo authors exercises inside canonical exercise homes under `exercises/<construct>/<exercise_key>/`:
 
-- Student notebooks live in `notebooks/` and contain unfinished work.
-- Solution mirrors live in `notebooks/solutions/` and are duplicates of the student notebooks with the tagged exercise cells filled in.
+- `notebooks/student.ipynb` contains the student-facing notebook.
+- `notebooks/solution.ipynb` contains the instructor solution mirror.
+- `tests/test_<exercise_key>.py` contains the canonical exercise-local pytest checks.
 
-The same pytest tests can be run against either set:
+Flattened notebook or test surfaces may still appear in export/runtime flows during migration, but they are not the source-repo authoring layout.
 
-- Default (student notebooks): `uv run pytest -q`
-- Solution verification: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`
+The same canonical exercise-local test file can be run against either notebook variant:
 
-This is used to quickly confirm the tests are correct (they pass on the known-good solution notebooks) and that the student notebooks still fail until students make changes.
+- Default (student variant): `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
+- Solution verification: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`
+
+This is used to quickly confirm the tests are correct (they pass on the known-good solution notebook) and that the student notebook still fails until students make changes.
 
 ## Pedagogical Approach
 
@@ -68,7 +74,7 @@ To achieve the best possible understanding, students are given exercises that fo
 - Each cell object includes `metadata.language` set to `python` or `markdown` to match our validator.
 - Student code should expose a small, pure function.
 - Before the Functions construct is taught, avoid requiring docstrings; after Functions, include clear docstrings with examples.
-- Tests should use `tests.exercise_framework.runtime.exec_tagged_code("notebooks/exNNN_slug.ipynb", tag="exercise1")` to extract and run the tagged cell.
+- Tests should use exercise framework helpers with the canonical `exercise_key` and explicit variant selection, for example `exercise_runtime_support.exercise_framework.exec_tagged_code("<exercise_key>", tag="exercise1", variant="solution")`.
 - **Namespace isolation**: By default, each tagged cell is executed in isolation. If an exercise explicitly builds on previous exercises (e.g., exercise2 extends exercise1), state this clearly in the notebook instructions and design tests accordingly.
 
 ## Creating exercises - the process
@@ -91,8 +97,8 @@ If the required guide is missing or cannot be read, the agent must stop and ask 
 4. Author the student notebook (intro, worked examples, one graded cell per part). **Create the exercises one a time**.
 5. Run the **Exercise Verifier** (before writing tests) to check structure and sequencing.
 6. Write and refine pytest tests following the testing guide.
-7. Verify tests locally and confirm they pass on `notebooks/solutions` while student notebooks still fail.
-8. Run the **Exercise Verifier** again (after tests) and update `exercises/CONSTRUCT/OrderOfTeaching.md`.
+7. Verify tests locally and confirm they pass on the explicit `solution` variant while student notebooks still fail.
+8. Run the **Exercise Verifier** again (after tests) and update `exercises/<construct>/OrderOfTeaching.md`.
 
 ## When asked to create an exercise
 
@@ -107,14 +113,14 @@ Refer to these key docs:
 [Exercise Generation CLI](../../docs/exercise-generation-cli.md)
 [Exercise Generation](../../docs/exercise-generation.md)
 
-This creates the current execution surfaces and the canonical authoring metadata files:
+This scaffolds the canonical source-repo files:
   - `exercises/<construct>/<exercise_key>/exercise.json` (canonical exercise metadata, including exercise type)
   - `exercises/<construct>/<exercise_key>/README.md`
-  - `notebooks/exNNN_slug.ipynb`
-  - `notebooks/solutions/exNNN_slug.ipynb` (solution mirror; initially identical)
-  - `tests/test_exNNN_slug.py` (transitional flattened execution/export surface)
+  - `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
+  - `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb` (solution mirror; initially identical)
+  - `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
 
-Exercise-specific repository tests are canonical under `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Create or move the test logic there during authoring; do not treat the top-level `tests/test_exNNN_slug.py` file as the source-repo authoring layout.
+If flattened notebook or test surfaces are materialised elsewhere for export/runtime compatibility, treat them as derived artifacts rather than authored outputs.
 
 ### Required repository files for each exercise
 
@@ -129,7 +135,7 @@ In addition to the notebook and tests, each exercise should include a small set 
   - **Notebook path** and **tests path** (relative links)
 - `exercises/<construct>/<exercise_key>/README.md` (generated by the scaffold): a concise exercise overview for maintainers and teachers. Include the title, learning objective, notebook path, tests path, and a brief summary of how the exercise is intended to be used.
 - `exercises/<construct>/<exercise_key>/OVERVIEW.md` (hand-authored): a short pedagogical overview for teachers. Include prerequisites, expected student misconceptions, suggested worked examples, and teaching notes (how many hints, how to demo the solution). This complements the student-facing notebook by explaining why the exercise exists and how to teach it.
-- `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` (canonical repository-side test file): author and maintain exercise-specific test logic here. If a flattened `tests/test_exNNN_slug.py` file also exists for current execution/export compatibility, treat it as transitional only.
+- `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` (canonical repository-side test file): author and maintain exercise-specific test logic here. If a flattened compatibility test also exists elsewhere during migration or export, treat it as transitional only.
 
 Why these files matter:
 - `OrderOfTeaching.md` lets teachers see the recommended progression for a construct at a glance.
@@ -145,7 +151,7 @@ Do not introduce `type` as a canonical path segment under `exercises/`. Store ex
 
 Legacy repositories or migration notes may still mention construct/type folders as current-state context, but they are not the target model for new authoring work.
 
-Note: The generator provides a minimal starting notebook and a transitional flattened test surface. You should edit the notebook to add prompt text, examples, and the code cell(s) tagged `exercise1`, `exercise2`, etc. where learners will write their solution(s) while keeping the canonical repository-side test source under `exercises/<construct>/<exercise_key>/tests/`.
+Note: The generator provides minimal canonical student/solution notebooks and an exercise-local test surface. You should edit the notebook to add prompt text, examples, and the code cell(s) tagged `exercise1`, `exercise2`, etc. where learners will write their solution(s) while keeping the canonical repository-side test source under `exercises/<construct>/<exercise_key>/tests/`.
 
 4) Author the notebook
 - Keep a clear structure:
@@ -156,7 +162,7 @@ Note: The generator provides a minimal starting notebook and a transitional flat
 
 **IMPORTANT**: YOU MUST create the exercises **one at a time** in the student notebook. After each exercise, check the one before to ensure that there is the appropriate, very gradual progression and that the next exercise is harder than the last.
 
-Once you have completed the student notebook, you can then create the solutions notebook
+Once you have completed the student notebook, you can then complete the solution notebook
 
 Graded cell rules:
 - Must be tagged with `exercise1`, `exercise2`, etc. (exact match in `metadata.tags`)
@@ -203,18 +209,18 @@ Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testi
 - **Expectations data**: Store expected outputs, prompts, and inputs in `tests/exercise_expectations/` and import them into tests.
 
 7) Verify
-- Run `uv run pytest -q` locally.
+- Run `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` locally.
 
 Also verify the tests pass against the solution mirror:
 
-- Either: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`
-- Or (recommended): `scripts/verify_solutions.sh -q`
+- Either: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`
+- Or (recommended for broader sweeps): `uv run ./scripts/verify_solutions.sh -q`
 
 If tests fail locally, update only the tests or notebook relevant to the exercise — do not modify unrelated exercises or global test configuration.
 
 8) ### Quality gate (run the verifier — AFTER tests)
 After tests pass on the solution notebooks, user your runSubAgent tool run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
-- `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q` (or the relevant single test file)
+- `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q` (or `uv run ./scripts/verify_solutions.sh -q` for a broader sweep)
 - confirm student notebooks still *fail* until students do the work
 
 ### Required final step: update teaching order
@@ -224,7 +230,7 @@ Once the exercise is complete (notebook authored, tests written, and solution ve
 
 Add the new exercise in the appropriate place in the sequence and include:
 - a link to the supporting docs folder under `exercises/<construct>/<exercise_key>/`
-- a link to the canonical student notebook under `notebooks/exNNN_slug.ipynb`
+- a link to the canonical student notebook under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 
 This is required for maintainability; the verifier will check that the new exercise is listed.
 
@@ -274,7 +280,7 @@ Rules:
 
 - **Always read the necessary instructions**: Always open and read (`read_file` tool) the entire set of instructions for a given coding exercise type.
 - **Always use your `manage_todo_list` tool** to plan and track your progress through a task.
-- **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions.
+- **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions -> File Handling -> Exception Handling -> Libraries -> OOP.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
 - **Convention**: Standardise on `solve()`. No docstrings until the Functions construct is reached.
 - **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass using the verifier subagent.

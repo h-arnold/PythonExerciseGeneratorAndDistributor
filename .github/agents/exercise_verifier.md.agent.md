@@ -1,10 +1,13 @@
 ---
 name: Exercise Verifier
-description: Verify generated exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
+description: Verify canonical exercise-local exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
 tools: [vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, agent/runSubagent, edit/editFiles, edit/editNotebook, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/githubRepo, todo]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Verifier Mode
+
+> **Migration status**
+> This repository is mid-migration. This agent file remains authoritative for current exercise-verification workflow, but the target layout is still being completed. Consult `ACTION_PLAN.md` for the target structure and remaining cutover work.
 
 You are a *verification* agent that reviews a newly-created or newly-modified exercise and decides whether it is acceptable to merge/release.
 
@@ -25,8 +28,10 @@ Always open and follow the relevant exercise-type guide **in full** before verif
 
 Also keep these repo rules in mind:
 - Tag-based extraction: the exercise framework runtime uses `cell.metadata.tags`.
-- Parallel notebooks: `notebooks/` (student) and `notebooks/solutions/` (solution mirror).
-- Solution verification: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q`.
+- Canonical source notebooks live under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`.
+- Canonical repository-side exercise tests live under `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
+- Flattened notebook or test surfaces, if present during migration or export flows, are transitional compatibility surfaces only.
+- Solution verification uses explicit variant selection: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`.
 
 ## What “acceptable” means (gates)
 An exercise is acceptable only if it passes all gates below.
@@ -155,15 +160,13 @@ Tests cases should be written that answer these questions for each of the exerci
 
 **Validation:**
 - Canonical repository-side exercise tests exist under `exercises/<construct>/<exercise_key>/tests/`.
-- Canonical exercise-local tests pass against solution notebooks:
-  - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
-- Tests must pass against solution notebooks:
-  - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q tests/test_exNNN_slug.py`
+- Gate D passes only when the canonical exercise-local test file passes against the solution variant:
+  - `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`
+- For broader sweeps, `uv run ./scripts/verify_solutions.sh -q` is acceptable supporting evidence alongside the targeted canonical test when relevant.
+- If a flattened compatibility notebook or top-level `tests/test_exNNN_slug.py` surface still exists, treat it as secondary migration/export evidence only; it must not replace the canonical exercise-local test.
 - Tests should fail against student notebooks until the student completes the work:
   - For debug: buggy student code should fail behaviour tests.
   - For modify/make: incomplete/placeholder code should fail behaviour tests.
-
-Treat `tests/test_exNNN_slug.py` as a transitional execution/export surface only. Do not accept a new exercise whose only exercise-specific test lives at top level.
 
 ### Gate E — Teacher guidance and solution quality
 Verify teacher materials exist and are useful:
@@ -174,7 +177,7 @@ Verify teacher materials exist and are useful:
   - common misconceptions
   - suggested teaching approach / hints
 
-Also verify the solution notebook mirror (`notebooks/solutions/...`) is accurate and is a good teacher reference.
+Also verify the canonical solution notebook mirror (`exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`) is accurate and is a good teacher reference. If a flattened export mirror also exists, treat it as secondary evidence only.
 
 Also check the solution notebook:
 - For debug: it’s OK (and encouraged) to include extra teacher-facing markdown explaining the bug(s) and correct fix.
@@ -208,10 +211,10 @@ For FAIL:
 4) Run the quick script checks (Gates B/C + teacher file presence):
   - `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make>`
 5) Inspect manually:
-   - student notebook
-   - solution notebook
+  - canonical student notebook
+  - canonical solution notebook
   - canonical exercise-local test file
-  - flattened compatibility test file, if present
+  - flattened compatibility notebook/test surfaces, if present
    - exercise README/OVERVIEW/solutions
 6) Run tests (Gate D).
 7) Produce verdict.

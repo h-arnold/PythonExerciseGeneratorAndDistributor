@@ -2,6 +2,9 @@
 
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
+> **Migration status**
+> This repository is mid-migration. This file remains authoritative for contributor guidance, but some compatibility surfaces still exist while the canonical layout is being completed. Consult `ACTION_PLAN.md` for the target structure and remaining cutover work.
+
 ## Project Overview
 
 This repository provides notebook-based Python exercises with automated grading via pytest, designed for GitHub Classroom integration.
@@ -25,18 +28,22 @@ This repository provides notebook-based Python exercises with automated grading 
 ## Repository Structure
 
 ```text
-exercises/             # Canonical authoring home for exercise-specific assets
+exercises/             # Canonical source-repo home for exercise-specific assets
   <construct>/<exercise_key>/
     exercise.json      # Exercise metadata (exercise type lives here, not in the path)
+    notebooks/
+      student.ipynb    # Canonical student notebook in the source repo
+      solution.ipynb   # Canonical instructor solution notebook in the source repo
     tests/             # Canonical repository-side exercise-specific tests
-notebooks/             # Transitional and exported flattened notebook paths
-  exNNN_slug.ipynb     # Student notebook surface used by current tooling
-  solutions/           # Instructor solution mirrors used by current tooling
-tests/                 # Shared pytest suites plus transitional/exported flattened exercise tests
+tests/                 # Shared pytest suites and repository-level integration tests
   notebook_grader.py   # Core grading framework
-  test_exNNN_*.py      # Transitional/exported flattened exercise tests
+  test_*.py            # Shared/integration tests, not canonical per-exercise authoring surfaces
+notebooks/             # Transitional or exported flattened notebook surfaces, when present
+  solutions/           # Compatibility/export solution mirrors used by some tooling
 scripts/               # Automation utilities
   new_exercise.py      # Exercise scaffolding tool
+  run_pytest_variant.py# Explicit student/solution variant test runner
+  verify_solutions.sh  # Convenience wrapper for solution-variant validation
 docs/                  # Project documentation
 ```
 
@@ -68,7 +75,7 @@ docs/                  # Project documentation
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, canonical repository-side tests belong under `exercises/<construct>/<exercise_key>/tests/`. Top-level `tests/test_exNNN_*.py` files and `PYTUTOR_NOTEBOOKS_DIR` flows remain transitional execution/export surfaces only.
+  - For notebooks and exercises, canonical source-repo assets belong under `exercises/<construct>/<exercise_key>/`, with notebooks in `notebooks/{student,solution}.ipynb` and repository-side exercise tests in `tests/`. Flattened notebook mirrors and top-level `tests/test_exNNN_*.py` files, when present for export/runtime compatibility, are not the source-repo authoring layout.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
@@ -153,7 +160,13 @@ def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
 source .venv/bin/activate
 
 # Run tests
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
+uv run pytest -q
+
+# Run tests against the solution variant
+uv run python scripts/run_pytest_variant.py --variant solution -q
+
+# Convenience wrapper for broader solution validation
+uv run ./scripts/verify_solutions.sh -q
 
 # Lint code
 ruff check . --fix
@@ -170,15 +183,16 @@ Do not create exercises manually. Use:
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
 
-Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened top-level `tests/test_exNNN_*.py` files remain transitional/export-facing only.
+Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with source notebooks at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`, and exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened notebook or test surfaces, when present for export/runtime compatibility, are not the source-repo authoring layout.
 
 ## Working with the Grading System
 
 The grading system (`tests/notebook_grader.py`) provides:
 
 - `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
-- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace. When developing or running tests, run these against the solutions notebook by default (use `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` or call `resolve_notebook_path()` so tests validate the instructor solution first).
-- `resolve_notebook_path(notebook_path)` - Handle `PYTUTOR_NOTEBOOKS_DIR` redirection; by convention the agent should default this to `notebooks/solutions` when running tests during development.
+- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace.
+
+When developing or validating repository-side exercises, run the canonical exercise-local tests directly with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`, or use `uv run ./scripts/verify_solutions.sh -q` for a broader solution pass.
 
 See Testing Framework: `docs/testing-framework.md` for details.
 
