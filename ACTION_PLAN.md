@@ -520,6 +520,8 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] An explicit collection audit now exists for the current layout: `uv run pytest --collect-only -q` completes successfully, which demonstrates that the canonical exercise-local tests are discoverable without duplicate-collection conflicts.
 - [x] Workflow definitions already pass the explicit `--variant` flag instead of depending on `PYTUTOR_NOTEBOOKS_DIR`.
 - [x] Focused solution-mode validation no longer blocks the pilot cutover proof: `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py -q` now passes for the migrated ex004 pilot.
+- [x] `tests/test_debug_explanations.py` now scans canonical student notebooks under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`, with a focused regression check preventing drift back to solution mirrors or the removed top-level `notebooks/` surface.
+- [x] `PHASE_13_MIGRATION_CHECKLIST.md` now exists and records the minimum validation matrix for repository collection, repository student mode, repository solution mode, packaged-template smoke checks, docs/workflow gates, and legacy-support removal.
 - [ ] Broader validation still lacks the required proof for student-mode validation, full solution-mode coverage, packaged-template smoke validation, and final legacy-support removal.
 
 #### Constraints And Acceptance Criteria
@@ -536,7 +538,7 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [ ] Run repository CI and packaged-template smoke tests against the new contract before removing legacy support.
 - [x] Run an explicit full test-collection pass before final cleanup so collection-time identity mismatches are caught, not just runtime failures.
 - [x] Update repository workflows and exported template workflows to use the final `--variant <student|solution>` CLI flag so the literal is forwarded to the resolver instead of relying on `PYTUTOR_NOTEBOOKS_DIR`.
-- [ ] Define and document the minimum validation matrix required before each cutover stage, including repository student mode, repository solution mode, and packaged-template runtime checks.
+- [x] Define and document the minimum validation matrix required before each cutover stage, including repository student mode, repository solution mode, and packaged-template runtime checks.
 - [ ] Remove legacy path support only after every exercise and every doc set has been migrated.
 - [x] Delete or repurpose the top-level `notebooks/` directory once it is no longer needed.
 - [x] Delete or repurpose any remaining top-level exercise-specific test files once all exercises use local `tests/` directories.
@@ -570,7 +572,7 @@ Use this section to track which detailed migration checklist documents have been
 - [x] Phase 4 checklist: Execution Model And Source-To-Export Contract
 - [x] Phase 5 checklist: Docs And Agent Guidance Alignment
 - [x] Phase 12 checklist: Docs, Agents, Workflows, And Contributor Guidance
-- [ ] Phase 13 checklist: Validation, Cutover, And Cleanup
+- [x] Phase 13 checklist: Validation, Cutover, And Cleanup
 
 These can be written first because they define the migration model, inventory, the early docs-and-agent alignment needed before test relocation, and end-state validation expectations.
 
