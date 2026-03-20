@@ -4,9 +4,9 @@ This document outlines the testing philosophy and conventions for verifying stud
 
 > Source of truth: execution behaviour and fail-fast rules are defined in [docs/execution-model.md](execution-model.md).
 
-## Migration status
+## Repository status
 
-Legacy notebook-directory overrides are transitional only. Prefer explicit variant selection in tooling and CI.
+Prefer explicit variant selection in tooling and CI. Canonical notebook resolution now starts from `exercise_key` and the exercise-local source tree.
 
 ## Philosophy: "Task Completion" with Good Habits
 
@@ -555,10 +555,6 @@ EXERCISE_KEY = "ex001_slug"
 ```
 
 The runtime helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.
-
-#### Transitional compatibility note (`PYTUTOR_NOTEBOOKS_DIR`)
-
-`PYTUTOR_NOTEBOOKS_DIR` may still be honoured in some legacy execution paths, but new tests and scripts should use explicit variant orchestration (`--variant student|solution`).
 
 ### Expectations Modules
 

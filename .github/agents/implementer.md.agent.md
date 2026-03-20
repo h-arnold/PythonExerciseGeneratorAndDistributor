@@ -5,7 +5,7 @@ tools: [vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute
 user-invocable: true
 ---
 
-> Migration status: This repository is mid-migration. This file remains authoritative for contributor guidance. Consult `ACTION_PLAN.md` for the target structure.
+> Repository status: The source repository now uses the canonical exercise-local layout. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
 
 # Implementer Agent
 

@@ -6,8 +6,8 @@ user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
 
-> **Migration status**
-> This repository is mid-migration. This agent file remains authoritative for current exercise-authoring workflow, but the target layout is still being completed. Consult `ACTION_PLAN.md` for the target structure and remaining cutover work.
+> **Repository status**
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
 
 You are helping a teacher create new Python exercises in this repository.
 

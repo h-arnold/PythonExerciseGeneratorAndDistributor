@@ -4,9 +4,9 @@ This guide explains how to use the **Exercise Generation** assistant in GitHub C
 
 > Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
 
-## Migration status
+## Repository status
 
-New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document.
+New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document, and flattened notebook/test paths are derived export outputs rather than authoring locations.
 
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
@@ -28,7 +28,7 @@ If you are new to Visual Studio Code (VS Code) or GitHub Copilot, follow these s
 
 1. **Create a GitHub account**: You will need a GitHub account so you can clone the repository and sign in to Copilot. If you don't have an account, sign up at <https://github.com>. Note: your organisation may require a Copilot subscription.
 
-2. **Clone the repository**: In VS Code use **Source Control** → **Clone Repository**, or open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Git: Clone**. Paste this URL: `https://github.com/h-arnold/PythonTutorExercises.git`. (If you already have a local copy, you can instead use **File > Open Folder...** and select the `PythonTutorExercises` folder.) After opening the workspace, see the [What to expect after cloning (prompts & tips)](#what-to-expect-after-cloning-prompts--tips) section below for guidance on common VS Code prompts and recommended actions.
+2. **Clone the repository**: In VS Code use **Source Control** → **Clone Repository**, or open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Git: Clone**. Paste your repository URL for `PythonExerciseGeneratorAndDistributor`. (If you already have a local copy, you can instead use **File > Open Folder...** and select the `PythonExerciseGeneratorAndDistributor` folder.) After opening the workspace, see the [What to expect after cloning (prompts & tips)](#what-to-expect-after-cloning-prompts--tips) section below for guidance on common VS Code prompts and recommended actions.
 
 3. **Sign in to GitHub in VS Code**: Click the Accounts icon in the bottom-left of VS Code and sign in with your GitHub account so extensions (Copilot) can access it.
 
