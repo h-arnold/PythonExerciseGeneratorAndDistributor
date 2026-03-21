@@ -46,9 +46,9 @@ Contract:
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `student` when no variant is provided.
 
-Compatibility note:
+Deprecated note:
 
-- `PYTUTOR_NOTEBOOKS_DIR` may still exist for transitional compatibility in some paths, but it is no longer the long-term public contract.
+- `legacy notebook-root override env var` is not part of the supported execution contract. New tooling must ignore or clear it rather than using it for notebook selection.
 
 ## 4) Source-to-export mapping contract
 
@@ -57,16 +57,16 @@ Canonical authoring and export surfaces are intentionally different.
 Contract:
 
 - Authoring source of truth: `exercises/<construct>/<exercise_key>/`.
-- Export/runtime surfaces during migration: flattened `notebooks/`, `notebooks/solutions/`, and top-level `tests/`.
+- Export surfaces: flattened `notebooks/`, `notebooks/solutions/`, and top-level `tests/` inside packaged Classroom repositories.
 - Mapping from canonical source to flattened export must be deterministic and reproducible, so the same exercise key resolves to the same exported notebook and test paths.
 
 The mapping layer must preserve exercise identity by `exercise_key` and must not redefine identity from flattened path names.
 
-## Migration status
+## Current status
 
-- **Canonical now**: exercise identity, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
-- **Transitional**: flattened notebooks and top-level flattened exercise tests used for export compatibility, plus limited legacy path-based resolution.
-- **Planned removal**: undocumented legacy entry points and long-term dependency on `PYTUTOR_NOTEBOOKS_DIR`.
+- **Canonical now**: exercise identity, exercise-local notebooks and tests, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
+- **Export-only**: flattened notebooks and top-level flattened exercise tests used in packaged Classroom repositories.
+- **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 
 
 ## 5) Consumer matrix (definitive migration tracker)

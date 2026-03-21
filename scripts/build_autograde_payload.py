@@ -23,7 +23,7 @@ import subprocess
 import sys
 import textwrap
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, NotRequired, TypedDict, cast
@@ -184,11 +184,13 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def validate_environment(variant: Variant) -> None:
-    """Apply the explicit variant contract to the pytest environment."""
+def build_pytest_environment(variant: Variant) -> dict[str, str]:
+    """Return a subprocess environment using the explicit variant contract."""
 
-    configure_variant_environment(os.environ, variant)
+    env = dict(os.environ)
+    configure_variant_environment(env, variant)
     print(f"Variant: {variant}")
+    return env
 
 
 def _should_zero_scores_on_failure(variant: Variant) -> bool:
@@ -210,7 +212,12 @@ def _ensure_autograde_option(pytest_args: Sequence[str], results_path: Path) -> 
     return updated
 
 
-def run_pytest(pytest_args: Sequence[str], results_path: Path) -> int:
+def run_pytest(
+    pytest_args: Sequence[str],
+    results_path: Path,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> int:
     """Run pytest with the autograde plugin and return the exit code."""
 
     args_with_option = _ensure_autograde_option(pytest_args, results_path)
@@ -218,7 +225,7 @@ def run_pytest(pytest_args: Sequence[str], results_path: Path) -> int:
     printable = shlex.join(command)
     print(f"Executing: {printable}")
     try:
-        completed_process = subprocess.run(command, check=False)
+        completed_process = subprocess.run(command, check=False, env=dict(env) if env else None)
     except OSError as exc:  # pragma: no cover - defensive logging for unexpected failures
         print(f"Failed to execute pytest: {exc}", file=sys.stderr)
         return 1
@@ -561,7 +568,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         args = parse_args(argv)
-        validate_environment(args.variant)
+        pytest_env = build_pytest_environment(args.variant)
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -571,7 +578,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary_path: Path | None = args.summary
     results_path.parent.mkdir(parents=True, exist_ok=True)
 
-    exit_code = run_pytest(args.pytest_args, results_path)
+    exit_code = run_pytest(args.pytest_args, results_path, env=pytest_env)
 
     try:
         raw_results = load_results(results_path)

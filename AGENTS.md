@@ -1,9 +1,9 @@
-# Copilot Custom Instructions — PythonTutorExercises
+# Copilot Custom Instructions — PythonExerciseGeneratorAndDistributor
 
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
-> **Migration status**
-> This repository is mid-migration. This file remains authoritative for contributor guidance, but some compatibility surfaces still exist while the canonical layout is being completed. Consult `ACTION_PLAN.md` for the target structure and remaining cutover work.
+> **Repository status**
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not source-repository authoring surfaces.
 
 ## Project Overview
 
@@ -38,8 +38,6 @@ exercises/             # Canonical source-repo home for exercise-specific assets
 tests/                 # Shared pytest suites and repository-level integration tests
   notebook_grader.py   # Core grading framework
   test_*.py            # Shared/integration tests, not canonical per-exercise authoring surfaces
-notebooks/             # Transitional or exported flattened notebook surfaces, when present
-  solutions/           # Compatibility/export solution mirrors used by some tooling
 scripts/               # Automation utilities
   new_exercise.py      # Exercise scaffolding tool
   run_pytest_variant.py# Explicit student/solution variant test runner
@@ -75,7 +73,7 @@ docs/                  # Project documentation
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, canonical source-repo assets belong under `exercises/<construct>/<exercise_key>/`, with notebooks in `notebooks/{student,solution}.ipynb` and repository-side exercise tests in `tests/`. Flattened notebook mirrors and top-level `tests/test_exNNN_*.py` files, when present for export/runtime compatibility, are not the source-repo authoring layout.
+  - For notebooks and exercises, canonical source-repo assets belong under `exercises/<construct>/<exercise_key>/`, with notebooks in `notebooks/{student,solution}.ipynb` and repository-side exercise tests in the exercise-local `tests/` directory. Flattened notebook mirrors and top-level `tests/test_exNNN_*.py` files are packaging outputs only, not the source-repo authoring layout.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.

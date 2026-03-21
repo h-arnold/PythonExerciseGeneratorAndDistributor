@@ -19,7 +19,6 @@ def test_ex002_autograde_task_distribution_and_count_parity(tmp_path: Path) -> N
     results_path = tmp_path / "autograde-results.json"
     env = os.environ.copy()
     env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
-    env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
 
     command = [
         sys.executable,

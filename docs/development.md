@@ -4,9 +4,9 @@ This guide is for contributors and maintainers working on the Python Tutor Exerc
 
 > Source of truth: execution and variant contracts are defined in [docs/execution-model.md](execution-model.md).
 
-## Migration status
+## Repository status
 
-The flattened notebook/test surfaces are still transitional. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic.
+The source repository has completed the exercise-local layout cutover. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic, and treat flattened notebook/test paths as packaging outputs for exported Classroom repositories only.
 
 ## Development Setup
 

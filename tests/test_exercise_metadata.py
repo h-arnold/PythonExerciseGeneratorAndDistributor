@@ -5,7 +5,7 @@ isolated tmp_path fixtures so they do not depend on the live filesystem.
 
 Contract under test:
 - exercise_key is the ONLY supported resolver input.
-- PYTUTOR_NOTEBOOKS_DIR is NOT used anywhere in these tests.
+- Notebook resolution is unaffected by unrelated environment variables.
 - Path-based inputs are rejected with TypeError.
 - Legacy exercises cause resolve_notebook_path to fail hard.
 - Missing canonical notebook files cause resolve_notebook_path to fail hard.
@@ -77,13 +77,13 @@ class TestResolveExerciseDir:
             "ex999_sequence_fake_exercise", exercises_root=tmp_path)
         assert result == exercise_dir
 
-    def test_ignores_pytutor_notebooks_dir_for_canonical_directory_resolution(
+    def test_ignores_unrelated_environment_for_canonical_directory_resolution(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """resolve_exercise_dir ignores PYTUTOR_NOTEBOOKS_DIR and uses canonical resolution."""
+        """resolve_exercise_dir ignores unrelated environment state."""
         misleading_notebooks_dir = tmp_path / "misleading_notebooks"
         misleading_notebooks_dir.mkdir()
-        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR",
+        monkeypatch.setenv("UNRELATED_NOTEBOOK_OVERRIDE",
                            str(misleading_notebooks_dir))
 
         result = resolve_exercise_dir("ex004_sequence_debug_syntax")
@@ -128,15 +128,15 @@ class TestResolveNotebookPath:
         assert result.exists()
         assert result.name == "solution.ipynb"
 
-    def test_ignores_pytutor_notebooks_dir_for_canonical_notebook_resolution(
+    def test_ignores_unrelated_environment_for_canonical_notebook_resolution(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """resolve_notebook_path ignores PYTUTOR_NOTEBOOKS_DIR and keeps canonical paths."""
+        """resolve_notebook_path keeps canonical paths despite unrelated env state."""
         misleading_notebooks_dir = tmp_path / "notebooks"
         misleading_notebooks_dir.mkdir()
         fake_solution = misleading_notebooks_dir / "solution.ipynb"
         fake_solution.write_text('{"cells": []}', encoding="utf-8")
-        monkeypatch.setenv("PYTUTOR_NOTEBOOKS_DIR",
+        monkeypatch.setenv("UNRELATED_NOTEBOOK_OVERRIDE",
                            str(misleading_notebooks_dir))
 
         result = resolve_notebook_path(

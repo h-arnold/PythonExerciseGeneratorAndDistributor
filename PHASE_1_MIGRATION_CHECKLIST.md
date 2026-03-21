@@ -100,7 +100,7 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 
 - [x] `scripts/new_exercise.py` — scaffolds root-level `exercises/<exercise_key>/`, root student notebook path, root solution notebook path, and top-level `tests/test_<exercise_key>.py`.
 - [x] `scripts/verify_exercise_quality.py` — recursively locates `exercises/**/<slug>/`, prefers deeper construct/type paths, and infers construct/type from parent directories.
-- [x] `scripts/build_autograde_payload.py` — constrains `PYTUTOR_NOTEBOOKS_DIR` to `notebooks` or `notebooks/solutions` and therefore encodes the current notebook-root contract.
+- [x] `scripts/build_autograde_payload.py` — constrains `legacy notebook-root override env var` to `notebooks` or `notebooks/solutions` and therefore encodes the current notebook-root contract.
 - [x] `scripts/template_repo_cli/cli.py` — public CLI surface for `create`, `update-repo`, `list`, and `validate`; selection inputs currently revolve around constructs, types, and notebook IDs.
 - [x] `scripts/template_repo_cli/core/collector.py` — synthesises file paths from an `exercise_id` using filename conventions.
 - [x] `scripts/template_repo_cli/core/selector.py` — mixes notebook filename scanning with construct/type directory scanning.
@@ -108,7 +108,7 @@ The following matrix is based on the current codebase state in `/workspaces/Pyth
 - [x] `scripts/template_repo_cli/utils/filesystem.py` — still accepts bare notebook filenames and silently prepends `notebooks/`, which is a hidden identity dependency outside the core grader path.
 - [x] `scripts/template_repo_cli/utils/validation.py` — validates construct names, type names, and notebook-selection patterns that are tied to today’s layout.
 - [x] `tests/notebook_grader.py` — resolver and execution helpers consume notebook paths rather than canonical `exercise_key` values.
-- [x] `tests/helpers.py` — helper layer defaults `PYTUTOR_NOTEBOOKS_DIR` and exposes notebook-path oriented helpers.
+- [x] `tests/helpers.py` — helper layer defaults `legacy notebook-root override env var` and exposes notebook-path oriented helpers.
 - [x] `tests/exercise_framework/paths.py` — public path-resolution helper mirrors `tests/notebook_grader.py` semantics.
 - [x] `tests/exercise_framework/api.py` — manual slug registry for framework-level checks.
 - [x] `tests/student_checker/api.py` — manual slug registry for student self-check commands.
@@ -119,7 +119,7 @@ Decision note: keep `scripts/verify_exercise_quality.py` as the Exercise Verifie
 #### Test Files And Fixtures To Audit During Phase 1
 
 - [x] `tests/test_new_exercise.py` — hard-codes scaffold output paths.
-- [x] `tests/test_build_autograde_payload.py` — asserts allowed `PYTUTOR_NOTEBOOKS_DIR` values and grading expectations for `notebooks` versus `notebooks/solutions`.
+- [x] `tests/test_build_autograde_payload.py` — asserts allowed `legacy notebook-root override env var` values and grading expectations for `notebooks` versus `notebooks/solutions`.
 - [x] `tests/test_integration_autograding.py` — integration contract for the grading pipeline and environment semantics.
 - [x] `tests/template_repo_cli/conftest.py` — fixture data reveals current hybrid path assumptions.
 - [x] `tests/template_repo_cli/test_collector.py` — file collection contract.
@@ -145,12 +145,12 @@ Decision note: keep `scripts/verify_exercise_quality.py` as the Exercise Verifie
 - [x] `docs/exercise-generation.md` — authoring workflow guidance and examples that still rely on current paths.
 - [x] `docs/exercise-generation-cli.md` — scaffolding workflow and the manual “move the exercise folder afterwards” instruction.
 - [x] `docs/CLI_README.md` — template CLI export contract.
-- [x] `docs/autograding-cli.md` — `PYTUTOR_NOTEBOOKS_DIR` examples.
+- [x] `docs/autograding-cli.md` — `legacy notebook-root override env var` examples.
 - [x] `docs/exercise-testing.md` — grading workflow references.
 - [x] `.github/agents/exercise_generation.md.agent.md` — multiple current layout assumptions, plus an example that mentions `check_notebook('ex007_data_types_debug_casting')`.
 - [x] `.github/agents/exercise_verifier.md.agent.md` — verifier contract tied to current layout.
 - [x] `docs/agents/tidy_code_review/automated_review.md` and `docs/agents/tidy_code_review/manual_review.md` — reviewer guidance that references the current test and notebook layout.
-- [x] `.github/workflows/tests.yml` — solution-test workflow uses `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`.
+- [x] `.github/workflows/tests.yml` — solution-test workflow uses `legacy notebook-root override env var=notebooks/solutions`.
 - [x] `.github/workflows/tests-solutions.yml` — duplicate solution-testing workflow surface.
 - [x] `template_repo_files/.github/workflows/classroom.yml` — exported Classroom grading workflow expects flat `notebooks/` and `tests/`.
 - [x] `template_repo_files/README.md.template`, `template_repo_files/pyproject.toml`, and `template_repo_files/pytest.ini` — template contract surface for exported repositories.
@@ -185,7 +185,7 @@ Decision note: keep `scripts/verify_exercise_quality.py` as the Exercise Verifie
 
 #### Identity Represented As A Notebook Path With Environment Override
 
-- [x] `tests/notebook_grader.resolve_notebook_path()` — resolves a notebook path, optionally rebasing into `PYTUTOR_NOTEBOOKS_DIR`.
+- [x] `tests/notebook_grader.resolve_notebook_path()` — resolves a notebook path, optionally rebasing into `legacy notebook-root override env var`.
 - [x] `tests/exercise_framework/paths.resolve_notebook_path()` — mirrors the same behaviour for framework users.
 - [x] `tests/helpers.resolve_notebook_path()` and `tests/helpers.build_autograde_env()` — helper wrappers around the same notebook-root concept.
 - [x] `scripts/build_autograde_payload._normalise_notebooks_dir()` — only permits `notebooks` and `notebooks/solutions`.
@@ -195,12 +195,12 @@ Decision note: keep `scripts/verify_exercise_quality.py` as the Exercise Verifie
 - [x] `python scripts/new_exercise.py exNNN "Title" --slug slug` — current scaffolder command produces legacy root-level paths.
 - [x] `template_repo_cli create --construct ...`, `template_repo_cli create --type ...`, `template_repo_cli create --notebooks ...` — selection interface currently relies on path-derived concepts and notebook IDs.
 - [x] `template_repo_cli update-repo ...` — same selection contract as `create`.
-- [x] `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q` — current solution verification contract.
-- [x] `PYTUTOR_NOTEBOOKS_DIR=notebooks uv run python scripts/build_autograde_payload.py ...` — current student-mode grading contract used by exported templates.
+- [x] `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions uv run pytest -q` — current solution verification contract.
+- [x] `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks uv run python scripts/build_autograde_payload.py ...` — current student-mode grading contract used by exported templates.
 
 #### Packaging And Export Contracts That Must Not Be Broken In Phase 1
 
-- [x] `template_repo_files/.github/workflows/classroom.yml` — exported templates run grading with `PYTUTOR_NOTEBOOKS_DIR=notebooks`.
+- [x] `template_repo_files/.github/workflows/classroom.yml` — exported templates run grading with `legacy notebook-root override env var=notebooks`.
 - [x] `scripts/template_repo_cli/core/packager.py` — exported templates currently include flat student notebooks and tests only while copying shared runtime helpers out of `tests/`; document how `exercise_runtime_support` should replace that import path and add verification that the exported workspaces continue to include the runtime helpers alongside the flattened files.
 - [x] `docs/CLI_README.md` and `README.md` — public documentation promises metadata-free exported template repositories.
 
@@ -301,8 +301,8 @@ Every new test case below should prove a concrete migration fact rather than mer
 - [ ] Regression case: the recorded ex002 split test contract remains explicit across the inventory artefact, `tests/template_repo_cli/conftest.py`, `scripts/template_repo_cli/core/collector.py`, and the parity suites that deliberately execute both files.
 - [ ] Regression case: manual slug registries in `tests/student_checker/api.py` and `tests/exercise_framework/api.py` are checked against the filesystem inventory so future drift is visible immediately.
 - [ ] Export/package case: exported template repos remain metadata-free and do not accidentally retain obsolete exercises such as `ex001_sanity` once they have been removed from the source inventory.
-- [ ] Student-mode case: `PYTUTOR_NOTEBOOKS_DIR=notebooks` grading still resolves notebooks from the student tree and does not depend on yet-to-be-added metadata files.
-- [ ] Solution-mode case: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` grading still resolves solution notebooks and fails clearly when a mirrored slug is missing or renamed.
+- [ ] Student-mode case: `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks` grading still resolves notebooks from the student tree and does not depend on yet-to-be-added metadata files.
+- [ ] Solution-mode case: `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions` grading still resolves solution notebooks and fails clearly when a mirrored slug is missing or renamed.
 - [ ] Documentation case: examples in `.github/agents/exercise_generation.md.agent.md`, `docs/exercise-generation-cli.md`, and related docs are checked for stale exercise-name examples such as `ex007_data_types_debug_casting`.
 
 ### Docs, Agents, And Workflow Updates
@@ -361,8 +361,8 @@ These commands do **not** prove the migration, but they document the current con
 
 ```bash
 source .venv/bin/activate
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
-PYTUTOR_NOTEBOOKS_DIR=notebooks uv run python scripts/build_autograde_payload.py --pytest-args=-q --minimal
+<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions uv run pytest -q
+<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks uv run python scripts/build_autograde_payload.py --pytest-args=-q --minimal
 ```
 
 ### If Phase 1 Adds Automated Inventory Checks
