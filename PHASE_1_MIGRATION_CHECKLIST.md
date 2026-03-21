@@ -195,8 +195,8 @@ Decision note: keep `scripts/verify_exercise_quality.py` as the Exercise Verifie
 - [x] `python scripts/new_exercise.py exNNN "Title" --slug slug` — current scaffolder command produces legacy root-level paths.
 - [x] `template_repo_cli create --construct ...`, `template_repo_cli create --type ...`, `template_repo_cli create --notebooks ...` — selection interface currently relies on path-derived concepts and notebook IDs.
 - [x] `template_repo_cli update-repo ...` — same selection contract as `create`.
-- [x] `legacy notebook-root override env var=notebooks/solutions uv run pytest -q` — current solution verification contract.
-- [x] `legacy notebook-root override env var=notebooks uv run python scripts/build_autograde_payload.py ...` — current student-mode grading contract used by exported templates.
+- [x] `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions uv run pytest -q` — current solution verification contract.
+- [x] `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks uv run python scripts/build_autograde_payload.py ...` — current student-mode grading contract used by exported templates.
 
 #### Packaging And Export Contracts That Must Not Be Broken In Phase 1
 
@@ -301,8 +301,8 @@ Every new test case below should prove a concrete migration fact rather than mer
 - [ ] Regression case: the recorded ex002 split test contract remains explicit across the inventory artefact, `tests/template_repo_cli/conftest.py`, `scripts/template_repo_cli/core/collector.py`, and the parity suites that deliberately execute both files.
 - [ ] Regression case: manual slug registries in `tests/student_checker/api.py` and `tests/exercise_framework/api.py` are checked against the filesystem inventory so future drift is visible immediately.
 - [ ] Export/package case: exported template repos remain metadata-free and do not accidentally retain obsolete exercises such as `ex001_sanity` once they have been removed from the source inventory.
-- [ ] Student-mode case: `legacy notebook-root override env var=notebooks` grading still resolves notebooks from the student tree and does not depend on yet-to-be-added metadata files.
-- [ ] Solution-mode case: `legacy notebook-root override env var=notebooks/solutions` grading still resolves solution notebooks and fails clearly when a mirrored slug is missing or renamed.
+- [ ] Student-mode case: `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks` grading still resolves notebooks from the student tree and does not depend on yet-to-be-added metadata files.
+- [ ] Solution-mode case: `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions` grading still resolves solution notebooks and fails clearly when a mirrored slug is missing or renamed.
 - [ ] Documentation case: examples in `.github/agents/exercise_generation.md.agent.md`, `docs/exercise-generation-cli.md`, and related docs are checked for stale exercise-name examples such as `ex007_data_types_debug_casting`.
 
 ### Docs, Agents, And Workflow Updates
@@ -361,8 +361,8 @@ These commands do **not** prove the migration, but they document the current con
 
 ```bash
 source .venv/bin/activate
-legacy notebook-root override env var=notebooks/solutions uv run pytest -q
-legacy notebook-root override env var=notebooks uv run python scripts/build_autograde_payload.py --pytest-args=-q --minimal
+<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions uv run pytest -q
+<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks uv run python scripts/build_autograde_payload.py --pytest-args=-q --minimal
 ```
 
 ### If Phase 1 Adds Automated Inventory Checks

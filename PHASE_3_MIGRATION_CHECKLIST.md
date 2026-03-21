@@ -279,7 +279,7 @@ Notes:
   - student checker selection by `exercise_key` succeeds for metadata-backed exercises and fails clearly for unknown keys
 - [ ] Solution-mode case:
   - solution-mode checks still pass when labels/order come from metadata rather than duplicated constants
-  - `legacy notebook-root override env var=notebooks/solutions` continues to work for the current execution model, but metadata loading must not depend on that environment variable
+  - `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions` continues to work for the current execution model, but metadata loading must not depend on that environment variable
 
 Use explicit statements such as:
 
@@ -327,7 +327,7 @@ uv run pytest -q \
 
 ```bash
 source .venv/bin/activate
-legacy notebook-root override env var=notebooks/solutions \
+<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions \
 uv run pytest -q \
   tests/exercise_framework/test_api_contract.py \
   tests/student_checker/test_reporting.py
