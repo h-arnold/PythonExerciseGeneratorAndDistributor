@@ -6,14 +6,14 @@ from exercise_runtime_support.exercise_framework.reporting import (
     normalise_issue_text,
     render_grouped_table_with_errors,
 )
-from exercise_runtime_support.student_checker import Ex002CheckResult
+from exercise_runtime_support.student_checker import ExerciseCheckResult
 
 MINIMUM_EXPECTED_ROWS = 3
 
 
 def test_ex002_error_normalisation_pipeline_parity() -> None:
     results = [
-        Ex002CheckResult(
+        ExerciseCheckResult(
             exercise_no=1,
             title="Logic",
             passed=False,

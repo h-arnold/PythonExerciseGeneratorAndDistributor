@@ -8,8 +8,8 @@ from exercise_runtime_support.notebook_grader import (
     run_cell_with_input,
 )
 from exercise_runtime_support.student_checker.checks.base import (
-    Ex006CheckDefinition,
-    build_ex006_check,
+    ExerciseCheckDefinition,
+    build_exercise_check,
     exercise_tag,
 )
 
@@ -50,15 +50,15 @@ def _check_input_flow(exercise_no: int) -> list[str]:
     return errors
 
 
-def _build_checks() -> list[Ex006CheckDefinition]:
-    checks: list[Ex006CheckDefinition] = []
+def _build_checks() -> list[ExerciseCheckDefinition]:
+    checks: list[ExerciseCheckDefinition] = []
     exercise_numbers = sorted(set(ex006.EX006_EXPECTED_OUTPUTS) | set(ex006.EX006_INPUT_EXPECTATIONS))
     for exercise_no in exercise_numbers:
         if exercise_no in ex006.EX006_EXPECTED_OUTPUTS:
-            checks.append(build_ex006_check(exercise_no, "Static output", _check_static_output))
+            checks.append(build_exercise_check(exercise_no, "Static output", _check_static_output))
         if exercise_no in ex006.EX006_INPUT_EXPECTATIONS:
-            checks.append(build_ex006_check(exercise_no, "Prompt flow", _check_input_flow))
+            checks.append(build_exercise_check(exercise_no, "Prompt flow", _check_input_flow))
     return checks
 
 
-CHECKS: list[Ex006CheckDefinition] = _build_checks()
+CHECKS: list[ExerciseCheckDefinition] = _build_checks()

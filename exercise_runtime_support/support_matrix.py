@@ -1,9 +1,9 @@
-"""Shared runtime support matrix for exercise check wiring.
+"""Shared runtime support matrix for framework check wiring.
 
 This module is the single source of truth for which exercise IDs are wired into
-framework smoke checks, framework detailed checks, and student-checker checks.
-It intentionally stores only runtime wiring flags, not exercise identity data
-(such as titles, slugs, or construct/type labels), which come from metadata.
+framework smoke checks and framework detailed checks. It intentionally stores
+only runtime wiring flags, not exercise identity data (such as titles, slugs,
+or construct/type labels), which come from metadata.
 """
 
 from __future__ import annotations
@@ -18,16 +18,14 @@ class SupportRole(StrEnum):
 
     FRAMEWORK_DETAILED = "framework_detailed"
     FRAMEWORK_SMOKE = "framework_smoke"
-    STUDENT_CHECKER = "student_checker"
 
 
 _SUPPORT_MATRIX: Final[dict[int, frozenset[SupportRole]]] = {
-    2: frozenset({SupportRole.FRAMEWORK_DETAILED, SupportRole.STUDENT_CHECKER}),
-    3: frozenset({SupportRole.FRAMEWORK_SMOKE, SupportRole.STUDENT_CHECKER}),
-    4: frozenset({SupportRole.FRAMEWORK_SMOKE, SupportRole.STUDENT_CHECKER}),
-    5: frozenset({SupportRole.FRAMEWORK_SMOKE, SupportRole.STUDENT_CHECKER}),
-    6: frozenset({SupportRole.FRAMEWORK_SMOKE, SupportRole.STUDENT_CHECKER}),
-    7: frozenset({SupportRole.STUDENT_CHECKER}),
+    2: frozenset({SupportRole.FRAMEWORK_DETAILED}),
+    3: frozenset({SupportRole.FRAMEWORK_SMOKE}),
+    4: frozenset({SupportRole.FRAMEWORK_SMOKE}),
+    5: frozenset({SupportRole.FRAMEWORK_SMOKE}),
+    6: frozenset({SupportRole.FRAMEWORK_SMOKE}),
 }
 
 
