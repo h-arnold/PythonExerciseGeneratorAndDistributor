@@ -51,7 +51,8 @@ def test_check_exercises_uses_catalogue_order(monkeypatch: pytest.MonkeyPatch) -
 
     student_api.check_exercises()
 
-    assert seen_labels == [entry.display_label for entry in get_exercise_catalogue()]
+    assert seen_labels == [
+        entry.display_label for entry in get_exercise_catalogue()]
 
 
 def test_check_exercise_uses_catalogue_label(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -65,7 +66,8 @@ def test_check_exercise_uses_catalogue_label(monkeypatch: pytest.MonkeyPatch) ->
 
     student_api.check_exercise("ex004_sequence_debug_syntax")
 
-    assert captured_labels == [get_catalogue_entry("ex004_sequence_debug_syntax").display_label]
+    assert captured_labels == [get_catalogue_entry(
+        "ex004_sequence_debug_syntax").display_label]
 
 
 def test_check_exercise_unknown_key_is_explicit() -> None:
@@ -100,10 +102,12 @@ def test_check_exercise_passes_exercise_key_to_student_checker_helpers(
         exercise_no = int(tag.removeprefix("exercise"))
         assert inputs == _EX003_PROMPT_FLOW_INPUTS[exercise_no]
         values = dict(
-            zip(_EX003_PROMPT_FLOW_PLACEHOLDERS[exercise_no], inputs, strict=True)
+            zip(_EX003_PROMPT_FLOW_PLACEHOLDERS[exercise_no],
+                inputs, strict=True)
         )
         prompts = ex003.EX003_EXPECTED_PROMPTS[exercise_no]
-        message = ex003.EX003_EXPECTED_INPUT_MESSAGES[exercise_no].format(**values)
+        message = ex003.EX003_EXPECTED_INPUT_MESSAGES[exercise_no].format(
+            **values)
         return "".join(f"{line}\n" for line in (*prompts, message))
 
     def fake_print_exercise_results(_results: Sequence[ExerciseCheckResult]) -> None:
@@ -119,7 +123,8 @@ def test_check_exercise_passes_exercise_key_to_student_checker_helpers(
         "run_cell_with_input",
         fake_run_cell_with_input,
     )
-    monkeypatch.setattr(student_api, "print_exercise_results", fake_print_exercise_results)
+    monkeypatch.setattr(student_api, "print_exercise_results",
+                        fake_print_exercise_results)
 
     student_api.check_exercise("ex003_sequence_modify_variables")
 
@@ -134,12 +139,14 @@ def test_check_exercise_supports_generic_ex002_path(
     def fake_print_exercise_results(results: Sequence[ExerciseCheckResult]) -> None:
         captured_results.append(results)
 
-    monkeypatch.setattr(student_api, "print_exercise_results", fake_print_exercise_results)
+    monkeypatch.setattr(student_api, "print_exercise_results",
+                        fake_print_exercise_results)
 
     student_api.check_exercise("ex002_sequence_modify_basics")
 
     assert len(captured_results) == 1
     results = list(captured_results[0])
     assert len(results) == _EX002_CHECK_RESULT_COUNT
-    assert {result.title for result in results} == {"Construct", "Formatting", "Logic"}
+    assert {result.title for result in results} == {
+        "Construct", "Formatting", "Logic"}
     assert {result.exercise_no for result in results} == set(range(1, 11))

@@ -63,7 +63,8 @@ def test_run_exercise_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> No
     sentinel_title = "Sentinel ex003"
     sentinel_no = 303
     sentinel_checks = [
-        _make_check(student_checks.ExerciseCheckDefinition, sentinel_no, sentinel_title)
+        _make_check(student_checks.ExerciseCheckDefinition,
+                    sentinel_no, sentinel_title)
     ]
     cache: dict[str, list[Any]] = {}
     load_calls: list[str] = []
@@ -73,7 +74,8 @@ def test_run_exercise_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> No
         return sentinel_checks
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
-    monkeypatch.setattr(student_checks, "_load_check_list", fake_load_check_list)
+    monkeypatch.setattr(student_checks, "_load_check_list",
+                        fake_load_check_list)
 
     first_results = student_checks.run_exercise_checks(exercise_key)
     second_results = student_checks.run_exercise_checks(exercise_key)
@@ -96,8 +98,10 @@ def test_run_exercise_checks_supports_generic_ex002_path(
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
 
-    results = student_checks.run_exercise_checks("ex002_sequence_modify_basics")
+    results = student_checks.run_exercise_checks(
+        "ex002_sequence_modify_basics")
 
     assert len(results) == _EX002_CHECK_RESULT_COUNT
-    assert {result.title for result in results} == {"Construct", "Formatting", "Logic"}
+    assert {result.title for result in results} == {
+        "Construct", "Formatting", "Logic"}
     assert {result.exercise_no for result in results} == set(range(1, 11))

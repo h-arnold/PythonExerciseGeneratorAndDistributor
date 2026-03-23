@@ -63,8 +63,10 @@ def test_print_exercise_results_still_reports_success_message(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Logic", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=2, title="Formatting", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=1, title="Logic",
+                            passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=2, title="Formatting",
+                            passed=True, issues=[]),
     ]
 
     print_exercise_results(results)
@@ -99,8 +101,10 @@ def test_print_exercise_results_supports_ex006_rows(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=10, title="Prompt flow",
+                            passed=False, issues=["Oops"]),
     ]
 
     print_exercise_results(results)
@@ -114,8 +118,10 @@ def test_print_exercise_results_shows_per_exercise_labels(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=10, title="Prompt flow",
+                            passed=False, issues=["Oops"]),
     ]
 
     print_exercise_results(results)
@@ -170,8 +176,6 @@ def test_run_exercise_checks_continues_after_notebook_grading_error(
     assert "Exercise 2" in output
 
 
-
-
 def test_run_exercise_checks_continues_after_notebook_grading_error_for_ex006_definitions(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -199,7 +203,8 @@ def test_run_exercise_checks_continues_after_notebook_grading_error_for_ex006_de
         ],
     )
 
-    results = student_checks.run_exercise_checks("ex006_sequence_modify_casting")
+    results = student_checks.run_exercise_checks(
+        "ex006_sequence_modify_casting")
     print_exercise_results(results)
     output = capsys.readouterr().out
 
