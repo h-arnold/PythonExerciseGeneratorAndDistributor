@@ -125,7 +125,8 @@ def _build_repo_fixture(repo_root: Path) -> None:
         repo_root / "exercises" / "sequence" / "modify" / _EX002 / "__init__.py",
         "",
     )
-    _write_notebook(repo_root / "notebooks" / f"{_EX002}.ipynb", "student ex002")
+    _write_notebook(repo_root / "notebooks" /
+                    f"{_EX002}.ipynb", "student ex002")
     _write_notebook(
         repo_root / "notebooks" / "solutions" / f"{_EX002}.ipynb",
         "solution ex002",
@@ -147,7 +148,8 @@ def _build_repo_fixture(repo_root: Path) -> None:
         f"Use [notebooks/{_EX006}.ipynb](notebooks/{_EX006}.ipynb) and "
         f"`exercises/sequence/{_EX006}/tests/test_{_EX006}.py`.\n",
     )
-    _write_notebook(repo_root / "notebooks" / f"{_EX006}.ipynb", "student ex006")
+    _write_notebook(repo_root / "notebooks" /
+                    f"{_EX006}.ipynb", "student ex006")
     _write_notebook(
         repo_root / "notebooks" / "solutions" / f"{_EX006}.ipynb",
         "solution ex006",
@@ -247,8 +249,10 @@ def test_dry_run_skips_type_root_cleanup_when_unrelated_legacy_content_remains(
     assert "- remove empty legacy directory exercises/sequence/modify\n" not in captured.out
     assert "exercises/sequence/modify/notes.txt" in captured.out
     assert "exercises/sequence/modify/placeholder" in captured.out
-    assert (tmp_path / "exercises" / "sequence" / "modify" / "notes.txt").is_file()
-    assert (tmp_path / "exercises" / "sequence" / "modify" / "placeholder").is_dir()
+    assert (tmp_path / "exercises" / "sequence" /
+            "modify" / "notes.txt").is_file()
+    assert (tmp_path / "exercises" / "sequence" /
+            "modify" / "placeholder").is_dir()
 
 
 def test_apply_mode_preserves_nonempty_legacy_type_root(
@@ -276,8 +280,10 @@ def test_apply_mode_preserves_nonempty_legacy_type_root(
     assert exit_code == 0
     assert "- remove empty legacy directory exercises/sequence/modify\n" not in captured.out
     assert (tmp_path / "exercises" / "sequence" / "modify").is_dir()
-    assert (tmp_path / "exercises" / "sequence" / "modify" / "notes.txt").is_file()
-    assert (tmp_path / "exercises" / "sequence" / "modify" / "placeholder").is_dir()
+    assert (tmp_path / "exercises" / "sequence" /
+            "modify" / "notes.txt").is_file()
+    assert (tmp_path / "exercises" / "sequence" /
+            "modify" / "placeholder").is_dir()
     assert "exercises/sequence/modify/notes.txt" in captured.out
     assert "exercises/sequence/modify/placeholder" in captured.out
 
@@ -320,10 +326,13 @@ def test_apply_mode_migrates_notebooks_docs_manifest_and_teaching_order(
     ][0]["source"] == ["print('solution ex006')\n"]
 
     assert not (tmp_path / "notebooks" / f"{_EX002}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" / f"{_EX002}.ipynb").exists()
+    assert not (tmp_path / "notebooks" / "solutions" /
+                f"{_EX002}.ipynb").exists()
     assert not (tmp_path / "notebooks" / f"{_EX006}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" / f"{_EX006}.ipynb").exists()
-    assert not (tmp_path / "exercises" / "sequence" / "modify" / _EX002).exists()
+    assert not (tmp_path / "notebooks" / "solutions" /
+                f"{_EX006}.ipynb").exists()
+    assert not (tmp_path / "exercises" / "sequence" /
+                "modify" / _EX002).exists()
 
     ex002_readme = (ex002_dir / "README.md").read_text(encoding="utf-8")
     ex002_overview = (ex002_dir / "OVERVIEW.md").read_text(encoding="utf-8")
@@ -446,7 +455,8 @@ def test_apply_mode_retries_successfully_after_manifest_write_failure(
             raise OSError("simulated manifest write failure")
         original_apply_write(action)
 
-    monkeypatch.setattr(migrate_exercise_data, "_apply_write", _failing_apply_write)
+    monkeypatch.setattr(migrate_exercise_data,
+                        "_apply_write", _failing_apply_write)
 
     exit_code = migrate_exercise_data.main(
         [
@@ -466,7 +476,8 @@ def test_apply_mode_retries_successfully_after_manifest_write_failure(
     assert (tmp_path / "notebooks" / f"{_EX006}.ipynb").exists()
     assert (tmp_path / "notebooks" / "solutions" / f"{_EX006}.ipynb").exists()
     assert (tmp_path / "exercises" / "sequence" / "modify" / _EX002).exists()
-    assert (tmp_path / "exercises" / "sequence" / "modify" / _EX002 / "README.md").exists()
+    assert (tmp_path / "exercises" / "sequence" /
+            "modify" / _EX002 / "README.md").exists()
     assert manifest_path.read_text(encoding="utf-8") == manifest_before
     assert canonical_readme_path.exists()
     assert legacy_shadow_readme_path.exists()
@@ -478,7 +489,8 @@ def test_apply_mode_retries_successfully_after_manifest_write_failure(
     assert manifest["exercises"][_EX002]["layout"] == "legacy"
     assert manifest["exercises"][_EX006]["layout"] == "legacy"
 
-    monkeypatch.setattr(migrate_exercise_data, "_apply_write", original_apply_write)
+    monkeypatch.setattr(migrate_exercise_data,
+                        "_apply_write", original_apply_write)
 
     retry_exit_code = migrate_exercise_data.main(
         [
@@ -503,10 +515,13 @@ def test_apply_mode_retries_successfully_after_manifest_write_failure(
     assert (ex006_dir / "notebooks" / "student.ipynb").exists()
     assert (ex006_dir / "notebooks" / "solution.ipynb").exists()
     assert not (tmp_path / "notebooks" / f"{_EX002}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" / f"{_EX002}.ipynb").exists()
+    assert not (tmp_path / "notebooks" / "solutions" /
+                f"{_EX002}.ipynb").exists()
     assert not (tmp_path / "notebooks" / f"{_EX006}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" / f"{_EX006}.ipynb").exists()
-    assert not (tmp_path / "exercises" / "sequence" / "modify" / _EX002).exists()
+    assert not (tmp_path / "notebooks" / "solutions" /
+                f"{_EX006}.ipynb").exists()
+    assert not (tmp_path / "exercises" / "sequence" /
+                "modify" / _EX002).exists()
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     assert manifest["exercises"][_EX002]["layout"] == "canonical"
