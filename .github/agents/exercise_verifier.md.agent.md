@@ -7,7 +7,7 @@ user-invocable: true
 # Bassaleg Python Tutor — Exercise Verifier Mode
 
 > **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 You are a *verification* agent that reviews a newly-created or newly-modified exercise and decides whether it is acceptable to merge/release.
 
@@ -30,7 +30,7 @@ Also keep these repo rules in mind:
 - Tag-based extraction: the exercise framework runtime uses `cell.metadata.tags`.
 - Canonical source notebooks live under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`.
 - Canonical repository-side exercise tests live under `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
-- Flattened notebook or test surfaces, if present during migration or export flows, are transitional compatibility surfaces only.
+- Derived compatibility notebook or test surfaces, if present during migration or export flows, are transitional only.
 - Solution verification uses explicit variant selection: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`.
 
 ## What “acceptable” means (gates)
@@ -156,7 +156,7 @@ Tests cases should be written that answer these questions for each of the exerci
 - Use `tests.exercise_framework.runtime.run_cell_with_input()` for exercises with `input()` prompts.
 - Use `tests.exercise_framework.runtime.extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
 - Use `tests.exercise_framework.runtime.get_explanation_cell()` to verify reflection cells are non-empty.
-- Pull expected outputs and prompts from `tests/exercise_expectations/` rather than hard-coding them.
+- Pull expected outputs, prompts, and inputs from helper modules in `exercises/<construct>/<exercise_key>/tests/` rather than hard-coding them.
 
 **Validation:**
 - Canonical repository-side exercise tests exist under `exercises/<construct>/<exercise_key>/tests/`.

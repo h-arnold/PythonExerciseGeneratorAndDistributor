@@ -6,7 +6,7 @@ This guide is for contributors and maintainers working on the Python Tutor Exerc
 
 ## Repository status
 
-The source repository has completed the exercise-local layout cutover. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic, and treat flattened notebook/test paths as packaging outputs for exported Classroom repositories only.
+The source repository has completed the exercise-local layout cutover. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic, and treat derived packaging outputs as non-authoring surfaces.
 
 ## Development Setup
 
@@ -46,7 +46,7 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
-The canonical source-repository authoring model is now exercise-local: `exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb` with `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Flattened `notebooks/`, `notebooks/solutions/`, and top-level `tests/` paths are export or compatibility surfaces only when explicitly generated for packaged Classroom repositories.
+The canonical source-repository authoring model is now exercise-local: `exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb` with `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Top-level `notebooks/`, `notebooks/solutions/`, and exercise-specific files materialised under the root `tests/` tree are derived compatibility surfaces only when explicitly generated.
 
 Run the helper directly during development:
 
@@ -75,8 +75,8 @@ Core helpers (via `exercise_runtime_support.exercise_framework`):
 6. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
 7. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
 
-Shared expectations live in `tests/exercise_expectations/` and should be the single source of truth for
-expected outputs, prompts, and input data.
+Exercise-specific expected outputs, prompts, and input data should live in helper modules within
+`exercises/<construct>/<exercise_key>/tests/` so each exercise keeps its own canonical support data next to the canonical test file.
 
 **Design principles**:
 

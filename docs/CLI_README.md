@@ -214,7 +214,6 @@ Generated templates include the selected exercise tests and the required shared 
 - `tests/test_autograde_plugin.py`
 - `tests/test_build_autograde_payload.py`
 - `tests/exercise_framework/` (runtime files only)
-- `tests/exercise_expectations/` (runtime files only)
 - `tests/student_checker/` (runtime files only)
 - `exercise_runtime_support/` (packaged runtime support package)
 - `exercise_runtime_support/exercise_catalogue_snapshot.json` (generated at packaging time for metadata-free catalogue lookups)

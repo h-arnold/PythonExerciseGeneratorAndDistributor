@@ -164,7 +164,8 @@ class TestCopyFiles:
     @pytest.mark.parametrize(
         "expected_relative_path",
         [
-            pytest.param("notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
+            pytest.param(
+                "notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
             pytest.param(
                 "tests/sequence/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
                 id="test",
@@ -214,9 +215,40 @@ class TestCopyFiles:
 
         template_packager.copy_template_base_files(temp_dir)
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
         assert snapshot_path.exists()
-        assert json.loads(snapshot_path.read_text(encoding="utf-8")) == build_exercise_catalogue()
+        assert json.loads(snapshot_path.read_text(
+            encoding="utf-8")) == build_exercise_catalogue()
+
+    def test_copy_exercise_files_uses_flat_destination_for_legacy_layout(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Test legacy flat-layout exercises still export their test file into tests/."""
+
+        legacy_test = temp_dir / "source" / "tests" / "test_ex999_legacy.py"
+        legacy_test.parent.mkdir(parents=True)
+        legacy_test.write_text(
+            "def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
+
+        legacy_notebook = temp_dir / "source" / "notebooks" / "ex999_legacy.ipynb"
+        legacy_notebook.parent.mkdir(parents=True)
+        legacy_notebook.write_text("{}", encoding="utf-8")
+
+        files: ExerciseFileMap = {
+            "ex999_legacy": ExerciseFiles(
+                notebook=legacy_notebook,
+                notebook_export=Path("notebooks/ex999_legacy.ipynb"),
+                test=legacy_test,
+                tests_export_dir=Path("tests"),
+            )
+        }
+
+        template_packager.copy_exercise_files(temp_dir, files)
+
+        assert (temp_dir / "tests" / "test_ex999_legacy.py").exists()
 
     def test_copy_template_base_files_filters_runtime_catalogue_snapshot_for_subset(
         self,
@@ -233,8 +265,10 @@ class TestCopyFiles:
             selected_exercise_keys=set(files),
         )
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
-        snapshot_entries = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_entries = json.loads(
+            snapshot_path.read_text(encoding="utf-8"))
         expected_entries = [
             entry for entry in build_exercise_catalogue() if entry["exercise_key"] in files
         ]
@@ -281,7 +315,8 @@ class TestGenerateFiles:
 
     def test_generate_readme(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating custom README with exercise list."""
-        exercises = ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
+        exercises = ["ex002_sequence_modify_basics",
+                     "ex004_sequence_debug_syntax"]
 
         template_packager.generate_readme(temp_dir, "Test Template", exercises)
 
@@ -345,7 +380,8 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
         if not autograde_path.exists():
@@ -366,7 +402,8 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         plugin_path = temp_dir / "tests" / "autograde_plugin.py"
         if not plugin_path.exists():
@@ -387,9 +424,11 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
         snapshot_path.unlink()
 
         assert not template_packager.validate_package(temp_dir)
@@ -406,10 +445,13 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
-        snapshot_path = get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support")
-        snapshot_path.write_text(json.dumps({"broken": True}) + "\n", encoding="utf-8")
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_path.write_text(json.dumps(
+            {"broken": True}) + "\n", encoding="utf-8")
 
         assert not template_packager.validate_package(temp_dir)
 
@@ -471,7 +513,8 @@ class TestPackageIntegrity:
             pytest.param("tests/exercise_framework", id="exercise-framework"),
             pytest.param("tests/student_checker", id="student-checker"),
             pytest.param("tests/helpers.py", id="helpers"),
-            pytest.param("tests/test_autograde_plugin.py", id="autograde-test"),
+            pytest.param("tests/test_autograde_plugin.py",
+                         id="autograde-test"),
             pytest.param(
                 "tests/test_build_autograde_payload.py",
                 id="payload-test",
@@ -491,11 +534,13 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         path_to_remove = temp_dir / missing_path
         if not path_to_remove.exists():
-            pytest.skip(f"Required path not available in template copy: {missing_path}")
+            pytest.skip(
+                f"Required path not available in template copy: {missing_path}")
 
         if path_to_remove.is_dir():
             shutil.rmtree(path_to_remove)
@@ -580,8 +625,10 @@ class TestPackageIntegrity:
             env=env,
         )
 
-        assert not (temp_dir / "exercise_runtime_support" / "exercise.json").exists()
-        assert get_catalogue_snapshot_path(temp_dir / "exercise_runtime_support").exists()
+        assert not (temp_dir / "exercise_runtime_support" /
+                    "exercise.json").exists()
+        assert get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support").exists()
         assert not (temp_dir / "exercises").exists()
 
         assert result.returncode == 0, (
@@ -652,7 +699,8 @@ class TestPackageOptions:
         template_packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex002_sequence_modify_basics.ipynb").exists()
-        assert not (temp_dir / "notebooks/solutions/ex002_sequence_modify_basics.ipynb").exists()
+        assert not (
+            temp_dir / "notebooks/solutions/ex002_sequence_modify_basics.ipynb").exists()
 
 
 class TestPackageMultipleExercises:

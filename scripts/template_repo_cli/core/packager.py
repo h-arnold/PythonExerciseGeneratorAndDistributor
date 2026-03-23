@@ -44,7 +44,8 @@ class TemplatePackager:
         "student_checker",
     )
 
-    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = ("exercise_runtime_support",)
+    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = (
+        "exercise_runtime_support",)
 
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = (
         "exercise.json",
@@ -81,13 +82,15 @@ class TemplatePackager:
             files: Dictionary mapping exercise ID to file paths.
         """
         for file_dict in files.values():
-            safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
+            safe_copy_file(file_dict["notebook"],
+                           workspace / file_dict["notebook_export"])
             tests_export_dir = workspace / file_dict["tests_export_dir"]
             if file_dict["tests_export_dir"] == Path("tests"):
-                safe_copy_file(file_dict["test"], workspace / file_dict["test_export"])
+                safe_copy_file(
+                    file_dict["test"], tests_export_dir / file_dict["test"].name)
                 continue
             safe_copy_directory(
-                file_dict["tests_dir"],
+                file_dict["test"].parent,
                 tests_export_dir,
                 ignore_patterns=self.EXERCISE_TEST_COPY_EXCLUDE_PATTERNS,
             )
@@ -131,7 +134,8 @@ class TemplatePackager:
             return
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
-        raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
+        raise FileNotFoundError(
+            f"Missing required packaging source assets:\n{missing_list}")
 
     def copy_template_base_files(
         self,
@@ -155,7 +159,8 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
+            (self.template_files_dir / "pyproject.toml",
+             workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
@@ -165,13 +170,15 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
+            (self.template_files_dir / "INSTRUCTIONS.md",
+             workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
         tests_dest_dir = workspace / "tests"
         for required_file in self.REQUIRED_TEST_FILES:
-            file_pairs.append((tests_source_dir / required_file, tests_dest_dir / required_file))
+            file_pairs.append(
+                (tests_source_dir / required_file, tests_dest_dir / required_file))
 
         for src, dest in file_pairs:
             safe_copy_file(src, dest)
@@ -195,7 +202,8 @@ class TemplatePackager:
             )
 
         write_catalogue_snapshot(
-            get_catalogue_snapshot_path(workspace / "exercise_runtime_support"),
+            get_catalogue_snapshot_path(
+                workspace / "exercise_runtime_support"),
             exercise_keys=selected_exercise_keys,
         )
 
@@ -244,7 +252,8 @@ class TemplatePackager:
         if self._contains_authoring_only_assets(workspace):
             return False
 
-        snapshot_path = get_catalogue_snapshot_path(workspace / "exercise_runtime_support")
+        snapshot_path = get_catalogue_snapshot_path(
+            workspace / "exercise_runtime_support")
         required_files = [
             workspace / "pyproject.toml",
             workspace / "pytest.ini",

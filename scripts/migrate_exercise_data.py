@@ -159,10 +159,12 @@ def _discover_exercises(repo_root: Path, construct: str) -> list[ExerciseRecord]
             continue
         if not (path / "exercise.json").is_file():
             continue
-        exercises.append(_load_exercise_record(path, construct=construct, repo_root=repo_root))
+        exercises.append(_load_exercise_record(
+            path, construct=construct, repo_root=repo_root))
 
     if not exercises:
-        raise MigrationError(f"No canonical exercise directories found for construct {construct!r}")
+        raise MigrationError(
+            f"No canonical exercise directories found for construct {construct!r}")
     return exercises
 
 
@@ -239,7 +241,8 @@ def _plan_notebook_actions(record: ExerciseRecord, repo_root: Path) -> list[Acti
         ),
         (
             "solution",
-            repo_root / "notebooks" / "solutions" / f"{record.exercise_key}.ipynb",
+            repo_root / "notebooks" / "solutions" /
+            f"{record.exercise_key}.ipynb",
             record.canonical_dir / "notebooks" / "solution.ipynb",
         ),
     )
@@ -296,7 +299,8 @@ def _plan_shadow_actions(record: ExerciseRecord, repo_root: Path) -> list[Action
 
     actions: list[Action] = []
     for source in sorted(path for path in record.shadow_dir.rglob("*") if path.is_file()):
-        destination = record.canonical_dir / source.relative_to(record.shadow_dir)
+        destination = record.canonical_dir / \
+            source.relative_to(record.shadow_dir)
         retry_safe_cleanup = _plan_retry_safe_shadow_doc_cleanup(
             record,
             source,
@@ -399,7 +403,8 @@ def _plan_doc_rewrite_actions(record: ExerciseRecord, repo_root: Path) -> list[A
         actions.append(
             Action(
                 kind="write_text",
-                description=(f"rewrite local links in {_relative_to_repo(destination, repo_root)}"),
+                description=(
+                    f"rewrite local links in {_relative_to_repo(destination, repo_root)}"),
                 destination=destination,
                 content=rewritten_text,
             )
@@ -455,7 +460,8 @@ def _plan_manifest_action(repo_root: Path, exercises: list[ExerciseRecord]) -> l
 
     exercises_obj = manifest.get("exercises")
     if not isinstance(exercises_obj, dict):
-        raise MigrationError(f"Expected an 'exercises' object in {manifest_path}")
+        raise MigrationError(
+            f"Expected an 'exercises' object in {manifest_path}")
 
     changed = False
     for record in exercises:
@@ -540,7 +546,8 @@ def _build_actions(
         actions.extend(_plan_doc_rewrite_actions(record, repo_root))
 
     actions.extend(
-        _plan_order_of_teaching_action(repo_root, construct=construct, exercises=exercises)
+        _plan_order_of_teaching_action(
+            repo_root, construct=construct, exercises=exercises)
     )
     actions.extend(_plan_manifest_action(repo_root, exercises))
     return actions
@@ -590,7 +597,8 @@ def _apply_move_copy(action: Action) -> None:
     if action.source is None or action.destination is None:
         raise MigrationError(f"Invalid move action: {action}")
     if action.destination.exists():
-        raise MigrationConflictError(f"Conflict: {action.destination} already exists")
+        raise MigrationConflictError(
+            f"Conflict: {action.destination} already exists")
     action.destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(action.source, action.destination)
 
@@ -695,10 +703,12 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         exercises = _discover_exercises(repo_root, args.construct)
-        actions = _build_actions(repo_root, construct=args.construct, exercises=exercises)
+        actions = _build_actions(
+            repo_root, construct=args.construct, exercises=exercises)
         if args.apply:
             _apply_actions(actions)
-        remaining_legacy_sources = _collect_remaining_legacy_sources(repo_root, args.construct)
+        remaining_legacy_sources = _collect_remaining_legacy_sources(
+            repo_root, args.construct)
     except (MigrationError, OSError) as exc:
         print(f"ERROR: {exc}")
         return 1

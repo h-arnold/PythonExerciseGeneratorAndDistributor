@@ -450,22 +450,22 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
-    def test_dry_run_workspace_canonical_ex004_uses_flattened_export(
+    def test_dry_run_workspace_canonical_ex004_uses_nested_export(
         self,
         repo_root: Path,
     ) -> None:
-        """Test packaged canonical ex004 prefers its own flattened export under the repo."""
+        """Test packaged canonical ex004 exports exercise-local support under the nested test path."""
         from scripts.template_repo_cli.cli import main
 
         with tempfile.TemporaryDirectory(dir=repo_root) as tmpdir:
             output_dir = Path(tmpdir) / "template_output"
-            source_canonical = (
+            source_expectations = (
                 repo_root
                 / "exercises"
                 / "sequence"
                 / "ex004_sequence_debug_syntax"
-                / "notebooks"
-                / "student.ipynb"
+                / "tests"
+                / "expectations.py"
             ).resolve()
 
             result = main(
@@ -485,10 +485,18 @@ class TestEndToEndDryRun:
             assert output_dir.exists()
             assert (output_dir / "notebooks" /
                     "ex004_sequence_debug_syntax.ipynb").exists()
-            assert (output_dir / "tests" /
-                    "test_ex004_sequence_debug_syntax.py").exists()
+            exported_test = (
+                output_dir
+                / "tests"
+                / "sequence"
+                / "ex004_sequence_debug_syntax"
+                / "test_ex004_sequence_debug_syntax.py"
+            )
+            exported_expectations = exported_test.with_name("expectations.py")
+            assert exported_test.exists()
+            assert exported_expectations.exists()
             assert not (output_dir / "exercises").exists()
-            assert source_canonical.exists()
+            assert source_expectations.exists()
 
             shadow_root = Path(tmpdir) / "shadow_packages"
             shadow_package = shadow_root / "exercise_metadata"
@@ -514,16 +522,17 @@ class TestEndToEndDryRun:
                 "\n".join(
                     [
                         "from pathlib import Path",
-                        "import tests.test_ex004_sequence_debug_syntax as module",
-                        "expected = (Path.cwd() / 'notebooks' / 'ex004_sequence_debug_syntax.ipynb').resolve()",
-                        f"source_canonical = Path({str(source_canonical)!r}).resolve()",
-                        "assert source_canonical.exists()",
-                        "assert source_canonical != expected",
-                        "assert module._NOTEBOOK_PATH == expected, (module._NOTEBOOK_PATH, expected)",
-                        "assert module._NOTEBOOK_PATH != source_canonical, (module._NOTEBOOK_PATH, source_canonical)",
-                        "explanation = module.get_explanation_cell("
-                        "module._NOTEBOOK_PATH, tag=module._explanation_tag(1))",
-                        "assert 'What actually happened' in explanation",
+                        "import importlib.util",
+                        "module_path = Path.cwd() / 'tests' / 'sequence' / 'ex004_sequence_debug_syntax' / 'expectations.py'",
+                        "spec = importlib.util.spec_from_file_location('packaged_ex004_expectations', module_path)",
+                        "assert spec is not None and spec.loader is not None",
+                        "module = importlib.util.module_from_spec(spec)",
+                        "spec.loader.exec_module(module)",
+                        f"source_expectations = Path({str(source_expectations)!r}).resolve()",
+                        "assert source_expectations.exists()",
+                        "assert module_path.resolve() != source_expectations",
+                        "assert module.EX004_MIN_EXPLANATION_LENGTH == 50",
+                        "assert module.EX004_EXPECTED_SINGLE_LINE[1] == 'Hello World!'",
                     ]
                 ),
             ]

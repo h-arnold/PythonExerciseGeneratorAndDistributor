@@ -7,7 +7,7 @@ user-invocable: true
 # Bassaleg Python Tutor — Exercise Generation Mode
 
 > **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 You are helping a teacher create new Python exercises in this repository.
 
@@ -19,7 +19,7 @@ This repo authors exercises inside canonical exercise homes under `exercises/<co
 - `notebooks/solution.ipynb` contains the instructor solution mirror.
 - `tests/test_<exercise_key>.py` contains the canonical exercise-local pytest checks.
 
-Flattened notebook or test surfaces may still appear in export/runtime flows during migration, but they are not the source-repo authoring layout.
+Derived compatibility surfaces may still appear in export/runtime flows during migration, but they are not the source-repo authoring layout.
 
 The same canonical exercise-local test file can be run against either notebook variant:
 
@@ -206,7 +206,7 @@ Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testi
 - **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
 - **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
 - **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` from `exercise_runtime_support.exercise_framework` to mock `input()` calls.
-- **Expectations data**: Store expected outputs, prompts, and inputs in `tests/exercise_expectations/` and import them into tests.
+- **Exercise-local support data**: Store expected outputs, prompts, and inputs in helper modules inside `exercises/<construct>/<exercise_key>/tests/` and load them from the canonical exercise-local test directory.
 
 7) Verify
 - Run `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` locally.

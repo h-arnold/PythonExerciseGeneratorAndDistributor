@@ -28,11 +28,8 @@ class TestCollectAllFiles:
             / "exercises/sequence/ex002_sequence_modify_basics/tests"
             / "test_ex002_sequence_modify_basics.py"
         )
-        assert files["test_export"] == Path("tests/test_ex002_sequence_modify_basics.py")
-        assert files["tests_dir"] == (
-            repo_root / "exercises/sequence/ex002_sequence_modify_basics/tests"
-        )
-        assert files["tests_export_dir"] == Path("tests/sequence/ex002_sequence_modify_basics")
+        assert files["tests_export_dir"] == Path(
+            "tests/sequence/ex002_sequence_modify_basics")
 
     def test_collect_all_files_for_canonical_exercise(self, repo_root: Path) -> None:
         """Test collecting canonical files from the exercise source tree."""
@@ -49,11 +46,8 @@ class TestCollectAllFiles:
             / "exercises/sequence/ex004_sequence_debug_syntax/tests"
             / "test_ex004_sequence_debug_syntax.py"
         )
-        assert files["test_export"] == Path("tests/test_ex004_sequence_debug_syntax.py")
-        assert files["tests_dir"] == (
-            repo_root / "exercises/sequence/ex004_sequence_debug_syntax/tests"
-        )
-        assert files["tests_export_dir"] == Path("tests/sequence/ex004_sequence_debug_syntax")
+        assert files["tests_export_dir"] == Path(
+            "tests/sequence/ex004_sequence_debug_syntax")
 
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
@@ -114,8 +108,6 @@ class TestCollectValidation:
             "notebook",
             "notebook_export",
             "test",
-            "test_export",
-            "tests_dir",
             "tests_export_dir",
         ]
         for key in required_keys:
