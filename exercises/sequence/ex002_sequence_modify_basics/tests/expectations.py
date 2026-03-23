@@ -1,4 +1,4 @@
-"""Expectations for ex002 sequence modify basics."""
+"""Exercise-local expectations for ex002 sequence modify basics."""
 
 from __future__ import annotations
 

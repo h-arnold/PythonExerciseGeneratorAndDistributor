@@ -1,4 +1,4 @@
-"""Expectations for ex003 sequence modify variables."""
+"""Exercise-local expectations for ex003 sequence modify variables."""
 
 from __future__ import annotations
 
@@ -28,7 +28,6 @@ EX003_ORIGINAL_PROMPTS: Final[dict[int, str]] = {
     5: "Tell me your favourite place:",
     6: "Enter your name:",
 }
-
 EX003_EXPECTED_ASSIGNMENTS: Final[dict[int, dict[str, str]]] = {
     1: {"greeting": "Hi there!"},
     2: {"subject": "coding"},
@@ -41,13 +40,11 @@ EX003_EXPECTED_ASSIGNMENTS: Final[dict[int, dict[str, str]]] = {
         "audience": "everyone!",
     },
 }
-
 EX003_EXPECTED_INPUT_VARIABLES: Final[dict[int, tuple[str, str]]] = {
     4: ("fav_fruit", "descriptor"),
     5: ("town", "country"),
     6: ("first_name", "last_name"),
 }
-
 EX003_EXERCISE10_REQUIRED_PHRASES: Final[dict[str, str]] = {
     "part_one": "Variables",
     "part_two": "strings",

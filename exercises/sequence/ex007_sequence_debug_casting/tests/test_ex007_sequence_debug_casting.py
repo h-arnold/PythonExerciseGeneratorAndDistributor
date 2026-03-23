@@ -4,15 +4,10 @@ import ast
 
 import pytest
 
-from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
-    has_binop,
-    has_call,
-    interactive_construct_issues,
-)
 from exercise_runtime_support.exercise_framework.expectations_helpers import (
     is_valid_explanation,
 )
-from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -22,6 +17,11 @@ from tests.exercise_framework import (
 )
 
 _EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
+construct_checks = load_exercise_test_module(_EX007_EXERCISE_KEY, "construct_checks")
+ex007 = load_exercise_test_module(_EX007_EXERCISE_KEY, "expectations")
+has_binop = construct_checks.has_binop
+has_call = construct_checks.has_call
+interactive_construct_issues = construct_checks.interactive_construct_issues
 _CACHE = RuntimeCache()
 
 

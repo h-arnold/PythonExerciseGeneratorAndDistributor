@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 import pytest
 
-from tests.exercise_expectations import ex003_sequence_modify_variables as ex003
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -13,12 +13,14 @@ from tests.exercise_framework import (
     run_cell_with_input,
 )
 
+_EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
+ex003 = load_exercise_test_module(_EX003_EXERCISE_KEY, "expectations")
+
 
 def _tag(exercise_no: int) -> str:
     return f"exercise{exercise_no}"
 
 
-_EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
 _CACHE = RuntimeCache()
 _EXPECTED_INPUT_CALLS = 2
 

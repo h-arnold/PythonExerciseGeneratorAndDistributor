@@ -19,6 +19,8 @@ class ExerciseFiles(TypedDict):
     notebook_export: Path
     test: Path
     test_export: Path
+    tests_dir: Path
+    tests_export_dir: Path
 
 
 class FileCollector:
@@ -129,6 +131,12 @@ class FileCollector:
             notebook_export=Path("notebooks") / f"{exercise_id}.ipynb",
             test=test_path,
             test_export=Path("tests") / f"test_{exercise_id}.py",
+            tests_dir=test_path.parent,
+            tests_export_dir=(
+                Path("tests") / resolve_exercise_dir(exercise_id, self.exercises_dir).parts[-2] / exercise_id
+                if layout == ExerciseLayout.CANONICAL
+                else Path("tests")
+            ),
         )
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:

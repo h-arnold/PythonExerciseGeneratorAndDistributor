@@ -13,7 +13,7 @@ from exercise_runtime_support.exercise_framework import (
     run_cell_with_input,
 )
 from exercise_runtime_support.exercise_framework.expectations_helpers import is_valid_explanation
-from tests.exercise_expectations import ex004_sequence_debug_syntax as ex004
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 
 def _tag(exercise_no: int) -> str:
@@ -25,7 +25,8 @@ def _explanation_tag(exercise_no: int) -> str:
 
 
 _EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
-_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX004_EXERCISE_KEY)
+ex004 = load_exercise_test_module(_EX004_EXERCISE_KEY, "expectations")
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX004_EXERCISE_KEY, variant="solution")
 _CACHE = RuntimeCache()
 
 
@@ -34,6 +35,7 @@ def _exercise_output(exercise_no: int) -> str:
         _NOTEBOOK_PATH,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant="solution",
     )
 
 
@@ -43,6 +45,7 @@ def _exercise_output_with_input(exercise_no: int, inputs: list[str]) -> str:
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
+        variant="solution",
     )
 
 
@@ -51,6 +54,7 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
         _NOTEBOOK_PATH,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant="solution",
     )
     return ast.parse(code)
 

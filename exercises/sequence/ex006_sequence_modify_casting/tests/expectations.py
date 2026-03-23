@@ -1,10 +1,18 @@
-"""Expectations for ex006 sequence modify casting."""
+"""Exercise-local expectations for ex006 sequence modify casting."""
 
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, NotRequired, TypedDict
 
-from tests.exercise_expectations.types import Ex006InputExpectation
+
+class Ex006InputExpectation(TypedDict):
+    """Expectations for exercises that prompt for input in ex006."""
+
+    inputs: list[str]
+    prompt_contains: str
+    output_contains: NotRequired[str]
+    last_line: NotRequired[str]
+
 
 EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     1: "15\n",
@@ -15,7 +23,6 @@ EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     8: "Area: 50\n",
     9: "The Burger costs \u00a35.5\n",
 }
-
 
 EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {
     6: {

@@ -1,4 +1,4 @@
-"""Expectations for ex004 debug syntax."""
+"""Exercise-local expectations for ex004 debug syntax."""
 
 from __future__ import annotations
 

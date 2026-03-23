@@ -1,10 +1,12 @@
+"""Repository-only reporting parity checks for ex002."""
+
 from __future__ import annotations
 
-from tests.exercise_framework.reporting import (
+from exercise_runtime_support.exercise_framework.reporting import (
     normalise_issue_text,
     render_grouped_table_with_errors,
 )
-from tests.student_checker import Ex002CheckResult
+from exercise_runtime_support.student_checker import Ex002CheckResult
 
 MINIMUM_EXPECTED_ROWS = 3
 
@@ -46,7 +48,6 @@ def test_ex002_error_wrapping_continuation_row_columns_are_blank() -> None:
 
     row_lines = [line for line in table.splitlines() if line.startswith("| ")]
 
-    # Header + at least one data row + at least one wrapped continuation row.
     assert len(row_lines) >= MINIMUM_EXPECTED_ROWS
 
     first_data_row = row_lines[1]
@@ -56,7 +57,6 @@ def test_ex002_error_wrapping_continuation_row_columns_are_blank() -> None:
     assert "Logic" in first_data_row
     assert "🔴 NO" in first_data_row
 
-    # Continuation rows must blank out Exercise/Check/Status columns.
     assert "Exercise 2" not in continuation_row
     assert "Logic" not in continuation_row
     assert "🔴 NO" not in continuation_row

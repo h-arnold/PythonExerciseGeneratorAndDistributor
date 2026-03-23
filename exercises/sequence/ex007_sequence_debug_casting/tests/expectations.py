@@ -1,4 +1,4 @@
-"""Expectations for ex007 sequence debug casting."""
+"""Exercise-local expectations for ex007 sequence debug casting."""
 
 from __future__ import annotations
 
@@ -27,81 +27,40 @@ EX007_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
     "todo",
     "...",
 )
-
 EX007_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
     1: "You have 3 pens\n",
-    2: "Total price: £7.5\n",
+    2: "Total price: \u00a37.5\n",
     4: "Average per day: 3.5 km\n",
 }
-
 EX007_INTERACTIVE_CONSTRUCTS: Final[dict[int, Ex007InteractiveConstructs]] = {
-    3: {
-        "required_calls": ("int", "str"),
-    },
-    5: {
-        "required_calls": ("int",),
-        "required_ops": (ast.Mult,),
-    },
-    6: {
-        "required_calls": ("float", "str"),
-        "required_ops": (ast.Mult, ast.Div),
-    },
-    7: {
-        "required_calls": ("float", "int", "str"),
-        "required_ops": (ast.Mult,),
-    },
+    3: {"required_calls": ("int", "str")},
+    5: {"required_calls": ("int",), "required_ops": (ast.Mult,)},
+    6: {"required_calls": ("float", "str"), "required_ops": (ast.Mult, ast.Div)},
+    7: {"required_calls": ("float", "int", "str"), "required_ops": (ast.Mult,)},
     8: {
         "required_calls": ("int", "str"),
         "required_ops": (ast.Add, ast.Div),
         "forbidden_ops": (ast.FloorDiv,),
     },
-    9: {
-        "required_calls": ("int", "str"),
-        "required_ops": (ast.Mult, ast.Add),
-    },
+    9: {"required_calls": ("int", "str"), "required_ops": (ast.Mult, ast.Add)},
     10: {
         "required_calls": ("float", "int", "str"),
         "required_ops": (ast.Add, ast.Mult, ast.Div),
         "forbidden_ops": (ast.FloorDiv,),
     },
 }
-
 EX007_INPUT_CASES: Final[dict[int, tuple[Ex007InputCase, ...]]] = {
     3: (
-        {
-            "inputs": ["14"],
-            "expected_output": "Enter your age: Next year you will be 15\n",
-        },
-        {
-            "inputs": ["9"],
-            "expected_output": "Enter your age: Next year you will be 10\n",
-        },
-        {
-            "inputs": ["0"],
-            "expected_output": "Enter your age: Next year you will be 1\n",
-        },
-        {
-            "inputs": ["41"],
-            "expected_output": "Enter your age: Next year you will be 42\n",
-        },
+        {"inputs": ["14"], "expected_output": "Enter your age: Next year you will be 15\n"},
+        {"inputs": ["9"], "expected_output": "Enter your age: Next year you will be 10\n"},
+        {"inputs": ["0"], "expected_output": "Enter your age: Next year you will be 1\n"},
+        {"inputs": ["41"], "expected_output": "Enter your age: Next year you will be 42\n"},
     ),
     5: (
-        {
-            "inputs": ["hi", "3"],
-            "expected_output": "Word to repeat: How many times? hihihi\n",
-        },
-        {
-            "inputs": ["go", "2"],
-            "expected_output": "Word to repeat: How many times? gogo\n",
-        },
-        {
-            "inputs": ["z", "5"],
-            "expected_output": "Word to repeat: How many times? zzzzz\n",
-        },
-        {
-            "inputs": ["wow", "1"],
-            "expected_output": "Word to repeat: How many times? wow\n",
-        },
+        {"inputs": ["hi", "3"], "expected_output": "Word to repeat: How many times? hihihi\n"},
+        {"inputs": ["go", "2"], "expected_output": "Word to repeat: How many times? gogo\n"},
+        {"inputs": ["z", "5"], "expected_output": "Word to repeat: How many times? zzzzz\n"},
+        {"inputs": ["wow", "1"], "expected_output": "Word to repeat: How many times? wow\n"},
     ),
     6: (
         {
@@ -158,22 +117,10 @@ EX007_INPUT_CASES: Final[dict[int, tuple[Ex007InputCase, ...]]] = {
         },
     ),
     9: (
-        {
-            "inputs": ["3", "45"],
-            "expected_output": "Pounds: Pence: Total pence: 345\n",
-        },
-        {
-            "inputs": ["4", "50"],
-            "expected_output": "Pounds: Pence: Total pence: 450\n",
-        },
-        {
-            "inputs": ["0", "99"],
-            "expected_output": "Pounds: Pence: Total pence: 99\n",
-        },
-        {
-            "inputs": ["12", "0"],
-            "expected_output": "Pounds: Pence: Total pence: 1200\n",
-        },
+        {"inputs": ["3", "45"], "expected_output": "Pounds: Pence: Total pence: 345\n"},
+        {"inputs": ["4", "50"], "expected_output": "Pounds: Pence: Total pence: 450\n"},
+        {"inputs": ["0", "99"], "expected_output": "Pounds: Pence: Total pence: 99\n"},
+        {"inputs": ["12", "0"], "expected_output": "Pounds: Pence: Total pence: 1200\n"},
     ),
     10: (
         {

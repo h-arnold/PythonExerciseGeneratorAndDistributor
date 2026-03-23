@@ -24,6 +24,11 @@ class TemplatePackager:
         "test_*.py",
         "*_test.py",
     )
+    EXERCISE_TEST_COPY_EXCLUDE_PATTERNS: tuple[str, ...] = (
+        "__pycache__",
+        "*.pyc",
+        "test_repo_*.py",
+    )
 
     REQUIRED_TEST_FILES: tuple[str, ...] = (
         "__init__.py",
@@ -35,7 +40,6 @@ class TemplatePackager:
     )
 
     REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = (
-        "exercise_expectations",
         "exercise_framework",
         "student_checker",
     )
@@ -78,7 +82,15 @@ class TemplatePackager:
         """
         for file_dict in files.values():
             safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
-            safe_copy_file(file_dict["test"], workspace / file_dict["test_export"])
+            tests_export_dir = workspace / file_dict["tests_export_dir"]
+            if file_dict["tests_export_dir"] == Path("tests"):
+                safe_copy_file(file_dict["test"], workspace / file_dict["test_export"])
+                continue
+            safe_copy_directory(
+                file_dict["tests_dir"],
+                tests_export_dir,
+                ignore_patterns=self.EXERCISE_TEST_COPY_EXCLUDE_PATTERNS,
+            )
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.

@@ -7,7 +7,7 @@ import pytest
 from exercise_runtime_support.exercise_framework.expectations_helpers import (
     is_valid_explanation,
 )
-from tests.exercise_expectations import ex005_sequence_debug_logic as ex005
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -26,6 +26,7 @@ def _explanation_tag(exercise_no: int) -> str:
 
 
 _EX005_EXERCISE_KEY = "ex005_sequence_debug_logic"
+ex005 = load_exercise_test_module(_EX005_EXERCISE_KEY, "expectations")
 _CACHE = RuntimeCache()
 _RECTANGLE_SIDE_COUNT = 2
 

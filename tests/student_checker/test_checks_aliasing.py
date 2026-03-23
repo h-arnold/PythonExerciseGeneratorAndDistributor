@@ -5,7 +5,7 @@ from typing import TypeVar
 
 import pytest
 
-import tests.student_checker.checks as student_checks
+import exercise_runtime_support.student_checker.checks as student_checks
 
 CheckDef = TypeVar(
     "CheckDef", student_checks.ExerciseCheckDefinition, student_checks.Ex006CheckDefinition

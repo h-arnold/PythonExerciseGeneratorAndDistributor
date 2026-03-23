@@ -16,11 +16,10 @@ from exercise_runtime_support.exercise_framework import (
     extract_tagged_code,
     run_cell_and_capture_output,
 )
-from tests.exercise_expectations import (
-    ex002_sequence_modify_basics_exercise_expectations as ex002,
-)
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 _EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
+ex002 = load_exercise_test_module(_EX002_EXERCISE_KEY, "expectations")
 _CACHE = RuntimeCache()
 
 

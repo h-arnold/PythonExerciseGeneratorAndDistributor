@@ -1,4 +1,4 @@
-"""Shared AST helpers for ex007 construct checks."""
+"""Exercise-local AST helpers for ex007 construct checks."""
 
 from __future__ import annotations
 
@@ -281,15 +281,13 @@ def _collect_direct_expression_details(
     op_types: set[type[ast.operator]] = set()
 
     for node in ast.walk(expr):
-        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and node.id in input_names:
+        if isinstance(node, ast.Name) and node.id in input_names:
             direct_input_names.add(node.id)
-            continue
-        if isinstance(node, ast.Call):
+        elif isinstance(node, ast.Call):
             call_name = _call_name(node)
             if call_name is not None:
                 call_names.add(call_name)
-            continue
-        if isinstance(node, ast.BinOp):
+        elif isinstance(node, ast.BinOp):
             op_types.add(type(node.op))
 
     return direct_input_names, call_names, op_types
@@ -303,67 +301,58 @@ def _merge_transitive_expression_details(
     call_names: set[str],
     op_types: set[type[ast.operator]],
 ) -> None:
-    for name_node in _iter_referenced_names(expr):
-        if name_node.id in context.input_names or name_node.id in context.seen_names:
+    for node in ast.walk(expr):
+        if not isinstance(node, ast.Name):
             continue
-        assignment = _last_assignment_before(
+        assignment = _latest_assignment_before_line(
             context.assignments,
-            name_node.id,
-            getattr(name_node, "lineno", context.before_line),
+            node.id,
+            before_line=context.before_line,
         )
-        if assignment is None:
+        if assignment is None or node.id in context.seen_names:
             continue
         nested = _analyse_expression(
             assignment.value,
             before_line=getattr(assignment, "lineno", context.before_line),
             assignments=context.assignments,
             input_names=context.input_names,
-            seen_names=context.seen_names | {name_node.id},
+            seen_names=context.seen_names | {node.id},
         )
         transitive_input_names.update(nested.input_names)
         call_names.update(nested.call_names)
         op_types.update(nested.op_types)
 
 
-def _iter_referenced_names(expr: ast.AST) -> list[ast.Name]:
-    return [
-        node
-        for node in ast.walk(expr)
-        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load)
-    ]
-
-
-def _last_assignment_before(
+def _latest_assignment_before_line(
     assignments: dict[str, list[ast.Assign]],
     name: str,
+    *,
     before_line: int,
 ) -> ast.Assign | None:
-    for assignment in reversed(assignments.get(name, [])):
-        if getattr(assignment, "lineno", 0) < before_line:
-            return assignment
-    return None
+    candidates = assignments.get(name)
+    if not candidates:
+        return None
+    eligible = [node for node in candidates if getattr(node, "lineno", 0) < before_line]
+    if not eligible:
+        return None
+    return eligible[-1]
 
 
 def _call_name(node: ast.Call) -> str | None:
     if isinstance(node.func, ast.Name):
         return node.func.id
-    if (
-        isinstance(node.func, ast.Attribute)
-        and isinstance(node.func.value, ast.Name)
-        and node.func.value.id == "builtins"
-    ):
-        return node.func.attr
     return None
 
 
-def _operator_token(op_type: type[ast.operator]) -> str:
-    mapping = {
+def _operator_token(operator_type: type[ast.operator]) -> str:
+    mapping: dict[type[ast.operator], str] = {
         ast.Add: "+",
+        ast.Sub: "-",
+        ast.Mult: "*",
         ast.Div: "/",
         ast.FloorDiv: "//",
-        ast.Mult: "*",
     }
-    return mapping.get(op_type, op_type.__name__)
+    return mapping.get(operator_type, operator_type.__name__)
 
 
 class _AssignmentCollector(ast.NodeVisitor):
@@ -375,12 +364,3 @@ class _AssignmentCollector(ast.NodeVisitor):
             if isinstance(target, ast.Name):
                 self.assignments.setdefault(target.id, []).append(node)
         self.generic_visit(node)
-
-
-__all__ = [
-    "OutputFlowAnalysis",
-    "has_binop",
-    "has_call",
-    "input_assigned_names",
-    "interactive_construct_issues",
-]

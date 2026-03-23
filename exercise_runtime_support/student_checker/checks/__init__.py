@@ -1,24 +1,45 @@
-"""Check implementations for each notebook."""
+"""Generic check entry points backed by exercise-local test support modules."""
 
 from __future__ import annotations
 
 import sys
 from types import ModuleType
-from typing import Any, Final, NamedTuple
+from typing import Any, Final, NamedTuple, TypeVar
 
+from exercise_runtime_support.exercise_catalogue import get_catalogue_key_for_exercise_id
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+from exercise_runtime_support.notebook_grader import NotebookGradingError
+
+from ..models import Ex002CheckResult, Ex006CheckResult, ExerciseCheckResult
 from .base import Ex006CheckDefinition, ExerciseCheckDefinition
-from .ex002 import check_ex002_summary, run_ex002_checks
-from .ex003 import EX003_CHECKS, check_ex003, run_ex003_checks
-from .ex004 import EX004_CHECKS, check_ex004, run_ex004_checks
-from .ex005 import EX005_CHECKS, check_ex005, run_ex005_checks
-from .ex006 import EX006_CHECKS, check_ex006, run_ex006_checks
-from .ex007 import EX007_CHECKS, check_ex007, run_ex007_checks
 
-_EX003_CHECKS = EX003_CHECKS
-_EX004_CHECKS = EX004_CHECKS
-_EX005_CHECKS = EX005_CHECKS
-_EX006_CHECKS = EX006_CHECKS
-_EX007_CHECKS = EX007_CHECKS
+
+def _load_ex002_checks() -> list[Any]:
+    module = load_exercise_test_module(
+        get_catalogue_key_for_exercise_id(2),
+        "framework_support",
+    )
+    return list(module.EX002_CHECKS)
+
+
+def _load_check_list(exercise_id: int) -> list[Any]:
+    module = load_exercise_test_module(
+        get_catalogue_key_for_exercise_id(exercise_id),
+        "student_checker_support",
+    )
+    return list(module.CHECKS)
+
+
+_EX003_CHECKS = _load_check_list(3)
+EX003_CHECKS = _EX003_CHECKS
+_EX004_CHECKS = _load_check_list(4)
+EX004_CHECKS = _EX004_CHECKS
+_EX005_CHECKS = _load_check_list(5)
+EX005_CHECKS = _EX005_CHECKS
+_EX006_CHECKS = _load_check_list(6)
+EX006_CHECKS = _EX006_CHECKS
+_EX007_CHECKS = _load_check_list(7)
+EX007_CHECKS = _EX007_CHECKS
 
 __all__ = [
     "EX003_CHECKS",
@@ -44,34 +65,28 @@ __all__ = [
 
 
 class _CheckListBinding(NamedTuple):
-    module_name: str
     private_attr: str
     public_attr: str
 
 
 _CHECK_LIST_BINDINGS: Final[dict[str, _CheckListBinding]] = {
     "EX003_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex003",
         private_attr="_EX003_CHECKS",
         public_attr="EX003_CHECKS",
     ),
     "EX004_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex004",
         private_attr="_EX004_CHECKS",
         public_attr="EX004_CHECKS",
     ),
     "EX005_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex005",
         private_attr="_EX005_CHECKS",
         public_attr="EX005_CHECKS",
     ),
     "EX006_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex006",
         private_attr="_EX006_CHECKS",
         public_attr="EX006_CHECKS",
     ),
     "EX007_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex007",
         private_attr="_EX007_CHECKS",
         public_attr="EX007_CHECKS",
     ),
@@ -96,14 +111,6 @@ def _mirror_package_aliases(
         base_setattr(module, alias_name, value)
 
 
-def _propagate_to_submodule(binding: _CheckListBinding, value: Any) -> None:
-    module = sys.modules.get(binding.module_name)
-    if module is None:
-        return
-    setattr(module, binding.private_attr, value)
-    setattr(module, binding.public_attr, value)
-
-
 class _ChecksModule(ModuleType):
     def __setattr__(self, name: str, value: Any) -> None:
         ModuleType.__setattr__(self, name, value)
@@ -111,7 +118,106 @@ class _ChecksModule(ModuleType):
         if binding is None:
             return
         _mirror_package_aliases(self, binding, name, value)
-        _propagate_to_submodule(binding, value)
+
+
+ResultT = TypeVar("ResultT", Ex002CheckResult, Ex006CheckResult, ExerciseCheckResult)
+
+
+def _run_checks(
+    checks: list[Any],
+    result_type: type[ResultT],
+) -> list[ResultT]:
+    results: list[ResultT] = []
+    for check in checks:
+        try:
+            issues = check.check()
+        except NotebookGradingError as exc:
+            issues = [str(exc)]
+        results.append(
+            result_type(
+                exercise_no=check.exercise_no,
+                title=check.title,
+                passed=len(issues) == 0,
+                issues=issues,
+            )
+        )
+    return results
+
+
+def _summary(results: list[ExerciseCheckResult | Ex002CheckResult | Ex006CheckResult]) -> list[str]:
+    return [issue for result in results for issue in result.issues]
+
+
+def check_ex002_summary() -> list[str]:
+    """Run summary checks for ex002."""
+
+    return _summary(run_ex002_checks())
+
+
+def run_ex002_checks() -> list[Ex002CheckResult]:
+    """Run detailed checks for ex002."""
+
+    return _run_checks(_load_ex002_checks(), Ex002CheckResult)
+
+
+def check_ex003() -> list[str]:
+    """Run checks for ex003."""
+
+    return _summary(run_ex003_checks())
+
+
+def run_ex003_checks() -> list[ExerciseCheckResult]:
+    """Run detailed checks for ex003."""
+
+    return _run_checks(EX003_CHECKS, ExerciseCheckResult)
+
+
+def check_ex004() -> list[str]:
+    """Run checks for ex004."""
+
+    return _summary(run_ex004_checks())
+
+
+def run_ex004_checks() -> list[ExerciseCheckResult]:
+    """Run detailed checks for ex004."""
+
+    return _run_checks(EX004_CHECKS, ExerciseCheckResult)
+
+
+def check_ex005() -> list[str]:
+    """Run checks for ex005."""
+
+    return _summary(run_ex005_checks())
+
+
+def run_ex005_checks() -> list[ExerciseCheckResult]:
+    """Run detailed checks for ex005."""
+
+    return _run_checks(EX005_CHECKS, ExerciseCheckResult)
+
+
+def check_ex006() -> list[str]:
+    """Run checks for ex006."""
+
+    return _summary(run_ex006_checks())
+
+
+def run_ex006_checks() -> list[Ex006CheckResult]:
+    """Run detailed checks for ex006."""
+
+    return _run_checks(EX006_CHECKS, Ex006CheckResult)
+
+
+def check_ex007() -> list[str]:
+    """Run checks for ex007."""
+
+    return _summary(run_ex007_checks())
+
+
+def run_ex007_checks() -> list[ExerciseCheckResult]:
+    """Run detailed checks for ex007."""
+
+    return _run_checks(EX007_CHECKS, ExerciseCheckResult)
 
 
 module = sys.modules[__name__]

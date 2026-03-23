@@ -1,18 +1,21 @@
-"""Autograde checks for canonical ex002 and payload builders."""
+"""Repository-only autograde parity checks for canonical ex002."""
 
 from __future__ import annotations
 
 import copy
+import json
+import os
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
 
+from exercise_runtime_support.exercise_framework import EX002_CHECKS
 from exercise_runtime_support.helpers import build_autograde_env
-from tests.exercise_framework.expectations import EX002_CHECKS
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
+REPO_ROOT = Path(__file__).resolve().parents[5]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -20,10 +23,9 @@ from scripts import build_autograde_payload  # noqa: E402
 from scripts.build_autograde_payload import AutogradeResults  # noqa: E402
 
 PLUGIN_NAME = "tests.autograde_plugin"
-EX002_TEST_FILES = (
-    "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
-)
+_EX002_TEST_FILE = str(Path(__file__).with_name("test_ex002_sequence_modify_basics.py"))
 EXPECTED_EX002_TEST_COUNT = len(EX002_CHECKS)
+EXPECTED_TASK_DISTRIBUTION = Counter(check.exercise_no for check in EX002_CHECKS)
 MIN_STATUS_MUTATION_TESTS = 2
 
 
@@ -38,7 +40,7 @@ def _run_ex002_autograde(tmp_path: Path) -> AutogradeResults:
         "-p",
         PLUGIN_NAME,
         f"--autograde-results-path={results_path}",
-        *EX002_TEST_FILES,
+        _EX002_TEST_FILE,
     ]
     completed = subprocess.run(
         command,
@@ -82,6 +84,45 @@ def _mutate_statuses(raw_results: AutogradeResults) -> AutogradeResults:
 
     mutated["status"] = "error"
     return mutated
+
+
+def test_ex002_autograde_task_distribution_and_count_parity(tmp_path: Path) -> None:
+    results_path = tmp_path / "autograde-results.json"
+    env = os.environ.copy()
+    env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
+
+    command = [
+        sys.executable,
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        PLUGIN_NAME,
+        f"--autograde-results-path={results_path}",
+        _EX002_TEST_FILE,
+    ]
+
+    completed = subprocess.run(
+        command,
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert results_path.exists()
+
+    payload = json.loads(results_path.read_text(encoding="utf-8"))
+    tests = payload["tests"]
+
+    assert len(tests) == EXPECTED_EX002_TEST_COUNT
+
+    task_counts = Counter(test.get("taskno") for test in tests)
+    filtered_task_counts = {
+        int(task): count for task, count in task_counts.items() if task is not None
+    }
+
+    assert filtered_task_counts == dict(EXPECTED_TASK_DISTRIBUTION)
 
 
 def test_autograde_plugin_ex002_status_and_task_metadata(

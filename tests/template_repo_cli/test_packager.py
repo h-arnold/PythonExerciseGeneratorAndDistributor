@@ -91,7 +91,6 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         "test_build_autograde_payload.py",
     )
     required_directories = (
-        "exercise_expectations",
         "exercise_framework",
         "student_checker",
     )
@@ -166,7 +165,14 @@ class TestCopyFiles:
         "expected_relative_path",
         [
             pytest.param("notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
-            pytest.param("tests/test_ex002_sequence_modify_basics.py", id="test"),
+            pytest.param(
+                "tests/sequence/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+                id="test",
+            ),
+            pytest.param(
+                "tests/sequence/ex002_sequence_modify_basics/expectations.py",
+                id="support-module",
+            ),
         ],
     )
     def test_copy_exercise_files(
@@ -267,6 +273,7 @@ class TestCopyFiles:
         # Structure should be preserved
         assert (temp_dir / "notebooks").exists()
         assert (temp_dir / "tests").exists()
+        assert (temp_dir / "tests/sequence/ex002_sequence_modify_basics").exists()
 
 
 class TestGenerateFiles:
@@ -462,7 +469,6 @@ class TestPackageIntegrity:
         "missing_path",
         [
             pytest.param("tests/exercise_framework", id="exercise-framework"),
-            pytest.param("tests/exercise_expectations", id="exercise-expectations"),
             pytest.param("tests/student_checker", id="student-checker"),
             pytest.param("tests/helpers.py", id="helpers"),
             pytest.param("tests/test_autograde_plugin.py", id="autograde-test"),
@@ -565,7 +571,7 @@ class TestPackageIntegrity:
                 "pytest",
                 "--collect-only",
                 "-q",
-                "tests/test_ex002_sequence_modify_basics.py",
+                "tests/sequence/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
             ],
             cwd=temp_dir,
             capture_output=True,

@@ -8,14 +8,15 @@ from pathlib import Path
 import pytest
 
 from exercise_runtime_support.exercise_catalogue import get_catalogue_entry, get_exercise_catalogue
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from exercise_runtime_support.student_checker import api as student_api
-from exercise_runtime_support.student_checker.checks import ex003 as ex003_checks
 from exercise_runtime_support.student_checker.models import ExerciseCheckResult, NotebookCheckSpec
 from exercise_runtime_support.student_checker.reporting import CheckResult
-from tests.exercise_expectations import (
-    EX003_EXPECTED_INPUT_MESSAGES,
-    EX003_EXPECTED_PROMPTS,
-    EX003_EXPECTED_STATIC_OUTPUT,
+
+ex003 = load_exercise_test_module("ex003_sequence_modify_variables", "expectations")
+ex003_checks = load_exercise_test_module(
+    "ex003_sequence_modify_variables",
+    "student_checker_support",
 )
 
 _EX003_PROMPT_FLOW_INPUTS = {
@@ -84,7 +85,7 @@ def test_check_exercise_passes_exercise_key_to_student_checker_helpers(
     def fake_run_cell_and_capture_output(exercise_reference: str, *, tag: str) -> str:
         assert_exercise_key(exercise_reference)
         exercise_no = int(tag.removeprefix("exercise"))
-        return f"{EX003_EXPECTED_STATIC_OUTPUT[exercise_no]}\n"
+        return f"{ex003.EX003_EXPECTED_STATIC_OUTPUT[exercise_no]}\n"
 
     def fake_run_cell_with_input(
         exercise_reference: str,
@@ -96,8 +97,8 @@ def test_check_exercise_passes_exercise_key_to_student_checker_helpers(
         exercise_no = int(tag.removeprefix("exercise"))
         assert inputs == _EX003_PROMPT_FLOW_INPUTS[exercise_no]
         values = dict(zip(_EX003_PROMPT_FLOW_PLACEHOLDERS[exercise_no], inputs, strict=True))
-        prompts = EX003_EXPECTED_PROMPTS[exercise_no]
-        message = EX003_EXPECTED_INPUT_MESSAGES[exercise_no].format(**values)
+        prompts = ex003.EX003_EXPECTED_PROMPTS[exercise_no]
+        message = ex003.EX003_EXPECTED_INPUT_MESSAGES[exercise_no].format(**values)
         return "".join(f"{line}\n" for line in (*prompts, message))
 
     def fake_print_ex003_results(_results: Sequence[ExerciseCheckResult]) -> None:

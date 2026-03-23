@@ -1,4 +1,4 @@
-"""Integration tests for canonical ex002 task metadata."""
+"""Repository-only metadata checks for canonical ex002 task markers."""
 
 from __future__ import annotations
 
@@ -8,15 +8,12 @@ from collections.abc import Callable, Iterable
 from pathlib import Path
 from types import ModuleType
 
+from exercise_runtime_support.exercise_framework import EX002_CHECKS
 from exercise_runtime_support.exercise_framework.fixtures import TaskMark
-from tests.exercise_framework.expectations import EX002_CHECKS
 
 pytest_plugins = ("tests.exercise_framework.fixtures",)
 
-_CANONICAL_EX002_TEST_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py"
-)
+_CANONICAL_TEST_PATH = Path(__file__).with_name("test_ex002_sequence_modify_basics.py")
 
 
 def _expected_task_names() -> set[str]:
@@ -24,9 +21,9 @@ def _expected_task_names() -> set[str]:
 
 
 def _load_module(module_name: str) -> ModuleType:
-    spec = importlib.util.spec_from_file_location(module_name, _CANONICAL_EX002_TEST_PATH)
+    spec = importlib.util.spec_from_file_location(module_name, _CANONICAL_TEST_PATH)
     if spec is None or spec.loader is None:
-        raise RuntimeError(f"Could not load ex002 test module from {_CANONICAL_EX002_TEST_PATH}")
+        raise RuntimeError(f"Could not load ex002 test module from {_CANONICAL_TEST_PATH}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -41,7 +38,6 @@ def test_ex002_task_marker_distribution_matches_expectations(
     canonical_marks: list[TaskMark] = task_marker_collector(canonical_module)
 
     expected_distribution: Counter[int] = Counter(check.exercise_no for check in EX002_CHECKS)
-
     canonical_distribution: Counter[int] = task_distribution_builder(canonical_marks)
 
     assert canonical_distribution == expected_distribution

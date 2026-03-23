@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pytest import CaptureFixture, MonkeyPatch
 
-import tests.student_checker.checks as student_checks
+import exercise_runtime_support.student_checker.checks as student_checks
 from tests.notebook_grader import NotebookGradingError
 from tests.student_checker import (
     DetailedCheckResult,

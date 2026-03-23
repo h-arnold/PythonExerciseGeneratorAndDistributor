@@ -1,16 +1,19 @@
+"""Repository-only construct helper checks for ex007."""
+
 from __future__ import annotations
 
 import ast
 
-from exercise_runtime_support.exercise_framework.ex007_construct_checks import (
-    interactive_construct_issues,
-)
-from tests.exercise_expectations import ex007_sequence_debug_casting as ex007
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+
+_EXERCISE_KEY = "ex007_sequence_debug_casting"
+construct_checks = load_exercise_test_module(_EXERCISE_KEY, "construct_checks")
+ex007 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
 
 
 def _construct_issues(code: str, exercise_no: int) -> list[str]:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
-    return interactive_construct_issues(
+    return construct_checks.interactive_construct_issues(
         ast.parse(code),
         expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
