@@ -90,10 +90,7 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         "test_autograde_plugin.py",
         "test_build_autograde_payload.py",
     )
-    required_directories = (
-        "exercise_framework",
-        "student_checker",
-    )
+    required_directories = ("exercise_framework",)
 
     for filename in required_files:
         src = repo_root / "tests" / filename
@@ -511,7 +508,6 @@ class TestPackageIntegrity:
         "missing_path",
         [
             pytest.param("tests/exercise_framework", id="exercise-framework"),
-            pytest.param("tests/student_checker", id="student-checker"),
             pytest.param("tests/helpers.py", id="helpers"),
             pytest.param("tests/test_autograde_plugin.py",
                          id="autograde-test"),

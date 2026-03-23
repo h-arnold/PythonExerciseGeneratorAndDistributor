@@ -30,13 +30,10 @@ CONSUMER_MATRIX: Final[tuple[ConsumerMatrixEntry, ...]] = (
         target_entry_point="exercise_runtime_support.notebook_grader",
     ),
     ConsumerMatrixEntry(
-        surface="framework and student-checker APIs",
-        files=(
-            Path("tests/exercise_framework/runtime.py"),
-            Path("tests/student_checker/notebook_runtime.py"),
-        ),
-        current_entry_point="tests.* compatibility wrappers",
-        target_entry_point="exercise_runtime_support.exercise_framework.* and exercise_runtime_support.student_checker.*",
+        surface="framework API wrapper",
+        files=(Path("tests/exercise_framework/runtime.py"),),
+        current_entry_point="tests.exercise_framework.runtime wrapper",
+        target_entry_point="exercise_runtime_support.exercise_framework.*",
     ),
     ConsumerMatrixEntry(
         surface="packager and collector CLI",

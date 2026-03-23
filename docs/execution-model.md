@@ -76,7 +76,7 @@ The following matrix records each active consumer surface, its current entry poi
 | Surface | Current entry point | Target entry point |
 | --- | --- | --- |
 | runtime/grading wrapper | tests.notebook_grader wrapper | exercise_runtime_support.notebook_grader |
-| framework and student-checker APIs | tests.* compatibility wrappers | exercise_runtime_support.exercise_framework.* and exercise_runtime_support.student_checker.* |
+| framework API wrapper | tests.exercise_framework.runtime wrapper | exercise_runtime_support.exercise_framework.* |
 | packager and collector CLI | scripts/template_repo_cli/core/* imports and packaging surfaces | exercise_runtime_support package copied and referenced |
 | exercise scaffolder | emitted import from exercise_runtime_support.exercise_framework.runtime | emitted import from exercise_runtime_support.exercise_framework.runtime |
 | repository workflows | scripts/run_pytest_variant.py --variant solution | scripts/run_pytest_variant.py --variant solution |

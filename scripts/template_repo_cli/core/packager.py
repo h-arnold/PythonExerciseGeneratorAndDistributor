@@ -39,10 +39,7 @@ class TemplatePackager:
         "test_build_autograde_payload.py",
     )
 
-    REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = (
-        "exercise_framework",
-        "student_checker",
-    )
+    REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = ("exercise_framework",)
 
     REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = (
         "exercise_runtime_support",)

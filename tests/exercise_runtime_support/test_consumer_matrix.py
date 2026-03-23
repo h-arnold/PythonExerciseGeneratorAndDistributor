@@ -13,7 +13,7 @@ def test_consumer_matrix_has_required_surfaces() -> None:
     assert len(CONSUMER_MATRIX) == len(surfaces)
     assert {
         "runtime/grading wrapper",
-        "framework and student-checker APIs",
+        "framework API wrapper",
         "packager and collector CLI",
         "exercise scaffolder",
         "repository workflows",

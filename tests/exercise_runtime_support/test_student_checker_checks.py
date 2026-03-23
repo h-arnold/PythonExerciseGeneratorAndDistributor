@@ -1,3 +1,5 @@
+"""Tests for ``exercise_runtime_support.student_checker.checks``."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -28,26 +30,11 @@ def _make_check(
 @pytest.mark.parametrize(
     ("exercise_key", "def_cls"),
     [
-        (
-            "ex003_sequence_modify_variables",
-            student_checks.ExerciseCheckDefinition,
-        ),
-        (
-            "ex004_sequence_debug_syntax",
-            student_checks.ExerciseCheckDefinition,
-        ),
-        (
-            "ex005_sequence_debug_logic",
-            student_checks.ExerciseCheckDefinition,
-        ),
-        (
-            "ex006_sequence_modify_casting",
-            student_checks.ExerciseCheckDefinition,
-        ),
-        (
-            "ex007_sequence_debug_casting",
-            student_checks.ExerciseCheckDefinition,
-        ),
+        ("ex003_sequence_modify_variables", student_checks.ExerciseCheckDefinition),
+        ("ex004_sequence_debug_syntax", student_checks.ExerciseCheckDefinition),
+        ("ex005_sequence_debug_logic", student_checks.ExerciseCheckDefinition),
+        ("ex006_sequence_modify_casting", student_checks.ExerciseCheckDefinition),
+        ("ex007_sequence_debug_casting", student_checks.ExerciseCheckDefinition),
     ],
 )
 def test_cached_checks_override_loader(
@@ -76,8 +63,7 @@ def test_run_exercise_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> No
     sentinel_title = "Sentinel ex003"
     sentinel_no = 303
     sentinel_checks = [
-        _make_check(student_checks.ExerciseCheckDefinition,
-                    sentinel_no, sentinel_title)
+        _make_check(student_checks.ExerciseCheckDefinition, sentinel_no, sentinel_title)
     ]
     cache: dict[str, list[Any]] = {}
     load_calls: list[str] = []
@@ -87,8 +73,7 @@ def test_run_exercise_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> No
         return sentinel_checks
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
-    monkeypatch.setattr(student_checks, "_load_check_list",
-                        fake_load_check_list)
+    monkeypatch.setattr(student_checks, "_load_check_list", fake_load_check_list)
 
     first_results = student_checks.run_exercise_checks(exercise_key)
     second_results = student_checks.run_exercise_checks(exercise_key)
@@ -111,10 +96,8 @@ def test_run_exercise_checks_supports_generic_ex002_path(
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
 
-    results = student_checks.run_exercise_checks(
-        "ex002_sequence_modify_basics")
+    results = student_checks.run_exercise_checks("ex002_sequence_modify_basics")
 
     assert len(results) == _EX002_CHECK_RESULT_COUNT
-    assert {result.title for result in results} == {
-        "Construct", "Formatting", "Logic"}
+    assert {result.title for result in results} == {"Construct", "Formatting", "Logic"}
     assert {result.exercise_no for result in results} == set(range(1, 11))

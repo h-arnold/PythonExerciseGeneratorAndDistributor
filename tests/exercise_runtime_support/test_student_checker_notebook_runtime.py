@@ -1,19 +1,17 @@
+"""Tests for ``exercise_runtime_support.student_checker.notebook_runtime``."""
+
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
-from pytest import MonkeyPatch
 
 from exercise_runtime_support.notebook_grader import NotebookGradingError
-from tests.student_checker import notebook_runtime as _notebook_runtime
-
-notebook_runtime = cast(Any, _notebook_runtime)
+from exercise_runtime_support.student_checker import notebook_runtime
 
 
 def test_run_tagged_cell_uses_static_runner_when_no_input_calls(
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls = {"static": 0, "interactive": 0}
 
@@ -42,7 +40,7 @@ def test_run_tagged_cell_uses_static_runner_when_no_input_calls(
 
 
 def test_run_tagged_cell_uses_mocked_inputs_for_interactive_cells(
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls = {"static": 0, "interactive": 0}
 
@@ -71,7 +69,7 @@ def test_run_tagged_cell_uses_mocked_inputs_for_interactive_cells(
     assert calls == {"static": 0, "interactive": 1}
 
 
-def test_count_input_calls_detects_name_and_builtins_calls(monkeypatch: MonkeyPatch) -> None:
+def test_count_input_calls_detects_name_and_builtins_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     expected_count = 2
     source = "first = input('A: ')\nsecond = builtins.input('B: ')\nprint(first, second)\n"
 
@@ -86,7 +84,7 @@ def test_count_input_calls_detects_name_and_builtins_calls(monkeypatch: MonkeyPa
 
 
 def test_run_notebook_checks_marks_failure_when_execution_raises(
-    monkeypatch: MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     def fake_run_tagged_cell(notebook_path: str, tag: str) -> None:
         raise NotebookGradingError("Execution failed")
@@ -100,7 +98,7 @@ def test_run_notebook_checks_marks_failure_when_execution_raises(
     assert results[0].message == "Execution failed"
 
 
-def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: MonkeyPatch) -> None:
+def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
     attempt_lengths: list[int] = []
 
     def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
@@ -124,7 +122,7 @@ def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: MonkeyPatch) -
     assert attempt_lengths == [1, 2]
 
 
-def test_run_tagged_cell_propagates_real_errors(monkeypatch: MonkeyPatch) -> None:
+def test_run_tagged_cell_propagates_real_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
         return 1
 
@@ -142,7 +140,7 @@ def test_run_tagged_cell_propagates_real_errors(monkeypatch: MonkeyPatch) -> Non
         notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
 
 
-def test_run_tagged_cell_stops_after_max_attempts(monkeypatch: MonkeyPatch) -> None:
+def test_run_tagged_cell_stops_after_max_attempts(monkeypatch: pytest.MonkeyPatch) -> None:
     attempts = 0
     limit = 2
 
