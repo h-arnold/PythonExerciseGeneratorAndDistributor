@@ -28,9 +28,10 @@ def test_debug_explanations_have_content() -> None:
 
     This scans canonical student notebooks under
     `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and asserts
-    that any cell tagged `explanationN` contains more than 10 non-whitespace
-    characters. This enforces the instructor requirement that students provide a
-    short explanation of what happened when they ran the buggy program.
+    that any cell tagged `explanationN` contains more than 10 characters after
+    leading and trailing whitespace is stripped. This enforces the instructor
+    requirement that students provide a short explanation of what happened when
+    they ran the buggy program.
     """
     for nb_path in _get_canonical_student_notebooks():
         for tag, source in _find_explanation_cells(nb_path):
