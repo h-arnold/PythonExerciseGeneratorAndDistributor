@@ -4,7 +4,7 @@ This module provides the canonical resolver API for the new metadata-driven
 layout.  It accepts ONLY exercise_key as input; non-string path objects
 raise TypeError and path-like strings fail fast with a clear resolver error.
 
-PYTUTOR_NOTEBOOKS_DIR is deliberately ignored; this resolver targets the
+legacy notebook-root override env var is deliberately ignored; this resolver targets the
 canonical exercise home convention, `exercises/<construct>/<exercise_key>/`.
 """
 

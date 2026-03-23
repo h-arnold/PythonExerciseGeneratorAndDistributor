@@ -38,7 +38,6 @@ def configure_variant_environment(
 ) -> None:
     """Store the explicit notebook variant in an environment mapping."""
     env[ACTIVE_VARIANT_ENV_VAR] = variant
-    env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
 
 
 def resolve_variant_notebook_path(

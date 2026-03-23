@@ -4,7 +4,7 @@ This document describes how to use the CLI tool to scaffold new Python exercises
 
 > Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
 
-## Migration status
+## Repository status
 
 The scaffolder now writes directly to the canonical authoring tree at `exercises/<construct>/<exercise_key>/`. For new exercises, use the files generated there and do not move scaffold output after creation.
 

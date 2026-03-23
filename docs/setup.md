@@ -1,12 +1,12 @@
 # Setup Guide
 
-This guide covers setting up the PythonTutorExercises repository for development or use in a classroom.
+This guide covers setting up the PythonExerciseGeneratorAndDistributor repository for development or use in a classroom.
 
 > Source of truth: execution/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
 
-## Migration status
+## Repository status
 
-Use `--variant` workflows as the canonical way to select student/solution notebooks. `PYTUTOR_NOTEBOOKS_DIR` is transitional compatibility only.
+Use `--variant` workflows as the canonical way to select student/solution notebooks. The source repository now uses the exercise-local layout under `exercises/<construct>/<exercise_key>/`; flattened notebook and test paths are packaging outputs for exported Classroom repositories.
 
 ## Recommended environment
 
@@ -24,8 +24,8 @@ For a consistent toolchain, open the repository in GitHub Codespaces or the supp
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/Bassaleg-School/PythonTutorExercises.git
-cd PythonTutorExercises
+git clone <your-repository-url>/PythonExerciseGeneratorAndDistributor.git
+cd PythonExerciseGeneratorAndDistributor
 ```
 
 ### 2. Install uv (if you are not using the dev container)
@@ -281,12 +281,6 @@ Students sometimes forget imports. Remind them that:
 - Each tagged cell is executed in isolation
 - All necessary imports must be in the tagged cell
 - They cannot rely on imports from other cells
-
-## Environment Variables
-
-### Transitional compatibility note (`PYTUTOR_NOTEBOOKS_DIR`)
-
-`PYTUTOR_NOTEBOOKS_DIR` is temporarily accepted in some legacy paths, but do not use it for new workflows. Prefer `scripts/run_pytest_variant.py --variant ...` as the canonical interface.
 
 ## CI/CD Workflows
 

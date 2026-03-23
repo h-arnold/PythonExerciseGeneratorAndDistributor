@@ -4,9 +4,9 @@ A teaching platform for secondary-school programming that keeps everything in th
 
 > Source of truth: runtime, discovery, variant, and mapping contracts are defined in [docs/execution-model.md](docs/execution-model.md).
 
-### Migration status
+### Repository status
 
-Canonical behaviour is defined in the execution model contract. Flattened notebook/test paths are still transitional export surfaces while migration is completed.
+The source repository now uses the canonical exercise-local layout described in [docs/execution-model.md](docs/execution-model.md). Flattened notebook and test paths remain export-only packaging outputs for GitHub Classroom templates, not source-repository authoring surfaces.
 
 ## Key Benefits and Features
 
@@ -48,7 +48,7 @@ At the end of each student notebook, there is a self-check cell that runs a simp
 What works (mostly):
 
 - Exercise scaffolding and tests via the generation workflow
-- Tagged‑cell autograding ([tests/notebook_grader.py](tests/notebook_grader.py))
+- Tagged-cell autograding via [`exercise_runtime_support`](exercise_runtime_support/) with the compatibility wrapper at [tests/notebook_grader.py](tests/notebook_grader.py)
 - Template repo creation with notebooks, tests, and VS Code settings
 - GitHub Classroom workflow (template repo + autograding)
 
@@ -107,9 +107,8 @@ Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 ## Repository layout (high level)
 
 - [exercises/](exercises/) — canonical authoring tree for exercise-specific assets: `exercises/<construct>/<exercise_key>/`, including exercise-local tests under `exercises/<construct>/<exercise_key>/tests/`
-- [notebooks/](notebooks/) — transitional and exported flattened student notebooks
-- [notebooks/solutions/](notebooks/solutions/) — transitional flattened instructor solutions
-- [tests/](tests/) — shared pytest discovery plus transitional/exported flattened exercise tests
+- exported Classroom templates flatten notebooks and exercise tests at packaging time
+- [tests/](tests/) — shared pytest discovery, integration tests, and repository-level validation
 - [exercise_runtime_support/](exercise_runtime_support/) — shared runtime helpers used by tests and exported templates
 - [scripts/](scripts/) — exercise generator + template‑repo CLI
 - [docs/](docs/) — documentation

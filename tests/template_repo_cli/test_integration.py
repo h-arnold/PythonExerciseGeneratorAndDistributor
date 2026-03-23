@@ -227,7 +227,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "student"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -293,7 +292,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "student"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -363,7 +361,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "student"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -405,7 +402,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env.pop("PYTUTOR_ACTIVE_VARIANT", None)
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
 
         command = [
             sys.executable,
@@ -505,7 +501,6 @@ class TestEndToEndDryRun:
 
             env = os.environ.copy()
             env["PYTUTOR_ACTIVE_VARIANT"] = "student"
-            env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
             existing_pythonpath = env.get("PYTHONPATH")
             env["PYTHONPATH"] = (
                 f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -588,7 +583,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "student"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -679,7 +673,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -761,7 +754,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"
@@ -840,7 +832,6 @@ class TestEndToEndDryRun:
 
         env = os.environ.copy()
         env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
-        env.pop("PYTUTOR_NOTEBOOKS_DIR", None)
         existing_pythonpath = env.get("PYTHONPATH")
         env["PYTHONPATH"] = (
             f"{shadow_root}{os.pathsep}{existing_pythonpath}"

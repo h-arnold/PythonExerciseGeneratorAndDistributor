@@ -17,9 +17,9 @@ Phase 2 canonical behaviour is proved by both:
    to test error cases (missing notebooks for canonical exercise, missing exercise.json,
    wrong schema_version) independently of the live filesystem.
 
-## PYTUTOR_NOTEBOOKS_DIR
+## legacy notebook-root override env var
 
-`PYTUTOR_NOTEBOOKS_DIR` is deliberately **ignored** by this resolver.  It was a
+`legacy notebook-root override env var` is deliberately **ignored** by this resolver.  It was a
 legacy mechanism for switching between student and solution notebook roots.  The
 new resolver uses an explicit `variant` argument (`"student"` or `"solution"`) and
 reads from the canonical `exercises/<construct>/<exercise_key>/notebooks/` tree.
@@ -29,7 +29,7 @@ reads from the canonical `exercises/<construct>/<exercise_key>/notebooks/` tree.
 The following modules still use legacy path-based resolution and must be migrated
 in later phases:
 
-- `tests/notebook_grader.py` – `resolve_notebook_path()` uses `PYTUTOR_NOTEBOOKS_DIR`
+- `tests/notebook_grader.py` – `resolve_notebook_path()` uses `legacy notebook-root override env var`
 - `tests/exercise_framework/paths.py` – mirrors notebook_grader behaviour
 - `tests/exercise_expectations/` – all `*_NOTEBOOK_PATH` constants are legacy paths
 - `tests/student_checker/` – resolves notebooks by filename/slug

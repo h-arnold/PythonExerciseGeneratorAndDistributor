@@ -8,7 +8,7 @@ Contract:
 - ``exercise_key`` is the ONLY supported resolver input.
 - Path-based resolution is explicitly NOT supported; callers that pass paths
   will receive a TypeError immediately.
-- ``PYTUTOR_NOTEBOOKS_DIR`` is ignored entirely; this resolver addresses the
+- ``legacy notebook-root override env var`` is ignored entirely; this resolver addresses the
   canonical exercises/ tree, not the legacy notebooks/ tree.
 - Canonical behaviour is proved by the live pilot exercise
   ``ex004_sequence_debug_syntax`` which has a full exercise.json and

@@ -20,7 +20,7 @@ These rules are restated from [ACTION_PLAN.md](./ACTION_PLAN.md) and apply throu
 - Date: 2026-03-12
 - Status: `draft`
 - Scope summary: Replace duplicated exercise identity, title, construct, type, and ordering registries with metadata-driven loading from `exercise.json` and derived indexes, while keeping checker wiring in code and keeping exported Classroom repositories metadata-free.
-- Explicitly out of scope: moving notebooks or tests into canonical exercise folders; replacing `PYTUTOR_NOTEBOOKS_DIR`; changing repository pytest discovery; changing exported template layout; changing the scaffold output in `scripts/new_exercise.py`; broad docs/agent cutover work outside the metadata ownership contract; public API signature breakage such as renaming `notebook_slug` parameters before later execution-model phases are complete.
+- Explicitly out of scope: moving notebooks or tests into canonical exercise folders; replacing `legacy notebook-root override env var`; changing repository pytest discovery; changing exported template layout; changing the scaffold output in `scripts/new_exercise.py`; broad docs/agent cutover work outside the metadata ownership contract; public API signature breakage such as renaming `notebook_slug` parameters before later execution-model phases are complete.
 
 ## Objective
 
@@ -105,10 +105,10 @@ Notes:
 - [ ] Docs:
   - `README.md` — currently describes the legacy split model and should later describe metadata as the source of truth for exercise identity.
   - `docs/project-structure.md` — will need to distinguish metadata-driven source-of-truth from later layout migration work.
-  - `docs/testing-framework.md` — currently documents top-level notebook/test assumptions and the `PYTUTOR_NOTEBOOKS_DIR` solution flow.
+  - `docs/testing-framework.md` — currently documents top-level notebook/test assumptions and the `legacy notebook-root override env var` solution flow.
   - `docs/exercise-testing.md` — currently teaches `NOTEBOOK_PATH` constants in expectation/test modules.
   - `docs/CLI_README.md` — must continue to document flattened exports and should later document metadata-driven source selection.
-  - `docs/development.md` — currently points contributors at top-level notebook/test files and `PYTUTOR_NOTEBOOKS_DIR` workflows.
+  - `docs/development.md` — currently points contributors at top-level notebook/test files and `legacy notebook-root override env var` workflows.
 - [ ] Workflows:
   - `.github/workflows/tests.yml` — no immediate code change required for Phase 3, but metadata-driven source-of-truth work must not leak into the exported contract or break current solution-mode CI assumptions prematurely.
   - `.github/workflows/tests-solutions.yml` — same constraint as above.
@@ -167,7 +167,7 @@ Notes:
   - `template_repo_cli create` — selection remains metadata-driven in the source repo, but output stays flattened and metadata-free.
   - `template_repo_cli update-repo` — same contract as `create`.
 - [ ] Environment variables:
-  - `PYTUTOR_NOTEBOOKS_DIR` — still part of the current execution model, but Phase 3 must not rely on it as a metadata compatibility mechanism or registry substitute.
+  - `legacy notebook-root override env var` — still part of the current execution model, but Phase 3 must not rely on it as a metadata compatibility mechanism or registry substitute.
 - [ ] Workflow jobs or steps:
   - `tests.yml:pytest` — repository CI should stay green once metadata-driven registries are introduced, without requiring exported metadata files.
   - `tests-solutions.yml:pytest_solutions` — solution-mode CI should continue to pass with metadata-driven catalogue changes.
@@ -279,7 +279,7 @@ Notes:
   - student checker selection by `exercise_key` succeeds for metadata-backed exercises and fails clearly for unknown keys
 - [ ] Solution-mode case:
   - solution-mode checks still pass when labels/order come from metadata rather than duplicated constants
-  - `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` continues to work for the current execution model, but metadata loading must not depend on that environment variable
+  - `<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions` continues to work for the current execution model, but metadata loading must not depend on that environment variable
 
 Use explicit statements such as:
 
@@ -327,7 +327,7 @@ uv run pytest -q \
 
 ```bash
 source .venv/bin/activate
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
+<LEGACY_NOTEBOOK_ROOT_ENV_VAR>=notebooks/solutions \
 uv run pytest -q \
   tests/exercise_framework/test_api_contract.py \
   tests/student_checker/test_reporting.py

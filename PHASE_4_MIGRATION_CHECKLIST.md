@@ -28,7 +28,7 @@ When this checklist is complete, the repository should have one explicit, repo-s
 
 - how repository tests are discovered when exercise-specific tests no longer live only under top-level `tests/`
 - how shared grading/runtime support from `exercise_runtime_support` is imported by repository tests and by exported Classroom repositories, including verifying TemplatePackager copies that package alongside the flattened exercise files
-- how student versus solution notebook selection works without using `PYTUTOR_NOTEBOOKS_DIR` as a layout-compatibility escape hatch
+- how student versus solution notebook selection works without using `legacy notebook-root override env var` as a layout-compatibility escape hatch
 - how canonical authoring files in `exercises/` map to the flattened export contract already used by Classroom templates
 
 More specifically:
@@ -51,7 +51,7 @@ Notes:
   - `exercise_key` is the only canonical resolver input.
   - Exported Classroom repositories remain metadata-free.
   - Flattened export remains the current expected Classroom contract unless [ACTION_PLAN.md](./ACTION_PLAN.md) changes.
-  - `PYTUTOR_NOTEBOOKS_DIR` must not remain a layout-compatibility fallback in the target model.
+  - `legacy notebook-root override env var` must not remain a layout-compatibility fallback in the target model.
   - Deliberate breakage is preferred over compatibility wrappers once the replacement model exists.
 - Open assumptions:
   - Phase 2 will provide the shared resolver and migration-manifest layer that Phase 4 execution code can call.
@@ -66,7 +66,7 @@ Notes:
   - Phase 2 shared resolver/metadata module (path to be chosen in Phase 2) — must become the only execution-path source of truth used by repository tests, student checker code, packager code, and verification scripts.
   - `pyproject.toml` — currently pins pytest discovery to `testpaths = ["tests"]`, packages `tests`, and exposes `template_repo_cli`; must encode the agreed repository discovery and import model.
   - `pytest.ini` — duplicates the current top-level `tests` discovery contract and must be kept aligned with `pyproject.toml`.
-  - `tests/notebook_grader.py` — currently accepts raw notebook paths and uses `PYTUTOR_NOTEBOOKS_DIR` root swapping with a silent `candidate.exists()` fallback; must move to the new resolver and the explicit CLI `--variant <student|solution>` variant-selection contract.
+  - `tests/notebook_grader.py` — currently accepts raw notebook paths and uses `legacy notebook-root override env var` root swapping with a silent `candidate.exists()` fallback; must move to the new resolver and the explicit CLI `--variant <student|solution>` variant-selection contract.
   - `tests/helpers.py` — currently proxies notebook path resolution and autograde environment setup; must stay consistent with the new execution model.
   - `tests/exercise_framework/paths.py` — duplicates notebook-path override logic and currently treats path strings as canonical inputs.
   - `tests/exercise_framework/runtime.py` — wraps `tests.notebook_grader` and caches by notebook path; must align with the future exercise-key-driven execution model.
@@ -76,8 +76,8 @@ Notes:
   - `tests/student_checker/api.py` — currently hard-codes `_EX001_SLUG` through `_EX007_SLUG`, `_NOTEBOOK_ORDER`, and slug-based labels.
   - `tests/student_checker/notebook_runtime.py` — currently accepts a notebook path string, scans tags from the physical notebook, and executes tagged cells via raw path calls.
   - `tests/student_checker/checks/ex003.py`, `tests/student_checker/checks/ex004.py`, `tests/student_checker/checks/ex005.py`, `tests/student_checker/checks/ex006.py`, `tests/student_checker/checks/ex007.py` — each contains `_resolve_ex00X_notebook_path()` helpers that still encode notebook-path assumptions.
-  - `scripts/build_autograde_payload.py` — currently validates `PYTUTOR_NOTEBOOKS_DIR` against `notebooks` and `notebooks/solutions`, and derives failure semantics from that value.
-  - `scripts/verify_solutions.sh` — hard-codes `PYTUTOR_NOTEBOOKS_DIR="notebooks/solutions"`.
+  - `scripts/build_autograde_payload.py` — currently validates `legacy notebook-root override env var` against `notebooks` and `notebooks/solutions`, and derives failure semantics from that value.
+  - `scripts/verify_solutions.sh` — hard-codes `legacy notebook-root override env var="notebooks/solutions"`.
   - `scripts/new_exercise.py` — currently scaffolds top-level `notebooks/<exercise_key>.ipynb`, `notebooks/solutions/<exercise_key>.ipynb`, and `tests/test_<exercise_key>.py`, and writes self-check examples against that legacy layout.
   - `scripts/verify_exercise_quality.py` — currently infers exercise directories and notebook relationships from the flattened notebook tree and current `exercises/` shape; the plan is to migrate this verifier to the canonical metadata/resolver so it stays aligned with the new layout instead of being replaced.
   - `scripts/template_repo_cli/core/collector.py` — currently assumes source notebooks live at `notebooks/<exercise_key>.ipynb` and tests at `tests/test_<exercise_key>.py`.
@@ -87,10 +87,10 @@ Notes:
   - `scripts/template_repo_cli/cli.py` — should remain aligned with the new source-selection and packaging rules.
 - [ ] Test files:
   - `tests/exercise_framework/test_paths.py` — currently pins the duplicate `resolve_notebook_path()` behaviour.
-  - `tests/exercise_framework/test_runtime.py` — currently asserts runtime wrappers behave correctly with `PYTUTOR_NOTEBOOKS_DIR`.
+  - `tests/exercise_framework/test_runtime.py` — currently asserts runtime wrappers behave correctly with `legacy notebook-root override env var`.
   - `tests/exercise_framework/test_api_contract.py` — validates notebook checks under current solution-selection semantics.
   - `tests/exercise_framework/test_parity_paths.py` — parity checks for path-resolution helpers.
-  - `tests/exercise_framework/test_autograde_parity.py` and `tests/exercise_framework/test_parity_autograde_ex002.py` — currently run parity checks using `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` and explicit test file paths.
+  - `tests/exercise_framework/test_autograde_parity.py` and `tests/exercise_framework/test_parity_autograde_ex002.py` — currently run parity checks using `legacy notebook-root override env var=notebooks/solutions` and explicit test file paths.
   - `tests/student_checker/test_notebook_runtime.py` — currently validates notebook-runtime execution using direct notebook path inputs.
   - `tests/student_checker/test_reporting.py` and `tests/student_checker/test_checks_aliasing.py` — may need minor updates if the self-check contract changes shape.
   - `tests/template_repo_cli/test_collector.py` — pins top-level source file discovery.
@@ -98,7 +98,7 @@ Notes:
   - `tests/template_repo_cli/test_packager.py` — pins flattened output layout and copied support assets.
   - `tests/template_repo_cli/test_integration.py` — validates dry-run template output, including notebook self-check invocation inside the packaged workspace.
   - `tests/template_repo_cli/test_selector.py` — construct/type selection tests may need updates if selection stops relying only on directory shape.
-  - `tests/test_build_autograde_payload.py` — currently asserts environment validation and autograde payload logic under the old `PYTUTOR_NOTEBOOKS_DIR` variant-selection contract; it must switch to the CLI `--variant <student|solution>` selector.
+  - `tests/test_build_autograde_payload.py` — currently asserts environment validation and autograde payload logic under the old `legacy notebook-root override env var` variant-selection contract; it must switch to the CLI `--variant <student|solution>` selector.
   - `tests/test_integration_autograding.py` — repository-to-autograde integration surface.
   - `tests/test_new_exercise.py` — will need updates once the scaffold target layout is decided in later phases, but Phase 4 must list the required contract changes now.
   - `tests/test_ex001_sanity.py`, `tests/test_ex002_sequence_modify_basics.py`, `tests/test_ex003_sequence_modify_variables.py`, `tests/test_ex004_sequence_debug_syntax.py`, `tests/test_ex005_sequence_debug_logic.py`, `tests/test_ex006_sequence_modify_casting.py`, `tests/test_ex007_construct_checks.py`, `tests/test_ex007_sequence_debug_casting.py` — current top-level exercise-specific tests; `ex001_sanity` is explicitly obsolete, reserved for removal, and must be deleted before any later phases reuse these migration rules.
@@ -106,17 +106,17 @@ Notes:
 - [ ] Docs:
   - `docs/CLI_README.md` — explicitly documents flattened template contents under "What Gets Included in Templates".
   - `docs/testing-framework.md` — documents multiple `resolve_notebook_path()` helpers and the current execution semantics.
-  - `docs/development.md` — teaches `PYTUTOR_NOTEBOOKS_DIR` as the current solution-selection mechanism.
+  - `docs/development.md` — teaches `legacy notebook-root override env var` as the current solution-selection mechanism.
   - `docs/project-structure.md` — describes current top-level `notebooks/` and `tests/` assumptions.
   - `docs/exercise-testing.md` — includes runtime helper contracts.
   - `docs/exercise-types/debug.md` and `docs/exercise-types/modify.md` — reference current test locations and helper usage.
   - `docs/github-classroom-autograding-guide.md` — must remain consistent with template workflow and exported repository behaviour.
 - [ ] Workflows:
-  - `.github/workflows/tests.yml` — currently runs all repository tests with `PYTUTOR_NOTEBOOKS_DIR: notebooks/solutions`.
+  - `.github/workflows/tests.yml` — currently runs all repository tests with `legacy notebook-root override env var: notebooks/solutions`.
   - `.github/workflows/tests-solutions.yml` — duplicates the same solution-selection environment contract.
-  - `template_repo_files/.github/workflows/classroom.yml` — currently runs autograding in student mode using `PYTUTOR_NOTEBOOKS_DIR: notebooks`.
+  - `template_repo_files/.github/workflows/classroom.yml` — currently runs autograding in student mode using `legacy notebook-root override env var: notebooks`.
 - [ ] Agent instructions:
-  - `.github/agents/exercise_generation.md.agent.md` — currently teaches dual notebook trees and `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` verification.
+  - `.github/agents/exercise_generation.md.agent.md` — currently teaches dual notebook trees and `legacy notebook-root override env var=notebooks/solutions` verification.
   - `.github/agents/exercise_verifier.md.agent.md` — currently teaches the same execution model and path layout.
   - `AGENTS.md` — should remain consistent once repository execution and export contracts are updated in later phases.
 - [ ] Template/export files:
@@ -154,7 +154,7 @@ Notes:
   - `tests.student_checker.api.check_notebook()` — current behaviour: accepts a slug and looks it up in a hard-coded dictionary; required change: keep `exercise_key`-based entry but remove hidden layout assumptions.
   - `tests.student_checker.notebook_runtime.run_notebook_checks()` — current behaviour: accepts a notebook path; required change: define whether the long-term student self-check interface should accept `exercise_key`, a resolved canonical notebook path, or both during a short internal-only transition.
   - `tests.student_checker.checks.ex003._resolve_ex003_notebook_path()` and the matching `_resolve_ex00X_notebook_path()` helpers in the other checker modules — current behaviour: local path helpers; required change: remove these in favour of the shared resolver.
-  - `scripts.build_autograde_payload.validate_environment()` and `_should_zero_scores_on_failure()` — current behaviour: variant semantics are inferred from `PYTUTOR_NOTEBOOKS_DIR`; required change: bind autograde behaviour to the new student/solution selector contract.
+  - `scripts.build_autograde_payload.validate_environment()` and `_should_zero_scores_on_failure()` — current behaviour: variant semantics are inferred from `legacy notebook-root override env var`; required change: bind autograde behaviour to the new student/solution selector contract.
   - `scripts.template_repo_cli.core.collector.FileCollector.collect_files()` — current behaviour: builds source file paths from top-level conventions; required change: collect canonical authoring files and export destinations explicitly.
   - `scripts.template_repo_cli.core.packager.TemplatePackager.copy_exercise_files()` — current behaviour: copies source notebook/test files into flattened `workspace/notebooks/` and `workspace/tests/`; required change: keep or adjust the flattened export contract deliberately, not accidentally.
   - `scripts.template_repo_cli.utils.filesystem.resolve_notebook_path()` — current behaviour: filename-only inputs are assumed to live under `notebooks/`; required change: remove assumptions that bypass the shared resolver.
@@ -166,7 +166,7 @@ Notes:
   - `python scripts/build_autograde_payload.py` — workflow entry point whose variant semantics must match the new contract.
   - `scripts/verify_solutions.sh` — local helper that must stop teaching the wrong long-term selection mechanism.
 - [ ] Environment variables:
-  - `PYTUTOR_NOTEBOOKS_DIR` — current meaning is overloaded between variant selection and path-root swapping; Phase 4 must replace or tightly narrow this contract.
+  - `legacy notebook-root override env var` — current meaning is overloaded between variant selection and path-root swapping; Phase 4 must replace or tightly narrow this contract.
 - [ ] Workflow jobs or steps:
   - `tests.yml:pytest` — repository CI must run the correct variant and discover both shared and exercise-local tests under the agreed source layout.
   - `tests-solutions.yml:pytest_solutions` — same requirement for solution-mode CI.
@@ -182,7 +182,7 @@ Notes:
 
 - [ ] The repository test suite is discoverable only because `pytest` is pinned to top-level `tests/` in both `pyproject.toml` and `pytest.ini`.
 - [ ] Shared runtime code can safely live in the importable `tests` package without an explicit decision about how that interacts with pytest collection once exercise-local tests move under `exercises/**/tests/`; this assumption is being removed because the helpers now target `exercise_runtime_support`.
-- [ ] Student versus solution selection is the same thing as changing the notebook root directory via `PYTUTOR_NOTEBOOKS_DIR`.
+- [ ] Student versus solution selection is the same thing as changing the notebook root directory via `legacy notebook-root override env var`.
 - [ ] Silent fallback from `notebooks/solutions/<relative-path>` to the original notebook path is acceptable when the override file is missing.
 - [ ] Packaging source files from top-level `notebooks/` and `tests/` means the export contract is already defined.
 - [ ] A bare notebook filename such as `ex001_sanity.ipynb` can be treated as implicitly living under `notebooks/`, but it should be catalogued as an obsolete removal-only asset and deleted before any later phase attempts to treat it as canonical.
@@ -208,7 +208,7 @@ Notes:
   - `tests/notebook_grader.py` and `tests/exercise_framework/paths.py` so path-swapping logic is not duplicated
   - `tests/exercise_framework/runtime.py` and `tests/student_checker/notebook_runtime.py` so variant selection is explicit and layout validation is strict
   - `tests/student_checker/api.py` and `tests/exercise_framework/api.py` so they consume the same execution model rather than keeping their own layout assumptions
-  - `scripts/build_autograde_payload.py` so student-mode failure behaviour is keyed to the new variant selection contract rather than the `PYTUTOR_NOTEBOOKS_DIR` string value
+  - `scripts/build_autograde_payload.py` so student-mode failure behaviour is keyed to the new variant selection contract rather than the `legacy notebook-root override env var` string value
   - `scripts/template_repo_cli/core/collector.py` and `scripts/template_repo_cli/core/packager.py` so they collect from canonical source assets and still export the agreed flattened output
   - `scripts/template_repo_cli/utils/filesystem.py` so it no longer provides a shadow notebook-resolution rule that bypasses the shared contract
   - `scripts/verify_solutions.sh`, `.github/workflows/tests.yml`, `.github/workflows/tests-solutions.yml`, and `template_repo_files/.github/workflows/classroom.yml` so workflow semantics match the new execution model exactly
@@ -216,7 +216,7 @@ Notes:
   - silent path fallback behaviour in notebook resolution helpers
   - duplicate notebook-path resolution functions that exist only to preserve the old layout model
   - legacy assumptions in template packager code that top-level source layout is canonical
-  - documentation and agent guidance that instructs `PYTUTOR_NOTEBOOKS_DIR` as a long-term layout selector
+  - documentation and agent guidance that instructs `legacy notebook-root override env var` as a long-term layout selector
 - [ ] Rename or relocate:
   - move shared runtime helpers into `exercise_runtime_support`; if that package path/name is still not recorded, treat that as a blocker and document verification steps showing `pyproject.toml` installs the package, docs/workflows mention the new import path, and TemplatePackager copies the package directories.
   - relocate exercise-specific test files only after the repository discovery model has been proved on the Phase 2 pilot exercise `ex004_sequence_debug_syntax`
@@ -271,7 +271,7 @@ List both existing tests to update and new tests to add.
   - `tests/exercise_framework/test_parity_autograde_ex002.py`
   - add a workflow-facing test for the final student/solution selector contract if that logic lives outside existing modules
 - [ ] Remove obsolete tests:
-  - tests that explicitly assert `PYTUTOR_NOTEBOOKS_DIR` root swapping and silent fallback behaviour once the new selector exists
+  - tests that explicitly assert `legacy notebook-root override env var` root swapping and silent fallback behaviour once the new selector exists
   - tests that depend on filename-only notebook resolution through `scripts.template_repo_cli.utils.filesystem.resolve_notebook_path()` if that helper is retired
   - any temporary parity tests that exist only to support an abandoned intermediate import/discovery model
 
@@ -309,7 +309,7 @@ Every checklist should spell out the behaviour that must be proved, not just the
 - [ ] Teaching docs:
   - update `docs/exercise-testing.md`, `docs/exercise-types/debug.md`, and `docs/exercise-types/modify.md` where they currently name top-level test paths or legacy runtime helpers
 - [ ] Agent docs:
-  - update `.github/agents/exercise_generation.md.agent.md` and `.github/agents/exercise_verifier.md.agent.md` so they stop teaching `PYTUTOR_NOTEBOOKS_DIR` as the canonical long-term solution-selection model
+  - update `.github/agents/exercise_generation.md.agent.md` and `.github/agents/exercise_verifier.md.agent.md` so they stop teaching `legacy notebook-root override env var` as the canonical long-term solution-selection model
   - update `AGENTS.md` if the implementation changes the practical default commands contributors should run
 - [ ] Repository workflows:
   - update `.github/workflows/tests.yml` and `.github/workflows/tests-solutions.yml` to use the new variant-selection mechanism and repository discovery contract
@@ -392,7 +392,7 @@ Recommended additions during implementation:
   - exported templates still contain flattened `notebooks/` and `tests/` exercise files, the shared runtime helpers sourced from `exercise_runtime_support`, and no source metadata files (add assertions that the helpers stay present while metadata files stay out)
   - exported notebook self-check commands still work in the packaged workspace
 - [ ] Expected docs/workflow outcome:
-  - repository docs, agent guidance, and workflows no longer describe `PYTUTOR_NOTEBOOKS_DIR` as the primary long-term execution contract
+  - repository docs, agent guidance, and workflows no longer describe `legacy notebook-root override env var` as the primary long-term execution contract
 
 ### Evidence To Capture
 

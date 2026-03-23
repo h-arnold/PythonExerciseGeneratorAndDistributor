@@ -6,16 +6,16 @@ For details on **testing student notebooks**, see [Exercise Testing](exercise-te
 
 > Source of truth: execution/discovery/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
 
-## Migration status
+## Repository status
 
-Legacy flattened notebook paths and top-level flattened exercise tests remain supported as transitional export surfaces. Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`; use the execution model contract for canonical behaviour and fail-fast expectations.
+Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`. Flattened notebook and test paths are now export-only surfaces produced by the template packager for Classroom repositories.
 
 ## Overview
 
 The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, and documentation) is tested using `pytest`. These tests ensure that:
 
 1. **Exercise Generation**: The `new_exercise` script creates valid, compilable, and standards-compliant exercises.
-2. **Grading Logic**: The exercise framework under `tests/exercise_framework/` coordinates notebook extraction, execution, and assertions (wrapping `tests/notebook_grader.py`).
+2. **Grading Logic**: The public exercise framework lives under `exercise_runtime_support/exercise_framework/`, with compatibility coverage and repository tests under `tests/exercise_framework/`.
 3. **Template CLI**: The template repository tools work as expected.
 4. **Documentation**: Exercise validation rules are respected.
 
@@ -80,7 +80,7 @@ This repository provides a small set of shared helpers used across infrastructur
 
 - `tests/exercise_framework/` — the current notebook testing framework. Use `runtime.py` for execution helpers, `constructs.py` for AST checks, `assertions.py` for consistent messages, and `reporting.py` for table output. Detailed behaviour for notebook grading is documented in `docs/exercise-testing.md`.
 
-- `tests/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The framework wraps these helpers rather than calling them directly.
+- `exercise_runtime_support/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The compatibility wrapper at `tests/notebook_grader.py` exists for repository/test-template parity.
 
 - `scripts/template_repo_cli/utils/` — utility functions for the template CLI and packager, notably:
   - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`, `resolve_notebook_path`)

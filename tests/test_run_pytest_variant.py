@@ -53,4 +53,3 @@ def test_main_passes_explicit_variant_environment(monkeypatch: pytest.MonkeyPatc
 
     assert exit_code == 0
     assert captured_env["PYTUTOR_ACTIVE_VARIANT"] == "solution"
-    assert "PYTUTOR_NOTEBOOKS_DIR" not in captured_env
