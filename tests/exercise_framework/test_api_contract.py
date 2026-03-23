@@ -112,7 +112,8 @@ def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
     results = run_notebook_check("ex004_sequence_debug_syntax")
 
     assert captured_arguments == [("ex004_sequence_debug_syntax", "exercise1")]
-    assert results == [NotebookCheckResult("ex004 Debug Syntax Errors", True, [])]
+    assert results == [NotebookCheckResult(
+        "ex004 Debug Syntax Errors", True, [])]
 
 
 def test_package_surface_exposes_lazy_ex002_checks(
@@ -144,8 +145,10 @@ def test_package_surface_exposes_lazy_ex002_checks(
     )
     monkeypatch.setattr(framework_expectations, "_ex002_support_module", None)
     monkeypatch.setattr(framework_package, "_MODULE_CACHE", {})
-    monkeypatch.delitem(vars(framework_expectations), "EX002_CHECKS", raising=False)
-    monkeypatch.delitem(vars(framework_expectations), "Ex002CheckDefinition", raising=False)
+    monkeypatch.delitem(vars(framework_expectations),
+                        "EX002_CHECKS", raising=False)
+    monkeypatch.delitem(vars(framework_expectations),
+                        "Ex002CheckDefinition", raising=False)
     monkeypatch.delitem(vars(framework_package), "EX002_CHECKS", raising=False)
 
     assert calls == []

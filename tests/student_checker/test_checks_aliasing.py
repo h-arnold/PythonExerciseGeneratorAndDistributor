@@ -70,7 +70,8 @@ def test_run_ex003_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> None:
         return sentinel_checks
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
-    monkeypatch.setattr(student_checks, "_load_check_list", fake_load_check_list)
+    monkeypatch.setattr(student_checks, "_load_check_list",
+                        fake_load_check_list)
 
     first_results = student_checks.run_ex003_checks()
     second_results = student_checks.run_ex003_checks()
