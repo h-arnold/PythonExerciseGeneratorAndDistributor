@@ -520,7 +520,9 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] An explicit collection audit now exists for the current layout: `uv run pytest --collect-only -q` completes successfully, which demonstrates that the canonical exercise-local tests are discoverable without duplicate-collection conflicts.
 - [x] Workflow definitions already pass the explicit `--variant` flag instead of depending on `legacy notebook-root override env var`.
 - [x] Focused solution-mode validation no longer blocks the pilot cutover proof: `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py -q` now passes for the migrated ex004 pilot.
-- [x] Broader validation completed on `2026-03-20`: source-repository collection, full solution-mode coverage, student-mode autograde payload checks, packaged-template smoke validation, and the final docs/agent cleanup now all pass against the canonical contract.
+- [x] `tests/test_debug_explanations.py` now scans canonical student notebooks under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`, with a focused regression check preventing drift back to solution mirrors or the removed top-level `notebooks/` surface.
+- [x] `PHASE_13_MIGRATION_CHECKLIST.md` now exists and records the minimum validation matrix for repository collection, repository student mode, repository solution mode, packaged-template smoke checks, docs/workflow gates, and legacy-support removal.
+- [ ] Broader validation still lacks the required proof for student-mode validation, full solution-mode coverage, packaged-template smoke validation, and final legacy-support removal.
 
 #### Constraints And Acceptance Criteria
 
@@ -535,9 +537,9 @@ Criteria: the script already encodes the target checks, the agent depends on its
 - [x] Run template packaging smoke tests for at least one migrated exercise.
 - [x] Run repository CI and packaged-template smoke tests against the new contract before removing legacy support.
 - [x] Run an explicit full test-collection pass before final cleanup so collection-time identity mismatches are caught, not just runtime failures.
-- [x] Update repository workflows and exported template workflows to use the final `--variant <student|solution>` CLI flag so the literal is forwarded to the resolver instead of relying on `legacy notebook-root override env var`.
-- [x] Define and document the minimum validation matrix required before each cutover stage, including repository student mode, repository solution mode, and packaged-template runtime checks. The completed Phase 13 validation now uses source-repository collection, full solution-variant pytest, student-variant autograde payload generation, packaged-template smoke checks, and docs/agent consistency review as the minimum cutover proof set.
-- [x] Remove legacy path support only after every exercise and every doc set has been migrated.
+- [x] Update repository workflows and exported template workflows to use the final `--variant <student|solution>` CLI flag so the literal is forwarded to the resolver instead of relying on `PYTUTOR_NOTEBOOKS_DIR`.
+- [x] Define and document the minimum validation matrix required before each cutover stage, including repository student mode, repository solution mode, and packaged-template runtime checks.
+- [ ] Remove legacy path support only after every exercise and every doc set has been migrated.
 - [x] Delete or repurpose the top-level `notebooks/` directory once it is no longer needed.
 - [x] Delete or repurpose any remaining top-level exercise-specific test files once all exercises use local `tests/` directories.
 - [x] Confirm with an explicit repository audit that all `exNNN` exercise-specific tests now live only under `exercises/<construct>/<exercise_key>/tests/`.
