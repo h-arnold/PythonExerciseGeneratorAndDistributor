@@ -43,8 +43,10 @@ package = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = "-q"
-testpaths = ["tests"]
+addopts = ["-q", "--import-mode=importlib"]
+testpaths = ["tests", "exercises"]
+# importlib mode avoids module-name collisions between top-level tests/ package
+# and the tests/ subdirectories inside each exercise directory.
 pythonpath = ["."]
 markers = ["task(taskno): marks the exercise task number"]
 

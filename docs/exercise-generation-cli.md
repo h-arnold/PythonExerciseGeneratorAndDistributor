@@ -22,7 +22,7 @@ This creates:
 - `exercises/ex042_variables_and_types/README.md`
 - `notebooks/ex042_variables_and_types.ipynb`
 - `notebooks/solutions/ex042_variables_and_types.ipynb`
-- `tests/test_ex042_variables_and_types.py`
+- `tests/test_ex042_variables_and_types.py` *(move to canonical path after scaffolding — see Post-Scaffolding Steps)*
 
 ### Multi-Part Exercise (10 exercises in one notebook)
 
@@ -126,12 +126,21 @@ After running `new_exercise.py`, you must:
 
 ### 1. Organise the Exercise Folder
 
-Move `exercises/exNNN_slug/` to the correct location:
+Move `exercises/exNNN_slug/` to the correct location and create the `tests/` subdirectory:
 
 ```bash
 # Example: moving a sequence/modify exercise
 mv exercises/ex042_variables_and_types exercises/sequence/modify/
+
+# Create the canonical tests directory and move the scaffolded test file there
+mkdir -p exercises/sequence/modify/ex042_variables_and_types/tests
+touch exercises/sequence/modify/ex042_variables_and_types/tests/__init__.py
+mv tests/test_ex042_variables_and_types.py \
+   exercises/sequence/modify/ex042_variables_and_types/tests/test_ex042_variables_and_types.py
 ```
+
+The canonical test path is `exercises/<construct>/<type>/<exercise_key>/tests/test_<exercise_key>.py`.
+The collection guard in `conftest.py` will reject any `test_exNNN*.py` file outside this structure.
 
 ### 2. Author the Notebook
 
@@ -158,7 +167,7 @@ Edit `notebooks/exNNN_slug.ipynb`:
 
 ### 3. Write Tests
 
-Edit `tests/test_exNNN_slug.py`:
+Edit `exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py`:
 
 Replace the placeholder test with real assertions. Two common patterns:
 
@@ -230,13 +239,13 @@ Run tests locally:
 
 ```bash
 # Test against student notebook (should fail until students complete it)
-uv run pytest tests/test_exNNN_slug.py -v
+uv run pytest exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py -v
 
 # Test against solution notebook (should pass)
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_exNNN_slug.py -v
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py -v
 
-# Or use the helper script
-scripts/verify_solutions.sh tests/test_exNNN_slug.py -v
+# Or run all exercises together
+PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest exercises/ -v
 ```
 
 ### 6. Create Supporting Documentation
@@ -258,7 +267,7 @@ One sentence describing what students will learn.
 
 ## Files
 - Notebook: `notebooks/exNNN_slug.ipynb`
-- Tests: `tests/test_exNNN_slug.py`
+- Tests: `exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py`
 ```
 
 **`OVERVIEW.md`** (create new):
