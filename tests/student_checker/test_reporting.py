@@ -22,6 +22,19 @@ from tests.student_checker.reporting import (
 )
 
 
+def _patch_generic_checks(
+    monkeypatch: MonkeyPatch,
+    *,
+    exercise_id: int,
+    checks: list[object],
+) -> None:
+    def fake_get_check_list(requested_exercise_id: int) -> list[object]:
+        assert requested_exercise_id == exercise_id
+        return checks
+
+    monkeypatch.setattr(student_checks, "_get_check_list", fake_get_check_list)
+
+
 def test_print_detailed_results_discards_success_message_when_failures(
     capsys: CaptureFixture[str],
 ) -> None:
@@ -56,7 +69,8 @@ def test_print_ex002_results_still_reports_success_message(
 ) -> None:
     results = [
         Ex002CheckResult(exercise_no=1, title="Logic", passed=True, issues=[]),
-        Ex002CheckResult(exercise_no=2, title="Formatting", passed=True, issues=[]),
+        Ex002CheckResult(exercise_no=2, title="Formatting",
+                         passed=True, issues=[]),
     ]
 
     print_ex002_results(results)
@@ -91,8 +105,10 @@ def test_print_ex006_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        Ex006CheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        Ex006CheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        Ex006CheckResult(exercise_no=1, title="Static output",
+                         passed=True, issues=[]),
+        Ex006CheckResult(exercise_no=10, title="Prompt flow",
+                         passed=False, issues=["Oops"]),
     ]
 
     print_ex006_results(results)
@@ -112,10 +128,10 @@ def test_run_ex006_checks_continues_after_notebook_grading_error(
     def working_check() -> list[str]:
         return []
 
-    monkeypatch.setattr(
-        student_checks,
-        "_EX006_CHECKS",
-        [
+    _patch_generic_checks(
+        monkeypatch,
+        exercise_id=6,
+        checks=[
             student_checks.Ex006CheckDefinition(
                 exercise_no=1,
                 title="Broken",
@@ -141,8 +157,10 @@ def test_print_ex003_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=10, title="Prompt flow",
+                            passed=False, issues=["Oops"]),
     ]
 
     print_ex003_results(results)
@@ -156,7 +174,8 @@ def test_print_ex004_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
         ExerciseCheckResult(
             exercise_no=10, title="Explanation", passed=False, issues=["Needs detail"]
         ),
@@ -173,8 +192,10 @@ def test_print_ex005_results_shows_per_exercise_labels(
     capsys: CaptureFixture[str],
 ) -> None:
     results = [
-        ExerciseCheckResult(exercise_no=1, title="Static output", passed=True, issues=[]),
-        ExerciseCheckResult(exercise_no=10, title="Prompt flow", passed=False, issues=["Oops"]),
+        ExerciseCheckResult(
+            exercise_no=1, title="Static output", passed=True, issues=[]),
+        ExerciseCheckResult(exercise_no=10, title="Prompt flow",
+                            passed=False, issues=["Oops"]),
     ]
 
     print_ex005_results(results)
@@ -194,10 +215,10 @@ def test_run_ex003_checks_continues_after_notebook_grading_error(
     def working_check() -> list[str]:
         return []
 
-    monkeypatch.setattr(
-        student_checks,
-        "_EX003_CHECKS",
-        [
+    _patch_generic_checks(
+        monkeypatch,
+        exercise_id=3,
+        checks=[
             student_checks.ExerciseCheckDefinition(
                 exercise_no=1,
                 title="Broken",
@@ -229,10 +250,10 @@ def test_run_ex004_checks_continues_after_notebook_grading_error(
     def working_check() -> list[str]:
         return []
 
-    monkeypatch.setattr(
-        student_checks,
-        "_EX004_CHECKS",
-        [
+    _patch_generic_checks(
+        monkeypatch,
+        exercise_id=4,
+        checks=[
             student_checks.ExerciseCheckDefinition(
                 exercise_no=1,
                 title="Broken",
@@ -264,10 +285,10 @@ def test_run_ex005_checks_continues_after_notebook_grading_error(
     def working_check() -> list[str]:
         return []
 
-    monkeypatch.setattr(
-        student_checks,
-        "_EX005_CHECKS",
-        [
+    _patch_generic_checks(
+        monkeypatch,
+        exercise_id=5,
+        checks=[
             student_checks.ExerciseCheckDefinition(
                 exercise_no=1,
                 title="Broken",
@@ -299,10 +320,10 @@ def test_run_ex007_checks_continues_after_notebook_grading_error(
     def working_check() -> list[str]:
         return []
 
-    monkeypatch.setattr(
-        student_checks,
-        "_EX007_CHECKS",
-        [
+    _patch_generic_checks(
+        monkeypatch,
+        exercise_id=7,
+        checks=[
             student_checks.ExerciseCheckDefinition(
                 exercise_no=1,
                 title="Broken",

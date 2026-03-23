@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
+import pytest
+
 import exercise_runtime_support.exercise_framework.expectations as framework_expectations
 from exercise_runtime_support.exercise_framework.expectations import (
     expected_output_lines,
@@ -10,8 +14,10 @@ from exercise_runtime_support.exercise_framework.expectations import (
 )
 
 _SINGLE_LINE = {1: "Hello Python!", 4: "One line"}
-_MULTI_LINE = {6: ["Learning", "to", "code rocks"], 9: ["10 minus 3 equals", "7"]}
+_MULTI_LINE = {6: ["Learning", "to", "code rocks"],
+               9: ["10 minus 3 equals", "7"]}
 _PRINT_CALLS = {4: 1, 6: 3, 9: 2}
+_EX002_EXERCISE_ID = 2
 
 
 def test_expected_output_lines_normalises_single_line() -> None:
@@ -97,3 +103,35 @@ def test_framework_expectation_helpers_do_not_export_notebook_paths() -> None:
     for notebook_path_name in notebook_path_names:
         assert notebook_path_name not in framework_expectations.__all__
         assert not hasattr(framework_expectations, notebook_path_name)
+
+
+def test_get_ex002_checks_loads_support_lazily(monkeypatch: pytest.MonkeyPatch) -> None:
+    sentinel_checks = [object()]
+    calls: list[tuple[str, str]] = []
+
+    def fake_get_catalogue_key_for_exercise_id(exercise_id: int) -> str:
+        assert exercise_id == _EX002_EXERCISE_ID
+        return "ex002_sequence_modify_basics"
+
+    def fake_load_exercise_test_module(exercise_key: str, module_name: str) -> SimpleNamespace:
+        calls.append((exercise_key, module_name))
+        return SimpleNamespace(
+            EX002_CHECKS=sentinel_checks,
+            Ex002CheckDefinition=object,
+        )
+
+    monkeypatch.setattr(
+        framework_expectations,
+        "get_catalogue_key_for_exercise_id",
+        fake_get_catalogue_key_for_exercise_id,
+    )
+    monkeypatch.setattr(
+        framework_expectations,
+        "load_exercise_test_module",
+        fake_load_exercise_test_module,
+    )
+    monkeypatch.setattr(framework_expectations, "_ex002_support_module", None)
+
+    assert calls == []
+    assert framework_expectations.get_ex002_checks() == sentinel_checks
+    assert calls == [("ex002_sequence_modify_basics", "framework_support")]

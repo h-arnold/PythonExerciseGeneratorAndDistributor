@@ -14,7 +14,7 @@ from exercise_runtime_support.exercise_catalogue import (
     get_catalogue_entry,
     get_exercise_catalogue,
 )
-from exercise_runtime_support.exercise_framework.expectations import EX002_CHECKS
+from exercise_runtime_support.exercise_framework.expectations import get_ex002_checks
 from exercise_runtime_support.notebook_grader import NotebookGradingError
 from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 
@@ -103,7 +103,8 @@ def _get_check_definitions() -> dict[str, NotebookCheckDefinition]:
         runner = runners.get(entry.exercise_key)
         if runner is None:
             continue
-        definitions[entry.exercise_key] = NotebookCheckDefinition(entry.display_label, runner)
+        definitions[entry.exercise_key] = NotebookCheckDefinition(
+            entry.display_label, runner)
     return definitions
 
 
@@ -116,7 +117,8 @@ def _get_supported_catalogue() -> list[ExerciseCatalogueEntry]:
 def run_all_checks() -> list[NotebookCheckResult]:
     """Run all notebook checks and return structured results."""
     checks = _get_check_definitions()
-    ordered_definitions = [checks[entry.exercise_key] for entry in _get_supported_catalogue()]
+    ordered_definitions = [checks[entry.exercise_key]
+                           for entry in _get_supported_catalogue()]
     return _to_notebook_results(_run_definitions(ordered_definitions))
 
 
@@ -127,7 +129,8 @@ def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
     check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(f"Unknown notebook '{notebook_slug}'. Available: {available}")
+        raise ValueError(
+            f"Unknown notebook '{notebook_slug}'. Available: {available}")
 
     return _to_notebook_results(_run_definitions([check]))
 
@@ -135,7 +138,7 @@ def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
 def run_detailed_ex002_check() -> list[ExerciseCheckResult]:
     """Run detailed ex002 checks and return per-check structured results."""
     results: list[ExerciseCheckResult] = []
-    for check in EX002_CHECKS:
+    for check in get_ex002_checks():
         try:
             issues = check.check()
         except NotebookGradingError as exc:

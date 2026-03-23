@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from types import ModuleType
 from typing import Any
 
 from exercise_runtime_support.exercise_catalogue import get_catalogue_key_for_exercise_id
@@ -49,13 +50,33 @@ def expected_print_call_count(
     return expectations.get(exercise_no)
 
 
-_EX002_SUPPORT = load_exercise_test_module(
-    get_catalogue_key_for_exercise_id(2),
-    "framework_support",
-)
+_ex002_support_module: ModuleType | None = None
+EX002_CHECKS: Any
+Ex002CheckDefinition: Any
 
-Ex002CheckDefinition: Any = _EX002_SUPPORT.Ex002CheckDefinition
-EX002_CHECKS: Any = _EX002_SUPPORT.EX002_CHECKS
+
+def _load_ex002_support() -> ModuleType:
+    global _ex002_support_module
+    if _ex002_support_module is None:
+        _ex002_support_module = load_exercise_test_module(
+            get_catalogue_key_for_exercise_id(2),
+            "framework_support",
+        )
+    return _ex002_support_module
+
+
+def get_ex002_checks() -> list[Any]:
+    """Return the detailed ex002 check definitions from exercise-local support."""
+    return list(_load_ex002_support().EX002_CHECKS)
+
+
+def __getattr__(name: str) -> Any:
+    if name in {"EX002_CHECKS", "Ex002CheckDefinition"}:
+        value = getattr(_load_ex002_support(), name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "EX002_CHECKS",
@@ -63,4 +84,5 @@ __all__ = [
     "expected_output_lines",
     "expected_output_text",
     "expected_print_call_count",
+    "get_ex002_checks",
 ]
