@@ -21,10 +21,9 @@ from scripts.build_autograde_payload import AutogradeResults  # noqa: E402
 
 PLUGIN_NAME = "tests.autograde_plugin"
 EX002_TEST_FILES = (
-    "tests/test_ex002_sequence_modify_basics.py",
-    "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+    "exercises/sequence/modify/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
 )
-EXPECTED_EX002_TEST_COUNT = 60
+EXPECTED_EX002_TEST_COUNT = 30
 MIN_STATUS_MUTATION_TESTS = 2
 
 

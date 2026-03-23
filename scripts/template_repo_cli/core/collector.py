@@ -36,7 +36,7 @@ class FileCollector:
             Dictionary with keys: 'notebook', 'test'.
 
         Raises:
-            FileNotFoundError: If notebook is not found.
+            FileNotFoundError: If notebook or test file is not found.
             ValueError: If exercise_id is empty.
         """
         if not exercise_id:
@@ -47,12 +47,25 @@ class FileCollector:
         if not notebook_path.exists():
             raise FileNotFoundError(f"Student notebook not found: {exercise_id}")
 
-        # Test file (required)
-        test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
-        if not test_path.exists():
-            raise FileNotFoundError(f"Test file not found: {exercise_id}")
+        # Test file: check legacy location first, then canonical exercises/ tree.
+        # The canonical glob uses three wildcards (construct/type/exercise_key) rather
+        # than ** for performance and to match the exact three-level canonical structure.
+        legacy_test_path: Path = self.tests_dir / f"test_{exercise_id}.py"
+        if legacy_test_path.exists():
+            return ExerciseFiles(notebook=notebook_path, test=legacy_test_path)
 
-        return ExerciseFiles(notebook=notebook_path, test=test_path)
+        canonical_matches = list(
+            self.repo_root.glob(f"exercises/*/*/*/tests/test_{exercise_id}.py")
+        )
+        if len(canonical_matches) > 1:
+            paths = ", ".join(str(m) for m in canonical_matches)
+            raise FileNotFoundError(
+                f"Multiple canonical test files found for {exercise_id}: {paths}"
+            )
+        if canonical_matches:
+            return ExerciseFiles(notebook=notebook_path, test=canonical_matches[0])
+
+        raise FileNotFoundError(f"Test file not found: {exercise_id}")
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:
         """Collect files for multiple exercises.

@@ -28,8 +28,10 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
         ),
         "ex002_sequence_modify_basics": ExerciseFiles(
             notebook=repo_root / "notebooks/ex002_sequence_modify_basics.ipynb",
-            test=repo_root
-            / "tests/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+            test=repo_root / (
+                "exercises/sequence/modify/ex002_sequence_modify_basics"
+                "/tests/test_ex002_sequence_modify_basics.py"
+            ),
         ),
     }
 

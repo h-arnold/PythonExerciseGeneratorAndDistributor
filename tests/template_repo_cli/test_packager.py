@@ -29,18 +29,15 @@ def template_packager(repo_root: Path) -> TemplatePackager:
 @pytest.fixture
 def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
     """Build exercise file mappings for one or more exercise identifiers."""
+    from scripts.template_repo_cli.core.collector import FileCollector
+
+    collector = FileCollector(repo_root)
 
     def _build(*exercise_ids: str) -> ExerciseFileMap:
         if not exercise_ids:
             msg = "At least one exercise_id is required"
             raise ValueError(msg)
-        return {
-            exercise_id: ExerciseFiles(
-                notebook=repo_root / f"notebooks/{exercise_id}.ipynb",
-                test=repo_root / f"tests/test_{exercise_id}.py",
-            )
-            for exercise_id in exercise_ids
-        }
+        return {exercise_id: collector.collect_files(exercise_id) for exercise_id in exercise_ids}
 
     return _build
 
@@ -309,12 +306,10 @@ class TestPackageIntegrity:
         "missing_path",
         [
             pytest.param("tests/exercise_framework", id="exercise-framework"),
-            pytest.param("tests/exercise_expectations",
-                         id="exercise-expectations"),
+            pytest.param("tests/exercise_expectations", id="exercise-expectations"),
             pytest.param("tests/student_checker", id="student-checker"),
             pytest.param("tests/helpers.py", id="helpers"),
-            pytest.param("tests/test_autograde_plugin.py",
-                         id="autograde-test"),
+            pytest.param("tests/test_autograde_plugin.py", id="autograde-test"),
             pytest.param(
                 "tests/test_build_autograde_payload.py",
                 id="payload-test",
@@ -338,8 +333,7 @@ class TestPackageIntegrity:
 
         path_to_remove = temp_dir / missing_path
         if not path_to_remove.exists():
-            pytest.skip(
-                f"Required path not available in template copy: {missing_path}")
+            pytest.skip(f"Required path not available in template copy: {missing_path}")
 
         if path_to_remove.is_dir():
             shutil.rmtree(path_to_remove)
@@ -401,8 +395,7 @@ class TestPackageIntegrity:
         files = build_exercise_file_map("ex001_sanity")
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(
-            temp_dir, "Smoke Test Template", ["ex001_sanity"])
+        template_packager.generate_readme(temp_dir, "Smoke Test Template", ["ex001_sanity"])
 
         assert template_packager.validate_package(temp_dir)
 
@@ -432,7 +425,7 @@ class TestPackageIntegrity:
     def test_copies_notebook_grader_when_present(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
-        """Test that notebook_grader.py is present; project grader takes precedence over template grader."""
+        """Test notebook_grader.py present; project grader takes precedence over template grader."""
         template_tests_dir = repo_root / "template_repo_files" / "tests"
         template_tests_dir.mkdir(parents=True, exist_ok=True)
         grader_src = template_tests_dir / "notebook_grader.py"
@@ -491,8 +484,7 @@ class TestPackageOptions:
         template_packager.copy_exercise_files(temp_dir, files)
 
         assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (
-            temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
 
 
 class TestPackageMultipleExercises:
