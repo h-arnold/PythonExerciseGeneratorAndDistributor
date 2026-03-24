@@ -108,6 +108,27 @@ def test_run_notebook_checks_marks_failure_when_execution_raises(
     assert results[0].message == "Execution failed"
 
 
+def test_run_notebook_checks_passes_path_object_to_tagged_runner(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    received: list[Path] = []
+
+    def fake_run_tagged_cell(notebook_path: str | Path, tag: str) -> None:
+        assert tag == "exercise1"
+        assert isinstance(notebook_path, Path)
+        received.append(notebook_path)
+
+    notebook_path = Path("dummy_exercise.ipynb")
+    monkeypatch.setattr(
+        notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
+
+    results = notebook_runtime._run_notebook_checks(
+        notebook_path, ["exercise1"])
+
+    assert [result.passed for result in results] == [True]
+    assert received == [notebook_path]
+
+
 def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
     attempt_lengths: list[int] = []
 
