@@ -394,11 +394,11 @@ class TestEndToEndDryRun:
         assert "No such file or directory" not in combined_output
         assert "exercise_metadata must not be imported" not in combined_output
 
-    def test_repo_canonical_ex004_defaults_to_student_in_development_mode(
+    def test_repo_canonical_ex004_defaults_to_solution_in_development_mode(
         self,
         repo_root: Path,
     ) -> None:
-        """Test canonical ex004 resolves to the student notebook by default in development."""
+        """Test canonical ex004 resolves to the solution notebook by default in development."""
 
         env = os.environ.copy()
         env.pop("PYTUTOR_ACTIVE_VARIANT", None)
@@ -424,7 +424,7 @@ class TestEndToEndDryRun:
                     "    / 'sequence'",
                     "    / 'ex004_sequence_debug_syntax'",
                     "    / 'notebooks'",
-                    "    / 'student.ipynb'",
+                    "    / 'solution.ipynb'",
                     ").resolve()",
                     "spec = importlib.util.spec_from_file_location('repo_ex004_test_module', module_path)",
                     "assert spec is not None and spec.loader is not None",
@@ -445,7 +445,7 @@ class TestEndToEndDryRun:
         )
 
         assert check.returncode == 0, (
-            "Canonical ex004 default development-mode resolution failed:\n"
+            "Canonical ex004 default solution-mode resolution failed:\n"
             f"stdout:\n{check.stdout}\n"
             f"stderr:\n{check.stderr}"
         )

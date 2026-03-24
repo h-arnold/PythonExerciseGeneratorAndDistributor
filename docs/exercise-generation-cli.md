@@ -113,6 +113,8 @@ Contains:
 - Self-check scratch cell (not graded)
 - Auto-appended untagged code cell that imports `exercise_runtime_support.student_checker.run_notebook_checks` and runs it against the canonical `exercise_key` so students see grouped local check results before submitting
 
+Important: the final checker cell must pass the canonical `exercise_key` string to `run_notebook_checks(...)`, not a notebook path string. If shared infrastructure has already resolved a notebook location, it must preserve that value as a `Path` when calling resolver-backed helpers rather than coercing it back to `str(...)`.
+
 The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
 
 On notebooks with multiple exercises (ex003 and later) that final helper now prints grouped rows for each check with columns `Exercise`, `Check`, `Status` and `Error`, mirroring the ex002 experience. Long error text wraps inside the Error column so continuation lines belong to the same cell rather than introducing extra separators, and this grouped layout replaces the older single-notebook summary output that appeared for ex003+.
@@ -173,6 +175,8 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 5. Code (untagged): Self-check scratch cell
 6. Code (untagged): Auto-appended check-your-answers cell that runs `exercise_runtime_support.student_checker.run_notebook_checks('<exercise_key>')` so students see grouped per-check output
 ```
+
+Do not replace `'<exercise_key>'` with `notebooks/...ipynb`, an absolute `.ipynb` path, or `str(path)`. String inputs are interpreted as exercise keys by the checker/runtime contract.
 
 ### 2. Write Tests
 

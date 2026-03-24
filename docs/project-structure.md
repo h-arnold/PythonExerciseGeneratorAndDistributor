@@ -135,7 +135,8 @@ Each canonical exercise directory maintains two notebook variants:
 
 The same tests can run against either set:
 
-- Default: `uv run pytest -q` (runs against student notebooks using the uv-managed environment)
+- Default: `uv run pytest -q` (runs against solution notebooks using the uv-managed environment)
+- Students: `uv run python scripts/run_pytest_variant.py --variant student -q` (runs the same repository tests against student notebooks when you need the explicit student surface)
 - Solutions: `uv run python scripts/run_pytest_variant.py --variant solution` (runs the same repository tests against solutions)
 
 This allows verification that:

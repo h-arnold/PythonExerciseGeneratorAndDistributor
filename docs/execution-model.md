@@ -44,7 +44,7 @@ Contract:
 
 - Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py` and `scripts/build_autograde_payload.py`).
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
-- Default variant is `student` when no variant is provided.
+- Default variant is `solution` when no variant is provided.
 
 Deprecated note:
 

@@ -112,7 +112,8 @@ def _validate_results_payload(data: object) -> AutogradeResults:
         (key for key in ("max_score", "status", "tests") if key not in data_dict), None
     )
     if missing_key is not None:
-        raise RuntimeError(f"Autograde results missing required key: {missing_key}")
+        raise RuntimeError(
+            f"Autograde results missing required key: {missing_key}")
 
     tests = data_dict.get("tests")
     if not isinstance(tests, list):
@@ -120,7 +121,8 @@ def _validate_results_payload(data: object) -> AutogradeResults:
 
     tests_list = cast(list[object], tests)
     if not all(isinstance(test, dict) for test in tests_list):
-        raise RuntimeError("Autograde results 'tests' entries must be objects.")
+        raise RuntimeError(
+            "Autograde results 'tests' entries must be objects.")
     return cast(AutogradeResults, data_dict)
 
 
@@ -134,7 +136,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--variant",
         choices=("student", "solution"),
-        default="student",
+        default="solution",
         help="Notebook variant to expose to pytest.",
     )
     parser.add_argument(
@@ -225,7 +227,8 @@ def run_pytest(
     printable = shlex.join(command)
     print(f"Executing: {printable}")
     try:
-        completed_process = subprocess.run(command, check=False, env=dict(env) if env else None)
+        completed_process = subprocess.run(
+            command, check=False, env=dict(env) if env else None)
     except OSError as exc:  # pragma: no cover - defensive logging for unexpected failures
         print(f"Failed to execute pytest: {exc}", file=sys.stderr)
         return 1
@@ -241,7 +244,8 @@ def load_results(results_path: Path) -> AutogradeResults:
         with results_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Results JSON at {results_path} is invalid: {exc}") from exc
+        raise RuntimeError(
+            f"Results JSON at {results_path} is invalid: {exc}") from exc
 
     return _validate_results_payload(data)
 
@@ -362,7 +366,8 @@ def build_payload(
 ) -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
-    max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
+    max_score = _ensure_float(
+        raw_results["max_score"], "max_score in results must be numeric.")
     status = str(raw_results["status"])
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
@@ -431,7 +436,8 @@ def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
 def encode_payload(payload: AutogradePayload) -> str:
     """Encode the payload as a Base64 JSON string."""
 
-    json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    json_bytes = json.dumps(payload, ensure_ascii=False,
+                            indent=2).encode("utf-8")
     encoded = base64.b64encode(json_bytes)
     return encoded.decode("ascii")
 
@@ -486,7 +492,8 @@ def print_summary(payload: AutogradePayload) -> None:
     print(f"Points: {earned_score}/{max_score} ({percentage:.1f}%)")
     print(f"Tests Passed: {passed_tests}/{total_tests}")
 
-    grouped: dict[str | int | None, list[AutogradePayloadTest]] = defaultdict(list)
+    grouped: dict[str | int | None,
+                  list[AutogradePayloadTest]] = defaultdict(list)
     for test in tests:
         grouped[test.get("task")].append(test)
 
@@ -506,7 +513,8 @@ def print_summary(payload: AutogradePayload) -> None:
         for test in failing_tests:
             message = test.get("message")
             message_text = "(no message)" if message is None else str(message)
-            truncated = textwrap.shorten(message_text, width=200, placeholder="...")
+            truncated = textwrap.shorten(
+                message_text, width=200, placeholder="...")
             print(f"- {test['name']}: {truncated}")
 
 
@@ -524,7 +532,8 @@ def write_outputs(
             handle.write(encoded_payload)
             handle.write("\n")
     except OSError as exc:
-        print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
         return
@@ -560,7 +569,8 @@ def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
             for key, value in entries.items():
                 handle.write(f"{key}={value}\n")
     except OSError as exc:
-        print(f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
+        print(
+            f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
 
 
 def main(argv: Sequence[str] | None = None) -> int:

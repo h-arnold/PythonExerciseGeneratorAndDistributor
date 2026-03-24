@@ -137,7 +137,7 @@ uv run python scripts/build_autograde_payload.py \
     --results-json=tmp/autograde/results.json
 ```
 
-If you omit `--variant`, the script exercises the student notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
+If you omit `--variant`, the script exercises the solution notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
 
 ### Test workflow changes safely
 

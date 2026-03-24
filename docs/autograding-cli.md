@@ -16,7 +16,7 @@ Using the wrapper keeps local and CI executions aligned with the Classroom workf
 
 `build_autograde_payload.py` accepts the following parameters:
 
-- `--variant`: explicit notebook variant selector (`student` or `solution`). The CLI maps this to the runtime notebook root before invoking pytest.
+- `--variant`: explicit notebook variant selector (`student` or `solution`). The CLI maps this to the runtime notebook root before invoking pytest and defaults to `solution` when omitted.
 - `--pytest-args`: forward one or more pytest arguments. Repeat the flag for multiple options (e.g. `--pytest-args=-k --pytest-args=test_ex002_sequence_modify_basics`). Defaults to `-q` when omitted.
 - `--results-json`: path for the raw plugin output. Default `tmp/autograde/results.json`.
 - `--output`: path for the Base64 payload text file. Default `tmp/autograde/payload.txt`.
@@ -40,6 +40,8 @@ uv run python scripts/build_autograde_payload.py \
 ```bash
 uv run python scripts/build_autograde_payload.py --pytest-args=-k --pytest-args=exercise1
 ```
+
+Because `--variant` is omitted here, this command exercises the solution notebooks by default.
 
 ### GitHub Actions step (classroom workflow excerpt)
 

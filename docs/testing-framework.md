@@ -31,7 +31,7 @@ Run the full suite using `uv`:
 uv run pytest -q
 ```
 
-Because raw `uv run pytest -q` exercises the default student variant, the CI-equivalent source-repository check is a collection pass plus the explicit solution-variant run:
+Because raw `uv run pytest -q` exercises the default solution variant, the CI-equivalent source-repository check is a collection pass plus the explicit solution-variant run:
 
 ```bash
 uv run pytest --collect-only -q
@@ -97,6 +97,12 @@ Important note on similarly-named helpers:
 - `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
 
 Recommendation: Use the helper from `exercise_runtime_support.exercise_framework.paths` or `exercise_runtime_support.exercise_framework.runtime` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
+
+Resolver identity contract:
+
+- For notebook self-check cells and author-facing exercise guidance, the canonical identity is the `exercise_key` string passed to `run_notebook_checks('<exercise_key>')`.
+- For shared runtime or grading code that has already resolved a notebook location, keep the value as a `Path` when passing it into framework/grader helpers.
+- Avoid converting a resolved `Path` back into `str(path)` before calling resolver-backed helpers; path-like strings are intentionally distinct from exercise-key strings in the framework contract.
 
 ### 4. Exercise Quality (`tests/test_exercise_type_docs.py`)
 

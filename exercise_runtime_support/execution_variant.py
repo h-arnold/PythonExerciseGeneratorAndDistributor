@@ -18,10 +18,11 @@ def validate_variant(variant: str) -> Variant:
         return "student"
     if variant == "solution":
         return "solution"
-    raise RuntimeError(f"{ACTIVE_VARIANT_ENV_VAR} must be 'student' or 'solution', not {variant!r}")
+    raise RuntimeError(
+        f"{ACTIVE_VARIANT_ENV_VAR} must be 'student' or 'solution', not {variant!r}")
 
 
-def get_active_variant(*, default: Variant = "student") -> Variant:
+def get_active_variant(*, default: Variant = "solution") -> Variant:
     """Return the active notebook variant from the environment."""
     raw_variant = os.environ.get(ACTIVE_VARIANT_ENV_VAR)
     if raw_variant is None:
@@ -50,8 +51,10 @@ def resolve_variant_notebook_path(
     """Return the notebook path selected by the explicit variant contract."""
     selected_variant = variant or get_active_variant()
     original = Path(notebook_path)
-    resolved = _anchor_path(original, repo_root) if anchor_to_repo_root else original
-    legacy_selected = _resolve_legacy_notebook_path(resolved, selected_variant, repo_root)
+    resolved = _anchor_path(
+        original, repo_root) if anchor_to_repo_root else original
+    legacy_selected = _resolve_legacy_notebook_path(
+        resolved, selected_variant, repo_root)
     if legacy_selected != resolved:
         return legacy_selected
     return _resolve_canonical_notebook_path(legacy_selected, selected_variant)
@@ -74,11 +77,13 @@ def _resolve_legacy_notebook_path(
 
     if relative_path.parts[:2] == ("notebooks", "solutions"):
         suffix = Path(*relative_path.parts[2:])
-        selected_relative = Path("notebooks") / suffix if variant == "student" else relative_path
+        selected_relative = Path(
+            "notebooks") / suffix if variant == "student" else relative_path
     else:
         suffix = Path(*relative_path.parts[1:])
         selected_relative = (
-            relative_path if variant == "student" else Path("notebooks") / "solutions" / suffix
+            relative_path if variant == "student" else Path(
+                "notebooks") / "solutions" / suffix
         )
 
     if notebook_path.is_absolute() and repo_root is not None:
