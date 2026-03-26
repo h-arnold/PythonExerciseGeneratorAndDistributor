@@ -4,7 +4,7 @@ import ast
 
 import pytest
 
-from tests.exercise_expectations import ex006_sequence_modify_casting as ex006
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from tests.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -18,6 +18,7 @@ def _tag(n: int) -> str:
 
 
 _EX006_EXERCISE_KEY = "ex006_sequence_modify_casting"
+ex006 = load_exercise_test_module(_EX006_EXERCISE_KEY, "expectations")
 _CACHE = RuntimeCache()
 
 

@@ -5,7 +5,7 @@ tools: [vscode/getProjectSetupInfo, vscode/vscodeAPI, execute/getTerminalOutput,
 user-invocable: true
 ---
 
-> Repository status: The source repository now uses the canonical exercise-local layout. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
+> Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 # Tidy Code Review Sub-Agent
 

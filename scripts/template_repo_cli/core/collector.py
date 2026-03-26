@@ -18,7 +18,7 @@ class ExerciseFiles(TypedDict):
     notebook: Path
     notebook_export: Path
     test: Path
-    test_export: Path
+    tests_export_dir: Path
 
 
 class FileCollector:
@@ -45,6 +45,10 @@ class FileCollector:
 
     def _legacy_test_path(self, exercise_id: str) -> Path:
         return self.tests_dir / f"test_{exercise_id}.py"
+
+    def _canonical_tests_export_dir(self, exercise_id: str) -> Path:
+        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        return Path("tests") / exercise_dir.relative_to(self.exercises_dir)
 
     def _preferred_test_path_for_legacy_layout(self, exercise_id: str) -> Path:
         """Return the canonical test when available, otherwise the flat legacy test."""
@@ -86,7 +90,7 @@ class FileCollector:
             exercise_id: The exercise ID (for example, ``"ex004_sequence_debug_syntax"``).
 
         Returns:
-            Dictionary with source paths and flattened export paths.
+            Dictionary with source paths and exported workspace targets.
 
         Raises:
             FileNotFoundError: If required source files are missing.
@@ -128,7 +132,11 @@ class FileCollector:
             notebook=notebook_path,
             notebook_export=Path("notebooks") / f"{exercise_id}.ipynb",
             test=test_path,
-            test_export=Path("tests") / f"test_{exercise_id}.py",
+            tests_export_dir=(
+                self._canonical_tests_export_dir(exercise_id)
+                if layout == ExerciseLayout.CANONICAL
+                else Path("tests")
+            ),
         )
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:

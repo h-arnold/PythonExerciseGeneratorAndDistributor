@@ -300,7 +300,10 @@ def test_main_creates_canonical_debug_scaffold(
     assert "explanation1" in tags
 
     helper_source = "".join(_ensure_source_lines(cells[-1]))
-    assert f"run_notebook_checks('{exercise_key}')" in helper_source
+    assert (
+        "Pass the canonical exercise_key here; do not pass a notebook path." in helper_source
+        and f"run_notebook_checks('{exercise_key}')" in helper_source
+    )
 
     assert json.loads(student_notebook_path.read_text(encoding="utf-8")) == json.loads(
         solution_notebook_path.read_text(encoding="utf-8")
@@ -546,4 +549,7 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     assert (
         "from exercise_runtime_support.student_checker import run_notebook_checks" in joined_source
     )
-    assert "run_notebook_checks('ex000_sequence_modify_example')" in joined_source
+    assert (
+        "Pass the canonical exercise_key here; do not pass a notebook path." in joined_source
+        and "run_notebook_checks('ex000_sequence_modify_example')" in joined_source
+    )

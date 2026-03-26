@@ -1,119 +1,83 @@
-"""Check implementations for each notebook."""
+"""Generic check entry points backed by exercise-local test support modules."""
 
 from __future__ import annotations
 
-import sys
-from types import ModuleType
-from typing import Any, Final, NamedTuple
+from collections.abc import Sequence
+from typing import Any
 
-from .base import Ex006CheckDefinition, ExerciseCheckDefinition
-from .ex002 import check_ex002_summary, run_ex002_checks
-from .ex003 import EX003_CHECKS, check_ex003, run_ex003_checks
-from .ex004 import EX004_CHECKS, check_ex004, run_ex004_checks
-from .ex005 import EX005_CHECKS, check_ex005, run_ex005_checks
-from .ex006 import EX006_CHECKS, check_ex006, run_ex006_checks
-from .ex007 import EX007_CHECKS, check_ex007, run_ex007_checks
+from exercise_runtime_support.exercise_test_support import (
+    load_exercise_test_module,
+    resolve_exercise_tests_dir,
+)
+from exercise_runtime_support.notebook_grader import NotebookGradingError
 
-_EX003_CHECKS = EX003_CHECKS
-_EX004_CHECKS = EX004_CHECKS
-_EX005_CHECKS = EX005_CHECKS
-_EX006_CHECKS = EX006_CHECKS
-_EX007_CHECKS = EX007_CHECKS
+from ..models import ExerciseCheckResult
+from .base import ExerciseCheckDefinition
+
+_CHECK_CACHE: dict[str, list[Any]] = {}
 
 __all__ = [
-    "EX003_CHECKS",
-    "EX004_CHECKS",
-    "EX005_CHECKS",
-    "EX006_CHECKS",
-    "EX007_CHECKS",
-    "Ex006CheckDefinition",
     "ExerciseCheckDefinition",
-    "check_ex002_summary",
-    "check_ex003",
-    "check_ex004",
-    "check_ex005",
-    "check_ex006",
-    "check_ex007",
-    "run_ex002_checks",
-    "run_ex003_checks",
-    "run_ex004_checks",
-    "run_ex005_checks",
-    "run_ex006_checks",
-    "run_ex007_checks",
+    "check_exercise_summary",
+    "has_exercise_checks",
+    "run_exercise_checks",
 ]
 
 
-class _CheckListBinding(NamedTuple):
-    module_name: str
-    private_attr: str
-    public_attr: str
+def has_exercise_checks(exercise_key: str) -> bool:
+    """Return whether an exercise exposes student-checker support."""
+
+    try:
+        tests_dir = resolve_exercise_tests_dir(exercise_key)
+    except FileNotFoundError:
+        return False
+    return (tests_dir / "student_checker_support.py").is_file()
 
 
-_CHECK_LIST_BINDINGS: Final[dict[str, _CheckListBinding]] = {
-    "EX003_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex003",
-        private_attr="_EX003_CHECKS",
-        public_attr="EX003_CHECKS",
-    ),
-    "EX004_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex004",
-        private_attr="_EX004_CHECKS",
-        public_attr="EX004_CHECKS",
-    ),
-    "EX005_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex005",
-        private_attr="_EX005_CHECKS",
-        public_attr="EX005_CHECKS",
-    ),
-    "EX006_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex006",
-        private_attr="_EX006_CHECKS",
-        public_attr="EX006_CHECKS",
-    ),
-    "EX007_CHECKS": _CheckListBinding(
-        module_name="exercise_runtime_support.student_checker.checks.ex007",
-        private_attr="_EX007_CHECKS",
-        public_attr="EX007_CHECKS",
-    ),
-}
+def _load_check_list(exercise_key: str) -> list[Any]:
+    module = load_exercise_test_module(exercise_key, "student_checker_support")
+    return list(module.CHECKS)
 
 
-def _resolve_check_list_binding(name: str) -> _CheckListBinding | None:
-    normalized = name.lstrip("_")
-    return _CHECK_LIST_BINDINGS.get(normalized)
+def _get_check_list(exercise_key: str) -> list[Any]:
+    checks = _CHECK_CACHE.get(exercise_key)
+    if checks is None:
+        checks = _load_check_list(exercise_key)
+        _CHECK_CACHE[exercise_key] = checks
+    return checks
 
 
-def _mirror_package_aliases(
-    module: ModuleType,
-    binding: _CheckListBinding,
-    assigned_name: str,
-    value: Any,
-) -> None:
-    base_setattr = ModuleType.__setattr__
-    for alias_name in (binding.private_attr, binding.public_attr):
-        if alias_name == assigned_name:
-            continue
-        base_setattr(module, alias_name, value)
+def _build_result(check: Any, issues: list[str]) -> ExerciseCheckResult:
+    return ExerciseCheckResult(
+        exercise_no=check.exercise_no,
+        title=check.title,
+        passed=len(issues) == 0,
+        issues=issues,
+    )
 
 
-def _propagate_to_submodule(binding: _CheckListBinding, value: Any) -> None:
-    module = sys.modules.get(binding.module_name)
-    if module is None:
-        return
-    setattr(module, binding.private_attr, value)
-    setattr(module, binding.public_attr, value)
+def _run_checks(checks: list[Any]) -> list[ExerciseCheckResult]:
+    results: list[ExerciseCheckResult] = []
+    for check in checks:
+        try:
+            issues = check.check()
+        except NotebookGradingError as exc:
+            issues = [str(exc)]
+        results.append(_build_result(check, issues))
+    return results
 
 
-class _ChecksModule(ModuleType):
-    def __setattr__(self, name: str, value: Any) -> None:
-        ModuleType.__setattr__(self, name, value)
-        binding = _resolve_check_list_binding(name)
-        if binding is None:
-            return
-        _mirror_package_aliases(self, binding, name, value)
-        _propagate_to_submodule(binding, value)
+def _summary(results: Sequence[ExerciseCheckResult]) -> list[str]:
+    return [issue for result in results for issue in result.issues]
 
 
-module = sys.modules[__name__]
-if not isinstance(module, _ChecksModule):
-    module.__class__ = _ChecksModule
+def check_exercise_summary(exercise_key: str) -> list[str]:
+    """Run summary checks for a single exercise key."""
+
+    return _summary(run_exercise_checks(exercise_key))
+
+
+def run_exercise_checks(exercise_key: str) -> list[ExerciseCheckResult]:
+    """Run detailed student-checker checks for a single exercise key."""
+
+    return _run_checks(_get_check_list(exercise_key))

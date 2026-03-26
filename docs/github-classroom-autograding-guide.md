@@ -129,7 +129,7 @@ The CLI wrapper orchestrates the full autograding flow so template workflows (an
 uv run python scripts/build_autograde_payload.py --variant student --pytest-args=-k test_ex002_sequence_modify_basics
 ```
 
-You can repeat `--pytest-args` to forward multiple options. In this source repository, for example, you can target the canonical ex002 exercise-local test with `--pytest-args=--maxfail=1 --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`. Exported Classroom repositories still use the flattened path `tests/test_ex002_sequence_modify_basics.py`. The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
+You can repeat `--pytest-args` to forward multiple options. In this source repository, for example, you can target the canonical ex002 exercise-local test with `--pytest-args=--maxfail=1 --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`. The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
 
 #### Example: GitHub Actions Integration
 

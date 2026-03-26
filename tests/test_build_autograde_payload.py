@@ -14,7 +14,8 @@ import pytest
 
 from tests.helpers import build_autograde_env
 
-CLI_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
+CLI_SCRIPT = Path(__file__).resolve(
+).parents[1] / "scripts" / "build_autograde_payload.py"
 REPO_ROOT = CLI_SCRIPT.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -107,6 +108,13 @@ def test_cli_runs_pytest_successfully(tmp_path: Path, passing_test_file: Path) -
     payload = json.loads(results_path.read_text(encoding="utf-8"))
     assert payload["status"] == "pass"
     assert len(payload["tests"]) == 1
+
+
+def test_parse_args_defaults_to_solution_variant() -> None:
+    args = build_autograde_payload.parse_args([])
+
+    assert args.variant == "solution"
+    assert args.pytest_args == ["-q"]
 
 
 def test_cli_propagates_pytest_exit_code(tmp_path: Path) -> None:
@@ -293,7 +301,8 @@ def test_cli_handles_missing_results_file(
             path.unlink()
         return code
 
-    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_remove)
+    monkeypatch.setattr(build_autograde_payload,
+                        "run_pytest", run_pytest_and_remove)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -331,7 +340,8 @@ def test_cli_handles_malformed_json(
         path.write_text("{ invalid json", encoding="utf-8")
         return code
 
-    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_corrupt)
+    monkeypatch.setattr(build_autograde_payload,
+                        "run_pytest", run_pytest_and_corrupt)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -392,7 +402,8 @@ def test_main_builds_variant_specific_pytest_environment(
         captured_env.update(env)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps({"status": "pass", "max_score": 1, "score": 1, "tests": []}),
+            json.dumps({"status": "pass", "max_score": 1,
+                       "score": 1, "tests": []}),
             encoding="utf-8",
         )
         return 0
@@ -410,6 +421,45 @@ def test_main_builds_variant_specific_pytest_environment(
     assert exit_code == 0
     assert captured_env["PYTUTOR_ACTIVE_VARIANT"] == "student"
     assert captured_env["UNRELATED_ENV_MARKER"] == "preserved"
+
+
+def test_main_uses_solution_variant_environment_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    results_path = tmp_path / "tmp" / "autograde" / "results.json"
+    output_path = tmp_path / "tmp" / "autograde" / "payload.txt"
+    captured_env: dict[str, str] = {}
+    _set_cli_env(monkeypatch)
+
+    def fake_run_pytest(
+        pytest_args: Sequence[str],
+        path: Path,
+        *,
+        env: Mapping[str, str] | None = None,
+    ) -> int:
+        assert pytest_args == ["-q"]
+        assert env is not None
+        captured_env.update(env)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"status": "pass", "max_score": 1,
+                       "score": 1, "tests": []}),
+            encoding="utf-8",
+        )
+        return 0
+
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", fake_run_pytest)
+
+    exit_code = build_autograde_payload.main(
+        [
+            f"--results-json={results_path}",
+            f"--output={output_path}",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured_env["PYTUTOR_ACTIVE_VARIANT"] == "solution"
 
 
 def test_cli_forwards_pytest_args(tmp_path: Path) -> None:

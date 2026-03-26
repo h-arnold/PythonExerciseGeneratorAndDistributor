@@ -98,7 +98,7 @@ A shortened JSON excerpt from a finished two-part debug notebook is shown below.
 
 **Explanation expectations**
 
-- Students must rewrite the code so it behaves correctly **and** complete the explanation cell with a meaningful summary of the bug. Fresh scaffolds can start with local placeholder explanation-validation constants in the generated test module, but once the exercise contract stabilises, move those values into shared expectations rather than inlining them in individual tests. Ex004 shows the target pattern: the live minimum is `EX004_MIN_EXPLANATION_LENGTH = 50` in [tests/exercise_expectations/ex004_sequence_debug_syntax.py](../../tests/exercise_expectations/ex004_sequence_debug_syntax.py), and [exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py](../../exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py) imports that value.
+- Students must rewrite the code so it behaves correctly **and** complete the explanation cell with a meaningful summary of the bug. Fresh scaffolds can start with local placeholder explanation-validation constants in the generated test module, but once the exercise contract stabilises, move those values into an exercise-local support module rather than inlining them in individual tests. Ex004 shows the target pattern: the live minimum is `EX004_MIN_EXPLANATION_LENGTH = 50` in [exercises/sequence/ex004_sequence_debug_syntax/tests/expectations.py](../../exercises/sequence/ex004_sequence_debug_syntax/tests/expectations.py), and [exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py](../../exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py) loads that value from the same canonical exercise-local `tests/` directory.
 - The student-facing explanation prompt stays neutral. Teacher-facing clarifications belong in the exercise-local solution notebook, which keeps the same tags but may include fuller commentary.
 
 ## Critical Principles for Student-Facing Debugging Exercises
@@ -153,9 +153,10 @@ from exercise_runtime_support.exercise_framework import (
 from exercise_runtime_support.exercise_framework.expectations_helpers import (
     is_valid_explanation,
 )
-from tests.exercise_expectations import ex004_sequence_debug_syntax as ex004
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 EXERCISE_KEY = "ex004_sequence_debug_syntax"
+ex004 = load_exercise_test_module(EXERCISE_KEY, "expectations")
 NOTEBOOK_PATH = resolve_exercise_notebook_path(EXERCISE_KEY)
 CACHE = RuntimeCache()
 

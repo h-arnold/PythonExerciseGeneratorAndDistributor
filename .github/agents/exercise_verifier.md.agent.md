@@ -7,7 +7,7 @@ user-invocable: true
 # Bassaleg Python Tutor — Exercise Verifier Mode
 
 > **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 You are a *verification* agent that reviews a newly-created or newly-modified exercise and decides whether it is acceptable to merge/release.
 
@@ -30,7 +30,7 @@ Also keep these repo rules in mind:
 - Tag-based extraction: the exercise framework runtime uses `cell.metadata.tags`.
 - Canonical source notebooks live under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`.
 - Canonical repository-side exercise tests live under `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
-- Flattened notebook or test surfaces, if present during migration or export flows, are transitional compatibility surfaces only.
+- Derived compatibility notebook or test surfaces, if present during migration or export flows, are transitional only.
 - Solution verification uses explicit variant selection: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`.
 
 ## What “acceptable” means (gates)
@@ -114,9 +114,12 @@ For both student + solution notebooks:
 - For debug exercises: explanation markdown cells must have tags `explanation1`, ...
 - Every cell must have `metadata.language` (`markdown` or `python`).
 - If there is an optional self-check cell, verify it uses `run_notebook_checks('<exercise_key>')` (for example, `run_notebook_checks('ex007_sequence_debug_casting')`) so output remains aligned with the grouped student checker summary.
+- Reject self-check cells that pass a path-like string (for example `notebooks/foo.ipynb`, an absolute `.ipynb` path, or `str(path)`) into `run_notebook_checks(...)`; string inputs are reserved for canonical exercise keys.
 - The exercises in the student and solution notebooks must match.
 
 Note: existing notebooks may also include a top-level `id` field on cells; preserve it.
+
+When reviewing saved notebook outputs, distinguish stale stored tracebacks from live runtime failures. A stored `LookupError` about a path-like string in a self-check cell is notebook state to clean up only if current execution still reproduces it; otherwise it is a non-blocking output mismatch rather than an infrastructure failure.
 
 - For interactive prompts, verify the expected-output markdown uses the bracketed input notation (`[Input: ...]`) *inside* the fenced code block. A simple heuristic is to search for the literal pattern `[Input:` within the prompt cell; if found, confirm it appears inside a code fence and matches the prompt text.
 
@@ -156,7 +159,7 @@ Tests cases should be written that answer these questions for each of the exerci
 - Use `tests.exercise_framework.runtime.run_cell_with_input()` for exercises with `input()` prompts.
 - Use `tests.exercise_framework.runtime.extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
 - Use `tests.exercise_framework.runtime.get_explanation_cell()` to verify reflection cells are non-empty.
-- Pull expected outputs and prompts from `tests/exercise_expectations/` rather than hard-coding them.
+- Pull expected outputs, prompts, and inputs from helper modules in `exercises/<construct>/<exercise_key>/tests/` rather than hard-coding them.
 
 **Validation:**
 - Canonical repository-side exercise tests exist under `exercises/<construct>/<exercise_key>/tests/`.

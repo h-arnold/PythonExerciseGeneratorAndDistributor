@@ -32,7 +32,7 @@ def parse_args(argv: Sequence[str] | None = None) -> ParsedArgs:
     parser.add_argument(
         "--variant",
         choices=("student", "solution"),
-        default="student",
+        default="solution",
         help="Notebook variant to expose to pytest.",
     )
     args, pytest_args = parser.parse_known_args(argv)

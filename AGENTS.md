@@ -150,6 +150,7 @@ def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
 - **Cell metadata**: Generated notebooks include `metadata.language` ("python" or "markdown")
 - **Tags**: Exact match required (e.g., `exercise1`, not `Exercise1` or `exercise_1`)
 - **Tagged cells**: Use `exercise1`, `exercise2`, ... tags and align tests with the actual cell behaviour; there is no repository-wide `solve()` contract.
+- **Checker cells**: Self-check notebook cells must call `run_notebook_checks('<exercise_key>')` with the canonical exercise key string. Do not pass notebook path strings such as `notebooks/foo.ipynb` or `str(path)` into that helper.
 
 ## Common Commands
 
@@ -192,6 +193,11 @@ The grading system (`tests/notebook_grader.py`) provides:
 - `run_cell_and_capture_output(notebook_path, *, tag="student")` - Execute a tagged code cell and capture stdout; this is the primary helper for non-debug exercise behaviour checks.
 - `run_cell_with_input(notebook_path, *, tag="student", inputs=[...])` - Execute a tagged code cell while supplying deterministic `input()` values.
 - `get_explanation_cell(notebook_path, *, tag="explanation1")` - Read explanation or reflection markdown cells for debug-style checks.
+
+Resolver contract note:
+
+- Treat the canonical `exercise_key` as the notebook identity in generated self-check cells and author-facing guidance.
+- If infrastructure code has already resolved a notebook to a `Path`, keep it as a `Path` when passing it into grader/runtime helpers. Do not convert the resolved path back into a path-like string before calling resolver-backed helpers.
 
 When developing or validating repository-side exercises, run the canonical exercise-local tests directly with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`, or use `uv run ./scripts/verify_solutions.sh -q` for a broader solution pass.
 

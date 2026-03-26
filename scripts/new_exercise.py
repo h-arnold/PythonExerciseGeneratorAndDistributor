@@ -46,7 +46,8 @@ def _slugify(text: str) -> str:
 
 def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
     """Create cell metadata dictionary."""
-    meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
+    meta: dict[str, object] = {
+        "id": uuid.uuid4().hex[:8], "language": language}
     if tags:
         meta["tags"] = tags
     return meta
@@ -145,6 +146,7 @@ def _make_check_answers_cell(exercise_key: str) -> dict[str, Any]:
         "source": [
             "from exercise_runtime_support.student_checker import run_notebook_checks\n",
             "\n",
+            "# Pass the canonical exercise_key here; do not pass a notebook path.\n",
             f"run_notebook_checks({exercise_key!r})\n",
         ],
     }

@@ -44,7 +44,7 @@ Contract:
 
 - Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py` and `scripts/build_autograde_payload.py`).
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
-- Default variant is `student` when no variant is provided.
+- Default variant is `solution` when no variant is provided.
 
 Deprecated note:
 
@@ -76,7 +76,7 @@ The following matrix records each active consumer surface, its current entry poi
 | Surface | Current entry point | Target entry point |
 | --- | --- | --- |
 | runtime/grading wrapper | tests.notebook_grader wrapper | exercise_runtime_support.notebook_grader |
-| framework and student-checker APIs | tests.* compatibility wrappers | exercise_runtime_support.exercise_framework.* and exercise_runtime_support.student_checker.* |
+| framework API wrapper | tests.exercise_framework.runtime wrapper | exercise_runtime_support.exercise_framework.* |
 | packager and collector CLI | scripts/template_repo_cli/core/* imports and packaging surfaces | exercise_runtime_support package copied and referenced |
 | exercise scaffolder | emitted import from exercise_runtime_support.exercise_framework.runtime | emitted import from exercise_runtime_support.exercise_framework.runtime |
 | repository workflows | scripts/run_pytest_variant.py --variant solution | scripts/run_pytest_variant.py --variant solution |

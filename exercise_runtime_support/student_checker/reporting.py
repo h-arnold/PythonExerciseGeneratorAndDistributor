@@ -14,8 +14,6 @@ from exercise_runtime_support.notebook_grader import NotebookGradingError
 
 from .models import (
     DetailedCheckResult,
-    Ex002CheckResult,
-    Ex006CheckResult,
     ExerciseCheckResult,
     NotebookCheckSpec,
 )
@@ -81,42 +79,15 @@ def print_results(results: list[CheckResult]) -> None:
     table = render_table([(label, passed) for label, passed, _ in results])
     print(table)
 
-    failures = [(label, issues) for label, passed, issues in results if not passed]
+    failures = [(label, issues)
+                for label, passed, issues in results if not passed]
     if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
 
 
-def print_ex002_results(results: list[Ex002CheckResult]) -> None:
-    """Print grouped ex002 check results."""
-    print_detailed_results(_grouped_exercise_rows(results))
+def print_exercise_results(results: Iterable[ExerciseCheckResult]) -> None:
+    """Print grouped detailed results for exercise-local student checker checks."""
 
-
-def print_ex006_results(results: list[Ex006CheckResult]) -> None:
-    """Print grouped ex006 check results."""
-    print_detailed_results(_grouped_exercise_rows(results))
-
-
-def print_ex003_results(results: list[ExerciseCheckResult]) -> None:
-    """Print grouped ex003 check results."""
-    _print_exercise_results(results)
-
-
-def print_ex004_results(results: list[ExerciseCheckResult]) -> None:
-    """Print grouped ex004 check results."""
-    _print_exercise_results(results)
-
-
-def print_ex005_results(results: list[ExerciseCheckResult]) -> None:
-    """Print grouped ex005 check results."""
-    _print_exercise_results(results)
-
-
-def print_ex007_results(results: list[ExerciseCheckResult]) -> None:
-    """Print grouped ex007 check results."""
-    _print_exercise_results(results)
-
-
-def _print_exercise_results(results: Iterable[ExerciseCheckResult]) -> None:
     print_detailed_results(_grouped_exercise_rows(results))
 
 

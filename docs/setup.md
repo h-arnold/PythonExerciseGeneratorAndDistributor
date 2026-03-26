@@ -6,7 +6,7 @@ This guide covers setting up the PythonExerciseGeneratorAndDistributor repositor
 
 ## Repository status
 
-Use `--variant` workflows as the canonical way to select student/solution notebooks. The source repository now uses the exercise-local layout under `exercises/<construct>/<exercise_key>/`; flattened notebook and test paths are packaging outputs for exported Classroom repositories.
+Use `--variant` workflows as the canonical way to select student/solution notebooks. The source repository now uses the exercise-local layout under `exercises/<construct>/<exercise_key>/`; packaging may produce derived outputs, but canonical exercise-specific tests stay under each exercise's own `tests/` directory.
 
 ## Recommended environment
 
@@ -121,8 +121,6 @@ If you're a student working on exercises:
    ```bash
    uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -v
    ```
-
-   Exported Classroom repositories still flatten that file to `tests/test_ex002_sequence_modify_basics.py`.
 
 6. **Repeat** until all tests pass
 

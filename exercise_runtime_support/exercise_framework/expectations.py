@@ -1,29 +1,13 @@
-"""Expectation helpers for exercise checks."""
+"""Generic expectation helpers for exercise checks."""
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
-from functools import lru_cache, partial
-from typing import Final
+from collections.abc import Mapping, Sequence
+from types import ModuleType
+from typing import Any
 
 from exercise_runtime_support.exercise_catalogue import get_catalogue_key_for_exercise_id
-from tests.exercise_expectations import (
-    EX002_EXPECTED_MULTI_LINE,
-    EX002_EXPECTED_PRINT_CALLS,
-    EX002_EXPECTED_SINGLE_LINE,
-)
-
-from . import assertions, constructs, runtime
-
-
-@dataclass(frozen=True)
-class Ex002CheckDefinition:
-    """Defines a student-friendly check for an ex002 exercise."""
-
-    exercise_no: int
-    title: str
-    check: Callable[[], list[str]]
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 
 def expected_output_lines(
@@ -66,112 +50,39 @@ def expected_print_call_count(
     return expectations.get(exercise_no)
 
 
-def _exercise_tag(exercise_no: int) -> str:
-    return f"exercise{exercise_no}"
+_ex002_support_module: ModuleType | None = None
+EX002_CHECKS: Any
+Ex002CheckDefinition: Any
 
 
-@lru_cache(maxsize=1)
-def _get_ex002_exercise_key() -> str:
-    return get_catalogue_key_for_exercise_id(2)
-
-
-def _check_logic(exercise_no: int) -> list[str]:
-    errors: list[str] = []
-    output = runtime.run_cell_and_capture_output(
-        _get_ex002_exercise_key(),
-        tag=_exercise_tag(exercise_no),
-    )
-
-    expected_text = expected_output_text(
-        exercise_no,
-        single_line=EX002_EXPECTED_SINGLE_LINE,
-        multi_line=EX002_EXPECTED_MULTI_LINE,
-    )
-    if expected_text is None:
-        errors.append(f"Exercise {exercise_no}: no expected output configured.")
-        return errors
-
-    if output != expected_text:
-        expected_lines = expected_output_lines(
-            exercise_no,
-            single_line=EX002_EXPECTED_SINGLE_LINE,
-            multi_line=EX002_EXPECTED_MULTI_LINE,
+def _load_ex002_support() -> ModuleType:
+    global _ex002_support_module
+    if _ex002_support_module is None:
+        _ex002_support_module = load_exercise_test_module(
+            get_catalogue_key_for_exercise_id(2),
+            "framework_support",
         )
-        expected_summary = " | ".join(expected_lines or [])
-        errors.append(f"Exercise {exercise_no}: expected '{expected_summary}'.")
-    return errors
+    return _ex002_support_module
 
 
-def _check_formatting(exercise_no: int) -> list[str]:
-    expected_calls = expected_print_call_count(
-        exercise_no,
-        expectations=EX002_EXPECTED_PRINT_CALLS,
-    )
-    if expected_calls is None:
-        return []
-
-    output = runtime.run_cell_and_capture_output(
-        _get_ex002_exercise_key(),
-        tag=_exercise_tag(exercise_no),
-    )
-    actual_calls = len(output.splitlines())
-    if actual_calls != expected_calls:
-        return [f"Exercise {exercise_no}: expected {expected_calls} print calls."]
-    return []
+def get_ex002_checks() -> list[Any]:
+    """Return the detailed ex002 check definitions from exercise-local support."""
+    return list(_load_ex002_support().EX002_CHECKS)
 
 
-def _check_construct(exercise_no: int) -> list[str]:
-    errors: list[str] = []
-    code = runtime.extract_tagged_code(
-        _get_ex002_exercise_key(),
-        tag=_exercise_tag(exercise_no),
-    )
-    has_print = constructs.check_has_print_statement(code)
-    errors.extend(
-        assertions.assert_has_print_statement(
-            exercise_no=exercise_no,
-            has_print=has_print,
-        )
-    )
-
-    operator_expectations: dict[int, str] = {
-        3: "*",
-        5: "/",
-        8: "*",
-        9: "-",
-    }
-    operator = operator_expectations.get(exercise_no)
-    if operator:
-        uses_operator = constructs.check_uses_operator(code, operator=operator)
-        errors.extend(
-            assertions.assert_uses_operator(
-                exercise_no=exercise_no,
-                operator=operator,
-                used=uses_operator,
-            )
-        )
-
-    return errors
+def __getattr__(name: str) -> Any:
+    if name in {"EX002_CHECKS", "Ex002CheckDefinition"}:
+        value = getattr(_load_ex002_support(), name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def _build_check(
-    exercise_no: int,
-    title: str,
-    check_fn: Callable[[int], list[str]],
-) -> Ex002CheckDefinition:
-    return Ex002CheckDefinition(
-        exercise_no=exercise_no,
-        title=title,
-        check=partial(check_fn, exercise_no),
-    )
-
-
-EX002_CHECKS: Final[list[Ex002CheckDefinition]] = [
-    check
-    for exercise_no in range(1, 11)
-    for check in (
-        _build_check(exercise_no, "Logic", _check_logic),
-        _build_check(exercise_no, "Formatting", _check_formatting),
-        _build_check(exercise_no, "Construct", _check_construct),
-    )
+__all__ = [
+    "EX002_CHECKS",
+    "Ex002CheckDefinition",
+    "expected_output_lines",
+    "expected_output_text",
+    "expected_print_call_count",
+    "get_ex002_checks",
 ]

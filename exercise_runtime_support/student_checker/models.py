@@ -26,21 +26,6 @@ class ExerciseCheckResult:
 
 
 @dataclass(frozen=True)
-class Ex002CheckResult:
-    """Represents a single ex002 check result."""
-
-    exercise_no: int
-    title: str
-    passed: bool
-    issues: list[str]
-
-
-@dataclass(frozen=True)
-class Ex006CheckResult(ExerciseCheckResult):
-    """Represents a single ex006 check result."""
-
-
-@dataclass(frozen=True)
 class NotebookTagCheckResult:
     """Represents the status of a tagged exercise cell."""
 

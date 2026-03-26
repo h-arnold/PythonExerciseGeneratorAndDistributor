@@ -452,7 +452,7 @@ def test_exercise1_formatting():
 ## Technical Reference: Exercise Framework
 
 The testing framework now lives under [tests/exercise_framework/](../tests/exercise_framework/).
-Use the runtime helpers and shared expectations when authoring or updating tests.
+Use the runtime helpers and keep exercise-specific support modules beside the canonical exercise-local test file when authoring or updating tests.
 
 ### Core Modules and Responsibilities
 
@@ -463,8 +463,8 @@ Use the runtime helpers and shared expectations when authoring or updating tests
 - `reporting.py`: table formatting and error normalisation for student-facing output.
 - `api.py`: stable entry points for scripts and CLI checks.
 
-Exercise-specific expectations data lives under [tests/exercise_expectations/](../tests/exercise_expectations/).
-Treat those modules as the canonical source of expected outputs, prompt text, and input data.
+Exercise-specific expected outputs, prompt text, and input data should live under each exercise's canonical test directory, for example [exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py](../exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py).
+Treat those exercise-local modules as the canonical source of support data for that exercise.
 
 ### Runtime Helpers
 
@@ -558,12 +558,16 @@ The runtime helpers call `resolve_notebook_path` internally, so you usually don'
 
 ### Expectations Modules
 
-Exercise expectations live in [tests/exercise_expectations/](../tests/exercise_expectations/).
-Tests should import expectations from there instead of hard-coding outputs or prompts.
+Exercise expectations should live beside the canonical exercise-local test file under `exercises/<construct>/<exercise_key>/tests/`.
+Tests should load that exercise-local support data instead of hard-coding outputs or prompts.
 Example for ex002:
 
 ```python
-from tests.exercise_expectations import EX002_EXPECTED_SINGLE_LINE
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+
+ex002 = load_exercise_test_module("ex002_sequence_modify_basics", "expectations")
+
+assert ex002.EX002_EXPECTED_SINGLE_LINE
 ```
 
 ### Reporting Helpers

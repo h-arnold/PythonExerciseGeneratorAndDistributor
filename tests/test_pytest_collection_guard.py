@@ -67,8 +67,14 @@ def test_find_noncanonical_exercise_test_sources_flags_all_repo_side_exnnn_tests
 def test_find_noncanonical_exercise_test_sources_ignores_renamed_blocker_tests() -> None:
     offenders = find_noncanonical_exercise_test_sources(
         [
-            Path("tests/test_sequence_ex007_construct_checks.py"),
-            Path("tests/exercise_framework/test_canonical_ex002_integration.py"),
+            Path(
+                "exercises/sequence/ex007_sequence_debug_casting/tests/"
+                "test_repo_construct_checks.py"
+            ),
+            Path(
+                "exercises/sequence/ex002_sequence_modify_basics/tests/"
+                "test_repo_task_metadata.py"
+            ),
         ]
     )
 

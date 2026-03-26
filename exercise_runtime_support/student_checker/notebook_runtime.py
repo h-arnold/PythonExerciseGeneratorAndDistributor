@@ -52,7 +52,8 @@ def _load_notebook_json(path: Path) -> NotebookJson:
     except FileNotFoundError as exc:
         raise NotebookGradingError(f"Notebook not found: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise NotebookGradingError(f"Unable to parse notebook JSON: {path}") from exc
+        raise NotebookGradingError(
+            f"Unable to parse notebook JSON: {path}") from exc
     if is_notebook_json(data):
         return data
     return {}
@@ -108,23 +109,26 @@ def _run_notebook_checks(path: Path, tags: list[str]) -> list[NotebookTagCheckRe
     results: list[NotebookTagCheckResult] = []
     for tag in tags:
         try:
-            _run_tagged_cell(str(path), tag)
-            results.append(NotebookTagCheckResult(tag=tag, passed=True, message=""))
+            _run_tagged_cell(path, tag)
+            results.append(NotebookTagCheckResult(
+                tag=tag, passed=True, message=""))
         except NotebookGradingError as exc:
-            results.append(NotebookTagCheckResult(tag=tag, passed=False, message=str(exc)))
+            results.append(NotebookTagCheckResult(
+                tag=tag, passed=False, message=str(exc)))
     return results
 
 
-def _run_tagged_cell(notebook_path: str, tag: str) -> None:
+def _run_tagged_cell(notebook_path: str | Path, tag: str) -> None:
     input_calls = _count_input_calls(notebook_path, tag=tag)
     if input_calls == 0:
         run_cell_and_capture_output(notebook_path, tag=tag)
         return
-    _run_interactive_cell_with_backfill(notebook_path, tag=tag, input_calls=input_calls)
+    _run_interactive_cell_with_backfill(
+        notebook_path, tag=tag, input_calls=input_calls)
 
 
 def _run_interactive_cell_with_backfill(
-    notebook_path: str,
+    notebook_path: str | Path,
     *,
     tag: str,
     input_calls: int,
@@ -150,7 +154,7 @@ def _is_missing_input_error(exc: NotebookGradingError) -> bool:
     return False
 
 
-def _count_input_calls(notebook_path: str, *, tag: str) -> int:
+def _count_input_calls(notebook_path: str | Path, *, tag: str) -> int:
     """Count direct `input()` calls in a tagged code cell."""
     code = extract_tagged_code(notebook_path, tag=tag)
     try:

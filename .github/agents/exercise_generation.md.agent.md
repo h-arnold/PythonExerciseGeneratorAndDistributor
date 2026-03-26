@@ -7,7 +7,7 @@ user-invocable: true
 # Bassaleg Python Tutor — Exercise Generation Mode
 
 > **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 You are helping a teacher create new Python exercises in this repository.
 
@@ -19,7 +19,7 @@ This repo authors exercises inside canonical exercise homes under `exercises/<co
 - `notebooks/solution.ipynb` contains the instructor solution mirror.
 - `tests/test_<exercise_key>.py` contains the canonical exercise-local pytest checks.
 
-Flattened notebook or test surfaces may still appear in export/runtime flows during migration, but they are not the source-repo authoring layout.
+Derived compatibility surfaces may still appear in export/runtime flows during migration, but they are not the source-repo authoring layout.
 
 The same canonical exercise-local test file can be run against either notebook variant:
 
@@ -75,6 +75,7 @@ To achieve the best possible understanding, students are given exercises that fo
 - Student code in each tagged cell should be small, self-contained, and aligned with the construct being taught. Do not assume a repository-wide `solve()` contract.
 - Before the Functions construct is taught, avoid requiring docstrings or named helper functions; after Functions, include them only when the task genuinely teaches functions.
 - Tests should use exercise framework helpers with the canonical `exercise_key`, resolving the notebook path first and then using helpers such as `run_cell_and_capture_output(...)` or `run_cell_with_input(...)` for the tagged cell behaviour under test.
+- Preserve the exercise identity contract: notebook self-check cells must call `run_notebook_checks('<exercise_key>')` with the canonical exercise key string, while shared runtime code that has already resolved a notebook path must keep that value as a `Path` instead of converting it back to a path-like string.
 - **Namespace isolation**: By default, each tagged cell is executed in isolation. If an exercise explicitly builds on previous exercises (e.g., exercise2 extends exercise1), state this clearly in the notebook instructions and design tests accordingly.
 
 ## Creating exercises - the process
@@ -183,6 +184,7 @@ Notebook formatting requirements
 - Each cell must include `metadata.language` (`markdown`/`python`).
 - If editing existing notebook cells, preserve `metadata.id`.
 - For the optional self-check cell, call `run_notebook_checks('<exercise_key>')` (for example, `run_notebook_checks('ex007_sequence_debug_casting')`) so students see grouped, exercise-specific results.
+- Do not pass `'notebooks/...ipynb'`, an absolute path string, or `str(path)` into `run_notebook_checks(...)`; string inputs are treated as exercise keys, not notebook paths.
 
 Metadata tips:
 - When you tag a cell for grading, ensure the tag exactly matches `exercise1`, `exercise2`, etc.; the grader locates cells by this metadata tag.
@@ -206,7 +208,7 @@ Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testi
 - **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
 - **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
 - **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` from `exercise_runtime_support.exercise_framework` to mock `input()` calls.
-- **Expectations data**: Store expected outputs, prompts, and inputs in `tests/exercise_expectations/` and import them into tests.
+- **Exercise-local support data**: Store expected outputs, prompts, and inputs in helper modules inside `exercises/<construct>/<exercise_key>/tests/` and load them from the canonical exercise-local test directory.
 
 7) Verify
 - Run `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` locally.
