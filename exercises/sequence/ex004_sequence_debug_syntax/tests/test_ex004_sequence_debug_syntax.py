@@ -8,7 +8,6 @@ from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,
-    resolve_exercise_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -26,35 +25,31 @@ def _explanation_tag(exercise_no: int) -> str:
 
 _EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
 ex004 = load_exercise_test_module(_EX004_EXERCISE_KEY, "expectations")
-_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EX004_EXERCISE_KEY, variant="solution")
 _CACHE = RuntimeCache()
 
 
 def _exercise_output(exercise_no: int) -> str:
     return run_cell_and_capture_output(
-        _NOTEBOOK_PATH,
+        _EX004_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
 
 
 def _exercise_output_with_input(exercise_no: int, inputs: list[str]) -> str:
     return run_cell_with_input(
-        _NOTEBOOK_PATH,
+        _EX004_EXERCISE_KEY,
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
-        variant="solution",
     )
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
-        _NOTEBOOK_PATH,
+        _EX004_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
     return ast.parse(code)
 
@@ -153,7 +148,7 @@ def test_exercise1_construct() -> None:
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(1))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(1))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -181,7 +176,7 @@ def test_exercise2_construct() -> None:
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(2))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(2))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -210,7 +205,7 @@ def test_exercise3_construct() -> None:
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(3))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(3))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -241,7 +236,7 @@ def test_exercise4_construct() -> None:
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(4))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(4))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -270,7 +265,7 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(5))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(5))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -299,7 +294,7 @@ def test_exercise6_construct() -> None:
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(6))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(6))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -330,7 +325,7 @@ def test_exercise7_construct() -> None:
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(7))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(7))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -363,7 +358,7 @@ def test_exercise8_construct() -> None:
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(8))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(8))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -391,7 +386,7 @@ def test_exercise9_construct() -> None:
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(9))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(9))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -424,7 +419,7 @@ def test_exercise10_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
-    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=_explanation_tag(10))
+    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(10))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,

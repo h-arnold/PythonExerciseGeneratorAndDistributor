@@ -164,11 +164,11 @@ class TestCopyFiles:
             pytest.param(
                 "notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
             pytest.param(
-                "tests/sequence/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+                "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
                 id="test",
             ),
             pytest.param(
-                "tests/sequence/ex002_sequence_modify_basics/expectations.py",
+                "exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py",
                 id="support-module",
             ),
         ],
@@ -303,8 +303,9 @@ class TestCopyFiles:
 
         # Structure should be preserved
         assert (temp_dir / "notebooks").exists()
-        assert (temp_dir / "tests").exists()
-        assert (temp_dir / "tests/sequence/ex002_sequence_modify_basics").exists()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
+        ).exists()
 
 
 class TestGenerateFiles:
@@ -342,7 +343,7 @@ class TestPackageIntegrity:
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test validating package completeness for the flattened export."""
+        """Test validating package completeness for canonical exercise-local exports."""
 
         _create_valid_packaged_workspace(
             template_packager,
@@ -486,21 +487,66 @@ class TestPackageIntegrity:
 
         assert not template_packager.validate_package(temp_dir)
 
-    def test_package_integrity_rejects_exported_exercises_tree(
+    def test_package_integrity_allows_packaged_exercise_tests_tree(
         self,
         template_packager: TemplatePackager,
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test validation fails if the authoring exercises tree leaks into the export."""
+        """Test validation accepts the packaged exercises tree when it contains only tests."""
 
         _create_valid_packaged_workspace(
             template_packager,
             temp_dir,
             build_exercise_file_map,
         )
-        exported_exercises_dir = temp_dir / "exercises" / "ex999_example"
-        exported_exercises_dir.mkdir(parents=True)
+
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
+        ).is_dir()
+        assert template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_exported_exercises_tree_non_test_asset(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if the packaged exercises tree contains non-test assets."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        exported_exercises_dir = (
+            temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics"
+        )
+        (exported_exercises_dir / "notebooks").mkdir(parents=True)
+        (exported_exercises_dir / "notebooks" / "student.ipynb").write_text(
+            "{}\n", encoding="utf-8"
+        )
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_packaged_tests_path_that_is_not_a_directory(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if the packaged tests node is not a directory."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        tests_dir = (
+            temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics" / "tests"
+        )
+        shutil.rmtree(tests_dir)
+        tests_dir.write_text("not a directory\n", encoding="utf-8")
 
         assert not template_packager.validate_package(temp_dir)
 
@@ -605,14 +651,28 @@ class TestPackageIntegrity:
         assert template_packager.validate_package(temp_dir)
 
         env = os.environ.copy()
-        result = subprocess.run(
+        explicit_path_result = subprocess.run(
             [
                 sys.executable,
                 "-m",
                 "pytest",
                 "--collect-only",
                 "-q",
-                "tests/sequence/ex002_sequence_modify_basics/test_ex002_sequence_modify_basics.py",
+                "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
+            ],
+            cwd=temp_dir,
+            capture_output=True,
+            check=False,
+            text=True,
+            env=env,
+        )
+        default_discovery_result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
             ],
             cwd=temp_dir,
             capture_output=True,
@@ -625,12 +685,24 @@ class TestPackageIntegrity:
                     "exercise.json").exists()
         assert get_catalogue_snapshot_path(
             temp_dir / "exercise_runtime_support").exists()
-        assert not (temp_dir / "exercises").exists()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
+        ).is_dir()
 
-        assert result.returncode == 0, (
-            "Packaged workspace smoke pytest failed:\n"
-            f"stdout:\n{result.stdout}\n"
-            f"stderr:\n{result.stderr}"
+        assert explicit_path_result.returncode == 0, (
+            "Packaged workspace explicit-path smoke pytest failed:\n"
+            f"stdout:\n{explicit_path_result.stdout}\n"
+            f"stderr:\n{explicit_path_result.stderr}"
+        )
+        assert default_discovery_result.returncode == 0, (
+            "Packaged workspace default-discovery smoke pytest failed:\n"
+            f"stdout:\n{default_discovery_result.stdout}\n"
+            f"stderr:\n{default_discovery_result.stderr}"
+        )
+        assert "test_ex002_sequence_modify_basics" in default_discovery_result.stdout, (
+            "Default pytest discovery did not collect the packaged exercise test:\n"
+            f"stdout:\n{default_discovery_result.stdout}\n"
+            f"stderr:\n{default_discovery_result.stderr}"
         )
 
     def test_copies_notebook_grader_when_present(

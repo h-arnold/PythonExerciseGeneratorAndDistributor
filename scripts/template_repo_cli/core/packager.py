@@ -18,6 +18,10 @@ from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe
 class TemplatePackager:
     """Package templates for GitHub."""
 
+    _CONSTRUCT_DIR_DEPTH = 1
+    _EXERCISE_DIR_DEPTH = 2
+    _TESTS_DIR_INDEX = 2
+
     COPY_EXCLUDE_PATTERNS: tuple[str, ...] = (
         "__pycache__",
         "*.pyc",
@@ -227,9 +231,40 @@ class TemplatePackager:
         readme_path = workspace / "README.md"
         readme_path.write_text(content, encoding="utf-8")
 
+    def _is_valid_packaged_exercise_path(self, path: Path, exercises_dir: Path) -> bool:
+        """Return whether a path fits the reduced packaged exercises tree."""
+        relative_parts = path.relative_to(exercises_dir).parts
+        part_count = len(relative_parts)
+
+        if part_count == self._CONSTRUCT_DIR_DEPTH:
+            return path.is_dir()
+        if part_count == self._EXERCISE_DIR_DEPTH:
+            return path.is_dir()
+        if relative_parts[self._TESTS_DIR_INDEX] != "tests":
+            return False
+        if part_count == self._TESTS_DIR_INDEX + 1:
+            return path.is_dir()
+        return True
+
+    def _has_invalid_exercises_tree(self, workspace: Path) -> bool:
+        """Return whether the packaged exercises tree contains invalid assets."""
+        exercises_dir = workspace / "exercises"
+        if not exercises_dir.exists():
+            return False
+        if not exercises_dir.is_dir():
+            return True
+
+        for path in exercises_dir.rglob("*"):
+            if path.name in self.FORBIDDEN_AUTHORING_FILENAMES:
+                return True
+            if not self._is_valid_packaged_exercise_path(path, exercises_dir):
+                return True
+
+        return False
+
     def _contains_authoring_only_assets(self, workspace: Path) -> bool:
         """Return whether a packaged workspace still contains authoring-only assets."""
-        if (workspace / "exercises").exists():
+        if self._has_invalid_exercises_tree(workspace):
             return True
 
         return any(

@@ -27,7 +27,6 @@ def _run(n: int) -> str:
         _EX006_EXERCISE_KEY,
         tag=_tag(n),
         cache=_CACHE,
-        variant="solution",
     )
 
 
@@ -37,7 +36,6 @@ def _run_with_inputs(n: int, inputs: list[str]) -> str:
         tag=_tag(n),
         inputs=inputs,
         cache=_CACHE,
-        variant="solution",
     )
 
 
@@ -46,7 +44,6 @@ def _ast(n: int) -> ast.Module:
         _EX006_EXERCISE_KEY,
         tag=_tag(n),
         cache=_CACHE,
-        variant="solution",
     )
     return ast.parse(code)
 

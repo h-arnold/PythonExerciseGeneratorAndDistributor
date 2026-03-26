@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -256,6 +257,83 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
+    def test_dry_run_workspace_packaged_sequence_test_runs_against_student_slot(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Packaged exercise tests should execute against the packaged student notebook slot."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--exercise-keys",
+                "ex002_sequence_modify_basics",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        source_solution = (
+            Path(__file__).resolve().parents[2]
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "notebooks"
+            / "solution.ipynb"
+        )
+        packaged_student = output_dir / "notebooks" / "ex002_sequence_modify_basics.ipynb"
+        shutil.copyfile(source_solution, packaged_student)
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "resolver.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged pytest execution")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env["PYTUTOR_ACTIVE_VARIANT"] = "student"
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-m",
+            "pytest",
+            "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
+            "-q",
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert check.returncode == 0, (
+            "Packaged exercise pytest run failed in dry-run workspace:\n"
+            f"stdout:\n{check.stdout}\n"
+            f"stderr:\n{check.stderr}"
+        )
+
     def test_dry_run_workspace_subset_export_rejects_excluded_notebook_early(
         self,
         tmp_path: Path,
@@ -410,6 +488,7 @@ class TestEndToEndDryRun:
                 [
                     "import importlib.util",
                     "from pathlib import Path",
+                    "from exercise_runtime_support.exercise_framework import resolve_exercise_notebook_path",
                     "module_path = (",
                     "    Path.cwd()",
                     "    / 'exercises'",
@@ -430,7 +509,8 @@ class TestEndToEndDryRun:
                     "assert spec is not None and spec.loader is not None",
                     "module = importlib.util.module_from_spec(spec)",
                     "spec.loader.exec_module(module)",
-                    "assert module._NOTEBOOK_PATH == expected, (module._NOTEBOOK_PATH, expected)",
+                    "assert resolve_exercise_notebook_path('ex004_sequence_debug_syntax') == expected",
+                    "assert module._exercise_ast(1)",
                 ]
             ),
         ]
@@ -450,11 +530,11 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
-    def test_dry_run_workspace_canonical_ex004_uses_nested_export(
+    def test_dry_run_workspace_canonical_ex004_uses_exercise_local_export(
         self,
         repo_root: Path,
     ) -> None:
-        """Test packaged canonical ex004 exports exercise-local support under the nested test path."""
+        """Test packaged canonical ex004 exports exercise-local support under exercises/."""
         from scripts.template_repo_cli.cli import main
 
         with tempfile.TemporaryDirectory(dir=repo_root) as tmpdir:
@@ -487,15 +567,16 @@ class TestEndToEndDryRun:
                     "ex004_sequence_debug_syntax.ipynb").exists()
             exported_test = (
                 output_dir
-                / "tests"
+                / "exercises"
                 / "sequence"
                 / "ex004_sequence_debug_syntax"
+                / "tests"
                 / "test_ex004_sequence_debug_syntax.py"
             )
             exported_expectations = exported_test.with_name("expectations.py")
             assert exported_test.exists()
             assert exported_expectations.exists()
-            assert not (output_dir / "exercises").exists()
+            assert (output_dir / "exercises").is_dir()
             assert source_expectations.exists()
 
             shadow_root = Path(tmpdir) / "shadow_packages"
@@ -523,7 +604,7 @@ class TestEndToEndDryRun:
                     [
                         "from pathlib import Path",
                         "import importlib.util",
-                        "module_path = Path.cwd() / 'tests' / 'sequence' / 'ex004_sequence_debug_syntax' / 'expectations.py'",
+                        "module_path = Path.cwd() / 'exercises' / 'sequence' / 'ex004_sequence_debug_syntax' / 'tests' / 'expectations.py'",
                         "spec = importlib.util.spec_from_file_location('packaged_ex004_expectations', module_path)",
                         "assert spec is not None and spec.loader is not None",
                         "module = importlib.util.module_from_spec(spec)",

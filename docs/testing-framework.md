@@ -8,7 +8,7 @@ For details on **testing student notebooks**, see [Exercise Testing](exercise-te
 
 ## Repository status
 
-Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`. Flattened notebook and test paths are now export-only surfaces produced by the template packager for Classroom repositories.
+Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`. Exported Classroom repositories now preserve that exercise-local test path while still flattening student notebooks under `notebooks/`.
 
 ## Overview
 

@@ -30,7 +30,6 @@ def _exercise_output(exercise_no: int) -> str:
         _EX003_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
 
 
@@ -40,7 +39,6 @@ def _exercise_output_with_inputs(exercise_no: int, inputs: list[str]) -> str:
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
-        variant="solution",
     )
 
 
@@ -49,7 +47,6 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
         _EX003_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
     return ast.parse(code)
 
