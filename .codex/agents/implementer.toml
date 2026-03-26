@@ -1,8 +1,6 @@
 name = "Implementer"
 description = "Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes."
-developer_instructions = """
-
-> Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
+developer_instructions = """> Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 # Implementer Agent
 

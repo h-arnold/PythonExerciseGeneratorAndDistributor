@@ -1,8 +1,6 @@
 name = "Tidy Code Reviewer"
 description = "Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent"
-developer_instructions = """
-
-> Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
+developer_instructions = """> Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 # Tidy Code Review Sub-Agent
 
