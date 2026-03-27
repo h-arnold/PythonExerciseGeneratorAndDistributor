@@ -58,13 +58,19 @@ Each exercise folder contains:
 - `exercise.json`: Minimal exercise metadata used by the canonical resolver
 - `tests/`: Canonical repository-side home for exercise-specific pytest files (for example, `test_<exercise_key>.py`)
 
-Exported Classroom repositories still receive flattened notebooks and exercise tests during packaging, but those derived paths do not exist in the source repository and are not part of the authoring contract.
+Exported Classroom repositories are derived packaging outputs and are not part of the source-repository authoring contract.
+
+The packaged student-facing layout follows Option A:
+
+- Student notebooks are exported to `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
+- Exercise tests are exported under `exercises/<construct>/<exercise_key>/tests/`.
+- Authoring-only assets are excluded (`exercise.json`, solution notebooks).
 
 - `OrderOfTeaching.md`: (at construct level) recommended exercise sequence
 
 ### Packaged notebook outputs
 
-Exported Classroom repositories flatten canonical notebooks to `notebooks/exNNN_slug.ipynb` during packaging. Those paths are derived outputs for the student-facing repository; in the source repository, the canonical notebooks live under `exercises/<construct>/<exercise_key>/notebooks/`.
+Exported Classroom repositories preserve exercise-local notebooks for students at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`. In the source repository, canonical notebooks also live under `exercises/<construct>/<exercise_key>/notebooks/`.
 
 ### `tests/`
 

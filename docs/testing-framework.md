@@ -8,7 +8,11 @@ For details on **testing student notebooks**, see [Exercise Testing](exercise-te
 
 ## Repository status
 
-Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`. Exported Classroom repositories now preserve that exercise-local test path while still flattening student notebooks under `notebooks/`.
+Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`.
+
+Exported Classroom repositories preserve exercise-local tests and export student notebooks to `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
+
+Packaged templates remain metadata-free (no exported `exercise.json`) and exclude solution notebooks by default.
 
 ## Overview
 

@@ -22,7 +22,7 @@ class TestCollectAllFiles:
             / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
         )
         assert files["notebook_export"] == Path(
-            "notebooks/ex002_sequence_modify_basics.ipynb")
+            "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb")
         assert files["test"] == (
             repo_root
             / "exercises/sequence/ex002_sequence_modify_basics/tests"
@@ -40,7 +40,7 @@ class TestCollectAllFiles:
             repo_root / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
         )
         assert files["notebook_export"] == Path(
-            "notebooks/ex004_sequence_debug_syntax.ipynb")
+            "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb")
         assert files["test"] == (
             repo_root
             / "exercises/sequence/ex004_sequence_debug_syntax/tests"

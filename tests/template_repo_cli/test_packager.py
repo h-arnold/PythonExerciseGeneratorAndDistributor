@@ -162,7 +162,9 @@ class TestCopyFiles:
         "expected_relative_path",
         [
             pytest.param(
-                "notebooks/ex002_sequence_modify_basics.ipynb", id="notebook"),
+                "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb",
+                id="notebook",
+            ),
             pytest.param(
                 "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
                 id="test",
@@ -237,7 +239,7 @@ class TestCopyFiles:
         files: ExerciseFileMap = {
             "ex999_legacy": ExerciseFiles(
                 notebook=legacy_notebook,
-                notebook_export=Path("notebooks/ex999_legacy.ipynb"),
+                notebook_export=Path("exercises/legacy/ex999_legacy/notebooks/student.ipynb"),
                 test=legacy_test,
                 tests_export_dir=Path("tests"),
             )
@@ -302,7 +304,9 @@ class TestCopyFiles:
         template_packager.copy_exercise_files(temp_dir, files)
 
         # Structure should be preserved
-        assert (temp_dir / "notebooks").exists()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks"
+        ).exists()
         assert (
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
         ).exists()
@@ -466,7 +470,13 @@ class TestPackageIntegrity:
             temp_dir,
             build_exercise_file_map,
         )
-        (temp_dir / "notebooks" / "exercise.json").write_text("{}\n", encoding="utf-8")
+        (
+            temp_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "exercise.json"
+        ).write_text("{}\n", encoding="utf-8")
 
         assert not template_packager.validate_package(temp_dir)
 
@@ -483,17 +493,24 @@ class TestPackageIntegrity:
             temp_dir,
             build_exercise_file_map,
         )
-        (temp_dir / "notebooks" / "solution.ipynb").write_text("{}\n", encoding="utf-8")
+        (
+            temp_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "notebooks"
+            / "solution.ipynb"
+        ).write_text("{}\n", encoding="utf-8")
 
         assert not template_packager.validate_package(temp_dir)
 
-    def test_package_integrity_allows_packaged_exercise_tests_tree(
+    def test_package_integrity_allows_packaged_exercise_tree_with_student_notebook_and_tests(
         self,
         template_packager: TemplatePackager,
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test validation accepts the packaged exercises tree when it contains only tests."""
+        """Test validation accepts the packaged exercises tree for Option A layout."""
 
         _create_valid_packaged_workspace(
             template_packager,
@@ -504,15 +521,19 @@ class TestPackageIntegrity:
         assert (
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
         ).is_dir()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).is_file()
         assert template_packager.validate_package(temp_dir)
 
-    def test_package_integrity_rejects_exported_exercises_tree_non_test_asset(
+    def test_package_integrity_rejects_exported_exercises_tree_non_allowed_notebook_asset(
         self,
         template_packager: TemplatePackager,
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test validation fails if the packaged exercises tree contains non-test assets."""
+        """Test validation fails if the packaged exercises tree contains non-allowed notebook assets."""
 
         _create_valid_packaged_workspace(
             template_packager,
@@ -522,8 +543,8 @@ class TestPackageIntegrity:
         exported_exercises_dir = (
             temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics"
         )
-        (exported_exercises_dir / "notebooks").mkdir(parents=True)
-        (exported_exercises_dir / "notebooks" / "student.ipynb").write_text(
+        (exported_exercises_dir / "notebooks").mkdir(parents=True, exist_ok=True)
+        (exported_exercises_dir / "notebooks" / "extra.ipynb").write_text(
             "{}\n", encoding="utf-8"
         )
 
@@ -713,6 +734,10 @@ class TestPackageIntegrity:
         assert (
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
         ).is_dir()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).is_file()
 
         assert explicit_path_result.returncode == 0, (
             "Packaged workspace explicit-path smoke pytest failed:\n"
@@ -791,9 +816,14 @@ class TestPackageOptions:
 
         template_packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/ex002_sequence_modify_basics.ipynb").exists()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).exists()
         assert not (
-            temp_dir / "notebooks/solutions/ex002_sequence_modify_basics.ipynb").exists()
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/solution.ipynb"
+        ).exists()
 
 
 class TestPackageMultipleExercises:
@@ -813,5 +843,11 @@ class TestPackageMultipleExercises:
 
         template_packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/ex002_sequence_modify_basics.ipynb").exists()
-        assert (temp_dir / "notebooks/ex003_sequence_modify_variables.ipynb").exists()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).exists()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex003_sequence_modify_variables/notebooks/student.ipynb"
+        ).exists()

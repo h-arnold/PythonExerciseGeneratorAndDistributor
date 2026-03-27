@@ -57,15 +57,15 @@ Canonical authoring and export surfaces are intentionally different.
 Contract:
 
 - Authoring source of truth: `exercises/<construct>/<exercise_key>/`.
-- Export surfaces: flattened `notebooks/`, `notebooks/solutions/`, and top-level `tests/` inside packaged Classroom repositories.
-- Mapping from canonical source to flattened export must be deterministic and reproducible, so the same exercise key resolves to the same exported notebook and test paths.
+- Export surfaces (Option A): canonical student-only exercise-local notebooks and tests under `exercises/<construct>/<exercise_key>/`, no exported `exercise.json`, and no solution notebooks.
+- Mapping from canonical source to export must be deterministic and reproducible, so the same exercise key resolves to the same exported notebook and test paths.
 
 The mapping layer must preserve exercise identity by `exercise_key` and must not redefine identity from flattened path names.
 
 ## Current status
 
 - **Canonical now**: exercise identity, exercise-local notebooks and tests, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
-- **Export-only**: flattened notebooks and top-level flattened exercise tests used in packaged Classroom repositories.
+- **Export-only**: canonical student-only exercise-local notebook/test packaging, metadata-free runtime catalogue snapshots, and no exported authoring-only assets.
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 
 

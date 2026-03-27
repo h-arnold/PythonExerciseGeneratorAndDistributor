@@ -12,6 +12,7 @@ from exercise_runtime_support.exercise_catalogue import (
     get_exercise_catalogue,
 )
 from exercise_runtime_support.exercise_framework import api as framework_api
+from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 from tests.exercise_framework.api import (
     ExerciseCheckResult,
     NotebookCheckResult,
@@ -20,7 +21,6 @@ from tests.exercise_framework.api import (
     run_notebook_check,
 )
 
-EXPECTED_NOTEBOOK_CHECK_COUNT = 5
 EXPECTED_EX002_DETAILED_CHECK_COUNT = 30
 EXPECTED_EX002_CHECK_TITLES = {"Logic", "Formatting", "Construct"}
 EXPECTED_EX002_EXERCISE_ID = 2
@@ -32,15 +32,17 @@ def test_run_all_checks_returns_structured_results(
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     results = run_all_checks()
-
-    assert len(results) == EXPECTED_NOTEBOOK_CHECK_COUNT
-    assert all(isinstance(result, NotebookCheckResult) for result in results)
-    assert all(result.passed for result in results)
-    assert [result.label for result in results] == [
+    expected_labels = [
         entry.display_label
         for entry in get_exercise_catalogue()
-        if entry.exercise_key != "ex007_sequence_debug_casting"
+        if has_support_role(entry.exercise_id, SupportRole.FRAMEWORK_DETAILED)
+        or has_support_role(entry.exercise_id, SupportRole.FRAMEWORK_SMOKE)
     ]
+
+    assert len(results) == len(expected_labels)
+    assert all(isinstance(result, NotebookCheckResult) for result in results)
+    assert all(result.passed for result in results)
+    assert [result.label for result in results] == expected_labels
 
 
 def test_run_notebook_check_returns_single_structured_result(

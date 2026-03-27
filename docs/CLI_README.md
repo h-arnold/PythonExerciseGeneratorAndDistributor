@@ -187,8 +187,9 @@ Each generated template repository includes:
 
 ### Exercise Files
 
-- Student notebooks (`notebooks/exNNN_slug.ipynb`)
-- Test files (`tests/test_exNNN_slug.py`)
+- `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
+- `exercises/<construct>/<exercise_key>/tests/`
+- No exported per-exercise metadata (`exercise.json`) and no solution notebooks
 
 ### Infrastructure Files
 
@@ -219,7 +220,9 @@ Generated templates include the selected exercise tests and the required shared 
 
 When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py`/`*_test.py`).
 
-This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces rely on the generated `exercise_runtime_support/exercise_catalogue_snapshot.json` snapshot instead of importing `exercise_metadata` from the source repository, and the export contract explicitly rejects authoring-only assets such as `exercise.json`, `solution.ipynb`, or a top-level `exercises/` tree.
+This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces rely on the generated `exercise_runtime_support/exercise_catalogue_snapshot.json` snapshot instead of importing `exercise_metadata` from the source repository.
+
+The export contract rejects authoring-only assets such as `exercise.json` and `solution.ipynb`, while keeping student notebooks at canonical exercise-local paths.
 
 ## Available Constructs
 

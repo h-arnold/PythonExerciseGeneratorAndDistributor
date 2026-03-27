@@ -20,7 +20,7 @@ class TemplatePackager:
 
     _CONSTRUCT_DIR_DEPTH = 1
     _EXERCISE_DIR_DEPTH = 2
-    _TESTS_DIR_INDEX = 2
+    _SUBDIR_INDEX = 2
 
     COPY_EXCLUDE_PATTERNS: tuple[str, ...] = (
         "__pycache__",
@@ -52,6 +52,8 @@ class TemplatePackager:
         "exercise.json",
         "solution.ipynb",
     )
+    _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = ("notebooks", "tests")
+    _STUDENT_NOTEBOOK_FILENAME = "student.ipynb"
 
     def __init__(self, repo_root: Path):
         """Initialize packager.
@@ -232,28 +234,39 @@ class TemplatePackager:
         readme_path.write_text(content, encoding="utf-8")
 
     def _is_valid_packaged_exercise_path(self, path: Path, exercises_dir: Path) -> bool:
-        """Return whether a path fits the reduced packaged exercises tree."""
+        """Return whether a path fits the Option A packaged exercises tree."""
         relative_parts = path.relative_to(exercises_dir).parts
         part_count = len(relative_parts)
-
-        # Allow construct directories such as exercises/sequence/.
-        if part_count == self._CONSTRUCT_DIR_DEPTH:
+        if part_count in (self._CONSTRUCT_DIR_DEPTH, self._EXERCISE_DIR_DEPTH):
             return path.is_dir()
 
-        # Allow exercise directories such as exercises/sequence/ex001_example/.
-        if part_count == self._EXERCISE_DIR_DEPTH:
-            return path.is_dir()
-
-        # Any deeper entry must live under exercises/<construct>/<exercise_key>/tests/.
-        if part_count <= self._TESTS_DIR_INDEX:
-            return False
-        if relative_parts[self._TESTS_DIR_INDEX] != "tests":
+        if part_count <= self._SUBDIR_INDEX:
             return False
 
-        # Allow the tests directory itself; deeper descendants are validated separately.
-        if part_count == self._TESTS_DIR_INDEX + 1:
+        subdirectory = relative_parts[self._SUBDIR_INDEX]
+        is_allowed_subdirectory = subdirectory in self._ALLOWED_EXERCISE_SUBDIRECTORIES
+        if not is_allowed_subdirectory:
+            return False
+
+        if part_count == self._SUBDIR_INDEX + 1:
             return path.is_dir()
-        return True
+
+        if subdirectory == "notebooks":
+            return self._is_valid_packaged_notebook_path(path, part_count)
+
+        return self._is_valid_packaged_tests_path(path)
+
+    def _is_valid_packaged_notebook_path(self, path: Path, part_count: int) -> bool:
+        """Return whether a path is the allowed exercise-local student notebook."""
+        expected_depth = self._SUBDIR_INDEX + 2
+        if part_count != expected_depth:
+            return False
+        return path.is_file() and path.name == self._STUDENT_NOTEBOOK_FILENAME
+
+    @staticmethod
+    def _is_valid_packaged_tests_path(path: Path) -> bool:
+        """Return whether a path is valid under the packaged exercise tests subtree."""
+        return not (path.is_file() and path.suffix == ".ipynb")
 
     def _has_invalid_exercises_tree(self, workspace: Path) -> bool:
         """Return whether the packaged exercises tree contains invalid assets."""
@@ -265,8 +278,6 @@ class TemplatePackager:
 
         for path in exercises_dir.rglob("*"):
             if path.name in self.FORBIDDEN_AUTHORING_FILENAMES:
-                return True
-            if path.is_file() and path.suffix == ".ipynb":
                 return True
             if not self._is_valid_packaged_exercise_path(path, exercises_dir):
                 return True
@@ -314,7 +325,7 @@ class TemplatePackager:
             if not required_file.exists():
                 return False
 
-        required_dirs = [workspace / "notebooks", tests_dir]
+        required_dirs = [workspace / "exercises", tests_dir]
         required_dirs.extend(
             tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
         )

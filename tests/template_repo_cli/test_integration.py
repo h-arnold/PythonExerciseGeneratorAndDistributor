@@ -290,7 +290,14 @@ class TestEndToEndDryRun:
             / "notebooks"
             / "solution.ipynb"
         )
-        packaged_student = output_dir / "notebooks" / "ex002_sequence_modify_basics.ipynb"
+        packaged_student = (
+            output_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "notebooks"
+            / "student.ipynb"
+        )
         shutil.copyfile(source_solution, packaged_student)
 
         shadow_root = tmp_path / "shadow_packages"
@@ -563,8 +570,14 @@ class TestEndToEndDryRun:
 
             assert result == 0
             assert output_dir.exists()
-            assert (output_dir / "notebooks" /
-                    "ex004_sequence_debug_syntax.ipynb").exists()
+            assert (
+                output_dir
+                / "exercises"
+                / "sequence"
+                / "ex004_sequence_debug_syntax"
+                / "notebooks"
+                / "student.ipynb"
+            ).exists()
             exported_test = (
                 output_dir
                 / "exercises"
@@ -739,12 +752,23 @@ class TestEndToEndDryRun:
         assert result == 0
         assert output_dir.exists()
 
-        exported_notebook = output_dir / "notebooks" / \
-            "ex004_sequence_debug_syntax.ipynb"
-        solution_mirror = (
-            output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+        exported_notebook = (
+            output_dir
+            / "exercises"
+            / "sequence"
+            / "ex004_sequence_debug_syntax"
+            / "notebooks"
+            / "student.ipynb"
         )
-        solution_mirror.parent.mkdir(parents=True)
+        solution_mirror = (
+            output_dir
+            / "exercises"
+            / "sequence"
+            / "ex004_sequence_debug_syntax"
+            / "notebooks"
+            / "solution.ipynb"
+        )
+        solution_mirror.parent.mkdir(parents=True, exist_ok=True)
         solution_mirror.write_bytes(exported_notebook.read_bytes())
         exported_notebook.unlink()
 
@@ -869,7 +893,12 @@ class TestEndToEndDryRun:
 
         combined_output = f"{check.stdout}\n{check.stderr}"
         expected_solution_mirror = (
-            output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+            output_dir
+            / "exercises"
+            / "sequence"
+            / "ex004_sequence_debug_syntax"
+            / "notebooks"
+            / "solution.ipynb"
         )
 
         assert check.returncode != 0
@@ -947,7 +976,12 @@ class TestEndToEndDryRun:
 
         combined_output = f"{check.stdout}\n{check.stderr}"
         expected_solution_mirror = (
-            output_dir / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+            output_dir
+            / "exercises"
+            / "sequence"
+            / "ex004_sequence_debug_syntax"
+            / "notebooks"
+            / "solution.ipynb"
         )
 
         assert check.returncode != 0
