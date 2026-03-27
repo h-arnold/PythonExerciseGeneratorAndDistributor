@@ -37,7 +37,7 @@ You must craft exercises using only computational constructs and concepts that s
  - Iteration – loops (for, while)
  - Data Types and Casting - int, float, str, converting types
  - Lists - sorting and looping over collections
- - Dictionaries.md – key–value data
+ - Dictionaries – key–value data
  - Functions and Procedures – breaking code into reusable parts
  - File Handling – reading and writing files
  - Exception Handling – handling errors safely
@@ -56,7 +56,7 @@ The intention is to keep each exercise tightly scoped so learners can focus on t
 To achieve the best possible understanding, students are given exercises that follow the following process:
 
  - Debug existing code
- - Modfiy existing code to achieve something different
+ - Modify existing code to achieve something different
  - Make new code using the constructs to achieve something new.
 
  In all cases, exercises should start simple, requiring only single changes and then gradually increase in difficulty.
@@ -91,7 +91,7 @@ If the required guide is missing or cannot be read, the agent must stop and ask 
 1. Create a TODO using `manage_todo_list` to plan the work.
 2. Pick exercise identifiers (exNNN and a clear slug).
 3. Scaffold files with the generator (notebook, solution mirror, tests, exercise metadata).
-4. Author the student notebook (intro, worked examples, one graded cell per part). **Create the exercises one a time**.
+4. Author the student notebook (intro, worked examples, one graded cell per part). **Create the exercises one at a time**.
 5. Run the **Exercise Verifier** (before writing tests) to check structure and sequencing.
 6. Write and refine pytest tests following the testing guide.
 7. Verify tests locally and confirm they pass on the explicit `solution` variant while student notebooks still fail.
@@ -217,7 +217,7 @@ Also verify the tests pass against the solution mirror:
 If tests fail locally, update only the tests or notebook relevant to the exercise — do not modify unrelated exercises or global test configuration.
 
 8) ### Quality gate (run the verifier — AFTER tests)
-After tests pass on the solution notebooks, user your runSubAgent tool run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
+After tests pass on the solution notebooks, use your runSubAgent tool to run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
 - `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q` (or `uv run ./scripts/verify_solutions.sh -q` for a broader sweep)
 - confirm student notebooks still *fail* until students do the work
 

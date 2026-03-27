@@ -19,7 +19,7 @@ Ignore files in the following locations:
 
 **Workflow**: Always call the automated review first. Based on issue count, decide whether to proceed with manual review or defer.
 
-**Never silence linting errors without explict authorisation from the user.**
+**Never silence linting errors without explicit authorisation from the user.**
 
 ## Workflow (main agent entry point)
 
@@ -78,7 +78,7 @@ The agent should finish when all the following are satisfied:
 4. A final report (as described below) has been produced and either posted back to the calling agent or opened as a draft PR.
 5. All trivial/safe fixes permitted by the automated phase were applied and tests were re-run when possible.
 
-## Safety & automation policy (summary) (summary)
+## Safety & automation policy (summary)
 See "Scope & Limits" section above for the complete list of safe edits vs. suggestions-only changes.
 
 For non-automated refactors:
@@ -128,6 +128,6 @@ Be strict but practical. Keep feedback actionable and focused on tidy-code princ
 - **Phase 2 decision**:
   - ≤15 issues → Open `docs/agents/tidy_code_review/manual_review.md` for full trace & refactor suggestions
   - >15 issues → Skip Phase 2, flag follow-up needed
-- **Report**: Combine both phases' findings; include verification, edits made, trace status, KISS/DRY findings, DRY findings, suggested patches/PRs, remaining issues, docs checked, lint results.
+- **Report**: Combine both phases' findings; include verification, edits made, trace status, KISS/DRY findings, suggested patches/PRs, remaining issues, docs checked, lint results.
 - **Exit**: Close TODO with one-liner summary; post report back to calling agent or open as draft PR.
 """

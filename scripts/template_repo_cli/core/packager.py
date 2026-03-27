@@ -236,12 +236,21 @@ class TemplatePackager:
         relative_parts = path.relative_to(exercises_dir).parts
         part_count = len(relative_parts)
 
+        # Allow construct directories such as exercises/sequence/.
         if part_count == self._CONSTRUCT_DIR_DEPTH:
             return path.is_dir()
+
+        # Allow exercise directories such as exercises/sequence/ex001_example/.
         if part_count == self._EXERCISE_DIR_DEPTH:
             return path.is_dir()
+
+        # Any deeper entry must live under exercises/<construct>/<exercise_key>/tests/.
+        if part_count <= self._TESTS_DIR_INDEX:
+            return False
         if relative_parts[self._TESTS_DIR_INDEX] != "tests":
             return False
+
+        # Allow the tests directory itself; deeper descendants are validated separately.
         if part_count == self._TESTS_DIR_INDEX + 1:
             return path.is_dir()
         return True
@@ -256,6 +265,8 @@ class TemplatePackager:
 
         for path in exercises_dir.rglob("*"):
             if path.name in self.FORBIDDEN_AUTHORING_FILENAMES:
+                return True
+            if path.is_file() and path.suffix == ".ipynb":
                 return True
             if not self._is_valid_packaged_exercise_path(path, exercises_dir):
                 return True

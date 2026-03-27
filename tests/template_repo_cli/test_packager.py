@@ -529,6 +529,31 @@ class TestPackageIntegrity:
 
         assert not template_packager.validate_package(temp_dir)
 
+    def test_package_integrity_rejects_notebook_leaked_into_packaged_tests_tree(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if a notebook leaks into the packaged exercise tests tree."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        leaked_notebook = (
+            temp_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "tests"
+            / "student.ipynb"
+        )
+        leaked_notebook.write_text("{}\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
     def test_package_integrity_rejects_packaged_tests_path_that_is_not_a_directory(
         self,
         template_packager: TemplatePackager,
