@@ -29,7 +29,7 @@ class TestCollectAllFiles:
             / "test_ex002_sequence_modify_basics.py"
         )
         assert files["tests_export_dir"] == Path(
-            "tests/sequence/ex002_sequence_modify_basics")
+            "exercises/sequence/ex002_sequence_modify_basics/tests")
 
     def test_collect_all_files_for_canonical_exercise(self, repo_root: Path) -> None:
         """Test collecting canonical files from the exercise source tree."""
@@ -47,7 +47,7 @@ class TestCollectAllFiles:
             / "test_ex004_sequence_debug_syntax.py"
         )
         assert files["tests_export_dir"] == Path(
-            "tests/sequence/ex004_sequence_debug_syntax")
+            "exercises/sequence/ex004_sequence_debug_syntax/tests")
 
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""

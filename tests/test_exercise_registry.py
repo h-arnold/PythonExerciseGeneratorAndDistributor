@@ -128,7 +128,7 @@ def test_get_all_exercise_keys_canonical_first() -> None:
 def test_build_exercise_catalogue_orders_by_exercise_id() -> None:
     """The catalogue order follows metadata exercise IDs."""
     catalogue = build_exercise_catalogue()
-    assert [entry["exercise_id"] for entry in catalogue] == [2, 3, 4, 5, 6, 7]
+    assert [entry["exercise_id"] for entry in catalogue] == [2, 3, 4, 5, 6, 7, 8]
     assert [entry["exercise_key"]
             for entry in catalogue] == _expected_all_keys()
 

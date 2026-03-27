@@ -48,7 +48,7 @@ class FileCollector:
 
     def _canonical_tests_export_dir(self, exercise_id: str) -> Path:
         exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
-        return Path("tests") / exercise_dir.relative_to(self.exercises_dir)
+        return Path("exercises") / exercise_dir.relative_to(self.exercises_dir) / "tests"
 
     def _preferred_test_path_for_legacy_layout(self, exercise_id: str) -> Path:
         """Return the canonical test when available, otherwise the flat legacy test."""

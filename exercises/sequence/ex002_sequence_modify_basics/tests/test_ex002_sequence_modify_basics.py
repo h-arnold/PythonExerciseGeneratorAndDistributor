@@ -36,7 +36,6 @@ def _exercise_output(exercise_no: int) -> str:
         _EX002_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
 
 
@@ -45,7 +44,6 @@ def _exercise_code(exercise_no: int) -> str:
         _EX002_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
 
 

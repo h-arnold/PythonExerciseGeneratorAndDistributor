@@ -55,3 +55,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Debugging type conversion issues with `int()`, `float()`, `str()`, and `input()` values in sequential programs.
 - Type: Debug exercises with increasing bug complexity.
 - Purpose: Build confidence identifying type-related runtime and logic errors before moving to advanced constructs.
+
+1. [**Sequence Make Consolidation**](`ex008_sequence_make_consolidation`)
+
+[Supporting docs](./ex008_sequence_make_consolidation/)
+[Notebook](./ex008_sequence_make_consolidation/notebooks/student.ipynb)
+
+- Focus: Writing short sequence programs from scratch using variables, `input()`, arithmetic, and casting.
+- Type: Make exercises with a gradual step up from fixed output to prompted calculations.
+- Purpose: Consolidate the full sequence strand so far by moving students from editing and debugging into independent program construction.

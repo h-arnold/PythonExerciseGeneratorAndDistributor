@@ -19,6 +19,9 @@
     },
     "ex007_sequence_debug_casting": {
       "layout": "canonical"
+    },
+    "ex008_sequence_make_consolidation": {
+      "layout": "canonical"
     }
   }
 }

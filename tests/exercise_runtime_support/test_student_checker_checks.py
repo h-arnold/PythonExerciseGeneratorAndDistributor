@@ -35,6 +35,7 @@ def _make_check(
         ("ex005_sequence_debug_logic", student_checks.ExerciseCheckDefinition),
         ("ex006_sequence_modify_casting", student_checks.ExerciseCheckDefinition),
         ("ex007_sequence_debug_casting", student_checks.ExerciseCheckDefinition),
+        ("ex008_sequence_make_consolidation", student_checks.ExerciseCheckDefinition),
     ],
 )
 def test_cached_checks_override_loader(

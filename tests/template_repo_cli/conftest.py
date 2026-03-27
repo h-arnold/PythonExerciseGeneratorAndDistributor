@@ -35,7 +35,7 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
                 / "test_ex002_sequence_modify_basics.py"
             ),
             tests_export_dir=Path(
-                "tests/sequence/ex002_sequence_modify_basics"),
+                "exercises/sequence/ex002_sequence_modify_basics/tests"),
         ),
         "ex004_sequence_debug_syntax": ExerciseFiles(
             notebook=(
@@ -50,7 +50,7 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
                 / "test_ex004_sequence_debug_syntax.py"
             ),
             tests_export_dir=Path(
-                "tests/sequence/ex004_sequence_debug_syntax"),
+                "exercises/sequence/ex004_sequence_debug_syntax/tests"),
         ),
     }
 

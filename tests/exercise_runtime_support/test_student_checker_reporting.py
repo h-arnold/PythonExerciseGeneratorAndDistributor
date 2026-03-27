@@ -138,6 +138,7 @@ def test_print_exercise_results_shows_per_exercise_labels(
         "ex004_sequence_debug_syntax",
         "ex005_sequence_debug_logic",
         "ex007_sequence_debug_casting",
+        "ex008_sequence_make_consolidation",
     ],
 )
 def test_run_exercise_checks_continues_after_notebook_grading_error(

@@ -38,14 +38,12 @@ def _exercise_output(exercise_no: int) -> str:
             _EX005_EXERCISE_KEY,
             tag=_tag(exercise_no),
             cache=_CACHE,
-            variant="solution",
         )
     return run_cell_with_input(
         _EX005_EXERCISE_KEY,
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
-        variant="solution",
     )
 
 
@@ -54,7 +52,6 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
         _EX005_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
-        variant="solution",
     )
     return ast.parse(code)
 
@@ -63,7 +60,6 @@ def _exercise_explanation(exercise_no: int) -> str:
     return get_explanation_cell(
         _EX005_EXERCISE_KEY,
         tag=_explanation_tag(exercise_no),
-        variant="solution",
     )
 
 
