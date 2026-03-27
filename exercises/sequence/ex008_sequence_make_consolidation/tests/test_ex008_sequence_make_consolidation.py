@@ -16,6 +16,7 @@ _EX008_EXERCISE_KEY = "ex008_sequence_make_consolidation"
 ex008 = load_exercise_test_module(_EX008_EXERCISE_KEY, "expectations")
 _CACHE = RuntimeCache()
 _MIN_EXERCISE1_STRING_ASSIGNMENTS = 3
+_MIN_EXERCISE2_NUMERIC_FACTORS = 2
 _EXPECTED_INPUT_CALLS = 2
 
 
@@ -73,6 +74,19 @@ def _string_assignment_count(tree: ast.AST) -> int:
     )
 
 
+def _assigned_constant_names(tree: ast.AST, value_type: type[str | int | float]) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not isinstance(node.value, ast.Constant) or not isinstance(node.value.value, value_type):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                names.add(target.id)
+    return names
+
+
 def _input_assigned_names(tree: ast.AST) -> set[str]:
     names: set[str] = set()
     for node in ast.walk(tree):
@@ -107,14 +121,63 @@ def _print_uses_name(tree: ast.AST, name: str) -> bool:
     return False
 
 
-def _print_uses_any_name(tree: ast.AST) -> bool:
-    return any(
-        isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "print"
-        and any(isinstance(child, ast.Name) for child in ast.walk(node))
-        for node in ast.walk(tree)
-    )
+def _printed_names(tree: ast.AST) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Name) or node.func.id != "print":
+            continue
+        names.update(
+            child.id
+            for child in ast.walk(node)
+            if isinstance(child, ast.Name)
+        )
+    return names
+
+
+def _names_used_in_binop(tree: ast.AST, operator_type: type[ast.operator]) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.BinOp) or not isinstance(node.op, operator_type):
+            continue
+        names.update(
+            child.id
+            for child in ast.walk(node)
+            if isinstance(child, ast.Name)
+        )
+    return names
+
+
+def _assigned_names_from_binop(tree: ast.AST, operator_type: type[ast.operator]) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        if not isinstance(node.value, ast.BinOp) or not isinstance(node.value.op, operator_type):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                names.add(target.id)
+    return names
+
+
+def _assigned_names_using_names(tree: ast.AST, source_names: set[str], minimum_names: int) -> set[str]:
+    names: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign):
+            continue
+        used_names = {
+            child.id
+            for child in ast.walk(node.value)
+            if isinstance(child, ast.Name) and child.id in source_names
+        }
+        if len(used_names) < minimum_names:
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                names.add(target.id)
+    return names
 
 
 @pytest.mark.task(taskno=1)
@@ -126,7 +189,18 @@ def test_exercise1_logic() -> None:
 def test_exercise1_construct() -> None:
     tree = _exercise_ast(1)
     assert _string_assignment_count(tree) >= _MIN_EXERCISE1_STRING_ASSIGNMENTS
-    assert _print_uses_any_name(tree)
+    string_names = _assigned_constant_names(tree, str)
+    printed_names = _printed_names(tree)
+    built_message_names = _assigned_names_using_names(
+        tree,
+        string_names,
+        _MIN_EXERCISE1_STRING_ASSIGNMENTS,
+    )
+    assert len(string_names) >= _MIN_EXERCISE1_STRING_ASSIGNMENTS
+    assert (
+        len(printed_names & string_names) >= _MIN_EXERCISE1_STRING_ASSIGNMENTS
+        or len(printed_names & built_message_names) >= 1
+    )
 
 
 @pytest.mark.task(taskno=2)
@@ -140,6 +214,14 @@ def test_exercise2_construct() -> None:
     assert _string_assignment_count(tree) >= 1
     assert _has_binop(tree, ast.Mult)
     assert _has_call(tree, "str")
+    string_names = _assigned_constant_names(tree, str)
+    numeric_names = _assigned_constant_names(tree, int) | _assigned_constant_names(tree, float)
+    printed_names = _printed_names(tree)
+    multiplied_names = _names_used_in_binop(tree, ast.Mult)
+    total_names = _assigned_names_from_binop(tree, ast.Mult)
+    assert len(printed_names & string_names) >= 1
+    assert len(multiplied_names & numeric_names) >= _MIN_EXERCISE2_NUMERIC_FACTORS
+    assert len(printed_names & total_names) >= 1
 
 
 @pytest.mark.task(taskno=3)
