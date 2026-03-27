@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex008_sequence_make_consolidation",
+  "exercise_id": 8,
+  "slug": "ex008_sequence_make_consolidation",
+  "title": "Sequence Make Consolidation",
+  "construct": "sequence",
+  "exercise_type": "make",
+  "parts": 5,
+  "difficulty": "easy",
+  "learning_objective": "Write short sequential Python programs from scratch using variables, input, arithmetic, and casting.",
+  "notebook_path": "notebooks/student.ipynb",
+  "solution_path": "notebooks/solution.ipynb",
+  "tests_path": "tests/test_ex008_sequence_make_consolidation.py"
+}

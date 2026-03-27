@@ -17,6 +17,7 @@ from tests.exercise_framework import (
 )
 
 _EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
+_STUDENT_VARIANT = "student"
 construct_checks = load_exercise_test_module(_EX007_EXERCISE_KEY, "construct_checks")
 ex007 = load_exercise_test_module(_EX007_EXERCISE_KEY, "expectations")
 has_binop = construct_checks.has_binop
@@ -38,6 +39,7 @@ def _run_static(exercise_no: int) -> str:
         _EX007_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant=_STUDENT_VARIANT,
     )
 
 
@@ -47,6 +49,7 @@ def _run_with_inputs(exercise_no: int, inputs: list[str]) -> str:
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
+        variant=_STUDENT_VARIANT,
     )
 
 
@@ -55,6 +58,7 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
         _EX007_EXERCISE_KEY,
         tag=_tag(exercise_no),
         cache=_CACHE,
+        variant=_STUDENT_VARIANT,
     )
     return ast.parse(code)
 
@@ -63,6 +67,7 @@ def _exercise_explanation(exercise_no: int) -> str:
     return get_explanation_cell(
         _EX007_EXERCISE_KEY,
         tag=_explanation_tag(exercise_no),
+        variant=_STUDENT_VARIANT,
     )
 
 

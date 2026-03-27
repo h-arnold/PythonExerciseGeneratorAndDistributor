@@ -19,6 +19,7 @@ from exercise_runtime_support.student_checker.checks.base import (
 )
 
 _EXERCISE_KEY = "ex007_sequence_debug_casting"
+_STUDENT_VARIANT = "student"
 _AVERAGE_DISTANCE_EXERCISE = 4
 construct_checks = load_exercise_test_module(_EXERCISE_KEY, "construct_checks")
 ex007 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
@@ -26,7 +27,11 @@ ex007 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
 
 def _check_static_output(exercise_no: int) -> list[str]:
     expected = ex007.EX007_EXPECTED_STATIC_OUTPUTS[exercise_no]
-    output = run_cell_and_capture_output(_EXERCISE_KEY, tag=exercise_tag(exercise_no))
+    output = run_cell_and_capture_output(
+        _EXERCISE_KEY,
+        tag=exercise_tag(exercise_no),
+        variant=_STUDENT_VARIANT,
+    )
     if output != expected:
         return [f"Exercise {exercise_no}: expected '{expected.strip()}'."]
     return []
@@ -39,6 +44,7 @@ def _check_prompt_flow(exercise_no: int) -> list[str]:
             _EXERCISE_KEY,
             tag=exercise_tag(exercise_no),
             inputs=list(case["inputs"]),
+            variant=_STUDENT_VARIANT,
         )
         if output != case["expected_output"]:
             errors.append(
@@ -53,6 +59,7 @@ def _check_explanation(exercise_no: int) -> list[str]:
         exercise_no,
         ex007.EX007_MIN_EXPLANATION_LENGTH,
         ex007.EX007_PLACEHOLDER_PHRASES,
+        variant=_STUDENT_VARIANT,
     )
 
 
@@ -93,6 +100,7 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
         _EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
+        variant=_STUDENT_VARIANT,
     )
     try:
         return ast.parse(code)
