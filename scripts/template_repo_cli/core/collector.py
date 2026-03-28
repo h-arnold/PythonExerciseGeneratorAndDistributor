@@ -139,17 +139,9 @@ class FileCollector:
 
         return ExerciseFiles(
             notebook=notebook_path,
-            notebook_export=(
-                self._canonical_notebook_export_path(exercise_id)
-                if layout == ExerciseLayout.CANONICAL
-                else Path("notebooks") / f"{exercise_id}.ipynb"
-            ),
+            notebook_export=self._canonical_notebook_export_path(exercise_id),
             test=test_path,
-            tests_export_dir=(
-                self._canonical_tests_export_dir(exercise_id)
-                if layout == ExerciseLayout.CANONICAL
-                else Path("tests")
-            ),
+            tests_export_dir=self._canonical_tests_export_dir(exercise_id),
         )
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:

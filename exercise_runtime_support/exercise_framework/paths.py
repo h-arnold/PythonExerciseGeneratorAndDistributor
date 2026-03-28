@@ -120,9 +120,10 @@ def resolve_exercise_notebook_path(
     ``exercises/<construct>/<exercise_key>/notebooks/student.ipynb``.
     Packaged solution-mode resolution requires an explicit optional
     ``.../notebooks/solution.ipynb`` mirror and fails fast when
-    that surface is absent. Legacy source exercises continue to use the
-    existing flattened notebooks/ layout when addressed by exercise_key,
-    but raw ``notebooks/...`` path inputs are rejected by
+    that surface is absent. Legacy source exercises, when addressed by
+    exercise key, also resolve to exercise-local
+    ``exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb``
+    surfaces, but raw ``notebooks/...`` path inputs are rejected by
     :func:`resolve_notebook_path`.
     """
     selected_variant = get_active_variant() if variant is None else variant

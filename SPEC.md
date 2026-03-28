@@ -70,7 +70,7 @@ A valid packaged template must include:
 Packaged template repositories must **not** include:
 
 - `exercise.json` (or any per-exercise metadata file),
-- `notebooks/solution.ipynb` (or any solution notebook surface),
+- `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb` (or any solution notebook surface),
 - teacher-facing authoring documentation copied from exercise folders (unless separately specified),
 - template-repo maintenance/authoring-only tooling not needed by students.
 
@@ -141,4 +141,3 @@ A packaging run is accepted only if:
 - No requirement to support teacher extension of packaged templates.
 - No requirement to preserve authoring metadata in exported templates.
 - No requirement to include solution variants in exported templates.
-

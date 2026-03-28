@@ -166,7 +166,7 @@ class TestCollectValidation:
         self,
         temp_dir: Path,
     ) -> None:
-        """Test legacy layouts still use the flat test when no canonical source exists."""
+        """Test legacy layouts may source a flat test but export to exercise-local tests/."""
         repo_root = temp_dir
         (repo_root / "notebooks").mkdir()
         (repo_root / "tests").mkdir()
@@ -176,7 +176,9 @@ class TestCollectValidation:
         (repo_root / "tests" / "test_ex002_sequence_modify_basics.py").write_text(
             "", encoding="utf-8"
         )
-        (repo_root / "exercises").mkdir()
+        (repo_root / "exercises" / "sequence" / "ex002_sequence_modify_basics").mkdir(
+            parents=True
+        )
         (repo_root / "exercises" / "migration_manifest.json").write_text(
             '{"schema_version": 1, "exercises": {"ex002_sequence_modify_basics": {"layout": "legacy"}}}',
             encoding="utf-8",
@@ -187,7 +189,9 @@ class TestCollectValidation:
 
         assert files["test"] == repo_root / "tests" / \
             "test_ex002_sequence_modify_basics.py"
-        assert files["tests_export_dir"] == Path("tests")
+        assert files["tests_export_dir"] == Path(
+            "exercises/sequence/ex002_sequence_modify_basics/tests"
+        )
 
 
 class TestCollectEdgeCases:
