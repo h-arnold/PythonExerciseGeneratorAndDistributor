@@ -186,7 +186,12 @@ def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_ex
     tmp_path: Path,
 ) -> None:
     solution_mirror = (
-        tmp_path / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+        tmp_path
+        / "exercises"
+        / "sequence"
+        / "ex004_sequence_debug_syntax"
+        / "notebooks"
+        / "solution.ipynb"
     )
     solution_mirror.parent.mkdir(parents=True)
     solution_mirror.write_text("{}", encoding="utf-8")
@@ -196,7 +201,7 @@ def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_ex
 
     def fake_catalogue_entry(exercise_key: str) -> SimpleNamespace:
         del exercise_key
-        return SimpleNamespace(layout="canonical")
+        return SimpleNamespace(layout="canonical", construct="sequence")
 
     def fake_has_local_metadata_package(repo_root: Path) -> bool:
         del repo_root
@@ -234,11 +239,18 @@ def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_ex
     assert resolved == solution_mirror
 
 
-def test_resolve_exercise_notebook_path_uses_flattened_export_only_for_student_variant(
+def test_resolve_exercise_notebook_path_uses_exercise_local_export_for_student_variant(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
-    exported_notebook = tmp_path / "notebooks" / "ex004_sequence_debug_syntax.ipynb"
+    exported_notebook = (
+        tmp_path
+        / "exercises"
+        / "sequence"
+        / "ex004_sequence_debug_syntax"
+        / "notebooks"
+        / "student.ipynb"
+    )
     exported_notebook.parent.mkdir(parents=True)
     exported_notebook.write_text("{}", encoding="utf-8")
 
@@ -247,7 +259,7 @@ def test_resolve_exercise_notebook_path_uses_flattened_export_only_for_student_v
 
     def fake_catalogue_entry(exercise_key: str) -> SimpleNamespace:
         del exercise_key
-        return SimpleNamespace(layout="canonical")
+        return SimpleNamespace(layout="canonical", construct="sequence")
 
     def fake_has_local_metadata_package(repo_root: Path) -> bool:
         del repo_root
@@ -282,7 +294,12 @@ def test_resolve_exercise_notebook_path_uses_flattened_export_only_for_student_v
         variant="student",
     )
     expected_solution_mirror = (
-        tmp_path / "notebooks" / "solutions" / "ex004_sequence_debug_syntax.ipynb"
+        tmp_path
+        / "exercises"
+        / "sequence"
+        / "ex004_sequence_debug_syntax"
+        / "notebooks"
+        / "solution.ipynb"
     )
 
     assert student_resolved == exported_notebook

@@ -28,7 +28,7 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
                 / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
             ),
             notebook_export=Path(
-                "notebooks/ex002_sequence_modify_basics.ipynb"),
+                "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"),
             test=(
                 repo_root
                 / "exercises/sequence/ex002_sequence_modify_basics/tests"
@@ -43,7 +43,7 @@ def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
                 / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
             ),
             notebook_export=Path(
-                "notebooks/ex004_sequence_debug_syntax.ipynb"),
+                "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"),
             test=(
                 repo_root
                 / "exercises/sequence/ex004_sequence_debug_syntax/tests"

@@ -50,6 +50,15 @@ class FileCollector:
         exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
         return Path("exercises") / exercise_dir.relative_to(self.exercises_dir) / "tests"
 
+    def _canonical_notebook_export_path(self, exercise_id: str) -> Path:
+        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        return (
+            Path("exercises")
+            / exercise_dir.relative_to(self.exercises_dir)
+            / "notebooks"
+            / "student.ipynb"
+        )
+
     def _preferred_test_path_for_legacy_layout(self, exercise_id: str) -> Path:
         """Return the canonical test when available, otherwise the flat legacy test."""
 
@@ -130,13 +139,9 @@ class FileCollector:
 
         return ExerciseFiles(
             notebook=notebook_path,
-            notebook_export=Path("notebooks") / f"{exercise_id}.ipynb",
+            notebook_export=self._canonical_notebook_export_path(exercise_id),
             test=test_path,
-            tests_export_dir=(
-                self._canonical_tests_export_dir(exercise_id)
-                if layout == ExerciseLayout.CANONICAL
-                else Path("tests")
-            ),
+            tests_export_dir=self._canonical_tests_export_dir(exercise_id),
         )
 
     def collect_multiple(self, exercise_ids: list[str]) -> dict[str, ExerciseFiles]:
