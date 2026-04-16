@@ -23,6 +23,53 @@ The focus is not generic style commentary. The focus is concrete AI-slop or main
 - documentation encoded as code that has drifted
 - validation layers that look safer than they are
 
+## Cleanup Progress
+
+This section tracks completed cleanup phases so work can resume safely after interruptions.
+
+### Phase 1 Complete (dead helper surface)
+
+- Status: complete
+- Commit: `2f3979d` (`cleanup: trim helper surface to autograde env API`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Reduced `exercise_runtime_support/helpers.py` to the real autograde surface (`build_autograde_env`) and removed stale helper APIs.
+- Replaced the broad dynamic shim in `tests/helpers.py` with an explicit minimal shim that exports only `build_autograde_env`.
+- Added focused regression tests in `tests/exercise_runtime_support/test_build_autograde_env.py` for:
+  - `PYTHONPATH` behavior
+  - plugin autoload default/override behavior
+  - default `student` variant wiring
+  - override precedence and key deletion
+  - canonical and shim API surface constraints
+
+Verification completed:
+
+- `uv run pytest tests/exercise_runtime_support/test_build_autograde_env.py tests/test_build_autograde_payload.py tests/test_integration_autograding.py exercises/sequence/ex002_sequence_modify_basics/tests/test_repo_autograde_parity.py -q`
+- `uv run ruff check exercise_runtime_support/helpers.py tests/helpers.py tests/exercise_runtime_support/test_build_autograde_env.py`
+
+### Phase 2 Complete (consumer matrix removal and direct contract tests)
+
+- Status: complete
+- Commit: `51d875a` (`cleanup: replace consumer matrix with direct contract tests`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Deleted stale matrix module: `exercise_runtime_support/consumer_matrix.py`.
+- Deleted matrix-parity test: `tests/exercise_runtime_support/test_consumer_matrix.py`.
+- Added direct runtime contract tests: `tests/exercise_runtime_support/test_runtime_contract.py`.
+- Removed matrix table from `docs/execution-model.md` and replaced with a concise non-matrix enforcement note.
+- Added `docs/execution-model.md` to AGENTS documentation quick-reference list.
+
+Verification completed:
+
+- `uv run pytest tests/exercise_runtime_support/test_runtime_contract.py -q`
+- `uv run pytest tests/test_new_exercise.py -q`
+- `uv run pytest tests/exercise_framework/test_runtime.py tests/exercise_framework/test_paths.py tests/exercise_framework/test_api_contract.py -q`
+- `uv run ruff check tests/exercise_runtime_support/test_runtime_contract.py docs/execution-model.md AGENTS.md`
+
 
 ## Scope
 
