@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -9,6 +10,7 @@ import sys
 import tempfile
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,6 +19,22 @@ from _pytest.capture import CaptureResult
 GitHubCreateKwargs = dict[str, object | None]
 GitHubCreateResult = dict[str, bool | str]
 CommandSequence = Sequence[str]
+
+
+def _create_shadow_exercise_metadata_package(
+    root: Path,
+    message: str,
+) -> Path:
+    shadow_root = root / "shadow_packages"
+    shadow_package = shadow_root / "exercise_metadata"
+    shadow_package.mkdir(parents=True)
+    (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+    for module_name in ("registry.py", "resolver.py"):
+        (shadow_package / module_name).write_text(
+            f'raise RuntimeError("{message}")\n',
+            encoding="utf-8",
+        )
+    return shadow_root
 
 
 class TestEndToEndSingleConstruct:
@@ -331,6 +349,133 @@ class TestEndToEndDryRun:
         assert "Great work! Everything that can be checked here looks good." not in check.stdout
         assert "Metadata-free packaged repositories do not include solution notebooks" not in combined_output
         assert "exercise_metadata must not be imported" not in combined_output
+
+    def test_dry_run_workspace_sequence_notebook_self_checks_fail_until_solved(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Packaged sequence student notebook self-check cells should fail by default."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--construct",
+                "sequence",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        shadow_root = _create_shadow_exercise_metadata_package(
+            tmp_path,
+            "exercise_metadata must not be imported in packaged notebook self-check sweep",
+        )
+
+        env = os.environ.copy()
+        env.pop("PYTUTOR_ACTIVE_VARIANT", None)
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "\n".join(
+                [
+                    "import contextlib",
+                    "import io",
+                    "import json",
+                    "import re",
+                    "import sys",
+                    "from pathlib import Path",
+                    "from exercise_runtime_support.student_checker.checks import has_exercise_checks, run_exercise_checks",
+                    "summary = {",
+                    "    'notebook_count': 0,",
+                    "    'missing_self_check_cells': [],",
+                    "    'unsupported_exercises': [],",
+                    "    'unexpected_passes': [],",
+                    "    'execution_errors': [],",
+                    "    'failing_exercises': [],",
+                    "}",
+                    "for notebook_path in sorted(Path.cwd().glob('exercises/*/*/notebooks/student.ipynb')):",
+                    "    summary['notebook_count'] += 1",
+                    "    notebook = json.loads(notebook_path.read_text(encoding='utf-8'))",
+                    "    sources = []",
+                    "    for cell in notebook.get('cells', []):",
+                    "        if cell.get('cell_type') != 'code':",
+                    "            continue",
+                    "        source = cell.get('source', '')",
+                    "        joined = ''.join(source) if isinstance(source, list) else str(source)",
+                    "        if 'run_notebook_checks(' in joined:",
+                    "            sources.append(joined)",
+                    "    if not sources:",
+                    "        summary['missing_self_check_cells'].append(notebook_path.parent.parent.name)",
+                    "        continue",
+                    "    source = sources[-1]",
+                    "    match = re.search(r\"run_notebook_checks\\('([^']+)'\\)\", source)",
+                    "    if match is None:",
+                    "        summary['execution_errors'].append(f\"{notebook_path.parent.parent.name}: could not extract exercise key\")",
+                    "        continue",
+                    "    exercise_key = match.group(1)",
+                    "    namespace = {'__name__': '__main__'}",
+                    "    try:",
+                    "        with contextlib.redirect_stdout(io.StringIO()):",
+                    "            exec(compile(source, str(notebook_path), 'exec'), namespace, namespace)",
+                    "    except Exception as exc:",
+                    "        summary['execution_errors'].append(f\"{exercise_key}: {exc}\")",
+                    "        continue",
+                    "    if not has_exercise_checks(exercise_key):",
+                    "        summary['unsupported_exercises'].append(exercise_key)",
+                    "        continue",
+                    "    results = run_exercise_checks(exercise_key)",
+                    "    if all(result.passed for result in results):",
+                    "        summary['unexpected_passes'].append(exercise_key)",
+                    "        continue",
+                    "    summary['failing_exercises'].append(exercise_key)",
+                    "print(json.dumps(summary, sort_keys=True))",
+                    "sys.exit(0 if not any((summary['missing_self_check_cells'], summary['unsupported_exercises'], summary['unexpected_passes'], summary['execution_errors'])) else 1)",
+                ]
+            ),
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        assert check.returncode == 0, (
+            "Packaged sequence notebook self-check sweep failed:\n"
+            f"stdout:\n{check.stdout}\n"
+            f"stderr:\n{check.stderr}"
+        )
+
+        summary = cast(dict[str, Any], json.loads(
+            check.stdout.strip().splitlines()[-1]))
+        notebook_count = cast(int, summary["notebook_count"])
+        failing_exercises = cast(list[str], summary["failing_exercises"])
+
+        assert notebook_count > 0
+        assert summary["missing_self_check_cells"] == []
+        assert summary["unsupported_exercises"] == []
+        assert summary["unexpected_passes"] == []
+        assert summary["execution_errors"] == []
+        assert len(failing_exercises) == notebook_count
 
     def test_dry_run_workspace_packaged_sequence_test_runs_against_student_slot(
         self,
