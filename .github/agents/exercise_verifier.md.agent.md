@@ -1,7 +1,7 @@
 ---
 name: Exercise Verifier
 description: Verify canonical exercise-local exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
-tools: [vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/awaitTerminal, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, agent/runSubagent, edit/editFiles, edit/editNotebook, search/changes, search/codebase, search/fileSearch, search/listDirectory, search/searchResults, search/textSearch, search/usages, web/githubRepo, todo]
+tools: [execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, read, edit/editFiles, edit/editNotebook, edit/rename, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/configurePythonEnvironment]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Verifier Mode

@@ -1,7 +1,7 @@
 ---
 name: Exercise Generation
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
-tools: [vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
+tools: [vscode/askQuestions, vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
