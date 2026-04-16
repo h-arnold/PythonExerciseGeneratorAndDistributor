@@ -9,11 +9,11 @@ from typing import Any
 import pytest
 
 import exercise_runtime_support.student_checker.checks as student_checks
-from exercise_runtime_support.student_checker.checks import base as student_check_base
 from exercise_runtime_support.execution_variant import (
     ACTIVE_VARIANT_ENV_VAR,
     get_active_variant,
 )
+from exercise_runtime_support.student_checker.checks import base as student_check_base
 
 _EX002_CHECK_RESULT_COUNT = 30
 
