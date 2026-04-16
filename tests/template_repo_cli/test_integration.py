@@ -256,6 +256,81 @@ class TestEndToEndDryRun:
             f"stdout:\n{check.stdout}\n"
             f"stderr:\n{check.stderr}"
         )
+        assert "Hello Python!" in check.stdout
+        assert "Great work! Everything that can be checked here looks good." not in check.stdout
+        assert "exercise_metadata must not be imported" not in check.stderr
+
+    def test_dry_run_workspace_notebook_runtime_self_check_defaults_to_student_failures_without_variant_env(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Packaged notebook runtime self-checks should default to the student slot."""
+        from scripts.template_repo_cli.cli import main
+
+        output_dir = tmp_path / "template_output"
+
+        result = main(
+            [
+                "--dry-run",
+                "--output-dir",
+                str(output_dir),
+                "create",
+                "--exercise-keys",
+                "ex002_sequence_modify_basics",
+                "--repo-name",
+                "test-repo",
+            ]
+        )
+
+        assert result == 0
+        assert output_dir.exists()
+
+        shadow_root = tmp_path / "shadow_packages"
+        shadow_package = shadow_root / "exercise_metadata"
+        shadow_package.mkdir(parents=True)
+        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
+        (shadow_package / "registry.py").write_text(
+            'raise RuntimeError("exercise_metadata must not be imported in packaged notebook runtime")\n',
+            encoding="utf-8",
+        )
+
+        env = os.environ.copy()
+        env.pop("PYTUTOR_ACTIVE_VARIANT", None)
+        existing_pythonpath = env.get("PYTHONPATH")
+        env["PYTHONPATH"] = (
+            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
+            if existing_pythonpath
+            else str(shadow_root)
+        )
+
+        command = [
+            sys.executable,
+            "-c",
+            "from exercise_runtime_support.student_checker import run_notebook_checks; "
+            "run_notebook_checks('ex002_sequence_modify_basics')",
+        ]
+
+        check = subprocess.run(
+            command,
+            cwd=output_dir,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        combined_output = f"{check.stdout}\n{check.stderr}"
+
+        assert check.returncode == 0, (
+            "Notebook runtime self-check failed in dry-run workspace without a variant override:\n"
+            f"stdout:\n{check.stdout}\n"
+            f"stderr:\n{check.stderr}"
+        )
+        assert "Hello Python!" in check.stdout
+        assert "Great work! All exercise cells ran without errors." not in check.stdout
+        assert "Great work! Everything that can be checked here looks good." not in check.stdout
+        assert "Metadata-free packaged repositories do not include solution notebooks" not in combined_output
+        assert "exercise_metadata must not be imported" not in combined_output
 
     def test_dry_run_workspace_packaged_sequence_test_runs_against_student_slot(
         self,

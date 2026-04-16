@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from typing import Any
 
 import pytest
 
 import exercise_runtime_support.student_checker.checks as student_checks
+from exercise_runtime_support.execution_variant import (
+    ACTIVE_VARIANT_ENV_VAR,
+    get_active_variant,
+)
 
 _EX002_CHECK_RESULT_COUNT = 30
 
@@ -35,7 +40,8 @@ def _make_check(
         ("ex005_sequence_debug_logic", student_checks.ExerciseCheckDefinition),
         ("ex006_sequence_modify_casting", student_checks.ExerciseCheckDefinition),
         ("ex007_sequence_debug_casting", student_checks.ExerciseCheckDefinition),
-        ("ex008_sequence_make_consolidation", student_checks.ExerciseCheckDefinition),
+        ("ex008_sequence_make_consolidation",
+         student_checks.ExerciseCheckDefinition),
     ],
 )
 def test_cached_checks_override_loader(
@@ -106,3 +112,76 @@ def test_run_exercise_checks_supports_generic_ex002_path(
     assert {result.title for result in results} == {
         "Construct", "Formatting", "Logic"}
     assert {result.exercise_no for result in results} == set(range(1, 11))
+
+
+def test_run_exercise_checks_defaults_to_student_variant_when_env_unset(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed_variants: list[str] = []
+    cache: dict[str, list[Any]] = {}
+
+    def record_variant() -> list[str]:
+        observed_variants.append(get_active_variant())
+        return []
+
+    monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
+    monkeypatch.delenv(ACTIVE_VARIANT_ENV_VAR, raising=False)
+    cache["variant_probe"] = [
+        student_checks.ExerciseCheckDefinition(
+            exercise_no=1,
+            title="Variant",
+            check=record_variant,
+        )
+    ]
+
+    results = student_checks.run_exercise_checks("variant_probe")
+
+    assert [result.passed for result in results] == [True]
+    assert observed_variants == ["student"]
+    assert ACTIVE_VARIANT_ENV_VAR not in os.environ
+
+
+def test_run_exercise_checks_preserves_explicit_solution_variant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed_variants: list[str] = []
+    cache: dict[str, list[Any]] = {}
+
+    def record_variant() -> list[str]:
+        observed_variants.append(get_active_variant())
+        return []
+
+    monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
+    monkeypatch.setenv(ACTIVE_VARIANT_ENV_VAR, "solution")
+    cache["variant_probe"] = [
+        student_checks.ExerciseCheckDefinition(
+            exercise_no=1,
+            title="Variant",
+            check=record_variant,
+        )
+    ]
+
+    results = student_checks.run_exercise_checks("variant_probe")
+
+    assert [result.passed for result in results] == [True]
+    assert observed_variants == ["solution"]
+    assert os.environ[ACTIVE_VARIANT_ENV_VAR] == "solution"
+
+
+def test_run_exercise_checks_reports_failures_for_unsolved_ex002_without_variant_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cache: dict[str, list[Any]] = {}
+
+    monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
+    monkeypatch.delenv(ACTIVE_VARIANT_ENV_VAR, raising=False)
+
+    results = student_checks.run_exercise_checks(
+        "ex002_sequence_modify_basics")
+
+    assert any(not result.passed for result in results)
+    assert any(
+        "Hello Python!" in issue
+        for result in results
+        for issue in result.issues
+    )
