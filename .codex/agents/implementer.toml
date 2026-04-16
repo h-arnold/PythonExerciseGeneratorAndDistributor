@@ -1,8 +1,8 @@
 name = "Implementer"
 description = "Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes."
+model = "gpt-5.4-mini"
+model_reasoning_effort = "high"
 developer_instructions = """
-model = 5.4-mini
-model_reasoning_effort = high
 > Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
 
 # Implementer Agent
