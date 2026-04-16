@@ -68,19 +68,4 @@ The mapping layer must preserve exercise identity by `exercise_key` and must not
 - **Export-only**: canonical student-only exercise-local notebook/test packaging, metadata-free runtime catalogue snapshots, and no exported authoring-only assets.
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 
-
-## 5) Consumer matrix (definitive migration tracker)
-
-The following matrix records each active consumer surface, its current entry point, and the target entry point for the shared execution contract.
-
-| Surface | Current entry point | Target entry point |
-| --- | --- | --- |
-| runtime/grading wrapper | tests.notebook_grader wrapper | exercise_runtime_support.notebook_grader |
-| framework API wrapper | tests.exercise_framework.runtime wrapper | exercise_runtime_support.exercise_framework.* |
-| packager and collector CLI | scripts/template_repo_cli/core/* imports and packaging surfaces | exercise_runtime_support package copied and referenced |
-| exercise scaffolder | emitted import from exercise_runtime_support.exercise_framework.runtime | emitted import from exercise_runtime_support.exercise_framework.runtime |
-| repository workflows | scripts/run_pytest_variant.py --variant solution | scripts/run_pytest_variant.py --variant solution |
-| classroom template workflow | scripts/build_autograde_payload.py --variant student | scripts/build_autograde_payload.py --variant student |
-| contributor documentation | legacy and transition guidance scattered across docs and AGENTS.md | single contract documented in docs/execution-model.md |
-
-Maintenance note: `tests/exercise_runtime_support/test_consumer_matrix.py` validates this matrix, checks listed files exist, and guards against regressions that bypass the shared contract.
+Key runtime contract checks are enforced by direct file-based tests, without a consumer matrix table.
