@@ -203,11 +203,9 @@ When developing or validating repository-side exercises, run the canonical exerc
 
 See Testing Framework: `docs/testing-framework.md` for details.
 
-## Calling Sub-Agents in a Github Copilot Environment
+## Calling Sub-Agents
 
 When you need to perform a task that falls under the expertise of a sub-agent, you should delegate to that agent rather than trying to handle it yourself. This ensures that the task is completed with the appropriate level of focus and expertise.
-
-**MANDATORY:** Every sub-agent call must include `agentName: "{name of subagent}"` in its payload. If sub-agent tools are unavailable in this environment, handle the task directly.
 
 The sub-agents you can call are (first-line names are case-sensitive):
 
@@ -215,10 +213,6 @@ The sub-agents you can call are (first-line names are case-sensitive):
 - **Exercise Verifier** — `.github/agents/exercise_verifier.md.agent.md`  (first line: `Exercise Verifier`)
 - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
 - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
-
-### Sub-agent roles
-
-Sub-agent roles are defined in the `.github/agents` folder, along with the configuration file. To create a new role, add a markdown file with the role name (e.g. `implementation.md`) and a prompt template for that role. Empty files are ignored. Use `--list-roles` to see the discovered roles.
 
 ## Implementation Workflow
 
