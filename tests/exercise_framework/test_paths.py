@@ -181,6 +181,50 @@ def test_resolve_exercise_notebook_path_uses_canonical_path_for_migrated_exercis
     )
 
 
+def test_resolve_exercise_notebook_path_propagates_legacy_layout_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+
+    def fake_repo_root() -> Path:
+        return repo_root
+
+    def fake_catalogue_entry(exercise_key: str) -> SimpleNamespace:
+        del exercise_key
+        return SimpleNamespace(layout="legacy", construct="sequence")
+
+    def raise_legacy_not_supported(
+        exercise_key: str,
+        *,
+        variant: str | None = None,
+    ) -> Path:
+        del exercise_key, variant
+        raise LookupError("legacy not supported")
+
+    monkeypatch.setattr(paths_impl, "_framework_repo_root", fake_repo_root)
+    monkeypatch.setattr(
+        paths_impl,
+        "_has_local_metadata_package",
+        lambda _repo_root: True,
+    )
+    monkeypatch.setattr(
+        paths_impl,
+        "get_catalogue_entry",
+        fake_catalogue_entry,
+    )
+    monkeypatch.setattr(
+        paths_impl,
+        "_resolve_source_canonical_notebook_path",
+        raise_legacy_not_supported,
+    )
+
+    with pytest.raises(LookupError, match="legacy not supported"):
+        paths.resolve_exercise_notebook_path(
+            "ex999_legacy_layout",
+            variant="solution",
+        )
+
+
 def test_resolve_exercise_notebook_path_uses_solution_mirror_in_metadata_free_exports(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
