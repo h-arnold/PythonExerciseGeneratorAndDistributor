@@ -70,6 +70,26 @@ Verification completed:
 - `uv run pytest tests/exercise_framework/test_runtime.py tests/exercise_framework/test_paths.py tests/exercise_framework/test_api_contract.py -q`
 - `uv run ruff check tests/exercise_runtime_support/test_runtime_contract.py docs/execution-model.md AGENTS.md`
 
+### Phase 3 Complete (source-legacy framework path fallback removal)
+
+- Status: complete
+- Commit: `64aec4b` (`cleanup: drop source-legacy fallback from framework paths`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Removed `_resolve_source_legacy_notebook_path(...)` from `exercise_runtime_support/exercise_framework/paths.py`.
+- Removed the source-legacy fallback branch from `resolve_exercise_notebook_path(...)`.
+- Simplified source-mode dispatch so local metadata repositories always use canonical metadata-backed resolution and metadata-free repositories use packaged-export resolution.
+- Added `tests/exercise_framework/test_paths.py::test_resolve_exercise_notebook_path_propagates_legacy_layout_failure` to assert source-mode legacy layout resolution now fails fast.
+- Preserved `resolve_notebook_path(...)` path-like rejection semantics and packaged-export path behavior.
+
+Verification completed:
+
+- `uv run pytest tests/exercise_framework/test_paths.py tests/exercise_framework/test_parity_paths.py tests/exercise_runtime_support/test_exercise_catalogue.py tests/exercise_framework/test_runtime.py -q`
+- `uv run pytest tests/template_repo_cli/test_integration.py -k packaged -q`
+- `uv run ruff check exercise_runtime_support/exercise_framework/paths.py tests/exercise_framework/test_paths.py`
+
 
 ## Scope
 
@@ -480,14 +500,6 @@ Option A, preferred:
 - Inline the few trivial `dict`/`list` checks directly into `notebook_runtime.py`.
 - Remove `notebook_runtime_typeguards.py`.
 
-Option B:
-
-- Keep the module, but make the guards real.
-- For example:
-  - require `cells` to be a list when validating notebook JSON
-  - require metadata to be a `dict[str, object]`
-  - raise `NotebookGradingError` when the notebook shape is invalid
-
 Important caution:
 
 - If you tighten notebook validation, update user-facing messages deliberately.
@@ -545,15 +557,7 @@ Why it matters:
 
 Recommended simplification:
 
-Option A, preferred:
-
 - Update `framework_support.py` to use the shared helpers from `exercise_runtime_support.exercise_framework.expectations`.
-
-Option B:
-
-- If `framework_support.py` intentionally owns this logic, stop exporting the generic helpers from the package.
-
-The first option is more consistent with the rest of the runtime package.
 
 Suggested edit set:
 
@@ -605,11 +609,7 @@ Option A, preferred for now:
 
 - Make the detailed-check path explicitly ex002-specific until there is a second real detailed consumer.
 
-Option B:
-
-- Introduce a real per-exercise detailed runner registry only when at least one more detailed exercise exists.
-
-If choosing Option A, an acceptable cleanup would be:
+An acceptable cleanup would be:
 
 - collapse the multiple catalogue passes
 - make the detailed path explicit
