@@ -3,6 +3,7 @@ name: Implementer
 description: Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes.
 tools: [vscode/getProjectSetupInfo, vscode/memory, vscode/runCommand, vscode/vscodeAPI, execute, read/terminalSelection, read/terminalLastCommand, read/problems, read/readFile, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search, web, 'pylance-mcp-server/*', todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
 user-invocable: true
+model: GPT-5.3-Codex (copilot)
 ---
 
 > Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.

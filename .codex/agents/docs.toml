@@ -1,11 +1,6 @@
----
-name: 'Docs'
-description: 'Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy'
-user-invocable: true
-model: gpt-5.4-mini
-tools: [vscode/askQuestions, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runInTerminal, execute/runNotebookCell, read/problems, read/readFile, read/viewImage, read/readNotebookCellOutput, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search, web, todo, vscode.mermaid-chat-features/renderMermaidDiagram]
----
-
+name = "Docs"
+description = "Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy"
+developer_instructions = """
 # Documentation Agent Instructions
 
 You are a Documentation Agent for PythonExerciseGeneratorAndDistributor. Your role is to keep project documentation accurate, current, and aligned with actual code behaviour after every meaningful change.
@@ -105,3 +100,4 @@ Provide a concise handoff summary including:
 - Keep all developer docs tightly focused on this codebase, its architecture, and its workflows.
 - Assume developer-doc readers are experienced engineers; avoid hand-holding explanations of TypeScript, React, GAS, IDE setup, or generic programming basics.
 - For non-developer docs, assume a technically competent secondary school teacher: tech-savvy and comfortable with practical software use, but not necessarily familiar with coding, IDEs, or developer tooling internals.
+"""
