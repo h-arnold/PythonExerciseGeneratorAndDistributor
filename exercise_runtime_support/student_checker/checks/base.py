@@ -6,6 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 
+from exercise_runtime_support.execution_variant import Variant
 from exercise_runtime_support.exercise_framework.expectations_helpers import is_valid_explanation
 from exercise_runtime_support.notebook_grader import get_explanation_cell
 
@@ -36,10 +37,15 @@ def check_explanation_cell(
     exercise_no: int,
     min_length: int,
     placeholder_phrases: tuple[str, ...],
+    *,
+    variant: Variant | None = None,
 ) -> list[str]:
     try:
         explanation = get_explanation_cell(
-            exercise_key, tag=f"explanation{exercise_no}")
+            exercise_key,
+            tag=f"explanation{exercise_no}",
+            variant=variant,
+        )
     except AssertionError:
         return [f"Exercise {exercise_no}: explanation is missing."]
     if not is_valid_explanation(

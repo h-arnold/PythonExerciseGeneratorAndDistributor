@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 import exercise_runtime_support.student_checker.checks as student_checks
+from exercise_runtime_support.student_checker.checks import base as student_check_base
 from exercise_runtime_support.execution_variant import (
     ACTIVE_VARIANT_ENV_VAR,
     get_active_variant,
@@ -185,3 +186,41 @@ def test_run_exercise_checks_reports_failures_for_unsolved_ex002_without_variant
         for result in results
         for issue in result.issues
     )
+
+
+def test_check_explanation_cell_forwards_variant(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_get_explanation_cell(
+        exercise_key: str,
+        *,
+        tag: str,
+        variant: str | None = None,
+    ) -> str:
+        captured["exercise_key"] = exercise_key
+        captured["tag"] = tag
+        captured["variant"] = variant
+        return "This explanation is detailed enough to pass the checker."
+
+    monkeypatch.setattr(
+        student_check_base,
+        "get_explanation_cell",
+        fake_get_explanation_cell,
+    )
+
+    result = student_check_base.check_explanation_cell(
+        "ex007_sequence_debug_casting",
+        3,
+        10,
+        (),
+        variant="student",
+    )
+
+    assert result == []
+    assert captured == {
+        "exercise_key": "ex007_sequence_debug_casting",
+        "tag": "explanation3",
+        "variant": "student",
+    }
