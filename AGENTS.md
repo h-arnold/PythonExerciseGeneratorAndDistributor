@@ -96,6 +96,10 @@ docs/                  # Project documentation
 - Keep formatter changes unless the user says otherwise.
 - **NEVER** silence linting errors without explicit authorisation from the user. If you feel that fixing the linting error would make the code less readable, then stop and ask for clarification.
 
+### VERY IMPORTANT NOTE ON TESTING OUTPUT
+
+Student variant tests **must always** fail in this repo. Soltution variant notebook tests **must always** pass. If you see a failing test, that is the expected behaviour for student variants. Do not attempt to fix or silence failing student tests. If you see a failing solution test, that is a problem that needs to be fixed.
+
 ### Python Style (for infrastructure code, not student exercises)
 
 - **Language**: Python 3.11+
