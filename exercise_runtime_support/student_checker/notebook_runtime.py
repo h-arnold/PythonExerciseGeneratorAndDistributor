@@ -6,24 +6,16 @@ import ast
 import json
 import re
 from pathlib import Path
-from typing import cast
+from typing import TypedDict
 
 from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
 from exercise_runtime_support.notebook_grader import (
+    NotebookCell,
     NotebookGradingError,
     extract_tagged_code,
     resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
-)
-from exercise_runtime_support.student_checker.notebook_runtime_typeguards import (
-    NotebookCell,
-    NotebookJson,
-    NotebookMetadata,
-    is_notebook_cell,
-    is_notebook_cells_list,
-    is_notebook_json,
-    is_notebook_metadata,
 )
 
 from .checks import has_exercise_checks, run_exercise_checks
@@ -34,6 +26,12 @@ _EXERCISE_TAG_PATTERN = re.compile(r"exercise\d+")
 _DEFAULT_INPUT_VALUE = "2"
 _MISSING_INPUT_ERROR_MESSAGE = "Test expected more input values"
 _MAX_AUTOMATED_INPUTS = 10
+
+
+class NotebookJson(TypedDict):
+    """Typed notebook JSON shape used by the student checker."""
+
+    cells: list[NotebookCell]
 
 
 def run_notebook_checks(exercise_key: str) -> None:
@@ -60,51 +58,41 @@ def _load_notebook_json(path: Path) -> NotebookJson:
     except json.JSONDecodeError as exc:
         raise NotebookGradingError(
             f"Unable to parse notebook JSON: {path}") from exc
-    if is_notebook_json(data):
-        return data
-    return {}
+    if not isinstance(data, dict):
+        raise NotebookGradingError(
+            f"Notebook JSON must be a JSON object: {path}")
+    cells = data.get("cells")
+    if not isinstance(cells, list):
+        raise NotebookGradingError(
+            f"Notebook JSON must contain a 'cells' list: {path}")
+    notebook_json: NotebookJson = {"cells": cells}
+    return notebook_json
 
 
 def _extract_tags_from_cell(cell: object) -> list[str]:
-    if not is_notebook_cell(cell):
+    if not isinstance(cell, dict):
         return []
-    cell_dict: NotebookCell = cell
-    metadata = cell_dict.get("metadata")
-    if not is_notebook_metadata(metadata):
+    metadata = cell.get("metadata")
+    if not isinstance(metadata, dict):
         return []
-    metadata_dict: NotebookMetadata = metadata
-    return _extract_tags_from_metadata(metadata_dict)
-
-
-def _extract_tags_from_metadata(metadata: NotebookMetadata) -> list[str]:
-    """Return the exercise tags encoded in notebook metadata."""
     raw_tags = metadata.get("tags")
     if isinstance(raw_tags, str):
-        candidates = (raw_tags,)
+        candidates = [raw_tags]
     elif isinstance(raw_tags, list):
-        typed_tags = cast(list[object], raw_tags)
-        str_items: list[str] = []
-        for item in typed_tags:
+        candidates = []
+        for item in raw_tags:
             if not isinstance(item, str):
                 return []
-            str_items.append(item)
-        candidates = tuple(str_items)
+            candidates.append(item)
     else:
         return []
 
-    tags: list[str] = []
-    for tag in candidates:
-        if _EXERCISE_TAG_PATTERN.fullmatch(tag):
-            tags.append(tag)
-    return tags
+    return [tag for tag in candidates if _EXERCISE_TAG_PATTERN.fullmatch(tag)]
 
 
 def _collect_exercise_tags(path: Path) -> list[str]:
     data = _load_notebook_json(path)
-    cells = data.get("cells")
-    if not is_notebook_cells_list(cells):
-        return []
-
+    cells = data["cells"]
     tags: list[str] = []
     for cell in cells:
         tags.extend(_extract_tags_from_cell(cell))

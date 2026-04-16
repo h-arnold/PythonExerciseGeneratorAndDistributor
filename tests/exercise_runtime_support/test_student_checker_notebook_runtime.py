@@ -108,6 +108,38 @@ def test_count_input_calls_detects_name_and_builtins_calls(monkeypatch: pytest.M
     assert count == expected_count
 
 
+def test_load_notebook_json_rejects_non_mapping_json(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "broken.ipynb"
+    path.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(
+        NotebookGradingError,
+        match="Notebook JSON must be a JSON object",
+    ):
+        notebook_runtime._load_notebook_json(path)
+
+
+@pytest.mark.parametrize(
+    ("content", "match"),
+    [
+        ('{"metadata": {}}', "Notebook JSON must contain a 'cells' list"),
+        ('{"cells": {}}', "Notebook JSON must contain a 'cells' list"),
+    ],
+)
+def test_load_notebook_json_rejects_missing_or_invalid_cells(
+    tmp_path: Path,
+    content: str,
+    match: str,
+) -> None:
+    path = tmp_path / "broken.ipynb"
+    path.write_text(content, encoding="utf-8")
+
+    with pytest.raises(NotebookGradingError, match=match):
+        notebook_runtime._load_notebook_json(path)
+
+
 def test_run_notebook_checks_marks_failure_when_execution_raises(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
