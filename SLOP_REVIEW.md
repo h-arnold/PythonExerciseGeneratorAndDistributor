@@ -90,6 +90,32 @@ Verification completed:
 - `uv run pytest tests/template_repo_cli/test_integration.py -k packaged -q`
 - `uv run ruff check exercise_runtime_support/exercise_framework/paths.py tests/exercise_framework/test_paths.py`
 
+### Phase 4 Complete (execution-variant legacy path rewrite removal)
+
+- Status: complete
+- Commit: `a805e20` (`cleanup: remove legacy variant notebook path rewriting`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Removed legacy notebooks-path rewrite logic from `exercise_runtime_support/execution_variant.py`.
+- Deleted obsolete helpers:
+  - `_resolve_legacy_notebook_path(...)`
+  - `_relative_legacy_path(...)`
+- Simplified `resolve_variant_notebook_path(...)` to:
+  - optionally anchor relative paths to `repo_root` when requested
+  - apply canonical filename switching only (`student.ipynb`/`solution.ipynb`)
+- Added direct tests in `tests/exercise_runtime_support/test_execution_variant.py` for:
+  - canonical filename switching
+  - anchor-to-repo-root behavior
+  - no-rewrite behavior for legacy `notebooks/...` inputs
+  - unchanged behavior for non-canonical filenames
+
+Verification completed:
+
+- `uv run pytest tests/exercise_runtime_support/test_execution_variant.py tests/exercise_framework/test_paths.py tests/exercise_framework/test_parity_paths.py tests/exercise_framework/test_runtime.py -q`
+- `uv run ruff check exercise_runtime_support/execution_variant.py tests/exercise_runtime_support/test_execution_variant.py`
+
 
 ## Scope
 
