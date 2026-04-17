@@ -6,7 +6,7 @@ import ast
 import json
 import re
 from pathlib import Path
-from typing import TypedDict, TypeGuard, cast
+from typing import Any, TypedDict, TypeGuard, cast
 
 from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
 from exercise_runtime_support.notebook_grader import (
@@ -36,13 +36,16 @@ class NotebookJson(TypedDict):
 
 def _is_json_object(value: object) -> TypeGuard[dict[str, object]]:
     """Return whether parsed JSON is a mapping with string keys."""
-    return isinstance(value, dict)
+    if not isinstance(value, dict):
+        return False
+    mapping = cast(dict[Any, Any], value)
+    return all(isinstance(key, str) for key in mapping)
 
 
 def _as_json_object(value: object) -> dict[str, object] | None:
-    if not isinstance(value, dict):
+    if not _is_json_object(value):
         return None
-    return cast(dict[str, object], value)
+    return value
 
 
 def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
@@ -63,7 +66,8 @@ def _has_valid_source(cell: dict[str, object]) -> bool:
     if isinstance(source, str):
         return True
     if isinstance(source, list):
-        return _is_string_list(cast(list[object], source))
+        items = cast(list[Any], source)
+        return all(isinstance(item, str) for item in items)
     return False
 
 
@@ -82,8 +86,8 @@ def _has_valid_metadata(cell: dict[str, object]) -> bool:
     return _is_string_list(tags)
 
 
-def _is_object_list(value: object) -> TypeGuard[list[object]]:
-    """Return whether a parsed value is a list of objects."""
+def _is_object_list(value: object) -> TypeGuard[list[Any]]:
+    """Return whether a parsed value is a list."""
     return isinstance(value, list)
 
 
@@ -91,16 +95,14 @@ def _is_notebook_cell_list(value: object) -> TypeGuard[list[NotebookCell]]:
     """Return whether a parsed value is a list of notebook cell mappings."""
     if not _is_object_list(value):
         return False
-    cells: list[object] = value
-    return all(_is_notebook_cell(item) for item in cells)
+    return all(_is_notebook_cell(item) for item in value)
 
 
 def _is_string_list(value: object) -> TypeGuard[list[str]]:
     """Return whether a parsed value is a list of strings."""
     if not _is_object_list(value):
         return False
-    items: list[object] = value
-    return all(isinstance(item, str) for item in items)
+    return all(isinstance(item, str) for item in value)
 
 
 def run_notebook_checks(exercise_key: str) -> None:
@@ -143,7 +145,7 @@ def _extract_tags_from_cell(cell: object) -> list[str]:
     if not _is_notebook_cell(cell):
         return []
     metadata = cell.get("metadata")
-    if not isinstance(metadata, dict):
+    if not _is_json_object(metadata):
         return []
     raw_tags = metadata.get("tags")
     if isinstance(raw_tags, str):

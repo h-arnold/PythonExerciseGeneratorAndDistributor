@@ -26,6 +26,16 @@ def test_build_autograde_env_sets_pythonpath_to_repo_root_when_absent() -> None:
     assert env["PYTHONPATH"] == str(REPO_ROOT)
 
 
+def test_build_autograde_env_with_empty_base_env_does_not_inherit_process_vars(
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv("AUTOGRADE_SENTINEL", "present-in-process")
+
+    env = build_autograde_env(base_env={})
+
+    assert "AUTOGRADE_SENTINEL" not in env
+
+
 def test_build_autograde_env_prepends_repo_root_to_existing_pythonpath() -> None:
     env = build_autograde_env(base_env={"PYTHONPATH": "existing:path"})
 

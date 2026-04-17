@@ -121,6 +121,25 @@ def test_load_notebook_json_rejects_non_mapping_json(
         notebook_runtime._load_notebook_json(path)
 
 
+def test_load_notebook_json_rejects_non_string_object_keys(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    path = tmp_path / "broken.ipynb"
+    path.write_text("{}", encoding="utf-8")
+
+    def fake_loads(_raw_json: str) -> object:
+        return {1: []}
+
+    monkeypatch.setattr(notebook_runtime.json, "loads", fake_loads)
+
+    with pytest.raises(
+        NotebookGradingError,
+        match="Notebook JSON must be a JSON object",
+    ):
+        notebook_runtime._load_notebook_json(path)
+
+
 @pytest.mark.parametrize(
     ("content", "match"),
     [

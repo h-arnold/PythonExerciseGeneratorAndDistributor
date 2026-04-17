@@ -21,7 +21,7 @@ def build_autograde_env(
 ) -> dict[str, str]:
     """Return an environment mapping suitable for invoking autograde helpers."""
 
-    env = dict(base_env or os.environ)
+    env = dict(os.environ if base_env is None else base_env)
     repo = str(_REPO_ROOT)
     current = env.get("PYTHONPATH")
     env["PYTHONPATH"] = f"{repo}{os.pathsep}{current}" if current else repo
