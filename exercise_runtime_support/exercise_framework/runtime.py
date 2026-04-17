@@ -12,6 +12,16 @@ from typing import Any
 from exercise_runtime_support import notebook_grader
 from exercise_runtime_support.execution_variant import Variant
 
+__all__ = [
+    "RuntimeCache",
+    "exec_tagged_code",
+    "extract_tagged_code",
+    "get_explanation_cell",
+    "resolve_notebook_path",
+    "run_cell_and_capture_output",
+    "run_cell_with_input",
+]
+
 
 class RuntimeCache:
     """In-memory cache for extracted code and captured outputs."""

@@ -19,8 +19,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
-from _pytest.outcomes import Exit as PytestExit
-from _pytest.outcomes import OutcomeException
+try:
+    from _pytest.outcomes import Exit as _PytestExit
+    from _pytest.outcomes import OutcomeException as _PytestOutcomeException
+
+    _PYTEST_FATAL_TYPES: tuple[type[BaseException], ...] = (
+        GeneratorExit,
+        KeyboardInterrupt,
+        _PytestOutcomeException,
+        _PytestExit,
+        SystemExit,
+    )
+except ImportError:
+    # Fallback for future pytest versions where these private symbols may move.
+    _PYTEST_FATAL_TYPES = (GeneratorExit, KeyboardInterrupt, SystemExit)
 
 ELLIPSIS_GUARD_LENGTH = 3
 LOCATION_MIN_LENGTH = 2
@@ -29,10 +41,7 @@ LOCATION_MIN_LENGTH = 2
 def _is_fatal_control_flow_exception(error: BaseException) -> bool:
     """Return True when an exception must escape defensive handlers."""
 
-    return isinstance(
-        error,
-        (GeneratorExit, KeyboardInterrupt, OutcomeException, PytestExit, SystemExit),
-    )
+    return isinstance(error, _PYTEST_FATAL_TYPES)
 
 
 def _empty_results() -> list[AutogradeTestResult]:

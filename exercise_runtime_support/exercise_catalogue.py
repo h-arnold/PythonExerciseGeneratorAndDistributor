@@ -141,7 +141,7 @@ def get_catalogue_entry(exercise_key: str) -> ExerciseCatalogueEntry:
     available = ", ".join(
         item.exercise_key for item in get_exercise_catalogue())
     raise ValueError(
-        f"Unknown notebook '{exercise_key}'. Available: {available}")
+        f"Unknown exercise key '{exercise_key}'. Available: {available}")
 
 
 def get_catalogue_key_for_exercise_id(exercise_id: int) -> str:

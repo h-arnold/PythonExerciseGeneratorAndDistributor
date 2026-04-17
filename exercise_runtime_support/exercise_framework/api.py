@@ -102,15 +102,15 @@ def run_all_checks() -> list[NotebookCheckResult]:
     return _run_definitions(list(checks.values()))
 
 
-def run_notebook_check(notebook_slug: str) -> list[NotebookCheckResult]:
-    """Run a single notebook-level check and return structured results."""
+def run_notebook_check(exercise_key: str) -> list[NotebookCheckResult]:
+    """Run a single notebook-level check for an exercise key and return structured results."""
     checks = _get_supported_check_definitions()
-    catalogue_entry = get_catalogue_entry(notebook_slug)
+    catalogue_entry = get_catalogue_entry(exercise_key)
     check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
         raise ValueError(
-            f"Unknown notebook '{notebook_slug}'. Available: {available}")
+            f"Unknown exercise key '{exercise_key}'. Available: {available}")
 
     return _run_definitions([check])
 

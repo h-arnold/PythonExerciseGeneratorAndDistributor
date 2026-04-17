@@ -15,7 +15,20 @@ import pytest
 from exercise_runtime_support.exercise_framework import EX002_CHECKS
 from exercise_runtime_support.helpers import build_autograde_env
 
-REPO_ROOT = Path(__file__).resolve().parents[5]
+
+def _find_repo_root() -> Path:
+    current_file = Path(__file__).resolve()
+    for candidate in (current_file.parent, *current_file.parents):
+        if (
+            (candidate / "pyproject.toml").exists()
+            or (candidate / ".git").exists()
+            or (candidate / "scripts").is_dir()
+        ):
+            return candidate
+    raise RuntimeError(f"Could not determine repository root from {current_file}")
+
+
+REPO_ROOT = _find_repo_root()
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 

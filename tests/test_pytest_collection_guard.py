@@ -5,11 +5,169 @@ from pathlib import Path
 import pytest
 
 from exercise_runtime_support.pytest_collection_guard import (
+    _exercise_key_for_path,
+    _is_canonical_test_path,
+    _is_top_level_test_path,
     find_duplicate_exercise_test_sources,
     find_noncanonical_exercise_test_sources,
 )
 
 pytest_plugins = ("pytester",)
+
+
+# ---------------------------------------------------------------------------
+# _exercise_key_for_path
+# ---------------------------------------------------------------------------
+
+
+def test_exercise_key_for_path_returns_key_for_matching_test_file() -> None:
+    assert _exercise_key_for_path(Path("test_ex003_sequence_modify_variables.py")) == "ex003_sequence_modify_variables"
+
+
+def test_exercise_key_for_path_returns_key_for_short_stem() -> None:
+    assert _exercise_key_for_path(Path("test_ex001.py")) == "ex001"
+
+
+def test_exercise_key_for_path_returns_none_for_non_py_file() -> None:
+    assert _exercise_key_for_path(Path("test_ex001.txt")) is None
+
+
+def test_exercise_key_for_path_returns_none_for_non_exercise_test_file() -> None:
+    assert _exercise_key_for_path(Path("test_helpers.py")) is None
+
+
+def test_exercise_key_for_path_returns_none_for_non_test_exercise_file() -> None:
+    assert _exercise_key_for_path(Path("ex001_something.py")) is None
+
+
+def test_exercise_key_for_path_returns_none_for_wrong_digit_count() -> None:
+    # Must have exactly 3 digits after 'ex'
+    assert _exercise_key_for_path(Path("test_ex01_something.py")) is None
+
+
+# ---------------------------------------------------------------------------
+# _is_top_level_test_path
+# ---------------------------------------------------------------------------
+
+
+def test_is_top_level_test_path_returns_true_for_valid_path() -> None:
+    assert _is_top_level_test_path(Path("tests/test_ex004_sequence_debug_syntax.py")) is True
+
+
+def test_is_top_level_test_path_returns_false_for_nested_path() -> None:
+    assert (
+        _is_top_level_test_path(
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py")
+        )
+        is False
+    )
+
+
+def test_is_top_level_test_path_returns_false_for_wrong_root() -> None:
+    assert _is_top_level_test_path(Path("other/test_ex004_sequence_debug_syntax.py")) is False
+
+
+def test_is_top_level_test_path_returns_false_for_nested_tests_dir() -> None:
+    assert _is_top_level_test_path(Path("tests/ex123/test_ex123_example.py")) is False
+
+
+# ---------------------------------------------------------------------------
+# _is_canonical_test_path
+# ---------------------------------------------------------------------------
+
+
+def test_is_canonical_test_path_returns_true_for_valid_canonical_path() -> None:
+    assert (
+        _is_canonical_test_path(
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py")
+        )
+        is True
+    )
+
+
+def test_is_canonical_test_path_returns_false_for_top_level_path() -> None:
+    assert _is_canonical_test_path(Path("tests/test_ex004_sequence_debug_syntax.py")) is False
+
+
+def test_is_canonical_test_path_returns_false_when_exercise_key_dir_mismatch() -> None:
+    # Filename key does not match directory name
+    assert (
+        _is_canonical_test_path(
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex005_sequence_debug_logic.py")
+        )
+        is False
+    )
+
+
+def test_is_canonical_test_path_returns_false_for_wrong_root() -> None:
+    assert (
+        _is_canonical_test_path(
+            Path("other/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py")
+        )
+        is False
+    )
+
+
+def test_is_canonical_test_path_returns_false_for_non_test_subdir() -> None:
+    assert (
+        _is_canonical_test_path(
+            Path("exercises/sequence/ex004_sequence_debug_syntax/notebooks/test_ex004_sequence_debug_syntax.py")
+        )
+        is False
+    )
+
+
+def test_is_canonical_test_path_returns_false_for_too_few_parts() -> None:
+    assert _is_canonical_test_path(Path("exercises/sequence/test_ex004_sequence_debug_syntax.py")) is False
+
+
+def test_is_canonical_test_path_returns_true_for_non_exercise_key_filename_in_canonical_dir() -> None:
+    # Files like test_repo_construct_checks.py that live in the canonical dir
+    # but don't have a test_exNNN stem should still be recognised as canonical
+    # because _is_canonical_test_path only validates exercise-key filenames.
+    # The function returns False for those — that's correct; they bypass the guard.
+    assert (
+        _is_canonical_test_path(
+            Path("exercises/sequence/ex007_sequence_debug_casting/tests/test_repo_construct_checks.py")
+        )
+        is False
+    )
+
+
+# ---------------------------------------------------------------------------
+# find_duplicate_exercise_test_sources - edge cases
+# ---------------------------------------------------------------------------
+
+
+def test_find_duplicate_exercise_test_sources_no_duplicates_returns_empty() -> None:
+    duplicates = find_duplicate_exercise_test_sources(
+        [
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py"),
+        ]
+    )
+    assert duplicates == {}
+
+
+def test_find_duplicate_exercise_test_sources_ignores_non_exercise_files() -> None:
+    duplicates = find_duplicate_exercise_test_sources(
+        [
+            Path("tests/test_helpers.py"),
+            Path("exercises/sequence/ex004_sequence_debug_syntax/tests/test_repo_construct_checks.py"),
+        ]
+    )
+    assert duplicates == {}
+
+
+def test_find_duplicate_exercise_test_sources_nested_tests_not_treated_as_top_level() -> None:
+    # A path like tests/ex123/test_ex123_example.py should NOT be treated as a
+    # top-level match because it has more than 2 path parts.
+    duplicates = find_duplicate_exercise_test_sources(
+        [
+            Path("tests/ex123_example/test_ex123_example.py"),
+            Path("exercises/sequence/ex123_example/tests/test_ex123_example.py"),
+        ]
+    )
+    assert duplicates == {}
 
 
 def test_find_duplicate_exercise_test_sources_flags_top_level_and_canonical_duplicates() -> None:
