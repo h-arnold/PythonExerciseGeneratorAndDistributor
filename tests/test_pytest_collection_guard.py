@@ -121,7 +121,7 @@ def test_is_canonical_test_path_returns_false_for_too_few_parts() -> None:
     assert _is_canonical_test_path(Path("exercises/sequence/test_ex004_sequence_debug_syntax.py")) is False
 
 
-def test_is_canonical_test_path_returns_true_for_non_exercise_key_filename_in_canonical_dir() -> None:
+def test_is_canonical_test_path_returns_false_for_non_exercise_key_filename_in_canonical_dir() -> None:
     # Files like test_repo_construct_checks.py that live in the canonical dir
     # but don't have a test_exNNN stem should still be recognised as canonical
     # because _is_canonical_test_path only validates exercise-key filenames.
