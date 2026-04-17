@@ -145,6 +145,35 @@ Verification completed:
 - `uv run pytest tests/exercise_runtime_support -k notebook_runtime -q`
 - `uv run ruff check exercise_runtime_support/student_checker/notebook_runtime.py tests/exercise_runtime_support/test_student_checker_notebook_runtime.py`
 
+### Phase 6 Complete (exercise_framework package-root facade simplification)
+
+- Status: complete
+- Commit: `9e9eafc` (`cleanup: simplify framework package facade imports`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Replaced the broad package-root lazy facade in `exercise_runtime_support/exercise_framework/__init__.py` with explicit static re-exports for core runtime/path/api helpers.
+- Removed old package-root lazy machinery:
+  - `_ATTRIBUTE_MODULES`
+  - `_MODULE_CACHE`
+  - `_load_module(...)`
+  - broad dynamic `__getattr__` dispatch
+- Retained a minimal lazy path only for EX002 support symbols at package root:
+  - `EX002_CHECKS`
+  - `Ex002CheckDefinition`
+- Restored `__dir__` behavior so package introspection still includes `__all__` names.
+- Updated `tests/exercise_framework/test_api_contract.py`:
+  - replaced private-cache lazy tests with static re-export identity checks
+  - added focused checks that EX002 symbols are not eagerly populated at import time and still resolve correctly on access
+
+Verification completed:
+
+- `uv run pytest tests/exercise_framework/test_api_contract.py tests/exercise_framework/test_expectations.py tests/exercise_runtime_support/test_runtime_contract.py tests/test_new_exercise.py -q`
+- `uv run pytest tests/exercise_framework -q`
+- `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex002_sequence_modify_basics/tests/test_repo_autograde_parity.py -q`
+- `uv run ruff check exercise_runtime_support/exercise_framework/__init__.py tests/exercise_framework/test_api_contract.py`
+
 
 ## Scope
 
