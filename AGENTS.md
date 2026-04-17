@@ -20,6 +20,7 @@ This repository provides notebook-based Python exercises with automated grading 
 **Documentation (fetch on demand)**: Only read these files when a question specifically requires detailed information. Use `cat` or `sed -n` to fetch the exact file needed.
 
 - `docs/project-structure.md` — project layout and file conventions
+- `docs/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
 - `docs/testing-framework.md` — how the grading and test system works
 - `docs/exercise-generation-cli.md` — CLI for scaffolding new exercises
 - `docs/setup.md` — installation and environment setup

@@ -1,17 +1,19 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
 import exercise_runtime_support.exercise_framework as framework_package
+import exercise_runtime_support.exercise_framework.api as framework_api
 import exercise_runtime_support.exercise_framework.expectations as framework_expectations
+import exercise_runtime_support.exercise_framework.paths as framework_paths
+import exercise_runtime_support.exercise_framework.runtime as framework_runtime
 from exercise_runtime_support.exercise_catalogue import (
     get_catalogue_key_for_exercise_id,
     get_exercise_catalogue,
 )
-from exercise_runtime_support.exercise_framework import api as framework_api
 from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 from tests.exercise_framework.api import (
     ExerciseCheckResult,
@@ -23,7 +25,6 @@ from tests.exercise_framework.api import (
 
 EXPECTED_EX002_DETAILED_CHECK_COUNT = 30
 EXPECTED_EX002_CHECK_TITLES = {"Logic", "Formatting", "Construct"}
-EXPECTED_EX002_EXERCISE_ID = 2
 
 
 def test_run_all_checks_returns_structured_results(
@@ -118,41 +119,72 @@ def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
         "ex004 Debug Syntax Errors", True, [])]
 
 
-def test_package_surface_exposes_lazy_ex002_checks(
+def test_package_surface_re_exports_expectations_symbols() -> None:
+    expected_sources = {
+        "resolve_exercise_notebook_path": framework_paths,
+        "resolve_notebook_path": framework_paths,
+        "RuntimeCache": framework_runtime,
+        "exec_tagged_code": framework_runtime,
+        "extract_tagged_code": framework_runtime,
+        "get_explanation_cell": framework_runtime,
+        "run_cell_and_capture_output": framework_runtime,
+        "run_cell_with_input": framework_runtime,
+        "expected_output_lines": framework_expectations,
+        "expected_output_text": framework_expectations,
+        "expected_print_call_count": framework_expectations,
+        "ExerciseCheckResult": framework_api,
+        "NotebookCheckResult": framework_api,
+        "run_all_checks": framework_api,
+        "run_detailed_ex002_check": framework_api,
+        "run_notebook_check": framework_api,
+    }
+
+    for name, module in expected_sources.items():
+        assert getattr(framework_package, name) is getattr(module, name)
+
+    assert framework_package.__all__ == [
+        "EX002_CHECKS",
+        "Ex002CheckDefinition",
+        "ExerciseCheckResult",
+        "NotebookCheckResult",
+        "RuntimeCache",
+        "exec_tagged_code",
+        "expected_output_lines",
+        "expected_output_text",
+        "expected_print_call_count",
+        "extract_tagged_code",
+        "get_explanation_cell",
+        "resolve_exercise_notebook_path",
+        "resolve_notebook_path",
+        "run_all_checks",
+        "run_cell_and_capture_output",
+        "run_cell_with_input",
+        "run_detailed_ex002_check",
+        "run_notebook_check",
+    ]
+
+
+def test_package_surface_lazy_loads_ex002_support_symbols(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    sentinel_checks = [object()]
-    calls: list[tuple[str, str]] = []
-
-    def fake_get_catalogue_key_for_exercise_id(exercise_id: int) -> str:
-        assert exercise_id == EXPECTED_EX002_EXERCISE_ID
-        return "ex002_sequence_modify_basics"
-
-    def fake_load_exercise_test_module(exercise_key: str, module_name: str) -> SimpleNamespace:
-        calls.append((exercise_key, module_name))
-        return SimpleNamespace(
-            EX002_CHECKS=sentinel_checks,
-            Ex002CheckDefinition=object,
-        )
-
-    monkeypatch.setattr(
-        framework_expectations,
-        "get_catalogue_key_for_exercise_id",
-        fake_get_catalogue_key_for_exercise_id,
-    )
-    monkeypatch.setattr(
-        framework_expectations,
-        "load_exercise_test_module",
-        fake_load_exercise_test_module,
-    )
     monkeypatch.setattr(framework_expectations, "_ex002_support_module", None)
-    monkeypatch.setattr(framework_package, "_MODULE_CACHE", {})
     monkeypatch.delitem(vars(framework_expectations),
                         "EX002_CHECKS", raising=False)
     monkeypatch.delitem(vars(framework_expectations),
                         "Ex002CheckDefinition", raising=False)
     monkeypatch.delitem(vars(framework_package), "EX002_CHECKS", raising=False)
+    monkeypatch.delitem(vars(framework_package),
+                        "Ex002CheckDefinition", raising=False)
 
-    assert calls == []
-    assert framework_package.EX002_CHECKS is framework_expectations.EX002_CHECKS
-    assert calls == [("ex002_sequence_modify_basics", "framework_support")]
+    reloaded_package = importlib.reload(framework_package)
+
+    assert "EX002_CHECKS" not in vars(reloaded_package)
+    assert "Ex002CheckDefinition" not in vars(reloaded_package)
+    assert "EX002_CHECKS" not in vars(framework_expectations)
+    assert "Ex002CheckDefinition" not in vars(framework_expectations)
+
+    assert reloaded_package.EX002_CHECKS is framework_expectations.EX002_CHECKS
+    assert (
+        reloaded_package.Ex002CheckDefinition
+        is framework_expectations.Ex002CheckDefinition
+    )

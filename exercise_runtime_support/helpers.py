@@ -1,95 +1,17 @@
+"""Autograde environment helpers."""
+
 from __future__ import annotations
 
-import json
 import os
 from collections.abc import Mapping
 from pathlib import Path
-from typing import Any
 
 from exercise_runtime_support.execution_variant import (
-    Variant,
-    configure_variant_environment,
-)
-from exercise_runtime_support.notebook_grader import (
-    get_explanation_cell as grading_get_explanation_cell,
-)
-from exercise_runtime_support.notebook_grader import (
-    resolve_notebook_path as grading_resolve_notebook_path,
-)
-from exercise_runtime_support.notebook_grader import (
-    run_cell_and_capture_output,
-    run_cell_with_input,
+    configure_variant_environment as _configure_variant_environment,
 )
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
-
-def resolve_notebook_path(
-    notebook_path: str | Path,
-    *,
-    variant: Variant | None = None,
-) -> Path:
-    """Return the absolute notebook path following the grading helpers."""
-    return grading_resolve_notebook_path(notebook_path, variant=variant)
-
-
-def run_tagged_cell_output(
-    notebook_path: str,
-    tag: str,
-    *,
-    inputs: list[str] | None = None,
-) -> str:
-    """Execute a tagged cell and capture its output (optionally providing inputs)."""
-    if inputs is not None:
-        return run_cell_with_input(notebook_path, tag=tag, inputs=inputs)
-
-    return run_cell_and_capture_output(notebook_path, tag=tag)
-
-
-def load_notebook(notebook_path: str | Path, *, use_solution: bool = False) -> dict[str, Any]:
-    """Load a notebook JSON document for the requested notebook variant."""
-    variant: Variant = "solution" if use_solution else "student"
-    target = resolve_notebook_path(notebook_path, variant=variant)
-    with open(target, encoding="utf-8") as handle:
-        return json.load(handle)
-
-
-def _find_code_cell(notebook: dict[str, Any], tag: str) -> dict[str, Any] | None:
-    for cell in notebook.get("cells", []):
-        if cell.get("cell_type") != "code":
-            continue
-        tags = cell.get("metadata", {}).get("tags", [])
-        if tag in tags:
-            return cell
-    return None
-
-
-def assert_code_cell_present(
-    notebook_path: str,
-    tag: str,
-    *,
-    use_solution: bool = False,
-    ensure_not_empty: bool = True,
-    allow_todo: bool = True,
-) -> str:
-    """Assert that a code cell with the specified tag exists and return its source."""
-    notebook = load_notebook(notebook_path, use_solution=use_solution)
-    cell = _find_code_cell(notebook, tag)
-    assert cell is not None, f"No code cell found with tag {tag}"
-    assert cell.get("cell_type") == "code", f"Cell {tag} must be a code cell"
-
-    source = "".join(cell.get("source", []))
-    if ensure_not_empty:
-        assert source.strip(), f"Cell {tag} must not be empty"
-    if not allow_todo and "TODO" in source:
-        raise AssertionError(f"Solution cell {tag} should not contain TODO placemarkers")
-
-    return source
-
-
-def get_explanation_cell(notebook_path: str, *, tag: str) -> str:
-    """Return the content of a tagged explanation cell from the grading helper."""
-    return grading_get_explanation_cell(notebook_path, tag=tag)
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+__all__ = ["build_autograde_env"]
 
 
 def build_autograde_env(
@@ -99,12 +21,12 @@ def build_autograde_env(
 ) -> dict[str, str]:
     """Return an environment mapping suitable for invoking autograde helpers."""
 
-    env = dict(base_env or os.environ)
-    repo = str(REPO_ROOT)
+    env = dict(os.environ if base_env is None else base_env)
+    repo = str(_REPO_ROOT)
     current = env.get("PYTHONPATH")
     env["PYTHONPATH"] = f"{repo}{os.pathsep}{current}" if current else repo
     env.setdefault("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
-    configure_variant_environment(env, "student")
+    _configure_variant_environment(env, "student")
 
     if overrides:
         for key, value in overrides.items():

@@ -74,17 +74,6 @@ def _relative_packaged_solution_path(exercise_key: str) -> Path:
     return _relative_packaged_notebooks_dir(exercise_key) / "solution.ipynb"
 
 
-def _resolve_source_legacy_notebook_path(
-    exercise_key: str,
-    *,
-    variant: Variant,
-    repo_root: Path,
-) -> Path:
-    if variant == "student":
-        return repo_root / _relative_packaged_notebook_path(exercise_key)
-    return repo_root / _relative_packaged_solution_path(exercise_key)
-
-
 def _resolve_packaged_notebook_path(
     exercise_key: str,
     *,
@@ -114,23 +103,18 @@ def resolve_exercise_notebook_path(
 ) -> Path:
     """Resolve a notebook path from an exercise key.
 
-    Source repositories use canonical metadata-backed paths for canonical
-    exercises. Metadata-free packaged exports fall back to the packaged
-    exercise-local student surface
+    Source repositories use canonical metadata-backed paths. Metadata-free
+    packaged exports fall back to the packaged exercise-local student surface
     ``exercises/<construct>/<exercise_key>/notebooks/student.ipynb``.
     Packaged solution-mode resolution requires an explicit optional
-    ``.../notebooks/solution.ipynb`` mirror and fails fast when
-    that surface is absent. Legacy source exercises, when addressed by
-    exercise key, also resolve to exercise-local
-    ``exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb``
-    surfaces, but raw ``notebooks/...`` path inputs are rejected by
+    ``.../notebooks/solution.ipynb`` mirror and fails fast when that surface
+    is absent. Raw ``notebooks/...`` path inputs are rejected by
     :func:`resolve_notebook_path`.
     """
     selected_variant = get_active_variant() if variant is None else variant
     repo_root = _framework_repo_root()
-    catalogue_entry = get_catalogue_entry(exercise_key)
     has_local_metadata = _has_local_metadata_package(repo_root)
-    if has_local_metadata and catalogue_entry.layout == "canonical":
+    if has_local_metadata:
         return _resolve_source_canonical_notebook_path(
             exercise_key,
             variant=selected_variant,
@@ -142,12 +126,6 @@ def resolve_exercise_notebook_path(
             variant=selected_variant,
             repo_root=repo_root,
         )
-
-    return _resolve_source_legacy_notebook_path(
-        exercise_key,
-        variant=selected_variant,
-        repo_root=repo_root,
-    )
 
 
 def resolve_notebook_path(

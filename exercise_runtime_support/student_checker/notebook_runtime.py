@@ -6,24 +6,16 @@ import ast
 import json
 import re
 from pathlib import Path
-from typing import cast
+from typing import Any, TypedDict, TypeGuard, cast
 
 from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
 from exercise_runtime_support.notebook_grader import (
+    NotebookCell,
     NotebookGradingError,
     extract_tagged_code,
     resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
-)
-from exercise_runtime_support.student_checker.notebook_runtime_typeguards import (
-    NotebookCell,
-    NotebookJson,
-    NotebookMetadata,
-    is_notebook_cell,
-    is_notebook_cells_list,
-    is_notebook_json,
-    is_notebook_metadata,
 )
 
 from .checks import has_exercise_checks, run_exercise_checks
@@ -34,6 +26,83 @@ _EXERCISE_TAG_PATTERN = re.compile(r"exercise\d+")
 _DEFAULT_INPUT_VALUE = "2"
 _MISSING_INPUT_ERROR_MESSAGE = "Test expected more input values"
 _MAX_AUTOMATED_INPUTS = 10
+
+
+class NotebookJson(TypedDict):
+    """Typed notebook JSON shape used by the student checker."""
+
+    cells: list[NotebookCell]
+
+
+def _is_json_object(value: object) -> TypeGuard[dict[str, object]]:
+    """Return whether parsed JSON is a mapping with string keys."""
+    if not isinstance(value, dict):
+        return False
+    mapping = cast(dict[Any, Any], value)
+    return all(isinstance(key, str) for key in mapping)
+
+
+def _as_json_object(value: object) -> dict[str, object] | None:
+    if not _is_json_object(value):
+        return None
+    return value
+
+
+def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
+    """Return whether a parsed value is a notebook cell mapping."""
+    cell = _as_json_object(value)
+    if cell is None:
+        return False
+    cell_type = cell.get("cell_type")
+    if not isinstance(cell_type, str):
+        return False
+    return _has_valid_source(cell) and _has_valid_metadata(cell)
+
+
+def _has_valid_source(cell: dict[str, object]) -> bool:
+    source = cell.get("source")
+    if source is None:
+        return True
+    if isinstance(source, str):
+        return True
+    if isinstance(source, list):
+        items = cast(list[Any], source)
+        return all(isinstance(item, str) for item in items)
+    return False
+
+
+def _has_valid_metadata(cell: dict[str, object]) -> bool:
+    metadata = cell.get("metadata")
+    if metadata is None:
+        return True
+    metadata_mapping = _as_json_object(metadata)
+    if metadata_mapping is None:
+        return False
+    tags = metadata_mapping.get("tags")
+    if tags is None:
+        return True
+    if isinstance(tags, str):
+        return True
+    return _is_string_list(tags)
+
+
+def _is_object_list(value: object) -> TypeGuard[list[Any]]:
+    """Return whether a parsed value is a list."""
+    return isinstance(value, list)
+
+
+def _is_notebook_cell_list(value: object) -> TypeGuard[list[NotebookCell]]:
+    """Return whether a parsed value is a list of notebook cell mappings."""
+    if not _is_object_list(value):
+        return False
+    return all(_is_notebook_cell(item) for item in value)
+
+
+def _is_string_list(value: object) -> TypeGuard[list[str]]:
+    """Return whether a parsed value is a list of strings."""
+    if not _is_object_list(value):
+        return False
+    return all(isinstance(item, str) for item in value)
 
 
 def run_notebook_checks(exercise_key: str) -> None:
@@ -54,57 +123,44 @@ def run_notebook_checks(exercise_key: str) -> None:
 
 def _load_notebook_json(path: Path) -> NotebookJson:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data: object = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise NotebookGradingError(f"Notebook not found: {path}") from exc
     except json.JSONDecodeError as exc:
         raise NotebookGradingError(
             f"Unable to parse notebook JSON: {path}") from exc
-    if is_notebook_json(data):
-        return data
-    return {}
+    if not _is_json_object(data):
+        raise NotebookGradingError(
+            f"Notebook JSON must be a JSON object: {path}")
+    cells = data.get("cells")
+    if not _is_notebook_cell_list(cells):
+        raise NotebookGradingError(
+            f"Notebook JSON must contain a 'cells' list of notebook cell "
+            f"objects: {path}")
+    notebook_json: NotebookJson = {"cells": cells}
+    return notebook_json
 
 
 def _extract_tags_from_cell(cell: object) -> list[str]:
-    if not is_notebook_cell(cell):
+    if not _is_notebook_cell(cell):
         return []
-    cell_dict: NotebookCell = cell
-    metadata = cell_dict.get("metadata")
-    if not is_notebook_metadata(metadata):
+    metadata = cell.get("metadata")
+    if not _is_json_object(metadata):
         return []
-    metadata_dict: NotebookMetadata = metadata
-    return _extract_tags_from_metadata(metadata_dict)
-
-
-def _extract_tags_from_metadata(metadata: NotebookMetadata) -> list[str]:
-    """Return the exercise tags encoded in notebook metadata."""
     raw_tags = metadata.get("tags")
     if isinstance(raw_tags, str):
-        candidates = (raw_tags,)
-    elif isinstance(raw_tags, list):
-        typed_tags = cast(list[object], raw_tags)
-        str_items: list[str] = []
-        for item in typed_tags:
-            if not isinstance(item, str):
-                return []
-            str_items.append(item)
-        candidates = tuple(str_items)
+        candidates = [raw_tags]
+    elif _is_string_list(raw_tags):
+        candidates = raw_tags
     else:
         return []
 
-    tags: list[str] = []
-    for tag in candidates:
-        if _EXERCISE_TAG_PATTERN.fullmatch(tag):
-            tags.append(tag)
-    return tags
+    return [tag for tag in candidates if _EXERCISE_TAG_PATTERN.fullmatch(tag)]
 
 
 def _collect_exercise_tags(path: Path) -> list[str]:
     data = _load_notebook_json(path)
-    cells = data.get("cells")
-    if not is_notebook_cells_list(cells):
-        return []
-
+    cells = data["cells"]
     tags: list[str] = []
     for cell in cells:
         tags.extend(_extract_tags_from_cell(cell))

@@ -1,7 +1,7 @@
 name = "Docs"
 description = "Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy"
-model = 5.4-mini
-model_reasoning_effort = high
+model = "gpt-5.4-mini"
+model_reasoning_effort = "high"
 developer_instructions = """
 # Documentation Agent Instructions
 
