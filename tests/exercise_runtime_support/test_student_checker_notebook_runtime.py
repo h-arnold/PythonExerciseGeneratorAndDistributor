@@ -126,6 +126,18 @@ def test_load_notebook_json_rejects_non_mapping_json(
     [
         ('{"metadata": {}}', "Notebook JSON must contain a 'cells' list"),
         ('{"cells": {}}', "Notebook JSON must contain a 'cells' list"),
+        (
+            '{"cells": [{"metadata": {}}, "oops"]}',
+            "Notebook JSON must contain a 'cells' list of notebook cell objects",
+        ),
+        (
+            '{"cells": [{"cell_type": "code", "metadata": {"tags": ["exercise1"]}, "source": 1}]}',
+            "Notebook JSON must contain a 'cells' list of notebook cell objects",
+        ),
+        (
+            '{"cells": [{"source": [], "metadata": {}}]}',
+            "Notebook JSON must contain a 'cells' list of notebook cell objects",
+        ),
     ],
 )
 def test_load_notebook_json_rejects_missing_or_invalid_cells(

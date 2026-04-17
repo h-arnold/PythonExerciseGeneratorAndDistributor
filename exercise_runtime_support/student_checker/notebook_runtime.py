@@ -6,7 +6,7 @@ import ast
 import json
 import re
 from pathlib import Path
-from typing import TypedDict
+from typing import TypedDict, TypeGuard, cast
 
 from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
 from exercise_runtime_support.notebook_grader import (
@@ -34,6 +34,75 @@ class NotebookJson(TypedDict):
     cells: list[NotebookCell]
 
 
+def _is_json_object(value: object) -> TypeGuard[dict[str, object]]:
+    """Return whether parsed JSON is a mapping with string keys."""
+    return isinstance(value, dict)
+
+
+def _as_json_object(value: object) -> dict[str, object] | None:
+    if not isinstance(value, dict):
+        return None
+    return cast(dict[str, object], value)
+
+
+def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
+    """Return whether a parsed value is a notebook cell mapping."""
+    cell = _as_json_object(value)
+    if cell is None:
+        return False
+    cell_type = cell.get("cell_type")
+    if not isinstance(cell_type, str):
+        return False
+    return _has_valid_source(cell) and _has_valid_metadata(cell)
+
+
+def _has_valid_source(cell: dict[str, object]) -> bool:
+    source = cell.get("source")
+    if source is None:
+        return True
+    if isinstance(source, str):
+        return True
+    if isinstance(source, list):
+        return _is_string_list(cast(list[object], source))
+    return False
+
+
+def _has_valid_metadata(cell: dict[str, object]) -> bool:
+    metadata = cell.get("metadata")
+    if metadata is None:
+        return True
+    metadata_mapping = _as_json_object(metadata)
+    if metadata_mapping is None:
+        return False
+    tags = metadata_mapping.get("tags")
+    if tags is None:
+        return True
+    if isinstance(tags, str):
+        return True
+    return _is_string_list(tags)
+
+
+def _is_object_list(value: object) -> TypeGuard[list[object]]:
+    """Return whether a parsed value is a list of objects."""
+    return isinstance(value, list)
+
+
+def _is_notebook_cell_list(value: object) -> TypeGuard[list[NotebookCell]]:
+    """Return whether a parsed value is a list of notebook cell mappings."""
+    if not _is_object_list(value):
+        return False
+    cells: list[object] = value
+    return all(_is_notebook_cell(item) for item in cells)
+
+
+def _is_string_list(value: object) -> TypeGuard[list[str]]:
+    """Return whether a parsed value is a list of strings."""
+    if not _is_object_list(value):
+        return False
+    items: list[object] = value
+    return all(isinstance(item, str) for item in items)
+
+
 def run_notebook_checks(exercise_key: str) -> None:
     """Run notebook-facing student checks for the given canonical exercise key."""
     if has_exercise_checks(exercise_key):
@@ -52,25 +121,26 @@ def run_notebook_checks(exercise_key: str) -> None:
 
 def _load_notebook_json(path: Path) -> NotebookJson:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data: object = json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError as exc:
         raise NotebookGradingError(f"Notebook not found: {path}") from exc
     except json.JSONDecodeError as exc:
         raise NotebookGradingError(
             f"Unable to parse notebook JSON: {path}") from exc
-    if not isinstance(data, dict):
+    if not _is_json_object(data):
         raise NotebookGradingError(
             f"Notebook JSON must be a JSON object: {path}")
     cells = data.get("cells")
-    if not isinstance(cells, list):
+    if not _is_notebook_cell_list(cells):
         raise NotebookGradingError(
-            f"Notebook JSON must contain a 'cells' list: {path}")
+            f"Notebook JSON must contain a 'cells' list of notebook cell "
+            f"objects: {path}")
     notebook_json: NotebookJson = {"cells": cells}
     return notebook_json
 
 
 def _extract_tags_from_cell(cell: object) -> list[str]:
-    if not isinstance(cell, dict):
+    if not _is_notebook_cell(cell):
         return []
     metadata = cell.get("metadata")
     if not isinstance(metadata, dict):
@@ -78,12 +148,8 @@ def _extract_tags_from_cell(cell: object) -> list[str]:
     raw_tags = metadata.get("tags")
     if isinstance(raw_tags, str):
         candidates = [raw_tags]
-    elif isinstance(raw_tags, list):
-        candidates = []
-        for item in raw_tags:
-            if not isinstance(item, str):
-                return []
-            candidates.append(item)
+    elif _is_string_list(raw_tags):
+        candidates = raw_tags
     else:
         return []
 
