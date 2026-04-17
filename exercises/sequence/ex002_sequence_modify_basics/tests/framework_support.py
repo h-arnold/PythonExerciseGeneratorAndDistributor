@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
 
 from exercise_runtime_support.exercise_framework import assertions, constructs, runtime
+from exercise_runtime_support.exercise_framework.expectations import (
+    expected_output_lines as _expected_output_lines,
+)
+from exercise_runtime_support.exercise_framework.expectations import (
+    expected_output_text as _expected_output_text,
+)
 from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 _EXERCISE_KEY = "ex002_sequence_modify_basics"
@@ -20,35 +26,6 @@ class Ex002CheckDefinition:
     exercise_no: int
     title: str
     check: Callable[[], list[str]]
-
-
-def _expected_output_lines(
-    exercise_no: int,
-    *,
-    single_line: Mapping[int, str],
-    multi_line: Mapping[int, Sequence[str]],
-) -> list[str] | None:
-    if exercise_no in single_line:
-        return [single_line[exercise_no]]
-    if exercise_no in multi_line:
-        return list(multi_line[exercise_no])
-    return None
-
-
-def _expected_output_text(
-    exercise_no: int,
-    *,
-    single_line: Mapping[int, str],
-    multi_line: Mapping[int, Sequence[str]],
-) -> str | None:
-    lines = _expected_output_lines(
-        exercise_no,
-        single_line=single_line,
-        multi_line=multi_line,
-    )
-    if lines is None:
-        return None
-    return "\n".join(lines) + "\n"
 
 
 def _exercise_tag(exercise_no: int) -> str:

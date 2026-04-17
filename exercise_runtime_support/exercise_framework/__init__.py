@@ -16,15 +16,6 @@ from .runtime import (
     run_cell_with_input,
 )
 
-# isort: split
-from .api import (
-    ExerciseCheckResult,
-    NotebookCheckResult,
-    run_all_checks,
-    run_detailed_ex002_check,
-    run_notebook_check,
-)
-
 __all__ = [
     "EX002_CHECKS",
     "Ex002CheckDefinition",
@@ -50,6 +41,18 @@ __all__ = [
 def __getattr__(name: str) -> Any:
     if name in {"EX002_CHECKS", "Ex002CheckDefinition"}:
         value = getattr(_expectations, name)
+        globals()[name] = value
+        return value
+    if name in {
+        "ExerciseCheckResult",
+        "NotebookCheckResult",
+        "run_all_checks",
+        "run_detailed_ex002_check",
+        "run_notebook_check",
+    }:
+        from . import api as _api
+
+        value = getattr(_api, name)
         globals()[name] = value
         return value
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
