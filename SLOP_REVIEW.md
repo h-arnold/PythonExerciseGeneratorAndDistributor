@@ -199,6 +199,37 @@ Verification completed:
 - `uv run ./scripts/verify_solutions.sh -q`
 - `uv run ruff check exercises/sequence/ex002_sequence_modify_basics/tests/framework_support.py exercise_runtime_support/exercise_framework/__init__.py`
 
+### Phase 8 Complete (framework API abstraction simplification)
+
+- Status: complete
+- Commit: `41d2ebb` (`cleanup: simplify framework api check assembly`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Simplified `exercise_runtime_support/exercise_framework/api.py` by collapsing multi-pass check assembly into a single ordered helper:
+  - removed `_get_check_runners()`
+  - removed `_get_check_definitions()`
+  - removed `_get_supported_catalogue()`
+  - added unified ordered check-definition assembly path
+- Removed intermediate raw-result conversion indirection:
+  - deleted `RawNotebookResult` alias
+  - deleted `_to_notebook_results(...)`
+  - updated `_run_definitions(...)` to return `list[NotebookCheckResult]` directly
+- Kept behavior unchanged:
+  - same support-role mapping
+  - same check ordering
+  - same unknown-notebook `ValueError` shape
+  - same `NotebookGradingError` wrapping behavior in notebook-level checks
+
+Verification completed:
+
+- `uv run pytest tests/exercise_framework/test_api_contract.py -q`
+- `uv run pytest tests/exercise_runtime_support/test_support_matrix.py -q`
+- `uv run pytest tests/exercise_runtime_support/test_runtime_contract.py -q`
+- `uv run python scripts/run_pytest_variant.py --variant solution tests/exercise_framework/test_api_contract.py -q`
+- `uv run ruff check exercise_runtime_support/exercise_framework/api.py`
+
 
 ## Scope
 
