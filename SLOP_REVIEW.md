@@ -174,6 +174,31 @@ Verification completed:
 - `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex002_sequence_modify_basics/tests/test_repo_autograde_parity.py -q`
 - `uv run ruff check exercise_runtime_support/exercise_framework/__init__.py tests/exercise_framework/test_api_contract.py`
 
+### Phase 7 Complete (ex002 expectation normalization deduplication)
+
+- Status: complete
+- Commit: `1266a99` (`cleanup: deduplicate ex002 expectation helper usage`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Removed duplicated expectation-normalization helpers from:
+  - `exercises/sequence/ex002_sequence_modify_basics/tests/framework_support.py`
+  - local `_expected_output_lines(...)`
+  - local `_expected_output_text(...)`
+- Rewired `framework_support.py` to import shared helpers directly from:
+  - `exercise_runtime_support.exercise_framework.expectations`
+  - imported with aliases to preserve existing local call sites
+- Cleaned up now-unused imports in `framework_support.py`.
+- Preserved ex002 check behavior and output formatting expectations.
+- Included package-facade follow-up needed to avoid packaged circular-import regressions while keeping Phase 6 surface simplification intent.
+Verification completed:
+
+- `uv run pytest tests/exercise_framework/test_expectations.py -q`
+- `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q`
+- `uv run ./scripts/verify_solutions.sh -q`
+- `uv run ruff check exercises/sequence/ex002_sequence_modify_basics/tests/framework_support.py exercise_runtime_support/exercise_framework/__init__.py`
+
 
 ## Scope
 
