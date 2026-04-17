@@ -20,6 +20,19 @@ from scripts.template_repo_cli.utils.validation import (
     validate_repo_name,
 )
 
+_OUTPUT_DIRECTORY_EXCEPTIONS = (
+    OSError,
+    shutil.Error,
+    TypeError,
+    ValueError,
+)
+
+
+def _is_fatal_control_flow_exception(error: BaseException) -> bool:
+    """Return True when an exception must escape defensive handlers."""
+
+    return isinstance(error, (GeneratorExit, KeyboardInterrupt, SystemExit))
+
 
 def get_repo_root() -> Path:
     """Get repository root directory."""
@@ -27,22 +40,22 @@ def get_repo_root() -> Path:
     return Path.cwd()
 
 
-def _select_by_notebooks(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
-    """Select exercises by notebooks or patterns.
+def _select_by_exercise_keys(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
+    """Select exercises by exercise keys or exercise-key patterns.
 
     Args:
-        args: Parsed command-line arguments with notebooks list.
+        args: Parsed command-line arguments with exercise-key patterns.
         selector: ExerciseSelector instance.
 
     Returns:
-        List of exercise IDs.
+        List of exercise keys.
     """
     exercises: list[str] = []
-    for pattern in args.notebooks:
+    for pattern in args.exercise_keys:
         if "*" in pattern or "?" in pattern or "[" in pattern:
-            exercises.extend(selector.select_by_pattern(pattern))
+            exercises.extend(selector.select_by_exercise_key_pattern(pattern))
         else:
-            exercises.extend(selector.select_by_notebooks([pattern]))
+            exercises.extend(selector.select_by_exercise_keys([pattern]))
     return exercises
 
 
@@ -54,13 +67,13 @@ def _select_exercises(args: argparse.Namespace, selector: ExerciseSelector) -> l
         selector: ExerciseSelector instance.
 
     Returns:
-        List of selected exercise IDs.
+        List of selected exercise keys.
 
     Raises:
         ValueError: If selection criteria are invalid or no criteria provided.
     """
-    if args.notebooks:
-        return _select_by_notebooks(args, selector)
+    if args.exercise_keys:
+        return _select_by_exercise_keys(args, selector)
     elif args.construct and args.type:
         return selector.select_by_construct_and_type(args.construct, args.type)
     elif args.construct:
@@ -68,7 +81,7 @@ def _select_exercises(args: argparse.Namespace, selector: ExerciseSelector) -> l
     elif args.type:
         return selector.select_by_type(args.type)
     else:
-        raise ValueError("Must specify --construct, --type, or --notebooks")
+        raise ValueError("Must specify --construct, --type, or --exercise-keys")
 
 
 def _check_github_prerequisites(github: GitHubClient) -> str | None:
@@ -203,7 +216,7 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
         if output_path.exists():
             shutil.rmtree(output_path)
         shutil.copytree(workspace, output_path)
-    except Exception as copy_error:
+    except _OUTPUT_DIRECTORY_EXCEPTIONS as copy_error:
         traceback.print_exception(
             type(copy_error), copy_error, copy_error.__traceback__, file=sys.stderr
         )
@@ -238,7 +251,10 @@ def _build_template_package(  # noqa: PLR0913
         True if successful, False otherwise.
     """
     packager.copy_exercise_files(workspace, files)
-    packager.copy_template_base_files(workspace)
+    packager.copy_template_base_files(
+        workspace,
+        selected_exercise_keys=set(files),
+    )
     packager.generate_readme(workspace, template_name, exercises)
 
     if not packager.validate_package(workspace):
@@ -641,12 +657,13 @@ def _execute_template_creation(  # noqa: PLR0913
         print(f"Error: {e}", file=sys.stderr)
         packager.cleanup(workspace)
         return 1
-    # Defensive catch-all to ensure the CLI exits cleanly on truly unexpected
-    # errors. Specific, anticipated exceptions are handled above; this block
-    # is only for unexpected failures and still exposes a traceback in verbose
-    # mode to aid debugging.
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+    # Defensive broad catch to preserve the CLI's previous contract of failing
+    # cleanly on non-fatal workflow issues while still allowing fatal control-flow
+    # exceptions to propagate unchanged.
+    except BaseException as error:
+        if _is_fatal_control_flow_exception(error):
+            raise
+        print(f"Unexpected error: {error}", file=sys.stderr)
         if args.verbose:
             traceback.print_exc()
         packager.cleanup(workspace)
@@ -681,8 +698,10 @@ def _execute_template_update(  # noqa: PLR0913
         print(f"Error: {e}", file=sys.stderr)
         packager.cleanup(workspace)
         return 1
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+    except BaseException as error:
+        if _is_fatal_control_flow_exception(error):
+            raise
+        print(f"Unexpected error: {error}", file=sys.stderr)
         if args.verbose:
             traceback.print_exc()
         packager.cleanup(workspace)
@@ -763,7 +782,7 @@ def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector
         selector: ExerciseSelector instance.
 
     Returns:
-        List of exercise IDs.
+        List of exercise keys.
     """
     if args.construct and args.type:
         return selector.select_by_construct_and_type([args.construct], [args.type])
@@ -771,7 +790,7 @@ def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector
         return selector.select_by_construct([args.construct])
     if args.type:
         return selector.select_by_type([args.type])
-    return selector.get_all_notebooks()
+    return selector.get_all_exercise_keys()
 
 
 def _print_exercises(exercises: list[str], args: argparse.Namespace) -> None:
@@ -784,7 +803,7 @@ def _print_exercises(exercises: list[str], args: argparse.Namespace) -> None:
     if args.format == "json":
         print(json.dumps(exercises, indent=2))
     elif args.format == "table":
-        print(f"{'Exercise ID':<40}")
+        print(f"{'Exercise Key':<40}")
         print("-" * 40)
         for ex in exercises:
             print(f"{ex:<40}")
@@ -821,13 +840,13 @@ def _select_exercises_for_validation(
         selector: ExerciseSelector instance.
 
     Returns:
-        List of exercise IDs.
+        List of exercise keys.
 
     Raises:
         ValueError: If invalid selection criteria or no criteria provided.
     """
-    if args.notebooks:
-        return _select_by_notebooks(args, selector)
+    if args.exercise_keys:
+        return _select_by_exercise_keys(args, selector)
     if args.construct and args.type:
         return selector.select_by_construct_and_type(args.construct, args.type)
     elif args.construct:
@@ -835,7 +854,7 @@ def _select_exercises_for_validation(
     elif args.type:
         return selector.select_by_type(args.type)
     else:
-        raise ValueError("Must specify --construct, --type, or --notebooks")
+        raise ValueError("Must specify --construct, --type, or --exercise-keys")
 
 
 def validate_command(args: argparse.Namespace) -> int:
@@ -911,7 +930,9 @@ def main(argv: list[str] | None = None) -> int:
     create_parser = subparsers.add_parser("create", help="Create template repository")
     create_parser.add_argument("--construct", nargs="+", help="One or more constructs")
     create_parser.add_argument("--type", nargs="+", help="One or more exercise types")
-    create_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    create_parser.add_argument(
+        "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
+    )
     create_parser.add_argument("--name", type=str, help="Template repository name/description")
     create_parser.add_argument(
         "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
@@ -951,7 +972,9 @@ def main(argv: list[str] | None = None) -> int:
     validate_parser = subparsers.add_parser("validate", help="Validate selection")
     validate_parser.add_argument("--construct", nargs="+", help="Filter by construct")
     validate_parser.add_argument("--type", nargs="+", help="Filter by type")
-    validate_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    validate_parser.add_argument(
+        "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
+    )
 
     # Update command
     update_parser = subparsers.add_parser(
@@ -960,7 +983,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     update_parser.add_argument("--construct", nargs="+", help="One or more constructs")
     update_parser.add_argument("--type", nargs="+", help="One or more exercise types")
-    update_parser.add_argument("--notebooks", nargs="+", help="Specific notebook patterns")
+    update_parser.add_argument(
+        "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
+    )
     update_parser.add_argument("--name", type=str, help="Template repository name/description")
     update_parser.add_argument(
         "--repo-name",

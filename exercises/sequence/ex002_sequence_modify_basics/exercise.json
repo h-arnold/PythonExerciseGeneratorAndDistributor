@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex002_sequence_modify_basics",
+  "exercise_id": 2,
+  "slug": "ex002_sequence_modify_basics",
+  "title": "Sequence Modify Basics",
+  "construct": "sequence",
+  "exercise_type": "modify",
+  "parts": 10
+}

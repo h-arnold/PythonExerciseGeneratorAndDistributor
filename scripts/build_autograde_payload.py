@@ -23,15 +23,18 @@ import subprocess
 import sys
 import textwrap
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, NotRequired, TypedDict, cast
+from typing import Any, Literal, NotRequired, TypedDict, cast
+
+from exercise_runtime_support.execution_variant import configure_variant_environment
 
 DEFAULT_PYTEST_ARGS = ["-q"]
 AUTOGRADE_OPTION = "--autograde-results-path"
 SUMMARY_HEADER = "=== Autograde Summary ==="
 MAX_AUTOGRADE_MESSAGE_LENGTH = 200
+Variant = Literal["student", "solution"]
 
 
 class AutogradeTestEntry(TypedDict):
@@ -109,7 +112,8 @@ def _validate_results_payload(data: object) -> AutogradeResults:
         (key for key in ("max_score", "status", "tests") if key not in data_dict), None
     )
     if missing_key is not None:
-        raise RuntimeError(f"Autograde results missing required key: {missing_key}")
+        raise RuntimeError(
+            f"Autograde results missing required key: {missing_key}")
 
     tests = data_dict.get("tests")
     if not isinstance(tests, list):
@@ -117,7 +121,8 @@ def _validate_results_payload(data: object) -> AutogradeResults:
 
     tests_list = cast(list[object], tests)
     if not all(isinstance(test, dict) for test in tests_list):
-        raise RuntimeError("Autograde results 'tests' entries must be objects.")
+        raise RuntimeError(
+            "Autograde results 'tests' entries must be objects.")
     return cast(AutogradeResults, data_dict)
 
 
@@ -127,6 +132,12 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Execute pytest with the autograde plugin and emit payload data.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--variant",
+        choices=("student", "solution"),
+        default="solution",
+        help="Notebook variant to expose to pytest.",
     )
     parser.add_argument(
         "--pytest-args",
@@ -175,45 +186,19 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def validate_environment() -> None:
-    """Ensure environment variables are compatible with the autograde flow."""
+def build_pytest_environment(variant: Variant) -> dict[str, str]:
+    """Return a subprocess environment using the explicit variant contract."""
 
-    notebooks_dir = os.environ.get("PYTUTOR_NOTEBOOKS_DIR")
-    reported_value = notebooks_dir if notebooks_dir else "<unset>"
-    print(f"Environment: PYTUTOR_NOTEBOOKS_DIR={reported_value}")
-    if not notebooks_dir:
-        return
-
-    normalised_dir = _normalise_notebooks_dir(notebooks_dir)
-    allowed_dirs = {"notebooks", "notebooks/solutions"}
-    # Consider offering a CLI flag to override the notebook directory when workflows expand.
-    if normalised_dir in allowed_dirs:
-        return
-
-    allowed_display = "', '".join(sorted(allowed_dirs))
-    raise RuntimeError(
-        "PYTUTOR_NOTEBOOKS_DIR must be unset or one of "
-        f"'{allowed_display}' when building autograde payloads."
-    )
+    env = dict(os.environ)
+    configure_variant_environment(env, variant)
+    print(f"Variant: {variant}")
+    return env
 
 
-def _normalise_notebooks_dir(value: str | None) -> str | None:
-    """Return a normalised notebooks directory value for comparison."""
-
-    if value is None:
-        return None
-    normalised = value.replace("\\", "/").strip()
-    if normalised.startswith("./"):
-        normalised = normalised[2:]
-    normalised = normalised.rstrip("/")
-    return normalised or None
-
-
-def _should_zero_scores_on_failure() -> bool:
+def _should_zero_scores_on_failure(variant: Variant) -> bool:
     """Return True when failing student notebooks should yield zero credit."""
 
-    notebooks_dir = _normalise_notebooks_dir(os.environ.get("PYTUTOR_NOTEBOOKS_DIR"))
-    return notebooks_dir == "notebooks"
+    return variant == "student"
 
 
 def _ensure_autograde_option(pytest_args: Sequence[str], results_path: Path) -> list[str]:
@@ -229,7 +214,12 @@ def _ensure_autograde_option(pytest_args: Sequence[str], results_path: Path) -> 
     return updated
 
 
-def run_pytest(pytest_args: Sequence[str], results_path: Path) -> int:
+def run_pytest(
+    pytest_args: Sequence[str],
+    results_path: Path,
+    *,
+    env: Mapping[str, str] | None = None,
+) -> int:
     """Run pytest with the autograde plugin and return the exit code."""
 
     args_with_option = _ensure_autograde_option(pytest_args, results_path)
@@ -237,7 +227,8 @@ def run_pytest(pytest_args: Sequence[str], results_path: Path) -> int:
     printable = shlex.join(command)
     print(f"Executing: {printable}")
     try:
-        completed_process = subprocess.run(command, check=False)
+        completed_process = subprocess.run(
+            command, check=False, env=dict(env) if env else None)
     except OSError as exc:  # pragma: no cover - defensive logging for unexpected failures
         print(f"Failed to execute pytest: {exc}", file=sys.stderr)
         return 1
@@ -253,7 +244,8 @@ def load_results(results_path: Path) -> AutogradeResults:
         with results_path.open("r", encoding="utf-8") as handle:
             data = json.load(handle)
     except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Results JSON at {results_path} is invalid: {exc}") from exc
+        raise RuntimeError(
+            f"Results JSON at {results_path} is invalid: {exc}") from exc
 
     return _validate_results_payload(data)
 
@@ -369,15 +361,18 @@ def _calculate_earned_score(
     return _ensure_float(candidate, "score in results must be numeric if provided.")
 
 
-def build_payload(raw_results: AutogradeResults) -> AutogradePayload:
+def build_payload(
+    raw_results: AutogradeResults, *, variant: Variant = "student"
+) -> AutogradePayload:
     """Construct the payload dictionary expected by autograding-grading-reporter."""
 
-    max_score = _ensure_float(raw_results["max_score"], "max_score in results must be numeric.")
+    max_score = _ensure_float(
+        raw_results["max_score"], "max_score in results must be numeric.")
     status = str(raw_results["status"])
     raw_tests = raw_results["tests"]
     normalised_tests = [_normalise_test_entry(test) for test in raw_tests]
     earned_score_value = _calculate_earned_score(raw_results, normalised_tests)
-    if status != "pass" and _should_zero_scores_on_failure():
+    if status != "pass" and _should_zero_scores_on_failure(variant):
         earned_score_value = 0.0
         for test in normalised_tests:
             test["score"] = 0.0
@@ -441,7 +436,8 @@ def minimize_payload(payload: AutogradePayload) -> AutogradePayload:
 def encode_payload(payload: AutogradePayload) -> str:
     """Encode the payload as a Base64 JSON string."""
 
-    json_bytes = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
+    json_bytes = json.dumps(payload, ensure_ascii=False,
+                            indent=2).encode("utf-8")
     encoded = base64.b64encode(json_bytes)
     return encoded.decode("ascii")
 
@@ -496,7 +492,8 @@ def print_summary(payload: AutogradePayload) -> None:
     print(f"Points: {earned_score}/{max_score} ({percentage:.1f}%)")
     print(f"Tests Passed: {passed_tests}/{total_tests}")
 
-    grouped: dict[str | int | None, list[AutogradePayloadTest]] = defaultdict(list)
+    grouped: dict[str | int | None,
+                  list[AutogradePayloadTest]] = defaultdict(list)
     for test in tests:
         grouped[test.get("task")].append(test)
 
@@ -516,7 +513,8 @@ def print_summary(payload: AutogradePayload) -> None:
         for test in failing_tests:
             message = test.get("message")
             message_text = "(no message)" if message is None else str(message)
-            truncated = textwrap.shorten(message_text, width=200, placeholder="...")
+            truncated = textwrap.shorten(
+                message_text, width=200, placeholder="...")
             print(f"- {test['name']}: {truncated}")
 
 
@@ -533,8 +531,9 @@ def write_outputs(
         with output_path.open("w", encoding="utf-8") as handle:
             handle.write(encoded_payload)
             handle.write("\n")
-    except Exception as exc:
-        print(f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
+    except OSError as exc:
+        print(
+            f"Warning: failed to write payload to {output_path}: {exc}", file=sys.stderr)
 
     if summary_path is None:
         return
@@ -544,7 +543,7 @@ def write_outputs(
         with summary_path.open("w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, indent=2)
             handle.write("\n")
-    except Exception as exc:
+    except OSError as exc:
         print(
             f"Warning: failed to write summary to {summary_path}: {exc}",
             file=sys.stderr,
@@ -569,8 +568,9 @@ def write_github_outputs(encoded: str, payload: AutogradePayload) -> None:
         with Path(github_output_path).open("a", encoding="utf-8") as handle:
             for key, value in entries.items():
                 handle.write(f"{key}={value}\n")
-    except Exception as exc:
-        print(f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
+    except OSError as exc:
+        print(
+            f"Warning: failed to write GitHub outputs: {exc}", file=sys.stderr)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -578,7 +578,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         args = parse_args(argv)
-        validate_environment()
+        pytest_env = build_pytest_environment(args.variant)
     except RuntimeError as exc:
         print(f"Error: {exc}", file=sys.stderr)
         return 1
@@ -588,11 +588,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     summary_path: Path | None = args.summary
     results_path.parent.mkdir(parents=True, exist_ok=True)
 
-    exit_code = run_pytest(args.pytest_args, results_path)
+    exit_code = run_pytest(args.pytest_args, results_path, env=pytest_env)
 
     try:
         raw_results = load_results(results_path)
-        payload = build_payload(raw_results)
+        payload = build_payload(raw_results, variant=args.variant)
 
         # Apply minimal mode to reduce payload size for GitHub Classroom
         if args.minimal:

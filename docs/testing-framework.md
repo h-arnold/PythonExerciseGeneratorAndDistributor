@@ -4,14 +4,26 @@ This document describes the testing framework for the **codebase itself**, ensur
 
 For details on **testing student notebooks**, see [Exercise Testing](exercise-testing.md).
 
+> Source of truth: execution/discovery/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Repository status
+
+Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`.
+
+Exported Classroom repositories preserve exercise-local tests and export student notebooks to `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
+
+Packaged templates remain metadata-free (no exported `exercise.json`) and exclude solution notebooks by default.
+
 ## Overview
 
 The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, and documentation) is tested using `pytest`. These tests ensure that:
 
 1. **Exercise Generation**: The `new_exercise` script creates valid, compilable, and standards-compliant exercises.
-2. **Grading Logic**: The exercise framework under `tests/exercise_framework/` coordinates notebook extraction, execution, and assertions (wrapping `tests/notebook_grader.py`).
+2. **Grading Logic**: The public exercise framework lives under `exercise_runtime_support/exercise_framework/`, with compatibility coverage and repository tests under `tests/exercise_framework/`.
 3. **Template CLI**: The template repository tools work as expected.
 4. **Documentation**: Exercise validation rules are respected.
+
+Pytest discovery uses the configured roots in `pyproject.toml` (`testpaths = ["tests", "exercises"]`) so shared infrastructure and canonical exercise-scoped tests are both discoverable.
 
 ## Running Tests
 
@@ -21,6 +33,13 @@ Run the full suite using `uv`:
 
 ```bash
 uv run pytest -q
+```
+
+Because raw `uv run pytest -q` exercises the default solution variant, the CI-equivalent source-repository check is a collection pass plus the explicit solution-variant run:
+
+```bash
+uv run pytest --collect-only -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
 ```
 
 ### Targeted Execution
@@ -65,11 +84,11 @@ This repository provides a small set of shared helpers used across infrastructur
 
 - `tests/exercise_framework/` — the current notebook testing framework. Use `runtime.py` for execution helpers, `constructs.py` for AST checks, `assertions.py` for consistent messages, and `reporting.py` for table output. Detailed behaviour for notebook grading is documented in `docs/exercise-testing.md`.
 
-- `tests/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The framework wraps these helpers rather than calling them directly.
+- `exercise_runtime_support/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The compatibility wrapper at `tests/notebook_grader.py` exists for repository/test-template parity.
 
 - `scripts/template_repo_cli/utils/` — utility functions for the template CLI and packager, notably:
   - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`, `resolve_notebook_path`)
-  - `validation.py` (name/construct/type validators)
+  - `validation.py` (name/construct/type validators; note that exercise type is canonical metadata rather than a canonical path segment)
   - `config.py` (configuration helpers)
 
 - `scripts/template_repo_cli/core/` — core components implementing CLI behaviour: `collector.py`, `packager.py`, `selector.py`, and `github.py`.
@@ -77,11 +96,17 @@ This repository provides a small set of shared helpers used across infrastructur
 Important note on similarly-named helpers:
 
 - There are three helpers named `resolve_notebook_path()` in the codebase:
-  - `tests/exercise_framework/paths.py::resolve_notebook_path` is the framework entry point and respects the `PYTUTOR_NOTEBOOKS_DIR` override.
-  - `tests/notebook_grader.py::resolve_notebook_path` is a low-level helper used by the framework runtime.
-  - `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
+- `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path` is the framework entry point and respects the current notebook-variant selection.
+- `exercise_runtime_support.notebook_grader::resolve_notebook_path` is a low-level helper used by the framework runtime.
+- `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
 
-Recommendation: Use the helper from `tests/exercise_framework/paths.py` or `tests/exercise_framework/runtime.py` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic.
+Recommendation: Use the helper from `exercise_runtime_support.exercise_framework.paths` or `exercise_runtime_support.exercise_framework.runtime` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
+
+Resolver identity contract:
+
+- For notebook self-check cells and author-facing exercise guidance, the canonical identity is the `exercise_key` string passed to `run_notebook_checks('<exercise_key>')`.
+- For shared runtime or grading code that has already resolved a notebook location, keep the value as a `Path` when passing it into framework/grader helpers.
+- Avoid converting a resolved `Path` back into `str(path)` before calling resolver-backed helpers; path-like strings are intentionally distinct from exercise-key strings in the framework contract.
 
 ### 4. Exercise Quality (`tests/test_exercise_type_docs.py`)
 
@@ -91,8 +116,9 @@ Sanity checks for the documentation and exercise type definition files.
 
 The repository uses GitHub Actions to run these tests automatically.
 
-- **`tests.yml`**: Runs the full suite on every push and pull request.
-- **`tests-solutions.yml`**: Specifically runs the notebook tests against the *solution* notebooks (using `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions`) to ensure the instructor solutions are valid and passing.
+- **`tests.yml`**: Source-repository validation on every push and pull request. It checks pytest collection/discovery in the authoring repository and then runs `scripts/run_pytest_variant.py --variant solution -q`.
+- **`tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional forwarded pytest args for targeted solution checks.
+- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-free student contract.
 
 ## Adding New Infrastructure Tests
 

@@ -116,7 +116,7 @@ class TestResolveNotebookPath:
 
     def test_resolve_notebook_path_absolute(self, repo_root: Path) -> None:
         """Test resolving absolute notebook path."""
-        notebook_path = repo_root / "notebooks/ex001_sanity.ipynb"
+        notebook_path = repo_root / "notebooks/ex002_sequence_modify_basics.ipynb"
         resolved = resolve_notebook_path(str(notebook_path))
 
         assert resolved == notebook_path
@@ -124,17 +124,17 @@ class TestResolveNotebookPath:
 
     def test_resolve_notebook_path_relative(self, repo_root: Path) -> None:
         """Test resolving relative notebook path."""
-        resolved = resolve_notebook_path("notebooks/ex001_sanity.ipynb")
+        resolved = resolve_notebook_path("notebooks/ex002_sequence_modify_basics.ipynb")
 
         assert resolved.is_absolute()
-        assert resolved.name == "ex001_sanity.ipynb"
+        assert resolved.name == "ex002_sequence_modify_basics.ipynb"
 
     def test_resolve_notebook_path_notebook_only(self, repo_root: Path) -> None:
         """Test resolving notebook path from name only."""
-        resolved = resolve_notebook_path("ex001_sanity.ipynb")
+        resolved = resolve_notebook_path("ex002_sequence_modify_basics.ipynb")
 
         assert resolved.is_absolute()
-        assert resolved.name == "ex001_sanity.ipynb"
+        assert resolved.name == "ex002_sequence_modify_basics.ipynb"
 
     def test_resolve_notebook_path_nonexistent(self) -> None:
         """Test resolving nonexistent notebook path."""

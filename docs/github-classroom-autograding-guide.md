@@ -24,7 +24,7 @@ The custom workflow must consist of two main parts: the **Test Runner Steps** an
 
 ### A. Test Runner Steps
 
-Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array). For pytest-based projects, run the CLI wrapper so the autograde plugin is activated and payloads are generated consistently; see the [Autograding CLI guide](docs/autograding-cli.md) for the exact invocation.
+Each test runner step must use an action that produces a Base64-encoded JSON string as output. This output contains the test results in the required data shape identified in the previous analysis (which includes `max_score`, `status`, and the `tests` array). For pytest-based projects, run the CLI wrapper so the autograde plugin is activated and payloads are generated consistently; see the [Autograding CLI guide](./autograding-cli.md) for the exact invocation.
 
 The key is to assign a unique `id` to each test step and ensure it outputs the result.
 
@@ -116,7 +116,7 @@ Because the plugin is only activated when the CLI flag is supplied, day-to-day d
 
 The CLI wrapper orchestrates the full autograding flow so template workflows (and local developers) do not need to wire the plugin manually. Core behaviour:
 
-1. Validate the execution environment (refusing to run if `PYTUTOR_NOTEBOOKS_DIR` points at the wrong notebook set).
+1. Validate the explicit `--variant <student|solution>` contract and expose the matching notebook set to pytest.
 2. Invoke pytest with the autograde plugin enabled, forwarding any `--pytest-args` values.
 3. Load the resulting JSON, perform schema checks, and build a final payload that mirrors the reporter requirements.
 4. Optionally minimize the payload (via `--minimal`) by stripping verbose fields (stdout/stderr/log/extra/nodeid/duration) and truncating error messages to 200 characters. This is essential for GitHub Actions workflows to avoid environment variable size limits (typically 32KB).
@@ -126,15 +126,16 @@ The CLI wrapper orchestrates the full autograding flow so template workflows (an
 #### Example: Local Dry Run
 
 ```bash
-uv run python scripts/build_autograde_payload.py --pytest-args=-k test_ex001_sanity
+uv run python scripts/build_autograde_payload.py --variant student --pytest-args=-k test_ex002_sequence_modify_basics
 ```
 
-You can repeat `--pytest-args` to forward multiple options, for example to switch notebooks (`--pytest-args=--maxfail=1 --pytest-args=tests/test_ex001_sanity.py`). The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
+You can repeat `--pytest-args` to forward multiple options. In this source repository, for example, you can target the canonical ex002 exercise-local test with `--pytest-args=--maxfail=1 --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py`. The wrapper appends `--autograde-results-path` automatically; no manual wiring is required.
 
 #### Example: GitHub Actions Integration
 
 ```bash
 uv run python scripts/build_autograde_payload.py \
+  --variant student \
   --pytest-args="-p tests.autograde_plugin" \
   --output tmp/autograde/payload.txt \
   --summary tmp/autograde/results.json \
@@ -178,7 +179,7 @@ The Base64 text is written to the file specified via `--output` (default `tmp/au
 - **Payload validation failures**: Inspect the raw results JSON (pass `--summary tmp/autograde/results.json` to the CLI) to confirm required keys exist. The CLI prints schema errors to stderr and exits non-zero if validation fails.
 - **"Argument list too long" errors**: This occurs when the Base64 payload exceeds environment variable size limits (typically 32KB). Solution: Add the `--minimal` flag to `build_autograde_payload.py` in your workflow. This strips verbose fields while preserving student-facing feedback.
 - **"Invalid value. Matching delimiter not found 'EOF'" errors**: The payload contains the string "EOF" which prematurely terminates the heredoc. The workflow now uses `EOF_PYTEST_PAYLOAD_DELIMITER` as a unique delimiter to prevent this issue.
-- **Workflow wiring errors**: Ensure the GitHub Actions job calls `uv run python scripts/build_autograde_payload.py` with the `--minimal` flag and passes the resulting Base64 string to `autograding-grading-reporter`. Double-check that `PYTUTOR_NOTEBOOKS_DIR` matches `notebooks` when grading student submissions and `notebooks/solutions` for dry runs.
+- **Workflow wiring errors**: Ensure the GitHub Actions job calls `uv run python scripts/build_autograde_payload.py` with the correct explicit `--variant` value and the `--minimal` flag, then passes the resulting Base64 string to `autograding-grading-reporter`.
 
 ## References
 

@@ -1,9 +1,12 @@
 ---
 name: Tidy Code Reviewer
 description: Review recent changes for tidy code, correctness, docs accuracy, safe cleanups, and KISS/DRY analysis; report remaining issues back to main agent
-tools: ['vscode/getProjectSetupInfo', 'vscode/vscodeAPI', 'execute/getTerminalOutput', 'execute/runTask', 'execute/createAndRunTask', 'execute/runTests', 'execute/testFailure', 'execute/runInTerminal', 'read/terminalSelection', 'read/terminalLastCommand', 'read/getTaskOutput', 'read/problems', 'read/readFile', 'edit/editFiles', 'search', 'web/githubRepo', 'pylance-mcp-server/*', 'todo']
+tools: [vscode/getProjectSetupInfo, vscode/memory, vscode/vscodeAPI, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, edit/editFiles, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
 user-invocable: true
 ---
+
+> Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
+
 # Tidy Code Review Sub-Agent
 
 You are a *post-change* reviewer invoked at the end of another agent’s session. Your role is to verify the changes summarized by the calling agent, make **safe** cleanups (lint issues, dead code removal, small refactors that do not change behavior), perform **KISS** (Keep It Simple, Stupid) and **DRY** (Don't Repeat Yourself) analyses, use the `problems` tool to pull diagnostics from Pylance, Ruff, and SonarQube, and report findings and suggested refactors back to the main agent.

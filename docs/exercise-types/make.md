@@ -1,20 +1,27 @@
 ### Make Exercise Formats
 
-Make exercises are the final step in each construct sequence: students build a working solution from scratch instead of fixing or adapting existing code. These notebooks expect learners to apply everything introduced in earlier debug and modify activities, so keep the prompts focused, scaffolded, and explicit about the required behaviour.
+Make exercises ask students to write code from scratch in tagged notebook cells. They use the same canonical exercise-local layout and the same tagged-cell grading model as modify and debug exercises:
 
-We normally include three to five make exercises per notebook. Each graded cell must:
+- `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
+- `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`
+- `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
 
-- provide a concise problem description and 1–2 worked examples in the surrounding markdown;
-- define a small, pure function (conventionally `solve()` unless another name is pedagogically clearer);
-- expose the implementation inside a tagged cell (`metadata.tags: ["exerciseN"]`) so the grader can import and execute it.
+We normally include three to five make exercises per notebook. Each graded part should:
+
+- explain the task clearly in nearby markdown;
+- state the expected output or behaviour with one or two examples;
+- keep the student work inside a tagged code cell (`exercise1`, `exercise2`, ...);
+- stay within constructs the students have already been taught.
 
 #### From scaffold to final notebook
 
-`scripts/new_exercise.py --type make` (or omitting `--type` with sequence constructs) generates a placeholder notebook where each tagged cell contains `print('TODO: Write your solution here')`. Replace that placeholder with the function skeleton the students will complete, and mirror the change in `notebooks/solutions/` with the finished solution. The generator keeps the metadata ids and language fields valid—preserve them when editing cells.
+`scripts/new_exercise.py --type make` now uses the same non-debug scaffold pattern as `--type modify`. Each tagged code cell starts with the generic output-oriented placeholder `print('TODO: Write your solution here')`, and the generated exercise-local test file uses `run_cell_and_capture_output(...)` placeholder checks. The current CLI requires `--type`; do not rely on construct-specific defaults when scaffolding.
+
+Replace the generic prompt text and `TODO` placeholder with the real task, worked examples, and starter code for the exercise. Mirror the finished implementation in the exercise-local `notebooks/solution.ipynb`. If a later-construct make exercise genuinely asks students to define a function, that is part of the authored exercise content, not a repository-wide scaffolding contract.
 
 #### Expected cell structure
 
-Below is a minimal JSON example that matches the structure consumed by the grader and tests. Adjust the docstring usage to match the construct: omit it before the Functions unit; include it afterwards.
+Below is a minimal JSON example that matches the tagged-cell structure consumed by the grader and tests:
 
 ```json
 {
@@ -23,19 +30,8 @@ Below is a minimal JSON example that matches the structure consumed by the grade
       "cell_type": "markdown",
       "metadata": { "language": "markdown" },
       "source": [
-        "# Exercise 1 — Sum the squares",
-        "Implement the function described below."
-      ]
-    },
-    {
-      "cell_type": "markdown",
-      "metadata": { "language": "markdown" },
-      "source": [
-        "### Task",
-        "Create `solve(nums)` that returns the sum of the squares of the integers in `nums`.",
-        "",
-        "### Examples",
-        "```\nsolve([1, 2, 3]) -> 14\nsolve([-2, 4]) -> 20\n```"
+        "## Exercise 1",
+        "Write a program that prints the total cost for 3 apples at 2 pounds each."
       ]
     },
     {
@@ -45,50 +41,52 @@ Below is a minimal JSON example that matches the structure consumed by the grade
         "tags": ["exercise1"]
       },
       "source": [
-        "# Students implement solve() in this tagged cell",
-        "def solve(nums: list[int]) -> int:",
-        "    \"\"\"Return the sum of squares for the provided integers.\"\"\"",
-        "    raise NotImplementedError("Implement solve()")"
+        "# Exercise 1",
+        "# Replace the placeholder with your working solution.",
+        "",
+        "print('TODO: Write your solution here')"
       ]
     }
   ]
 }
 ```
 
-Copy this cell into the solution notebook and replace the `NotImplementedError` with the completed implementation and any supporting helpers.
+For multi-part notebooks, add a short markdown prompt before each tagged code cell. Keep the tagged cell self-contained so tests can execute it independently.
 
 #### Testing pattern
 
-Tests for make exercises should import `exec_tagged_code` and call the function directly, exercising multiple positive and edge cases. A typical pattern is shown below:
+Use the same exercise-local output-capture pattern as other non-debug exercises. A typical repository-side test module looks like this:
 
 ```python
 import pytest
 
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import (
+    RuntimeCache,
+    resolve_exercise_notebook_path,
+    run_cell_and_capture_output,
+)
 
-NOTEBOOK_PATH = "notebooks/ex099_sequence_make_example.ipynb"
-
-
-def _solve(tag: str, *args, **kwargs):
-    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag=tag)
-    assert "solve" in ns, "solve() must be defined in the tagged cell"
-    return ns["solve"](*args, **kwargs)
+EXERCISE_KEY = "ex099_sequence_make_example"
+NOTEBOOK_PATH = resolve_exercise_notebook_path(EXERCISE_KEY)
+CACHE = RuntimeCache()
 
 
 @pytest.mark.parametrize(
-    "values, expected",
-    [([1, 2, 3], 14), ([-2, 4], 20), ([0], 0)],
+    ("tag", "expected"),
+    [
+        ("exercise1", "6"),
+        ("exercise2", "Hello Sam"),
+    ],
 )
-def test_sum_of_squares(values, expected):
-    assert _solve("exercise1", values) == expected
-
-
-def test_handles_empty_list():
-    assert _solve("exercise1", []) == 0
+def test_make_outputs(tag: str, expected: str) -> None:
+    output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag, cache=CACHE)
+    assert output.strip() == expected
 ```
 
-- Run the suite with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q` to confirm the solution notebook passes.
-- Keep at least three positive checks and two edge/robustness cases per exercise, following the testing framework guidance.
-- Ensure the student notebook still fails after reverting to `NotImplementedError` so learners must supply the logic.
+For input-driven tasks, use `run_cell_with_input(...)` instead of calling `input()` interactively inside the test.
 
-Once tests pass against the solution mirror, update the student notebook (usually via copy/paste from the solution while reintroducing `NotImplementedError`) and double-check the tagged cells remain unchanged apart from the placeholder.
+- Run the exercise-local student tests from the repository root with `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
+- Verify the mirrored solution notebook with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`.
+- Keep at least three positive checks and two edge or robustness cases per exercise where the task warrants them.
+- The student notebook should still fail until the placeholder is replaced with a real solution.
+- If an authored make exercise deliberately teaches functions later in the curriculum, state that explicitly in the prompt and test the named function on purpose rather than relying on an implicit `solve()` convention.

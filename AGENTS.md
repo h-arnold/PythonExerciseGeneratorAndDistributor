@@ -1,6 +1,9 @@
-# Copilot Custom Instructions — PythonTutorExercises
+# Copilot Custom Instructions — PythonExerciseGeneratorAndDistributor
 
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
+
+> **Repository status**
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not source-repository authoring surfaces.
 
 ## Project Overview
 
@@ -17,6 +20,7 @@ This repository provides notebook-based Python exercises with automated grading 
 **Documentation (fetch on demand)**: Only read these files when a question specifically requires detailed information. Use `cat` or `sed -n` to fetch the exact file needed.
 
 - `docs/project-structure.md` — project layout and file conventions
+- `docs/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
 - `docs/testing-framework.md` — how the grading and test system works
 - `docs/exercise-generation-cli.md` — CLI for scaffolding new exercises
 - `docs/setup.md` — installation and environment setup
@@ -24,17 +28,21 @@ This repository provides notebook-based Python exercises with automated grading 
 
 ## Repository Structure
 
-```
-notebooks/              # Student exercise notebooks
-  exNNN_slug.ipynb     # One notebook per exercise
-  solutions/           # Instructor solution mirrors
-tests/                 # pytest-based automated grading
+```text
+exercises/             # Canonical source-repo home for exercise-specific assets
+  <construct>/<exercise_key>/
+    exercise.json      # Exercise metadata (exercise type lives here, not in the path)
+    notebooks/
+      student.ipynb    # Canonical student notebook in the source repo
+      solution.ipynb   # Canonical instructor solution notebook in the source repo
+    tests/             # Canonical repository-side exercise-specific tests
+tests/                 # Shared pytest suites and repository-level integration tests
   notebook_grader.py   # Core grading framework
-  test_exNNN_*.py      # Tests for each exercise
-exercises/             # Teacher materials and metadata
-  CONSTRUCT/TYPE/exNNN_slug/
+  test_*.py            # Shared/integration tests, not canonical per-exercise authoring surfaces
 scripts/               # Automation utilities
   new_exercise.py      # Exercise scaffolding tool
+  run_pytest_variant.py# Explicit student/solution variant test runner
+  verify_solutions.sh  # Convenience wrapper for solution-variant validation
 docs/                  # Project documentation
 ```
 
@@ -66,41 +74,19 @@ docs/                  # Project documentation
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, continue to use the existing notebook test patterns: `tests/test_exNNN_*.py` and `PYTUTOR_NOTEBOOKS_DIR` as described elsewhere.
+  - For notebooks and exercises, canonical source-repo assets belong under `exercises/<construct>/<exercise_key>/`, with notebooks in `notebooks/{student,solution}.ipynb` and repository-side exercise tests in the exercise-local `tests/` directory. Flattened notebook mirrors and top-level `tests/test_exNNN_*.py` files are packaging outputs only, not the source-repo authoring layout.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
   - Keep type guards and tiny helpers close to the code they protect to reduce cognitive overhead and avoid import cycles.
   - When splitting code, update and add tests at the same time and expose only the intended public API from packages.
 
-## Key Concepts
-
-### Tagged Cells
-
-Students write solutions in code cells tagged with `exerciseN` (e.g., `exercise1`, `exercise2`) in the cell metadata. Tests extract these cells using `exec_tagged_code()` from `tests/notebook_grader.py`.
-
-**Important**: Marker comments (e.g., `# STUDENT`) are deprecated. Only metadata tags are used.
-
-### Parallel Notebook Sets
-
-- **Student notebooks** (`notebooks/`): Scaffolding with incomplete exercises
-- **Solution notebooks** (`notebooks/solutions/`): Completed versions
-
-The same tests run against both sets.
-
-**IMPORTANT NOTE:** Always run the *Development* tests unless you are creating or verifying jupyter notebook exercises. The tests for the students notebooks are designed to fail until they are completed with the correct code.
-
-- Development (recommended): `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q`
-- Student grading: run `pytest -q` (tests the student notebooks)
-
-> Note: When using the `uv`-managed environment, running `pytest -q` will use the virtual environment created by `uv sync`.
-
 ## Coding Standards
 
 ### Concise Standards
 
 - Python 3.11+; use modern type hints (e.g., `list[str]`).
-- Fail Fast: **No unnecessary defensive guards**. Better to find out something is broken than silently swallow errors!
+- Fail Fast: **No defensive guards unless explicitly requested**. Better to find out something is broken than silently swallow errors!
 - Docstrings required for public functions.
 - Keep logic simple (KISS): low complexity, shallow nesting, short functions.
 - Avoid duplication (DRY): extract shared helpers when logic repeats.
@@ -110,6 +96,10 @@ The same tests run against both sets.
 - Match Ruff rules in `pyproject.toml` (E/F/W/I/UP/B/C90/LOG/PIE/RUF/SIM/PLR).
 - Keep formatter changes unless the user says otherwise.
 - **NEVER** silence linting errors without explicit authorisation from the user. If you feel that fixing the linting error would make the code less readable, then stop and ask for clarification.
+
+### VERY IMPORTANT NOTE ON TESTING OUTPUT
+
+Student variant tests **must always** fail in this repo. Soltution variant notebook tests **must always** pass. If you see a failing test, that is the expected behaviour for student variants. Do not attempt to fix or silence failing student tests. If you see a failing solution test, that is a problem that needs to be fixed.
 
 ### Python Style (for infrastructure code, not student exercises)
 
@@ -164,7 +154,8 @@ def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
 - **Format**: Standard `.ipynb` JSON
 - **Cell metadata**: Generated notebooks include `metadata.language` ("python" or "markdown")
 - **Tags**: Exact match required (e.g., `exercise1`, not `Exercise1` or `exercise_1`)
-- **Function names**: Prefer `solve()` for consistency
+- **Tagged cells**: Use `exercise1`, `exercise2`, ... tags and align tests with the actual cell behaviour; there is no repository-wide `solve()` contract.
+- **Checker cells**: Self-check notebook cells must call `run_notebook_checks('<exercise_key>')` with the canonical exercise key string. Do not pass notebook path strings such as `notebooks/foo.ipynb` or `str(path)` into that helper.
 
 ## Common Commands
 
@@ -173,7 +164,13 @@ def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
 source .venv/bin/activate
 
 # Run tests
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions pytest -q
+uv run pytest -q
+
+# Run tests against the solution variant
+uv run python scripts/run_pytest_variant.py --variant solution -q
+
+# Convenience wrapper for broader solution validation
+uv run ./scripts/verify_solutions.sh -q
 
 # Lint code
 ruff check . --fix
@@ -190,40 +187,30 @@ Do not create exercises manually. Use:
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
 
+Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with source notebooks at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`, and exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened notebook or test surfaces, when present for export/runtime compatibility, are not the source-repo authoring layout.
+
 ## Working with the Grading System
 
 The grading system (`tests/notebook_grader.py`) provides:
 
 - `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
-- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace. When developing or running tests, run these against the solutions notebook by default (use `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` or call `resolve_notebook_path()` so tests validate the instructor solution first).
-- `resolve_notebook_path(notebook_path)` - Handle `PYTUTOR_NOTEBOOKS_DIR` redirection; by convention the agent should default this to `notebooks/solutions` when running tests during development.
+- `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace.
+- `run_cell_and_capture_output(notebook_path, *, tag="student")` - Execute a tagged code cell and capture stdout; this is the primary helper for non-debug exercise behaviour checks.
+- `run_cell_with_input(notebook_path, *, tag="student", inputs=[...])` - Execute a tagged code cell while supplying deterministic `input()` values.
+- `get_explanation_cell(notebook_path, *, tag="explanation1")` - Read explanation or reflection markdown cells for debug-style checks.
+
+Resolver contract note:
+
+- Treat the canonical `exercise_key` as the notebook identity in generated self-check cells and author-facing guidance.
+- If infrastructure code has already resolved a notebook to a `Path`, keep it as a `Path` when passing it into grader/runtime helpers. Do not convert the resolved path back into a path-like string before calling resolver-backed helpers.
+
+When developing or validating repository-side exercises, run the canonical exercise-local tests directly with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`, or use `uv run ./scripts/verify_solutions.sh -q` for a broader solution pass.
 
 See Testing Framework: `docs/testing-framework.md` for details.
 
-## Constraints
-
-**Do not**:
-
-- Include full solutions in student-facing notebooks
-- Add dependencies that can't be installed via micropip (web VSCode compatibility)
-- Use network access in exercises or tests
-- Create exercises that require constructs students haven't learned
-- Use generic best practices that aren't specific to this codebase
-
-**Do**:
-
-- Keep instructions clear and age-appropriate (14-18 year olds)
-- Write concise, accurate documentation
-- Use the scaffolding tools for consistency
-- Test both student and solution notebooks
-- Follow the existing patterns in the codebase
-- Always write in British English
-
-## Calling Sub-Agents in a Github Copilot Environment
+## Calling Sub-Agents
 
 When you need to perform a task that falls under the expertise of a sub-agent, you should delegate to that agent rather than trying to handle it yourself. This ensures that the task is completed with the appropriate level of focus and expertise.
-
-**MANDATORY:** Every sub-agent call must include `agentName: "{name of subagent}"` in its payload. If sub-agent tools are unavailable in this environment, handle the task directly.
 
 The sub-agents you can call are (first-line names are case-sensitive):
 
@@ -231,29 +218,6 @@ The sub-agents you can call are (first-line names are case-sensitive):
 - **Exercise Verifier** — `.github/agents/exercise_verifier.md.agent.md`  (first line: `Exercise Verifier`)
 - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
 - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
-
-## Spawning sub-agents in a Codex Enironment
-
-Use `codex-delegate` to spawn a focused sub-agent for a specific task. Keep tasks small, pass constraints in `--instructions`, and set `--timeout-minutes` to 10 or more for long-running jobs.
-
-Example:
-
-```bash
-codex-delegate --role implementation \
-  --task "Add input validation to the assessor controller" \
-  --instructions "{Detailed and highly specific instructions on exactly what you expect the sub-agent to do. More detail is better.}" \
-  --working-dir packages/my-app \
-  --timeout-minutes 10
-```
-
-While a sub-agent is running, expect a heartbeat line (`agent is still working`) roughly every minute if no new stream events arrive.
-
-**IMPORTANT**: Be patient. Some tasks will take several minutes and if the agent is thinking, you may not see any output for a while. If you see the heartbeat line, it is still working. If there is an error with the agent, `codex-delegate` will throw an error. If you stop it early, you may lose the work it has done so far. If you think it has stalled, check the logs for details `codex-delegate.log` (or set `--log-file` to write logs to a different path).
-
-### Sub-agent roles
-
-Sub-agent roles are defined in the `.codex` folder, along with the configuration file. To create a new role, add a markdown file with the role name (e.g. `implementation.md`) and a prompt template for that role. Empty files are ignored. Use `--list-roles` to see the discovered roles.
-
 
 ## Implementation Workflow
 
@@ -264,7 +228,8 @@ For any significant code changes (defined as adding/modifying more than 1 functi
     - *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
 3. **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
     - *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
-4. If changes are required, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
+4. If there are significant changes, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
+   1. If the changes are minor and can be fixed with a simple edit, you can make the change directly without going back to the implementer.
 5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
 
 **ALWAYS** follow this process unless the user explicitly directs you otherwise.

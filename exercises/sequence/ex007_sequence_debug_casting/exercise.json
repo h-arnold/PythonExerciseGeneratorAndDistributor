@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex007_sequence_debug_casting",
+  "exercise_id": 7,
+  "slug": "ex007_sequence_debug_casting",
+  "title": "Sequence Debug Casting",
+  "construct": "sequence",
+  "exercise_type": "debug",
+  "parts": 10
+}

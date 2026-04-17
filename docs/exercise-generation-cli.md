@@ -2,32 +2,49 @@
 
 This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
 
+> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Repository status
+
+The scaffolder now writes directly to the canonical authoring tree at `exercises/<construct>/<exercise_key>/`. For new exercises, use the files generated there and do not move scaffold output after creation.
+
 ## Quick Start
 
 ### Single Exercise
 
 ```bash
-uv run python scripts/new_exercise.py ex042 "Variables and Types" --slug variables_and_types
+uv run python scripts/new_exercise.py ex042 "Variables and Types" \
+  --construct sequence \
+  --type modify \
+  --slug variables_and_types
 ```
 
 For a debug exercise (scaffolds expected-output and explanation cells plus explanation tags):
 
 ```bash
-uv run python scripts/new_exercise.py ex004 "Debug Syntax" --slug sequence_debug_syntax --type debug
+uv run python scripts/new_exercise.py ex004 "Debug Syntax" \
+  --construct sequence \
+  --type debug \
+  --slug syntax
 ```
 
 This creates:
 
-- `exercises/ex042_variables_and_types/__init__.py`
-- `exercises/ex042_variables_and_types/README.md`
-- `notebooks/ex042_variables_and_types.ipynb`
-- `notebooks/solutions/ex042_variables_and_types.ipynb`
-- `tests/test_ex042_variables_and_types.py` *(move to canonical path after scaffolding — see Post-Scaffolding Steps)*
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/__init__.py`
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/README.md`
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/exercise.json`
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb`
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/solution.ipynb`
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/tests/test_ex042_sequence_modify_variables_and_types.py`
 
 ### Multi-Part Exercise (10 exercises in one notebook)
 
 ```bash
-uv run python scripts/new_exercise.py ex043 "Week 1 Practice" --slug week1 --parts 10
+uv run python scripts/new_exercise.py ex043 "Week 1 Practice" \
+  --construct sequence \
+  --type modify \
+  --slug week1 \
+  --parts 10
 ```
 
 This creates the same structure but scaffolds 10 tagged cells (`exercise1` through `exercise10`) in the notebook.
@@ -41,7 +58,7 @@ Scaffolds the boilerplate for new exercises to ensure consistency across the rep
 ### Command-Line Arguments
 
 ```bash
-python scripts/new_exercise.py <id> <title> [--slug SLUG] [--parts N] [--type TYPE]
+python scripts/new_exercise.py <id> <title> --construct CONSTRUCT --type TYPE [--slug SLUG] [--parts N]
 ```
 
 Run it through the managed environment, for example `uv run python scripts/new_exercise.py ...`, so the correct dependencies are used.
@@ -50,20 +67,27 @@ Run it through the managed environment, for example `uv run python scripts/new_e
 
 - `id`: Exercise identifier (format: `exNNN`, e.g., `ex001`, `ex042`)
 - `title`: Human-readable title (e.g., "Variables and Types")
+- `--construct`: Programming construct directory (for example `sequence`)
+- `--type`: Exercise type (`debug`, `modify`, or `make`)
 
 **Optional**:
 
-- `--slug`: Snake-case slug for filenames (default: auto-generated from title)
+- `--slug`: Snake-case slug suffix (default: auto-generated from title)
 - `--parts`: Number of exercise parts in one notebook (default: 1, max: 20)
-- `--type`: Optional exercise type (one of `debug`, `modify`, `make`). When `--type debug` is used the scaffolder will include an "Expected output" markdown cell and an `explanationN` markdown cell for each exercise part.
+
+When `--type debug` is used the scaffolder includes an "Expected output" markdown cell and an `explanationN` markdown cell for each exercise part.
 
 ### What Gets Created
 
 #### 1. Exercise Directory
 
-`exercises/CONSTRUCT/TYPE/exNNN_slug/`
+Canonical authoring target: `exercises/<construct>/<exercise_key>/`
 
-The script creates a temporary folder at `exercises/exNNN_slug/`. Move this directory into the correct construct/type path after scaffolding to match the curriculum structure. Suggested destinations:
+Canonical repository-side exercise tests live under `exercises/<construct>/<exercise_key>/tests/`.
+
+The generated `exercise_key` is `exNNN_<construct>_<type>_<slug>`, so a modify exercise for the sequence construct becomes `ex042_sequence_modify_variables_and_types`. The scaffolder writes directly to that canonical location. Do **not** add an extra `/<type>/` path segment or manually move the scaffold after creation.
+
+Relevant metadata values:
 
 - **CONSTRUCT**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
 - **TYPE**: `debug`, `modify`, `make`
@@ -72,21 +96,24 @@ Created files:
 
 - `__init__.py`: Keeps the package importable
 - `README.md`: Prefilled with student prompt and teacher notes placeholders (update both sections)
+- `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`: Canonical repository-side exercise test within the exercise folder
 - (Add manually) `OVERVIEW.md`: Detailed teaching notes
 
-Instructor reference solutions live in the solution notebook mirror under `notebooks/solutions/`.
+Instructor reference solutions live beside the student notebook under `notebooks/solution.ipynb`.
 
 #### 2. Student Notebook
 
-`notebooks/exNNN_slug.ipynb`
+`exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 
 Contains:
 
 - Markdown cell with title and instructions
 - Code cell(s) tagged `exercise1`, `exercise2`, etc.
 - For multi-part notebooks, a markdown prompt precedes each tagged cell
-- Optional self-check cell (not graded)
- - Auto-appended untagged code cell that imports `tests.student_checker` and calls `check_notebook('<slug>')` so students see the full grouped results for each internal check before submitting
+- Self-check scratch cell (not graded)
+- Auto-appended untagged code cell that imports `exercise_runtime_support.student_checker.run_notebook_checks` and runs it against the canonical `exercise_key` so students see grouped local check results before submitting
+
+Important: the final checker cell must pass the canonical `exercise_key` string to `run_notebook_checks(...)`, not a notebook path string. If shared infrastructure has already resolved a notebook location, it must preserve that value as a `Path` when calling resolver-backed helpers rather than coercing it back to `str(...)`.
 
 The scaffolder adds the final check-your-answers cell to both the student and solution notebooks to keep the verification helper consistent across copies.
 
@@ -102,16 +129,18 @@ For `--parts N`, creates N tagged exercise cells.
 
 #### 3. Solution Notebook
 
-`notebooks/solutions/exNNN_slug.ipynb`
+`exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`
 
 Initially identical to the student notebook. You should:
 
 - Fill in the exercise cells with correct solutions
-- Verify tests pass: `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest`
+- Verify tests pass: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`
 
-#### 4. Test File
+#### 4. Exercise Test File
 
-`tests/test_exNNN_slug.py`
+`exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
+
+This is the canonical repository-side test file generated by the scaffolder.
 
 Contains:
 
@@ -124,34 +153,16 @@ Contains:
 
 After running `new_exercise.py`, you must:
 
-### 1. Organise the Exercise Folder
+### 1. Author the Notebook
 
-Move `exercises/exNNN_slug/` to the correct location and create the `tests/` subdirectory:
-
-```bash
-# Example: moving a sequence/modify exercise
-mv exercises/ex042_variables_and_types exercises/sequence/modify/
-
-# Create the canonical tests directory and move the scaffolded test file there
-mkdir -p exercises/sequence/modify/ex042_variables_and_types/tests
-touch exercises/sequence/modify/ex042_variables_and_types/tests/__init__.py
-mv tests/test_ex042_variables_and_types.py \
-   exercises/sequence/modify/ex042_variables_and_types/tests/test_ex042_variables_and_types.py
-```
-
-The canonical test path is `exercises/<construct>/<type>/<exercise_key>/tests/test_<exercise_key>.py`.
-The collection guard in `conftest.py` will reject any `test_exNNN*.py` file outside this structure.
-
-### 2. Author the Notebook
-
-Edit `notebooks/exNNN_slug.ipynb`:
+Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 
 - **Add context**: Explain the goal and provide 1-2 examples
 - **Update exercise cells**:
   - Keep the cell tagged correctly (`exercise1`, `exercise2`, etc.)
-  - Provide a clear function signature (typically `solve()`), or a clear prompt for output-based tasks
-  - Add docstrings (after Functions construct is taught)
-  - Replace placeholder prints with the intended starter code (`return "TODO"`, `raise NotImplementedError()`, or a buggy snippet for debug tasks)
+  - Provide a clear prompt, expected output, and starter code that match the construct being taught. Only require a named function when the exercise itself is about functions.
+  - Add docstrings only when the exercise deliberately teaches functions and students have reached that construct.
+  - Replace the placeholder print with the intended starter code or buggy snippet for debug tasks.
 - **Keep it focused**: Each exercise cell should target a single learning objective
 
 **Notebook structure**:
@@ -161,47 +172,36 @@ Edit `notebooks/exNNN_slug.ipynb`:
 2. Markdown/Code: Examples or context
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
-5. Code (untagged): Optional self-check cell
-6. Code (untagged): Auto-appended check-your-answers cell that runs `tests.student_checker.check_notebook('<slug>')` against the generated notebook so students see the grouped per-check output
+5. Code (untagged): Self-check scratch cell
+6. Code (untagged): Auto-appended check-your-answers cell that runs `exercise_runtime_support.student_checker.run_notebook_checks('<exercise_key>')` so students see grouped per-check output
 ```
 
-### 3. Write Tests
+Do not replace `'<exercise_key>'` with `notebooks/...ipynb`, an absolute `.ipynb` path, or `str(path)`. String inputs are interpreted as exercise keys by the checker/runtime contract.
 
-Edit `exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py`:
+### 2. Write Tests
 
-Replace the placeholder test with real assertions. Two common patterns:
+Author the canonical repository-side test in `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
+
+Replace the placeholder test with real assertions. The default pattern matches the scaffold:
 
 ```python
-# Option 1: assert on printed output (matches the scaffold)
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import (
+  RuntimeCache,
+  resolve_exercise_notebook_path,
+  run_cell_and_capture_output,
+)
 
-NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
+_EXERCISE_KEY = "ex042_sequence_modify_variables_and_types"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
+_CACHE = RuntimeCache()
 
 
 def test_exercise1_greets_user() -> None:
-    output = runtime.run_cell_and_capture_output(NOTEBOOK_PATH, tag="exercise1")
-    assert "Hello" in output
-    assert "TODO" not in output
+  output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag="exercise1", cache=_CACHE)
+  assert output.strip() == "Hello"
 ```
 
-```python
-# Option 2: execute the cell and inspect objects
-from tests.exercise_framework import runtime
-
-NOTEBOOK_PATH = "notebooks/ex042_variables_and_types.ipynb"
-
-
-def test_solve_returns_correct_value() -> None:
-    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
-    assert "solve" in ns, "'solve' function not found in notebook"
-    assert ns["solve"](5) == 10
-
-
-def test_solve_handles_edge_case() -> None:
-    ns = runtime.exec_tagged_code(NOTEBOOK_PATH, tag="exercise1")
-    assert "solve" in ns, "'solve' function not found in notebook"
-    assert ns["solve"](0) == 0
-```
+If an authored exercise deliberately defines Python objects instead of printing output, you can use `exec_tagged_code(...)` in a targeted test. That is an exercise-specific choice rather than the default make or multi-part scaffolding contract.
 
 **Test requirements**:
 
@@ -213,11 +213,11 @@ def test_solve_handles_edge_case() -> None:
 - Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
 - For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
 
-**Note on scaffolding**: the generator's placeholder tests may still use `tests.notebook_grader` directly. Replace those with the framework runtime helpers shown above so tests are consistent across the codebase.
+**Note on scaffolding**: generated placeholder tests import direct helpers from `exercise_runtime_support.exercise_framework`. Keep that contract when editing or extending canonical exercise-local tests and any flattened compatibility tests so local development, CI, and packaged classroom repositories stay aligned.
 
-### 4. Fill in the Solution Notebook
+### 3. Fill in the Solution Notebook
 
-Edit `notebooks/solutions/exNNN_slug.ipynb`:
+Edit `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`:
 
 - Complete the exercise cells with correct implementations
 - Keep the same cell tags
@@ -233,24 +233,30 @@ print("Next year you will be " + str(age))
 
 Avoid compact one-liners such as `print("Next year you will be " + str(int(input()) + 1))`, which hide intermediate steps and make it harder for students to follow the state change.
 
-### 5. Verify
+### 4. Verify
 
 Run tests locally:
 
 ```bash
-# Test against student notebook (should fail until students complete it)
-uv run pytest exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py -v
+# Test against the student notebook (often fails until authoring is complete)
+uv run pytest exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Test against solution notebook (should pass)
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py -v
+# Test against the solution notebook (should pass)
+uv run python scripts/run_pytest_variant.py --variant solution \
+  exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Or run all exercises together
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest exercises/ -v
+# Or use the helper script
+uv run ./scripts/verify_solutions.sh \
+  exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
+
+# Run structural checks against the canonical exercise
+uv run python scripts/verify_exercise_quality.py \
+  <exercise_key>
 ```
 
-### 6. Create Supporting Documentation
+### 5. Create Supporting Documentation
 
-Add to `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
+Add to `exercises/<construct>/<exercise_key>/`:
 
 **`README.md`** (update the generated template):
 
@@ -266,8 +272,8 @@ Add to `exercises/CONSTRUCT/TYPE/exNNN_slug/`:
 One sentence describing what students will learn.
 
 ## Files
-- Notebook: `notebooks/exNNN_slug.ipynb`
-- Tests: `exercises/<construct>/<type>/exNNN_slug/tests/test_exNNN_slug.py`
+- Notebook: `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
+- Tests: `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`
 ```
 
 **`OVERVIEW.md`** (create new):
@@ -312,8 +318,8 @@ Students fix broken code.
 
 **Notebook structure**:
 
-1. Show the buggy code in a non-graded cell
-2. Student fixes it in a tagged cell
+1. Show the expected behaviour in a markdown cell
+2. Student fixes the buggy starter code in the tagged `exerciseN` cell
 3. Tests verify the fix
 
 ### Modify Exercises
@@ -340,16 +346,15 @@ Students write code from scratch.
 **Key points**:
 
 - Typically 3-5 exercises per notebook (more challenging)
-- Provide a clear function signature and docstring
-- Give 1-2 example inputs/outputs
-- Use consistent function names (`solve()` is conventional)
+- Provide clear task text and expected output examples
+- Use the same tagged-cell scaffold as other non-debug exercises
+- Only require a named function when the exercise content genuinely teaches functions
 
 **Notebook structure**:
 
-1. Explain the problem
-2. Show example inputs/outputs
-3. Student implements in tagged cell (with skeleton)
-4. Tests verify correctness
+1. Explain the problem and show expected output or worked examples
+2. Student writes the solution in a tagged cell
+3. Tests capture output or provide deterministic input
 
 ## Multi-Part Notebooks (10 exercises)
 
@@ -357,41 +362,59 @@ When creating a notebook with `--parts 10`:
 
 ### Consistent Structure
 
-- Use the same function name across parts (typically `solve()`)
 - Each part in its own tagged cell: `exercise1`, `exercise2`, ..., `exercise10`
+- For non-debug multi-part notebooks, place a short markdown prompt before each tagged cell
 - Progressive difficulty: exercises 1-3 trivial, 4-7 moderate, 8-10 challenging
+- Only standardise on a function name if a specific later-construct notebook explicitly teaches functions
 
 ### Testing Pattern
 
 ```python
 import pytest
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import (
+  RuntimeCache,
+  resolve_exercise_notebook_path,
+  run_cell_and_capture_output,
+)
 
+_EXERCISE_KEY = "ex043_sequence_modify_week1"
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
+_CACHE = RuntimeCache()
 TAGS = [f"exercise{i}" for i in range(1, 11)]
 
 @pytest.mark.parametrize("tag", TAGS)
-def test_exercise_exists(tag):
-    ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
-    assert "solve" in ns, f"Missing solve() in {tag}"
+def test_exercise_cells_execute(tag):
+  output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)
+  assert output.strip()
+  assert "TODO" not in output
 
 @pytest.mark.parametrize(
-    "tag,input_val,expected",
+  ("tag", "expected"),
     [
-        ("exercise1", 1, 2),
-        ("exercise2", 5, 10),
+    ("exercise1", "2"),
+    ("exercise2", "10"),
         # ... more cases
     ],
 )
-def test_exercise_behaviour(tag, input_val, expected):
-    ns = runtime.exec_tagged_code("notebooks/ex043_week1.ipynb", tag=tag)
-    assert ns["solve"](input_val) == expected
+def test_exercise_behaviour(tag, expected):
+  output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)
+  assert output.strip() == expected
 ```
+
+## Canonical vs Transitional Paths
+
+- Canonical authoring path: `exercises/<construct>/<exercise_key>/`
+- Exercise type: stored in `exercise.json`, not in the path
+- Canonical resolver input: `exercise_key`
+- Legacy flattened paths elsewhere in the repository may still exist during migration, but new scaffold output is canonical only
+
+When documenting or authoring new exercises, prefer the canonical exercise-local notebook and test paths.
 
 ## Best Practices
 
 1. **Naming**: Use descriptive slugs that indicate the topic
-2. **Function names**: Prefer `solve()` for consistency
-3. **Docstrings**: Include after Functions construct is taught
+2. **Tagged cells**: Keep each tagged cell self-contained and aligned with its test expectations
+3. **Docstrings**: Include only when the exercise deliberately teaches functions and that construct has been taught
 4. **No network**: Avoid external dependencies or API calls
 5. **Fast tests**: Keep test execution under 1s per test
 6. **Isolation**: Each exercise cell should be self-contained

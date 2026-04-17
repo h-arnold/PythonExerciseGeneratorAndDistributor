@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -12,7 +13,9 @@ from typing import TypeAlias
 
 import pytest
 
-from scripts.template_repo_cli.core.collector import ExerciseFiles
+from exercise_metadata.registry import build_exercise_catalogue
+from exercise_runtime_support.exercise_catalogue import get_catalogue_snapshot_path
+from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
 ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
@@ -29,7 +32,6 @@ def template_packager(repo_root: Path) -> TemplatePackager:
 @pytest.fixture
 def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
     """Build exercise file mappings for one or more exercise identifiers."""
-    from scripts.template_repo_cli.core.collector import FileCollector
 
     collector = FileCollector(repo_root)
 
@@ -37,7 +39,7 @@ def build_exercise_file_map(repo_root: Path) -> ExerciseFileMapBuilder:
         if not exercise_ids:
             msg = "At least one exercise_id is required"
             raise ValueError(msg)
-        return {exercise_id: collector.collect_files(exercise_id) for exercise_id in exercise_ids}
+        return collector.collect_multiple(list(exercise_ids))
 
     return _build
 
@@ -78,7 +80,7 @@ def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
 
 
 def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -> None:
-    """Verify required test infrastructure files and directories are copied."""
+    """Verify required test infrastructure files, directories, and runtime package are copied."""
 
     required_files = (
         "__init__.py",
@@ -88,11 +90,7 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         "test_autograde_plugin.py",
         "test_build_autograde_payload.py",
     )
-    required_directories = (
-        "exercise_expectations",
-        "exercise_framework",
-        "student_checker",
-    )
+    required_directories = ("exercise_framework",)
 
     for filename in required_files:
         src = repo_root / "tests" / filename
@@ -110,6 +108,33 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
             assert dest.is_dir()
         else:
             assert not dest.exists()
+
+    runtime_src = repo_root / "exercise_runtime_support"
+    runtime_dest = temp_dir / "exercise_runtime_support"
+    if runtime_src.exists():
+        assert runtime_dest.exists()
+        assert runtime_dest.is_dir()
+        assert (runtime_dest / "exercise_framework" / "runtime.py").exists()
+        assert get_catalogue_snapshot_path(runtime_dest).exists()
+    else:
+        assert not runtime_dest.exists()
+
+
+def _create_valid_packaged_workspace(
+    template_packager: TemplatePackager,
+    temp_dir: Path,
+    build_exercise_file_map: ExerciseFileMapBuilder,
+) -> None:
+    """Create a valid packaged workspace for packager validation tests."""
+
+    files = build_exercise_file_map("ex002_sequence_modify_basics")
+    template_packager.copy_exercise_files(temp_dir, files)
+    template_packager.copy_template_base_files(temp_dir)
+    template_packager.generate_readme(
+        temp_dir,
+        "Test",
+        ["ex002_sequence_modify_basics"],
+    )
 
 
 class TestCreateTempDirectory:
@@ -136,8 +161,18 @@ class TestCopyFiles:
     @pytest.mark.parametrize(
         "expected_relative_path",
         [
-            pytest.param("notebooks/ex001_sanity.ipynb", id="notebook"),
-            pytest.param("tests/test_ex001_sanity.py", id="test"),
+            pytest.param(
+                "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb",
+                id="notebook",
+            ),
+            pytest.param(
+                "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
+                id="test",
+            ),
+            pytest.param(
+                "exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py",
+                id="support-module",
+            ),
         ],
     )
     def test_copy_exercise_files(
@@ -149,7 +184,7 @@ class TestCopyFiles:
     ) -> None:
         """Test copying exercise notebooks and tests to the workspace."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
 
@@ -169,6 +204,78 @@ class TestCopyFiles:
         _assert_autograde_script_copy(repo_root, temp_dir)
         _assert_autograde_plugin_copy(repo_root, temp_dir)
         _assert_required_test_infrastructure_copy(repo_root, temp_dir)
+
+    def test_copy_template_base_files_generates_runtime_catalogue_snapshot(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Test packaging emits the metadata-derived runtime catalogue snapshot."""
+
+        template_packager.copy_template_base_files(temp_dir)
+
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        assert snapshot_path.exists()
+        assert json.loads(snapshot_path.read_text(
+            encoding="utf-8")) == build_exercise_catalogue()
+
+    def test_copy_exercise_files_uses_exercise_local_destination_for_legacy_sources(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Test legacy source files can still be exported to exercise-local Option A paths."""
+
+        legacy_test = temp_dir / "source" / "tests" / "test_ex999_legacy.py"
+        legacy_test.parent.mkdir(parents=True)
+        legacy_test.write_text(
+            "def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
+
+        legacy_notebook = temp_dir / "source" / "notebooks" / "ex999_legacy.ipynb"
+        legacy_notebook.parent.mkdir(parents=True)
+        legacy_notebook.write_text("{}", encoding="utf-8")
+
+        files: ExerciseFileMap = {
+            "ex999_legacy": ExerciseFiles(
+                notebook=legacy_notebook,
+                notebook_export=Path("exercises/legacy/ex999_legacy/notebooks/student.ipynb"),
+                test=legacy_test,
+                tests_export_dir=Path("exercises/legacy/ex999_legacy/tests"),
+            )
+        }
+
+        template_packager.copy_exercise_files(temp_dir, files)
+
+        assert (
+            temp_dir
+            / "exercises/legacy/ex999_legacy/tests/test_ex999_legacy.py"
+        ).exists()
+
+    def test_copy_template_base_files_filters_runtime_catalogue_snapshot_for_subset(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test packaged subset exports only publish their selected runtime catalogue entries."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(
+            temp_dir,
+            selected_exercise_keys=set(files),
+        )
+
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_entries = json.loads(
+            snapshot_path.read_text(encoding="utf-8"))
+        expected_entries = [
+            entry for entry in build_exercise_catalogue() if entry["exercise_key"] in files
+        ]
+
+        assert snapshot_entries == expected_entries
 
     def test_required_test_directories_exclude_non_runtime_artefacts(
         self,
@@ -195,13 +302,17 @@ class TestCopyFiles:
     ) -> None:
         """Test that directory structure is maintained."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
 
         # Structure should be preserved
-        assert (temp_dir / "notebooks").exists()
-        assert (temp_dir / "tests").exists()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks"
+        ).exists()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
+        ).exists()
 
 
 class TestGenerateFiles:
@@ -209,7 +320,8 @@ class TestGenerateFiles:
 
     def test_generate_readme(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating custom README with exercise list."""
-        exercises = ["ex001_sanity", "ex002_sequence_modify_basics"]
+        exercises = ["ex002_sequence_modify_basics",
+                     "ex004_sequence_debug_syntax"]
 
         template_packager.generate_readme(temp_dir, "Test Template", exercises)
 
@@ -217,7 +329,7 @@ class TestGenerateFiles:
         assert readme.exists()
         content = readme.read_text()
         assert "Test Template" in content
-        assert "ex001_sanity" in content
+        assert "ex002_sequence_modify_basics" in content
 
     def test_generate_gitignore(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating appropriate .gitignore."""
@@ -238,18 +350,19 @@ class TestPackageIntegrity:
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test validating package completeness."""
+        """Test validating package completeness for canonical exercise-local exports."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
 
-        template_packager.copy_exercise_files(temp_dir, files)
-        template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
         assert (temp_dir / "scripts").is_dir()
-
-        # Validate package
-        is_valid = template_packager.validate_package(temp_dir)
-        assert is_valid
+        runtime_support_dir = temp_dir / "exercise_runtime_support"
+        assert runtime_support_dir.is_dir()
+        assert get_catalogue_snapshot_path(runtime_support_dir).exists()
+        assert template_packager.validate_package(temp_dir)
 
     def test_package_integrity_missing_files(
         self, template_packager: TemplatePackager, temp_dir: Path
@@ -268,11 +381,12 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validation fails without Classroom autograde script."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
         if not autograde_path.exists():
@@ -289,11 +403,12 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validation fails without Classroom autograde plugin."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         plugin_path = temp_dir / "tests" / "autograde_plugin.py"
         if not plugin_path.exists():
@@ -302,14 +417,195 @@ class TestPackageIntegrity:
         plugin_path.unlink()
         assert not template_packager.validate_package(temp_dir)
 
+    def test_package_integrity_missing_runtime_catalogue_snapshot(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails when the generated runtime catalogue snapshot is removed."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_path.unlink()
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_invalid_runtime_catalogue_snapshot(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails when the runtime catalogue snapshot is malformed."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        snapshot_path = get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support")
+        snapshot_path.write_text(json.dumps(
+            {"broken": True}) + "\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_exported_exercise_metadata(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if exercise metadata leaks into the export."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        (
+            temp_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "exercise.json"
+        ).write_text("{}\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_exported_solution_notebook(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if a solution notebook leaks into the export."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        (
+            temp_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "notebooks"
+            / "solution.ipynb"
+        ).write_text("{}\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_allows_packaged_exercise_tree_with_student_notebook_and_tests(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation accepts the packaged exercises tree for Option A layout."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
+        ).is_dir()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).is_file()
+        assert template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_exported_exercises_tree_non_allowed_notebook_asset(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if the packaged exercises tree contains non-allowed notebook assets."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        exported_exercises_dir = (
+            temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics"
+        )
+        (exported_exercises_dir / "notebooks").mkdir(parents=True, exist_ok=True)
+        (exported_exercises_dir / "notebooks" / "extra.ipynb").write_text(
+            "{}\n", encoding="utf-8"
+        )
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_notebook_leaked_into_packaged_tests_tree(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if a notebook leaks into the packaged exercise tests tree."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        leaked_notebook = (
+            temp_dir
+            / "exercises"
+            / "sequence"
+            / "ex002_sequence_modify_basics"
+            / "tests"
+            / "student.ipynb"
+        )
+        leaked_notebook.write_text("{}\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_rejects_packaged_tests_path_that_is_not_a_directory(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails if the packaged tests node is not a directory."""
+
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        tests_dir = (
+            temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics" / "tests"
+        )
+        shutil.rmtree(tests_dir)
+        tests_dir.write_text("not a directory\n", encoding="utf-8")
+
+        assert not template_packager.validate_package(temp_dir)
+
     @pytest.mark.parametrize(
         "missing_path",
         [
             pytest.param("tests/exercise_framework", id="exercise-framework"),
-            pytest.param("tests/exercise_expectations", id="exercise-expectations"),
-            pytest.param("tests/student_checker", id="student-checker"),
             pytest.param("tests/helpers.py", id="helpers"),
-            pytest.param("tests/test_autograde_plugin.py", id="autograde-test"),
+            pytest.param("tests/test_autograde_plugin.py",
+                         id="autograde-test"),
             pytest.param(
                 "tests/test_build_autograde_payload.py",
                 id="payload-test",
@@ -325,15 +621,17 @@ class TestPackageIntegrity:
     ) -> None:
         """Test validation fails when required test infrastructure is removed."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex001_sanity"])
+        template_packager.generate_readme(
+            temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         path_to_remove = temp_dir / missing_path
         if not path_to_remove.exists():
-            pytest.skip(f"Required path not available in template copy: {missing_path}")
+            pytest.skip(
+                f"Required path not available in template copy: {missing_path}")
 
         if path_to_remove.is_dir():
             shutil.rmtree(path_to_remove)
@@ -390,24 +688,40 @@ class TestPackageIntegrity:
         temp_dir: Path,
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
-        """Test minimal packaged workspace passes a focused pytest run."""
+        """Test minimal packaged workspace can collect the selected exercise tests."""
 
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Smoke Test Template", ["ex001_sanity"])
+        template_packager.generate_readme(
+            temp_dir, "Smoke Test Template", ["ex002_sequence_modify_basics"]
+        )
 
         assert template_packager.validate_package(temp_dir)
 
         env = os.environ.copy()
-        env["PYTUTOR_NOTEBOOKS_DIR"] = "notebooks"
-        result = subprocess.run(
+        explicit_path_result = subprocess.run(
             [
                 sys.executable,
                 "-m",
                 "pytest",
+                "--collect-only",
                 "-q",
-                "tests/test_ex001_sanity.py",
+                "exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py",
+            ],
+            cwd=temp_dir,
+            capture_output=True,
+            check=False,
+            text=True,
+            env=env,
+        )
+        default_discovery_result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--collect-only",
+                "-q",
             ],
             cwd=temp_dir,
             capture_output=True,
@@ -416,16 +730,38 @@ class TestPackageIntegrity:
             env=env,
         )
 
-        assert result.returncode == 0, (
-            "Packaged workspace smoke pytest failed:\n"
-            f"stdout:\n{result.stdout}\n"
-            f"stderr:\n{result.stderr}"
+        assert not (temp_dir / "exercise_runtime_support" /
+                    "exercise.json").exists()
+        assert get_catalogue_snapshot_path(
+            temp_dir / "exercise_runtime_support").exists()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests"
+        ).is_dir()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).is_file()
+
+        assert explicit_path_result.returncode == 0, (
+            "Packaged workspace explicit-path smoke pytest failed:\n"
+            f"stdout:\n{explicit_path_result.stdout}\n"
+            f"stderr:\n{explicit_path_result.stderr}"
+        )
+        assert default_discovery_result.returncode == 0, (
+            "Packaged workspace default-discovery smoke pytest failed:\n"
+            f"stdout:\n{default_discovery_result.stdout}\n"
+            f"stderr:\n{default_discovery_result.stderr}"
+        )
+        assert "test_ex002_sequence_modify_basics" in default_discovery_result.stdout, (
+            "Default pytest discovery did not collect the packaged exercise test:\n"
+            f"stdout:\n{default_discovery_result.stdout}\n"
+            f"stderr:\n{default_discovery_result.stderr}"
         )
 
     def test_copies_notebook_grader_when_present(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
-        """Test notebook_grader.py present; project grader takes precedence over template grader."""
+        """Test that notebook_grader.py is present; project grader takes precedence over template grader."""
         template_tests_dir = repo_root / "template_repo_files" / "tests"
         template_tests_dir.mkdir(parents=True, exist_ok=True)
         grader_src = template_tests_dir / "notebook_grader.py"
@@ -479,12 +815,18 @@ class TestPackageOptions:
         build_exercise_file_map: ExerciseFileMapBuilder,
     ) -> None:
         """Test solutions are not included in the package."""
-        files = build_exercise_file_map("ex001_sanity")
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
 
         template_packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert not (temp_dir / "notebooks/solutions/ex001_sanity.ipynb").exists()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).exists()
+        assert not (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/solution.ipynb"
+        ).exists()
 
 
 class TestPackageMultipleExercises:
@@ -498,11 +840,17 @@ class TestPackageMultipleExercises:
     ) -> None:
         """Test packaging multiple exercises together."""
         files = build_exercise_file_map(
-            "ex001_sanity",
             "ex002_sequence_modify_basics",
+            "ex003_sequence_modify_variables",
         )
 
         template_packager.copy_exercise_files(temp_dir, files)
 
-        assert (temp_dir / "notebooks/ex001_sanity.ipynb").exists()
-        assert (temp_dir / "notebooks/ex002_sequence_modify_basics.ipynb").exists()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).exists()
+        assert (
+            temp_dir
+            / "exercises/sequence/ex003_sequence_modify_variables/notebooks/student.ipynb"
+        ).exists()

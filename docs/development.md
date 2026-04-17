@@ -2,6 +2,12 @@
 
 This guide is for contributors and maintainers working on the Python Tutor Exercises infrastructure.
 
+> Source of truth: execution and variant contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Repository status
+
+The source repository has completed the exercise-local layout cutover. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic, and treat derived packaging outputs as non-authoring surfaces.
+
 ## Development Setup
 
 Follow the [Setup Guide](setup.md) to install dependencies and configure your environment.
@@ -30,14 +36,17 @@ uv run python -V
 
 ### Code Organisation
 
-- `tests/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
-- `tests/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
+- `exercises/<construct>/<exercise_key>/`: Canonical authoring home for exercise-specific assets and `exercise.json`
+- `exercise_runtime_support/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
+- `exercise_runtime_support/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
 - `scripts/new_exercise.py`: Exercise scaffolding tool
-- `scripts/verify_solutions.sh`: Helper to test solutions (wraps `pytest` with `PYTUTOR_NOTEBOOKS_DIR`)
+- `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
 - `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
 - `AGENTS.md`: Repo-wide Copilot context
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
+
+The canonical source-repository authoring model is now exercise-local: `exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb` with `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Top-level `notebooks/`, `notebooks/solutions/`, and exercise-specific files materialised under the root `tests/` tree are derived compatibility surfaces only when explicitly generated.
 
 Run the helper directly during development:
 
@@ -47,21 +56,27 @@ Run the helper directly during development:
 
 ## Working on the Grading System
 
-### `tests/exercise_framework/`
+### `exercise_runtime_support.exercise_framework`
 
 The grading system now uses the exercise framework, which wraps the low-level notebook grader.
 
-Core helpers (via `tests/exercise_framework/runtime.py`):
+Import the canonical public helper surface from `exercise_runtime_support.exercise_framework`.
+The supported runtime and path helpers are re-exported from
+`exercise_runtime_support/exercise_framework/__init__.py`; treat compatibility wrappers as
+internal shims rather than the primary contributor-facing API.
 
-1. **`resolve_notebook_path()`**: Redirects to alternative notebook directories via `PYTUTOR_NOTEBOOKS_DIR`
-2. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
-3. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
-4. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
-5. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
-6. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
+Core helpers (via `exercise_runtime_support.exercise_framework`):
 
-Shared expectations live in `tests/exercise_expectations/` and should be the single source of truth for
-expected outputs, prompts, and input data.
+1. **`resolve_exercise_notebook_path()`**: Resolves an exercise-local notebook from an `exercise_key`, respecting the active variant contract (`--variant` / `PYTUTOR_ACTIVE_VARIANT`)
+2. **`resolve_notebook_path()`**: Resolves an explicit notebook location using the same active variant contract
+3. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
+4. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
+5. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
+6. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
+7. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
+
+Exercise-specific expected outputs, prompts, and input data should live in helper modules within
+`exercises/<construct>/<exercise_key>/tests/` so each exercise keeps its own canonical support data next to the canonical test file.
 
 **Design principles**:
 
@@ -73,14 +88,14 @@ expected outputs, prompts, and input data.
 
 ```bash
 # Always test against the solution notebooks first
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
 
 # Focus on a specific exercise (still targeting solutions)
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex001_sanity.py -q
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest exercises/sequence/modify/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
+uv run python scripts/run_pytest_variant.py --variant solution \
+    exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
 
 # Only switch to student notebooks when validating the classroom experience
-uv run pytest tests/test_ex001_sanity.py -q
+uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
 ```
 
 ### Adding Features to the Grader
@@ -99,29 +114,30 @@ When modifying grading logic:
 Always exercise the pytest plugin with an explicit results path so the Classroom payload can be inspected:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
-    uv run pytest -q \
-    --autograde-results-path tmp/autograde/solutions.json
+uv run python scripts/build_autograde_payload.py \
+    --variant solution \
+    --pytest-args=-q \
+    --results-json=tmp/autograde/solutions.json
 
-uv run pytest tests/test_ex001_sanity.py -q \
+uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q \
     --autograde-results-path tmp/autograde/student.json
 ```
 
-The first command targets the instructor notebooks; the second intentionally hits the student notebooks to confirm failure messaging. Replace `tests/test_ex001_sanity.py` with focused paths as needed.
+The first command targets the instructor notebooks; the second intentionally hits the student notebooks to confirm failure messaging. Replace `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` with focused paths as needed.
 
 ### Build Classroom payloads with the CLI
 
-Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow. Set `PYTUTOR_NOTEBOOKS_DIR` before the call when validating solution notebooks so pytest imports the correct files:
+Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow. Pass `--variant <student|solution>` so the same contract is used locally and in CI:
 
 ```bash
-PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions \
-    uv run python scripts/build_autograde_payload.py \
+uv run python scripts/build_autograde_payload.py \
+    --variant solution \
     --pytest-args=-q \
-    --pytest-args=tests/test_ex001_sanity.py \
+    --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py \
     --results-json=tmp/autograde/results.json
 ```
 
-If you omit `PYTUTOR_NOTEBOOKS_DIR`, the script will exercise the student notebooks instead. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
+If you omit `--variant`, the script exercises the solution notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
 
 ### Test workflow changes safely
 
@@ -146,20 +162,19 @@ The generator scaffolds new exercises with consistent structure.
 
 ```bash
 # From the repository root
-uv run scripts/new_exercise.py ex999 "Test" --slug test_exercise
+uv run scripts/new_exercise.py ex999 "Test" \
+    --construct sequence --type modify --slug test_exercise
 
 # Verify created files
-ls exercises/ex999_test_exercise/
-ls notebooks/ex999_test_exercise.ipynb
-ls notebooks/solutions/ex999_test_exercise.ipynb
-ls tests/test_ex999_test_exercise.py
+ls exercises/sequence/ex999_sequence_modify_test_exercise/
+ls exercises/sequence/ex999_sequence_modify_test_exercise/notebooks/
+ls exercises/sequence/ex999_sequence_modify_test_exercise/tests/
 
 # Run static verification (fast checks for structure and metadata)
-uv run scripts/verify_exercise_quality.py notebooks/ex999_test_exercise.ipynb
+uv run scripts/verify_exercise_quality.py ex999_sequence_modify_test_exercise
 
 # Remove the scaffolding when done experimenting
-rm -rf exercises/ex999_test_exercise notebooks/ex999_test_exercise.ipynb \
-    notebooks/solutions/ex999_test_exercise.ipynb tests/test_ex999_test_exercise.py
+rm -rf exercises/sequence/ex999_sequence_modify_test_exercise
 ```
 
 ### Extending the Generator
@@ -267,17 +282,25 @@ Before submitting an exercise:
 
 ### GitHub Actions Workflows
 
+Repository CI and exported Classroom autograding are separate surfaces.
+
 **`tests.yml`**:
 
 - Runs on push/PR
-- Tests student notebooks
-- Fast feedback for contributors
+- Validates pytest collection/discovery in the source repository
+- Runs the explicit `--variant solution` authoring-repo pass
 
 **`tests-solutions.yml`**:
 
 - Manual trigger
-- Tests solution notebooks
-- Validates instructor answers
+- Maintainer-focused targeted rerun of the explicit `--variant solution` pass
+- Accepts optional pytest args for focused checks
+
+**`template_repo_files/.github/workflows/classroom.yml`**:
+
+- Exported to Classroom/template repositories
+- Runs `scripts/build_autograde_payload.py --variant student`
+- Validates the metadata-free student contract rather than the source-repository authoring contract
 
 ## Updating Exercises
 
@@ -292,7 +315,7 @@ When updating existing exercises:
 
 If an exercise needs to be removed:
 
-1. **Don't delete**: Move to `exercises/deprecated/exNNN_slug/`
+1. **Don't delete**: Move to `exercises/deprecated/<exercise_key>/`
 2. **Update README**: Document why it was deprecated
 3. **Keep tests**: Mark with `@pytest.mark.skip` and reason
 4. **Remove from student notebooks**: But keep in repository for reference
@@ -342,7 +365,7 @@ Check:
 Validate JSON:
 
 ```bash
-python -c "import json; json.load(open('notebooks/exNNN_slug.ipynb'))"
+python -c "import json; json.load(open('exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb'))"
 ```
 
 If invalid, fix manually or regenerate with the scaffolder.

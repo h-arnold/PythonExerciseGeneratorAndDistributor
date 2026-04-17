@@ -1,17 +1,12 @@
-"""Assertion helpers for exercise check messaging."""
+"""Compatibility wrapper for :mod:`exercise_runtime_support.exercise_framework.assertions`."""
 
-from __future__ import annotations
+from importlib import import_module as _import_module
 
+_impl = _import_module("exercise_runtime_support.exercise_framework.assertions")
 
-def assert_has_print_statement(*, exercise_no: int, has_print: bool) -> list[str]:
-    """Return an error message when a print statement is missing."""
-    if has_print:
-        return []
-    return [f"Exercise {exercise_no}: expected a print statement."]
+for _name, _value in vars(_impl).items():
+    if _name.startswith("__") and _name not in {"__all__", "__doc__"}:
+        continue
+    globals()[_name] = _value
 
-
-def assert_uses_operator(*, exercise_no: int, operator: str, used: bool) -> list[str]:
-    """Return an error message when the required operator is missing."""
-    if used:
-        return []
-    return [f"Exercise {exercise_no}: expected to use '{operator}' in the calculation."]
+__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

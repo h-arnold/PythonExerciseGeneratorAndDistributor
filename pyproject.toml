@@ -36,28 +36,30 @@ template-repo-cli = "scripts.template_repo_cli.cli:main"
 template_repo_cli = "scripts.template_repo_cli.cli:main"
 
 [tool.setuptools]
-packages = ["scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
+packages = ["exercise_metadata", "exercise_runtime_support", "exercise_runtime_support.exercise_framework", "exercise_runtime_support.student_checker", "exercise_runtime_support.student_checker.checks", "scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
 
 [tool.uv]
 package = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-addopts = ["-q", "--import-mode=importlib"]
+addopts = "-q"
 testpaths = ["tests", "exercises"]
-# importlib mode avoids module-name collisions between top-level tests/ package
-# and the tests/ subdirectories inside each exercise directory.
 pythonpath = ["."]
 markers = ["task(taskno): marks the exercise task number"]
 
 [tool.ruff]
 line-length = 100
+force-exclude = true
 exclude = [
   "notebooks/**",
+  "exercises/**/notebooks/**",
+  "*.md",
+  "docs/**",
 ]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "C90", "LOG", "PIE", "RUF", "SIM", "PLR"]
+select = ["E", "F", "W", "I", "UP", "B", "BLE", "C90", "LOG", "PIE", "RUF", "SIM", "PLR"]
 ignore = ["E501"]
 
 [tool.ruff.lint.mccabe]

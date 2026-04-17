@@ -2,6 +2,12 @@
 
 This guide explains how to use the **Exercise Generation** assistant in GitHub Copilot to create new Python exercises for students. This tool is designed to help you quickly create pedagogically sound exercises without needing to manually write all the boilerplate code.
 
+> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
+
+## Repository status
+
+New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document, and flattened notebook/test paths are derived export outputs rather than authoring locations.
+
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
     - [What to expect after cloning (prompts \& tips)](#what-to-expect-after-cloning-prompts--tips)
@@ -22,7 +28,7 @@ If you are new to Visual Studio Code (VS Code) or GitHub Copilot, follow these s
 
 1. **Create a GitHub account**: You will need a GitHub account so you can clone the repository and sign in to Copilot. If you don't have an account, sign up at <https://github.com>. Note: your organisation may require a Copilot subscription.
 
-2. **Clone the repository**: In VS Code use **Source Control** → **Clone Repository**, or open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Git: Clone**. Paste this URL: `https://github.com/h-arnold/PythonTutorExercises.git`. (If you already have a local copy, you can instead use **File > Open Folder...** and select the `PythonTutorExercises` folder.) After opening the workspace, see the [What to expect after cloning (prompts & tips)](#what-to-expect-after-cloning-prompts--tips) section below for guidance on common VS Code prompts and recommended actions.
+2. **Clone the repository**: In VS Code use **Source Control** → **Clone Repository**, or open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Git: Clone**. Paste your repository URL for `PythonExerciseGeneratorAndDistributor`. (If you already have a local copy, you can instead use **File > Open Folder...** and select the `PythonExerciseGeneratorAndDistributor` folder.) After opening the workspace, see the [What to expect after cloning (prompts & tips)](#what-to-expect-after-cloning-prompts--tips) section below for guidance on common VS Code prompts and recommended actions.
 
 3. **Sign in to GitHub in VS Code**: Click the Accounts icon in the bottom-left of VS Code and sign in with your GitHub account so extensions (Copilot) can access it.
 
@@ -118,14 +124,17 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests inside the managed environment:
 
    ```bash
-   uv run python scripts/new_exercise.py ex050 "My New Topic" --slug my_topic --type modify
+    uv run python scripts/new_exercise.py ex050 "My New Topic" \
+      --construct sequence \
+      --type modify \
+      --slug my_topic
    ```
 
-   The scaffolder writes a placeholder test, notebooks, and an exercise folder at `exercises/ex050_my_topic/`. Move that folder into the right curriculum path (for example, `exercises/sequence/modify/`) so it lines up with [docs/exercise-types](exercise-types/) guidance.
+     The scaffolder writes directly to `exercises/sequence/ex050_sequence_modify_my_topic/` with `exercise.json`, `notebooks/student.ipynb`, `notebooks/solution.ipynb`, and `tests/test_ex050_sequence_modify_my_topic.py`. Do not move the scaffold after generation. Exercise type belongs in `exercise.json`, not in an extra path segment.
 
 2. **Add the Content**:
 
-   - Open both `notebooks/ex050_my_topic.ipynb` and `notebooks/solutions/ex050_my_topic.ipynb`.
+    - Open both `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb` and `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/solution.ipynb`.
    - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-types](exercise-types/).
    - Replace any placeholder `TODO`/`pass` code with the versions supplied by the agent (student copy in the main notebook, full answer in solutions).
 
@@ -134,53 +143,54 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    Run the automated checks to confirm the notebooks and tests align:
 
    ```bash
-   PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions uv run pytest tests/test_ex050_my_topic.py -q
-   uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
+    uv run python scripts/run_pytest_variant.py --variant solution \
+      exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
+   uv run python scripts/verify_exercise_quality.py \
+     ex050_sequence_modify_my_topic
    ```
 
-   The first command exercises the solutions; rerun the pytest command without `PYTUTOR_NOTEBOOKS_DIR` once you expect the student notebook to pass as well.
+    The first command exercises the solution notebook; rerun it with `--variant student` once you expect the student notebook to pass as well.
+
 
 ## Exercise Verifier — quick quality checks 🔍
 
-The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards (structure, tags, sequencing, tests, teacher guidance, and order-of-teaching). It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
+The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards for canonical scaffold structure, metadata resolution, notebook tags/metadata, sequencing heuristics, and `OrderOfTeaching.md` coverage. It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
 
 How to run it manually:
 
 - **From Copilot Chat**: Select the **Exercise Verifier** chatmode and ask something like:
-  - "Verify exercise ex050_my_topic" or
-  - "Please verify notebooks/ex050_my_topic.ipynb — construct: sequence, type: modify"
+  - "Verify exercise ex050_sequence_modify_my_topic" or
+  - "Please verify exercise_key ex050_sequence_modify_my_topic"
 - **Locally (command line)**:
 
   ```bash
-  uv run python scripts/verify_exercise_quality.py notebooks/ex050_my_topic.ipynb --construct sequence --type modify
+  uv run python scripts/verify_exercise_quality.py \
+    ex050_sequence_modify_my_topic
   ```
 
 What it checks:
 
-- Gate A–F (see repo guidelines): exercise-type compliance, construct sequencing, tags & notebook structure, tests, teacher docs, and inclusion in `OrderOfTeaching.md`.
+- Canonical scaffold structure and required file presence.
+- Canonical metadata loading and resolver-based exercise discovery.
+- Notebook tags, `metadata.language`, and debug explanation-cell structure.
+- Construct progression heuristics and inclusion in `OrderOfTeaching.md`.
 - It follows the rules in `docs/exercise-types/` and the verifier agent spec (`.github/agents/exercise_verifier.md.agent.md`).
 
 Output:
 
-- The verifier returns a concise verdict: **PASS**, **PASS WITH NITS**, or **FAIL**, plus specific, minimal fixes (file(s) and suggestions).
+- The verifier returns a concise verdict such as **OK: 0 warning(s)** or **FAIL: ...**, plus specific, minimal fixes (file(s) and suggestions).
 
-**Tip:** Provide the exercise id/slug (e.g., `ex050_my_topic`) or the notebook path when asking — the verifier needs one of these to run targeted checks.
+**Tip:** Provide the canonical `exercise_key` (for example, `ex050_sequence_modify_my_topic`) when asking — the verifier now targets exercises by `exercise_key`, not by notebook path.
 
 ### Recommended models — cost vs. quality 💡
 
-- **Raptor-mini (Preview)** — Tested and recommended for classroom use. The agent workflows in this repository have been validated with Raptor-mini. It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education. Raptor-mini produces perfectly workable results when used with the standard verification step (always run the Exercise Verifier after generation).
+- **Raptor-mini (Preview)** — The best of the free models available in Copilot. It can produce good results but is sometimes inconsistent. The tests is generates are less good.  It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education.
 
-- **Sonnet 4.5 / Codex 5.2** — More powerful models that tend to produce higher-quality and faster outputs, especially for complex or subtle tasks. They are, however, more costly; use them for large batches, complex exercises, or when you need higher confidence in a single pass.
-
-Practical tips:
-
-- For most classroom work, start with **Raptor-mini** and **always** run the Exercise Verifier afterwards.
-- If you repeatedly need the generator to hit edge cases in one run, consider using **Sonnet 4.5** or **Codex 5.2** for that run, then run the verifier as usual.
-- You can select the model in Copilot Chat using the model/agent selector; choose the preferred model or let the agent default to the recommended model for the workspace.
+- **GPT 5.4** — This is the best of the current line of paid models. It's precise, follows instructions well and is particularly adept at generating tests that account for the ways in which students might bypass the required construct (e.g. using a while loop instead of a for loop) so that they are only told their solution is correct when it's correct in the intended way. It is available with the Copilot Education plan, which is free for students and teachers.
 
 ## Best Practices
 
-- **Small Batches:** Generate 1 exercises at a time rather than a whole chapter.
+- **Small Batches:** Generate one set of exercises at a time.
 - **Fresh Context**: Start a new chat for each exercise for best results.
 - **Be Specific about Type:**
   - **Debug**: Students fix broken code.

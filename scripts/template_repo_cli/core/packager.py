@@ -6,21 +6,32 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from scripts.template_repo_cli.core.collector import ExerciseFiles
-from scripts.template_repo_cli.utils.filesystem import (
-    safe_copy_directory,
-    safe_copy_file,
+from exercise_runtime_support.exercise_catalogue import (
+    get_catalogue_snapshot_path,
+    load_catalogue_snapshot,
+    write_catalogue_snapshot,
 )
+from scripts.template_repo_cli.core.collector import ExerciseFiles
+from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
 
 
 class TemplatePackager:
     """Package templates for GitHub."""
+
+    _CONSTRUCT_DIR_DEPTH = 1
+    _EXERCISE_DIR_DEPTH = 2
+    _SUBDIR_INDEX = 2
 
     COPY_EXCLUDE_PATTERNS: tuple[str, ...] = (
         "__pycache__",
         "*.pyc",
         "test_*.py",
         "*_test.py",
+    )
+    EXERCISE_TEST_COPY_EXCLUDE_PATTERNS: tuple[str, ...] = (
+        "__pycache__",
+        "*.pyc",
+        "test_repo_*.py",
     )
 
     REQUIRED_TEST_FILES: tuple[str, ...] = (
@@ -32,11 +43,17 @@ class TemplatePackager:
         "test_build_autograde_payload.py",
     )
 
-    REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = (
-        "exercise_expectations",
-        "exercise_framework",
-        "student_checker",
+    REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = ("exercise_framework",)
+
+    REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = (
+        "exercise_runtime_support",)
+
+    FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = (
+        "exercise.json",
+        "solution.ipynb",
     )
+    _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = ("notebooks", "tests")
+    _STUDENT_NOTEBOOK_FILENAME = "student.ipynb"
 
     def __init__(self, repo_root: Path):
         """Initialize packager.
@@ -53,7 +70,6 @@ class TemplatePackager:
         Returns:
             Path to temporary workspace directory.
         """
-        # Create a temporary directory
         temp_dir = tempfile.mkdtemp(prefix="template_repo_")
         return Path(temp_dir)
 
@@ -68,16 +84,19 @@ class TemplatePackager:
             workspace: Workspace directory.
             files: Dictionary mapping exercise ID to file paths.
         """
-        for exercise_id, file_dict in files.items():
-            # Copy student notebook
-            if file_dict.get("notebook"):
-                dest = workspace / "notebooks" / f"{exercise_id}.ipynb"
-                safe_copy_file(file_dict["notebook"], dest)
-
-            # Copy test file
-            if file_dict.get("test"):
-                dest = workspace / "tests" / f"test_{exercise_id}.py"
-                safe_copy_file(file_dict["test"], dest)
+        for file_dict in files.values():
+            safe_copy_file(file_dict["notebook"],
+                           workspace / file_dict["notebook_export"])
+            tests_export_dir = workspace / file_dict["tests_export_dir"]
+            if file_dict["tests_export_dir"] == Path("tests"):
+                safe_copy_file(
+                    file_dict["test"], tests_export_dir / file_dict["test"].name)
+                continue
+            safe_copy_directory(
+                file_dict["test"].parent,
+                tests_export_dir,
+                ignore_patterns=self.EXERCISE_TEST_COPY_EXCLUDE_PATTERNS,
+            )
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -106,6 +125,9 @@ class TemplatePackager:
         required_paths.extend(
             tests_source_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
         )
+        required_paths.extend(
+            self.repo_root / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
+        )
         return [path for path in required_paths if not path.exists()]
 
     def _raise_for_missing_required_sources(self) -> None:
@@ -118,11 +140,17 @@ class TemplatePackager:
         raise FileNotFoundError(
             f"Missing required packaging source assets:\n{missing_list}")
 
-    def copy_template_base_files(self, workspace: Path) -> None:
+    def copy_template_base_files(
+        self,
+        workspace: Path,
+        selected_exercise_keys: set[str] | None = None,
+    ) -> None:
         """Copy base template files.
 
         Args:
             workspace: Workspace directory.
+            selected_exercise_keys: Optional set of exercise keys to keep in the
+                packaged runtime catalogue snapshot.
         """
         if not self.template_files_dir.exists():
             raise FileNotFoundError(
@@ -134,18 +162,10 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (
-                self.template_files_dir / "pyproject.toml",
-                workspace / "pyproject.toml",
-            ),
-            (
-                self.template_files_dir / "pytest.ini",
-                workspace / "pytest.ini",
-            ),
-            (
-                self.template_files_dir / ".gitignore",
-                workspace / ".gitignore",
-            ),
+            (self.template_files_dir / "pyproject.toml",
+             workspace / "pyproject.toml"),
+            (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
+            (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
                 self.repo_root / "scripts" / "build_autograde_payload.py",
                 workspace / "scripts" / "build_autograde_payload.py",
@@ -153,10 +173,8 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (
-                self.template_files_dir / "INSTRUCTIONS.md",
-                workspace / "INSTRUCTIONS.md",
-            ),
+            (self.template_files_dir / "INSTRUCTIONS.md",
+             workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
@@ -173,14 +191,25 @@ class TemplatePackager:
                 safe_copy_file(src, dest)
 
         for required_dir in self.REQUIRED_TEST_DIRECTORIES:
-            source_dir = tests_source_dir / required_dir
             safe_copy_directory(
-                source_dir,
+                tests_source_dir / required_dir,
                 tests_dest_dir / required_dir,
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
-        # Copy directories
+        for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES:
+            safe_copy_directory(
+                self.repo_root / required_dir,
+                workspace / required_dir,
+                ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
+            )
+
+        write_catalogue_snapshot(
+            get_catalogue_snapshot_path(
+                workspace / "exercise_runtime_support"),
+            exercise_keys=selected_exercise_keys,
+        )
+
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
 
@@ -192,24 +221,78 @@ class TemplatePackager:
             template_name: Name of the template.
             exercises: List of exercise IDs.
         """
-        # Read template
         template_path = self.template_files_dir / "README.md.template"
         if template_path.exists():
             template_content = template_path.read_text(encoding="utf-8")
         else:
-            # Fallback template
             template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
 
-        # Generate exercise list
-        exercise_list = "\n".join([f"- {ex}" for ex in sorted(exercises)])
-
-        # Replace placeholders
+        exercise_list = "\n".join(f"- {ex}" for ex in sorted(exercises))
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
         content = content.replace("{EXERCISE_LIST}", exercise_list)
-
-        # Write README
         readme_path = workspace / "README.md"
         readme_path.write_text(content, encoding="utf-8")
+
+    def _is_valid_packaged_exercise_path(self, path: Path, exercises_dir: Path) -> bool:
+        """Return whether a path fits the Option A packaged exercises tree."""
+        relative_parts = path.relative_to(exercises_dir).parts
+        part_count = len(relative_parts)
+        if part_count in (self._CONSTRUCT_DIR_DEPTH, self._EXERCISE_DIR_DEPTH):
+            return path.is_dir()
+
+        if part_count <= self._SUBDIR_INDEX:
+            return False
+
+        subdirectory = relative_parts[self._SUBDIR_INDEX]
+        is_allowed_subdirectory = subdirectory in self._ALLOWED_EXERCISE_SUBDIRECTORIES
+        if not is_allowed_subdirectory:
+            return False
+
+        if part_count == self._SUBDIR_INDEX + 1:
+            return path.is_dir()
+
+        if subdirectory == "notebooks":
+            return self._is_valid_packaged_notebook_path(path, part_count)
+
+        return self._is_valid_packaged_tests_path(path)
+
+    def _is_valid_packaged_notebook_path(self, path: Path, part_count: int) -> bool:
+        """Return whether a path is the allowed exercise-local student notebook."""
+        expected_depth = self._SUBDIR_INDEX + 2
+        if part_count != expected_depth:
+            return False
+        return path.is_file() and path.name == self._STUDENT_NOTEBOOK_FILENAME
+
+    @staticmethod
+    def _is_valid_packaged_tests_path(path: Path) -> bool:
+        """Return whether a path is valid under the packaged exercise tests subtree."""
+        return not (path.is_file() and path.suffix == ".ipynb")
+
+    def _has_invalid_exercises_tree(self, workspace: Path) -> bool:
+        """Return whether the packaged exercises tree contains invalid assets."""
+        exercises_dir = workspace / "exercises"
+        if not exercises_dir.exists():
+            return False
+        if not exercises_dir.is_dir():
+            return True
+
+        for path in exercises_dir.rglob("*"):
+            if path.name in self.FORBIDDEN_AUTHORING_FILENAMES:
+                return True
+            if not self._is_valid_packaged_exercise_path(path, exercises_dir):
+                return True
+
+        return False
+
+    def _contains_authoring_only_assets(self, workspace: Path) -> bool:
+        """Return whether a packaged workspace still contains authoring-only assets."""
+        if self._has_invalid_exercises_tree(workspace):
+            return True
+
+        return any(
+            next(workspace.rglob(filename), None) is not None
+            for filename in self.FORBIDDEN_AUTHORING_FILENAMES
+        )
 
     def validate_package(self, workspace: Path) -> bool:
         """Validate package integrity.
@@ -220,53 +303,54 @@ class TemplatePackager:
         Returns:
             True if package is valid, False otherwise.
         """
-        # Check required files exist
+        if self._contains_authoring_only_assets(workspace):
+            return False
+
+        snapshot_path = get_catalogue_snapshot_path(
+            workspace / "exercise_runtime_support")
         required_files = [
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
             workspace / "scripts" / "build_autograde_payload.py",
             workspace / ".github" / "workflows" / "classroom.yml",
+            snapshot_path,
         ]
 
         tests_dir = workspace / "tests"
         required_files.extend(
-            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES)
-
+            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES
+        )
         for required_file in required_files:
             if not required_file.exists():
                 return False
 
-        # Check required directories exist
-        required_dirs = [
-            workspace / "notebooks",
-            tests_dir,
-        ]
+        required_dirs = [workspace / "exercises", tests_dir]
         required_dirs.extend(
-            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES)
-
+            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
+        )
+        required_dirs.extend(
+            workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
+        )
         for required_dir in required_dirs:
             if not required_dir.exists() or not required_dir.is_dir():
                 return False
 
+        try:
+            load_catalogue_snapshot(snapshot_path)
+        except (OSError, TypeError, ValueError, KeyError):
+            return False
+
         return True
 
     def _is_safe_workspace(self, workspace: Path) -> bool:
-        """Check whether the given path looks like a valid temporary workspace.
-
-        A safe workspace is:
-        - Located inside the system temporary directory, and
-        - Has the expected prefix used by create_workspace(), and
-        - Is an existing directory.
-        """
-        # Normalize and resolve paths to avoid traversal tricks.
+        """Check whether the given path looks like a valid temporary workspace."""
         workspace_path = Path(workspace).resolve()
         temp_root = Path(tempfile.gettempdir()).resolve()
 
         try:
             workspace_path.relative_to(temp_root)
         except ValueError:
-            # Workspace is not inside the system temp directory.
             return False
 
         if not workspace_path.name.startswith("template_repo_"):
@@ -281,10 +365,6 @@ class TemplatePackager:
             workspace: Workspace directory to remove.
         """
         workspace_path = Path(workspace)
-
-        # Only remove directories that look like workspaces created by
-        # create_workspace(). This helps prevent accidental deletion of
-        # important non-temporary directories.
         if not self._is_safe_workspace(workspace_path):
             return
 

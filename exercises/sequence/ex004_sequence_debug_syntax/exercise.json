@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex004_sequence_debug_syntax",
+  "exercise_id": 4,
+  "slug": "ex004_sequence_debug_syntax",
+  "title": "Debug Syntax Errors",
+  "construct": "sequence",
+  "exercise_type": "debug",
+  "parts": 10
+}

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex006_sequence_modify_casting",
+  "exercise_id": 6,
+  "slug": "ex006_sequence_modify_casting",
+  "title": "Casting and Type Conversion",
+  "construct": "sequence",
+  "exercise_type": "modify",
+  "parts": 10
+}

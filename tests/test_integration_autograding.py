@@ -69,12 +69,17 @@ def _run_cli(  # noqa: PLR0913 - helper mirrors CLI signature
     results_path: Path,
     output_path: Path,
     pytest_args: list[str],
+    variant: str,
     env_overrides: EnvOverrides = None,
     bypass_env_validation: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     results_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    cli_args = [f"--results-json={results_path}", f"--output={output_path}"]
+    cli_args = [
+        f"--results-json={results_path}",
+        f"--output={output_path}",
+        f"--variant={variant}",
+    ]
     for chunk in pytest_args:
         cli_args.append(f"--pytest-args={chunk}")
 
@@ -85,7 +90,7 @@ def _run_cli(  # noqa: PLR0913 - helper mirrors CLI signature
             import sys
             from scripts import build_autograde_payload as cli
 
-            cli.validate_environment = lambda: None
+            cli.validate_environment = lambda *_args, **_kwargs: None
             raise SystemExit(cli.main({cli_args!r}))
             """)
         command = [sys.executable, "-c", override_code]
@@ -211,6 +216,7 @@ def _run_cli_autograde(
     target_test: Path,
     env_overrides: EnvOverrides,
     *,
+    variant: str,
     bypass_env_validation: bool = False,
 ) -> tuple[subprocess.CompletedProcess[str], AutogradePayloadDict]:
     results_path = working_dir / "cli" / "results.json"
@@ -220,6 +226,7 @@ def _run_cli_autograde(
         results_path=results_path,
         output_path=output_path,
         pytest_args=[PLUGIN_FLAG, str(target_test)],
+        variant=variant,
         env_overrides=env_overrides,
         bypass_env_validation=bypass_env_validation,
     )
@@ -245,7 +252,7 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
         project_dir,
         results_path=manual_results,
         pytest_args=[str(test_file)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": None},
+        env_overrides={"PYTUTOR_ACTIVE_VARIANT": None},
     )
     assert manual_results.exists()
     recorded = _load_results(manual_results)
@@ -257,7 +264,8 @@ def test_full_autograding_flow(tmp_path: Path) -> None:
         results_path=cli_results,
         output_path=cli_output,
         pytest_args=[PLUGIN_FLAG, str(test_file)],
-        env_overrides={"PYTUTOR_NOTEBOOKS_DIR": None},
+        variant="solution",
+        env_overrides={"PYTUTOR_ACTIVE_VARIANT": None},
     )
 
     payload = cast(AutogradePayloadDict, _decode_payload(cli_output))
@@ -272,31 +280,37 @@ def test_autograding_with_real_exercise(tmp_path: Path) -> None:
 
 
             def test_solution_notebook_env() -> None:
-                assert os.environ.get("PYTUTOR_NOTEBOOKS_DIR") == "notebooks/solutions", (
-                    "Solution autograding must run with PYTUTOR_NOTEBOOKS_DIR='notebooks/solutions'; "
-                    "student runs intentionally fail when this is set to 'notebooks'."
+                assert os.environ.get("PYTUTOR_ACTIVE_VARIANT") == "solution", (
+                    "Solution autograding must run with PYTUTOR_ACTIVE_VARIANT='solution'; "
+                    "student runs intentionally fail when this is set to 'student'."
                 )
             """).lstrip(),
         encoding="utf-8",
     )
 
-    solution_env: EnvOverrides = {"PYTUTOR_NOTEBOOKS_DIR": "notebooks/solutions"}
+    solution_env: EnvOverrides = {"PYTUTOR_ACTIVE_VARIANT": "solution"}
     solution_dir = tmp_path / "solutions"
     sol_run, sol_results = _run_manual_autograde(solution_dir, target_test, solution_env)
     sol_cli_run, sol_payload = _run_cli_autograde(
         solution_dir,
         target_test,
         solution_env,
+        variant="solution",
         bypass_env_validation=True,
     )
 
     _assert_cli_alignment(sol_cli_run, sol_run, sol_payload, sol_results)
     _expect_solution_success(sol_run, sol_payload, sol_results)
 
-    student_env: EnvOverrides = {"PYTUTOR_NOTEBOOKS_DIR": "notebooks"}
+    student_env: EnvOverrides = {"PYTUTOR_ACTIVE_VARIANT": "student"}
     student_dir = tmp_path / "students"
     student_run, student_results = _run_manual_autograde(student_dir, target_test, student_env)
-    student_cli_run, student_payload = _run_cli_autograde(student_dir, target_test, student_env)
+    student_cli_run, student_payload = _run_cli_autograde(
+        student_dir,
+        target_test,
+        student_env,
+        variant="student",
+    )
 
     _assert_cli_alignment(student_cli_run, student_run, student_payload, student_results)
     _expect_student_failure(student_run, student_payload, student_results)

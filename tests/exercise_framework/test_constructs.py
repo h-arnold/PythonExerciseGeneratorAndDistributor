@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from tests.exercise_framework import constructs, paths, runtime
-from tests.exercise_framework.expectations import EX002_NOTEBOOK_PATH
+from tests.exercise_framework import constructs, runtime
+
+_EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 
 
 def _exercise_code(exercise_no: int) -> str:
-    notebook_path = paths.resolve_notebook_path(EX002_NOTEBOOK_PATH)
-    return runtime.extract_tagged_code(notebook_path, tag=f"exercise{exercise_no}")
+    return runtime.extract_tagged_code(
+        _EX002_EXERCISE_KEY,
+        tag=f"exercise{exercise_no}",
+        variant="solution",
+    )
 
 
 def test_ex002_print_usage_is_detected_via_ast() -> None:

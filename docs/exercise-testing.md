@@ -2,6 +2,12 @@
 
 This document outlines the testing philosophy and conventions for verifying student notebook exercises.
 
+> Source of truth: execution behaviour and fail-fast rules are defined in [docs/execution-model.md](execution-model.md).
+
+## Repository status
+
+Prefer explicit variant selection in tooling and CI. Canonical notebook resolution now starts from `exercise_key` and the exercise-local source tree.
+
 ## Philosophy: "Task Completion" with Good Habits
 
 The goal of our tests is to verify that a student has **achieved the learning objective** while fostering precise coding habits.
@@ -446,7 +452,7 @@ def test_exercise1_formatting():
 ## Technical Reference: Exercise Framework
 
 The testing framework now lives under [tests/exercise_framework/](../tests/exercise_framework/).
-Use the runtime helpers and shared expectations when authoring or updating tests.
+Use the runtime helpers and keep exercise-specific support modules beside the canonical exercise-local test file when authoring or updating tests.
 
 ### Core Modules and Responsibilities
 
@@ -457,8 +463,8 @@ Use the runtime helpers and shared expectations when authoring or updating tests
 - `reporting.py`: table formatting and error normalisation for student-facing output.
 - `api.py`: stable entry points for scripts and CLI checks.
 
-Exercise-specific expectations data lives under [tests/exercise_expectations/](../tests/exercise_expectations/).
-Treat those modules as the canonical source of expected outputs, prompt text, and input data.
+Exercise-specific expected outputs, prompt text, and input data should live under each exercise's canonical test directory, for example [exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py](../exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py).
+Treat those exercise-local modules as the canonical source of support data for that exercise.
 
 ### Runtime Helpers
 
@@ -468,11 +474,15 @@ Treat those modules as the canonical source of expected outputs, prompt text, an
 
 **Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
 
-- **Parameters**: `notebook_path` (str/Path), `tag` (str)
+- **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str)
 - **Returns**: Captured stdout. `input()` prompts are included.
 
 ```python
-output = runtime.run_cell_and_capture_output("notebooks/ex001.ipynb", tag="exercise1")
+output = runtime.run_cell_and_capture_output(
+    "ex002_sequence_modify_basics",
+    tag="exercise1",
+    variant="solution",
+)
 assert output.strip() == "Hello Python!"
 ```
 
@@ -480,15 +490,16 @@ assert output.strip() == "Hello Python!"
 
 For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
 
-- **Parameters**: `notebook_path` (str/Path), `tag` (str), `inputs` (list[str])
+- **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str), `inputs` (list[str])
 - **Returns**: Captured stdout (including prompts).
 - **Raises**: `RuntimeError` if code calls `input()` more times than provided.
 
 ```python
 output = runtime.run_cell_with_input(
-    "notebooks/ex002.ipynb",
+    "ex003_sequence_modify_variables",
     tag="exercise1",
-    inputs=["Alice", "Smith"]
+    inputs=["Alice", "Smith"],
+    variant="solution",
 )
 assert "Alice Smith" in output
 ```
@@ -497,11 +508,15 @@ assert "Alice Smith" in output
 
 Extracts content from markdown reflection cells.
 
-- **Parameters**: `notebook_path` (str/Path), `tag` (str)
+- **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str)
 - **Returns**: Cell content string.
 
 ```python
-expl = runtime.get_explanation_cell("notebooks/ex.ipynb", tag="explanation1")
+expl = runtime.get_explanation_cell(
+    "ex004_sequence_debug_syntax",
+    tag="explanation1",
+    variant="solution",
+)
 assert len(expl.strip()) > 10
 ```
 
@@ -512,7 +527,11 @@ assert len(expl.strip()) > 10
 Extracts raw source code from tagged cells. Useful for **AST checks** (verifying constructs).
 
 ```python
-code = runtime.extract_tagged_code(path, tag="exercise1")
+code = runtime.extract_tagged_code(
+    "ex002_sequence_modify_basics",
+    tag="exercise1",
+    variant="solution",
+)
 assert "for " in code, "Must use a for loop"
 ```
 
@@ -524,35 +543,31 @@ Low-level executor. Returns the variable namespace (dict). Useful if you need to
 
 #### `runtime.resolve_notebook_path(notebook_path) -> Path`
 
-Most tests use `NOTEBOOK_PATH` constant. This function resolves that path, strictly adhering to the `PYTUTOR_NOTEBOOKS_DIR` environment variable if set.
+Most tests use an `EXERCISE_KEY` constant. This function resolves that key, or an explicit canonical notebook `Path`, using the active variant contract and current resolver settings.
+
+Path-like strings such as `"notebooks/ex001_slug.ipynb"` are rejected; use the exercise key instead.
 
 **Usage in tests**:
 Tests generally define a constant at the top:
 
 ```python
-NOTEBOOK_PATH = "notebooks/ex001_slug.ipynb"
+EXERCISE_KEY = "ex001_slug"
 ```
 
 The runtime helpers call `resolve_notebook_path` internally, so you usually don't need to call this directly.
 
-#### `PYTUTOR_NOTEBOOKS_DIR`
-
-Environment variable to redirect tests to a different directory (e.g., solutions).
-
-```bash
-# Run tests against solution notebooks
-export PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions
-uv run pytest -q
-```
-
 ### Expectations Modules
 
-Exercise expectations live in [tests/exercise_expectations/](../tests/exercise_expectations/).
-Tests should import expectations from there instead of hard-coding outputs or prompts.
+Exercise expectations should live beside the canonical exercise-local test file under `exercises/<construct>/<exercise_key>/tests/`.
+Tests should load that exercise-local support data instead of hard-coding outputs or prompts.
 Example for ex002:
 
 ```python
-from tests.exercise_expectations import EX002_EXPECTED_SINGLE_LINE
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+
+ex002 = load_exercise_test_module("ex002_sequence_modify_basics", "expectations")
+
+assert ex002.EX002_EXPECTED_SINGLE_LINE
 ```
 
 ### Reporting Helpers
@@ -560,7 +575,7 @@ from tests.exercise_expectations import EX002_EXPECTED_SINGLE_LINE
 Student-facing check tables should be generated via [tests/exercise_framework/reporting.py](../tests/exercise_framework/reporting.py)
 so formatting and error normalisation stay consistent across exercises.
 
-The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`, `Error`) are now the same grouped output shown in the final check-your-answers cells for ex003 through ex007. Each notebook now imports `tests.student_checker` and calls `check_notebook('<slug>')`, which runs the specialised printers so every check gets its own row instead of the older single summary entry that appeared for ex003 and later. Treat this grouped layout as the canonical student-facing summary for all multi-part notebooks.
+The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`, `Error`) are now the same grouped output shown in the final check-your-answers cells for ex003 through ex007. Each self-check cell now imports `exercise_runtime_support.student_checker` and calls `run_notebook_checks('<exercise_key>')`, which runs the specialised printers so every check gets its own row instead of the older single summary entry that appeared for ex003 and later. Treat this grouped layout as the canonical student-facing summary for all multi-part notebooks.
 
 `render_grouped_table_with_errors` keeps long error text inside the Error column, so wrapped lines appear as continuation text without inserting extra grid separators. When reading new checker output you will therefore see multi-line errors indented in a single Error cell while the Exercise/Check/Status columns remain blank on the continuation lines.
 
@@ -573,16 +588,19 @@ The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`,
 uv run pytest -q
 
 # Run specific test file
-uv run pytest tests/test_ex001_sanity.py -v
+uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -v
 
 # Run and show output (debug prints)
-uv run pytest tests/test_ex001_sanity.py -s
+uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -s
 ```
 
 ### CI/CD
 
-- **`.github/workflows/tests.yml`**: Runs tests on every push/PR with `PYTUTOR_NOTEBOOKS_DIR=notebooks/solutions` (verifying the instructor solutions pass).
-- **GitHub Classroom**: Runs tests against the student's submission (default path).
+Source-repository validation and exported Classroom autograding are different workflows.
+
+- **`.github/workflows/tests.yml`**: Push/PR validation for the authoring repository. It checks pytest collection/discovery and then runs the explicit `scripts/run_pytest_variant.py --variant solution -q` pass.
+- **`.github/workflows/tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional pytest args for targeted solution checks.
+- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-free student contract.
 
 ## Cell Tagging
 
