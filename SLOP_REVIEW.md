@@ -116,6 +116,35 @@ Verification completed:
 - `uv run pytest tests/exercise_runtime_support/test_execution_variant.py tests/exercise_framework/test_paths.py tests/exercise_framework/test_parity_paths.py tests/exercise_framework/test_runtime.py -q`
 - `uv run ruff check exercise_runtime_support/execution_variant.py tests/exercise_runtime_support/test_execution_variant.py`
 
+### Phase 5 Complete (student-checker notebook validation tightening)
+
+- Status: complete
+- Commit: `c41a30f` (`cleanup: tighten student checker notebook validation`)
+- Branch: `chore/SlopCleanup` (pushed)
+
+Changes delivered:
+
+- Tightened structural validation in `exercise_runtime_support/student_checker/notebook_runtime.py` to fail fast for malformed notebook JSON:
+  - top-level JSON must be an object
+  - `cells` must be a list of valid notebook cell objects
+  - each cell must include a string `cell_type`
+  - malformed `source`/`metadata`/`metadata.tags` shapes are rejected during load validation
+- Inlined local runtime narrowing helpers with `TypeGuard` in `notebook_runtime.py` and removed dependency on the separate typeguard module.
+- Added/extended tests in `tests/exercise_runtime_support/test_student_checker_notebook_runtime.py` to cover:
+  - non-object JSON
+  - missing/invalid `cells`
+  - mixed-content `cells`
+  - invalid tagged cell shapes (for example invalid `source` type or missing `cell_type`)
+- Kept existing reporting behavior tests unchanged and passing.
+
+Verification completed:
+
+- `uv run pyright exercise_runtime_support/student_checker/notebook_runtime.py`
+- `uv run pytest tests/exercise_runtime_support/test_student_checker_notebook_runtime.py -q`
+- `uv run pytest tests/exercise_runtime_support/test_student_checker_reporting.py -q`
+- `uv run pytest tests/exercise_runtime_support -k notebook_runtime -q`
+- `uv run ruff check exercise_runtime_support/student_checker/notebook_runtime.py tests/exercise_runtime_support/test_student_checker_notebook_runtime.py`
+
 
 ## Scope
 
