@@ -44,5 +44,5 @@
     },
     "chat.customAgentInSubagent.enabled": true,
     "debug.showSubSessionsInToolBar": true,
-    "chat.disableAIFeatures": true
+    "chat.disableAIFeatures": false
 }
