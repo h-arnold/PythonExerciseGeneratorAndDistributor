@@ -217,6 +217,7 @@ The sub-agents you can call are (first-line names are case-sensitive):
 - **Exercise Generation** — `.github/agents/exercise_generation.md.agent.md`  (first line: `Exercise Generation`)
 - **Exercise Verifier** — `.github/agents/exercise_verifier.md.agent.md`  (first line: `Exercise Verifier`)
 - **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
+- **Planner Reviewer** — `.github/agents/planner-reviewer.agent.md`  (first line: `Planner Reviewer`)
 - **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
 
 ## Implementation Workflow
