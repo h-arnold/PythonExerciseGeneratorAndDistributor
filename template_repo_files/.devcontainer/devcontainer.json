@@ -26,6 +26,10 @@
         ],
         "python.analysis.typeCheckingMode": "basic",
         "python.formatting.provider": "none",
+
+        // Copilot chat features
+        "chat.disableAIFeatures": true,
+        
         
         // Editor configuration
         "editor.formatOnSave": true,
@@ -75,4 +79,5 @@
 
   // Features to disable (keep minimal)
   "features": {}
+
 }

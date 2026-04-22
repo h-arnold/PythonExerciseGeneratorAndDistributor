@@ -43,5 +43,6 @@
         "ruff": true    
     },
     "chat.customAgentInSubagent.enabled": true,
-    "debug.showSubSessionsInToolBar": true
+    "debug.showSubSessionsInToolBar": true,
+    "chat.disableAIFeatures": true
 }
