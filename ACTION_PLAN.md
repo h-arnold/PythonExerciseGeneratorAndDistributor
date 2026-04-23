@@ -322,3 +322,24 @@ Implementation notes:
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `d996b8d` - `chore: record section 4 execution tracker status`
   - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+
+### Section 5 - Selector Fail-Fast Behavior Tightening
+
+- Status: Completed
+- Red tests added: Completed
+- Red review clean: Completed
+- Green implementation complete: Completed
+- Green review clean: Completed
+- Checks passed: Completed
+- Action plan updated: Completed
+- Commit created: Completed (section code commit recorded)
+- Push completed: Pending
+
+Implementation notes:
+- Added red-phase selector coverage to assert missing-manifest behaviour across selector-backed entrypoints with the required `Migration manifest not found` fragment.
+- Removed selector-side silent empty-registry fallback so missing migration manifests now fail fast by propagating metadata loader `FileNotFoundError`.
+- Preserved existing `ValueError` semantics for invalid selected exercise keys in manifest-present flows.
+- Section 5 targeted checks and full solution-variant run passed after implementation.
+- Commit evidence (code):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `d135161` - `fix: fail fast in selector when manifest is missing`
