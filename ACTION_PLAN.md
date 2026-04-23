@@ -307,7 +307,7 @@ Implementation notes:
 - Checks passed: Completed
 - Action plan updated: Completed
 - Commit created: Completed (section code commit recorded)
-- Push completed: Pending
+- Push completed: Completed
 
 Implementation notes:
 - Added isolated Section 4 contract coverage in `tests/template_repo_cli/test_section4_metadata_contract.py` to keep metadata-surface assertions explicit and maintainable.
@@ -318,3 +318,7 @@ Implementation notes:
 - Commit evidence (code):
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `3f6ad43` - `refactor: enforce metadata-surface packaging contract`
+- Commit evidence (plan/tracker):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `d996b8d` - `chore: record section 4 execution tracker status`
+  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
