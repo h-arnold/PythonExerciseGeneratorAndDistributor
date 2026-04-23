@@ -29,28 +29,20 @@ class NotebookGradingError(RuntimeError):
     pass
 
 
-def resolve_notebook_path(
-    notebook_path: str | Path,
-    *,
-    variant: Variant | None = None,
-) -> Path:
-    """Resolve an exercise_key string or explicit notebook Path."""
-    return resolve_framework_notebook_path(notebook_path, variant=variant)
-
-
 def _read_notebook(
     notebook_path: str | Path,
     *,
     variant: Variant | None = None,
 ) -> dict[str, Any]:
-    path = resolve_notebook_path(notebook_path, variant=variant)
+    path = resolve_framework_notebook_path(notebook_path, variant=variant)
     if not path.exists():
         raise NotebookGradingError(f"Notebook not found: {path}")
 
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise NotebookGradingError(f"Invalid JSON in notebook: {path}") from exc
+        raise NotebookGradingError(
+            f"Invalid JSON in notebook: {path}") from exc
 
 
 def _cell_tags(cell: NotebookCell | dict[str, Any]) -> set[str]:
@@ -115,7 +107,8 @@ def extract_tagged_code(
     if not isinstance(cells, list):
         raise NotebookGradingError("Notebook has no 'cells' list")
 
-    tagged_sources = _collect_tagged_sources(cast(Sequence[object], cells), tag)
+    tagged_sources = _collect_tagged_sources(
+        cast(Sequence[object], cells), tag)
 
     if not tagged_sources:
         raise NotebookGradingError(
@@ -154,7 +147,7 @@ def exec_tagged_code(
 
     code = extract_tagged_code(notebook_path, tag=tag, variant=variant)
 
-    path = resolve_notebook_path(notebook_path, variant=variant)
+    path = resolve_framework_notebook_path(notebook_path, variant=variant)
     filename = filename_hint or str(path)
 
     ns: dict[str, Any] = {

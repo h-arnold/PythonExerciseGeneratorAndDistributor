@@ -76,7 +76,7 @@ Integration tests for the template repository CLI. These tests verify:
 - Configuration parsing and selection logic.
 - Packaging behaviour (e.g., that `TemplatePackager` copies the required base files, runtime-only shared `tests/` infrastructure for exercise checks and notebook self-checks, and the `.github` workflow directory).
 
-> **Tip:** The `tests/template_repo_cli/conftest.py` file exposes useful pytest fixtures (e.g., `repo_root`, `temp_dir`, `sample_exercises`, and `mock_gh_*`) that are intentionally reusable for new tests.
+> **Note:** Test-only helpers and fixtures are kept under `tests/` and are not part of the runtime surface. The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
 ### 3. Supporting helpers & locations
 
@@ -87,20 +87,24 @@ This repository provides a small set of shared helpers used across infrastructur
 - `exercise_runtime_support/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The compatibility wrapper at `tests/notebook_grader.py` exists for repository/test-template parity.
 
 - `scripts/template_repo_cli/utils/` — utility functions for the template CLI and packager, notably:
-  - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`, `resolve_notebook_path`)
+  - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`)
   - `validation.py` (name/construct/type validators; note that exercise type is canonical metadata rather than a canonical path segment)
-  - `config.py` (configuration helpers)
 
 - `scripts/template_repo_cli/core/` — core components implementing CLI behaviour: `collector.py`, `packager.py`, `selector.py`, and `github.py`.
 
 Important note on similarly-named helpers:
 
-- There are three helpers named `resolve_notebook_path()` in the codebase:
+- There are two supported `resolve_notebook_path()` helpers in the codebase:
 - `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path` is the framework entry point and respects the current notebook-variant selection.
-- `exercise_runtime_support.notebook_grader::resolve_notebook_path` is a low-level helper used by the framework runtime.
-- `scripts/template_repo_cli/utils/filesystem.py::resolve_notebook_path` is a small CLI utility used for local path resolution in packaging.
+- `exercise_metadata.resolver::resolve_notebook_path` resolves canonical notebook locations directly from `exercise_key` metadata.
 
-Recommendation: Use the helper from `exercise_runtime_support.exercise_framework.paths` or `exercise_runtime_support.exercise_framework.runtime` when writing tests or tooling that interacts with student/solution notebooks; use the CLI utility for packager and local filesystem logic. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
+Breaking-change migration note:
+
+- Removed symbols: `exercise_runtime_support.notebook_grader::resolve_notebook_path` and `exercise_runtime_support.exercise_framework.runtime::resolve_notebook_path`.
+- Canonical replacement for runtime and test helpers: `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path`.
+- Canonical replacement for metadata-driven canonical lookup: `exercise_metadata.resolver::resolve_notebook_path`.
+
+Recommendation: For runtime and test execution helpers, use `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path`. For template CLI canonical file collection, use `exercise_metadata.resolver::resolve_notebook_path`. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
 
 Resolver identity contract:
 

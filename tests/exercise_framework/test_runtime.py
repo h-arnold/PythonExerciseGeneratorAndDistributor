@@ -9,7 +9,8 @@ import pytest
 
 from exercise_runtime_support import notebook_grader
 from exercise_runtime_support.execution_variant import Variant
-from tests.exercise_framework import runtime
+from exercise_runtime_support.exercise_framework import runtime
+from tests.exercise_framework import paths
 
 EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
@@ -76,6 +77,15 @@ def test_runtime_extract_helper_matches_notebook_grader() -> None:
     )
 
     assert from_runtime == from_grader
+
+
+def test_runtime_module_does_not_expose_removed_resolve_notebook_path_wrapper() -> None:
+    assert not hasattr(runtime, "resolve_notebook_path")
+    assert "resolve_notebook_path" not in runtime.__all__
+
+
+def test_notebook_grader_module_does_not_expose_removed_resolve_notebook_path_wrapper() -> None:
+    assert not hasattr(notebook_grader, "resolve_notebook_path")
 
 
 def test_runtime_reports_missing_tag_with_same_error_message(tmp_path: Path) -> None:
@@ -216,7 +226,7 @@ def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
     assert get_call_count() == EXPECTED_CALL_COUNT_FOR_DISTINCT_INPUTS
 
 
-def test_runtime_solution_variant_resolves_migrated_exercise_key() -> None:
+def test_paths_solution_variant_resolves_migrated_exercise_key() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     expected = (
         repo_root
@@ -227,10 +237,8 @@ def test_runtime_solution_variant_resolves_migrated_exercise_key() -> None:
         / "solution.ipynb"
     )
 
-    from_runtime = runtime.resolve_notebook_path(
-        EX007_EXERCISE_KEY, variant="solution")
-    from_grader = notebook_grader.resolve_notebook_path(
+    resolved = paths.resolve_notebook_path(
         EX007_EXERCISE_KEY, variant="solution")
 
-    assert from_runtime == from_grader == expected
-    assert from_runtime.exists()
+    assert resolved == expected
+    assert resolved.exists()

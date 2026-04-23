@@ -26,6 +26,10 @@
         ],
         "python.analysis.typeCheckingMode": "basic",
         "python.formatting.provider": "none",
+
+        // Copilot chat features
+        "chat.disableAIFeatures": true,
+        
         
         // Editor configuration
         "editor.formatOnSave": true,
@@ -36,11 +40,29 @@
           }
         },
         
-        // File exclusions
+        // File exclusions - we keep a minimal set of folders visible to avoid extraneous cognitive load
         "files.exclude": {
           "**/__pycache__": true,
           "**/*.pyc": true,
-          "**/.pytest_cache": true
+          "**/.pytest_cache": true,
+          "**/.github": true,
+          "**/.git": true,
+          "**/.svn": true,
+          "**/.hg": true,
+          "**/.DS_Store": true,
+          "**/Thumbs.db": true,
+          "**/*.crswap": true,
+          "**/scripts": true,
+          "**/tests": true,
+          "**/exercise_runtime_support": true,
+          "**/.devcontainer": true,
+          ".devcontainer": true,
+          ".venv": true,
+          "**/.venv": true,
+          "pyproject.toml": true,
+          ".gitignore": true,
+          "pytest.ini": true,
+          "uv.lock": true
         },
         
         // Jupyter configuration
@@ -63,8 +85,8 @@
 
 
   // Post-create command to install the exercise package if pyproject.toml exists
-  "postCreateCommand": "[ -f pyproject.toml ] && (uv sync && . .venv/bin/activate) || echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'",
-
+  "postCreateCommand": "command -v uv >/dev/null 2>&1 || python -m pip install --user uv==0.8.22; python -m uv sync && . .venv/bin/activate",
+  "postStartCommand": "[ -f pyproject.toml ] && (uv sync && . .venv/bin/activate) || echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'",
   // Use the 'vscode' user which already exists in the base image
   "remoteUser": "vscode",
 
@@ -75,4 +97,5 @@
 
   // Features to disable (keep minimal)
   "features": {}
+
 }

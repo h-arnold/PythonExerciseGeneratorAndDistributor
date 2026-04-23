@@ -54,38 +54,4 @@ def safe_copy_directory(
     shutil.copytree(source, dest, dirs_exist_ok=True, ignore=ignore)
 
 
-def resolve_notebook_path(notebook_path: str) -> Path:
-    """Resolve notebook path.
 
-    Converts relative or notebook-name-only paths to absolute paths.
-
-    Args:
-        notebook_path: Notebook path (absolute, relative, or just filename).
-
-    Returns:
-        Absolute Path object.
-    """
-    path = Path(notebook_path)
-
-    # If already absolute, return it
-    if path.is_absolute():
-        return path
-
-    # If it's just a filename (no directory parts), look in notebooks/
-    if len(path.parts) == 1:
-        # Assume it's in the notebooks directory
-        return Path.cwd() / "notebooks" / path
-
-    # Otherwise, resolve relative to current directory
-    return Path.cwd() / path
-
-
-def create_directory_structure(target: Path) -> None:
-    """Create directory structure.
-
-    Creates all parent directories as needed.
-
-    Args:
-        target: Target directory path to create.
-    """
-    target.mkdir(parents=True, exist_ok=True)

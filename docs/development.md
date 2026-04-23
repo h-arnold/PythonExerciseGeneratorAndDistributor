@@ -2,7 +2,7 @@
 
 This guide is for contributors and maintainers working on the Python Tutor Exercises infrastructure.
 
-> Source of truth: execution and variant contracts are defined in [docs/execution-model.md](execution-model.md).
+> Source of truth: execution and variant contracts are defined in [docs/execution-model.md](execution-model.md). The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
 ## Repository status
 

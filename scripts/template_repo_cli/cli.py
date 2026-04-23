@@ -28,12 +28,6 @@ _OUTPUT_DIRECTORY_EXCEPTIONS = (
 )
 
 
-def _is_fatal_control_flow_exception(error: BaseException) -> bool:
-    """Return True when an exception must escape defensive handlers."""
-
-    return isinstance(error, (GeneratorExit, KeyboardInterrupt, SystemExit))
-
-
 def get_repo_root() -> Path:
     """Get repository root directory."""
     # Assume we're running from repository root
@@ -81,7 +75,8 @@ def _select_exercises(args: argparse.Namespace, selector: ExerciseSelector) -> l
     elif args.type:
         return selector.select_by_type(args.type)
     else:
-        raise ValueError("Must specify --construct, --type, or --exercise-keys")
+        raise ValueError(
+            "Must specify --construct, --type, or --exercise-keys")
 
 
 def _check_github_prerequisites(github: GitHubClient) -> str | None:
@@ -107,70 +102,6 @@ def _check_github_prerequisites(github: GitHubClient) -> str | None:
         return (
             f"Current GitHub authentication is missing required scopes: {missing}. "
             f"Run 'gh auth refresh -s repo' to add the required scopes."
-        )
-
-    return None
-
-
-def _detect_auth_token_env() -> str | None:
-    """Return which GitHub auth-related environment variable is set, if any."""
-
-    for key in ("GITHUB_TOKEN", "GH_TOKEN"):
-        if os.getenv(key):
-            return key
-    return None
-
-
-def _github_permission_hint(error: str | None) -> str | None:
-    """Return actionable hint for permission-related GitHub errors."""
-
-    if not error:
-        return None
-
-    message = error.lower()
-    if "resource not accessible by integration" in message and "createrepository" in message:
-        env_key = _detect_auth_token_env()
-        base = (
-            "The current GitHub authentication token cannot create repositories. "
-            "Run `gh auth login` with a user account/token that has the `repo` scope "
-            "or provide a personal access token via GH_TOKEN."
-        )
-
-        if env_key == "GITHUB_TOKEN":
-            base += (
-                " It looks like GITHUB_TOKEN is set (e.g., from GitHub Apps or CI). "
-                "Unset GITHUB_TOKEN before running `gh auth login` so you can authenticate "
-                "as a user with repo permissions."
-            )
-        elif env_key == "GH_TOKEN":
-            base += " Ensure GH_TOKEN references a personal access token with the `repo` scope."
-
-        return base
-
-    return None
-
-
-def _is_integration_permission_error(error: str | None) -> bool:
-    """Return True if createRepository permissions error is reported."""
-
-    if not error:
-        return False
-
-    message = error.lower()
-    return "resource not accessible by integration" in message and "createrepository" in message
-
-
-def _github_already_exists_hint(error: str | None, repo_name: str) -> str | None:
-    """Return actionable hint for 'repository already exists' errors."""
-
-    if not error:
-        return None
-
-    message = error.lower()
-    if "name already exists" in message or "already exists" in message:
-        return (
-            f"A repository named '{repo_name}' already exists. "
-            "Either delete the existing repository or choose a different name."
         )
 
     return None
@@ -220,7 +151,8 @@ def _handle_output_directory(workspace: Path, output_dir: str, packager: Templat
         traceback.print_exception(
             type(copy_error), copy_error, copy_error.__traceback__, file=sys.stderr
         )
-        print(f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
+        print(
+            f"Error saving output to {output_path}: {copy_error}", file=sys.stderr)
         print(f"Workspace preserved at: {workspace}", file=sys.stderr)
         return 1
 
@@ -283,14 +215,11 @@ def _should_retry_with_reauth(
     Returns:
         True if we should retry with reauthentication, False otherwise.
     """
-    if not env_key or already_reauthenticated:
+    if not github.should_offer_reauth_retry(error_msg, env_key, already_reauthenticated):
         return False
 
-    if not _is_integration_permission_error(error_msg):
-        return False
-
-    scope_check = github.check_scopes(["repo"])
-    return not scope_check["has_scopes"] and _offer_unset_token_and_reauth(env_key)
+    assert env_key is not None
+    return _offer_unset_token_and_reauth(env_key)
 
 
 def _attempt_github_repo_creation(
@@ -333,18 +262,18 @@ def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
     Returns:
         Enhanced error message with hints.
     """
-    permission_hint = _github_permission_hint(error_msg)
-    if permission_hint:
-        return f"{error_msg}\n\n{permission_hint}"
-
-    exists_hint = _github_already_exists_hint(error_msg, args.repo_name)
+    exists_hint = GitHubClient.github_already_exists_hint(error_msg, args.repo_name)
     if exists_hint:
         return (
             f"{error_msg}\n\n{exists_hint}\n"
             "Use the update-repo command to push new contents to the existing repository."
         )
 
-    return error_msg
+    hint = GitHubClient.github_error_hint(error_msg, args.repo_name)
+    if not hint:
+        return error_msg
+
+    return f"{error_msg}\n\n{hint}"
 
 
 def _create_github_repo(
@@ -363,7 +292,7 @@ def _create_github_repo(
         Tuple of (success, error_message).
     """
     template_flag = not getattr(args, "no_template", False)
-    env_key = _detect_auth_token_env()
+    env_key = GitHubClient.detect_auth_token_env()
     already_reauthenticated = False
     first_attempt = True
 
@@ -384,7 +313,7 @@ def _create_github_repo(
         normalized_error = error_msg or "Unknown error"
         if _should_retry_with_reauth(github, normalized_error, env_key, already_reauthenticated):
             already_reauthenticated = True
-            env_key = _detect_auth_token_env()
+            env_key = GitHubClient.detect_auth_token_env()
             continue
 
         # Add hints to error message
@@ -646,7 +575,8 @@ def _execute_template_creation(  # noqa: PLR0913
             return 1
 
         # Create GitHub repository
-        result = _handle_repository_creation(args, github, workspace, packager, exercises)
+        result = _handle_repository_creation(
+            args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -655,17 +585,6 @@ def _execute_template_creation(  # noqa: PLR0913
 
     except (FileNotFoundError, ValueError, RuntimeError) as e:
         print(f"Error: {e}", file=sys.stderr)
-        packager.cleanup(workspace)
-        return 1
-    # Defensive broad catch to preserve the CLI's previous contract of failing
-    # cleanly on non-fatal workflow issues while still allowing fatal control-flow
-    # exceptions to propagate unchanged.
-    except BaseException as error:
-        if _is_fatal_control_flow_exception(error):
-            raise
-        print(f"Unexpected error: {error}", file=sys.stderr)
-        if args.verbose:
-            traceback.print_exc()
         packager.cleanup(workspace)
         return 1
 
@@ -688,7 +607,8 @@ def _execute_template_update(  # noqa: PLR0913
             packager.cleanup(workspace)
             return 1
 
-        result = _handle_repository_update(args, github, workspace, packager, exercises)
+        result = _handle_repository_update(
+            args, github, workspace, packager, exercises)
         if result != 0:
             return result
 
@@ -696,14 +616,6 @@ def _execute_template_update(  # noqa: PLR0913
 
     except (FileNotFoundError, ValueError, RuntimeError) as e:
         print(f"Error: {e}", file=sys.stderr)
-        packager.cleanup(workspace)
-        return 1
-    except BaseException as error:
-        if _is_fatal_control_flow_exception(error):
-            raise
-        print(f"Unexpected error: {error}", file=sys.stderr)
-        if args.verbose:
-            traceback.print_exc()
         packager.cleanup(workspace)
         return 1
 
@@ -738,12 +650,14 @@ def create_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
-    repo_root, selector, collector, packager, github = _initialize_components(args)
+    repo_root, selector, collector, packager, github = _initialize_components(
+        args)
 
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
+    workspace, exercises, files = _prepare_workspace(
+        args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
@@ -762,12 +676,14 @@ def update_repo_command(args: argparse.Namespace) -> int:
         print(message, file=sys.stderr)
         return 1
 
-    repo_root, selector, collector, packager, github = _initialize_components(args)
+    repo_root, selector, collector, packager, github = _initialize_components(
+        args)
 
     if args.verbose:
         print(f"Repository root: {repo_root}")
 
-    workspace, exercises, files = _prepare_workspace(args, selector, collector, packager)
+    workspace, exercises, files = _prepare_workspace(
+        args, selector, collector, packager)
     if workspace is None or exercises is None or files is None:
         return 1
 
@@ -830,33 +746,6 @@ def list_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _select_exercises_for_validation(
-    args: argparse.Namespace, selector: ExerciseSelector
-) -> list[str]:
-    """Select exercises for validation based on arguments.
-
-    Args:
-        args: Parsed command-line arguments.
-        selector: ExerciseSelector instance.
-
-    Returns:
-        List of exercise keys.
-
-    Raises:
-        ValueError: If invalid selection criteria or no criteria provided.
-    """
-    if args.exercise_keys:
-        return _select_by_exercise_keys(args, selector)
-    if args.construct and args.type:
-        return selector.select_by_construct_and_type(args.construct, args.type)
-    elif args.construct:
-        return selector.select_by_construct(args.construct)
-    elif args.type:
-        return selector.select_by_type(args.type)
-    else:
-        raise ValueError("Must specify --construct, --type, or --exercise-keys")
-
-
 def validate_command(args: argparse.Namespace) -> int:
     """Handle validate command.
 
@@ -872,7 +761,7 @@ def validate_command(args: argparse.Namespace) -> int:
 
     # Select exercises
     try:
-        exercises = _select_exercises_for_validation(args, selector)
+        exercises = _select_exercises(args, selector)
     except ValueError as e:
         print(f"Validation error: {e}", file=sys.stderr)
         return 1
@@ -920,20 +809,27 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Build and validate without executing gh commands",
     )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
-    parser.add_argument("--output-dir", type=str, help="Local output directory (default: temp)")
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Show detailed progress")
+    parser.add_argument("--output-dir", type=str,
+                        help="Local output directory (default: temp)")
 
     # Subcommands
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+    subparsers = parser.add_subparsers(
+        dest="command", help="Command to execute")
 
     # Create command
-    create_parser = subparsers.add_parser("create", help="Create template repository")
-    create_parser.add_argument("--construct", nargs="+", help="One or more constructs")
-    create_parser.add_argument("--type", nargs="+", help="One or more exercise types")
+    create_parser = subparsers.add_parser(
+        "create", help="Create template repository")
+    create_parser.add_argument(
+        "--construct", nargs="+", help="One or more constructs")
+    create_parser.add_argument(
+        "--type", nargs="+", help="One or more exercise types")
     create_parser.add_argument(
         "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
     )
-    create_parser.add_argument("--name", type=str, help="Template repository name/description")
+    create_parser.add_argument(
+        "--name", type=str, help="Template repository name/description")
     create_parser.add_argument(
         "--repo-name", type=str, required=True, help="GitHub repository name (slug)"
     )
@@ -958,8 +854,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # List command
-    list_parser = subparsers.add_parser("list", help="List available exercises")
-    list_parser.add_argument("--construct", type=str, help="Filter by construct")
+    list_parser = subparsers.add_parser(
+        "list", help="List available exercises")
+    list_parser.add_argument("--construct", type=str,
+                             help="Filter by construct")
     list_parser.add_argument("--type", type=str, help="Filter by type")
     list_parser.add_argument(
         "--format",
@@ -969,8 +867,10 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # Validate command
-    validate_parser = subparsers.add_parser("validate", help="Validate selection")
-    validate_parser.add_argument("--construct", nargs="+", help="Filter by construct")
+    validate_parser = subparsers.add_parser(
+        "validate", help="Validate selection")
+    validate_parser.add_argument(
+        "--construct", nargs="+", help="Filter by construct")
     validate_parser.add_argument("--type", nargs="+", help="Filter by type")
     validate_parser.add_argument(
         "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
@@ -981,12 +881,15 @@ def main(argv: list[str] | None = None) -> int:
         "update-repo",
         help="Update an existing template repository by pushing new contents",
     )
-    update_parser.add_argument("--construct", nargs="+", help="One or more constructs")
-    update_parser.add_argument("--type", nargs="+", help="One or more exercise types")
+    update_parser.add_argument(
+        "--construct", nargs="+", help="One or more constructs")
+    update_parser.add_argument(
+        "--type", nargs="+", help="One or more exercise types")
     update_parser.add_argument(
         "--exercise-keys", nargs="+", help="Specific exercise keys or exercise-key patterns"
     )
-    update_parser.add_argument("--name", type=str, help="Template repository name/description")
+    update_parser.add_argument(
+        "--name", type=str, help="Template repository name/description")
     update_parser.add_argument(
         "--repo-name",
         type=str,

@@ -220,37 +220,7 @@ class TestCopyFiles:
         assert json.loads(snapshot_path.read_text(
             encoding="utf-8")) == build_exercise_catalogue()
 
-    def test_copy_exercise_files_uses_exercise_local_destination_for_legacy_sources(
-        self,
-        template_packager: TemplatePackager,
-        temp_dir: Path,
-    ) -> None:
-        """Test legacy source files can still be exported to exercise-local Option A paths."""
 
-        legacy_test = temp_dir / "source" / "tests" / "test_ex999_legacy.py"
-        legacy_test.parent.mkdir(parents=True)
-        legacy_test.write_text(
-            "def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
-
-        legacy_notebook = temp_dir / "source" / "notebooks" / "ex999_legacy.ipynb"
-        legacy_notebook.parent.mkdir(parents=True)
-        legacy_notebook.write_text("{}", encoding="utf-8")
-
-        files: ExerciseFileMap = {
-            "ex999_legacy": ExerciseFiles(
-                notebook=legacy_notebook,
-                notebook_export=Path("exercises/legacy/ex999_legacy/notebooks/student.ipynb"),
-                test=legacy_test,
-                tests_export_dir=Path("exercises/legacy/ex999_legacy/tests"),
-            )
-        }
-
-        template_packager.copy_exercise_files(temp_dir, files)
-
-        assert (
-            temp_dir
-            / "exercises/legacy/ex999_legacy/tests/test_ex999_legacy.py"
-        ).exists()
 
     def test_copy_template_base_files_filters_runtime_catalogue_snapshot_for_subset(
         self,
