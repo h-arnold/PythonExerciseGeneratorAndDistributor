@@ -281,7 +281,7 @@ Implementation notes:
 - Checks passed: Completed
 - Action plan updated: Completed
 - Commit created: Completed (section code commit recorded)
-- Push completed: Pending
+- Push completed: Completed
 
 Implementation notes:
 - Added focused red-phase tests for canonical-only exercise test directory resolution and module loading behaviour.
@@ -292,3 +292,7 @@ Implementation notes:
 - Commit evidence (code):
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `d7d073a` - `refactor: enforce canonical-only exercise test support paths`
+- Commit evidence (plan/tracker):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `3f3d15d` - `chore: record section 3 execution tracker status`
+  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
