@@ -270,3 +270,25 @@ Implementation notes:
   - Push: commit is present on `origin/refactor/simplifyExerciseRegistry`
 - Deviation noted:
   - The section commit also touched `.codex/agents/tidy_code_review.toml` (outside the planned Section 2 file list). Kept as-is; no rollback performed.
+
+### Section 3 - Test-Support Canonical Path Enforcement
+
+- Status: Completed
+- Red tests added: Completed (`tests/exercise_runtime_support/test_exercise_test_support.py`)
+- Red review clean: Completed
+- Green implementation complete: Completed
+- Green review clean: Completed
+- Checks passed: Completed
+- Action plan updated: Completed
+- Commit created: Completed (section code commit recorded)
+- Push completed: Pending
+
+Implementation notes:
+- Added focused red-phase tests for canonical-only exercise test directory resolution and module loading behaviour.
+- Resolved red-review findings by replacing brittle source-text assertions with behaviour-based tests and ensuring local lint/type cleanliness for the test slice.
+- Removed legacy packaged fallback path resolution from `exercise_runtime_support/exercise_test_support.py`; resolution is now canonical-only via `exercises/<construct>/<exercise_key>/tests`.
+- Updated fail-fast error messaging to reference the missing canonical exercise-local tests directory explicitly.
+- Green-phase review passed with no findings after targeted verification.
+- Commit evidence (code):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `d7d073a` - `refactor: enforce canonical-only exercise test support paths`
