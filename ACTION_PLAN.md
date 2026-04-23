@@ -414,3 +414,22 @@ Cleanup notes:
 - Commit evidence (cleanup code):
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `097c889` - `refactor: remove duplicated runtime support copy path`
+- Commit evidence (cleanup tracker):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `2df1903` - `chore: record de-sloppification cleanup outcome`
+  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+
+### Final Documentation Pass
+
+- Status: Completed
+- Docs sync result: Completed (targeted AGENTS contract alignment update)
+- Review: Completed
+- Commit created: Completed (docs commit recorded)
+- Push completed: Pending
+
+Documentation notes:
+- Updated `AGENTS.md` to align packaged runtime guidance with the final metadata-only contract by explicitly forbidding flattened notebook/test mirrors in packaged outputs.
+- Confirmed core docs (`docs/project-structure.md`, `docs/execution-model.md`, `docs/testing-framework.md`, `docs/development.md`, `docs/setup.md`) were already aligned and required no additional edits.
+- Commit evidence (docs):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `88dfbb1` - `docs: align AGENTS runtime contract with packaged outputs`
