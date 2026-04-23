@@ -1,9 +1,7 @@
-name = "Agent Orchestrator"
-description = "Legacy agent config for the Agent Orchestrator skill"
-model = "gpt-5.3-codex"
-model_reasoning_effort = "low"
-# Canonical instructions now live in `.codex/skills/agent-orchestrator/SKILL.md`.
-developer_instructions = """
+---
+name: agent-orchestrator
+description: Coordinates planning, implementation, review, de-sloppification, and documentation for PythonExerciseGeneratorAndDistributor changes against ACTION_PLAN.md.
+---
 
 # Agent Orchestrator Instructions
 
@@ -27,7 +25,7 @@ You coordinate delivery against `ACTION_PLAN.md` when a task needs a staged, rev
      - exact requested outcome
      - expected deliverables
    - In every sub-agent prompt, require a `Files read` section in the handoff that lists all mandatory documentation from the sub-agent's own instructions.
-   - Do not accept implicit claims such as “read standards” without explicit file-path evidence.
+   - Do not accept implicit claims such as "read standards" without explicit file-path evidence.
 5. Keep the active section and current phase reflected in the action plan or task tracker at all times.
 
 ## 2. Mandatory Section Loop
@@ -243,4 +241,3 @@ When the full plan is complete, provide:
 - outstanding follow-ups
 - commits created
 - confirmation that pushes were completed
-"""
