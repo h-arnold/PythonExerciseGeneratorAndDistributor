@@ -296,3 +296,25 @@ Implementation notes:
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `3f3d15d` - `chore: record section 3 execution tracker status`
   - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+
+### Section 4 - Packager and Collector Metadata-Surface Enforcement
+
+- Status: Completed
+- Red tests added: Completed (`tests/template_repo_cli/test_section4_metadata_contract.py`)
+- Red review clean: Completed
+- Green implementation complete: Completed
+- Green review clean: Completed
+- Checks passed: Completed
+- Action plan updated: Completed
+- Commit created: Completed (section code commit recorded)
+- Push completed: Pending
+
+Implementation notes:
+- Added isolated Section 4 contract coverage in `tests/template_repo_cli/test_section4_metadata_contract.py` to keep metadata-surface assertions explicit and maintainable.
+- Updated packager and collector flows to export metadata-backed surfaces (`exercise_metadata/`, subset `exercises/migration_manifest.json`, per-exercise `exercise.json`) and removed snapshot-era snapshot export/validation behaviour.
+- Enforced anti-regression checks that flattened notebook/test mirrors are forbidden in packaged outputs.
+- Updated template `.devcontainer` `files.exclude` entries to hide metadata clutter while preserving runtime behaviour.
+- Aligned runtime-contract assertions and test surfaces after refactor (including explicit shared runtime-support copy path expected by runtime contract tests).
+- Commit evidence (code):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `3f6ad43` - `refactor: enforce metadata-surface packaging contract`
