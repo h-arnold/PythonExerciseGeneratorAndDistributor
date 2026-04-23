@@ -17,7 +17,8 @@ A teaching platform for secondary-school programming that keeps everything in th
 
 <figure style="display:inline-block;">
   <img src="docs/images/exercise-print-message.png" alt="Notebook editor showing a tagged exercise cell with expected output and a syntax error" style="transform:scale(0.75); transform-origin:top left; display:block;">
-  <figcaption>Figure: Example student activity — a tagged cell with inline feedback.</figcaption>
+  
+  Figure: Example student activity — a tagged cell with inline feedback.</figcaption>
 </figure>
 
 1. You generate exercises using the Exercise Generation assistant (a custom Copilot Chat mode) or use the pre-existing exercises in the repo.

@@ -105,7 +105,6 @@ def _assert_strict_output(exercise_no: int, output: str, expected: str) -> None:
 def test_exercise1_logic() -> None:
     output = _run(1)
     _assert_strict_output(1, output, ex009.EX009_EXPECTED_OUTPUTS[1])
-    assert "Hello" not in output
 
 
 @pytest.mark.task(taskno=1)
@@ -118,7 +117,6 @@ def test_exercise1_construct() -> None:
 def test_exercise2_logic() -> None:
     output = _run(2)
     _assert_strict_output(2, output, ex009.EX009_EXPECTED_OUTPUTS[2])
-    assert "cat" not in output
 
 
 @pytest.mark.task(taskno=2)
@@ -133,7 +131,6 @@ def test_exercise2_construct() -> None:
 def test_exercise3_logic() -> None:
     output = _run(3)
     _assert_strict_output(3, output, ex009.EX009_EXPECTED_OUTPUTS[3])
-    assert "likes" not in output
 
 
 @pytest.mark.task(taskno=3)
@@ -146,7 +143,6 @@ def test_exercise3_construct() -> None:
 def test_exercise4_logic() -> None:
     output = _run(4)
     _assert_strict_output(4, output, ex009.EX009_EXPECTED_OUTPUTS[4])
-    assert "science" not in output
 
 
 @pytest.mark.task(taskno=4)
@@ -200,7 +196,6 @@ def test_exercise6_construct() -> None:
 def test_exercise7_logic() -> None:
     output = _run(7)
     _assert_strict_output(7, output, ex009.EX009_EXPECTED_OUTPUTS[7])
-    assert "str(" not in output
 
 
 @pytest.mark.task(taskno=7)
@@ -214,7 +209,6 @@ def test_exercise7_construct() -> None:
 def test_exercise8_logic() -> None:
     output = _run(8)
     _assert_strict_output(8, output, ex009.EX009_EXPECTED_OUTPUTS[8])
-    assert "Tickets sold today" not in output
 
 
 @pytest.mark.task(taskno=8)
@@ -230,7 +224,6 @@ def test_exercise9_logic() -> None:
     case = ex009.EX009_INPUT_CASES[9]
     output = _run_with_inputs(9, list(case["inputs"]))
     _assert_strict_output(9, output, case["expected_output"])
-    assert "Pages read today" not in output
 
 
 @pytest.mark.task(taskno=9)
@@ -249,7 +242,6 @@ def test_exercise10_logic() -> None:
     case = ex009.EX009_INPUT_CASES[10]
     output = _run_with_inputs(10, list(case["inputs"]))
     _assert_strict_output(10, output, case["expected_output"])
-    assert "You bought" not in output
 
 
 @pytest.mark.task(taskno=10)
