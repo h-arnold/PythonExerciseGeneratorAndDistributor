@@ -3,7 +3,7 @@
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
 > **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not source-repository authoring surfaces.
+> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories must preserve canonical notebook and test paths; flattened notebook or test mirrors are forbidden in packaged outputs and are not source-repository authoring surfaces.
 
 ## Project Overview
 
@@ -74,7 +74,7 @@ docs/                  # Project documentation
   - Use pytest naming conventions: files `test_*.py`, functions `test_*`.
   - Keep tests fast and deterministic (no network, sleep, or randomness).
   - Each public behaviour should have positive and edge-case tests (follow repository testing standards).
-  - For notebooks and exercises, canonical source-repo assets belong under `exercises/<construct>/<exercise_key>/`, with notebooks in `notebooks/{student,solution}.ipynb` and repository-side exercise tests in the exercise-local `tests/` directory. Flattened notebook mirrors and top-level `tests/test_exNNN_*.py` files are packaging outputs only, not the source-repo authoring layout.
+  - For notebooks and exercises, canonical source-repo assets belong under `exercises/<construct>/<exercise_key>/`, with notebooks in `notebooks/{student,solution}.ipynb` and repository-side exercise tests in the exercise-local `tests/` directory. Flattened notebook mirrors and top-level `tests/test_exNNN_*.py` files are not part of the packaged runtime contract and must not be treated as canonical surfaces.
 
 - Practical rules of thumb
   - Small, well-documented modules are easier to test and review; prefer composition over monoliths.
@@ -187,7 +187,7 @@ Do not create exercises manually. Use:
 2. `scripts/new_exercise.py` for scaffolding
 3. The testing framework for grading
 
-Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with source notebooks at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`, and exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened notebook or test surfaces, when present for export/runtime compatibility, are not the source-repo authoring layout.
+Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with source notebooks at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`, and exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened notebook or test surfaces are not part of the supported packaged runtime contract.
 
 ## Working with the Grading System
 

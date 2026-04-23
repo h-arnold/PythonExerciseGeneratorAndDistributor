@@ -1,20 +1,16 @@
 """Shared exercise catalogue for runtime support modules.
 
-The source repository loads this directly from
-``exercise_metadata.registry.build_exercise_catalogue()``. Packaged Classroom
-exports remain metadata-free, so this module falls back to a generated runtime
-snapshot stored alongside the package.
+The catalogue is always built from ``exercise_metadata.registry`` so source and
+packaged runtimes share the same metadata-backed resolution path.
 """
 
 from __future__ import annotations
 
-import json
-from collections.abc import Collection
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from functools import lru_cache
-from importlib import import_module
-from pathlib import Path
-from typing import Any, TypeGuard, cast
+from typing import Any
+
+import exercise_metadata.registry as metadata_registry
 
 
 @dataclass(frozen=True)
@@ -32,9 +28,6 @@ class ExerciseCatalogueEntry:
     layout: str
 
 
-CATALOGUE_SNAPSHOT_FILENAME = "exercise_catalogue_snapshot.json"
-
-
 def _to_runtime_entry(entry: Any) -> ExerciseCatalogueEntry:
     """Normalise metadata catalogue output into the runtime dataclass."""
     return ExerciseCatalogueEntry(
@@ -50,87 +43,18 @@ def _to_runtime_entry(entry: Any) -> ExerciseCatalogueEntry:
     )
 
 
-def _is_snapshot_entry_list(value: object) -> TypeGuard[list[dict[str, object]]]:
-    """Return whether a parsed snapshot payload is a list of JSON objects."""
-    if not isinstance(value, list):
-        return False
-
-    entries = cast(list[object], value)
-    return all(isinstance(entry_object, dict) for entry_object in entries)
-
-
-def get_catalogue_snapshot_path(runtime_package_dir: Path | None = None) -> Path:
-    """Return the path for the generated runtime catalogue snapshot."""
-    package_dir = Path(__file__).resolve(
-    ).parent if runtime_package_dir is None else runtime_package_dir
-    return package_dir / CATALOGUE_SNAPSHOT_FILENAME
-
-
-def _has_local_metadata_package(runtime_package_dir: Path | None = None) -> bool:
-    """Return whether the runtime package lives beside source metadata."""
-    package_dir = Path(__file__).resolve(
-    ).parent if runtime_package_dir is None else runtime_package_dir
-    metadata_init = package_dir.parent / "exercise_metadata" / "__init__.py"
-    return metadata_init.exists()
-
-
 def _build_metadata_catalogue() -> tuple[ExerciseCatalogueEntry, ...]:
-    """Load the runtime catalogue from source-repository metadata."""
-    registry = import_module("exercise_metadata.registry")
-    build_catalogue = registry.build_exercise_catalogue
-    return tuple(_to_runtime_entry(entry) for entry in build_catalogue())
-
-
-def load_catalogue_snapshot(snapshot_path: Path | None = None) -> tuple[ExerciseCatalogueEntry, ...]:
-    """Load the runtime catalogue snapshot used in packaged exports."""
-    target_path = get_catalogue_snapshot_path(
-    ) if snapshot_path is None else snapshot_path
-    loaded_snapshot: object = json.loads(
-        target_path.read_text(encoding="utf-8"))
-    if not _is_snapshot_entry_list(loaded_snapshot):
-        raise ValueError(
-            f"Runtime catalogue snapshot at {target_path} must contain a list")
-    snapshot_entries = loaded_snapshot
-    return tuple(_to_runtime_entry(entry) for entry in snapshot_entries)
-
-
-def write_catalogue_snapshot(
-    snapshot_path: Path | None = None,
-    *,
-    exercise_keys: Collection[str] | None = None,
-) -> Path:
-    """Write a runtime catalogue snapshot for metadata-free packaged exports."""
-    target_path = get_catalogue_snapshot_path(
-    ) if snapshot_path is None else snapshot_path
-    selected_exercise_keys = None if exercise_keys is None else set(
-        exercise_keys)
-    snapshot_entries = [
-        asdict(entry)
-        for entry in _build_metadata_catalogue()
-        if selected_exercise_keys is None or entry.exercise_key in selected_exercise_keys
-    ]
-    target_path.parent.mkdir(parents=True, exist_ok=True)
-    target_path.write_text(
-        json.dumps(snapshot_entries, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+    """Load the runtime catalogue from the metadata registry."""
+    return tuple(
+        _to_runtime_entry(entry)
+        for entry in metadata_registry.build_exercise_catalogue()
     )
-    return target_path
 
 
 @lru_cache(maxsize=1)
 def get_exercise_catalogue() -> tuple[ExerciseCatalogueEntry, ...]:
     """Return the shared exercise catalogue."""
-    snapshot_path = get_catalogue_snapshot_path()
-    if _has_local_metadata_package(snapshot_path.parent):
-        return _build_metadata_catalogue()
-
-    if snapshot_path.exists():
-        return load_catalogue_snapshot(snapshot_path)
-
-    raise FileNotFoundError(
-        "Runtime catalogue snapshot is missing and no local exercise metadata "
-        f"package was found beside {snapshot_path.parent}"
-    )
+    return _build_metadata_catalogue()
 
 
 def get_catalogue_entry(exercise_key: str) -> ExerciseCatalogueEntry:

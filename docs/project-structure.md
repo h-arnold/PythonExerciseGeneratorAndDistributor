@@ -60,17 +60,21 @@ Each exercise folder contains:
 
 Exported Classroom repositories are derived packaging outputs and are not part of the source-repository authoring contract.
 
-The packaged student-facing layout follows Option A:
+The packaged Classroom layout includes the metadata-backed runtime contract:
 
-- Student notebooks are exported to `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
-- Exercise tests are exported under `exercises/<construct>/<exercise_key>/tests/`.
-- Authoring-only assets are excluded (`exercise.json`, solution notebooks).
+- `exercise_metadata/`
+- `exercises/migration_manifest.json`
+- `exercises/<construct>/<exercise_key>/exercise.json`
+- `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
+- `exercises/<construct>/<exercise_key>/tests/`
+
+Flattened notebook/test mirrors are forbidden in packaged outputs.
 
 - `OrderOfTeaching.md`: (at construct level) recommended exercise sequence
 
 ### Packaged notebook outputs
 
-Exported Classroom repositories preserve exercise-local notebooks for students at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`. In the source repository, canonical notebooks also live under `exercises/<construct>/<exercise_key>/notebooks/`.
+Exported Classroom repositories preserve exercise-local notebooks for students at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and ship the metadata surfaces required by the packaged runtime contract. In the source repository, canonical notebooks also live under `exercises/<construct>/<exercise_key>/notebooks/`.
 
 ### `tests/`
 

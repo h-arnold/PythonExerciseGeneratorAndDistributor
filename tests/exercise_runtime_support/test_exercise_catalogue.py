@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from pathlib import Path
 
-from exercise_metadata.registry import build_exercise_catalogue
+import pytest
+
+import exercise_metadata.registry as metadata_registry
 from exercise_runtime_support import exercise_catalogue
 
 
@@ -14,98 +15,55 @@ def test_get_exercise_catalogue_matches_metadata_catalogue() -> None:
     exercise_catalogue.get_exercise_catalogue.cache_clear()
 
     runtime_catalogue = exercise_catalogue.get_exercise_catalogue()
-    metadata_catalogue = build_exercise_catalogue()
+    metadata_catalogue = metadata_registry.build_exercise_catalogue()
 
     assert [asdict(entry) for entry in runtime_catalogue] == metadata_catalogue
 
     exercise_catalogue.get_exercise_catalogue.cache_clear()
 
 
-def test_get_exercise_catalogue_prefers_source_metadata_over_snapshot(
-    monkeypatch,
-    tmp_path: Path,
-) -> None:
-    """Source repos ignore adjacent snapshots and keep live metadata authoritative."""
+def test_get_exercise_catalogue_unknown_key_and_id_fail_fast() -> None:
+    """Unknown catalogue lookups keep the documented ValueError contract."""
     exercise_catalogue.get_exercise_catalogue.cache_clear()
 
-    snapshot_path = tmp_path / exercise_catalogue.CATALOGUE_SNAPSHOT_FILENAME
-    snapshot_path.write_text("[]\n", encoding="utf-8")
-    expected_catalogue = (
-        exercise_catalogue.ExerciseCatalogueEntry(
-            exercise_key="ex999_sequence_demo",
-            exercise_id=999,
-            slug="sequence_demo",
-            title="Demo",
-            display_label="ex999 Demo",
-            construct="sequence",
-            exercise_type="modify",
-            parts=1,
-            layout="flat",
-        ),
-    )
+    unknown_key_message = "Unknown exercise key"
+    unknown_id_message = "Unknown exercise_id"
 
-    def resolve_snapshot_path(_runtime_package_dir: Path | None = None) -> Path:
-        return snapshot_path
+    with pytest.raises(ValueError, match=unknown_key_message):
+        exercise_catalogue.get_catalogue_entry("ex999_missing")
 
-    def raise_if_snapshot_loaded(_snapshot_path: Path | None = None):
-        raise AssertionError(
-            "source repositories must not load the runtime snapshot")
+    with pytest.raises(ValueError, match=unknown_id_message):
+        exercise_catalogue.get_catalogue_key_for_exercise_id(999_999)
 
+    exercise_catalogue.get_exercise_catalogue.cache_clear()
+
+
+def test_get_exercise_catalogue_uses_metadata_registry_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The runtime catalogue is always built directly from metadata registry data."""
+    exercise_catalogue.get_exercise_catalogue.cache_clear()
+
+    expected_catalogue = [
+        {
+            "exercise_key": "ex321_sequence_demo",
+            "exercise_id": 321,
+            "slug": "sequence_demo",
+            "title": "Demo",
+            "display_label": "ex321 Demo",
+            "construct": "sequence",
+            "exercise_type": "modify",
+            "parts": 1,
+            "layout": "canonical",
+        },
+    ]
     monkeypatch.setattr(
-        exercise_catalogue,
-        "get_catalogue_snapshot_path",
-        resolve_snapshot_path,
-    )
-    monkeypatch.setattr(
-        exercise_catalogue,
-        "_has_local_metadata_package",
-        lambda _runtime_package_dir=None: True,
-    )
-    monkeypatch.setattr(
-        exercise_catalogue,
-        "load_catalogue_snapshot",
-        raise_if_snapshot_loaded,
-    )
-    monkeypatch.setattr(
-        exercise_catalogue,
-        "_build_metadata_catalogue",
+        metadata_registry,
+        "build_exercise_catalogue",
         lambda: expected_catalogue,
     )
 
-    assert exercise_catalogue.get_exercise_catalogue() == expected_catalogue
-
-    exercise_catalogue.get_exercise_catalogue.cache_clear()
-
-
-def test_get_exercise_catalogue_loads_generated_snapshot_without_metadata_import(
-    monkeypatch,
-    tmp_path: Path,
-) -> None:
-    """Packaged repositories can load the generated snapshot without metadata."""
-    exercise_catalogue.get_exercise_catalogue.cache_clear()
-
-    snapshot_path = tmp_path / exercise_catalogue.CATALOGUE_SNAPSHOT_FILENAME
-    exercise_catalogue.write_catalogue_snapshot(snapshot_path)
-
-    def raise_runtime_error(_module_name: str):
-        raise RuntimeError("metadata import should not be attempted")
-
-    def resolve_snapshot_path(_runtime_package_dir: Path | None = None) -> Path:
-        return snapshot_path
-
-    monkeypatch.setattr(exercise_catalogue,
-                        "import_module", raise_runtime_error)
-    monkeypatch.setattr(exercise_catalogue,
-                        "get_catalogue_snapshot_path", resolve_snapshot_path)
-    monkeypatch.setattr(
-        exercise_catalogue,
-        "_has_local_metadata_package",
-        lambda _runtime_package_dir=None: False,
-    )
-
-    catalogue = exercise_catalogue.get_exercise_catalogue()
-    metadata_catalogue = build_exercise_catalogue()
-
-    assert [asdict(entry) for entry in catalogue] == metadata_catalogue
+    runtime_catalogue = exercise_catalogue.get_exercise_catalogue()
+    assert [asdict(entry) for entry in runtime_catalogue] == expected_catalogue
 
     exercise_catalogue.get_exercise_catalogue.cache_clear()

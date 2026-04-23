@@ -57,15 +57,21 @@ Canonical authoring and export surfaces are intentionally different.
 Contract:
 
 - Authoring source of truth: `exercises/<construct>/<exercise_key>/`.
-- Export surfaces (Option A): canonical student-only exercise-local notebooks and tests under `exercises/<construct>/<exercise_key>/`, no exported `exercise.json`, and no solution notebooks.
-- Mapping from canonical source to export must be deterministic and reproducible, so the same exercise key resolves to the same exported notebook and test paths.
+- Packaged runtime contract: exported Classroom repositories include `exercise_metadata/`, `exercises/migration_manifest.json`, `exercises/<construct>/<exercise_key>/exercise.json`, `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`, and `exercises/<construct>/<exercise_key>/tests/`.
+- Mapping from canonical source to export must be deterministic and reproducible, so the same exercise key resolves to the same exported metadata, notebook, and test paths.
+- Flattened notebook/test mirrors are forbidden in packaged outputs.
+- Resolution and packaging failures must remain fail-fast and preserve the SPEC §2.2 message fragments:
+  - missing manifest -> `Migration manifest not found`
+  - unknown exercise key in manifest resolution -> `not in the migration manifest`
+  - missing or invalid `exercise.json` -> `exercise.json is missing or invalid`
+  - missing canonical notebook -> `expected notebook is missing`
 
 The mapping layer must preserve exercise identity by `exercise_key` and must not redefine identity from flattened path names.
 
 ## Current status
 
-- **Canonical now**: exercise identity, exercise-local notebooks and tests, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
-- **Export-only**: canonical student-only exercise-local notebook/test packaging, metadata-free runtime catalogue snapshots, and no exported authoring-only assets.
+- **Canonical now**: exercise identity, exercise-local notebooks and tests, metadata-backed runtime catalogue resolution, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
+- **Packaged runtime now**: exported repositories include the metadata package, migration manifest, per-exercise `exercise.json`, canonical student notebooks, and canonical exercise-local tests.
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 - **Template CLI contract**: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
 

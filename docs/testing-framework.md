@@ -12,7 +12,7 @@ Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key
 
 Exported Classroom repositories preserve exercise-local tests and export student notebooks to `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
 
-Packaged templates remain metadata-free (no exported `exercise.json`) and exclude solution notebooks by default.
+Packaged templates ship the metadata-backed runtime surfaces required by the packaged runtime contract: `exercise_metadata/`, `exercises/migration_manifest.json`, per-exercise `exercise.json`, canonical student notebooks, and canonical exercise-local tests. They rely on the metadata-backed contract instead of compatibility fallbacks, and solution notebooks remain excluded by default.
 
 ## Overview
 
@@ -122,7 +122,7 @@ The repository uses GitHub Actions to run these tests automatically.
 
 - **`tests.yml`**: Source-repository validation on every push and pull request. It checks pytest collection/discovery in the authoring repository and then runs `scripts/run_pytest_variant.py --variant solution -q`.
 - **`tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional forwarded pytest args for targeted solution checks.
-- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-free student contract.
+- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-backed student contract.
 
 ## Adding New Infrastructure Tests
 

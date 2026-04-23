@@ -300,7 +300,7 @@ Repository CI and exported Classroom autograding are separate surfaces.
 
 - Exported to Classroom/template repositories
 - Runs `scripts/build_autograde_payload.py --variant student`
-- Validates the metadata-free student contract rather than the source-repository authoring contract
+- Validates the metadata-backed student contract rather than the source-repository authoring contract
 
 ## Updating Exercises
 

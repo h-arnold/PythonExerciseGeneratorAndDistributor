@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import shutil
 import tempfile
 from pathlib import Path
 
-from exercise_runtime_support.exercise_catalogue import (
-    get_catalogue_snapshot_path,
-    load_catalogue_snapshot,
-    write_catalogue_snapshot,
-)
+from exercise_metadata.manifest import load_migration_manifest
 from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
 
@@ -46,14 +43,16 @@ class TemplatePackager:
     REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = ("exercise_framework",)
 
     REQUIRED_PACKAGE_DIRECTORIES: tuple[str, ...] = (
-        "exercise_runtime_support",)
-
-    FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = (
-        "exercise.json",
-        "solution.ipynb",
+        "exercise_metadata",
+        "exercise_runtime_support",
     )
+
+    FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
     _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = ("notebooks", "tests")
     _STUDENT_NOTEBOOK_FILENAME = "student.ipynb"
+    _MIGRATION_MANIFEST_FILENAME = "migration_manifest.json"
+    _EXERCISE_METADATA_FILENAME = "exercise.json"
+    _FLATTENED_TEST_GLOB = "test_ex[0-9]*_*.py"
 
     def __init__(self, repo_root: Path):
         """Initialize packager.
@@ -85,8 +84,10 @@ class TemplatePackager:
             files: Dictionary mapping exercise ID to file paths.
         """
         for file_dict in files.values():
-            safe_copy_file(file_dict["notebook"],
-                           workspace / file_dict["notebook_export"])
+            safe_copy_file(
+                file_dict["exercise_json"], workspace / file_dict["exercise_json_export"]
+            )
+            safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
             tests_export_dir = workspace / file_dict["tests_export_dir"]
             safe_copy_directory(
                 file_dict["test"].parent,
@@ -133,8 +134,7 @@ class TemplatePackager:
             return
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
-        raise FileNotFoundError(
-            f"Missing required packaging source assets:\n{missing_list}")
+        raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
 
     def copy_template_base_files(
         self,
@@ -145,8 +145,8 @@ class TemplatePackager:
 
         Args:
             workspace: Workspace directory.
-            selected_exercise_keys: Optional set of exercise keys to keep in the
-                packaged runtime catalogue snapshot.
+            selected_exercise_keys: Optional set of exercise keys to include in
+                the exported migration manifest.
         """
         if not self.template_files_dir.exists():
             raise FileNotFoundError(
@@ -158,8 +158,7 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (self.template_files_dir / "pyproject.toml",
-             workspace / "pyproject.toml"),
+            (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
@@ -169,15 +168,13 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (self.template_files_dir / "INSTRUCTIONS.md",
-             workspace / "INSTRUCTIONS.md"),
+            (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
         tests_dest_dir = workspace / "tests"
         for required_file in self.REQUIRED_TEST_FILES:
-            file_pairs.append(
-                (tests_source_dir / required_file, tests_dest_dir / required_file))
+            file_pairs.append((tests_source_dir / required_file, tests_dest_dir / required_file))
 
         for src, dest in file_pairs:
             safe_copy_file(src, dest)
@@ -200,14 +197,40 @@ class TemplatePackager:
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
-        write_catalogue_snapshot(
-            get_catalogue_snapshot_path(
-                workspace / "exercise_runtime_support"),
-            exercise_keys=selected_exercise_keys,
-        )
-
+        self._write_migration_manifest(workspace, selected_exercise_keys)
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
+
+    def _write_migration_manifest(
+        self,
+        workspace: Path,
+        selected_exercise_keys: set[str] | None,
+    ) -> None:
+        """Write the subset migration manifest into the workspace."""
+        source_manifest_path = self.repo_root / "exercises" / "migration_manifest.json"
+        manifest = load_migration_manifest(source_manifest_path)
+        if selected_exercise_keys is None:
+            selected_exercise_keys = {
+                path.parent.name
+                for path in (workspace / "exercises").glob("*/*/exercise.json")
+                if path.is_file()
+            }
+
+        exercise_items = manifest["exercises"].items()
+        exercise_items = (item for item in exercise_items if item[0] in selected_exercise_keys)
+
+        filtered_manifest = {
+            "schema_version": manifest["schema_version"],
+            "exercises": {
+                exercise_key: exercise_entry for exercise_key, exercise_entry in exercise_items
+            },
+        }
+        destination = workspace / "exercises" / "migration_manifest.json"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(
+            json.dumps(filtered_manifest, indent=2) + "\n",
+            encoding="utf-8",
+        )
 
     def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
         """Generate README file.
@@ -233,8 +256,18 @@ class TemplatePackager:
         """Return whether a path fits the Option A packaged exercises tree."""
         relative_parts = path.relative_to(exercises_dir).parts
         part_count = len(relative_parts)
-        if part_count in (self._CONSTRUCT_DIR_DEPTH, self._EXERCISE_DIR_DEPTH):
-            return path.is_dir()
+        is_manifest = part_count == 1 and path.is_file()
+        is_manifest = is_manifest and path.name == self._MIGRATION_MANIFEST_FILENAME
+        is_exercise_dir = (
+            part_count in (self._CONSTRUCT_DIR_DEPTH, self._EXERCISE_DIR_DEPTH) and path.is_dir()
+        )
+        is_exercise_json = (
+            part_count == self._SUBDIR_INDEX + 1
+            and path.is_file()
+            and path.name == self._EXERCISE_METADATA_FILENAME
+        )
+        if is_manifest or is_exercise_dir or is_exercise_json:
+            return True
 
         if part_count <= self._SUBDIR_INDEX:
             return False
@@ -280,8 +313,18 @@ class TemplatePackager:
 
         return False
 
+    def _contains_flattened_mirrors(self, workspace: Path) -> bool:
+        """Return whether the workspace contains flattened notebook or test mirrors."""
+        if (workspace / "notebooks").exists():
+            return True
+
+        tests_dir = workspace / "tests"
+        return tests_dir.exists() and any(tests_dir.glob(self._FLATTENED_TEST_GLOB))
+
     def _contains_authoring_only_assets(self, workspace: Path) -> bool:
         """Return whether a packaged workspace still contains authoring-only assets."""
+        if self._contains_flattened_mirrors(workspace):
+            return True
         if self._has_invalid_exercises_tree(workspace):
             return True
 
@@ -289,6 +332,57 @@ class TemplatePackager:
             next(workspace.rglob(filename), None) is not None
             for filename in self.FORBIDDEN_AUTHORING_FILENAMES
         )
+
+    def _has_required_packaged_exercise_metadata(self, workspace: Path) -> bool:
+        """Return whether every exported exercise has its canonical metadata file."""
+        exercises_dir = workspace / "exercises"
+        if not exercises_dir.exists():
+            return False
+
+        for exercise_dir in exercises_dir.glob("*/*"):
+            if not exercise_dir.is_dir():
+                continue
+            if not (exercise_dir / "exercise.json").is_file():
+                return False
+
+        return True
+
+    def _has_required_packaged_assets(self, workspace: Path) -> bool:
+        """Return whether the workspace contains all required packaged surfaces."""
+        required_files = [
+            workspace / "pyproject.toml",
+            workspace / "pytest.ini",
+            workspace / "README.md",
+            workspace / "scripts" / "build_autograde_payload.py",
+            workspace / ".github" / "workflows" / "classroom.yml",
+            workspace / "exercises" / "migration_manifest.json",
+            workspace / "exercise_metadata" / "__init__.py",
+        ]
+
+        tests_dir = workspace / "tests"
+        required_files.extend(
+            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES
+        )
+        for required_file in required_files:
+            if not required_file.exists():
+                return False
+
+        required_dirs = [
+            workspace / "exercises",
+            tests_dir,
+            workspace / "exercise_metadata",
+        ]
+        required_dirs.extend(
+            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
+        )
+        required_dirs.extend(
+            workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
+        )
+        for required_dir in required_dirs:
+            if not required_dir.exists() or not required_dir.is_dir():
+                return False
+
+        return self._has_required_packaged_exercise_metadata(workspace)
 
     def validate_package(self, workspace: Path) -> bool:
         """Validate package integrity.
@@ -301,43 +395,7 @@ class TemplatePackager:
         """
         if self._contains_authoring_only_assets(workspace):
             return False
-
-        snapshot_path = get_catalogue_snapshot_path(
-            workspace / "exercise_runtime_support")
-        required_files = [
-            workspace / "pyproject.toml",
-            workspace / "pytest.ini",
-            workspace / "README.md",
-            workspace / "scripts" / "build_autograde_payload.py",
-            workspace / ".github" / "workflows" / "classroom.yml",
-            snapshot_path,
-        ]
-
-        tests_dir = workspace / "tests"
-        required_files.extend(
-            tests_dir / required_file for required_file in self.REQUIRED_TEST_FILES
-        )
-        for required_file in required_files:
-            if not required_file.exists():
-                return False
-
-        required_dirs = [workspace / "exercises", tests_dir]
-        required_dirs.extend(
-            tests_dir / required_dir for required_dir in self.REQUIRED_TEST_DIRECTORIES
-        )
-        required_dirs.extend(
-            workspace / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
-        )
-        for required_dir in required_dirs:
-            if not required_dir.exists() or not required_dir.is_dir():
-                return False
-
-        try:
-            load_catalogue_snapshot(snapshot_path)
-        except (OSError, TypeError, ValueError, KeyError):
-            return False
-
-        return True
+        return self._has_required_packaged_assets(workspace)
 
     def _is_safe_workspace(self, workspace: Path) -> bool:
         """Check whether the given path looks like a valid temporary workspace."""
