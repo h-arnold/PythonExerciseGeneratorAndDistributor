@@ -347,3 +347,24 @@ Implementation notes:
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `9d15a12` - `chore: record section 5 execution tracker status`
   - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+
+### Section 6 - Test Suite Migration to Metadata-Only Contract
+
+- Status: Completed
+- Red tests added: Completed
+- Red review clean: Completed
+- Green implementation complete: Completed
+- Green review clean: Completed
+- Checks passed: Completed
+- Action plan updated: Completed
+- Commit created: Completed (section code commit recorded)
+- Push completed: Pending
+
+Implementation notes:
+- Added contract-matrix coverage for unknown `exercise_id` in `tests/exercise_framework/test_api_contract.py`.
+- Added malformed canonical metadata coverage in `tests/test_exercise_metadata.py` to enforce `LookupError` mapping with `exercise.json is missing or invalid`.
+- Resolved remaining green-phase gap by normalising loader `TypeError` into resolver `LookupError` in `exercise_metadata/resolver.py`.
+- Verified the full Section 6 six-file gate and full solution-variant gate after the fix.
+- Commit evidence (code):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `d15025c` - `test: enforce metadata error mapping contract coverage`
