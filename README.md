@@ -2,12 +2,6 @@
 
 A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get autograding feedback. Teachers can generate new exercises quickly and bundle selected exercises into GitHub Classroom template repos.
 
-> Source of truth: runtime, discovery, variant, and mapping contracts are defined in [docs/execution-model.md](docs/execution-model.md).
-
-### Repository status
-
-The source repository now uses the canonical exercise-local layout described in [docs/execution-model.md](docs/execution-model.md). Flattened notebook and test paths remain export-only packaging outputs for GitHub Classroom templates, not source-repository authoring surfaces.
-
 ## Key Benefits and Features
 
  - **No local setup or config**: The most your IT technician will need to do is ensure that connections to GitHub and Codespaces are allowed.
@@ -48,12 +42,13 @@ At the end of each student notebook, there is a self-check cell that runs a simp
 What works (mostly):
 
 - Exercise scaffolding and tests via the generation workflow
-- Tagged-cell autograding via [`exercise_runtime_support`](exercise_runtime_support/) with the compatibility wrapper at [tests/notebook_grader.py](tests/notebook_grader.py)
 - Template repo creation with notebooks, tests, and VS Code settings
 - GitHub Classroom workflow (template repo + autograding)
+- The student self checker cell at the end of each exercise so students can find out how well they've done
 
 Known gaps / not fully working yet:
 
+- Tagged-cell autograding for GitHub classroom is broken at the moment. Given that was quite buggy anywyay, I may just skip that entirely and investigate an entirely differnt GitHub actions reporting approach instead.
 - Full VS Code for Web support needs a Pyodide‑based Python kernel integration
 - There's work to be done on optimising the student devcontainer - currently students still need to select the Jupyter kernel manually after opening the repo in Codespaces.
 - Tweaks and formatting changes for the layout of the exercise notebooks as they could be clearer.
@@ -95,12 +90,6 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
 3. Create a template repo (example: all sequence exercises):
    - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
-
-> Note: use the explicit variant contract to run instructor-solution checks:
->
-> ```bash
-> uv run python scripts/run_pytest_variant.py --variant solution -q
-> ```
 
 Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
