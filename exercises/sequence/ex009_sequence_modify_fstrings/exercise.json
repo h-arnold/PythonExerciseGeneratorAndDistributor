@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex009_sequence_modify_fstrings",
+  "exercise_id": 9,
+  "slug": "ex009_sequence_modify_fstrings",
+  "title": "Sequence Modify F-Strings",
+  "construct": "sequence",
+  "exercise_type": "modify",
+  "parts": 10,
+  "difficulty": "easy",
+  "learning_objective": "Modify short sequence programs to use f-strings while preserving correct input flow and simple arithmetic logic.",
+  "notebook_path": "notebooks/student.ipynb",
+  "solution_path": "notebooks/solution.ipynb",
+  "tests_path": "tests/test_ex009_sequence_modify_fstrings.py"
+}

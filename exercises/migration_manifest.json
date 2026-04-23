@@ -22,6 +22,9 @@
     },
     "ex008_sequence_make_consolidation": {
       "layout": "canonical"
+    },
+    "ex009_sequence_modify_fstrings": {
+      "layout": "canonical"
     }
   }
 }

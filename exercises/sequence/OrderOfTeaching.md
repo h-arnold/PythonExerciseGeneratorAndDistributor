@@ -64,3 +64,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Writing short sequence programs from scratch using variables, `input()`, arithmetic, and casting.
 - Type: Make exercises with a gradual step up from fixed output to prompted calculations.
 - Purpose: Consolidate the full sequence strand so far by moving students from editing and debugging into independent program construction.
+
+1. [**Sequence Modify F-Strings**](`ex009_sequence_modify_fstrings`)
+
+[Supporting docs](./ex009_sequence_modify_fstrings/)
+[Notebook](./ex009_sequence_modify_fstrings/notebooks/student.ipynb)
+
+- Focus: Editing f-string output, converting old `+` concatenation to f-strings, and updating simple arithmetic logic with clear final messages.
+- Type: Modification exercises that move from wording changes to mixed logic-and-output corrections.
+- Purpose: Bridge earlier sequence skills (variables, input, concatenation, casting, arithmetic) into confident use of f-strings.
