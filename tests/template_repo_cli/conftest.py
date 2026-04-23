@@ -5,11 +5,8 @@ from __future__ import annotations
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import MagicMock
 
 import pytest
-
-from scripts.template_repo_cli.core.collector import ExerciseFiles
 
 
 @pytest.fixture
@@ -18,41 +15,7 @@ def repo_root() -> Path:
     return Path(__file__).parent.parent.parent
 
 
-@pytest.fixture
-def sample_exercises(repo_root: Path) -> dict[str, ExerciseFiles]:
-    """Sample exercise file mappings for testing."""
-    return {
-        "ex002_sequence_modify_basics": ExerciseFiles(
-            notebook=(
-                repo_root
-                / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
-            ),
-            notebook_export=Path(
-                "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"),
-            test=(
-                repo_root
-                / "exercises/sequence/ex002_sequence_modify_basics/tests"
-                / "test_ex002_sequence_modify_basics.py"
-            ),
-            tests_export_dir=Path(
-                "exercises/sequence/ex002_sequence_modify_basics/tests"),
-        ),
-        "ex004_sequence_debug_syntax": ExerciseFiles(
-            notebook=(
-                repo_root
-                / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
-            ),
-            notebook_export=Path(
-                "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"),
-            test=(
-                repo_root
-                / "exercises/sequence/ex004_sequence_debug_syntax/tests"
-                / "test_ex004_sequence_debug_syntax.py"
-            ),
-            tests_export_dir=Path(
-                "exercises/sequence/ex004_sequence_debug_syntax/tests"),
-        ),
-    }
+
 
 
 @pytest.fixture
@@ -62,31 +25,4 @@ def temp_dir() -> Generator[Path, None, None]:
         yield Path(tmpdir)
 
 
-@pytest.fixture
-def mock_gh_success() -> MagicMock:
-    """Mock successful gh CLI execution."""
-    mock = MagicMock()
-    mock.return_value = MagicMock(
-        returncode=0, stdout='{"name": "test-repo"}', stderr="")
-    return mock
 
-
-@pytest.fixture
-def mock_gh_failure() -> MagicMock:
-    """Mock failed gh CLI execution."""
-    mock = MagicMock()
-    mock.return_value = MagicMock(
-        returncode=1, stdout="", stderr="Error occurred")
-    return mock
-
-
-@pytest.fixture
-def mock_gh_auth_error() -> MagicMock:
-    """Mock gh CLI authentication error."""
-    mock = MagicMock()
-    mock.return_value = MagicMock(
-        returncode=1,
-        stdout="",
-        stderr="error: authentication required. Run 'gh auth login'",
-    )
-    return mock

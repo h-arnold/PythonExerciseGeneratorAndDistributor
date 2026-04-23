@@ -69,7 +69,7 @@ class TestCollectMissingFiles:
         """Test handling missing student notebook."""
         collector = FileCollector(repo_root)
 
-        with pytest.raises(FileNotFoundError, match="Exercise not found in migration manifest"):
+        with pytest.raises(LookupError, match="exercise 'ex999_nonexistent' is not in the migration manifest"):
             collector.collect_files("ex999_nonexistent")
 
     def test_collect_missing_test(self, repo_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -121,20 +121,12 @@ class TestCollectValidation:
         for file_path in files.values():
             assert isinstance(file_path, Path)
 
-    def test_collect_rejects_duplicate_top_level_and_canonical_test_sources(
+    def test_collect_canonical_only_no_duplicate_detection_between_exercises(
         self,
         temp_dir: Path,
     ) -> None:
-        """Test duplicate top-level and canonical sources fail fast."""
+        """Test that canonical-only layout doesn't detect duplicates across different exercises."""
         repo_root = temp_dir
-        (repo_root / "notebooks").mkdir()
-        (repo_root / "tests").mkdir()
-        (repo_root / "notebooks" / "ex004_sequence_debug_syntax.ipynb").write_text(
-            "{}", encoding="utf-8"
-        )
-        (repo_root / "tests" / "test_ex004_sequence_debug_syntax.py").write_text(
-            "", encoding="utf-8"
-        )
         exercise_dir = repo_root / "exercises" / \
             "sequence" / "ex004_sequence_debug_syntax"
         (exercise_dir / "notebooks").mkdir(parents=True)
@@ -159,39 +151,11 @@ class TestCollectValidation:
         )
 
         collector = FileCollector(repo_root)
-        with pytest.raises(FileExistsError, match="Duplicate exercise test sources"):
-            collector.collect_files("ex004_sequence_debug_syntax")
+        # Should not raise an error since we only have one canonical test source
+        files = collector.collect_files("ex004_sequence_debug_syntax")
+        assert files["test"] == exercise_dir / "tests" / "test_ex004_sequence_debug_syntax.py"
 
-    def test_collect_legacy_layout_falls_back_to_flat_test_when_canonical_test_is_absent(
-        self,
-        temp_dir: Path,
-    ) -> None:
-        """Test legacy layouts may source a flat test but export to exercise-local tests/."""
-        repo_root = temp_dir
-        (repo_root / "notebooks").mkdir()
-        (repo_root / "tests").mkdir()
-        (repo_root / "notebooks" / "ex002_sequence_modify_basics.ipynb").write_text(
-            "{}", encoding="utf-8"
-        )
-        (repo_root / "tests" / "test_ex002_sequence_modify_basics.py").write_text(
-            "", encoding="utf-8"
-        )
-        (repo_root / "exercises" / "sequence" / "ex002_sequence_modify_basics").mkdir(
-            parents=True
-        )
-        (repo_root / "exercises" / "migration_manifest.json").write_text(
-            '{"schema_version": 1, "exercises": {"ex002_sequence_modify_basics": {"layout": "legacy"}}}',
-            encoding="utf-8",
-        )
 
-        collector = FileCollector(repo_root)
-        files = collector.collect_files("ex002_sequence_modify_basics")
-
-        assert files["test"] == repo_root / "tests" / \
-            "test_ex002_sequence_modify_basics.py"
-        assert files["tests_export_dir"] == Path(
-            "exercises/sequence/ex002_sequence_modify_basics/tests"
-        )
 
 
 class TestCollectEdgeCases:

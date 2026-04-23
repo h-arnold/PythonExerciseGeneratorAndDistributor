@@ -693,7 +693,7 @@ class TestEndToEndDryRun:
 
         assert check.returncode != 0
         assert (
-            "Unknown notebook 'ex003_sequence_modify_variables'. Available: "
+            "Unknown exercise key 'ex003_sequence_modify_variables'. Available: "
             "ex002_sequence_modify_basics"
         ) in combined_output
         assert "No such file or directory" not in combined_output
@@ -1364,8 +1364,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1376,8 +1375,6 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
         ):
             result = main(["create", "--construct", "sequence",
                           "--repo-name", "test-repo"])
@@ -1410,8 +1407,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1422,8 +1418,6 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
         ):
             result = main(
                 [
@@ -1462,8 +1456,7 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed",
-                         return_value=True),
+            patch.object(GitHubClient, "check_gh_installed", return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1474,8 +1467,6 @@ class TestCliCreateCommand:
                     "missing_scopes": [],
                 },
             ),
-            patch.object(GitHubClient, "check_authentication",
-                         return_value=True),
         ):
             result = main(
                 [
@@ -1496,17 +1487,12 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
-    def test_cli_permission_hint(  # noqa: PLR0913
+    def test_cli_permission_hint(
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_create: MagicMock,
         repo_root: Path,
@@ -1544,17 +1530,12 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
-    def test_cli_permission_hint_unset_env_token(  # noqa: PLR0913
+    def test_cli_permission_hint_unset_env_token(
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_create: MagicMock,
         repo_root: Path,
@@ -1597,17 +1578,12 @@ class TestCliCreateCommand:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.create_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
     def test_cli_permission_hint_reauth_flow(  # noqa: PLR0913
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_create: MagicMock,
         mock_subprocess_run: MagicMock,
@@ -1801,17 +1777,12 @@ class TestCliUpdateRepo:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
-    def test_cli_update_calls_push_when_repo_exists(  # noqa: PLR0913
+    def test_cli_update_calls_push_when_repo_exists(
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_push: MagicMock,
         mock_check_exists: MagicMock,
@@ -1846,17 +1817,12 @@ class TestCliUpdateRepo:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
     def test_cli_update_fails_when_repo_missing(  # noqa: PLR0913
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_push: MagicMock,
         mock_check_exists: MagicMock,
@@ -1892,17 +1858,12 @@ class TestCliUpdateRepo:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
-    def test_cli_update_allows_owner_prefixed_repo_name(  # noqa: PLR0913
+    def test_cli_update_allows_owner_prefixed_repo_name(
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_push: MagicMock,
         mock_check_exists: MagicMock,
@@ -1936,17 +1897,12 @@ class TestCliUpdateRepo:
     @patch("scripts.template_repo_cli.core.github.GitHubClient.push_to_existing_repository")
     @patch("scripts.template_repo_cli.core.github.GitHubClient.check_scopes")
     @patch(
-        "scripts.template_repo_cli.core.github.GitHubClient.check_authentication",
-        return_value=True,
-    )
-    @patch(
         "scripts.template_repo_cli.core.github.GitHubClient.check_gh_installed",
         return_value=True,
     )
     def test_cli_update_prompts_for_owner_when_remote_missing(  # noqa: PLR0913
         self,
         mock_installed: MagicMock,
-        mock_auth: MagicMock,
         mock_scopes: MagicMock,
         mock_push: MagicMock,
         mock_check_exists: MagicMock,

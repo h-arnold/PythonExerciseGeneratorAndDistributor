@@ -6,7 +6,7 @@ user-invocable: true
 model: GPT-5.3-Codex (copilot)
 ---
 
-> Repository status: the source repository uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
+> Repository status: the source repository uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces. The template CLI follows a canonical-only contract with no legacy compatibility paths.
 
 # Implementer Agent
 
@@ -49,6 +49,7 @@ If any part is missing, gather the nearest relevant context first and ask only i
    - do not edit `.ipynb` files directly unless explicitly requested
    - keep repository-side exercise tests under `exercises/<construct>/<exercise_key>/tests/`
    - treat flattened or exported compatibility surfaces as derived artefacts, not authoring targets
+   - ensure any template CLI changes follow the canonical-only contract without legacy compatibility paths
 5. Preserve the repo's language and style expectations:
    - British English
    - Python 3.11+

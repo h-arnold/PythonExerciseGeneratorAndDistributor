@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import subprocess
 from pathlib import Path
-from typing import Any, Literal, TypedDict, TypeGuard
+from typing import Literal, TypedDict
 
 
 # TypedDicts for well-known result shapes to improve static typing
@@ -46,6 +45,8 @@ AUTH_TOKEN_HINT_MARKERS = (
     "current github authentication token cannot create repositories",
     "unset github_token before running gh auth login",
 )
+
+GITHUB_TOKEN_ENV_KEYS = ("GITHUB_TOKEN", "GH_TOKEN")
 
 
 def run_subprocess(
@@ -101,20 +102,7 @@ def run_subprocess(
         raise ValueError(f"Invalid output_mode: {output_mode}")
 
 
-def is_command_sequence(obj: Any) -> TypeGuard[list[str] | tuple[str, ...]]:
-    """Return True if ``obj`` is a sequence of strings representing a command.
 
-    This helper narrows the type to either a `list[str]` or `tuple[str, ...]`.
-    We avoid generator expressions here so static analyzers have a concrete
-    variable to type-check (prevents 'Type of "x" is unknown' diagnostics).
-    """
-    if not isinstance(obj, (list, tuple)):
-        return False
-
-    # Treat the container as a sequence of objects; check each element's type
-    # explicitly so tools like Pylance can infer the element type safely.
-    seq: list[object] | tuple[object, ...] = obj  # type: ignore[assignment]
-    return all(isinstance(element, str) for element in seq)
 
 
 class GitHubClient:
@@ -274,19 +262,7 @@ class GitHubClient:
         except FileNotFoundError:
             return False
 
-    def check_authentication(self) -> bool:
-        """Check gh authentication status.
 
-        Returns:
-            True if authenticated, False otherwise.
-        """
-        try:
-            result: subprocess.CompletedProcess[str] = run_subprocess(
-                ["gh", "auth", "status"], check=False
-            )
-            return result.returncode == 0
-        except FileNotFoundError:
-            return False
 
     def check_repository_exists(self, repo_name: str, org: str | None = None) -> bool:
         """Check if a repository exists on GitHub.
@@ -374,22 +350,7 @@ class GitHubClient:
         except OSError:
             return result
 
-    def parse_json_output(self, output: str) -> dict[str, Any]:
-        """Parse JSON output from gh.
 
-        Args:
-            output: JSON string.
-
-        Returns:
-            Parsed dictionary.
-
-        Raises:
-            ValueError: If output is not valid JSON.
-        """
-        try:
-            return json.loads(output)
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON: {e}") from e
 
     def create_repository(  # noqa: PLR0913
         self,
@@ -473,8 +434,11 @@ class GitHubClient:
                     or "Failed to mark repository as template",
                     "output": template_result.get("output") or "",
                     "returncode": int(template_result.get("returncode") or 1),
+                    "dry_run": False,
                 }
 
+        # Always include dry_run field for consistency
+        result["dry_run"] = False
         return result
 
     def mark_repository_as_template(self, repo_name: str, org: str | None = None) -> ExecResult:
@@ -745,3 +709,66 @@ class GitHubClient:
     def should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
         """Public wrapper around the internal auth-retry detection logic."""
         return self._should_retry_with_fresh_auth(result)
+
+    @staticmethod
+    def _detect_auth_token_env() -> str | None:
+        """Return which GitHub auth-related environment variable is set, if any."""
+        import os
+
+        for key in GITHUB_TOKEN_ENV_KEYS:
+            if os.getenv(key):
+                return key
+        return None
+
+    @staticmethod
+    def _is_integration_permission_error(error: str | None) -> bool:
+        """Return True if createRepository permissions error is reported."""
+        if not error:
+            return False
+
+        message = error.lower()
+        return all(
+            marker in message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS
+        )
+
+    @staticmethod
+    def _github_permission_hint(error: str | None) -> str | None:
+        """Return actionable hint for permission-related GitHub errors."""
+        if not error:
+            return None
+
+        if GitHubClient._is_integration_permission_error(error):
+            env_key = GitHubClient._detect_auth_token_env()
+            base = (
+                "The current GitHub authentication token cannot create repositories. "
+                "Run `gh auth login` with a user account/token that has the `repo` scope "
+                "or provide a personal access token via GH_TOKEN."
+            )
+
+            if env_key == "GITHUB_TOKEN":
+                base += (
+                    " It looks like GITHUB_TOKEN is set (e.g., from GitHub Apps or CI). "
+                    "Unset GITHUB_TOKEN before running `gh auth login` so you can authenticate "
+                    "as a user with repo permissions."
+                )
+            elif env_key == "GH_TOKEN":
+                base += " Ensure GH_TOKEN references a personal access token with the `repo` scope."
+
+            return base
+
+        return None
+
+    @staticmethod
+    def _github_already_exists_hint(error: str | None, repo_name: str) -> str | None:
+        """Return actionable hint for 'repository already exists' errors."""
+        if not error:
+            return None
+
+        message = error.lower()
+        if "name already exists" in message or "already exists" in message:
+            return (
+                f"A repository named '{repo_name}' already exists. "
+                "Either delete the existing repository or choose a different name."
+            )
+
+        return None

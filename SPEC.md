@@ -85,7 +85,7 @@ This work covers the template repository CLI, its tests, and the directly-relate
 - `scripts/template_repo_cli/cli.py` and `scripts/template_repo_cli/core/github.py` both classify GitHub integration/auth failures.
 - `scripts/template_repo_cli/core/github.py` exposes helpers such as `check_authentication()` and `parse_json_output()` that are exercised only by tests.
 - `tests/template_repo_cli/conftest.py` includes unused shared fixtures.
-- `tests/template_repo_cli/test_integration.py` still contains one assertion expecting legacy wording (`Unknown notebook ...`) while nearby checks already use the current `Unknown exercise key ...` contract.
+- `tests/template_repo_cli/test_integration.py` should keep its assertions aligned with the current `Unknown exercise key ...` contract rather than any older notebook-oriented wording.
 
 ## Acceptance criteria
 1. Repo docs and agent guidance are updated first so contributors and sub-agents are told to implement the canonical-only template CLI behaviour and to keep any retained test-only helpers under `tests/`.
@@ -103,4 +103,4 @@ This work covers the template repository CLI, its tests, and the directly-relate
 ## Open questions and risks
 - No open questions remain after clarification: all legacy-layout compatibility should be removed, and test-only helpers should either move under `tests/` with a justified role or be deleted.
 - **Documentation drift risk:** several current docs still describe helpers and fixtures likely to be removed or relocated. If these are not updated first, implementers may preserve obsolete surfaces to satisfy stale guidance.
-- **Baseline mismatch risk:** `tests/template_repo_cli/test_integration.py` currently mixes `Unknown exercise key ...` and `Unknown notebook ...` expectations. The implementation should align tests with the documented runtime contract, but this is a pre-existing inconsistency rather than a new requirement introduced by the clean-up.
+- **Baseline mismatch risk:** `tests/template_repo_cli/test_integration.py` previously mixed exercise-key and notebook-oriented expectation wording. That inconsistency has been aligned with the documented runtime contract, so future cleanups should keep the exercise-key wording consistent.

@@ -212,23 +212,27 @@ See Testing Framework: `docs/testing-framework.md` for details.
 
 When you need to perform a task that falls under the expertise of a sub-agent, you should delegate to that agent rather than trying to handle it yourself. This ensures that the task is completed with the appropriate level of focus and expertise.
 
-The sub-agents you can call are (first-line names are case-sensitive):
+The sub-agents you can call are (use these exact lowercase-with-dashes names):
 
-- **Exercise Generation** — `.github/agents/exercise_generation.md.agent.md`  (first line: `Exercise Generation`)
-- **Exercise Verifier** — `.github/agents/exercise_verifier.md.agent.md`  (first line: `Exercise Verifier`)
-- **Implementer** — `.github/agents/implementer.md.agent.md`  (first line: `Implementer`)
-- **Planner Reviewer** — `.github/agents/planner-reviewer.agent.md`  (first line: `Planner Reviewer`)
-- **Tidy Code Reviewer** — `.github/agents/tidy_code_review.md.agent.md`  (first line: `Tidy Code Reviewer`)
+- `explore` — Read-only subagent for codebase exploration
+- `agent-orchestrator` — Orchestrates the other agents to implement an action plan
+- `code-reviewer` — Reviews code for quality, standards adherence, and bugs
+- `docs` — Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy
+- `implementation` — Implements code for the orchestrator
+- `planner-reviewer` — Reviews planner output for missing requirements, architecture mismatches, notebook and workflow ambiguities, and undersized or misordered action plans
+- `planner` — Clarifies requirements and produces SPEC.md, optional frontend layout specs, and ACTION_PLAN.md before implementation starts
+- `testing` — Creates, runs and debugs tests
+- `de-sloppification` — Finds and removes AI-slop, duplication, and unnecessary complexity
 
 ## Implementation Workflow
 
 For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring) that **IS NOT** related to student notebook, follow this workflow:
 
 1. **Consider the size of the task**: If it's a large task requiring many changes, split the task into smaller chunks and update your TODO list manually.
-2. **Delegate to the Implementer Agent**: Use the available sub-agent tool with the `Implementer` agent. Pass a detailed task description, including the scope of files to edit. If sub-agents are unavailable, complete the work directly.
+2. **Delegate to the Implementation Agent**: Use the available sub-agent tool with the `Implementation` agent. Pass a detailed task description, including the scope of files to edit. If sub-agents are unavailable, complete the work directly.
     - *Prompt*: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
-3. **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
-    - *Prompt*: "The implementer agent has completed task [X]. Please review the changes."
+3. **Review with Code Reviewer**: Once the implementation agent finishes, you **MUST** call the `Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review.
+    - *Prompt*: "The implementation agent has completed task [X]. Please review the changes."
 4. If there are significant changes, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary.
    1. If the changes are minor and can be fixed with a simple edit, you can make the change directly without going back to the implementer.
 5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.

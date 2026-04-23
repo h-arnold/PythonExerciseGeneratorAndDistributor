@@ -2,7 +2,7 @@
 
 This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
 
-> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
+> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md). The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
 ## Repository status
 

@@ -6,7 +6,7 @@ user-invocable: true
 model: GPT-5.3-Codex (copilot)
 ---
 
-> Repository status: the source repository uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
+> Repository status: the source repository uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces. The template CLI follows a canonical-only contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
 
 # Planner Agent
 
@@ -34,6 +34,7 @@ You turn a request into a concise, reviewable plan. Keep the workflow local, seq
    - `notebooks/solution.ipynb`
    - `tests/`
    - `exercise.json`
+   - Ensure any template CLI changes follow the canonical-only contract without legacy compatibility paths
 4. If this is a new exercise request, plan around `scripts/new_exercise.py` and the exercise-generation docs rather than inventing a new folder scheme.
 5. Keep the search narrow. Form one falsifiable hypothesis about the requested change and one cheap check that could disconfirm it before you draft the spec.
 

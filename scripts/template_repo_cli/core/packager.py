@@ -88,10 +88,6 @@ class TemplatePackager:
             safe_copy_file(file_dict["notebook"],
                            workspace / file_dict["notebook_export"])
             tests_export_dir = workspace / file_dict["tests_export_dir"]
-            if file_dict["tests_export_dir"] == Path("tests"):
-                safe_copy_file(
-                    file_dict["test"], tests_export_dir / file_dict["test"].name)
-                continue
             safe_copy_directory(
                 file_dict["test"].parent,
                 tests_export_dir,

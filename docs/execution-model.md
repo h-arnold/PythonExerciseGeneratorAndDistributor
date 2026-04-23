@@ -67,5 +67,6 @@ The mapping layer must preserve exercise identity by `exercise_key` and must not
 - **Canonical now**: exercise identity, exercise-local notebooks and tests, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
 - **Export-only**: canonical student-only exercise-local notebook/test packaging, metadata-free runtime catalogue snapshots, and no exported authoring-only assets.
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
+- **Template CLI contract**: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
 
 Key runtime contract checks are enforced by direct file-based tests, without a consumer matrix table.

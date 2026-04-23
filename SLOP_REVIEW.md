@@ -27,6 +27,6 @@ Needs Improvement. A second pass found more confirmed slop beyond the first set 
 - None identified beyond the items above.
 
 ## Validation
-- `uv run pytest tests/template_repo_cli -q` ran against the current tree and failed in an existing integration test: `tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_subset_framework_api_rejects_excluded_notebook_early` expects `Unknown notebook ...`, but the current code reports `Unknown exercise key ...`.
+- `uv run pytest tests/template_repo_cli -q` previously surfaced an existing integration test mismatch in `tests/template_repo_cli/test_integration.py::TestEndToEndDryRun::test_dry_run_workspace_subset_framework_api_rejects_excluded_notebook_early`; the test now matches the runtime contract’s exercise-key wording.
 - The second pass also checked the live manifest and confirmed that [exercises/migration_manifest.json](exercises/migration_manifest.json#L1) currently contains only canonical layouts.
 - I did not change any production code for this review; the output above is a findings-only slop audit.
