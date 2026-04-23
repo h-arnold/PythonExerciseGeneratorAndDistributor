@@ -39,6 +39,12 @@ def _write_notebook(path: Path, *, include_explanation: bool = True) -> None:
     path.write_text(json.dumps(notebook), encoding="utf-8")
 
 
+def _write_notebook_cells(path: Path, cells: list[dict[str, object]]) -> None:
+    notebook = {"cells": cells}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(notebook), encoding="utf-8")
+
+
 def _exercise_metadata(
     slug: str,
     *,
@@ -227,3 +233,70 @@ def test_main_rejects_notebook_path_cli_input(
     assert "resolver input must be an exercise_key, not a path-like string" in captured.out
     assert "Notebook not found" not in captured.out
     assert captured.out.strip().endswith("FAIL: 1 error(s), 0 warning(s)")
+
+
+def test_main_fails_when_debug_explanation_tags_do_not_match_exercise_tags(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    slug = "ex004_sequence_debug_syntax"
+    exercise_dir = _write_canonical_exercise(tmp_path, slug)
+    mismatched_cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {"language": "markdown", "tags": ["explanation2"]},
+            "source": ["What actually happened?\n"],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {"language": "python", "tags": ["exercise1"]},
+            "source": ["print('Hello')\n"],
+        },
+    ]
+    _write_notebook_cells(exercise_dir / "notebooks" / "student.ipynb", mismatched_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" / "solution.ipynb", mismatched_cells)
+
+    exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Debug exercise explanationN tags must exactly match exerciseN tags" in captured.out
+
+
+def test_main_fails_when_student_solution_exercise_tags_do_not_match(
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    slug = "ex004_sequence_debug_syntax"
+    exercise_dir = _write_canonical_exercise(tmp_path, slug)
+
+    solution_cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {"language": "markdown", "tags": ["explanation1"]},
+            "source": ["What actually happened?\n"],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {"language": "python", "tags": ["exercise1"]},
+            "source": ["print('Hello')\n"],
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {"language": "markdown", "tags": ["explanation2"]},
+            "source": ["What actually happened?\n"],
+        },
+        {
+            "cell_type": "code",
+            "metadata": {"language": "python", "tags": ["exercise2"]},
+            "source": ["print('Hello again')\n"],
+        },
+    ]
+    _write_notebook_cells(exercise_dir / "notebooks" / "solution.ipynb", solution_cells)
+
+    exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Student and solution notebooks must use the same exerciseN tags" in captured.out
+    assert "Student and solution notebooks must use the same explanationN tags" in captured.out

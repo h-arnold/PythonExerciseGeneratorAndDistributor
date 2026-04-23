@@ -339,6 +339,23 @@ def _collect_tag_findings(
                     )
                 )
 
+    if len(exercise_tags) > 1:
+        findings.append(
+            Finding(
+                "ERROR",
+                f"Cell has multiple exerciseN tags {sorted(exercise_tags)}; use exactly one exerciseN tag per graded cell",
+                path=nb_path,
+            )
+        )
+    if len(explanation_tags) > 1:
+        findings.append(
+            Finding(
+                "ERROR",
+                f"Cell has multiple explanationN tags {sorted(explanation_tags)}; use exactly one explanationN tag per reflection cell",
+                path=nb_path,
+            )
+        )
+
     return exercise_tags, explanation_tags, findings
 
 
@@ -385,7 +402,7 @@ def _check_tag_continuity(
     if exercise_nums != expected:
         findings.append(
             Finding(
-                "WARN",
+                "ERROR",
                 f"Exercise tags are not contiguous: found {exercise_nums}, expected {expected}",
                 path=nb_path,
             )
@@ -393,11 +410,11 @@ def _check_tag_continuity(
 
     if expect_debug and explanation_tags:
         exp_nums = _tag_numbers(explanation_tags, _EXPLANATION_TAG_RE)
-        if exp_nums and max(exp_nums) < max(exercise_nums):
+        if exp_nums != exercise_nums:
             findings.append(
                 Finding(
-                    "WARN",
-                    "Some exercise parts may be missing matching explanationN cells",
+                    "ERROR",
+                    "Debug exercise explanationN tags must exactly match exerciseN tags",
                     path=nb_path,
                 )
             )
@@ -603,6 +620,54 @@ def _collect_code_cell_text(nb: NotebookDocument) -> str:
     return "\n\n".join(code_chunks)
 
 
+def _collect_notebook_tag_sets(nb: NotebookDocument) -> tuple[set[str], set[str]]:
+    """Return exerciseN and explanationN tag sets found in a notebook."""
+    exercise_tags: set[str] = set()
+    explanation_tags: set[str] = set()
+    cells = nb.get("cells")
+    if not isinstance(cells, list):
+        return exercise_tags, explanation_tags
+
+    for cell in cells:
+        if not _is_notebook_cell(cell):
+            continue
+        tags = _cell_tags(cell)
+        exercise_tags.update(tag for tag in tags if _EXERCISE_TAG_RE.match(tag))
+        explanation_tags.update(tag for tag in tags if _EXPLANATION_TAG_RE.match(tag))
+    return exercise_tags, explanation_tags
+
+
+def _check_student_solution_notebook_parity(
+    *,
+    student_nb: NotebookDocument,
+    solution_nb: NotebookDocument,
+    solution_path: Path,
+) -> list[Finding]:
+    """Ensure the student and solution notebooks expose the same tagged exercise surface."""
+    findings: list[Finding] = []
+    student_exercise_tags, student_explanation_tags = _collect_notebook_tag_sets(student_nb)
+    solution_exercise_tags, solution_explanation_tags = _collect_notebook_tag_sets(solution_nb)
+
+    if student_exercise_tags != solution_exercise_tags:
+        findings.append(
+            Finding(
+                "ERROR",
+                "Student and solution notebooks must use the same exerciseN tags",
+                path=solution_path,
+            )
+        )
+    if student_explanation_tags != solution_explanation_tags:
+        findings.append(
+            Finding(
+                "ERROR",
+                "Student and solution notebooks must use the same explanationN tags",
+                path=solution_path,
+            )
+        )
+
+    return findings
+
+
 def _print_findings(findings: list[Finding]) -> None:
     for f in findings:
         loc = f" ({f.path})" if f.path else ""
@@ -792,6 +857,14 @@ def main(argv: list[str] | None = None) -> int:
         expect_debug=expect_debug,
     )
     findings.extend(solution_findings)
+    if nb_solution is not None:
+        findings.extend(
+            _check_student_solution_notebook_parity(
+                student_nb=nb_student,
+                solution_nb=nb_solution,
+                solution_path=nb_solution_path,
+            )
+        )
 
     if construct is None:
         if metadata_error is None:
