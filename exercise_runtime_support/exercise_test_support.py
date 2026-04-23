@@ -22,8 +22,7 @@ def resolve_exercise_tests_dir(exercise_key: str) -> Path:
         return source_dir
 
     raise FileNotFoundError(
-        "Canonical exercise-local tests directory not found for "
-        f"{exercise_key!r}: {source_dir}"
+        f"Canonical exercise-local tests directory not found for {exercise_key!r}: {source_dir}"
     )
 
 

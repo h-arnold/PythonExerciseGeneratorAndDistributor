@@ -15,16 +15,10 @@ EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
 def test_paths_resolver_uses_canonical_exercise_key_for_solution_variant() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     expected = (
-        repo_root
-        / "exercises"
-        / "sequence"
-        / EX004_EXERCISE_KEY
-        / "notebooks"
-        / "solution.ipynb"
+        repo_root / "exercises" / "sequence" / EX004_EXERCISE_KEY / "notebooks" / "solution.ipynb"
     )
 
-    resolved = paths.resolve_notebook_path(
-        EX004_EXERCISE_KEY, variant="solution")
+    resolved = paths.resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
 
     assert resolved == expected
 
@@ -80,17 +74,11 @@ def test_paths_resolver_rejects_relative_legacy_source_path_objects() -> None:
 def test_paths_resolver_preserves_variant_switching_for_canonical_paths() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     student_notebook = (
-        repo_root
-        / "exercises"
-        / "sequence"
-        / EX004_EXERCISE_KEY
-        / "notebooks"
-        / "student.ipynb"
+        repo_root / "exercises" / "sequence" / EX004_EXERCISE_KEY / "notebooks" / "student.ipynb"
     )
     expected = student_notebook.with_name("solution.ipynb")
 
-    resolved = paths.resolve_notebook_path(
-        student_notebook, variant="solution")
+    resolved = paths.resolve_notebook_path(student_notebook, variant="solution")
 
     assert resolved == expected
 
@@ -102,16 +90,11 @@ def test_paths_resolver_anchors_relative_canonical_paths_to_repo_root(
     repo_root = Path(__file__).resolve().parents[2]
     monkeypatch.chdir(tmp_path)
     student_notebook = (
-        Path("exercises")
-        / "sequence"
-        / EX004_EXERCISE_KEY
-        / "notebooks"
-        / "student.ipynb"
+        Path("exercises") / "sequence" / EX004_EXERCISE_KEY / "notebooks" / "student.ipynb"
     )
     expected = (repo_root / student_notebook).with_name("solution.ipynb")
 
-    resolved = paths.resolve_notebook_path(
-        student_notebook, variant="solution")
+    resolved = paths.resolve_notebook_path(student_notebook, variant="solution")
 
     assert resolved == expected
 
@@ -152,12 +135,7 @@ def test_resolve_exercise_notebook_path_uses_canonical_path_for_migrated_exercis
     )
 
     assert resolved == (
-        repo_root
-        / "exercises"
-        / "sequence"
-        / EX003_EXERCISE_KEY
-        / "notebooks"
-        / "solution.ipynb"
+        repo_root / "exercises" / "sequence" / EX003_EXERCISE_KEY / "notebooks" / "solution.ipynb"
     )
 
 
