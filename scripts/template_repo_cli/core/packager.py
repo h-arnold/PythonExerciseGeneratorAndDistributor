@@ -190,11 +190,6 @@ class TemplatePackager:
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
-        safe_copy_directory(
-            self.repo_root / "exercise_runtime_support",
-            workspace / "exercise_runtime_support",
-            ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
-        )
         for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES:
             safe_copy_directory(
                 self.repo_root / required_dir,

@@ -62,7 +62,7 @@ def test_template_cli_consumers_link_to_shared_runtime_support() -> None:
     assert "exercise_runtime_support.pytest_collection_guard" in collector_source
     assert "find_duplicate_exercise_test_sources" in collector_source
     assert "exercise_runtime_support" in packager_source
-    assert 'workspace / "exercise_runtime_support"' in packager_source
+    assert '"exercise_runtime_support",' in packager_source
     assert "REQUIRED_PACKAGE_DIRECTORIES" in packager_source
 
 
