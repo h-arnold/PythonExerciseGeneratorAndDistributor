@@ -40,11 +40,26 @@
           }
         },
         
-        // File exclusions
+        // File exclusions - we keep a minimal set of folders visible to avoid extraneous cognitive load
         "files.exclude": {
           "**/__pycache__": true,
           "**/*.pyc": true,
-          "**/.pytest_cache": true
+          "**/.pytest_cache": true,
+          "**/.github": true,
+          "**/.git": true,
+          "**/.svn": true,
+          "**/.hg": true,
+          "**/.DS_Store": true,
+          "**/Thumbs.db": true,
+          "**/*.crswap": true,
+          "**/scripts": true,
+          "**/tests": true,
+          "**/exercise_runtime_support": true,
+          "**/.devcontainer": true,
+          "pyproject.toml": true,
+          ".gitignore": true,
+          "pytest.ini": true,
+          "uv.lock": true
         },
         
         // Jupyter configuration

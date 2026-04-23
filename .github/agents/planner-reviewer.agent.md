@@ -1,8 +1,9 @@
 ---
 name: Planner Reviewer
 description: Reviews planner output for missing requirements, architecture mismatches, notebook and workflow ambiguities, and undersized or misordered action plans
-tools: [execute/getTerminalOutput, execute/runTests, execute/runInTerminal, execute/runNotebookCell, read/getNotebookSummary, read/problems, read/readFile, search, web, todo]
+tools: [read/readFile, read/list_dir, search/search, execute/getTerminalOutput, execute/runInTerminal, todo]
 user-invocable: true
+model: gpt-5.4
 ---
 
 # Planner Review Agent
