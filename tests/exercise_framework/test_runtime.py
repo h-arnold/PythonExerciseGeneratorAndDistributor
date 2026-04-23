@@ -227,7 +227,8 @@ def test_paths_solution_variant_resolves_migrated_exercise_key() -> None:
         / "solution.ipynb"
     )
 
-    resolved = paths.resolve_notebook_path(EX007_EXERCISE_KEY, variant="solution")
+    resolved = paths.resolve_notebook_path(
+        EX007_EXERCISE_KEY, variant="solution")
 
     assert resolved == expected
     assert resolved.exists()

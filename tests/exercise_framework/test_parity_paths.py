@@ -20,7 +20,8 @@ def test_resolve_notebook_path_uses_canonical_exercise_key_resolution() -> None:
         / "solution.ipynb"
     )
 
-    resolved = paths.resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
+    resolved = paths.resolve_notebook_path(
+        EX004_EXERCISE_KEY, variant="solution")
 
     assert resolved == expected
 

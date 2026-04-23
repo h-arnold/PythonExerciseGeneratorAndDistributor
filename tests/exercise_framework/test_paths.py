@@ -23,7 +23,8 @@ def test_paths_resolver_uses_canonical_exercise_key_for_solution_variant() -> No
         / "solution.ipynb"
     )
 
-    resolved = paths.resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
+    resolved = paths.resolve_notebook_path(
+        EX004_EXERCISE_KEY, variant="solution")
 
     assert resolved == expected
 
@@ -88,7 +89,8 @@ def test_paths_resolver_preserves_variant_switching_for_canonical_paths() -> Non
     )
     expected = student_notebook.with_name("solution.ipynb")
 
-    resolved = paths.resolve_notebook_path(student_notebook, variant="solution")
+    resolved = paths.resolve_notebook_path(
+        student_notebook, variant="solution")
 
     assert resolved == expected
 
@@ -108,7 +110,8 @@ def test_paths_resolver_anchors_relative_canonical_paths_to_repo_root(
     )
     expected = (repo_root / student_notebook).with_name("solution.ipynb")
 
-    resolved = paths.resolve_notebook_path(student_notebook, variant="solution")
+    resolved = paths.resolve_notebook_path(
+        student_notebook, variant="solution")
 
     assert resolved == expected
 

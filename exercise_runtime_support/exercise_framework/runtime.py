@@ -31,7 +31,8 @@ class RuntimeCache:
     def __init__(self) -> None:
         self.code_by_tag: dict[tuple[str, str], str] = {}
         self.output_by_tag: dict[tuple[str, str], str] = {}
-        self.input_output_by_tag: dict[tuple[str, str, tuple[str, ...]], str] = {}
+        self.input_output_by_tag: dict[tuple[str,
+                                             str, tuple[str, ...]], str] = {}
 
 
 def _path_key(notebook_path: str | Path) -> str:
@@ -46,11 +47,13 @@ def extract_tagged_code(
     variant: Variant | None = None,
 ) -> str:
     """Extract tagged code, using cache when provided."""
-    key = (_path_key(resolve_framework_notebook_path(notebook_path, variant=variant)), tag)
+    key = (_path_key(resolve_framework_notebook_path(
+        notebook_path, variant=variant)), tag)
     if cache is not None and key in cache.code_by_tag:
         return cache.code_by_tag[key]
 
-    code = notebook_grader.extract_tagged_code(notebook_path, tag=tag, variant=variant)
+    code = notebook_grader.extract_tagged_code(
+        notebook_path, tag=tag, variant=variant)
     if cache is not None:
         cache.code_by_tag[key] = code
     return code
@@ -80,7 +83,8 @@ def run_cell_and_capture_output(
     variant: Variant | None = None,
 ) -> str:
     """Run a tagged cell and capture stdout, with optional caching."""
-    key = (_path_key(resolve_framework_notebook_path(notebook_path, variant=variant)), tag)
+    key = (_path_key(resolve_framework_notebook_path(
+        notebook_path, variant=variant)), tag)
     if cache is not None and key in cache.output_by_tag:
         return cache.output_by_tag[key]
 
@@ -104,7 +108,8 @@ def run_cell_with_input(
 ) -> str:
     """Run a tagged cell with mocked input, with optional caching."""
     key = (
-        _path_key(resolve_framework_notebook_path(notebook_path, variant=variant)),
+        _path_key(resolve_framework_notebook_path(
+            notebook_path, variant=variant)),
         tag,
         tuple(inputs),
     )
