@@ -17,37 +17,52 @@ class TestCollectAllFiles:
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex002_sequence_modify_basics")
 
+        assert files["exercise_json"] == (
+            repo_root / "exercises/sequence/ex002_sequence_modify_basics/exercise.json"
+        )
+        assert files["exercise_json_export"] == Path(
+            "exercises/sequence/ex002_sequence_modify_basics/exercise.json"
+        )
         assert files["notebook"] == (
-            repo_root
-            / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+            repo_root / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
         )
         assert files["notebook_export"] == Path(
-            "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb")
+            "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        )
         assert files["test"] == (
             repo_root
             / "exercises/sequence/ex002_sequence_modify_basics/tests"
             / "test_ex002_sequence_modify_basics.py"
         )
         assert files["tests_export_dir"] == Path(
-            "exercises/sequence/ex002_sequence_modify_basics/tests")
+            "exercises/sequence/ex002_sequence_modify_basics/tests"
+        )
 
     def test_collect_all_files_for_canonical_exercise(self, repo_root: Path) -> None:
         """Test collecting canonical files from the exercise source tree."""
         collector = FileCollector(repo_root)
         files = collector.collect_files("ex004_sequence_debug_syntax")
 
+        assert files["exercise_json"] == (
+            repo_root / "exercises/sequence/ex004_sequence_debug_syntax/exercise.json"
+        )
+        assert files["exercise_json_export"] == Path(
+            "exercises/sequence/ex004_sequence_debug_syntax/exercise.json"
+        )
         assert files["notebook"] == (
             repo_root / "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
         )
         assert files["notebook_export"] == Path(
-            "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb")
+            "exercises/sequence/ex004_sequence_debug_syntax/notebooks/student.ipynb"
+        )
         assert files["test"] == (
             repo_root
             / "exercises/sequence/ex004_sequence_debug_syntax/tests"
             / "test_ex004_sequence_debug_syntax.py"
         )
         assert files["tests_export_dir"] == Path(
-            "exercises/sequence/ex004_sequence_debug_syntax/tests")
+            "exercises/sequence/ex004_sequence_debug_syntax/tests"
+        )
 
     def test_collect_multiple_exercises(self, repo_root: Path) -> None:
         """Test batch collection of multiple exercises."""
@@ -69,7 +84,9 @@ class TestCollectMissingFiles:
         """Test handling missing student notebook."""
         collector = FileCollector(repo_root)
 
-        with pytest.raises(LookupError, match="exercise 'ex999_nonexistent' is not in the migration manifest"):
+        with pytest.raises(
+            LookupError, match="exercise 'ex999_nonexistent' is not in the migration manifest"
+        ):
             collector.collect_files("ex999_nonexistent")
 
     def test_collect_missing_test(self, repo_root: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -105,6 +122,8 @@ class TestCollectValidation:
         files = collector.collect_files("ex002_sequence_modify_basics")
 
         required_keys = [
+            "exercise_json",
+            "exercise_json_export",
             "notebook",
             "notebook_export",
             "test",
@@ -127,14 +146,11 @@ class TestCollectValidation:
     ) -> None:
         """Test that canonical-only layout doesn't detect duplicates across different exercises."""
         repo_root = temp_dir
-        exercise_dir = repo_root / "exercises" / \
-            "sequence" / "ex004_sequence_debug_syntax"
+        exercise_dir = repo_root / "exercises" / "sequence" / "ex004_sequence_debug_syntax"
         (exercise_dir / "notebooks").mkdir(parents=True)
         (exercise_dir / "tests").mkdir(parents=True)
-        (exercise_dir / "notebooks" /
-         "student.ipynb").write_text("{}", encoding="utf-8")
-        (exercise_dir / "notebooks" /
-         "solution.ipynb").write_text("{}", encoding="utf-8")
+        (exercise_dir / "notebooks" / "student.ipynb").write_text("{}", encoding="utf-8")
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text("{}", encoding="utf-8")
         (exercise_dir / "tests" / "test_ex004_sequence_debug_syntax.py").write_text(
             "", encoding="utf-8"
         )
@@ -154,8 +170,6 @@ class TestCollectValidation:
         # Should not raise an error since we only have one canonical test source
         files = collector.collect_files("ex004_sequence_debug_syntax")
         assert files["test"] == exercise_dir / "tests" / "test_ex004_sequence_debug_syntax.py"
-
-
 
 
 class TestCollectEdgeCases:

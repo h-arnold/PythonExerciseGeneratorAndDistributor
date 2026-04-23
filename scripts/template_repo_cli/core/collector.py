@@ -15,6 +15,8 @@ from exercise_runtime_support.pytest_collection_guard import (
 class ExerciseFiles(TypedDict):
     """Typed mapping returned by FileCollector.collect_files()."""
 
+    exercise_json: Path
+    exercise_json_export: Path
     notebook: Path
     notebook_export: Path
     test: Path
@@ -38,9 +40,17 @@ class FileCollector:
         exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
         return exercise_dir / "tests" / f"test_{exercise_id}.py"
 
+    def _canonical_exercise_json_path(self, exercise_id: str) -> Path:
+        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        return exercise_dir / "exercise.json"
+
     def _canonical_tests_export_dir(self, exercise_id: str) -> Path:
         exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
         return Path("exercises") / exercise_dir.relative_to(self.exercises_dir) / "tests"
+
+    def _canonical_exercise_json_export_path(self, exercise_id: str) -> Path:
+        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        return Path("exercises") / exercise_dir.relative_to(self.exercises_dir) / "exercise.json"
 
     def _canonical_notebook_export_path(self, exercise_id: str) -> Path:
         exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
@@ -95,13 +105,16 @@ class FileCollector:
             manifest_path=self.manifest_path,
         )
 
+        exercise_json_path = self._canonical_exercise_json_path(exercise_id)
+
         # Resolve canonical test path
         test_path = self._canonical_test_path(exercise_id)
         if not test_path.exists():
-            raise FileNotFoundError(
-                f"Canonical exercise test not found: {test_path}")
+            raise FileNotFoundError(f"Canonical exercise test not found: {test_path}")
 
         return ExerciseFiles(
+            exercise_json=exercise_json_path,
+            exercise_json_export=self._canonical_exercise_json_export_path(exercise_id),
             notebook=notebook_path,
             notebook_export=self._canonical_notebook_export_path(exercise_id),
             test=test_path,

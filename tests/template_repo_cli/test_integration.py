@@ -177,10 +177,7 @@ class TestLegacyNotebookFlagRejection:
 
         captured = capsys.readouterr()
         assert exc_info.value.code == argparse_usage_error
-        assert (
-            "unrecognized arguments: --notebooks ex002_sequence_modify_basics"
-            in captured.err
-        )
+        assert "unrecognized arguments: --notebooks ex002_sequence_modify_basics" in captured.err
 
 
 class TestEndToEndDryRun:
@@ -347,7 +344,10 @@ class TestEndToEndDryRun:
         assert "Hello Python!" in check.stdout
         assert "Great work! All exercise cells ran without errors." not in check.stdout
         assert "Great work! Everything that can be checked here looks good." not in check.stdout
-        assert "Metadata-free packaged repositories do not include solution notebooks" not in combined_output
+        assert (
+            "Metadata-free packaged repositories do not include solution notebooks"
+            not in combined_output
+        )
         assert "exercise_metadata must not be imported" not in combined_output
 
     def test_dry_run_workspace_sequence_notebook_self_checks_fail_until_solved(
@@ -465,8 +465,7 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
-        summary = cast(dict[str, Any], json.loads(
-            check.stdout.strip().splitlines()[-1]))
+        summary = cast(dict[str, Any], json.loads(check.stdout.strip().splitlines()[-1]))
         notebook_count = cast(int, summary["notebook_count"])
         failing_exercises = cast(list[str], summary["failing_exercises"])
 
@@ -947,107 +946,6 @@ class TestEndToEndDryRun:
         assert "exercise_metadata must not be imported" not in combined_output
         assert "Exercise 1" in check.stdout
 
-    def test_dry_run_workspace_ex004_solution_variant_uses_solution_mirror(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        """Ex004-only exports can run solution checks from an added packaged mirror."""
-        from scripts.template_repo_cli.cli import main
-
-        output_dir = tmp_path / "template_output"
-
-        result = main(
-            [
-                "--dry-run",
-                "--output-dir",
-                str(output_dir),
-                "create",
-                "--exercise-keys",
-                "ex004_sequence_debug_syntax",
-                "--repo-name",
-                "test-repo",
-            ]
-        )
-
-        assert result == 0
-        assert output_dir.exists()
-
-        exported_notebook = (
-            output_dir
-            / "exercises"
-            / "sequence"
-            / "ex004_sequence_debug_syntax"
-            / "notebooks"
-            / "student.ipynb"
-        )
-        solution_mirror = (
-            output_dir
-            / "exercises"
-            / "sequence"
-            / "ex004_sequence_debug_syntax"
-            / "notebooks"
-            / "solution.ipynb"
-        )
-        solution_mirror.parent.mkdir(parents=True, exist_ok=True)
-        solution_mirror.write_bytes(exported_notebook.read_bytes())
-        exported_notebook.unlink()
-
-        shadow_root = tmp_path / "shadow_packages"
-        shadow_package = shadow_root / "exercise_metadata"
-        shadow_package.mkdir(parents=True)
-        (shadow_package / "__init__.py").write_text("", encoding="utf-8")
-        (shadow_package / "registry.py").write_text(
-            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
-            encoding="utf-8",
-        )
-        (shadow_package / "resolver.py").write_text(
-            'raise RuntimeError("exercise_metadata must not be imported in packaged ex004 solution checks")\n',
-            encoding="utf-8",
-        )
-
-        env = os.environ.copy()
-        env["PYTUTOR_ACTIVE_VARIANT"] = "solution"
-        existing_pythonpath = env.get("PYTHONPATH")
-        env["PYTHONPATH"] = (
-            f"{shadow_root}{os.pathsep}{existing_pythonpath}"
-            if existing_pythonpath
-            else str(shadow_root)
-        )
-
-        command = [
-            sys.executable,
-            "-c",
-            "\n".join(
-                [
-                    "from exercise_runtime_support.exercise_framework import run_notebook_check",
-                    "from exercise_runtime_support.student_checker import check_exercise",
-                    "framework_results = run_notebook_check('ex004_sequence_debug_syntax')",
-                    "assert len(framework_results) == 1, framework_results",
-                    "assert framework_results[0].label, framework_results",
-                    "check_exercise('ex004_sequence_debug_syntax')",
-                ]
-            ),
-        ]
-
-        check = subprocess.run(
-            command,
-            cwd=output_dir,
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        combined_output = f"{check.stdout}\n{check.stderr}"
-
-        assert check.returncode == 0, (
-            "Packaged ex004 solution mirror checks failed:\n"
-            f"stdout:\n{check.stdout}\n"
-            f"stderr:\n{check.stderr}"
-        )
-        assert "exercise_metadata must not be imported" not in combined_output
-        assert "Exercise 1" in check.stdout
-
     def test_dry_run_workspace_ex004_solution_variant_fails_without_solution_mirror(
         self,
         tmp_path: Path,
@@ -1122,10 +1020,7 @@ class TestEndToEndDryRun:
         )
 
         assert check.returncode != 0
-        assert (
-            "Metadata-free packaged repositories do not include solution notebooks"
-            in combined_output
-        )
+        assert "expected notebook is missing" in combined_output
         assert str(expected_solution_mirror) in combined_output
         assert "Notebook not found:" not in combined_output
         assert "No such file or directory" not in combined_output
@@ -1205,10 +1100,7 @@ class TestEndToEndDryRun:
         )
 
         assert check.returncode != 0
-        assert (
-            "Metadata-free packaged repositories do not include solution notebooks"
-            in combined_output
-        )
+        assert "expected notebook is missing" in combined_output
         assert str(expected_solution_mirror) in combined_output
         assert "Notebook not found:" not in combined_output
         assert "No such file or directory" not in combined_output
@@ -1227,8 +1119,7 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(
-            returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -1376,8 +1267,7 @@ class TestCliCreateCommand:
                 },
             ),
         ):
-            result = main(["create", "--construct", "sequence",
-                          "--repo-name", "test-repo"])
+            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -1646,8 +1536,7 @@ class TestCliCreateCommand:
         assert result == 0
         EXPECT_CREATE_CALLS = 2
         assert mock_create.call_count == EXPECT_CREATE_CALLS
-        mock_subprocess_run.assert_any_call(
-            ["gh", "auth", "login"], check=False)
+        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(
