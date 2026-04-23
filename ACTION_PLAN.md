@@ -333,7 +333,7 @@ Implementation notes:
 - Checks passed: Completed
 - Action plan updated: Completed
 - Commit created: Completed (section code commit recorded)
-- Push completed: Pending
+- Push completed: Completed
 
 Implementation notes:
 - Added red-phase selector coverage to assert missing-manifest behaviour across selector-backed entrypoints with the required `Migration manifest not found` fragment.
@@ -343,3 +343,7 @@ Implementation notes:
 - Commit evidence (code):
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `d135161` - `fix: fail fast in selector when manifest is missing`
+- Commit evidence (plan/tracker):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `9d15a12` - `chore: record section 5 execution tracker status`
+  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
