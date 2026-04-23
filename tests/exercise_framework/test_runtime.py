@@ -9,7 +9,8 @@ import pytest
 
 from exercise_runtime_support import notebook_grader
 from exercise_runtime_support.execution_variant import Variant
-from tests.exercise_framework import paths, runtime
+from exercise_runtime_support.exercise_framework import runtime
+from tests.exercise_framework import paths
 
 EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
@@ -76,6 +77,15 @@ def test_runtime_extract_helper_matches_notebook_grader() -> None:
     )
 
     assert from_runtime == from_grader
+
+
+def test_runtime_module_does_not_expose_removed_resolve_notebook_path_wrapper() -> None:
+    assert not hasattr(runtime, "resolve_notebook_path")
+    assert "resolve_notebook_path" not in runtime.__all__
+
+
+def test_notebook_grader_module_does_not_expose_removed_resolve_notebook_path_wrapper() -> None:
+    assert not hasattr(notebook_grader, "resolve_notebook_path")
 
 
 def test_runtime_reports_missing_tag_with_same_error_message(tmp_path: Path) -> None:

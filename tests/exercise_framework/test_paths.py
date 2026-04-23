@@ -166,6 +166,10 @@ def test_resolve_exercise_notebook_path_propagates_legacy_layout_failure(
 ) -> None:
     repo_root = Path(__file__).resolve().parents[2]
 
+    def fake_has_local_metadata_package(repo_root_path: Path) -> bool:
+        del repo_root_path
+        return True
+
     def fake_repo_root() -> Path:
         return repo_root
 
@@ -185,7 +189,7 @@ def test_resolve_exercise_notebook_path_propagates_legacy_layout_failure(
     monkeypatch.setattr(
         paths_impl,
         "_has_local_metadata_package",
-        lambda _repo_root: True,
+        fake_has_local_metadata_package,
     )
     monkeypatch.setattr(
         paths_impl,

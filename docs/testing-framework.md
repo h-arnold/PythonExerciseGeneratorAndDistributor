@@ -94,13 +94,17 @@ This repository provides a small set of shared helpers used across infrastructur
 
 Important note on similarly-named helpers:
 
-- There are four helpers named `resolve_notebook_path()` in the codebase:
+- There are two supported `resolve_notebook_path()` helpers in the codebase:
 - `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path` is the framework entry point and respects the current notebook-variant selection.
-- `exercise_runtime_support.notebook_grader::resolve_notebook_path` is a low-level helper used by the framework runtime.
-- `exercise_runtime_support.exercise_framework.runtime::resolve_notebook_path` is a runtime-oriented wrapper used by framework execution helpers.
 - `exercise_metadata.resolver::resolve_notebook_path` resolves canonical notebook locations directly from `exercise_key` metadata.
 
-Recommendation: For runtime and test execution helpers, prefer `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path` (or the `runtime` wrapper where that API is already in use). For template CLI canonical file collection, use `exercise_metadata.resolver::resolve_notebook_path`. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
+Breaking-change migration note:
+
+- Removed symbols: `exercise_runtime_support.notebook_grader::resolve_notebook_path` and `exercise_runtime_support.exercise_framework.runtime::resolve_notebook_path`.
+- Canonical replacement for runtime and test helpers: `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path`.
+- Canonical replacement for metadata-driven canonical lookup: `exercise_metadata.resolver::resolve_notebook_path`.
+
+Recommendation: For runtime and test execution helpers, use `exercise_runtime_support.exercise_framework.paths::resolve_notebook_path`. For template CLI canonical file collection, use `exercise_metadata.resolver::resolve_notebook_path`. Do not treat notebook paths as the canonical exercise identity in new guidance or new APIs.
 
 Resolver identity contract:
 
