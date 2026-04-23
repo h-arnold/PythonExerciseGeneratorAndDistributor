@@ -89,6 +89,11 @@ def test_run_notebook_check_supports_ex002_summary_path(
     assert results[0].passed is True
 
 
+def test_get_catalogue_key_for_exercise_id_unknown_id_is_explicit() -> None:
+    with pytest.raises(ValueError, match="Unknown exercise_id"):
+        get_catalogue_key_for_exercise_id(999_999)
+
+
 def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -115,8 +120,7 @@ def test_run_notebook_check_passes_exercise_key_to_runtime_helper(
     results = run_notebook_check("ex004_sequence_debug_syntax")
 
     assert captured_arguments == [("ex004_sequence_debug_syntax", "exercise1")]
-    assert results == [NotebookCheckResult(
-        "ex004 Debug Syntax Errors", True, [])]
+    assert results == [NotebookCheckResult("ex004 Debug Syntax Errors", True, [])]
 
 
 def test_package_surface_re_exports_expectations_symbols() -> None:
@@ -168,13 +172,10 @@ def test_package_surface_lazy_loads_ex002_support_symbols(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(framework_expectations, "_ex002_support_module", None)
-    monkeypatch.delitem(vars(framework_expectations),
-                        "EX002_CHECKS", raising=False)
-    monkeypatch.delitem(vars(framework_expectations),
-                        "Ex002CheckDefinition", raising=False)
+    monkeypatch.delitem(vars(framework_expectations), "EX002_CHECKS", raising=False)
+    monkeypatch.delitem(vars(framework_expectations), "Ex002CheckDefinition", raising=False)
     monkeypatch.delitem(vars(framework_package), "EX002_CHECKS", raising=False)
-    monkeypatch.delitem(vars(framework_package),
-                        "Ex002CheckDefinition", raising=False)
+    monkeypatch.delitem(vars(framework_package), "Ex002CheckDefinition", raising=False)
 
     reloaded_package = importlib.reload(framework_package)
 
@@ -184,7 +185,4 @@ def test_package_surface_lazy_loads_ex002_support_symbols(
     assert "Ex002CheckDefinition" not in vars(framework_expectations)
 
     assert reloaded_package.EX002_CHECKS is framework_expectations.EX002_CHECKS
-    assert (
-        reloaded_package.Ex002CheckDefinition
-        is framework_expectations.Ex002CheckDefinition
-    )
+    assert reloaded_package.Ex002CheckDefinition is framework_expectations.Ex002CheckDefinition

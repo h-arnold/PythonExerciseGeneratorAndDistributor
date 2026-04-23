@@ -162,7 +162,7 @@ def resolve_notebook_path(
     exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
     try:
         load_exercise_metadata(exercise_dir)
-    except (FileNotFoundError, ValueError) as exc:
+    except (FileNotFoundError, TypeError, ValueError) as exc:
         raise LookupError(
             f"exercise {exercise_key!r} is marked as canonical in the migration manifest "
             f"but its exercise.json is missing or invalid: {exc}"
