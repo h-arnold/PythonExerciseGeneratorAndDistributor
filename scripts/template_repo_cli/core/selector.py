@@ -29,9 +29,7 @@ class ExerciseSelector:
         self.manifest_path = self.exercises_dir / "migration_manifest.json"
 
     def _get_registry(self) -> list[RegistryEntry]:
-        """Return the metadata-backed exercise registry when available."""
-        if not self.manifest_path.exists():
-            return []
+        """Return the metadata-backed exercise registry."""
         return build_exercise_registry(self.manifest_path, self.exercises_dir)
 
     def _all_metadata_exercise_keys(self) -> list[str]:
@@ -45,10 +43,7 @@ class ExerciseSelector:
             List of exercise keys.
         """
         exercise_keys = self._all_metadata_exercise_keys()
-        if self.manifest_path.exists():
-            return sorted(set(exercise_keys))
-
-        return exercise_keys
+        return sorted(set(exercise_keys))
 
     def _validate_constructs(self, constructs: list[str]) -> None:
         """Validate construct names.
@@ -113,9 +108,6 @@ class ExerciseSelector:
         exercises = self._filter_metadata_exercise_keys(
             lambda _exercise_key, metadata: metadata["construct"] in constructs,
         )
-        if self.manifest_path.exists():
-            return sorted(set(exercises))
-
         return sorted(set(exercises))
 
     def select_by_type(self, types: list[str]) -> list[str]:
@@ -135,9 +127,6 @@ class ExerciseSelector:
         exercises = self._filter_metadata_exercise_keys(
             lambda _exercise_key, metadata: metadata["exercise_type"] in types,
         )
-        if self.manifest_path.exists():
-            return sorted(set(exercises))
-
         return sorted(set(exercises))
 
     def select_by_construct_and_type(self, constructs: list[str], types: list[str]) -> list[str]:
@@ -158,9 +147,6 @@ class ExerciseSelector:
                 metadata["construct"] in constructs and metadata["exercise_type"] in types
             ),
         )
-        if self.manifest_path.exists():
-            return sorted(set(exercises))
-
         return sorted(set(exercises))
 
     def select_by_exercise_keys(self, exercise_keys: list[str]) -> list[str]:

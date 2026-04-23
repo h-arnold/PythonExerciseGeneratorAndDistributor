@@ -9,6 +9,34 @@ import pytest
 from scripts.template_repo_cli.core.selector import ExerciseSelector
 
 
+class TestMissingManifest:
+    """Tests for selector-backed flows when the migration manifest is missing."""
+
+    @pytest.mark.parametrize(
+        ("method_name", "method_args"),
+        [
+            ("get_all_exercise_keys", ()),
+            ("select_by_construct", (["sequence"],)),
+            ("select_by_type", (["modify"],)),
+            ("select_by_construct_and_type", (["sequence"], ["modify"])),
+            ("select_by_exercise_keys", (["ex002_sequence_modify_basics"],)),
+            ("select_by_exercise_key_pattern", ("ex00*",)),
+        ],
+    )
+    def test_selector_flows_raise_file_not_found_when_manifest_is_missing(
+        self,
+        tmp_path: Path,
+        method_name: str,
+        method_args: tuple[object, ...],
+    ) -> None:
+        """Selector-backed flows must fail fast when the manifest is absent."""
+        selector = ExerciseSelector(tmp_path)
+        method = getattr(selector, method_name)
+
+        with pytest.raises(FileNotFoundError, match="Migration manifest not found"):
+            method(*method_args)
+
+
 class TestSelectByConstruct:
     """Tests for selecting exercises by construct."""
 
@@ -183,6 +211,7 @@ class TestSelectByPattern:
 
         with pytest.raises(ValueError, match="Invalid pattern"):
             selector.select_by_exercise_key_pattern("notebooks/ex002")
+
 
 class TestSelectEmptyResult:
     """Tests for handling empty selection results."""
