@@ -1,7 +1,8 @@
 name = "Testing Specialist"
 description = "Verifies repository infrastructure tests, exercise-local tests, notebook grading, autograding tooling, scaffolding, and template repo tooling."
+model = "gpt-5.4-mini"
+model_reasoning_effort = "high"
 developer_instructions = """
-
 > Repository status
 > The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces.
 
