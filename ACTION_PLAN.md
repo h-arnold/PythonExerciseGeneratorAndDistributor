@@ -256,11 +256,17 @@ Implementation notes:
 - Green review clean: Completed
 - Checks passed: Completed
 - Action plan updated: Completed
-- Commit created: Pending
-- Push completed: Pending
+- Commit created: Completed
+- Push completed: Completed
 
 Implementation notes:
 - Removed snapshot constants, snapshot loading/writing helpers, and metadata-presence branching from the scoped runtime modules.
 - `get_exercise_catalogue()` now always builds directly from `exercise_metadata.registry`.
 - `resolve_exercise_notebook_path()` now delegates directly to metadata resolver semantics for both variants.
 - Updated the targeted runtime tests to assert metadata-only catalogue resolution and metadata-resolver delegation, with no fallback branches.
+- Commit evidence:
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `80a90ce` - `refactor: simplify exercise resolution by removing snapshot handling and enhancing metadata integration`
+  - Push: commit is present on `origin/refactor/simplifyExerciseRegistry`
+- Deviation noted:
+  - The section commit also touched `.codex/agents/tidy_code_review.toml` (outside the planned Section 2 file list). Kept as-is; no rollback performed.
