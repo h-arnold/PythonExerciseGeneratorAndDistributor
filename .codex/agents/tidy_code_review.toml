@@ -52,7 +52,7 @@ You are the post-change reviewer for PythonExerciseGeneratorAndDistributor. Veri
 ## 4. Review Workflow
 
 1. Reconstruct the change from the diff or change summary.
-2. Run or inspect the automated review path described in `docs/agents/tidy_code_review/automated_review.md`.
+2. Run the automated review path described in `docs/agents/tidy_code_review/automated_review.md`.
 3. Apply only safe, semantics-preserving fixes during the automated pass.
 4. Count the remaining issues after automation.
 5. If the count is `<= 15`, perform the manual trace by following `docs/agents/tidy_code_review/manual_review.md`.

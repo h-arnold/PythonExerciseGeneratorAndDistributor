@@ -233,11 +233,34 @@ Dependencies and sequencing:
 - Green review clean: Completed (after one fix cycle)
 - Checks passed: Completed
 - Action plan updated: Completed
-- Commit created: Pending
-- Push completed: Pending
+- Commit created: Completed
+- Push completed: Completed
 
 Implementation notes:
 - Added a focused docs contract test that enforces required metadata-only/fail-fast fragments and forbids stale snapshot/metadata-free wording.
 - Updated docs to align with SPEC §2.1/§2.2 contract language.
 - Review finding resolved: corrected `docs/CLI_README.md` contradiction about exporting per-exercise `exercise.json` and strengthened guard assertions to prevent regression.
 - No approved deviations from Section 1 scope.
+- Commit evidence:
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `9ff7f2c` - `docs: lock metadata-only runtime contract and add guard test`
+  - Commit: `905d65d` - `chore: record section 1 execution tracker status`
+  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+
+### Section 2 - Runtime Catalogue and Path Resolver Unification
+
+- Status: Completed
+- Red tests added: Completed (`tests/exercise_runtime_support/test_exercise_catalogue.py`, `tests/exercise_framework/test_paths.py`)
+- Red review clean: Completed
+- Green implementation complete: Completed
+- Green review clean: Completed
+- Checks passed: Completed
+- Action plan updated: Completed
+- Commit created: Pending
+- Push completed: Pending
+
+Implementation notes:
+- Removed snapshot constants, snapshot loading/writing helpers, and metadata-presence branching from the scoped runtime modules.
+- `get_exercise_catalogue()` now always builds directly from `exercise_metadata.registry`.
+- `resolve_exercise_notebook_path()` now delegates directly to metadata resolver semantics for both variants.
+- Updated the targeted runtime tests to assert metadata-only catalogue resolution and metadata-resolver delegation, with no fallback branches.
