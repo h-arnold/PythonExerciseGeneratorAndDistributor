@@ -425,7 +425,7 @@ Cleanup notes:
 - Docs sync result: Completed (targeted AGENTS contract alignment update)
 - Review: Completed
 - Commit created: Completed (docs commit recorded)
-- Push completed: Pending
+- Push completed: Completed
 
 Documentation notes:
 - Updated `AGENTS.md` to align packaged runtime guidance with the final metadata-only contract by explicitly forbidding flattened notebook/test mirrors in packaged outputs.
@@ -433,3 +433,7 @@ Documentation notes:
 - Commit evidence (docs):
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `88dfbb1` - `docs: align AGENTS runtime contract with packaged outputs`
+- Commit evidence (docs tracker):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `eeea45d` - `chore: record final documentation pass status`
+  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
