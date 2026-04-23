@@ -8,12 +8,12 @@ import re
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
 
+from exercise_runtime_support.exercise_framework.paths import resolve_notebook_path
 from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
 from exercise_runtime_support.notebook_grader import (
     NotebookCell,
     NotebookGradingError,
     extract_tagged_code,
-    resolve_notebook_path,
     run_cell_and_capture_output,
     run_cell_with_input,
 )

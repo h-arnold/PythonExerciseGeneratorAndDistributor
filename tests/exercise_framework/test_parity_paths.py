@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.notebook_grader import resolve_notebook_path
+from tests.exercise_framework import paths
 
 EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
 
@@ -20,14 +20,14 @@ def test_resolve_notebook_path_uses_canonical_exercise_key_resolution() -> None:
         / "solution.ipynb"
     )
 
-    resolved = resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
+    resolved = paths.resolve_notebook_path(EX004_EXERCISE_KEY, variant="solution")
 
     assert resolved == expected
 
 
 def test_resolve_notebook_path_rejects_legacy_path_string_input() -> None:
     with pytest.raises(LookupError, match="resolver input must be an exercise_key"):
-        resolve_notebook_path(
+        paths.resolve_notebook_path(
             "notebooks/ex002_sequence_modify_basics.ipynb", variant="solution")
 
 
@@ -41,6 +41,6 @@ def test_resolve_notebook_path_switches_variant_for_canonical_paths() -> None:
         / "notebooks"
         / "student.ipynb"
     )
-    resolved = resolve_notebook_path(original, variant="solution")
+    resolved = paths.resolve_notebook_path(original, variant="solution")
 
     assert resolved == original.with_name("solution.ipynb")

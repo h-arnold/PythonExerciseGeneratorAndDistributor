@@ -29,21 +29,12 @@ class NotebookGradingError(RuntimeError):
     pass
 
 
-def resolve_notebook_path(
-    notebook_path: str | Path,
-    *,
-    variant: Variant | None = None,
-) -> Path:
-    """Resolve an exercise_key string or explicit notebook Path."""
-    return resolve_framework_notebook_path(notebook_path, variant=variant)
-
-
 def _read_notebook(
     notebook_path: str | Path,
     *,
     variant: Variant | None = None,
 ) -> dict[str, Any]:
-    path = resolve_notebook_path(notebook_path, variant=variant)
+    path = resolve_framework_notebook_path(notebook_path, variant=variant)
     if not path.exists():
         raise NotebookGradingError(f"Notebook not found: {path}")
 
@@ -154,7 +145,7 @@ def exec_tagged_code(
 
     code = extract_tagged_code(notebook_path, tag=tag, variant=variant)
 
-    path = resolve_notebook_path(notebook_path, variant=variant)
+    path = resolve_framework_notebook_path(notebook_path, variant=variant)
     filename = filename_hint or str(path)
 
     ns: dict[str, Any] = {

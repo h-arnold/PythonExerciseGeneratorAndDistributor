@@ -11,13 +11,15 @@ from typing import Any
 
 from exercise_runtime_support import notebook_grader
 from exercise_runtime_support.execution_variant import Variant
+from exercise_runtime_support.exercise_framework.paths import (
+    resolve_notebook_path as resolve_framework_notebook_path,
+)
 
 __all__ = [
     "RuntimeCache",
     "exec_tagged_code",
     "extract_tagged_code",
     "get_explanation_cell",
-    "resolve_notebook_path",
     "run_cell_and_capture_output",
     "run_cell_with_input",
 ]
@@ -36,15 +38,6 @@ def _path_key(notebook_path: str | Path) -> str:
     return str(Path(notebook_path))
 
 
-def resolve_notebook_path(
-    notebook_path: str | Path,
-    *,
-    variant: Variant | None = None,
-) -> Path:
-    """Resolve a notebook path using the shared path semantics."""
-    return notebook_grader.resolve_notebook_path(notebook_path, variant=variant)
-
-
 def extract_tagged_code(
     notebook_path: str | Path,
     *,
@@ -53,7 +46,7 @@ def extract_tagged_code(
     variant: Variant | None = None,
 ) -> str:
     """Extract tagged code, using cache when provided."""
-    key = (_path_key(resolve_notebook_path(notebook_path, variant=variant)), tag)
+    key = (_path_key(resolve_framework_notebook_path(notebook_path, variant=variant)), tag)
     if cache is not None and key in cache.code_by_tag:
         return cache.code_by_tag[key]
 
@@ -87,7 +80,7 @@ def run_cell_and_capture_output(
     variant: Variant | None = None,
 ) -> str:
     """Run a tagged cell and capture stdout, with optional caching."""
-    key = (_path_key(resolve_notebook_path(notebook_path, variant=variant)), tag)
+    key = (_path_key(resolve_framework_notebook_path(notebook_path, variant=variant)), tag)
     if cache is not None and key in cache.output_by_tag:
         return cache.output_by_tag[key]
 
@@ -110,7 +103,11 @@ def run_cell_with_input(
     variant: Variant | None = None,
 ) -> str:
     """Run a tagged cell with mocked input, with optional caching."""
-    key = (_path_key(resolve_notebook_path(notebook_path, variant=variant)), tag, tuple(inputs))
+    key = (
+        _path_key(resolve_framework_notebook_path(notebook_path, variant=variant)),
+        tag,
+        tuple(inputs),
+    )
     if cache is not None and key in cache.input_output_by_tag:
         return cache.input_output_by_tag[key]
 
