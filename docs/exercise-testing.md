@@ -6,7 +6,7 @@ This document outlines the testing philosophy and conventions for verifying stud
 
 ## Repository status
 
-Prefer explicit variant selection in tooling and CI. Canonical notebook resolution now starts from `exercise_key` and the exercise-local source tree.
+Prefer explicit variant selection in tooling and CI. Canonical notebook resolution starts from `exercise_key` and the exercise-local source tree, and packaged repositories must satisfy the metadata-backed runtime contract.
 
 ## Philosophy: "Task Completion" with Good Habits
 
@@ -600,7 +600,7 @@ Source-repository validation and exported Classroom autograding are different wo
 
 - **`.github/workflows/tests.yml`**: Push/PR validation for the authoring repository. It checks pytest collection/discovery and then runs the explicit `scripts/run_pytest_variant.py --variant solution -q` pass.
 - **`.github/workflows/tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional pytest args for targeted solution checks.
-- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-free student contract.
+- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-backed student contract.
 
 ## Cell Tagging
 

@@ -100,6 +100,54 @@ def test_contributor_docs_align_on_execution_model_contract() -> None:
     assert "## 4) Source-to-export mapping contract" in execution_model_source
 
 
+def test_contributor_docs_lock_metadata_only_packaged_contract() -> None:
+    """Contributor docs must remove snapshot-era guidance and state the packaged contract."""
+    required_fragments = {
+        Path("docs/execution-model.md"): (
+            "Packaged runtime contract",
+            "Resolution and packaging failures must remain fail-fast",
+        ),
+        Path("docs/testing-framework.md"): (
+            "metadata-backed runtime surfaces required by the packaged runtime contract",
+        ),
+        Path("docs/project-structure.md"): (
+            "The packaged Classroom layout includes the metadata-backed runtime contract",
+        ),
+        Path("docs/development.md"): (
+            "metadata-backed student contract rather than the source-repository authoring contract",
+        ),
+        Path("docs/setup.md"): (
+            "metadata-backed student contract used in Classroom",
+        ),
+        Path("docs/exercise-generation.md"): (
+            "flattened notebook/test mirrors are not part of the supported contract",
+        ),
+        Path("docs/exercise-generation-cli.md"): (
+            "Flattened notebook/test mirrors are not part of the supported contract and must not be introduced in scaffold output",
+        ),
+        Path("docs/exercise-testing.md"): (
+            "packaged repositories must satisfy the metadata-backed runtime contract",
+        ),
+        Path("docs/CLI_README.md"): (
+            "Exported per-exercise metadata (`exercise.json`)",
+        ),
+    }
+
+    forbidden_fragments = (
+        "No exported per-exercise metadata",
+        "metadata-free",
+        "exercise_catalogue_snapshot.json",
+        "snapshot",
+    )
+
+    for path, fragments in required_fragments.items():
+        source = path.read_text(encoding="utf-8")
+        for fragment in fragments:
+            assert fragment in source, f"Expected '{fragment}' in {path}"
+        for fragment in forbidden_fragments:
+            assert fragment not in source, f"Unexpected '{fragment}' in {path}"
+
+
 def test_framework_wrapper_surfaces_link_to_canonical_modules() -> None:
     """The framework wrapper surface files must point at the canonical modules."""
     expected_targets = {

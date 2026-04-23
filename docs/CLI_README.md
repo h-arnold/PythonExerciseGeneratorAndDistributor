@@ -189,7 +189,7 @@ Each generated template repository includes:
 
 - `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 - `exercises/<construct>/<exercise_key>/tests/`
-- No exported per-exercise metadata (`exercise.json`) and no solution notebooks
+- Exported per-exercise metadata (`exercise.json`), no solution notebooks, and no flattened notebook/test mirrors
 
 ### Infrastructure Files
 
@@ -216,13 +216,17 @@ Generated templates include the selected exercise tests and the required shared 
 - `tests/test_build_autograde_payload.py`
 - `tests/exercise_framework/` (runtime files only)
 - `exercise_runtime_support/` (packaged runtime support package)
-- `exercise_runtime_support/exercise_catalogue_snapshot.json` (generated at packaging time for metadata-free catalogue lookups)
+- `exercise_metadata/` (metadata-backed catalogue and resolver package)
+- `exercises/migration_manifest.json`
+- `exercises/<construct>/<exercise_key>/exercise.json`
+- `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
+- `exercises/<construct>/<exercise_key>/tests/`
 
 When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py`/`*_test.py`).
 
-This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces rely on the generated `exercise_runtime_support/exercise_catalogue_snapshot.json` snapshot instead of importing `exercise_metadata` from the source repository.
+This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces import `exercise_metadata` directly and rely on the migration manifest plus per-exercise metadata instead of compatibility fallbacks.
 
-The export contract rejects authoring-only assets such as `exercise.json` and `solution.ipynb`, while keeping student notebooks at canonical exercise-local paths.
+The export contract rejects authoring-only assets such as `solution.ipynb` and flattened notebook/test mirrors, while keeping student notebooks and canonical exercise-local tests at their canonical exercise-local paths.
 
 ## Available Constructs
 

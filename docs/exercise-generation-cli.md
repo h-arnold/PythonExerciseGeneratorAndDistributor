@@ -406,7 +406,7 @@ def test_exercise_behaviour(tag, expected):
 - Canonical authoring path: `exercises/<construct>/<exercise_key>/`
 - Exercise type: stored in `exercise.json`, not in the path
 - Canonical resolver input: `exercise_key`
-- Legacy flattened paths elsewhere in the repository may still exist during migration, but new scaffold output is canonical only
+- Flattened notebook/test mirrors are not part of the supported contract and must not be introduced in scaffold output
 
 When documenting or authoring new exercises, prefer the canonical exercise-local notebook and test paths.
 

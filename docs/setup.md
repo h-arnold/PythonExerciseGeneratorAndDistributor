@@ -193,7 +193,7 @@ The `.github/workflows/tests-solutions.yml` workflow:
 
 - Triggers the student-facing autograding run
 - Runs `scripts/build_autograde_payload.py --variant student`
-- Validates the metadata-free student contract used in Classroom
+- Validates the metadata-backed student contract used in Classroom
 
 Students see assignment autograding results from `classroom.yml` in the GitHub Actions tab of their Classroom repository.
 
@@ -306,4 +306,4 @@ Exported GitHub Classroom autograding workflow:
 
 - Copied into assignment repositories generated from this source repo
 - Runs the student variant via `scripts/build_autograde_payload.py --variant student`
-- Validates the metadata-free student notebook contract, not the source-repository authoring contract
+- Validates the metadata-backed student notebook contract, not the source-repository authoring contract

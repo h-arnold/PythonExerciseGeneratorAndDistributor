@@ -6,7 +6,7 @@ This guide explains how to use the **Exercise Generation** assistant in GitHub C
 
 ## Repository status
 
-New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document, and flattened notebook/test paths are derived export outputs rather than authoring locations.
+New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document, and flattened notebook/test mirrors are not part of the supported contract.
 
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
