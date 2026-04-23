@@ -399,3 +399,18 @@ Implementation notes:
   - Branch: `refactor/simplifyExerciseRegistry`
   - Commit: `72755ba` - `chore: record section 7 execution tracker status`
   - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+
+### Mandatory De-Sloppification Pass
+
+- Status: Completed
+- Findings: One confirmed duplication in template packager runtime-support copy path.
+- Cleanup implementation: Completed
+- Cleanup review: Completed
+- Branch ready for docs sync: Completed
+
+Cleanup notes:
+- Removed redundant duplicate copy of `exercise_runtime_support/` in `scripts/template_repo_cli/core/packager.py` so package directories are copied once via the required package directory loop.
+- Updated `tests/exercise_runtime_support/test_runtime_contract.py` to assert contract intent (shared runtime-support copy contract) rather than duplicate implementation detail.
+- Commit evidence (cleanup code):
+  - Branch: `refactor/simplifyExerciseRegistry`
+  - Commit: `097c889` - `refactor: remove duplicated runtime support copy path`
