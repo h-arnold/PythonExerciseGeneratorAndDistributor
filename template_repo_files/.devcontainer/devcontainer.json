@@ -85,7 +85,7 @@
 
 
   // Post-create command to install the exercise package if pyproject.toml exists
-  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && uv sync && . .venv/bin/activate",
+  "postCreateCommand": "command -v uv >/dev/null 2>&1 || python -m pip install --user uv==0.8.22; python -m uv sync && . .venv/bin/activate",
   "postStartCommand": "[ -f pyproject.toml ] && (uv sync && . .venv/bin/activate) || echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'",
   // Use the 'vscode' user which already exists in the base image
   "remoteUser": "vscode",

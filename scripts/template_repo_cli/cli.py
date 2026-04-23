@@ -262,17 +262,16 @@ def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
     Returns:
         Enhanced error message with hints.
     """
+    exists_hint = GitHubClient.github_already_exists_hint(error_msg, args.repo_name)
+    if exists_hint:
+        return (
+            f"{error_msg}\n\n{exists_hint}\n"
+            "Use the update-repo command to push new contents to the existing repository."
+        )
+
     hint = GitHubClient.github_error_hint(error_msg, args.repo_name)
     if not hint:
         return error_msg
-
-    exists_hint = GitHubClient.github_already_exists_hint(
-        error_msg, args.repo_name)
-    if exists_hint:
-        return (
-            f"{error_msg}\n\n{hint}\n"
-            "Use the update-repo command to push new contents to the existing repository."
-        )
 
     return f"{error_msg}\n\n{hint}"
 

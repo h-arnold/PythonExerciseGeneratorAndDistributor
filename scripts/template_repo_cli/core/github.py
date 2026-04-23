@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import Literal, TypedDict
@@ -759,8 +760,6 @@ class GitHubClient:
     @staticmethod
     def _detect_auth_token_env() -> str | None:
         """Return which GitHub auth-related environment variable is set, if any."""
-        import os
-
         for key in GITHUB_TOKEN_ENV_KEYS:
             if os.getenv(key):
                 return key

@@ -184,13 +184,6 @@ class TestSelectByPattern:
         with pytest.raises(ValueError, match="Invalid pattern"):
             selector.select_by_exercise_key_pattern("notebooks/ex002")
 
-
-class TestMetadataBackedSelection:
-    """Regression tests for metadata-backed selector behaviour."""
-
-
-
-
 class TestSelectEmptyResult:
     """Tests for handling empty selection results."""
 

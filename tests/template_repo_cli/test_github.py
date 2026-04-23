@@ -480,12 +480,20 @@ class TestPushToExistingRepository:
         error = subprocess.CalledProcessError(1, "git push")
         error.stdout = ""
         error.stderr = "remote: Permission denied (403)"
-        mock_run.side_effect = [
-            MagicMock(returncode=0, stdout="user/repo\n"),  # resolve repo ref
-            MagicMock(returncode=0),  # git init
-            MagicMock(returncode=0),  # git commit
-            error,  # git push fails with permission error
-        ]
+
+        def side_effect(cmd: object, **kwargs: Any) -> MagicMock:
+            if is_command_sequence(cmd) and cmd[:3] == ["git", "push", "-u"]:
+                raise error
+
+            if is_command_sequence(cmd) and cmd[:4] == ["gh", "api", "user", "--jq"]:
+                return MagicMock(returncode=0, stdout="user\n", stderr="")
+
+            if is_command_sequence(cmd) and cmd[:3] == ["git", "branch", "--show-current"]:
+                return MagicMock(returncode=0, stdout="main\n", stderr="")
+
+            return MagicMock(returncode=0, stdout="", stderr="")
+
+        mock_run.side_effect = side_effect
 
         client = GitHubClient()
         result: ExecResult = client.push_to_existing_repository(
