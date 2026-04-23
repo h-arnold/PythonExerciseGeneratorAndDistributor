@@ -54,7 +54,8 @@ Verify the student notebook matches the required format for its type. Make sure 
 - Student notebook cells must not include the complete final answer.
 
 **Make exercises** (see `docs/exercise-types/make.md`):
-- The graded `exerciseN` cell contains a clear function skeleton.
+- The graded `exerciseN` cell is a tagged code cell (`exerciseN`) that students complete from scaffolded starter code.
+- Do not require a function skeleton by default; only require named functions when the exercise explicitly teaches functions.
 - Prompt includes task + expected output and is appropriately scoped.
 - Student notebook cells must not include the complete final answer.
 
@@ -155,10 +156,10 @@ Tests cases should be written that answer these questions for each of the exerci
 - Where possible, split logic, construct checks, and formatting into separate tests under the same taskno for better feedback.
 
 **Helper Functions:**
-- Use `tests.exercise_framework.runtime.run_cell_and_capture_output()` for simple output capture.
-- Use `tests.exercise_framework.runtime.run_cell_with_input()` for exercises with `input()` prompts.
-- Use `tests.exercise_framework.runtime.extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
-- Use `tests.exercise_framework.runtime.get_explanation_cell()` to verify reflection cells are non-empty.
+- Use `exercise_runtime_support.exercise_framework.run_cell_and_capture_output()` for simple output capture.
+- Use `exercise_runtime_support.exercise_framework.run_cell_with_input()` for exercises with `input()` prompts.
+- Use `exercise_runtime_support.exercise_framework.extract_tagged_code()` for AST checks (e.g., verifying use of `for`, `if`).
+- Use `exercise_runtime_support.exercise_framework.get_explanation_cell()` to verify reflection cells are non-empty.
 - Pull expected outputs, prompts, and inputs from helper modules in `exercises/<construct>/<exercise_key>/tests/` rather than hard-coding them.
 
 **Validation:**
@@ -208,7 +209,7 @@ For FAIL:
 - include which file(s) to change.
 
 ## Recommended workflow
-1) Create a comprehensive TODO list using the `manage_todo_list` tool to help you track your progress. **You MUST do this**
+1) Create a comprehensive TODO list using the `todo` tool to help you track your progress. **You MUST do this**
 2) Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
 3) Open the appropriate exercise-type guide in full.
 4) Run the quick script checks (Gates B/C + teacher file presence):
