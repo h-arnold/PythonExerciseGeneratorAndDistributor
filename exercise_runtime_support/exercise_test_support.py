@@ -14,20 +14,16 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def resolve_exercise_tests_dir(exercise_key: str) -> Path:
-    """Return the canonical or packaged tests directory for an exercise key."""
+    """Return the canonical tests directory for an exercise key."""
 
     entry = get_catalogue_entry(exercise_key)
     source_dir = _REPO_ROOT / "exercises" / entry.construct / exercise_key / "tests"
     if source_dir.is_dir():
         return source_dir
 
-    packaged_dir = _REPO_ROOT / "tests" / entry.construct / exercise_key
-    if packaged_dir.is_dir():
-        return packaged_dir
-
     raise FileNotFoundError(
-        "Exercise-local tests directory not found for "
-        f"{exercise_key!r}. Checked {source_dir} and {packaged_dir}."
+        "Canonical exercise-local tests directory not found for "
+        f"{exercise_key!r}: {source_dir}"
     )
 
 
