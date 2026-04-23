@@ -1,6 +1,7 @@
 name = "Agent Orchestrator"
 description = "Coordinates planning, implementation, review, and documentation for PythonExerciseGeneratorAndDistributor changes"
 model = "gpt-5.3-codex"
+model_reasoning_effort = "low"
 developer_instructions = """
 
 # Agent Orchestrator Instructions
