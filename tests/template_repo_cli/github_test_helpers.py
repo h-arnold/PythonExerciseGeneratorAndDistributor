@@ -4,23 +4,23 @@ from __future__ import annotations
 
 import json
 import subprocess
-from typing import Any, TypeGuard
+from typing import Any, TypeGuard, cast
 
 
-def is_command_sequence(obj: Any) -> TypeGuard[list[str] | tuple[str, ...]]:
+def is_command_sequence(obj: object) -> TypeGuard[list[str] | tuple[str, ...]]:
     """Return True if ``obj`` is a sequence of strings representing a command.
 
     This helper narrows the type to either a `list[str]` or `tuple[str, ...]`.
     We avoid generator expressions here so static analyzers have a concrete
     variable to type-check (prevents 'Type of "x" is unknown' diagnostics).
     """
-    if not isinstance(obj, (list, tuple)):
-        return False
+    if isinstance(obj, list):
+        return all(isinstance(element, str) for element in cast(list[object], obj))
 
-    # Treat the container as a sequence of objects; check each element's type
-    # explicitly so tools like Pylance can infer the element type safely.
-    seq: list[object] | tuple[object, ...] = obj  # type: ignore[assignment]
-    return all(isinstance(element, str) for element in seq)
+    if isinstance(obj, tuple):
+        return all(isinstance(element, str) for element in cast(tuple[object, ...], obj))
+
+    return False
 
 
 def check_authentication() -> bool:
@@ -31,7 +31,7 @@ def check_authentication() -> bool:
     """
     try:
         result: subprocess.CompletedProcess[str] = subprocess.run(
-            ["gh", "auth", "status"], capture_output=True, check=False
+            ["gh", "auth", "status"], capture_output=True, check=False, text=True
         )
         return result.returncode == 0
     except FileNotFoundError:

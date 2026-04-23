@@ -196,3 +196,44 @@ Prove the clean-up is stable for the touched repository tooling surface.
 
 **Review point**
 Hand off only once the template CLI clean-up is verified against both local targeted tests and the repository-wide authoring contract.
+
+## Stage 7 — Post-review cleanup and hardening
+
+**Objective**
+Close the remaining quality gaps found in code review so the de-slop slice is complete, type-clean, and does not rely on private cross-module helpers.
+
+**Findings to address**
+
+- `scripts/template_repo_cli/cli.py` currently calls private `GitHubClient` helpers (`_is_integration_permission_error`, `_github_permission_hint`, `_github_already_exists_hint`, `_detect_auth_token_env`) instead of a public API boundary.
+- The auth classification centralization from Stage 4 is only partial because retry/hint usage still depends on private names and duplicated coordination.
+- `uv run --with pyright pyright scripts/template_repo_cli tests/template_repo_cli` reports 23 errors in the touched slice.
+- `tests/template_repo_cli/github_test_helpers.py` has a `CompletedProcess` typing mismatch.
+- `tests/template_repo_cli/test_github.py` includes optional `TypedDict` key access as required keys, missing callback parameter typing, and direct calls to private helpers.
+
+**Files or surfaces**
+
+- `scripts/template_repo_cli/cli.py`
+- `scripts/template_repo_cli/core/github.py`
+- `tests/template_repo_cli/github_test_helpers.py`
+- `tests/template_repo_cli/test_github.py`
+- any directly related template CLI tests requiring updates for public API coverage
+
+**Acceptance criteria**
+
+- CLI-to-GitHub helper calls use a clear public contract; no runtime dependency on private `GitHubClient` helpers remains.
+- Auth retry/hint classification has a single source of truth in `core/github.py` with public wrappers used by CLI flow.
+- Template CLI touched slice is Pyright-clean (`scripts/template_repo_cli` + `tests/template_repo_cli`).
+- Tests stop asserting private internals where a public behaviour contract exists.
+- TypedDict access patterns in tests are safe and explicit (e.g., `.get(...)` or key guards for optional keys).
+- Existing user-visible create/validate/update command behaviour remains unchanged except for cleaner internal boundaries.
+
+**Checks or validation**
+
+- `uv run --with pyright pyright scripts/template_repo_cli tests/template_repo_cli`
+- `uv run pytest tests/template_repo_cli/test_github.py tests/template_repo_cli/test_integration.py -q`
+- `uv run pytest tests/template_repo_cli -q`
+- `uv run python scripts/run_pytest_variant.py --variant solution -q`
+- `uv run ruff check scripts/template_repo_cli tests/template_repo_cli`
+
+**Review point**
+Confirm the de-slop implementation is complete only after private API leakage is removed and Pyright reports zero errors for the touched template CLI surface.
