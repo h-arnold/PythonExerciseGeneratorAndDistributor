@@ -1,439 +1,441 @@
-# Implementation Action Plan: Metadata-Only Exercise Resolution Migration
+# Feature Delivery Plan (TDD-First)
 
-## 1. Documentation Updates (Contract Lock-First)
+## Read-First Context
 
-Objective: Lock the metadata-only, fail-fast contract before code changes so all agents implement against the same rules and do not reintroduce snapshot/fallback behavior.
+Before writing or executing this plan:
 
-Files:
+1. Read the current `SPEC.md`.
+2. Read any related workflow or companion planning doc.
+3. Treat those documents as the source of truth for product behaviour, contracts, and layout rules.
+4. Use this action plan to sequence delivery and testing; do not restate or redefine material already settled in the spec or layout docs.
 
-- `/workspaces/PythonExerciseGeneratorAndDistributor/docs/execution-model.md`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/docs/testing-framework.md`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/docs/development.md`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/docs/setup.md`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/AGENTS.md`
+## Scope and assumptions
 
-Tasks:
+### Scope
 
-- Remove all snapshot export, metadata-free mode, and fallback-path guidance.
-- Document canonical-only runtime surfaces: `exercise_metadata/`, `exercises/migration_manifest.json`, `exercises/<construct>/<exercise_key>/exercise.json`, canonical notebooks, canonical exercise-local tests.
-- Document strict fail-fast error contract and message fragments from SPEC §2.2.
-- State explicitly that flattened notebook/test mirrors are forbidden in packaged outputs.
+- Implement README exercise-list rendering in template packaging with construct headings and numbered links.
+- Use metadata-backed `title` text and canonical student notebook links.
+- Preserve sorted exercise-key ordering.
+- Add and update packager unit tests covering the new rendering contract and error behaviour.
 
-Verification:
+### Out of scope
 
-- Contract assertions are explicitly present in docs:
-  - metadata-only catalogue resolution
-  - flattened mirrors forbidden
-  - fail-fast error contract summary aligned to SPEC §2.2
-  - packaged runtime contract surfaces aligned to SPEC §2.1
-- `rg -n "snapshot|metadata-free" /workspaces/PythonExerciseGeneratorAndDistributor/docs /workspaces/PythonExerciseGeneratorAndDistributor/AGENTS.md` is reviewed and any remaining occurrences are intentional historical context or removed.
-- Owner checks: doc review checklist in PR description + contract spot-check against SPEC §2.1/§2.2.
+- Changes to exercise selection API or CLI option set.
+- Changes to canonical package layout and runtime variant semantics.
+- Introducing alternative ordering schemes (for example, exercise-id ordering).
 
-Dependencies and sequencing:
+### Assumptions
 
-- Prepared first for implementation guidance.
-- Docs are drafted and reviewed first, then merged in the same migration PR as runtime/packager/test changes to stay aligned with SPEC §4 rollout.
+1. Selected exercises provided to packager are already validated as known exercise keys.
+2. Canonical metadata remains available at `exercises/<construct>/<exercise_key>/exercise.json`.
+3. Existing README placeholders (`{TEMPLATE_NAME}`, `{EXERCISE_LIST}`) remain the rendering interface.
 
-## 2. Runtime Catalogue and Path Resolver Unification
+---
 
-Objective: Make metadata catalogue resolution the only runtime path in source and packaged modes.
+## Global constraints and quality gates
 
-Files:
+### Engineering constraints
 
-- `/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_catalogue.py`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_framework/paths.py`
+- Keep API/entry points thin and delegate behaviour to services or controllers.
+- Fail fast on invalid inputs and persistence failures.
+- Avoid defensive guards that hide wiring issues.
+- Keep changes minimal, localised, and consistent with repository conventions.
+- Use British English in comments and documentation.
 
-Tasks:
+### TDD workflow (mandatory per section)
 
-- Remove snapshot constants/functions and all snapshot-based branch logic.
-- Remove environment-based “metadata package present?” branching.
-- Ensure `get_exercise_catalogue()` always uses `exercise_metadata.registry.build_exercise_catalogue()`.
-- Ensure notebook resolution always delegates through metadata resolver semantics using `exercise_key`.
+For each section below:
 
-Verification:
+1. Red: write failing tests for the section's acceptance criteria.
+2. Green: implement the smallest change needed to pass.
+3. Refactor: tidy implementation with all tests still green.
+4. Run section-level verification commands.
 
-- Unit tests for runtime catalogue and path resolution pass after test updates.
-- `rg -n "CATALOGUE_SNAPSHOT_FILENAME|get_catalogue_snapshot_path|load_catalogue_snapshot|write_catalogue_snapshot"` in runtime modules returns no matches.
-- Owner tests: `/workspaces/PythonExerciseGeneratorAndDistributor/tests/exercise_runtime_support/test_exercise_catalogue.py`, `/workspaces/PythonExerciseGeneratorAndDistributor/tests/exercise_framework/test_paths.py`.
+### Delegation mandatory-read gate (mandatory for sub-agent execution)
 
-Dependencies and sequencing:
+When a section is delegated to sub-agents, the plan must define and enforce mandatory documentation reads.
 
-- Depends on Section 1 contract lock.
-- Must precede packaging integration validation.
+For each delegated phase (Testing Specialist, Implementation, Code Reviewer, Docs, De-Sloppification, or planning agents when used):
 
-## 3. Test-Support Canonical Path Enforcement
+1. list required documentation file paths under that phase before delegation
+2. require the sub-agent handoff to include Files read with explicit file paths
+3. verify every mandatory file is listed before accepting the handoff
+4. if any mandatory file is missing, return the work to the same sub-agent and block progression to the next phase
 
-Objective: Remove non-canonical packaged test lookup and enforce exercise-local tests path only.
+### Shared-helper planning gate (mandatory when helper changes are expected)
 
-Files:
+When a section is likely to introduce helper reuse, helper extension, or new shared helpers:
 
-- `/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_test_support.py`
+1. record helper decisions in that section before implementation
+2. include: decision (`reuse` | `extend` | `new` | `keep local`), owning path, and call-site rationale
+3. add planned helper entries to the relevant canonical docs with status `Not implemented`
+4. during documentation pass, reconcile planned entries against actual implementation and update status/details accordingly
 
-Tasks:
+### Validation commands hierarchy
 
-- Remove `tests/<construct>/<exercise_key>` packaged fallback logic.
-- Resolve tests only from `exercises/<construct>/<exercise_key>/tests`.
+- Lint: `uv run ruff check .`
+- Format check (if used): `uv run ruff format --check .`
+- Type checks (if touched): `uv run pyright`
+- Tests: `uv run pytest -q`
+- Solution variant checks (when relevant): `uv run python scripts/run_pytest_variant.py --variant solution -q`
 
-Verification:
+---
 
-- Targeted tests confirm canonical lookup works and non-canonical fallback no longer exists.
-- Grep check confirms no fallback path strings remain in this module.
-- Owner tests: `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_integration.py` plus exercise test-support coverage that loads exercise-local modules.
+## Section 1 — Red tests for README rendering contract
 
-Dependencies and sequencing:
+### Objective
 
-- Depends on Section 2 runtime semantics.
-- Must be done before packager validation to keep path contract aligned.
+- Define failing tests for construct grouping, numbered links, sorted-key ordering, and packager-specific `ValueError` wrapping.
 
-## 4. Packager and Collector Metadata-Surface Enforcement
+### Constraints
 
-Objective: Ensure generated template repos always include required metadata runtime surfaces and no snapshot artifacts.
+- Tests must target observable README behaviour, not implementation details.
+- Keep assertions robust against unrelated whitespace changes.
+- Preserve existing package validation test intent.
 
-Files:
+### Delegation mandatory reads (when sub-agents are used)
 
-- `/workspaces/PythonExerciseGeneratorAndDistributor/scripts/template_repo_cli/core/packager.py`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/scripts/template_repo_cli/core/collector.py`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/template_repo_files/.devcontainer/devcontainer.json`
+Testing Specialist mandatory docs:
 
-Tasks:
+- `SPEC.md`
+- `docs/testing-framework.md`
+- `docs/execution-model.md`
+- `tests/template_repo_cli/test_packager.py`
 
-- Stop writing/validating snapshot artifacts.
-- Export `exercise_metadata/`, manifest, per-exercise `exercise.json`, canonical notebooks, canonical exercise-local tests.
-- Enforce flattened notebook/test mirrors as forbidden outputs.
-- Add/update `.devcontainer` `files.exclude` entries to hide metadata clutter from student view without changing runtime behavior.
+Implementation mandatory docs:
 
-Verification:
+- `SPEC.md`
+- `scripts/template_repo_cli/core/packager.py`
+- `template_repo_files/README.md.template`
 
-- Dry-run package output contains all required assets from SPEC §2.1.
-- Dry-run package output contains no snapshot artifacts and no flattened mirrors.
-- Owner tests: `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_packager.py`, `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_integration.py`.
+Code Reviewer mandatory docs:
 
-Dependencies and sequencing:
+- `SPEC.md`
+- `ACTION_PLAN.md`
+- `tests/template_repo_cli/test_packager.py`
+- `scripts/template_repo_cli/core/packager.py`
 
-- Depends on Sections 2 and 3 to match runtime expectations.
-- Must complete before integration test rewrites finish.
+Other delegated agents (if used) mandatory docs:
 
-## 5. Selector Fail-Fast Behavior Tightening
+- `docs/development.md`
 
-Objective: Remove silent empty-registry behavior when metadata prerequisites are missing.
+### Shared helper plan (when helper changes are expected)
 
-Files:
+Helper decision entries:
 
-- `/workspaces/PythonExerciseGeneratorAndDistributor/scripts/template_repo_cli/core/selector.py`
+1. Helper: README exercise-entry formatter in packager
+   - Decision: `extend`
+   - Owning module/path: `scripts/template_repo_cli/core/packager.py`
+   - Call-site rationale: keeps README rendering logic local to packager ownership boundary
+   - Relevant canonical doc target: `docs/development.md`
+   - Planned doc status: `Not implemented`
 
-Tasks:
+### Acceptance criteria
 
-- Replace silent fallback with fail-fast exceptions aligned to SPEC §2.2.
-- Selector-facing contract:
-  - missing manifest in selector-backed flows -> `FileNotFoundError` with `Migration manifest not found` (propagated from metadata manifest loader)
-  - unknown/invalid user-selected exercise keys -> existing selector `ValueError` semantics remain
-  - metadata-backed resolver failures surfaced by selection/packaging retain required SPEC §2.2 message fragments
+- Existing README test coverage is extended with failing tests for grouped numbered links and metadata title usage.
+- Failing test coverage exists for wrapped `ValueError` behaviour with exercise-key context.
+- Failing test coverage explicitly verifies wrapped exceptions preserve root cause via chaining.
+- Tests encode sorted exercise-key ordering expectation.
 
-Verification:
+### Required test cases (Red first)
 
-- Targeted tests assert exact exception type + message fragment behavior for missing manifest and invalid metadata scenarios.
-- Owner tests: `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_selector.py`, `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_integration.py`.
+Backend model tests:
 
-Dependencies and sequencing:
+1. None.
 
-- Depends on Section 1 documented error contract.
-- Should complete before finalizing CLI/packager integration tests.
+Backend controller tests:
 
-## 6. Test Suite Migration to Metadata-Only Contract
+1. None.
 
-Objective: Rewrite snapshot-era tests to enforce metadata-only behavior, canonical paths, and fail-fast errors.
+API layer tests:
 
-Files:
+1. None.
 
-- `/workspaces/PythonExerciseGeneratorAndDistributor/tests/exercise_runtime_support/test_exercise_catalogue.py`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/tests/exercise_framework/test_paths.py`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_packager.py`
-- `/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_integration.py`
+Integration tests:
 
-Tasks:
+1. Add/update `test_generate_readme` assertions for grouped numbered links and canonical student notebook hrefs.
+2. Add failure-path test where metadata loading/title access fails and packager raises `ValueError` with exercise-key context.
+3. Assert failure-path wrapping preserves root-cause chaining (for example, `exc_info.value.__cause__ is not None`).
+4. Add ordering test with multi-construct input to confirm sorted-key-derived output order.
 
-- Remove snapshot assumptions and fixtures.
-- Add assertions for required error mapping/message fragments from SPEC §2.2.
-- Add assertions that packaged dry-run includes required metadata assets and supports `exercise_metadata` import.
-- Add explicit checks that snapshot references/artifacts are absent.
-- Add anti-regression assertions that flattened notebook/test mirrors are not produced by packaging and are not consulted by runtime/test-support lookup paths.
+### Section checks
 
-Contract test matrix (mandatory coverage):
+- `uv run pytest -q tests/template_repo_cli/test_packager.py -k readme`
+- Mandatory-read evidence gate passed for all delegated handoffs in this section.
+- Shared-helper planning entries are present when helper changes are expected.
+- Planned helper entries were added to relevant canonical docs with status `Not implemented` before implementation starts.
 
-| Entrypoint | Expected error | Required message fragment | Owning test file |
-| --- | --- | --- | --- |
-| `exercise_metadata.manifest.load_migration_manifest()` | `FileNotFoundError` | `Migration manifest not found` | `tests/test_exercise_metadata.py` |
-| `exercise_metadata.resolver.resolve_notebook_path()` (unknown key) | `LookupError` | `not in the migration manifest` | `tests/test_exercise_metadata.py` |
-| `exercise_metadata.resolver.resolve_notebook_path()` (missing/invalid metadata) | `LookupError` | `exercise.json is missing or invalid` | `tests/test_exercise_metadata.py` |
-| `exercise_metadata.resolver.resolve_notebook_path()` (missing notebook) | `LookupError` | `expected notebook is missing` | `tests/test_exercise_metadata.py` |
-| `exercise_runtime_support.exercise_catalogue.get_catalogue_entry()` | `ValueError` | `Unknown exercise key` | `tests/exercise_runtime_support/test_exercise_catalogue.py` |
-| `exercise_runtime_support.exercise_catalogue.get_catalogue_key_for_exercise_id()` | `ValueError` | `Unknown exercise_id` | `tests/exercise_framework/test_api_contract.py` |
+### Optional documentation follow-through
 
-Verification:
+- None.
 
-- Required command gate passes:
-  - `uv run pytest -q tests/exercise_runtime_support/test_exercise_catalogue.py tests/exercise_framework/test_paths.py tests/template_repo_cli/test_packager.py tests/template_repo_cli/test_integration.py tests/test_exercise_metadata.py tests/exercise_framework/test_api_contract.py`
-- Matrix-owning tests above are updated and passing.
+### Implementation notes / deviations / follow-up
 
-Dependencies and sequencing:
+- Implementation notes: Pending implementation.
+- Deviations from plan: None.
+- Follow-up implications for later sections: None.
 
-- Depends on Sections 2–5.
-- Must complete before full acceptance gate run.
+---
 
-## 7. Acceptance Gates and Regression Sweep
+## Section 2 — Green implementation in packager and template
 
-Objective: Validate full migration across source and packaged flows with solution/student contract preserved.
+### Objective
 
-Files:
+- Implement the smallest packager/template changes that satisfy Section 1 tests.
 
-- Uses repository code and dry-run output under `/tmp/template_repo_dryrun`.
+### Constraints
 
-Tasks:
+- Preserve existing `generate_readme(...)` call flow from CLI.
+- Keep placeholder replacement contract unchanged.
+- Maintain canonical packaged path rules.
 
-- Run all SPEC §5.3 command gates exactly as written.
-- Fix regressions until all solution-path gates pass.
-- Preserve student variant contract (expected failing-student behavior unchanged).
-- Enforce anti-regression guards:
-  - packager must not emit flattened notebook/test mirrors
-  - runtime/test-support must not include legacy fallback path resolution
-  - snapshot symbols/files must remain absent from runtime and packaged outputs
-
-Verification:
-
-- All gates pass:
-  - `uv run pytest -q ...` (targeted suites)
-  - `uv run python scripts/run_pytest_variant.py --variant solution -q`
-  - `uv run ./scripts/verify_solutions.sh -q`
-  - CLI dry-run create command
-  - dry-run runtime import/resolution smoke script
-- Recommended hard guard: add CI check that fails if forbidden snapshot symbols or flattened-mirror generation logic is reintroduced.
-
-Dependencies and sequencing:
-
-- Depends on Sections 1–6 complete.
-- Final release/merge gate.
-
-## Critical Path Summary
-
-1. Section 1 freezes implementation contract early to prevent drift.
-2. Runtime unification (Section 2) and canonical test path enforcement (Section 3) establish core behavior.
-3. Packager/collector (Section 4) and selector fail-fast tightening (Section 5) align packaging and selection with runtime contract.
-4. Test migration (Section 6) enforces non-regression and mandatory fail-fast/error mapping coverage.
-5. Final gates (Section 7) validate metadata-only behavior end-to-end with no snapshot/fallback path.
-6. Merge order follows SPEC §4: docs + runtime + packaging + tests land together in the migration PR, with docs prepared first and verified continuously during implementation.
-
-## Execution Tracker
-
-### Section 1 - Documentation Updates (Contract Lock-First)
-
-- Status: Completed
-- Red tests added: Completed (`tests/exercise_runtime_support/test_runtime_contract.py`)
-- Red review clean: Completed
-- Green implementation complete: Completed
-- Green review clean: Completed (after one fix cycle)
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed
-- Push completed: Completed
-
-Implementation notes:
-- Added a focused docs contract test that enforces required metadata-only/fail-fast fragments and forbids stale snapshot/metadata-free wording.
-- Updated docs to align with SPEC §2.1/§2.2 contract language.
-- Review finding resolved: corrected `docs/CLI_README.md` contradiction about exporting per-exercise `exercise.json` and strengthened guard assertions to prevent regression.
-- No approved deviations from Section 1 scope.
-- Commit evidence:
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `9ff7f2c` - `docs: lock metadata-only runtime contract and add guard test`
-  - Commit: `905d65d` - `chore: record section 1 execution tracker status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Section 2 - Runtime Catalogue and Path Resolver Unification
-
-- Status: Completed
-- Red tests added: Completed (`tests/exercise_runtime_support/test_exercise_catalogue.py`, `tests/exercise_framework/test_paths.py`)
-- Red review clean: Completed
-- Green implementation complete: Completed
-- Green review clean: Completed
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed
-- Push completed: Completed
-
-Implementation notes:
-- Removed snapshot constants, snapshot loading/writing helpers, and metadata-presence branching from the scoped runtime modules.
-- `get_exercise_catalogue()` now always builds directly from `exercise_metadata.registry`.
-- `resolve_exercise_notebook_path()` now delegates directly to metadata resolver semantics for both variants.
-- Updated the targeted runtime tests to assert metadata-only catalogue resolution and metadata-resolver delegation, with no fallback branches.
-- Commit evidence:
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `80a90ce` - `refactor: simplify exercise resolution by removing snapshot handling and enhancing metadata integration`
-  - Push: commit is present on `origin/refactor/simplifyExerciseRegistry`
-- Deviation noted:
-  - The section commit also touched `.codex/agents/tidy_code_review.toml` (outside the planned Section 2 file list). Kept as-is; no rollback performed.
-
-### Section 3 - Test-Support Canonical Path Enforcement
-
-- Status: Completed
-- Red tests added: Completed (`tests/exercise_runtime_support/test_exercise_test_support.py`)
-- Red review clean: Completed
-- Green implementation complete: Completed
-- Green review clean: Completed
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed (section code commit recorded)
-- Push completed: Completed
-
-Implementation notes:
-- Added focused red-phase tests for canonical-only exercise test directory resolution and module loading behaviour.
-- Resolved red-review findings by replacing brittle source-text assertions with behaviour-based tests and ensuring local lint/type cleanliness for the test slice.
-- Removed legacy packaged fallback path resolution from `exercise_runtime_support/exercise_test_support.py`; resolution is now canonical-only via `exercises/<construct>/<exercise_key>/tests`.
-- Updated fail-fast error messaging to reference the missing canonical exercise-local tests directory explicitly.
-- Green-phase review passed with no findings after targeted verification.
-- Commit evidence (code):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `d7d073a` - `refactor: enforce canonical-only exercise test support paths`
-- Commit evidence (plan/tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `3f3d15d` - `chore: record section 3 execution tracker status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Section 4 - Packager and Collector Metadata-Surface Enforcement
-
-- Status: Completed
-- Red tests added: Completed (`tests/template_repo_cli/test_section4_metadata_contract.py`)
-- Red review clean: Completed
-- Green implementation complete: Completed
-- Green review clean: Completed
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed (section code commit recorded)
-- Push completed: Completed
-
-Implementation notes:
-- Added isolated Section 4 contract coverage in `tests/template_repo_cli/test_section4_metadata_contract.py` to keep metadata-surface assertions explicit and maintainable.
-- Updated packager and collector flows to export metadata-backed surfaces (`exercise_metadata/`, subset `exercises/migration_manifest.json`, per-exercise `exercise.json`) and removed snapshot-era snapshot export/validation behaviour.
-- Enforced anti-regression checks that flattened notebook/test mirrors are forbidden in packaged outputs.
-- Updated template `.devcontainer` `files.exclude` entries to hide metadata clutter while preserving runtime behaviour.
-- Aligned runtime-contract assertions and test surfaces after refactor (including explicit shared runtime-support copy path expected by runtime contract tests).
-- Commit evidence (code):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `3f6ad43` - `refactor: enforce metadata-surface packaging contract`
-- Commit evidence (plan/tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `d996b8d` - `chore: record section 4 execution tracker status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Section 5 - Selector Fail-Fast Behavior Tightening
-
-- Status: Completed
-- Red tests added: Completed
-- Red review clean: Completed
-- Green implementation complete: Completed
-- Green review clean: Completed
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed (section code commit recorded)
-- Push completed: Completed
-
-Implementation notes:
-- Added red-phase selector coverage to assert missing-manifest behaviour across selector-backed entrypoints with the required `Migration manifest not found` fragment.
-- Removed selector-side silent empty-registry fallback so missing migration manifests now fail fast by propagating metadata loader `FileNotFoundError`.
-- Preserved existing `ValueError` semantics for invalid selected exercise keys in manifest-present flows.
-- Section 5 targeted checks and full solution-variant run passed after implementation.
-- Commit evidence (code):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `d135161` - `fix: fail fast in selector when manifest is missing`
-- Commit evidence (plan/tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `9d15a12` - `chore: record section 5 execution tracker status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Section 6 - Test Suite Migration to Metadata-Only Contract
-
-- Status: Completed
-- Red tests added: Completed
-- Red review clean: Completed
-- Green implementation complete: Completed
-- Green review clean: Completed
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed (section code commit recorded)
-- Push completed: Completed
-
-Implementation notes:
-- Added contract-matrix coverage for unknown `exercise_id` in `tests/exercise_framework/test_api_contract.py`.
-- Added malformed canonical metadata coverage in `tests/test_exercise_metadata.py` to enforce `LookupError` mapping with `exercise.json is missing or invalid`.
-- Resolved remaining green-phase gap by normalising loader `TypeError` into resolver `LookupError` in `exercise_metadata/resolver.py`.
-- Verified the full Section 6 six-file gate and full solution-variant gate after the fix.
-- Commit evidence (code):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `d15025c` - `test: enforce metadata error mapping contract coverage`
-- Commit evidence (plan/tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `05291b9` - `chore: record section 6 execution tracker status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Section 7 - Acceptance Gates and Regression Sweep
-
-- Status: Completed
-- Red tests added: Completed (acceptance gate sweep evidence captured)
-- Red review clean: Completed
-- Green implementation complete: Completed (no-op; no functional fixes required)
-- Green review clean: Completed
-- Checks passed: Completed
-- Action plan updated: Completed
-- Commit created: Completed (section code commit recorded)
-- Push completed: Completed
-
-Implementation notes:
-- Ran all Section 7 acceptance gates and dry-run smoke checks; all passed.
-- Verified anti-regression guards in runtime and packaged output:
-  - no snapshot symbols/artifacts present
-  - no flattened notebook/test mirror outputs
-  - canonical metadata-backed runtime resolution in dry-run package
-- Section 7 green phase required no functional code edits; only formatter reconciliation requested by review was applied to keep quality gates clean.
-- Commit evidence (code):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `e5a032b` - `style: apply formatting for section 7 closeout`
-- Commit evidence (plan/tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `72755ba` - `chore: record section 7 execution tracker status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Mandatory De-Sloppification Pass
-
-- Status: Completed
-- Findings: One confirmed duplication in template packager runtime-support copy path.
-- Cleanup implementation: Completed
-- Cleanup review: Completed
-- Branch ready for docs sync: Completed
-
-Cleanup notes:
-- Removed redundant duplicate copy of `exercise_runtime_support/` in `scripts/template_repo_cli/core/packager.py` so package directories are copied once via the required package directory loop.
-- Updated `tests/exercise_runtime_support/test_runtime_contract.py` to assert contract intent (shared runtime-support copy contract) rather than duplicate implementation detail.
-- Commit evidence (cleanup code):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `097c889` - `refactor: remove duplicated runtime support copy path`
-- Commit evidence (cleanup tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `2df1903` - `chore: record de-sloppification cleanup outcome`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
-
-### Final Documentation Pass
-
-- Status: Completed
-- Docs sync result: Completed (targeted AGENTS contract alignment update)
-- Review: Completed
-- Commit created: Completed (docs commit recorded)
-- Push completed: Completed
-
-Documentation notes:
-- Updated `AGENTS.md` to align packaged runtime guidance with the final metadata-only contract by explicitly forbidding flattened notebook/test mirrors in packaged outputs.
-- Confirmed core docs (`docs/project-structure.md`, `docs/execution-model.md`, `docs/testing-framework.md`, `docs/development.md`, `docs/setup.md`) were already aligned and required no additional edits.
-- Commit evidence (docs):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `88dfbb1` - `docs: align AGENTS runtime contract with packaged outputs`
-- Commit evidence (docs tracker):
-  - Branch: `refactor/simplifyExerciseRegistry`
-  - Commit: `eeea45d` - `chore: record final documentation pass status`
-  - Push: `git push` succeeded to `origin/refactor/simplifyExerciseRegistry`
+### Delegation mandatory reads (when sub-agents are used)
+
+Testing Specialist mandatory docs:
+
+- `SPEC.md`
+- `tests/template_repo_cli/test_packager.py`
+
+Implementation mandatory docs:
+
+- `SPEC.md`
+- `scripts/template_repo_cli/core/packager.py`
+- `scripts/template_repo_cli/cli.py`
+- `template_repo_files/README.md.template`
+
+Code Reviewer mandatory docs:
+
+- `SPEC.md`
+- `ACTION_PLAN.md`
+- `scripts/template_repo_cli/core/packager.py`
+- `template_repo_files/README.md.template`
+- `tests/template_repo_cli/test_packager.py`
+
+Other delegated agents (if used) mandatory docs:
+
+- `docs/development.md`
+- `docs/project-structure.md`
+
+### Shared helper plan (when helper changes are expected)
+
+Helper decision entries:
+
+1. Helper: construct display normaliser (snake_case to title-case words)
+   - Decision: `new`
+   - Owning module/path: `scripts/template_repo_cli/core/packager.py`
+   - Call-site rationale: required for deterministic construct-heading rendering
+   - Relevant canonical doc target: `docs/development.md`
+   - Planned doc status: `Not implemented`
+2. Helper: grouped README list composer
+   - Decision: `new`
+   - Owning module/path: `scripts/template_repo_cli/core/packager.py`
+   - Call-site rationale: isolates formatting from I/O path and improves testability
+   - Relevant canonical doc target: `docs/development.md`
+   - Planned doc status: `Not implemented`
+
+### Acceptance criteria
+
+- README output contains construct headings and numbered links using metadata titles.
+- Link hrefs point to canonical student notebook export paths.
+- Ordering remains sorted by exercise key.
+- Failures in metadata/render path are wrapped in packager-specific `ValueError` with exercise-key context.
+
+### Required test cases (Red first)
+
+Backend model tests:
+
+1. None.
+
+Backend controller tests:
+
+1. None.
+
+API layer tests:
+
+1. None.
+
+Integration tests:
+
+1. Section 1 tests pass without weakening assertions.
+
+### Section checks
+
+- `uv run pytest -q tests/template_repo_cli/test_packager.py -k readme`
+- Mandatory-read evidence gate passed for all delegated handoffs in this section.
+- Shared-helper planning entries are present when helper changes are expected.
+- Planned helper entries were added to relevant canonical docs with status `Not implemented` before implementation starts.
+
+### Optional documentation follow-through
+
+- If helper methods are introduced, add concise docstrings to capture grouping and ordering rules.
+
+### Implementation notes / deviations / follow-up
+
+- Implementation notes: Pending implementation.
+- Deviations from plan: None.
+- Follow-up implications for later sections: Re-run any impacted package integrity tests.
+
+---
+
+## Section 3 — Refactor and local hardening
+
+### Objective
+
+- Refine implementation for readability and maintainability without changing behaviour.
+
+### Constraints
+
+- No behavioural drift from SPEC contract.
+- Keep public packager interface stable unless strictly necessary.
+
+### Delegation mandatory reads (when sub-agents are used)
+
+Testing Specialist mandatory docs:
+
+- `SPEC.md`
+- `tests/template_repo_cli/test_packager.py`
+
+Implementation mandatory docs:
+
+- `SPEC.md`
+- `scripts/template_repo_cli/core/packager.py`
+
+Code Reviewer mandatory docs:
+
+- `SPEC.md`
+- `ACTION_PLAN.md`
+- `scripts/template_repo_cli/core/packager.py`
+- `tests/template_repo_cli/test_packager.py`
+
+Other delegated agents (if used) mandatory docs:
+
+- `docs/development.md`
+
+### Shared helper plan (when helper changes are expected)
+
+Helper decision entries:
+
+1. Helper: README list composition helpers from Section 2
+   - Decision: `reuse`
+   - Owning module/path: `scripts/template_repo_cli/core/packager.py`
+   - Call-site rationale: keep behaviour centralised and avoid duplicate formatting logic
+   - Relevant canonical doc target: `docs/development.md`
+   - Planned doc status: `Not implemented`
+
+### Acceptance criteria
+
+- Implementation remains minimal and clear.
+- Section 1 and Section 2 behaviour stays green after refactor.
+
+### Required test cases (Red first)
+
+Backend model tests:
+
+1. None.
+
+Backend controller tests:
+
+1. None.
+
+API layer tests:
+
+1. None.
+
+Integration tests:
+
+1. Re-run README-focused packager tests.
+
+### Section checks
+
+- `uv run pytest -q tests/template_repo_cli/test_packager.py -k readme`
+- `uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py`
+- Mandatory-read evidence gate passed for all delegated handoffs in this section.
+- Shared-helper planning entries are present when helper changes are expected.
+- Planned helper entries were added to relevant canonical docs with status `Not implemented` before implementation starts.
+
+### Optional documentation follow-through
+
+- None unless refactor introduces non-obvious helper interactions.
+
+### Implementation notes / deviations / follow-up
+
+- Implementation notes: Pending implementation.
+- Deviations from plan: None.
+- Follow-up implications for later sections: None.
+
+---
+
+## Regression and contract hardening
+
+### Objective
+
+- Confirm the README feature and packaging contract remain stable across affected test surfaces.
+
+### Constraints
+
+- Prefer focused tests first, then broader checks if needed.
+
+### Acceptance criteria
+
+- README behaviour tests and touched lint checks pass.
+- Existing package integrity tests remain green for affected surfaces.
+
+### Required test cases/checks
+
+1. Run touched packager tests.
+2. Run related template integration checks if README assertions are present.
+3. Run lint checks for touched files.
+4. Verify mandatory-read evidence (Files read) is complete for every delegated regression handoff.
+
+### Section checks
+
+- `uv run pytest -q tests/template_repo_cli/test_packager.py`
+- Optional: `uv run pytest -q tests/template_repo_cli/test_integration.py -k readme`
+- `uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py`
+
+### Implementation notes / deviations / follow-up
+
+- Implementation notes: Pending implementation.
+- Deviations from plan: None.
+
+---
+
+## Documentation and rollout notes
+
+### Objective
+
+- Keep documentation and comments aligned with implemented README behaviour.
+
+### Constraints
+
+- Only modify docs relevant to touched packager/template surfaces.
+
+### Acceptance criteria
+
+- Documentation accurately reflects grouped numbered README rendering and error semantics.
+- Any deviations or caveats are documented.
+
+### Required checks
+
+1. Verify packager docstrings and comments reflect grouped numbered rendering.
+2. Verify notes/deviations fields are filled during implementation.
+3. Verify mandatory-read evidence (Files read) is complete for delegated docs/review handoffs.
+4. Reconcile planned shared-helper entries in canonical docs: keep `Not implemented` where still pending, and update implemented entries where delivered.
+
+### Optional documentation review
+
+- Confirm whether construct-heading formatting and ordering rationale needs preserving in inline comments/docstrings.
+
+### Implementation notes / deviations / follow-up
+
+- Pending implementation.
+
+---
+
+## Suggested implementation order
+
+1. Section 1 (Red tests for README rendering contract)
+2. Section 2 (Green implementation in packager and template)
+3. Section 3 (Refactor and local hardening)
+4. Regression and contract hardening
+5. Documentation and rollout notes
