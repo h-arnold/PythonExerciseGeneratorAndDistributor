@@ -25,6 +25,9 @@
     },
     "ex009_sequence_modify_fstrings": {
       "layout": "canonical"
+    },
+    "ex010_sequence_debug_fstrings": {
+      "layout": "canonical"
     }
   }
 }

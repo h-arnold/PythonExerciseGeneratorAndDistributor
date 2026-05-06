@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex010_sequence_debug_fstrings",
+  "exercise_id": 10,
+  "slug": "ex010_sequence_debug_fstrings",
+  "title": "Sequence Debug F-Strings",
+  "construct": "sequence",
+  "exercise_type": "debug",
+  "parts": 10
+}

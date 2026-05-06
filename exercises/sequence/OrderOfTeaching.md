@@ -73,3 +73,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Editing f-string output, converting old `+` concatenation to f-strings, and updating simple arithmetic logic with clear final messages.
 - Type: Modification exercises that move from wording changes to mixed logic-and-output corrections.
 - Purpose: Bridge earlier sequence skills (variables, input, concatenation, casting, arithmetic) into confident use of f-strings.
+
+1. [**Sequence Debug F-Strings**](`ex010_sequence_debug_fstrings`)
+
+[Supporting docs](./ex010_sequence_debug_fstrings/)
+[Notebook](./ex010_sequence_debug_fstrings/notebooks/student.ipynb)
+
+- Focus: Debugging short f-string programs by correcting missing placeholders, wrong variable references, and simple arithmetic mistakes in the final output.
+- Type: Debug exercises with a gradual move from single-bug fixes to short mixed-bug tasks.
+- Purpose: Follow the f-string modification work by helping students diagnose output problems independently while staying inside the sequence construct.
