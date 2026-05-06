@@ -86,9 +86,11 @@ class TemplatePackager:
         """
         for file_dict in files.values():
             safe_copy_file(
-                file_dict["exercise_json"], workspace / file_dict["exercise_json_export"]
+                file_dict["exercise_json"], workspace /
+                file_dict["exercise_json_export"]
             )
-            safe_copy_file(file_dict["notebook"], workspace / file_dict["notebook_export"])
+            safe_copy_file(file_dict["notebook"],
+                           workspace / file_dict["notebook_export"])
             tests_export_dir = workspace / file_dict["tests_export_dir"]
             safe_copy_directory(
                 file_dict["test"].parent,
@@ -135,7 +137,8 @@ class TemplatePackager:
             return
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
-        raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
+        raise FileNotFoundError(
+            f"Missing required packaging source assets:\n{missing_list}")
 
     def copy_template_base_files(
         self,
@@ -159,7 +162,8 @@ class TemplatePackager:
         self._raise_for_missing_required_sources()
 
         file_pairs = [
-            (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
+            (self.template_files_dir / "pyproject.toml",
+             workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
             (
@@ -169,13 +173,15 @@ class TemplatePackager:
         ]
 
         optional_file_pairs = [
-            (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
+            (self.template_files_dir / "INSTRUCTIONS.md",
+             workspace / "INSTRUCTIONS.md"),
         ]
 
         tests_source_dir = self.repo_root / "tests"
         tests_dest_dir = workspace / "tests"
         for required_file in self.REQUIRED_TEST_FILES:
-            file_pairs.append((tests_source_dir / required_file, tests_dest_dir / required_file))
+            file_pairs.append(
+                (tests_source_dir / required_file, tests_dest_dir / required_file))
 
         for src, dest in file_pairs:
             safe_copy_file(src, dest)
@@ -218,7 +224,8 @@ class TemplatePackager:
             }
 
         exercise_items = manifest["exercises"].items()
-        exercise_items = (item for item in exercise_items if item[0] in selected_exercise_keys)
+        exercise_items = (
+            item for item in exercise_items if item[0] in selected_exercise_keys)
 
         filtered_manifest = {
             "schema_version": manifest["schema_version"],
@@ -244,9 +251,11 @@ class TemplatePackager:
         """Resolve the README section key, display title, and canonical student notebook path."""
         try:
             exercise_metadata_path = next(
-                (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
+                (self.repo_root /
+                 "exercises").glob(f"*/{exercise_key}/exercise.json")
             )
-            metadata = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
+            metadata = json.loads(
+                exercise_metadata_path.read_text(encoding="utf-8"))
             if not isinstance(metadata, dict):
                 raise ValueError("missing or invalid exercise metadata")
 
@@ -290,12 +299,14 @@ class TemplatePackager:
         """
         template_content = self._load_readme_template()
 
-        grouped_entries: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
+        grouped_entries: OrderedDict[str,
+                                     list[tuple[str, str]]] = OrderedDict()
         for exercise_key in sorted(exercises):
             display_construct, title, link_target = self._readme_entry_from_exercise_key(
                 exercise_key
             )
-            grouped_entries.setdefault(display_construct, []).append((title, link_target))
+            grouped_entries.setdefault(
+                display_construct, []).append((title, link_target))
 
         exercise_list = self._render_grouped_readme_sections(grouped_entries)
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
@@ -310,7 +321,8 @@ class TemplatePackager:
         is_manifest = part_count == 1 and path.is_file()
         is_manifest = is_manifest and path.name == self._MIGRATION_MANIFEST_FILENAME
         is_exercise_dir = (
-            part_count in (self._CONSTRUCT_DIR_DEPTH, self._EXERCISE_DIR_DEPTH) and path.is_dir()
+            part_count in (self._CONSTRUCT_DIR_DEPTH,
+                           self._EXERCISE_DIR_DEPTH) and path.is_dir()
         )
         is_exercise_json = (
             part_count == self._SUBDIR_INDEX + 1
