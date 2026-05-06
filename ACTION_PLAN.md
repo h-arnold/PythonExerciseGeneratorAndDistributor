@@ -290,8 +290,8 @@ Integration tests:
    - green review clean: complete
    - checks passed: complete (uv run pytest -q tests/template_repo_cli/test_packager.py -k readme; uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py)
    - action plan updated: complete
-   - commit created: pending
-   - push completed: pending
+   - commit created: complete (ff7eea7, feat(packager): render README grouped numbered notebook links (section 2))
+   - push completed: complete (branch feat/READMELinks)
 
 ---
 
@@ -377,7 +377,18 @@ Integration tests:
 
 ### Implementation notes / deviations / follow-up
 
-- Implementation notes: Pending implementation.
+- Implementation notes: Refactored README generation by extracting helper methods in scripts/template_repo_cli/core/packager.py: _load_readme_template, _readme_entry_from_exercise_key, and _render_grouped_readme_sections. Behaviour is unchanged from Section 2.
+- Deviations from plan: None.
+- Follow-up implications for later sections: Regression checks should confirm broad packager stability beyond the readme-focused subset.
+- Section checklist status:
+   - red tests added: complete in Section 1
+   - red review clean: complete in Section 1
+   - green implementation complete: complete
+   - green review clean: complete
+   - checks passed: complete (uv run pytest -q tests/template_repo_cli/test_packager.py -k readme; uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py)
+   - action plan updated: complete
+   - commit created: pending
+   - push completed: pending
 - Deviations from plan: None.
 - Follow-up implications for later sections: None.
 

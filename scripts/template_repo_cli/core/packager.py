@@ -233,6 +233,47 @@ class TemplatePackager:
             encoding="utf-8",
         )
 
+    def _load_readme_template(self) -> str:
+        """Return the README template content, including fallback content."""
+        template_path = self.template_files_dir / "README.md.template"
+        if template_path.exists():
+            return template_path.read_text(encoding="utf-8")
+        return "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
+
+    def _readme_entry_from_exercise_key(self, exercise_key: str) -> tuple[str, str, str]:
+        """Resolve the README section key, display title, and canonical student notebook path."""
+        try:
+            exercise_metadata_path = next(
+                (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
+            )
+            metadata = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
+            construct = metadata["construct"]
+            title = metadata["title"]
+            if not isinstance(title, str) or not title.strip():
+                raise ValueError("missing or invalid title metadata")
+            if not isinstance(construct, str) or not construct.strip():
+                raise ValueError("missing or invalid construct metadata")
+        except Exception as cause:
+            raise ValueError(f"README generation failed for exercise '{exercise_key}'") from cause
+
+        display_construct = construct.replace("_", " ").title()
+        link_target = f"exercises/{construct}/{exercise_key}/notebooks/student.ipynb"
+        return display_construct, title, link_target
+
+    @staticmethod
+    def _render_grouped_readme_sections(
+        grouped_entries: OrderedDict[str, list[tuple[str, str]]],
+    ) -> str:
+        """Render grouped construct sections with numbered markdown links."""
+        sections: list[str] = []
+        for display_construct, entries in grouped_entries.items():
+            sections.append(f"## {display_construct}")
+            for index, (title, link_target) in enumerate(entries, start=1):
+                sections.append(f"{index}. [{title}]({link_target})")
+            sections.append("")
+
+        return "\n".join(sections).rstrip()
+
     def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
         """Generate README file.
 
@@ -241,42 +282,16 @@ class TemplatePackager:
             template_name: Name of the template.
             exercises: List of exercise IDs.
         """
-        template_path = self.template_files_dir / "README.md.template"
-        if template_path.exists():
-            template_content = template_path.read_text(encoding="utf-8")
-        else:
-            template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
+        template_content = self._load_readme_template()
 
         grouped_entries: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
         for exercise_key in sorted(exercises):
-            try:
-                exercise_metadata_path = next(
-                    (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
-                )
-                metadata = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
-                construct = metadata["construct"]
-                title = metadata["title"]
-                if not isinstance(title, str) or not title.strip():
-                    raise ValueError("missing or invalid title metadata")
-                if not isinstance(construct, str) or not construct.strip():
-                    raise ValueError("missing or invalid construct metadata")
-            except Exception as cause:
-                raise ValueError(
-                    f"README generation failed for exercise '{exercise_key}'"
-                ) from cause
-
-            display_construct = construct.replace("_", " ").title()
-            link_target = f"exercises/{construct}/{exercise_key}/notebooks/student.ipynb"
+            display_construct, title, link_target = self._readme_entry_from_exercise_key(
+                exercise_key
+            )
             grouped_entries.setdefault(display_construct, []).append((title, link_target))
 
-        sections: list[str] = []
-        for display_construct, entries in grouped_entries.items():
-            sections.append(f"## {display_construct}")
-            for index, (title, link_target) in enumerate(entries, start=1):
-                sections.append(f"{index}. [{title}]({link_target})")
-            sections.append("")
-
-        exercise_list = "\n".join(sections).rstrip()
+        exercise_list = self._render_grouped_readme_sections(grouped_entries)
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
         content = content.replace("{EXERCISE_LIST}", exercise_list)
         readme_path = workspace / "README.md"
