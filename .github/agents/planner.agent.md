@@ -1,9 +1,8 @@
 ---
 name: Planner
 description: Drafts SPEC.md, optional layout/workflow specs, and ACTION_PLAN.md for exercise-authoring, notebook, grading, packaging, and tooling changes.
-tools: [read/readFile, read/list_dir, read/file_search, search/search, edit/createFile, edit/editFiles, todo, execute]
+tools: [execute, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/readFile, read/viewImage, read/readNotebookCellOutput, agent, edit/createFile, edit/editFiles, search, web, todo]
 user-invocable: true
-model: GPT-5.3-Codex (copilot)
 ---
 
 > Repository status: the source repository uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Exported Classroom repositories may still flatten notebooks and tests during packaging, but those derived paths are not authoring surfaces. The template CLI follows a canonical-only contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
