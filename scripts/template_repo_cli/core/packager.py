@@ -247,14 +247,20 @@ class TemplatePackager:
                 (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
             )
             metadata = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
-            construct = metadata["construct"]
-            title = metadata["title"]
+            if not isinstance(metadata, dict):
+                raise ValueError("missing or invalid exercise metadata")
+
+            construct = metadata.get("construct")
+            title = metadata.get("title")
             if not isinstance(title, str) or not title.strip():
                 raise ValueError("missing or invalid title metadata")
             if not isinstance(construct, str) or not construct.strip():
                 raise ValueError("missing or invalid construct metadata")
         except Exception as cause:
-            raise ValueError(f"README generation failed for exercise '{exercise_key}'") from cause
+            reason = str(cause)
+            raise ValueError(
+                f"README generation failed for exercise '{exercise_key}': {reason}"
+            ) from cause
 
         display_construct = construct.replace("_", " ").title()
         link_target = f"exercises/{construct}/{exercise_key}/notebooks/student.ipynb"
@@ -280,7 +286,7 @@ class TemplatePackager:
         Args:
             workspace: Workspace directory.
             template_name: Name of the template.
-            exercises: List of exercise IDs.
+            exercises: List of exercise keys.
         """
         template_content = self._load_readme_template()
 

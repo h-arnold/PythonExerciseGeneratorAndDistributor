@@ -25,7 +25,10 @@ ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
 def _write_missing_title_metadata(path: Path) -> None:
     """Write valid JSON metadata missing required title."""
 
-    path.write_text('{"exercise_key": "ex040", "construct": "sequence"}\n', encoding="utf-8")
+    path.write_text(
+        '{"exercise_key": "ex040_sequence_broken", "construct": "sequence"}\n',
+        encoding="utf-8",
+    )
 
 
 def _write_invalid_json_metadata(path: Path) -> None:

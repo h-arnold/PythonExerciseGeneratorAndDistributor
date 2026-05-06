@@ -46,7 +46,7 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
-### Planned Template Packager README Helpers
+### Template Packager README Helpers
 
 Status tracker for the README exercise-links feature plan:
 
