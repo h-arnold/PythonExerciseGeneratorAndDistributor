@@ -128,7 +128,7 @@ Helper decision entries:
    - Owning module/path: `scripts/template_repo_cli/core/packager.py`
    - Call-site rationale: keeps README rendering logic local to packager ownership boundary
    - Relevant canonical doc target: `docs/development.md`
-   - Planned doc status: `Not implemented`
+   - Planned doc status: `Implemented`
 
 ### Acceptance criteria
 
@@ -234,13 +234,13 @@ Helper decision entries:
    - Owning module/path: `scripts/template_repo_cli/core/packager.py`
    - Call-site rationale: required for deterministic construct-heading rendering
    - Relevant canonical doc target: `docs/development.md`
-   - Planned doc status: `Not implemented`
+   - Planned doc status: `Implemented`
 2. Helper: grouped README list composer
    - Decision: `new`
    - Owning module/path: `scripts/template_repo_cli/core/packager.py`
    - Call-site rationale: isolates formatting from I/O path and improves testability
    - Relevant canonical doc target: `docs/development.md`
-   - Planned doc status: `Not implemented`
+   - Planned doc status: `Implemented`
 
 ### Acceptance criteria
 
@@ -338,7 +338,7 @@ Helper decision entries:
    - Owning module/path: `scripts/template_repo_cli/core/packager.py`
    - Call-site rationale: keep behaviour centralised and avoid duplicate formatting logic
    - Relevant canonical doc target: `docs/development.md`
-   - Planned doc status: `Not implemented`
+   - Planned doc status: `Implemented`
 
 ### Acceptance criteria
 
@@ -387,10 +387,8 @@ Integration tests:
    - green review clean: complete
    - checks passed: complete (uv run pytest -q tests/template_repo_cli/test_packager.py -k readme; uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py)
    - action plan updated: complete
-   - commit created: pending
-   - push completed: pending
-- Deviations from plan: None.
-- Follow-up implications for later sections: None.
+   - commit created: complete (16a2b7b, refactor(packager): extract README rendering helpers (section 3))
+   - push completed: complete (branch feat/READMELinks)
 
 ---
 
@@ -424,7 +422,7 @@ Integration tests:
 
 ### Implementation notes / deviations / follow-up
 
-- Implementation notes: Pending implementation.
+- Implementation notes: Completed regression checks for the touched surfaces. Command results: uv run pytest -q tests/template_repo_cli/test_packager.py passed; uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py passed; optional uv run pytest -q tests/template_repo_cli/test_integration.py -k readme reported no selected tests (38 deselected).
 - Deviations from plan: None.
 
 ---
@@ -457,7 +455,9 @@ Integration tests:
 
 ### Implementation notes / deviations / follow-up
 
-- Pending implementation.
+- Implementation notes: Updated docs/development.md to reflect delivered grouped numbered README rendering semantics, sorted exercise-key ordering, canonical student notebook href targets, and wrapped ValueError error semantics with exercise-key context and chained causes. Reconciled helper tracker status against implementation in scripts/template_repo_cli/core/packager.py: `_readme_entry_from_exercise_key` and `_render_grouped_readme_sections` are implemented; construct display normalisation remains inlined rather than extracted as a standalone helper.
+- Deviations from plan: The planned standalone construct display normaliser helper was not introduced; equivalent behaviour is implemented inline in `_readme_entry_from_exercise_key`.
+- Follow-up implications: If construct display rules grow beyond current title-casing, extract a dedicated normaliser helper to keep rendering concerns isolated.
 
 ---
 
