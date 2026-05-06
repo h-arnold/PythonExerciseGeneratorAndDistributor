@@ -1,0 +1,5 @@
+name = "planner-reviewer"
+type = "subagent"
+system_prompt_id = "planner-reviewer"
+
+[tools]

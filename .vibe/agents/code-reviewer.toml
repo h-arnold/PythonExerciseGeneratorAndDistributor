@@ -1,0 +1,5 @@
+name = "code-reviewer"
+type = "subagent"
+system_prompt_id = "code-reviewer"
+
+[tools]
