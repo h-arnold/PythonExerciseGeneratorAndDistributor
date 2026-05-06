@@ -46,6 +46,30 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
+### Planned Template Packager README Helpers
+
+Status tracker for the README exercise-links feature plan:
+
+- Helper: README exercise-entry formatter in packager
+- Decision: extend
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Not implemented
+
+- Helper: construct display normaliser (snake_case to title-case words)
+- Decision: new
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Not implemented
+
+- Helper: grouped README list composer
+- Decision: new
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Not implemented
+
+- Helper: README list composition helpers from Section 2
+- Decision: reuse
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Not implemented
+
 The canonical source-repository authoring model is now exercise-local: `exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb` with `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Top-level `notebooks/`, `notebooks/solutions/`, and exercise-specific files materialised under the root `tests/` tree are derived compatibility surfaces only when explicitly generated.
 
 Run the helper directly during development:

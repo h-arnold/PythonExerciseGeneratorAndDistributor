@@ -171,9 +171,18 @@ Integration tests:
 
 ### Implementation notes / deviations / follow-up
 
-- Implementation notes: Pending implementation.
+- Implementation notes: Completed red phase. Added failing README contract tests in tests/template_repo_cli/test_packager.py for construct headings, numbered markdown links, metadata title text, canonical student notebook hrefs, sorted exercise-key ordering, and ValueError wrapping with cause chaining.
 - Deviations from plan: None.
-- Follow-up implications for later sections: None.
+- Follow-up implications for later sections: Section 2 must implement metadata-backed README rendering and error wrapping so these tests pass.
+- Section checklist status:
+   - red tests added: complete
+   - red review clean: complete
+   - green implementation complete: deferred to Section 2
+   - green review clean: deferred to Section 2
+   - checks passed: red check executed with expected failures
+   - action plan updated: complete
+   - commit created: pending
+   - push completed: pending
 
 ---
 
