@@ -46,6 +46,37 @@ uv run python -V
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
+### Template Packager README Helpers
+
+Status tracker for the README exercise-links feature plan:
+
+- Helper: README exercise-entry formatter in packager (`_readme_entry_from_exercise_key`)
+- Decision: extend
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Implemented
+
+- Helper: construct display normaliser (snake_case to title-case words)
+- Decision: new
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Not implemented as a standalone helper (normalisation is currently inlined in `_readme_entry_from_exercise_key`)
+
+- Helper: grouped README list composer (`_render_grouped_readme_sections`)
+- Decision: new
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Implemented
+
+- Helper: README list composition helpers from Section 2
+- Decision: reuse
+- Owning path: scripts/template_repo_cli/core/packager.py
+- Status: Implemented (reused via `generate_readme`)
+
+Delivered README semantics:
+
+- Selected exercise keys are rendered in sorted key order.
+- Entries are grouped by construct heading with numbered markdown links per section.
+- Link text is sourced from metadata `title`, and hrefs target canonical exported student notebooks.
+- Metadata/render failures are wrapped as packager `ValueError` exceptions with exercise-key context and chained causes.
+
 The canonical source-repository authoring model is now exercise-local: `exercises/<construct>/<exercise_key>/notebooks/{student,solution}.ipynb` with `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Top-level `notebooks/`, `notebooks/solutions/`, and exercise-specific files materialised under the root `tests/` tree are derived compatibility surfaces only when explicitly generated.
 
 Run the helper directly during development:

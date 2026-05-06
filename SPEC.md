@@ -1,177 +1,332 @@
-**SPEC: Unify Exercise Resolution on Metadata Catalogue (Source + Packaged)**
+# README Exercise Links Specification
 
-## 1. Problem Statement
+## Status
 
-Current runtime resolution is split:
+- Draft v1.1
+- Updated to align with repository planning templates and lock agreed README rendering decisions.
 
-- Source repo path: `exercise_metadata.registry.build_exercise_catalogue()`
-- Packaged export path: JSON snapshot fallback in `exercise_runtime_support/exercise_catalogue.py`
+## Purpose
 
-This creates dual behavior, duplicated guarantees, and test/docs complexity around metadata-free packaged mode.
+This document defines the intended behaviour for README exercise-list rendering in generated template repositories.
 
-### Target
+The feature will be used to:
 
-Use one resolution method everywhere: metadata-catalogue resolution (`exercise_metadata` + manifest + per-exercise `exercise.json`) for both source and packaged exports, with fail-fast behavior and `exercise_key` as the only resolver identity.
+- present each selected exercise as a markdown link to the exported student notebook
+- use metadata-backed exercise titles as readable link text
+- organise mixed-construct selections into clear construct-based sections
 
-## 2. Target Architecture
+This feature is not intended to:
 
-- `exercise_runtime_support.exercise_catalogue.get_exercise_catalogue()` always builds from `exercise_metadata.registry.build_exercise_catalogue()`.
-- Runtime notebook path resolution always delegates through metadata resolver semantics.
-- No snapshot file generation, loading, or validation.
-- No environment-based “has metadata package?” branching.
+- change exercise selection rules in the template CLI
+- alter canonical packaging paths or runtime variant behaviour
 
-### 2.1 Packaged Runtime Contract
+## Agreed product decisions
 
-Packaged exports MUST include the following at repo root:
+1. Exercise ordering is fixed to sorted exercise keys.
+2. README entries are grouped by construct heading, with heading text derived from metadata `construct` and displayed as proper title-case words.
+3. Each exercise link appears as a numbered item under its construct heading.
+4. Link text is taken from metadata `title` in canonical `exercise.json`.
+5. Link targets are canonical exported student notebook paths: `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
+6. Metadata/render failures are wrapped and raised as a packager-specific `ValueError` with exercise-key context.
 
-- `exercise_metadata/` package (including `__init__.py`, `registry.py`, `resolver.py`, `loader.py`, `manifest.py`, `schema.py`)
-- `exercises/migration_manifest.json`
-- `exercises/<construct>/<exercise_key>/exercise.json` for every exported exercise
-- `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
-- `exercises/<construct>/<exercise_key>/tests/` (canonical exercise-local tests path)
+## Existing system constraints
 
-Importability contract:
+Documented constraints that shape the design are below.
 
-- `exercise_metadata` must be importable via normal repo-root Python import resolution (`import exercise_metadata...`) without runtime path hacks.
-- Packaged runtime and tests must not depend on snapshot artifacts.
-- Flattened notebook/test mirrors in packaged outputs are forbidden for this migration target. Packaging and runtime must treat canonical exercise-local paths as the only valid authoring and execution surfaces.
+### Backend or API constraints already in place
 
-### 2.2 Error Contract (Fail-Fast)
+- README generation is owned by `TemplatePackager.generate_readme(...)` in `scripts/template_repo_cli/core/packager.py`.
+- Packaging orchestration in `scripts/template_repo_cli/cli.py` passes selected exercise keys to packager methods.
 
-No silent fallback is allowed. Preserve existing module-level exception families and require diagnostic message fragments:
+### Current data-shape constraints
 
-- Missing manifest: `FileNotFoundError` containing `Migration manifest not found`
-- Unknown exercise key in manifest resolution: `LookupError` containing `not in the migration manifest`
-- Missing/invalid canonical metadata for canonical resolution: `LookupError` containing `exercise.json is missing or invalid`
-- Missing canonical notebook: `LookupError` containing `expected notebook is missing`
-- Unknown catalogue key/id: `ValueError` containing `Unknown exercise key` or `Unknown exercise_id`
+- Canonical metadata is in `exercises/<construct>/<exercise_key>/exercise.json`.
+- Canonical metadata includes `title`, `construct`, and exercise identity fields.
+- README template replacement contract currently uses `{TEMPLATE_NAME}` and `{EXERCISE_LIST}` placeholders.
 
-API-to-error mapping for primary entrypoints:
+### Consumer or integration architecture constraints
 
-- `exercise_metadata.manifest.load_migration_manifest()`:
-  missing manifest -> `FileNotFoundError` with `Migration manifest not found`
-- `exercise_metadata.resolver.resolve_notebook_path()`:
-  unknown manifest key -> `LookupError` with `not in the migration manifest`
-- `exercise_metadata.resolver.resolve_notebook_path()`:
-  canonical metadata missing/invalid -> `LookupError` with `exercise.json is missing or invalid`
-- `exercise_metadata.resolver.resolve_notebook_path()`:
-  canonical notebook missing -> `LookupError` with `expected notebook is missing`
-- `exercise_runtime_support.exercise_catalogue.get_catalogue_entry()`:
-  unknown key -> `ValueError` with `Unknown exercise key`
-- `exercise_runtime_support.exercise_catalogue.get_catalogue_key_for_exercise_id()`:
-  unknown id -> `ValueError` with `Unknown exercise_id`
+- Packaged repository layout must preserve canonical student notebook paths.
+- Existing packager tests in `tests/template_repo_cli/test_packager.py` assert README generation and package validity, so behaviour changes must be covered there.
 
-## 3. Exact Files/Modules to Modify (with rationale)
+## Domain and contract recommendations
 
-- [`exercise_runtime_support/exercise_catalogue.py`](/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_catalogue.py)  
-  Remove snapshot constants/functions and import-branch logic; make metadata catalogue the sole source.
+### Why this approach is preferable
 
-- [`exercise_runtime_support/exercise_framework/paths.py`](/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_framework/paths.py)  
-  Remove metadata-presence branching and packaged fallback resolver path; always resolve by exercise key via metadata-driven flow.
+- It improves student and teacher readability by replacing opaque exercise keys with human titles.
+- It keeps output deterministic and testable via stable ordering rules.
+- It scales to multi-construct exports without requiring separate templates per construct.
 
-- [`exercise_runtime_support/exercise_test_support.py`](/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_test_support.py)  
-  Remove `tests/<construct>/<exercise_key>` packaged fallback and use canonical exercise-local tests only under `exercises/<construct>/<exercise_key>/tests`.
+### Recommended data shapes
 
-- [`scripts/template_repo_cli/core/packager.py`](/workspaces/PythonExerciseGeneratorAndDistributor/scripts/template_repo_cli/core/packager.py)  
-  Stop writing/validating snapshot; package metadata module + manifest + per-exercise `exercise.json`; ensure canonical exercise-local tests are exported.
+#### Selected exercise render input
 
-- [`scripts/template_repo_cli/core/collector.py`](/workspaces/PythonExerciseGeneratorAndDistributor/scripts/template_repo_cli/core/collector.py)  
-  Collect metadata runtime surfaces required by the packaged runtime contract.
+```json
+{
+  "exercise_key": "ex002_sequence_modify_basics",
+  "construct": "sequence",
+  "title": "Sequence Modify Basics",
+  "student_notebook_path": "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+}
+```
 
-- [`scripts/template_repo_cli/core/selector.py`](/workspaces/PythonExerciseGeneratorAndDistributor/scripts/template_repo_cli/core/selector.py)  
-  Remove silent empty-registry behavior when manifest is missing; fail fast under metadata contract violations.
+#### README section model
 
-- [`template_repo_files/.devcontainer/devcontainer.json`](/workspaces/PythonExerciseGeneratorAndDistributor/template_repo_files/.devcontainer/devcontainer.json)  
-  Add/adjust `files.exclude` to hide metadata files/folders from student-facing explorer views.
+```json
+{
+  "display_construct": "Sequence",
+  "entries": [
+    {
+      "index": 1,
+      "title": "Sequence Modify Basics",
+      "href": "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+    }
+  ]
+}
+```
 
-- [`docs/execution-model.md`](/workspaces/PythonExerciseGeneratorAndDistributor/docs/execution-model.md), [`docs/testing-framework.md`](/workspaces/PythonExerciseGeneratorAndDistributor/docs/testing-framework.md), [`docs/development.md`](/workspaces/PythonExerciseGeneratorAndDistributor/docs/development.md), [`docs/setup.md`](/workspaces/PythonExerciseGeneratorAndDistributor/docs/setup.md), [`AGENTS.md`](/workspaces/PythonExerciseGeneratorAndDistributor/AGENTS.md)  
-  Remove metadata-free/snapshot language and document unified metadata-catalogue runtime contract.
+### Naming recommendation
 
-## 4. Migration Policy and Rollout
+Prefer:
 
-- No backward compatibility requirement for snapshot-based packaged exports.
-- Any failures caused by this migration are in-scope and must be fixed in the migration PR(s).
-- New template exports must satisfy the Packaged Runtime Contract in §2.1.
-- Classroom usability is preserved by keeping canonical student notebook/test workflows operational.
+- `exercise_key`
+- `construct`
+- `title`
+- `student_notebook_path`
 
-Rollout order:
+Avoid:
 
-1. Land packager + collector + runtime changes together.
-2. Update tests to enforce metadata-only behavior and remove snapshot assumptions.
-3. Update docs/contracts in the same PR to avoid mixed guidance.
-4. Validate acceptance gates in §5 before merge.
+- `exercise_id` for README ordering logic
+- `slug` as README link text
 
-## 5. Validation and Acceptance Criteria
+This naming avoids ambiguity between display labels and canonical identity keys.
 
-A migration is complete only when all gates below pass.
+### Validation recommendation
 
-### 5.1 Environment/Workflow Matrix
+#### Consumer
 
-- Source repo runtime: metadata catalogue resolution works and snapshot path is absent.
-- Packaged dry-run runtime: `exercise_metadata` imports successfully and catalogue/path resolution works without snapshot.
-- Solution variant: solution checks pass.
-- Student variant contract: expected failing-student behavior remains unchanged.
+- Selection inputs remain exercise-key based.
+- Empty selection behaviour remains unchanged unless already constrained elsewhere.
 
-### 5.2 Required Test Changes
+#### Backend
 
-Replace/remove snapshot-era assertions in:
+- Fail fast when required metadata for a selected exercise cannot be loaded.
+- Reject blank or missing metadata title for README rendering.
+- Raise packager-specific `ValueError` and include exercise-key context and chained cause.
 
-- [`tests/exercise_runtime_support/test_exercise_catalogue.py`](/workspaces/PythonExerciseGeneratorAndDistributor/tests/exercise_runtime_support/test_exercise_catalogue.py)
-- [`tests/exercise_framework/test_paths.py`](/workspaces/PythonExerciseGeneratorAndDistributor/tests/exercise_framework/test_paths.py)
-- [`tests/template_repo_cli/test_packager.py`](/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_packager.py)
-- [`tests/template_repo_cli/test_integration.py`](/workspaces/PythonExerciseGeneratorAndDistributor/tests/template_repo_cli/test_integration.py)
+### Display-resolution recommendation
 
-Add/adjust assertions for:
+- Construct display labels are resolved from metadata `construct` by replacing underscores with spaces and applying title case.
+- README grouping is determined by construct while preserving sorted exercise-key ordering of entries.
 
-- Missing metadata/manifest fail-fast behavior per §2.2.
-- Packaged dry-run workspace includes all required metadata assets in §2.1.
-- Packaged runtime imports `exercise_metadata` and executes checks successfully.
-- No snapshot artifact references remain in runtime tests, packager tests, and integration tests.
+## Feature architecture
 
-### 5.3 Command Gates
+### Placement
 
-Run and pass these commands before merge:
+- Canonical implementation surface is the template packager README generation path.
+- Parallel README rendering logic elsewhere is explicitly out of scope.
 
-1. `uv run pytest -q tests/exercise_runtime_support/test_exercise_catalogue.py tests/exercise_framework/test_paths.py tests/template_repo_cli/test_packager.py tests/template_repo_cli/test_integration.py`
-2. `uv run python scripts/run_pytest_variant.py --variant solution -q`
-3. `uv run ./scripts/verify_solutions.sh -q`
-4. `uv run python scripts/template_repo_cli/cli.py --dry-run --output-dir /tmp/template_repo_dryrun create --exercise-keys ex002_sequence_modify_basics --repo-name template-repo-dryrun-check`
-5. `cd /tmp/template_repo_dryrun && uv run python - <<'PY'\nfrom exercise_runtime_support.exercise_catalogue import get_exercise_catalogue\nfrom exercise_runtime_support.exercise_framework.paths import resolve_exercise_notebook_path\nentry = get_exercise_catalogue()[0]\nresolved = resolve_exercise_notebook_path(entry.exercise_key, variant='student')\nprint(entry.exercise_key)\nprint(resolved)\nPY`
+### Proposed high-level tree
 
-For student-variant expectations, preserve existing repository contract and related tests; do not alter tests merely to force student variants to pass.
+```text
+TemplatePackager
+└── README Rendering
+    ├── Metadata resolution per selected exercise key
+    ├── Construct grouping and display formatting
+    └── Numbered markdown link composition
+```
 
-## 6. Risks and Mitigations
+### Out of scope for this surface
 
-- Risk: path contract mismatch between packaged outputs and runtime lookup.
-  Mitigation: enforce canonical `exercises/<construct>/<exercise_key>/tests` export and remove alternate lookup paths.
+- Altering template selection UX or CLI flags.
+- Changing notebook packaging location or adding solution notebook links.
 
-- Risk: metadata import regressions in packaged repos.
-  Mitigation: explicit packaged runtime contract + integration tests asserting import success.
+## Data loading and orchestration
 
-- Risk: accidental reintroduction of fallback behavior.
-  Mitigation: add tests asserting absence of snapshot symbols, snapshot files, and snapshot docs references.
+### Required datasets or dependencies
 
-- Risk: student UX clutter from added metadata files.
-  Mitigation: required `files.exclude` entries in template devcontainer configuration.
+- canonical exercise metadata (`exercise.json`) for each selected exercise key
+- selected exercise keys passed from template CLI to packager
 
-## 7. Ordered Implementation Action Plan
+### Prefetch or initialisation policy
 
-1. Remove snapshot API and fallback branches in runtime catalogue and path resolver modules.
-2. Update exercise test-support path resolution to canonical exercise-local tests only.
-3. Update packager/collector to emit required metadata surfaces and canonical exercise-local tests.
-4. Tighten selector behavior to fail fast when metadata prerequisites are missing.
-5. Rewrite runtime + packager + integration tests to enforce metadata-only contract and error contract.
-6. Remove snapshot artifacts and references from code, fixtures, and docs.
-7. Run acceptance gates in §5 and fix all resulting migration regressions.
+#### Startup
 
-### 7.1 Snapshot Removal Checklist
+- No startup prefetch changes required for this feature.
 
-- Remove snapshot symbols from [`exercise_runtime_support/exercise_catalogue.py`](/workspaces/PythonExerciseGeneratorAndDistributor/exercise_runtime_support/exercise_catalogue.py):
-  - `CATALOGUE_SNAPSHOT_FILENAME`
-  - `get_catalogue_snapshot_path`
-  - `load_catalogue_snapshot`
-  - `write_catalogue_snapshot`
-  - snapshot-based branching in `get_exercise_catalogue`
-- Remove runtime/package expectations for `exercise_catalogue_snapshot.json` across tests and packaging validation.
-- Remove snapshot-focused tests and fixture setup in runtime/packager/integration suites.
-- Remove snapshot terminology from docs and AGENTS guidance.
+#### Feature entry
+
+- Metadata is loaded during README generation for the selected exercise set.
+
+#### Manual refresh
+
+- No manual refresh control is part of this feature.
+
+### Query or transport additions
+
+- No transport, API, or query-layer additions required.
+
+## Core view model or behavioural model
+
+### Suggested shape
+
+```json
+{
+  "construct_sections": [
+    {
+      "display_construct": "Sequence",
+      "entries": [
+        {
+          "exercise_key": "ex002_sequence_modify_basics",
+          "title": "Sequence Modify Basics",
+          "href": "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Derivation or merge rules
+
+#### Entry derivation
+
+- Sort selected exercise keys lexicographically.
+- For each key, load metadata and derive notebook link path from canonical construct and key.
+
+#### Group derivation
+
+- Group entries by metadata construct key.
+- Render one heading per construct with numbered entries below.
+
+### Sort order or priority rules
+
+1. Primary ordering is sorted exercise keys.
+2. Group ordering follows first appearance by sorted exercise-key iteration.
+3. Numbering restarts per construct section and follows entry order in that section.
+
+## Main user-facing surface specification
+
+### Recommended components or primitives
+
+- Markdown heading per construct section.
+- Numbered markdown list entries for notebook links.
+
+### Fields, columns, or visible sections
+
+1. Template title at top of README via `{TEMPLATE_NAME}`.
+2. Construct heading per group.
+3. Numbered link entries using exercise title text.
+
+### Sorting, filtering, or navigation rules
+
+- Sorting is deterministic and based on sorted exercise keys.
+- No README-side filtering or search is introduced.
+- Existing template placeholders remain unchanged.
+
+### Rendering rules
+
+#### Construct section with one or more exercises
+
+- Show heading in proper title-case words.
+- Show numbered links under the heading.
+
+#### Metadata failure for a selected exercise
+
+- Abort README generation and raise packager-specific `ValueError`.
+- Include exercise-key context and preserve root exception via chaining.
+- Expected error message format example:
+  - `README generation failed for exercise 'ex002_sequence_modify_basics': missing or invalid title metadata`
+
+## Workflow specification
+
+## Generate README during packaging
+
+### Eligible inputs or preconditions
+
+- Selected exercise keys are provided by existing CLI selection flow.
+- Canonical exercise metadata files exist for selected exercises.
+
+### Inputs, fields, or confirmation copy
+
+- `template_name`
+- `exercises` (selected exercise keys)
+
+### Behaviour
+
+- Load README template content from `template_repo_files/README.md.template` (or fallback content if absent).
+- Build construct-grouped numbered markdown links using metadata title and canonical student notebook paths.
+- Replace `{TEMPLATE_NAME}` and `{EXERCISE_LIST}` placeholders and write `README.md`.
+- Raise packager-specific `ValueError` on metadata/render failures.
+
+## Error, loading, and empty-state rules
+
+### Blocking failure
+
+- Missing or invalid metadata required for a selected exercise is blocking.
+- User must receive a packager-specific `ValueError` with exercise-key context.
+- Error text should follow the documented message-format style to support deterministic test assertions.
+
+### Partial-load or partial-success failure
+
+- Partial success is not allowed for README rendering; generation fails fast.
+
+### Empty states
+
+#### No selected exercises
+
+- Existing behaviour is preserved unless constrained by upstream selection validation.
+
+## Accessibility and usability notes
+
+- Human-readable titles improve scanability compared with raw exercise keys.
+- Construct headings reduce ambiguity when multiple constructs are packaged together.
+- Numbered lists provide predictable order cues.
+
+## Backend changes required to support agreed behaviour
+
+1. Update packager README rendering contract.
+   - Build metadata-backed grouped markdown output.
+   - Keep sorted exercise-key ordering semantics.
+2. Add packager-specific error wrapping.
+   - Wrap metadata and rendering failures in `ValueError`.
+   - Include exercise-key context and chained cause.
+3. Update README template wording only if needed for grouped output clarity.
+   - Preserve `{TEMPLATE_NAME}` and `{EXERCISE_LIST}` placeholders.
+
+## Planning handoff notes
+
+- Implementation must preserve existing packaging and selection contracts.
+- Test-first delivery should update packager tests before or alongside logic changes.
+- Do not introduce exercise-id-based ordering in v1.
+
+## Testing expectations
+
+- Unit coverage for packager README generation includes:
+  - construct heading rendering
+  - numbered link formatting
+  - title-based link text
+  - canonical notebook link targets
+  - sorted exercise-key ordering
+  - packager-specific `ValueError` wrapping on metadata failures
+- Existing package integrity checks remain green.
+
+## Documentation and rollout notes
+
+- Update packager docstrings/comments only where behaviour contract changes.
+- No migration or rollout toggle is required.
+- Deferred enhancement ideas (for example, optional ordering modes) remain out of v1.
+
+## V1 scope recommendation
+
+### Include in v1
+
+- Metadata title-based markdown notebook links.
+- Construct-grouped headings with numbered entries.
+- Packager-specific `ValueError` wrapping for metadata/render failures.
+
+### Defer from v1
+
+- Alternative ordering modes.
+- Additional README grouping levels beyond construct.
+- Optional inclusion of solution notebook links.

@@ -1,0 +1,5 @@
+name = "docs"
+type = "subagent"
+system_prompt_id = "docs"
+
+[tools]

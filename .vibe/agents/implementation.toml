@@ -1,0 +1,5 @@
+name = "implementation"
+type = "subagent"
+system_prompt_id = "implementation"
+
+[tools]
