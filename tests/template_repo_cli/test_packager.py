@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -20,6 +20,18 @@ if TYPE_CHECKING:
 
 ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
 ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
+
+
+def _write_missing_title_metadata(path: Path) -> None:
+    """Write valid JSON metadata missing required title."""
+
+    path.write_text('{"exercise_key": "ex040", "construct": "sequence"}\n', encoding="utf-8")
+
+
+def _write_invalid_json_metadata(path: Path) -> None:
+    """Write malformed JSON metadata for README failure-path tests."""
+
+    path.write_text("{not-json}\n", encoding="utf-8")
 
 
 @pytest.fixture
@@ -428,11 +440,11 @@ class TestGenerateFiles:
         "broken_metadata_writer",
         [
             pytest.param(
-                lambda path: path.write_text('{"exercise_key": "ex040", "construct": "sequence"}\n', encoding="utf-8"),
+                _write_missing_title_metadata,
                 id="missing-title",
             ),
             pytest.param(
-                lambda path: path.write_text("{not-json}\n", encoding="utf-8"),
+                _write_invalid_json_metadata,
                 id="invalid-json",
             ),
         ],

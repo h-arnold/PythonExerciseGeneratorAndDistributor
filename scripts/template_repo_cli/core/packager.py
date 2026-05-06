@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
+from collections import OrderedDict
 from pathlib import Path
 
 from exercise_metadata.manifest import load_migration_manifest
@@ -246,7 +247,36 @@ class TemplatePackager:
         else:
             template_content = "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
 
-        exercise_list = "\n".join(f"- {ex}" for ex in sorted(exercises))
+        grouped_entries: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
+        for exercise_key in sorted(exercises):
+            try:
+                exercise_metadata_path = next(
+                    (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
+                )
+                metadata = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
+                construct = metadata["construct"]
+                title = metadata["title"]
+                if not isinstance(title, str) or not title.strip():
+                    raise ValueError("missing or invalid title metadata")
+                if not isinstance(construct, str) or not construct.strip():
+                    raise ValueError("missing or invalid construct metadata")
+            except Exception as cause:
+                raise ValueError(
+                    f"README generation failed for exercise '{exercise_key}'"
+                ) from cause
+
+            display_construct = construct.replace("_", " ").title()
+            link_target = f"exercises/{construct}/{exercise_key}/notebooks/student.ipynb"
+            grouped_entries.setdefault(display_construct, []).append((title, link_target))
+
+        sections: list[str] = []
+        for display_construct, entries in grouped_entries.items():
+            sections.append(f"## {display_construct}")
+            for index, (title, link_target) in enumerate(entries, start=1):
+                sections.append(f"{index}. [{title}]({link_target})")
+            sections.append("")
+
+        exercise_list = "\n".join(sections).rstrip()
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
         content = content.replace("{EXERCISE_LIST}", exercise_list)
         readme_path = workspace / "README.md"

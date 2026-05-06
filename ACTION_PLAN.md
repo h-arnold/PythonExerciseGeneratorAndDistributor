@@ -181,8 +181,8 @@ Integration tests:
    - green review clean: deferred to Section 2
    - checks passed: red check executed with expected failures
    - action plan updated: complete
-   - commit created: pending
-   - push completed: pending
+   - commit created: complete (b087512, test(packager): add red README rendering contract tests (section 1))
+   - push completed: complete (branch feat/READMELinks)
 
 ---
 
@@ -280,9 +280,18 @@ Integration tests:
 
 ### Implementation notes / deviations / follow-up
 
-- Implementation notes: Pending implementation.
+- Implementation notes: Implemented metadata-backed README rendering in scripts/template_repo_cli/core/packager.py with sorted exercise-key iteration, construct grouping, title-based numbered markdown links, canonical student notebook hrefs, and ValueError wrapping with exercise-key context and chained cause.
 - Deviations from plan: None.
-- Follow-up implications for later sections: Re-run any impacted package integrity tests.
+- Follow-up implications for later sections: Section 3 may only refactor for clarity with no behaviour drift.
+- Section checklist status:
+   - red tests added: complete in Section 1
+   - red review clean: complete in Section 1
+   - green implementation complete: complete
+   - green review clean: complete
+   - checks passed: complete (uv run pytest -q tests/template_repo_cli/test_packager.py -k readme; uv run ruff check scripts/template_repo_cli/core/packager.py tests/template_repo_cli/test_packager.py)
+   - action plan updated: complete
+   - commit created: pending
+   - push completed: pending
 
 ---
 
