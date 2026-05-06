@@ -2,8 +2,8 @@
 name: 'De-Sloppification'
 description: 'Finds and removes AI-slop, duplication, and unnecessary complexity'
 user-invocable: true
-model: gpt-5.4
-tools: [vscode/askQuestions, vscode/memory, vscode/runCommand, execute/getTerminalOutput, execute/createAndRunTask, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/problems, read/readFile, read/viewImage, read/readNotebookCellOutput, edit/createFile, edit/editFiles, edit/rename, search, web, 'pylance-mcp-server/*', todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
+
+tools: [vscode/askQuestions, vscode/memory, vscode/runCommand, execute, read, edit/createFile, edit/editFiles, search, web, todo]
 ---
 
 # De-Sloppification Agent Instructions
