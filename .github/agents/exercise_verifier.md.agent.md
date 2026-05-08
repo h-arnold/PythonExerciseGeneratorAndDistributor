@@ -1,7 +1,7 @@
 ---
 name: Exercise Verifier
 description: Verify canonical exercise-local exercises meet repo standards (type rules, sequencing, tests, and teacher guidance)
-tools: [execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, read, edit/editFiles, edit/editNotebook, edit/rename, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/configurePythonEnvironment]
+tools: [execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runNotebookCell, execute/runInTerminal, read, edit/editFiles, edit/editNotebook, edit/rename, search, todo]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Verifier Mode
