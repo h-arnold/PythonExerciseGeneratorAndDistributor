@@ -28,6 +28,9 @@
     },
     "ex010_sequence_debug_fstrings": {
       "layout": "canonical"
+    },
+    "ex011_sequence_gaps_consolidation": {
+      "layout": "canonical"
     }
   }
 }

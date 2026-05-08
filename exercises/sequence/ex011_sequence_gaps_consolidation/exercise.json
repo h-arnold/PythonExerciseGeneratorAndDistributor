@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex011_sequence_gaps_consolidation",
+  "exercise_id": 11,
+  "slug": "ex011_sequence_gaps_consolidation",
+  "title": "Sequence Gaps Consolidation",
+  "construct": "sequence",
+  "exercise_type": "gaps",
+  "parts": 10
+}

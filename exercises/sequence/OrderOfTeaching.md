@@ -82,3 +82,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Debugging short f-string programs by correcting missing placeholders, wrong variable references, and simple arithmetic mistakes in the final output.
 - Type: Debug exercises with a gradual move from single-bug fixes to short mixed-bug tasks.
 - Purpose: Follow the f-string modification work by helping students diagnose output problems independently while staying inside the sequence construct.
+
+1. [**Sequence Gaps Consolidation**](`ex011_sequence_gaps_consolidation`)
+
+[Supporting docs](./ex011_sequence_gaps_consolidation/)
+[Notebook](./ex011_sequence_gaps_consolidation/notebooks/student.ipynb)
+
+- Focus: Consolidating print output, variables, input, arithmetic, and f-strings through partially completed programs.
+- Type: Gap-fill exercises where students supply the missing line or lines in each program.
+- Purpose: Bring together the full sequence strand so far in a gradual practice set that moves from one-line gaps to larger mixed tasks.
