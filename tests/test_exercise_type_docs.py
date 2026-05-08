@@ -4,6 +4,7 @@ FILES = {
     "docs/exercise-types/debug.md": "Debugging Exercise Formats",
     "docs/exercise-types/modify.md": "Modification Exercise Formats",
     "docs/exercise-types/make.md": "Make Exercise Formats",
+    "docs/exercise-types/gaps.md": "Gap-Fill Exercise Formats",
 }
 
 
@@ -23,4 +24,5 @@ def test_agent_requires_opening_guides():
     assert "docs/exercise-types/debug.md" in text
     assert "docs/exercise-types/modify.md" in text
     assert "docs/exercise-types/make.md" in text
+    assert "docs/exercise-types/gaps.md" in text
     assert "open and follow" in text or "open and follow the" in text

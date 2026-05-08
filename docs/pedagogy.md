@@ -162,6 +162,14 @@ I use a "faded scaffolding" approach here:
 1. **Highly Scaffolded:** Tasks with natural language steps corresponding 1:1 with code lines.  
 2. **Vague Briefs:** "Write a program that asks for a name and prints it backwards."
 
+### **Bridging the Gap: Gap-Fill Exercises**
+
+In practice, many students find the jump from Modify/Debug (where the program is essentially complete) to Make (where they write from scratch) too large in one step. Gap-fill exercises sit between these two phases.
+
+Students receive a partial program — the surrounding structure, variable names, and context are provided — and must write the missing **lines or blocks** of code. Early gap-fill exercises ask for one missing assignment or print statement with heavy surrounding scaffolding. Later exercises ask for multi-line constructs (a loop header and body, a conditional branch) alongside previously learned material, gradually fading the scaffolding until students are ready to write a full program independently.
+
+This keeps the **Predict-Run-Feedback** loop tight: the gap is small and well-defined, so students get fast, concrete feedback on whether they have the construct right, without being overwhelmed by having to manage the whole program structure at once.
+
 ## **The Environment: Jupyter & VS Code**
 
 The choice of using Jupyter Notebooks inside VS Code is a deliberate pedagogical decision, not just a preference for "cool tools."

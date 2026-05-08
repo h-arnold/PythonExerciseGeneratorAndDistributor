@@ -20,7 +20,7 @@ VALID_CONSTRUCTS = {
 }
 
 # Valid exercise types based on CLI_PLAN.md
-VALID_TYPES = {"debug", "modify", "make"}
+VALID_TYPES = {"debug", "modify", "make", "gaps"}
 
 
 def validate_construct_name(construct: str) -> bool:

@@ -25,6 +25,7 @@ Always open and follow the relevant exercise-type guide **in full** before verif
 - Debug: `docs/exercise-types/debug.md`
 - Modify: `docs/exercise-types/modify.md`
 - Make: `docs/exercise-types/make.md`
+- Gap-fill: `docs/exercise-types/gaps.md`
 
 Also keep these repo rules in mind:
 - Tag-based extraction: the exercise framework runtime uses `cell.metadata.tags`.
@@ -58,6 +59,15 @@ Verify the student notebook matches the required format for its type. Make sure 
 - Do not require a function skeleton by default; only require named functions when the exercise explicitly teaches functions.
 - Prompt includes task + expected output and is appropriately scoped.
 - Student notebook cells must not include the complete final answer.
+
+**Gap-fill exercises** (see `docs/exercise-types/gaps.md`):
+- Each tagged `exerciseN` cell contains partial program code with one or more `# YOUR CODE HERE` comment(s) marking the line(s) the student must write.
+- The scaffold raises a `NameError` or produces wrong output when run unmodified (student-variant tests must fail).
+- Task description and expected output are shown in the markdown cell immediately above the tagged cell.
+- Exercise title and task description are neutral — they do not name the operator, keyword, or construct the student must supply.
+- No comment adjacent to a gap reveals the answer (comments may state what value or effect to produce, not how to produce it).
+- Gap complexity escalates deliberately across the exercise: earlier parts have one missing line; later parts have multiple lines or revisit prior constructs alongside the new one.
+- Solution notebook mirrors the tag structure with all gaps resolved.
 
 ### Gate B — Sequencing / concept progression
 Use the construct ordering from the generation agent:
@@ -105,7 +115,7 @@ If you find a progression violation:
 - Propose the smallest change that removes the advanced concept.
 
 **Automation helper (recommended):** run the repo script to catch common progression slips quickly:
-- `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make|gaps>`
 
 Treat warnings from this script as prompts for closer manual review (it’s heuristic).
 
@@ -125,7 +135,7 @@ When reviewing saved notebook outputs, distinguish stale stored tracebacks from 
 - For interactive prompts, verify the expected-output markdown uses the bracketed input notation (`[Input: ...]`) *inside* the fenced code block. A simple heuristic is to search for the literal pattern `[Input:` within the prompt cell; if found, confirm it appears inside a code fence and matches the prompt text.
 
 **Automation helper (recommended):** the same script checks language fields, tag placement, and solution-mirror presence:
-- `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps>`
 
 ### Gate D — Tests
 
@@ -170,7 +180,7 @@ Tests cases should be written that answer these questions for each of the exerci
 - If a flattened compatibility notebook or top-level `tests/test_exNNN_slug.py` surface still exists, treat it as secondary migration/export evidence only; it must not replace the canonical exercise-local test.
 - Tests should fail against student notebooks until the student completes the work:
   - For debug: buggy student code should fail behaviour tests.
-  - For modify/make: incomplete/placeholder code should fail behaviour tests.
+  - For modify/make/gaps: incomplete/placeholder code should fail behaviour tests.
 
 ### Gate E — Teacher guidance and solution quality
 Verify teacher materials exist and are useful:
@@ -196,7 +206,7 @@ The exercise must be listed in the construct-level teaching order file:
 This ensures maintainers can see the intended progression and find notebooks quickly.
 
 **Automation helper (recommended):** the repo script checks the notebook/test surfaces and supporting metadata; use it alongside a manual check of the canonical authoring folder under `exercises/<construct>/<exercise_key>/`:
-- `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make>`
+- `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps>`
 
 ## Output format (what you report back)
 Return a concise verdict:
@@ -213,7 +223,7 @@ For FAIL:
 2) Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
 3) Open the appropriate exercise-type guide in full.
 4) Run the quick script checks (Gates B/C + teacher file presence):
-  - `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make>`
+  - `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make|gaps>`
 5) Inspect manually:
   - canonical student notebook
   - canonical solution notebook

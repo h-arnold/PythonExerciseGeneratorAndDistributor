@@ -68,7 +68,7 @@ Run it through the managed environment, for example `uv run python scripts/new_e
 - `id`: Exercise identifier (format: `exNNN`, e.g., `ex001`, `ex042`)
 - `title`: Human-readable title (e.g., "Variables and Types")
 - `--construct`: Programming construct directory (for example `sequence`)
-- `--type`: Exercise type (`debug`, `modify`, or `make`)
+- `--type`: Exercise type (`debug`, `modify`, `make`, or `gaps`)
 
 **Optional**:
 
@@ -90,7 +90,7 @@ The generated `exercise_key` is `exNNN_<construct>_<type>_<slug>`, so a modify e
 Relevant metadata values:
 
 - **CONSTRUCT**: `sequence`, `selection`, `iteration`, `data_types`, `lists`, `dictionaries`, `functions`, `file_handling`, `exceptions`, `libraries`, `oop`
-- **TYPE**: `debug`, `modify`, `make`
+- **TYPE**: `debug`, `modify`, `make`, `gaps`
 
 Created files:
 
@@ -265,7 +265,7 @@ Add to `exercises/<construct>/<exercise_key>/`:
 
 **ID**: exNNN
 **Construct**: sequence | selection | iteration | ...
-**Type**: debug | modify | make
+**Type**: debug | modify | make | gaps
 **Difficulty**: very easy | easy | medium | hard
 
 ## Learning Objective
@@ -355,6 +355,26 @@ Students write code from scratch.
 1. Explain the problem and show expected output or worked examples
 2. Student writes the solution in a tagged cell
 3. Tests capture output or provide deterministic input
+
+### Gap-Fill Exercises
+
+Students are given a partial program and must write the missing line(s) of code to make it work. This type bridges modify/debug exercises (where the program is essentially complete) and make exercises (where students write from scratch).
+
+**Key points**:
+
+- Each tagged cell includes surrounding scaffold code plus a `# YOUR CODE HERE` comment marking where the student must write
+- Early exercises (1-3): one missing line, highly scaffolded surround
+- Later exercises (7-10): multiple missing lines, less contextual scaffolding, may revisit earlier constructs alongside the new one
+- Test output rather than source code, since valid line-level completions are often equivalent
+- Use AST checks only when the gap must use a specific construct (e.g. a `while` loop rather than a `for` loop)
+
+**Notebook structure**:
+
+1. Markdown cell with task description and expected output
+2. Code cell with partial program and `# YOUR CODE HERE — <description>` comment(s)
+3. Tests verify the corrected output
+
+See `docs/exercise-types/gaps.md` for full authoring rules.
 
 ## Multi-Part Notebooks (10 exercises)
 

@@ -195,5 +195,6 @@ Output:
 - **Be Specific about Type:**
   - **Debug**: Students fix broken code.
   - **Modify**: Students change working code.
+  - **Gap-Fill**: Students write missing lines inside a partially written program.
   - **Make**: Students write from scratch.
   The agent knows the specific templates for these types.

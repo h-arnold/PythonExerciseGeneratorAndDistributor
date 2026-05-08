@@ -136,6 +136,50 @@ def _make_standard_cells(parts: int) -> list[dict[str, Any]]:
     return cells
 
 
+def _make_gaps_cells(parts: int) -> list[dict[str, Any]]:
+    """Create gap-fill exercise cells.
+
+    Each tagged cell contains surrounding scaffold code with a
+    ``# YOUR CODE HERE`` comment marking the line(s) the student must write.
+    Replace the placeholder comment and surrounding scaffold with the real
+    exercise content when authoring.
+    """
+    cells: list[dict[str, Any]] = []
+    for i in range(1, parts + 1):
+        exercise_tag = f"exercise{i}"
+        cells.append(
+            {
+                "cell_type": "markdown",
+                "metadata": _make_meta("markdown"),
+                "source": [
+                    f"## Exercise {i}\n",
+                    "(Describe the task and show the expected output here.)\n",
+                    "\n",
+                    "**Expected output:**\n",
+                    "```\n",
+                    "(put expected output here)\n",
+                    "```\n",
+                ],
+            }
+        )
+        cells.append(
+            {
+                "cell_type": "code",
+                "metadata": _make_meta("python", tags=[exercise_tag]),
+                "execution_count": None,
+                "outputs": [],
+                "source": [
+                    f"# Exercise {i} — replace this scaffold with the real partially-written program.\n",
+                    "# Keep the YOUR CODE HERE comment where the student must write their line(s).\n",
+                    "\n",
+                    "# YOUR CODE HERE\n",
+                ],
+            }
+        )
+
+    return cells
+
+
 def _make_check_answers_cell(exercise_key: str) -> dict[str, Any]:
     """Return the auto-generated check-your-answers cell for the notebook."""
     return {
@@ -164,6 +208,20 @@ def _make_notebook_with_parts(
     if parts < 1:
         raise ValueError("parts must be >= 1")
 
+    if exercise_type == "gaps":
+        how_to_work = [
+            "## How to work\n",
+            "- Find the `# YOUR CODE HERE` comment in each exercise cell\n",
+            "- Delete the comment and write the missing line(s) of code in its place\n",
+            f"- From the repository root, run `uv run pytest -q {test_target}`\n",
+        ]
+    else:
+        how_to_work = [
+            "## How to work\n",
+            "- Write your solution(s) in the exercise cell(s)\n",
+            f"- From the repository root, run `uv run pytest -q {test_target}`\n",
+        ]
+
     cells: list[dict[str, Any]] = [
         {
             "cell_type": "markdown",
@@ -174,15 +232,15 @@ def _make_notebook_with_parts(
                 "## Goal\n",
                 "Complete each exercise cell, then run the tests from the repository root.\n",
                 "\n",
-                "## How to work\n",
-                "- Write your solution(s) in the exercise cell(s)\n",
-                f"- From the repository root, run `uv run pytest -q {test_target}`\n",
+                *how_to_work,
             ],
         }
     ]
 
     if exercise_type == "debug":
         cells.extend(_make_debug_cells(parts))
+    elif exercise_type == "gaps":
+        cells.extend(_make_gaps_cells(parts))
     else:
         cells.extend(_make_standard_cells(parts))
 
@@ -241,6 +299,12 @@ def _build_readme_lines(
             "- After running your corrected solution, describe what happened in the cell "
             "tagged `explanation1` (or `explanationN`).",
         )
+    elif exercise_type == "gaps":
+        lines.insert(
+            6,
+            "- Find the `# YOUR CODE HERE` comment in each tagged cell and write the "
+            "missing line(s) of code in its place.",
+        )
     return lines
 
 
@@ -297,7 +361,7 @@ def _validate_and_parse_args() -> argparse.Namespace:
         "--type",
         dest="exercise_type",
         required=True,
-        choices=["debug", "modify", "make"],
+        choices=["debug", "modify", "make", "gaps"],
         help="Exercise type for the scaffold.",
     )
     parser.add_argument(
@@ -360,6 +424,84 @@ def _check_exercise_not_exists(
     ]
     if any(path.exists() for path in paths_to_check):
         raise SystemExit(f"Exercise already exists: {exercise_key}")
+
+
+def _build_exercise_body_test_lines(parts: int, exercise_type: str) -> list[str]:
+    """Return the scaffold test function lines for the exercise body.
+
+    For gaps exercises the placeholder is ``# YOUR CODE HERE``; for other
+    non-debug types the placeholder is a ``print('TODO: ...')`` statement.
+    """
+    if parts == 1:
+        if exercise_type == "gaps":
+            guard_lines = [
+                "    assert output.strip(), "
+                "'Cell produced no output - fill in the # YOUR CODE HERE line(s) and re-run'",
+            ]
+        else:
+            guard_lines = [
+                "    assert output.strip(), 'Exercise should produce output'",
+                "    assert 'TODO' not in output, "
+                "'Replace the TODO placeholder with your solution'",
+            ]
+        return [
+            "def test_exercise1_output() -> None:",
+            "    output = _run_and_capture('exercise1')",
+            "    # TODO: Add assertions to verify the output",
+            *guard_lines,
+            "    # Example: assert 'expected text' in output",
+            "",
+        ]
+
+    exercise_tags = ", ".join(f"'exercise{i}'" for i in range(1, parts + 1))
+    if exercise_type == "gaps":
+        guard_lines = [
+            "    assert output.strip(), "
+            "f'{tag}: Cell produced no output - fill in the # YOUR CODE HERE line(s) and re-run'",
+        ]
+    else:
+        guard_lines = [
+            "    assert output.strip(), f'{tag} should produce output'",
+            "    assert 'TODO' not in output, f'Replace the TODO placeholder in {tag}'",
+        ]
+    return [
+        f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
+        "def test_exercise_cells_execute(tag: str) -> None:",
+        '    """Verify each tagged cell executes without error."""',
+        "    output = _run_and_capture(tag)",
+        *guard_lines,
+        "",
+    ]
+
+
+def _build_debug_explanation_test_lines(parts: int) -> list[str]:
+    """Return scaffold test lines for debug explanation cells."""
+    lines = ["# Explanation cell checks for debug exercises", ""]
+    if parts == 1:
+        lines.extend([
+            "def test_explanation_has_content() -> None:",
+            "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
+            "    assert is_valid_explanation(",
+            "        explanation,",
+            "        min_length=_MIN_EXPLANATION_LENGTH,",
+            "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
+            "    )",
+            "",
+        ])
+    else:
+        lines.extend([
+            f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {parts} + 1)]",
+            "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
+            "def test_explanations_have_content(tag: str) -> None:",
+            "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
+            "    assert is_valid_explanation(",
+            "        explanation,",
+            "        min_length=_MIN_EXPLANATION_LENGTH,",
+            "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
+            "    )",
+            "",
+        ])
+    return lines
 
 
 def _build_test_lines(
@@ -436,70 +578,10 @@ def _build_test_lines(
         ]
     )
 
-    if parts == 1:
-        test_lines.extend(
-            [
-                "def test_exercise1_output() -> None:",
-                "    output = _run_and_capture('exercise1')",
-                "    # TODO: Add assertions to verify the output",
-                "    # Placeholder guard: ensure students replace the TODO",
-                "    assert output.strip(), 'Exercise should produce output'",
-                "    assert 'TODO' not in output, 'Replace the TODO placeholder with your solution'",
-                "    # Example: assert 'expected text' in output",
-                "",
-            ]
-        )
-    else:
-        exercise_tags = ", ".join(
-            f"'exercise{i}'" for i in range(1, parts + 1))
-        test_lines.extend(
-            [
-                f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
-                "def test_exercise_cells_execute(tag: str) -> None:",
-                '    """Verify each tagged cell executes without error."""',
-                "    output = _run_and_capture(tag)",
-                "    # Placeholder guard: ensure students replace the TODO",
-                "    assert output.strip(), f'{tag} should produce output'",
-                "    assert 'TODO' not in output, f'Replace the TODO placeholder in {tag}'",
-                "",
-            ]
-        )
+    test_lines.extend(_build_exercise_body_test_lines(parts, exercise_type))
 
     if exercise_type == "debug":
-        test_lines.extend(
-            [
-                "# Explanation cell checks for debug exercises",
-                "",
-            ]
-        )
-        if parts == 1:
-            test_lines.extend(
-                [
-                    "def test_explanation_has_content() -> None:",
-                    "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
-                    "    assert is_valid_explanation(",
-                    "        explanation,",
-                    "        min_length=_MIN_EXPLANATION_LENGTH,",
-                    "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
-                    "    )",
-                    "",
-                ]
-            )
-        else:
-            test_lines.extend(
-                [
-                    f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {parts} + 1)]",
-                    "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
-                    "def test_explanations_have_content(tag: str) -> None:",
-                    "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
-                    "    assert is_valid_explanation(",
-                    "        explanation,",
-                    "        min_length=_MIN_EXPLANATION_LENGTH,",
-                    "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
-                    "    )",
-                    "",
-                ]
-            )
+        test_lines.extend(_build_debug_explanation_test_lines(parts))
 
     return test_lines
 

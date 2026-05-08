@@ -61,13 +61,14 @@ To achieve the best possible understanding, students are given exercises that fo
 
  - Debug existing code
  - Modify existing code to achieve something different
+ - Fill in missing lines inside a partially written program (gap-fill)
  - Make new code using the constructs to achieve something new.
 
  In all cases, exercises should start simple, requiring only single changes and then gradually increase in difficulty.
 
  **Important context**: These exercises are designed for students aged 14-18 who are in school and learning Python for the first time. They will require more instruction, more scaffolding, and more practice than mature adult learners. Pace the difficulty accordingly—early exercises should be very explicit and forgiving, with complexity introduced in small, manageable increments.
 
- A standard notebook consisting of 10 exercises will usually only contain one type of activity (debug, modify or make), with all 10 exercises in ONE notebook with 10 tagged cells (`exercise1` through `exercise10`).
+ A standard notebook consisting of 10 exercises will usually only contain one type of activity (debug, modify, gaps or make), with all 10 exercises in ONE notebook with 10 tagged cells (`exercise1` through `exercise10`).
 
 #### Notes on crafting exercises for all problem types.
 - The graded cell must include the tag `exercise1` (or `exercise2`, etc.) in `metadata.tags`.
@@ -87,6 +88,7 @@ Use `read_file` to fetch the exact file needed
 - For a debug exercise: open and follow `docs/exercise-types/debug.md`.
 - For a modify exercise: open and follow `docs/exercise-types/modify.md`.
 - For a make exercise: open and follow `docs/exercise-types/make.md`.
+- For a gap-fill exercise: open and follow `docs/exercise-types/gaps.md`.
 
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
