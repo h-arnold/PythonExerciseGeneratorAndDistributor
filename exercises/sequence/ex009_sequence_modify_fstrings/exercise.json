@@ -3,7 +3,7 @@
   "exercise_key": "ex009_sequence_modify_fstrings",
   "exercise_id": 9,
   "slug": "ex009_sequence_modify_fstrings",
-  "title": "Sequence Modify F-Strings",
+  "title": "Modify F-Strings",
   "construct": "sequence",
   "exercise_type": "modify",
   "parts": 10,
