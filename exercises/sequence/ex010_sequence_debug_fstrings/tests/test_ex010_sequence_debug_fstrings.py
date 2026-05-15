@@ -4,6 +4,7 @@ import ast
 
 import pytest
 
+from exercise_runtime_support.execution_variant import get_active_variant
 from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -26,12 +27,21 @@ def _explanation_tag(exercise_no: int) -> str:
 
 _EXERCISE_KEY = "ex010_sequence_debug_fstrings"
 ex010 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
-_NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
+_ACTIVE_VARIANT = get_active_variant(default="student")
+_NOTEBOOK_PATH = resolve_exercise_notebook_path(
+    _EXERCISE_KEY,
+    variant=_ACTIVE_VARIANT,
+)
 _CACHE = RuntimeCache()
 
 
 def _exercise_output(exercise_no: int) -> str:
-    return run_cell_and_capture_output(_NOTEBOOK_PATH, tag=_tag(exercise_no), cache=_CACHE)
+    return run_cell_and_capture_output(
+        _NOTEBOOK_PATH,
+        tag=_tag(exercise_no),
+        cache=_CACHE,
+        variant=_ACTIVE_VARIANT,
+    )
 
 
 def _exercise_output_with_inputs(exercise_no: int, inputs: list[str]) -> str:
@@ -40,12 +50,17 @@ def _exercise_output_with_inputs(exercise_no: int, inputs: list[str]) -> str:
         tag=_tag(exercise_no),
         inputs=inputs,
         cache=_CACHE,
+        variant=_ACTIVE_VARIANT,
     )
 
 
 def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
-        _NOTEBOOK_PATH, tag=_tag(exercise_no), cache=_CACHE)
+        _NOTEBOOK_PATH,
+        tag=_tag(exercise_no),
+        cache=_CACHE,
+        variant=_ACTIVE_VARIANT,
+    )
     return ast.parse(code)
 
 
@@ -225,7 +240,10 @@ def test_exercise10_construct() -> None:
 )
 def test_explanations_have_content(exercise_no: int) -> None:
     explanation = get_explanation_cell(
-        _NOTEBOOK_PATH, tag=_explanation_tag(exercise_no))
+        _NOTEBOOK_PATH,
+        tag=_explanation_tag(exercise_no),
+        variant=_ACTIVE_VARIANT,
+    )
     assert is_valid_explanation(
         explanation,
         min_length=ex010.EX010_MIN_EXPLANATION_LENGTH,
