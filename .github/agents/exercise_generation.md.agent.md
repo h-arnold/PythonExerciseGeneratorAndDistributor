@@ -1,7 +1,7 @@
 ---
 name: Exercise Generation
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
-tools: [vscode/askQuestions, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo]
+tools: [vscode/askQuestions, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
@@ -87,16 +87,20 @@ Use `read_file` to fetch the exact file needed
 
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
-### Quick 8-step workflow summary ✅
+### Phase 1 workflow summary ✅
 
 1. Create a TODO using the `todo` tool to plan the work.
 2. Pick exercise identifiers (exNNN and a clear slug).
-3. Scaffold files with the generator (notebook, solution mirror, tests, exercise metadata).
+3. Scaffold files with the generator (notebook, solution mirror, exercise metadata).
 4. Author the student notebook (intro, worked examples, one graded cell per part). **Create the exercises one at a time**.
-5. Run the **Exercise Verifier** (before writing tests) to check structure and sequencing.
-6. Write and refine pytest tests following the testing guide.
-7. Verify tests locally and confirm they pass on the explicit `solution` variant while student notebooks still fail.
-8. Run the **Exercise Verifier** again (after tests) and update `exercises/<construct>/OrderOfTeaching.md`.
+5. Run the **Exercise Reviewer** to check structure, sequencing, and type compliance (Gates A, B, C).
+6. **Hand off to the teacher** for review and refinement.
+7. Generate supporting documentation (README.md, OVERVIEW.md, OrderOfTeaching.md) incorporating teacher feedback.
+8. Run the **Exercise Reviewer** again to verify teacher docs and ordering (Gates E, F).
+
+## Phase 2 — Exercise Testing (handoff)
+
+Once Phase 1 is complete (notebooks approved, supporting docs in place), delegate to the **Exercise Test Creator** to write robust pytest tests, followed by the **Exercise Test Reviewer** to verify them.
 
 ## When asked to create an exercise
 
@@ -179,51 +183,42 @@ Metadata tips:
 - When you tag a cell for grading, ensure the tag exactly matches `exercise1`, `exercise2`, etc.; the grader locates cells by this metadata tag.
 - Do not place multiple independent student solutions in the same tagged cell; the grader executes only the tagged cell's content.
 
-5) ### Quality gate (run the verifier — BEFORE tests)
-After scaffolding + authoring the notebooks (student + solutions mirror), use your runSubAgent tool to run the **Exercise Verifier** sub-agent to check:
-- exercise-type compliance (debug/modify/make format rules)
+5) ### Quality gate (run the Exercise Reviewer — before teacher handoff)
+After scaffolding + authoring the notebooks (student + solution mirror), use your `runSubAgent` tool to run the **Exercise Reviewer** sub-agent. The reviewer checks:
+- exercise-type compliance (debug/modify/make/gaps format rules)
 - concept sequencing (no later constructs accidentally introduced in prompts/starter code)
-- notebook structure/tags are correct
-- teacher materials (`README.md`) exist and are appropriate
+- notebook structure, tags, and metadata (`metadata.language`, `exerciseN` tags)
+- solution notebook quality and accuracy
 
-Only once the verifier is happy should you start writing/refining the pytest tests.
+Only once the reviewer passes should you hand off to the teacher.
 
-6) Write / refine tests
+6) ### Hand off to the teacher
+Present the work to the teacher for review. The teacher may request changes — loop back to step 4 or 3 as needed until the teacher approves the notebooks.
 
-Read `/docs/exercise-testing.md` first using `read_file` for comprehensive testing philosophy and patterns. Key points:
+The reviewer's verdict (PASS / PASS WITH NITS / FAIL) helps the teacher focus their attention. A PASS means the structural and pedagogical checks are clean and the teacher can focus on content.
 
-- **Philosophy**: "Task Completion" model verifies (1) code runs without errors, (2) produces correct output (strict by default), (3) uses required constructs.
-- **Strict output matching**: Enforce exact casing, whitespace, and punctuation unless there's a strong pedagogical reason not to.
-- **Construct checking**: Use AST checks to verify required syntax (`for`, `if`, etc.) is present when teaching specific constructs.
-- **GitHub Classroom scoring**: Mark all tests with `@pytest.mark.task(taskno=N)` and group multiple success criteria (logic, constructs, formatting) under the same task number for granular feedback.
-- **Input simulation**: Use `run_cell_with_input(notebook_path, tag="exercise1", inputs=[...])` from `exercise_runtime_support.exercise_framework` to mock `input()` calls.
-- **Exercise-local support data**: Store expected outputs, prompts, and inputs in helper modules inside `exercises/<construct>/<exercise_key>/tests/` and load them from the canonical exercise-local test directory.
+7) ### Generate supporting documentation
+Once the teacher has approved the notebooks, generate the supporting teacher-facing documentation:
 
-7) Verify
-- Run `uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` locally.
+- **`exercises/<construct>/<exercise_key>/README.md`** — Fill in the scaffolded file with the exercise title, learning objective, notebook path, tests path, and a brief summary of how the exercise is intended to be used.
+- **`exercises/<construct>/<exercise_key>/OVERVIEW.md`** — Create with:
+  - prerequisites (what constructs students should already know)
+  - common misconceptions to watch for
+  - suggested teaching approach / hints for teachers
+- **`exercises/<construct>/OrderOfTeaching.md`** — Update the construct-level teaching order file. Add the new exercise in the appropriate place in the sequence, including:
+  - a link to the supporting docs folder under `exercises/<construct>/<exercise_key>/`
+  - a link to the canonical student notebook under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 
-Also verify the tests pass against the solution mirror:
+8) ### Quality gate (run the Exercise Reviewer — after docs)
+After generating the supporting documentation, run the **Exercise Reviewer** sub-agent again. This second pass verifies Gates E and F:
+- teacher guidance files exist and are filled in (README.md, OVERVIEW.md)
+- solution notebook quality (stepwise examples, no compact one-liners)
+- OrderOfTeaching.md is updated with the new exercise listed
 
-- Either: `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`
-- Or (recommended for broader sweeps): `uv run ./scripts/verify_solutions.sh -q`
+Once the reviewer passes, the exercise is ready for Phase 2.
 
-If tests fail locally, update only the tests or notebook relevant to the exercise — do not modify unrelated exercises or global test configuration.
-
-8) ### Quality gate (run the verifier — AFTER tests)
-After tests pass on the solution notebooks, user your runSubAgent tool run the **Exercise Verifier** agent again. This second pass must include Gate D (tests):
-- `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q` (or `uv run ./scripts/verify_solutions.sh -q` for a broader sweep)
-- confirm student notebooks still *fail* until students do the work
-
-### Required final step: update teaching order
-Once the exercise is complete (notebook authored, tests written, and solution verified), you **must** update the construct-level teaching order file:
-
-- `exercises/<construct>/OrderOfTeaching.md`
-
-Add the new exercise in the appropriate place in the sequence and include:
-- a link to the supporting docs folder under `exercises/<construct>/<exercise_key>/`
-- a link to the canonical student notebook under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
-
-This is required for maintainability; the verifier will check that the new exercise is listed.
+### Hand off to Phase 2 — Exercise Testing
+The exercise authoring phase is complete. Delegate to the **Exercise Test Creator** sub-agent to write robust pytest tests, followed by the **Exercise Test Reviewer** to verify them. Provide the exercise key, construct, and type so the test creator can locate the notebooks and supporting docs.
 
 #### Notes on naming and readability
 - Clearly document each exercise prompt in the notebook so students know which `exerciseK` they are solving.
@@ -274,5 +269,6 @@ Rules:
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence -> Selection -> Iteration -> Data Types -> Lists -> Dictionaries -> Functions -> File Handling -> Exception Handling -> Libraries -> OOP.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
 - **Convention**: Standardise on tagged cells plus output-oriented tests for non-debug exercises; only introduce named functions when the lesson actually teaches them. No docstrings until the Functions construct is reached.
-- **Workflow**: Scaffold with `scripts/new_exercise.py` then verify solutions pass using the verifier subagent.
+- **Workflow Phase 1**: Scaffold with `scripts/new_exercise.py` → author notebooks → run **Exercise Reviewer** → teacher approves → generate supporting docs → run **Exercise Reviewer** again.
+- **Workflow Phase 2**: Delegate to **Exercise Test Creator** → **Exercise Test Reviewer** loop.
 - **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).

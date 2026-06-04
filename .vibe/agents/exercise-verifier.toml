@@ -1,5 +1,0 @@
-name = "exercise-verifier"
-type = "subagent"
-system_prompt_id = "exercise-verifier"
-
-[tools]

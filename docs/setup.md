@@ -126,7 +126,9 @@ If you're a student working on exercises:
 
 ## For Teachers
 
-If you're creating or modifying exercises:
+If you're creating or modifying exercises, follow the two-phase workflow:
+
+### Phase 1 — Notebook Authoring
 
 1. **Complete the setup** as described above
 2. **Review the documentation**:
@@ -142,12 +144,18 @@ If you're creating or modifying exercises:
       --slug your_slug
    ```
 
-4. **Author the exercise** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md), which documents how to use the exercise generation CLI tool to scaffold new Python exercises.
-5. **Verify solutions** pass tests:
+4. **Author the exercise notebooks** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md)
+5. **Run the Exercise Reviewer** to check structure and sequencing (Gates A, B, C)
+6. **Hand off to the teacher** for notebook review and approval
+
+### Phase 2 — Test Authoring (after teacher approval)
+
+7. Once notebooks are approved and supporting documentation is in place, **create tests** using the **Exercise Test Creator** agent
+8. **Verify tests** pass against the solution variant:
 
    ```bash
-    uv run ./scripts/verify_solutions.sh \
-      exercises/sequence/ex042_sequence_modify_your_slug/tests/test_ex042_sequence_modify_your_slug.py
+    uv run python scripts/run_pytest_variant.py --variant solution \
+      exercises/sequence/ex042_sequence_modify_your_slug/tests/test_ex042_sequence_modify_your_slug.py -q
    ```
 
 ## Linting and Code Quality

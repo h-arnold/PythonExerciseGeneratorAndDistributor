@@ -1,0 +1,5 @@
+name = "exercise-test-creator"
+type = "subagent"
+system_prompt_id = "exercise-test-creator"
+
+[tools]

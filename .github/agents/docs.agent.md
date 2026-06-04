@@ -2,8 +2,8 @@
 name: 'Docs'
 description: 'Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy'
 user-invocable: true
-model: gpt-5.4-mini
-tools: [vscode/askQuestions, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runInTerminal, execute/runNotebookCell, read/problems, read/readFile, read/viewImage, read/readNotebookCellOutput, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search, web, todo, vscode.mermaid-chat-features/renderMermaidDiagram]
+model: DeepSeek V4 Flash (deepseek)
+tools: [vscode/askQuestions, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runInTerminal, execute/runNotebookCell, read/problems, read/readFile, read/viewImage, read/readNotebookCellOutput, edit/createDirectory, edit/createFile, edit/editFiles, edit/rename, search, web, todo]
 ---
 
 # Documentation Agent Instructions

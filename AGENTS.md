@@ -15,7 +15,9 @@ This repository provides notebook-based Python exercises with automated grading 
 
 ## Quick Reference
 
-**For exercise creation**: Use the exercise generation custom agent (`.github/agents/exercise_generation.md.agent.md`)
+**For exercise creation (Phase 1 — notebooks)**: Use the exercise generation custom agent (`.github/agents/exercise_generation.md.agent.md`), then the exercise reviewer (`.github/agents/exercise_reviewer.md.agent.md`).
+
+**For exercise testing (Phase 2 — tests)**: After notebooks are approved, use the exercise test creator (`.github/agents/exercise_test_creator.md.agent.md`), then the exercise test reviewer (`.github/agents/exercise_test_reviewer.md.agent.md`).
 
 **Documentation (fetch on demand)**: Only read these files when a question specifically requires detailed information. Use `cat` or `sed -n` to fetch the exact file needed.
 
@@ -179,15 +181,35 @@ ruff check . --fix
 
 ## When Asked to Create Exercises
 
-**Delegate to the exercise generation sub-agent** - it has specialised knowledge of pedagogical patterns, exercise types, and construct progression.
+Exercise creation follows a **two-phase workflow** with a teacher review gate between them:
 
-Do not create exercises manually. Use:
+### Phase 1 — Exercise Authoring (notebooks + docs)
 
-1. The exercise generation agent for authoring
-2. `scripts/new_exercise.py` for scaffolding
-3. The testing framework for grading
+Delegate to the **Exercise Generation** agent, then the **Exercise Reviewer** agent:
 
-Canonical authoring note: exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with source notebooks at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`, and exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened notebook or test surfaces are not part of the supported packaged runtime contract.
+1. **Exercise Generation** — scaffolds and authors student + solution notebooks
+2. **Exercise Reviewer** (Pass 1) — checks structure, sequencing, type compliance (Gates A, B, C)
+3. **Teacher reviews** and requests changes → loop back until approved
+4. **Exercise Generation** — generates supporting docs (README.md, OVERVIEW.md, OrderOfTeaching.md)
+5. **Exercise Reviewer** (Pass 2) — verifies teacher docs and ordering (Gates E, F)
+
+### Phase 2 — Exercise Testing (tests only)
+
+Once notebooks are approved and docs are in place, delegate to the **Exercise Test Creator**, then the **Exercise Test Reviewer**:
+
+1. **Exercise Test Creator** — writes robust pytest tests against approved notebooks
+2. **Exercise Test Reviewer** — reviews tests (Gate D: solution passes, student fails, coverage adequate)
+3. Loop between test creator and reviewer until tests are clean
+
+### Tools
+
+- `scripts/new_exercise.py` for scaffolding
+- The testing framework for grading (`docs/testing-framework.md`)
+- `docs/exercise-testing.md` for test creation conventions
+
+### Canonical paths
+
+Exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, with source notebooks at `exercises/<construct>/<exercise_key>/notebooks/student.ipynb` and `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`, and exercise-specific tests under `exercises/<construct>/<exercise_key>/tests/`. Do not create or document new target paths of the form `exercises/<construct>/<type>/<exercise_key>/`; exercise type belongs in `exercise.json`. Flattened notebook or test surfaces are not part of the supported packaged runtime contract.
 
 ## Working with the Grading System
 
@@ -223,6 +245,9 @@ The sub-agents you can call are (use these exact case-sensitive names):
 - `Planner` — Clarifies requirements and produces SPEC.md, optional frontend layout specs, and ACTION_PLAN.md before implementation starts
 - `Testing Specialist` — Creates, runs and debugs tests
 - `De-Sloppification` — Finds and removes AI-slop, duplication, and unnecessary complexity
+- `Exercise Reviewer` — Reviews notebooks for pedagogical soundness, structure, and sequencing (Gates A, B, C, E, F)
+- `Exercise Test Creator` — Creates robust pytest tests for approved exercise notebooks
+- `Exercise Test Reviewer` — Reviews exercise tests for correctness, coverage, and construct enforcement (Gate D)
 
 ## Implementation Workflow
 

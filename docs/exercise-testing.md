@@ -2,6 +2,8 @@
 
 This document outlines the testing philosophy and conventions for verifying student notebook exercises.
 
+> **Note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.github/agents/exercise_test_creator.md.agent.md`) to generate tests, and the **Exercise Test Reviewer** (`.github/agents/exercise_test_reviewer.md.agent.md`) to verify them.
+
 > Source of truth: execution behaviour and fail-fast rules are defined in [docs/execution-model.md](execution-model.md).
 
 ## Repository status

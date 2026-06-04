@@ -110,7 +110,10 @@ The autograding workflow distributed to classrooms resides at `template_repo_fil
 
 GitHub-specific configuration:
 
-- `agents/exercise_generation.md.agent.md`: Custom agent for exercise generation
+- `agents/exercise_generation.md.agent.md`: Custom agent for exercise generation (Phase 1 — notebooks)
+- `agents/exercise_reviewer.md.agent.md`: Reviews exercise notebooks for pedagogical soundness and structure
+- `agents/exercise_test_creator.md.agent.md`: Creates pytest tests for approved exercises (Phase 2)
+- `agents/exercise_test_reviewer.md.agent.md`: Reviews exercise tests for correctness and coverage
 - `workflows/`: CI/CD workflows for testing
 
 ### Root files

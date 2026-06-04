@@ -151,7 +151,9 @@ Contains:
 
 ## Post-Scaffolding Steps
 
-After running `new_exercise.py`, you must:
+After running `new_exercise.py`, the workflow follows two phases with a teacher review gate between them.
+
+### Phase 1 — Notebook Authoring (before teacher handoff)
 
 ### 1. Author the Notebook
 
@@ -178,7 +180,17 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 
 Do not replace `'<exercise_key>'` with `notebooks/...ipynb`, an absolute `.ipynb` path, or `str(path)`. String inputs are interpreted as exercise keys by the checker/runtime contract.
 
-### 2. Write Tests
+### 2. Quality Gate
+
+Run the **Exercise Reviewer** (`.github/agents/exercise_reviewer.md.agent.md`) to check structure, sequencing, and type compliance (Gates A, B, C).
+
+### 3. Teacher Handoff
+
+Present the notebooks to the teacher for review and approval. Once notebooks are approved and supporting documentation (README, OVERVIEW, OrderOfTeaching) is in place, proceed to Phase 2.
+
+### Phase 2 — Test Authoring (after teacher approval)
+
+### 4. Write Tests
 
 Author the canonical repository-side test in `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
 

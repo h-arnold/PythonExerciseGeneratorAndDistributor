@@ -44,6 +44,9 @@ uv run python -V
 - `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
 - `AGENTS.md`: Repo-wide Copilot context
 - `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
+- `.github/agents/exercise_reviewer.md.agent.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
+- `.github/agents/exercise_test_creator.md.agent.md`: Creates pytest tests from approved notebooks
+- `.github/agents/exercise_test_reviewer.md.agent.md`: Reviews exercise tests (solution passes, student fails)
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI
 
 ### Template Packager README Helpers

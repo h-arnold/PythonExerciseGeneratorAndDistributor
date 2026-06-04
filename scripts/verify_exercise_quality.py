@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lightweight verifier for canonical exercises identified by ``exercise_key``.
 
-This script supports the Exercise Verifier agent by performing fast,
+This script supports the Exercise Reviewer agent by performing fast,
 objective checks against ``exercises/<construct>/<exercise_key>/``:
 - Notebook structure: metadata.language, code-vs-tag consistency
 - Presence of expected tags (exerciseN, explanationN)

@@ -8,6 +8,14 @@ This guide explains how to use the **Exercise Generation** assistant in GitHub C
 
 New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document, and flattened notebook/test mirrors are not part of the supported contract.
 
+## Two-Phase Workflow
+
+Exercise creation follows a two-phase process with a teacher review gate between phases:
+
+- **Phase 1 — Notebook Authoring**: Scaffold, author, and review student + solution notebooks. The **Exercise Generation** agent creates the notebooks, the **Exercise Reviewer** checks structure and pedagogy, then the teacher reviews and approves. Supporting documentation (README, OVERVIEW, OrderOfTeaching) is generated after teacher approval.
+
+- **Phase 2 — Test Authoring**: Once notebooks are approved, the **Exercise Test Creator** writes pytest tests following the testing conventions, and the **Exercise Test Reviewer** verifies them against solution (must pass) and student (must fail) variants.
+
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
     - [What to expect after cloning (prompts \& tips)](#what-to-expect-after-cloning-prompts--tips)
@@ -18,7 +26,7 @@ New exercises scaffold directly into the canonical exercise directory. Canonical
       - [Example Scenario B: Targeting Misconceptions](#example-scenario-b-targeting-misconceptions)
     - [3. Iterating on Content](#3-iterating-on-content)
     - [4. Saving Your Work](#4-saving-your-work)
-  - [Exercise Verifier — quick quality checks 🔍](#exercise-verifier--quick-quality-checks-)
+  - [Exercise Reviewer — quick quality checks 🔍](#exercise-reviewer--quick-quality-checks-)
     - [Recommended models — cost vs. quality 💡](#recommended-models--cost-vs-quality-)
   - [Best Practices](#best-practices)
 
@@ -138,29 +146,34 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-types](exercise-types/).
    - Replace any placeholder `TODO`/`pass` code with the versions supplied by the agent (student copy in the main notebook, full answer in solutions).
 
-3. **Verify**:
+3. **Verify (Phase 1 — notebooks only)**:
 
-   Run the automated checks to confirm the notebooks and tests align:
-
+   Run the structural and pedagogical checks:
    ```bash
-    uv run python scripts/run_pytest_variant.py --variant solution \
-      exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
    uv run python scripts/verify_exercise_quality.py \
      ex050_sequence_modify_my_topic
    ```
 
-    The first command exercises the solution notebook; rerun it with `--variant student` once you expect the student notebook to pass as well.
+4. **Verify (Phase 2 — after teacher approval and test creation)**:
+
+   Once tests are written, run the solution variant to confirm they pass:
+   ```bash
+   uv run python scripts/run_pytest_variant.py --variant solution \
+     exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
+   ```
 
 
-## Exercise Verifier — quick quality checks 🔍
+## Exercise Reviewer — quick quality checks 🔍
 
-The **Exercise Verifier** is a companion verification agent that reviews newly-created or updated exercises against repository standards for canonical scaffold structure, metadata resolution, notebook tags/metadata, sequencing heuristics, and `OrderOfTeaching.md` coverage. It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate verification.
+The **Exercise Reviewer** (`.github/agents/exercise_reviewer.md.agent.md`) is a review agent that examines newly-created or updated exercises for pedagogical soundness, structure, sequencing, and teacher-facing documentation. It does **not** review tests — test review is handled by the separate **Exercise Test Reviewer**.
+
+It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate review.
 
 How to run it manually:
 
-- **From Copilot Chat**: Select the **Exercise Verifier** chatmode and ask something like:
-  - "Verify exercise ex050_sequence_modify_my_topic" or
-  - "Please verify exercise_key ex050_sequence_modify_my_topic"
+- **From Copilot Chat**: Select the **Exercise Reviewer** chatmode and ask something like:
+  - "Review exercise ex050_sequence_modify_my_topic" or
+  - "Please review exercise_key ex050_sequence_modify_my_topic"
 - **Locally (command line)**:
 
   ```bash
@@ -168,27 +181,31 @@ How to run it manually:
     ex050_sequence_modify_my_topic
   ```
 
-What it checks:
+What it checks (Pass 1 — before teacher handoff):
 
-- Canonical scaffold structure and required file presence.
-- Canonical metadata loading and resolver-based exercise discovery.
-- Notebook tags, `metadata.language`, and debug explanation-cell structure.
-- Construct progression heuristics and inclusion in `OrderOfTeaching.md`.
-- It follows the rules in `docs/exercise-types/` and the verifier agent spec (`.github/agents/exercise_verifier.md.agent.md`).
+- Exercise-type compliance (Gates A).
+- Construct sequencing and progression (Gate B).
+- Notebook tags, `metadata.language`, and debug explanation-cell structure (Gate C).
+
+What it checks (Pass 2 — after supporting docs generated):
+
+- Teacher guidance files exist and are accurate (README.md, OVERVIEW.md) (Gate E).
+- Solution notebook quality (stepwise examples, no compact one-liners) (Gate E).
+- Inclusion in `OrderOfTeaching.md` (Gate F).
 
 Output:
 
-- The verifier returns a concise verdict such as **OK: 0 warning(s)** or **FAIL: ...**, plus specific, minimal fixes (file(s) and suggestions).
+- The reviewer returns a concise verdict such as **PASS**, **PASS WITH NITS**, or **FAIL**, plus specific, minimal fixes (file(s) and suggestions).
 
-**Tip:** Provide the canonical `exercise_key` (for example, `ex050_sequence_modify_my_topic`) when asking — the verifier now targets exercises by `exercise_key`, not by notebook path.
+**Tip:** Provide the canonical `exercise_key` (for example, `ex050_sequence_modify_my_topic`) when asking — the reviewer targets exercises by `exercise_key`, not by notebook path.
+
+## Best Practices
 
 ### Recommended models — cost vs. quality 💡
 
-- **Raptor-mini (Preview)** — The best of the free models available in Copilot. It can produce good results but is sometimes inconsistent. The tests is generates are less good.  It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education.
+- **Raptor-mini (Preview)** — The best of the free models available in Copilot. It can produce good results but is sometimes inconsistent. The tests it generates are less good. It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education.
 
 - **GPT 5.4** — This is the best of the current line of paid models. It's precise, follows instructions well and is particularly adept at generating tests that account for the ways in which students might bypass the required construct (e.g. using a while loop instead of a for loop) so that they are only told their solution is correct when it's correct in the intended way. It is available with the Copilot Education plan, which is free for students and teachers.
-
-## Best Practices
 
 - **Small Batches:** Generate one set of exercises at a time.
 - **Fresh Context**: Start a new chat for each exercise for best results.
