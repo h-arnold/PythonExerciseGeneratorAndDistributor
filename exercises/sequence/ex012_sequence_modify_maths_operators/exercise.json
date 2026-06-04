@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex012_sequence_modify_maths_operators",
+  "exercise_id": 12,
+  "slug": "ex012_sequence_modify_maths_operators",
+  "title": "Sequence Modify Maths Operators",
+  "construct": "sequence",
+  "exercise_type": "modify",
+  "parts": 10
+}
