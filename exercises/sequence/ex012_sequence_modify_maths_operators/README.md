@@ -7,4 +7,4 @@
 
 ## Teacher notes
 - Created: 2026-05-22
-- Target concepts: (fill in)
+- Target concepts: floor division (`//`), modulus (`%`), rounding with `round()`

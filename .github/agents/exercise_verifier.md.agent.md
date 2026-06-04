@@ -38,34 +38,36 @@ Also keep these repo rules in mind:
 An exercise is acceptable only if it passes all gates below.
 
 ### Gate A — Fit for purpose (exercise-type compliance)
-Verify the student notebook matches the required format for its type. Make sure you open the docs associated with the exercise:
+Verify the student notebook matches the required format for its type. Make sure you open the docs associated with the exercise.
 
-**Debug exercises** (see `docs/exercise-types/debug.md`):
+#### Common requirements (all exercise types)
+- Each graded part has a tagged `exerciseN` code cell (`metadata.tags`).
+- Student prompt/title is neutral — must not reveal the bug, answer, operator, keyword, or construct the student must supply.
+- Prompt does not explain the bug, include hint comments, or give away the answer.
+- Expected output is shown in the notebook.
+- Student notebook cells must not include the complete final answer.
+
+#### Debug exercises (see `docs/exercise-types/debug.md`)
 - Each part has *actual buggy code* in the tagged `exerciseN` code cell.
-- Student prompt/title is neutral (must not reveal the bug).
-- Prompt does not explain the bug or include hint comments.
 - There is a markdown explanation cell tagged `explanationN` that asks “What actually happened” (neutral).
-- The notebook shows expected output for the corrected behaviour.
+- The notebook shows expected output for the *corrected* behaviour.
 - If the exercise includes interactive prompts (requests for user input), the expected-output block must display any user-entered values using the standard bracketed notation: `Prompt? [Input: value]`. This makes the transcript unambiguous for students and easier to parse in automated checks (see `docs/exercise-types/debug.md` for examples).
 
-**Modify exercises** (see `docs/exercise-types/modify.md`):
+#### Modify exercises (see `docs/exercise-types/modify.md`)
 - Working code is shown (non-tagged), and the graded `exerciseN` cell is what students modify.
 - The graded cell should be close to the working code, but NOT already correct for the new task.
 - Prompt provides task + expected output.
-- Student notebook cells must not include the complete final answer.
 
-**Make exercises** (see `docs/exercise-types/make.md`):
-- The graded `exerciseN` cell is a tagged code cell (`exerciseN`) that students complete from scaffolded starter code.
+#### Make exercises (see `docs/exercise-types/make.md`)
+- The graded `exerciseN` cell is a tagged code cell containing scaffolded starter code that students complete.
 - Do not require a function skeleton by default; only require named functions when the exercise explicitly teaches functions.
 - Prompt includes task + expected output and is appropriately scoped.
-- Student notebook cells must not include the complete final answer.
 
-**Gap-fill exercises** (see `docs/exercise-types/gaps.md`):
+#### Gap-fill exercises (see `docs/exercise-types/gaps.md`)
 - Each tagged `exerciseN` cell contains partial program code with one or more `# YOUR CODE HERE` comment(s) marking the line(s) the student must write.
 - The scaffold raises a `NameError` or produces wrong output when run unmodified (student-variant tests must fail).
 - Task description and expected output are shown in the markdown cell immediately above the tagged cell.
-- Exercise title and task description are neutral — they do not name the operator, keyword, or construct the student must supply.
-- No comment adjacent to a gap reveals the answer (comments may state what value or effect to produce, not how to produce it).
+- No comment adjacent to a gap reveals the answer (comments may state *what* value or effect to produce, not *how* to produce it).
 - Gap complexity escalates deliberately across the exercise: earlier parts have one missing line; later parts have multiple lines or revisit prior constructs alongside the new one.
 - Solution notebook mirrors the tag structure with all gaps resolved.
 
@@ -177,7 +179,6 @@ Tests cases should be written that answer these questions for each of the exerci
 - Gate D passes only when the canonical exercise-local test file passes against the solution variant:
   - `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`
 - For broader sweeps, `uv run ./scripts/verify_solutions.sh -q` is acceptable supporting evidence alongside the targeted canonical test when relevant.
-- If a flattened compatibility notebook or top-level `tests/test_exNNN_slug.py` surface still exists, treat it as secondary migration/export evidence only; it must not replace the canonical exercise-local test.
 - Tests should fail against student notebooks until the student completes the work:
   - For debug: buggy student code should fail behaviour tests.
   - For modify/make/gaps: incomplete/placeholder code should fail behaviour tests.

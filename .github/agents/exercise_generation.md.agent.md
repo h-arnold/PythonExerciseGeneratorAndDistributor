@@ -6,9 +6,6 @@ user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
 
-> **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
-
 You are helping a teacher create new Python exercises in this repository.
 
 ## Core idea (how grading works)
@@ -18,8 +15,6 @@ This repo authors exercises inside canonical exercise homes under `exercises/<co
 - `notebooks/student.ipynb` contains the student-facing notebook.
 - `notebooks/solution.ipynb` contains the instructor solution mirror.
 - `tests/test_<exercise_key>.py` contains the canonical exercise-local pytest checks.
-
-Derived compatibility surfaces may still appear in export/runtime flows during migration, but they are not the source-repo authoring layout.
 
 The same canonical exercise-local test file can be run against either notebook variant:
 
@@ -146,8 +141,6 @@ Why these files matter:
 
 Do not introduce `type` as a canonical path segment under `exercises/`. Store exercise type in `exercises/<construct>/<exercise_key>/exercise.json` instead.
 
-Legacy repositories or migration notes may still mention construct/type folders as current-state context, but they are not the target model for new authoring work.
-
 Note: The generator provides minimal canonical student/solution notebooks and an exercise-local test surface. You should edit the notebook to add prompt text, examples, and the code cell(s) tagged `exercise1`, `exercise2`, etc. where learners will write their solution(s) while keeping the canonical repository-side test source under `exercises/<construct>/<exercise_key>/tests/`.
 
 4) Author the notebook
@@ -240,30 +233,30 @@ This is required for maintainability; the verifier will check that the new exerc
 - Expected output should be shown in a fenced code block within the markdown prompt cell (triple backticks).
 
 ### Notating interactive user input in Expected Output
-When a notebook prompt requires the user to type input, use the following standard notation: place the user's entry in square brackets immediately after the prompt using the labelled prefix `Input:`. Place all interactive lines inside the same expected-output block as the program output.
+When a notebook prompt requires the user to type input, use the following standard notation: place the user's entry in square brackets immediately after the prompt using the labelled prefix `⌨️: `. Place all interactive lines inside the same expected-output block as the program output.
 
 Examples:
 
 ```
-How many apples? [Input: 5]
+How many apples? [⌨️: 5]
 You have 10 apples in total
 ```
 
 ```
-Enter your name: [Input: Alice]
+Enter your name: [⌨️: Alice]
 Hello Alice
 ```
 
 ```
-Enter first number: [Input: 2]
-Enter second number: [Input: 3]
+Enter first number: [⌨️: 2]
+Enter second number: [⌨️: 3]
 The sum is 5
 ```
 
 Rules:
-- Use `Prompt? [Input: value]` when the prompt and input appear on the same line.
+- Use `Prompt? [⌨️: value]` when the prompt and input appear on the same line.
 - For multiple prompts, list each prompt and its input on a separate line.
-- If the program echoes the input, still show the prompt line with `[Input: ...]`, then the program's printed output below.
+- If the program echoes the input, still show the prompt line with `[⌨️: ...]`, then the program's printed output below.
 - Keep examples concise and inside the same code block as other expected output.
 
 - Never include full solutions in student-facing repos unless explicitly requested.
