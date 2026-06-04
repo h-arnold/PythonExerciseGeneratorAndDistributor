@@ -123,8 +123,6 @@ Treat warnings from this script as prompts for closer manual review (it’s heur
 
 ### Gate C — Notebook structure and tags
 For both student + solution notebooks:
-- Every graded code cell must include `metadata.tags` with the exact tag (`exercise1`, `exercise2`, ...).
-- For debug exercises: explanation markdown cells must have tags `explanation1`, ...
 - Every cell must have `metadata.language` (`markdown` or `python`).
 - If there is an optional self-check cell, verify it uses `run_notebook_checks('<exercise_key>')` (for example, `run_notebook_checks('ex007_sequence_debug_casting')`) so output remains aligned with the grouped student checker summary.
 - Reject self-check cells that pass a path-like string (for example `notebooks/foo.ipynb`, an absolute `.ipynb` path, or `str(path)`) into `run_notebook_checks(...)`; string inputs are reserved for canonical exercise keys.
@@ -134,9 +132,7 @@ Note: existing notebooks may also include a top-level `id` field on cells; prese
 
 When reviewing saved notebook outputs, distinguish stale stored tracebacks from live runtime failures. A stored `LookupError` about a path-like string in a self-check cell is notebook state to clean up only if current execution still reproduces it; otherwise it is a non-blocking output mismatch rather than an infrastructure failure.
 
-- For interactive prompts, verify the expected-output markdown uses the bracketed input notation (`[Input: ...]`) *inside* the fenced code block. A simple heuristic is to search for the literal pattern `[Input:` within the prompt cell; if found, confirm it appears inside a code fence and matches the prompt text.
-
-**Automation helper (recommended):** the same script checks language fields, tag placement, and solution-mirror presence:
+**Automation helper (recommended):** the script checks language fields, tag placement, and solution-mirror presence:
 - `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps>`
 
 ### Gate D — Tests

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+from typing import TypedDict
 
 from exercise_runtime_support.notebook_grader import (
     NotebookGradingError,
@@ -19,6 +20,16 @@ from exercise_runtime_support.student_checker.checks.base import (
 _EXERCISE_KEY = "ex011_sequence_gaps_consolidation"
 _STUDENT_VARIANT = "student"
 
+_FSTRING_CHECK_EXERCISE_NO = 7
+
+
+class _InputCase(TypedDict):
+    """Deterministic input/output case for an interactive exercise."""
+
+    inputs: list[str]
+    expected_output: str
+
+
 _EXPECTED_STATIC_OUTPUTS: dict[int, str] = {
     1: "Sequence is fun",
     2: "Hello Amina",
@@ -28,7 +39,7 @@ _EXPECTED_STATIC_OUTPUTS: dict[int, str] = {
     7: "Aisha enjoys drawing after school.",
 }
 
-_INPUT_CASES: dict[int, dict[str, object]] = {
+_INPUT_CASES: dict[int, _InputCase] = {
     3: {"inputs": ["word with space"], "expected_output": "What is your favourite word?\nYou chose word with space"},
     8: {"inputs": ["Aisha", "St Asaph"], "expected_output": "Enter your first name:\nEnter your town:\nHello Aisha from St Asaph."},
     9: {"inputs": ["blue", "fox"], "expected_output": "Enter your favourite colour:\nEnter your favourite animal:\nMy favourite colour is blue and my favourite animal is fox."},
@@ -67,7 +78,7 @@ def _check_prompt_flow(exercise_no: int) -> list[str]:
     output = run_cell_with_input(
         _EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
-        inputs=list(case["inputs"]),
+        inputs=case["inputs"],
         variant=_STUDENT_VARIANT,
     )
     if output != case["expected_output"]:
@@ -80,7 +91,8 @@ def _check_prompt_flow(exercise_no: int) -> list[str]:
 def _check_exercise7_fstring(exercise_no: int) -> list[str]:
     """Exercise 7 must use an f-string."""
     tree = _exercise_ast(exercise_no)
-    has_f_string = any(isinstance(node, ast.JoinedStr) for node in ast.walk(tree))
+    has_f_string = any(isinstance(node, ast.JoinedStr)
+                       for node in ast.walk(tree))
     if not has_f_string:
         return ["Exercise 7: use an f-string for the final output."]
     return []
@@ -95,7 +107,7 @@ def _build_checks() -> list[ExerciseCheckDefinition]:
         if exercise_no in _INPUT_CASES:
             checks.append(build_exercise_check(
                 exercise_no, "Prompt flow", _check_prompt_flow))
-        if exercise_no == 7:
+        if exercise_no == _FSTRING_CHECK_EXERCISE_NO:
             checks.append(build_exercise_check(
                 exercise_no, "Construct", _check_exercise7_fstring))
     return checks
