@@ -1,7 +1,7 @@
 ---
 name: Exercise Generation
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
-tools: [vscode/askQuestions, vscode/getProjectSetupInfo, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo]
+tools: [vscode/askQuestions, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode
