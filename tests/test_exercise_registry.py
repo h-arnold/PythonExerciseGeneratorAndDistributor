@@ -129,7 +129,7 @@ def test_build_exercise_catalogue_orders_by_exercise_id() -> None:
     """The catalogue order follows metadata exercise IDs."""
     catalogue = build_exercise_catalogue()
     assert [entry["exercise_id"]
-            for entry in catalogue] == [2, 3, 4, 5, 6, 7, 8, 9]
+            for entry in catalogue] == [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
     assert [entry["exercise_key"]
             for entry in catalogue] == _expected_all_keys()
 

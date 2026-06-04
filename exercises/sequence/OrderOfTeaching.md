@@ -91,3 +91,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Consolidating print output, variables, input, arithmetic, and f-strings through partially completed programs.
 - Type: Gap-fill exercises where students supply the missing line or lines in each program.
 - Purpose: Bring together the full sequence strand so far in a gradual practice set that moves from one-line gaps to larger mixed tasks.
+
+1. [**Sequence Modify Maths Operators**](`ex012_sequence_modify_maths_operators`)
+
+[Supporting docs](./ex012_sequence_modify_maths_operators/)
+[Notebook](./ex012_sequence_modify_maths_operators/notebooks/student.ipynb)
+
+- Focus: Floor division `//`, modulus `%`, and rounding with `round()`.
+- Type: Modification exercises where students replace incorrect operators in working programs.
+- Purpose: Introduce integer division and remainder concepts alongside controlled rounding, preparing students for iteration and data-type work.

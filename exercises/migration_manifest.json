@@ -31,6 +31,9 @@
     },
     "ex011_sequence_gaps_consolidation": {
       "layout": "canonical"
+    },
+    "ex012_sequence_modify_maths_operators": {
+      "layout": "canonical"
     }
   }
 }

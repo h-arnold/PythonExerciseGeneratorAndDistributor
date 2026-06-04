@@ -27,7 +27,7 @@ def _explanation_tag(exercise_no: int) -> str:
 
 _EXERCISE_KEY = "ex010_sequence_debug_fstrings"
 ex010 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
-_ACTIVE_VARIANT = get_active_variant(default="student")
+_ACTIVE_VARIANT = get_active_variant(default="solution")
 _NOTEBOOK_PATH = resolve_exercise_notebook_path(
     _EXERCISE_KEY,
     variant=_ACTIVE_VARIANT,
