@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -814,31 +815,287 @@ def _collect_progression_findings(
     return findings
 
 
-# ── Gates F–I: student checker support, expectations, variant overrides, runtime self-check ──
+# -- Gates F-I: student checker support, expectations, variant overrides, runtime self-check --
+
+
+def _load_exercise_local_module(ex_dir: Path, module_name: str) -> object | None:
+    """Import an exercise-local test module by file path.
+
+    Uses direct file import rather than the runtime resolver so that the
+    verifier works with unregistered exercises (e.g. during scaffolding).
+    Returns ``None`` if the module does not exist or cannot be imported.
+    """
+    module_path = ex_dir / "tests" / f"{module_name}.py"
+    if not module_path.is_file():
+        return None
+
+    import importlib.util
+
+    qualified_name = f"_verify_local_{ex_dir.name}_{module_name}"
+    spec = importlib.util.spec_from_file_location(qualified_name, module_path)
+    if spec is None or spec.loader is None:
+        return None
+
+    import sys as _sys
+
+    module = importlib.util.module_from_spec(spec)
+    _sys.modules[qualified_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except (SyntaxError, ImportError):
+        _sys.modules.pop(qualified_name, None)
+        return None
+    return module
 
 
 def _check_student_checker_support(ex_dir: Path) -> list[Finding]:
     """Gate F: Verify student_checker_support.py exists with non-empty CHECKS."""
-    return []
+    findings: list[Finding] = []
+    checker_path = ex_dir / "tests" / "student_checker_support.py"
+
+    if not checker_path.exists():
+        findings.append(
+            Finding(
+                "ERROR",
+                "Missing student_checker_support.py",
+                path=checker_path,
+            )
+        )
+        return findings
+
+    module = _load_exercise_local_module(ex_dir, "student_checker_support")
+    if module is None:
+        findings.append(
+            Finding(
+                "ERROR",
+                "student_checker_support.py could not be imported",
+                path=checker_path,
+            )
+        )
+        return findings
+
+    checks = getattr(module, "CHECKS", None)
+    if checks is None or not isinstance(checks, list):
+        findings.append(
+            Finding(
+                "ERROR",
+                "student_checker_support.py must define CHECKS as a list",
+                path=checker_path,
+            )
+        )
+    elif len(checks) == 0:
+        findings.append(
+            Finding(
+                "ERROR",
+                "CHECKS list in student_checker_support.py is empty; "
+                "author must define check functions",
+                path=checker_path,
+            )
+        )
+
+    return findings
 
 
 def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
     """Gate G: Verify expectations.py exists with non-empty expected-outputs."""
-    return []
+    findings: list[Finding] = []
+    expectations_path = ex_dir / "tests" / "expectations.py"
+
+    if not expectations_path.exists():
+        findings.append(
+            Finding(
+                "ERROR",
+                "Missing expectations.py",
+                path=expectations_path,
+            )
+        )
+        return findings
+
+    module = _load_exercise_local_module(ex_dir, "expectations")
+    if module is None:
+        findings.append(
+            Finding(
+                "ERROR",
+                "expectations.py could not be imported",
+                path=expectations_path,
+            )
+        )
+        return findings
+
+    # Find the exercise-ID-prefixed expected outputs dict
+    expected_outputs = None
+    for attr_name in dir(module):
+        if attr_name.endswith("_EXPECTED_OUTPUTS") and isinstance(
+            getattr(module, attr_name), dict
+        ):
+            expected_outputs = getattr(module, attr_name)
+            break
+
+    if expected_outputs is None:
+        findings.append(
+            Finding(
+                "ERROR",
+                "expectations.py must define EX<N>_EXPECTED_OUTPUTS dict",
+                path=expectations_path,
+            )
+        )
+        return findings
+
+    if len(expected_outputs) == 0:
+        findings.append(
+            Finding(
+                "ERROR",
+                "EX<N>_EXPECTED_OUTPUTS dict is empty; expected outputs for 1..{parts}",
+                path=expectations_path,
+            )
+        )
+        return findings
+
+    # Check that all required part keys are present
+    expected_keys = set(range(1, parts + 1))
+    actual_keys = set(expected_outputs.keys())
+    missing_keys = expected_keys - actual_keys
+    if missing_keys:
+        findings.append(
+            Finding(
+                "ERROR",
+                f"EX<N>_EXPECTED_OUTPUTS missing keys for parts {sorted(missing_keys)}; expected 1..{parts}",
+                path=expectations_path,
+            )
+        )
+
+    return findings
 
 
 def _check_notebook_variant_overrides(
     *, ex_dir: Path, student_nb: NotebookDocument, solution_nb: NotebookDocument,
 ) -> list[Finding]:
     """Gate H: Verify variant overrides in student and solution notebooks."""
-    return []
+    findings: list[Finding] = []
+
+    student_nb_path = ex_dir / "notebooks" / "student.ipynb"
+    solution_nb_path = ex_dir / "notebooks" / "solution.ipynb"
+
+    # Check student notebook
+    student_variant = _find_variant_in_notebook(student_nb)
+    if student_variant is None:
+        findings.append(
+            Finding(
+                "WARN",
+                "Student notebook self-checker cell does not set "
+                "PYTUTOR_ACTIVE_VARIANT (default is 'student', but explicit is safer)",
+                path=student_nb_path,
+            )
+        )
+    elif student_variant != "student":
+        findings.append(
+            Finding(
+                "WARN",
+                "Student notebook self-checker sets PYTUTOR_ACTIVE_VARIANT "
+                f"to {student_variant!r} instead of 'student'",
+                path=student_nb_path,
+            )
+        )
+
+    # Check solution notebook
+    solution_variant = _find_variant_in_notebook(solution_nb)
+    if solution_variant is None:
+        findings.append(
+            Finding(
+                "ERROR",
+                "Solution notebook self-checker cell does not set "
+                "PYTUTOR_ACTIVE_VARIANT — it will default to 'student' and "
+                "read from student.ipynb instead of solution.ipynb",
+                path=solution_nb_path,
+            )
+        )
+    elif solution_variant != "solution":
+        findings.append(
+            Finding(
+                "ERROR",
+                "Solution notebook self-checker sets PYTUTOR_ACTIVE_VARIANT "
+                f"to {solution_variant!r} instead of 'solution'",
+                path=solution_nb_path,
+            )
+        )
+
+    return findings
+
+
+# Match PYTUTOR_ACTIVE_VARIANT assignment, accounting for optional quote
+# characters between VARIANT and ] (e.g. os.environ["VARIANT"] = "value").
+VAR_OVERRIDE_RE = re.compile(
+    r"""PYTUTOR_ACTIVE_VARIANT['"]?\]\s*=\s*(?P<quote>['"])(?P<value>.*?)(?P=quote)"""
+)
+
+
+def _find_variant_in_notebook(nb: NotebookDocument) -> str | None:
+    """Return the PYTUTOR_ACTIVE_VARIANT value from a notebook, or None."""
+    cells = nb.get("cells", [])
+    for cell in cells:
+        if not _is_notebook_cell(cell):
+            continue
+        match = VAR_OVERRIDE_RE.search(_cell_source_text(cell))
+        if match:
+            return match.group("value")
+    return None
 
 
 def _check_runtime_self_check(
     *, ex_dir: Path, exercise_key: str, nb_solution: NotebookDocument,
 ) -> list[Finding]:
     """Gate I: Run self-checker against solution variant and report failures."""
-    return []
+    findings: list[Finding] = []
+
+    from exercise_runtime_support.execution_variant import configure_variant_environment
+    from exercise_runtime_support.student_checker.checks import (
+        run_exercise_checks,
+    )
+
+    # Check if student_checker_support.py exists (already validated by Gate F,
+    # but Gate I may be called independently)
+    checker_path = ex_dir / "tests" / "student_checker_support.py"
+    if not checker_path.exists():
+        findings.append(
+            Finding(
+                "WARN",
+                "Cannot run runtime self-check: student_checker_support.py missing",
+                path=checker_path,
+            )
+        )
+        return findings
+
+    # Save current variant and set to solution
+    original_variant = configure_variant_environment(os.environ, "solution")
+
+    try:
+        results = run_exercise_checks(exercise_key)
+        for result in results:
+            if not result.passed:
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        f"Self-check failed for exercise {result.exercise_no} "
+                        f"({result.title}): {', '.join(result.issues)}",
+                        path=checker_path,
+                    )
+                )
+    except (ImportError, LookupError, ValueError) as exc:
+        findings.append(
+            Finding(
+                "ERROR",
+                f"Runtime self-check raised an exception: {exc}",
+                path=checker_path,
+            )
+        )
+    finally:
+        # Restore original variant
+        if original_variant is not None:
+            os.environ["PYTUTOR_ACTIVE_VARIANT"] = original_variant
+        elif "PYTUTOR_ACTIVE_VARIANT" in os.environ:
+            del os.environ["PYTUTOR_ACTIVE_VARIANT"]
+
+    return findings
 
 
 def _report_findings(findings: list[Finding]) -> int:
@@ -923,6 +1180,34 @@ def main(argv: list[str] | None = None) -> int:
                 nb_student=nb_student,
             )
         )
+
+    # -- Gates F-I (only when metadata is valid) ----------------------------
+    if metadata_error is None:
+        parts = 1
+        try:
+            metadata = _load_canonical_metadata(ex_dir)
+            parts = int(metadata.get("parts", 1))
+        except _ExerciseMetadataError:
+            parts = 1
+
+        findings.extend(_check_student_checker_support(ex_dir))
+        findings.extend(_check_expectations_module(ex_dir, parts))
+
+        if nb_solution is not None:
+            findings.extend(
+                _check_notebook_variant_overrides(
+                    ex_dir=ex_dir,
+                    student_nb=nb_student,
+                    solution_nb=nb_solution,
+                )
+            )
+            findings.extend(
+                _check_runtime_self_check(
+                    ex_dir=ex_dir,
+                    exercise_key=slug,
+                    nb_solution=nb_solution,
+                )
+            )
 
     return _report_findings(findings)
 
