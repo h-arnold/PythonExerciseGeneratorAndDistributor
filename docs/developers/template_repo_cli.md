@@ -223,7 +223,7 @@ Generated templates include the selected exercise tests and the required shared 
 
 When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py` / `*_test.py`).
 
-This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces import `exercise_metadata` directly and rely on the migration manifest plus per-exercise metadata instead of compatibility fallbacks.
+This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces import `exercise_metadata` directly and rely on per-exercise metadata discovered via `exercise.json` files under the canonical exercise tree instead of compatibility fallbacks.
 
 The export contract rejects authoring-only assets such as `solution.ipynb` and flattened notebook/test mirrors, while keeping student notebooks and canonical exercise-local tests at their canonical exercise-local paths.
 
@@ -363,6 +363,6 @@ gh auth login
 
 `unset GITHUB_TOKEN` clears the auto-set, scoped token. `gh auth login` then prompts you to authenticate with full credentials (you can choose "Login with a browser" and use a token or web-based flow). After this, the CLI has the permissions needed to create and update repositories.
 
-## License
+## Licence
 
-See repository LICENSE file.
+See the repository `LICENSE` file for terms.

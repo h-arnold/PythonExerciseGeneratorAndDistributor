@@ -23,8 +23,7 @@ docs/
 ├── teachers/                  ← Teacher-facing docs
 │   ├── pedagogy.md
 │   ├── exercise-generation.md
-│   ├── how-to-use-the-template-repo-cli.md  ← Teacher guide (create/update template repos)
-│   └── github-classroom-autograding-guide.md
+│   └── how-to-use-the-template-repo-cli.md  ← Teacher guide (create/update template repos)
 ├── exercise-agents/           ← Exercise generation agent docs
 │   ├── exercise-generation-cli.md
 │   ├── exercise-testing.md
@@ -38,6 +37,7 @@ docs/
 │   ├── development.md
 │   ├── docker-devcontainer-setup.md
 │   ├── execution-model.md
+│   ├── github-classroom-autograding-guide.md  ← Autograding integration
 │   ├── project-structure.md
 │   ├── setup.md
 │   ├── template_repo_cli.md   ← Full CLI reference

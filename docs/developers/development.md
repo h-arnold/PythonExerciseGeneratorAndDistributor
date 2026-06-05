@@ -4,9 +4,7 @@ This guide is for contributors and maintainers working on the Python Tutor Exerc
 
 > Source of truth: execution and variant contracts are defined in [execution-model.md](execution-model.md). The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
-## Repository status
-
-The source repository has completed the exercise-local layout cutover. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic, and treat derived packaging outputs as non-authoring surfaces.
+> The source repository has completed the exercise-local layout cutover. Treat `--variant` and `PYTUTOR_ACTIVE_VARIANT` as canonical for selection logic, and treat derived packaging outputs as non-authoring surfaces. See [execution-model.md](execution-model.md) for the full contract.
 
 ## Development Setup
 
@@ -178,7 +176,7 @@ If you omit `--variant`, the script exercises the solution notebooks. The CLI wr
 - Use [act](https://github.com/nektos/act) to dry-run workflow edits against the repository configuration before pushing
 - Push experiment branches to a sandbox Classroom template and run the full workflow end-to-end
 - Keep payload fields backward compatible: preserve the plugin option names, JSON structure, and Base64 encoding so existing Classroom assignments keep working
-- Review the GitHub Classroom integration guidance in [docs/teachers/github-classroom-autograding-guide.md](../teachers/github-classroom-autograding-guide.md) when adjusting CI steps
+- Review the GitHub Classroom integration guidance in [docs/developers/github-classroom-autograding-guide.md](github-classroom-autograding-guide.md) when adjusting CI steps
 
 ## Working on the Exercise Generator
 

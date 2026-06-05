@@ -6,13 +6,7 @@ For details on **testing student notebooks**, see [Exercise Testing](exercise-te
 
 > Source of truth: execution/discovery/runtime contracts are defined in [docs/developers/execution-model.md](execution-model.md).
 
-## Repository status
-
-Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`.
-
-Exported Classroom repositories preserve exercise-local tests and export student notebooks to `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`.
-
-Packaged templates ship the metadata-backed runtime surfaces required by the packaged runtime contract: `exercise_metadata/`, `exercises/migration_manifest.json`, per-exercise `exercise.json`, canonical student notebooks, and canonical exercise-local tests. They rely on the metadata-backed contract instead of compatibility fallbacks, and solution notebooks remain excluded by default.
+> Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`. Exported Classroom repositories preserve exercise-local tests and student notebooks at their canonical paths. Packaged templates ship the metadata-backed runtime surface (`exercise_metadata/`, per-exercise `exercise.json`, canonical student notebooks, and canonical exercise-local tests) with no solution notebooks or flattened mirrors. See [execution-model.md](execution-model.md) for the full contract.
 
 ## Overview
 
