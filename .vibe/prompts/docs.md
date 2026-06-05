@@ -23,7 +23,7 @@ docs/
 ├── teachers/                  ← Teacher-facing docs
 │   ├── pedagogy.md
 │   ├── exercise-generation.md
-│   ├── CLI_README.md
+│   ├── how-to-use-the-template-repo-cli.md  ← Teacher guide (create/update template repos)
 │   └── github-classroom-autograding-guide.md
 ├── exercise-agents/           ← Exercise generation agent docs
 │   ├── exercise-generation-cli.md
@@ -40,6 +40,7 @@ docs/
 │   ├── execution-model.md
 │   ├── project-structure.md
 │   ├── setup.md
+│   ├── template_repo_cli.md   ← Full CLI reference
 │   └── testing-framework.md
 ├── agents/                    ← Agent pipeline specs
 │   ├── plan_templates/

@@ -10,7 +10,8 @@ Documentation is organised by audience. Choose the section that matches your rol
 |---|---|
 | [`teachers/pedagogy.md`](teachers/pedagogy.md) | The MDM (Modify, Debug, Make) pedagogical framework — why this approach works. |
 | [`teachers/exercise-generation.md`](teachers/exercise-generation.md) | Using the Exercise Generation Copilot agent to create new exercises. |
-| [`teachers/CLI_README.md`](teachers/CLI_README.md) | Template Repository CLI — bundling exercises into GitHub Classroom template repos. |
+| [`teachers/how-to-use-the-template-repo-cli.md`](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
+| [`developers/template_repo_cli.md`](developers/template_repo_cli.md) | Full CLI reference — all flags, options, and technical details. |
 | [`teachers/github-classroom-autograding-guide.md`](teachers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
 
 ---
@@ -37,6 +38,7 @@ Documentation is organised by audience. Choose the section that matches your rol
 | [`developers/project-structure.md`](developers/project-structure.md) | Directory layout, naming conventions, tagged cell system, parallel notebook sets. |
 | [`developers/testing-framework.md`](developers/testing-framework.md) | Infrastructure testing — testing the codebase itself (scaffolding, grader, CLI). |
 | [`developers/setup.md`](developers/setup.md) | Environment setup — prerequisites, uv sync, verification. |
+| [`developers/template_repo_cli.md`](developers/template_repo_cli.md) | Full CLI reference for `template_repo_cli` — all flags, options, and technical details. |
 | [`developers/docker-devcontainer-setup.md`](developers/docker-devcontainer-setup.md) | Dockerfile, devcontainer configs, GitHub Actions image build. |
 | [`developers/autograding-cli.md`](developers/autograding-cli.md) | Technical reference for `build_autograde_payload.py` — CLI args, outputs, CI usage. |
 

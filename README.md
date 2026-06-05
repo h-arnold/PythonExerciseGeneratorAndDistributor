@@ -23,7 +23,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 </figure>
 
 1. You generate exercises using the Exercise Generation assistant (a custom Copilot Chat mode) or use the pre-existing exercises in the repo.
-2. You use the [template repo CLI](docs/teachers/CLI_README.md) to bundle selected exercises into a GitHub Classroom template repository.
+2. You use the [template repo CLI](docs/developers/template_repo_cli.md) to bundle selected exercises into a GitHub Classroom template repository.
 3. You create a Github Classroom assignment using that template and distribute it to students.
 4. Students open the assignment in Codespaces, complete the exercises in the browser, and get immediate feedback from the autograding tests.
 5. When they commit and push their work, the GitHub Classroom workflow runs the autograding tests again and reports results back to the Classroom interface.
@@ -93,7 +93,8 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
    - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
 
-Full CLI reference: [docs/teachers/CLI_README.md](docs/teachers/CLI_README.md)
+Full CLI reference: [docs/developers/template_repo_cli.md](docs/developers/template_repo_cli.md)
+Teacher guide: [docs/teachers/how-to-use-the-template-repo-cli.md](docs/teachers/how-to-use-the-template-repo-cli.md)
 
 ## Repository layout (high level)
 
