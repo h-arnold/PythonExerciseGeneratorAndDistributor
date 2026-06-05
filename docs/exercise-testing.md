@@ -450,6 +450,7 @@ def test_exercise1_formatting():
 - [ ] **Granularity**: Are logic, constructs, and formatting tested separately (where appropriate) for better partial credit?
 - [ ] **Grouping**: Is every test marked with `@pytest.mark.task(taskno=N)`?
 - [ ] **Failure**: Do all tests fail before the student writes code?
+- [ ] **Self-check cell**: Does `tests/student_checker_support.py` exist with output-verification checks, interleaved by exercise? (See [The Self-Check Cell](#the-self-check-cell-student_checker_supportpy))
 
 ## Technical Reference: Exercise Framework
 
@@ -580,6 +581,160 @@ so formatting and error normalisation stay consistent across exercises.
 The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`, `Error`) are now the same grouped output shown in the final check-your-answers cells for ex003 through ex007. Each self-check cell now imports `exercise_runtime_support.student_checker` and calls `run_notebook_checks('<exercise_key>')`, which runs the specialised printers so every check gets its own row instead of the older single summary entry that appeared for ex003 and later. Treat this grouped layout as the canonical student-facing summary for all multi-part notebooks.
 
 `render_grouped_table_with_errors` keeps long error text inside the Error column, so wrapped lines appear as continuation text without inserting extra grid separators. When reading new checker output you will therefore see multi-line errors indented in a single Error cell while the Exercise/Check/Status columns remain blank on the continuation lines.
+
+### The Self-Check Cell: `student_checker_support.py`
+
+Every exercise notebook ends with a self-check cell that calls `run_notebook_checks('<exercise_key>')`. This gives students a fast local table showing which exercises pass or fail before they run the full pytest suite.
+
+`run_notebook_checks` takes **two code paths**:
+
+1. **Exercise-specific checks** (preferred): If `tests/student_checker_support.py` exists in the exercise's canonical test directory, it loads the `CHECKS` list from that module and runs each check.
+2. **Generic fallback**: If no `student_checker_support.py` exists, it runs a basic execution-only check — the cell is executed and if it doesn't crash it shows 🟢 OK.
+
+#### Anti-pattern: relying on the generic fallback
+
+The generic fallback **only verifies execution success**. It cannot detect logic bugs where the code runs without crashing but produces wrong output. For example:
+
+```python
+# Buggy student code — runs fine, produces wrong output
+full_groups = students / group_size    # uses / instead of //
+print(f"Full groups: {full_groups}")   # prints 6.25, not 6
+```
+
+This code executes without error, so the generic fallback shows 🟢 OK despite the bug. This is unacceptable for debug, modify, and gaps exercises — all of which rely on the student producing **correct output**, not just crash-free code.
+
+**Do not ship an exercise without `student_checker_support.py` when any exercise part can produce wrong-but-crash-free output.** This includes:
+
+- **Debug exercises**: logic bugs produce wrong output without crashing
+- **Modify exercises**: wrong operator/variable produces wrong output
+- **Gap-fill exercises**: wrong expression in the gap produces wrong output
+- **Make exercises**: the student writes from scratch; the generic fallback can't know the expected output
+
+The only exercises where the generic fallback is acceptable are those where every bug is guaranteed to produce a runtime error (e.g., exercises that exclusively use uncast `input()` with arithmetic — though even there, `student_checker_support.py` provides better feedback).
+
+#### Required pattern: `student_checker_support.py`
+
+Every exercise that has expected outputs **must** provide a `tests/student_checker_support.py` module. This module exports a `CHECKS` list of `ExerciseCheckDefinition` objects, each defining a named check for one exercise part.
+
+```python
+"""Student-checker support for ex013 sequence debug maths operators."""
+
+from __future__ import annotations
+
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+from exercise_runtime_support.notebook_grader import (
+    run_cell_and_capture_output,
+    run_cell_with_input,
+)
+from exercise_runtime_support.student_checker.checks.base import (
+    ExerciseCheckDefinition,
+    build_exercise_check,
+    check_explanation_cell,
+)
+
+_EXERCISE_KEY = "ex013_sequence_debug_maths_operators"
+_ex = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+
+
+def _check_static_output(exercise_no: int) -> list[str]:
+    """Verify a non-interactive exercise cell produces the correct output."""
+    expected = _ex.EX013_EXPECTED_STATIC_OUTPUTS[exercise_no]
+    try:
+        output = run_cell_and_capture_output(
+            _EXERCISE_KEY,
+            tag=f"exercise{exercise_no}",
+        )
+    except Exception as exc:
+        return [str(exc)]
+    if output != expected:
+        return [
+            f"Expected: {expected.strip()!r}\n"
+            f"     Got: {output.strip()!r}"
+        ]
+    return []
+
+
+def _check_input_output(exercise_no: int) -> list[str]:
+    """Verify an interactive exercise cell produces the correct output."""
+    case = _ex.EX013_INPUT_CASES[exercise_no]
+    try:
+        output = run_cell_with_input(
+            _EXERCISE_KEY,
+            tag=f"exercise{exercise_no}",
+            inputs=case["inputs"],
+        )
+    except Exception as exc:
+        return [str(exc)]
+    expected = case["expected_output"]
+    if output != expected:
+        return [
+            f"Expected: {expected.strip()!r}\n"
+            f"     Got: {output.strip()!r}"
+        ]
+    return []
+
+
+def _check_explanation(exercise_no: int) -> list[str]:
+    """Verify the explanation cell has been filled in."""
+    return check_explanation_cell(
+        _EXERCISE_KEY,
+        exercise_no,
+        min_length=_ex.EX013_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=_ex.EX013_PLACEHOLDER_PHRASES,
+    )
+
+
+def _make_output_check(exercise_no: int, title: str) -> ExerciseCheckDefinition:
+    """Build an output-verification check for the given exercise."""
+    if exercise_no in _ex.EX013_INPUT_CASES:
+        return build_exercise_check(exercise_no, title, _check_input_output)
+    return build_exercise_check(exercise_no, title, _check_static_output)
+
+
+# ---------------------------------------------------------------------------
+# Public CHECKS list — consumed by the student self-check cell
+# ---------------------------------------------------------------------------
+
+CHECKS: list[ExerciseCheckDefinition] = [
+    _make_output_check(1, "Full groups only"),
+    build_exercise_check(1, "Explain what went wrong", _check_explanation),
+    _make_output_check(2, "Find the leftover"),
+    build_exercise_check(2, "Explain what went wrong", _check_explanation),
+    # … remaining exercises follow the same interleaved pattern
+]
+```
+
+##### Key rules for `CHECKS` ordering
+
+**Interleave checks by exercise, not by check type.** Each exercise's output check and explanation check must appear next to each other in the list so the reporting table groups them under a single exercise row:
+
+```
+✅ Correct (interleaved):  Ex1 output, Ex1 explanation, Ex2 output, Ex2 explanation, …
+❌ Wrong (batched by type):  Ex1 output, Ex2 output, …, Ex1 explanation, Ex2 explanation, …
+```
+
+When batched by type, every exercise number repeats twice in separate blocks, making the table confusing to scan. When interleaved, the renderer groups same-exercise rows so the Exercise column shows the label only once.
+
+##### Loading expectations from `load_exercise_test_module`
+
+Always use `load_exercise_test_module(exercise_key, "expectations")` to load the exercise-local expectations module. Do **not** use relative imports (`from .expectations import …`) — the module is loaded flat by the framework and relative imports will fail with `ImportError`.
+
+##### Do not hardcode `variant="student"`
+
+The `run_exercise_checks` context manager already sets the active variant. Let it propagate — do not pass `variant="student"` explicitly to `run_cell_and_capture_output` or `run_cell_with_input`. Explicit variants override the context manager and cause the solution notebook's self-check to test the student notebook instead.
+
+##### Verification checklist for `student_checker_support.py`
+
+Before considering an exercise complete, verify:
+
+- [ ] `student_checker_support.py` exists in the exercise's `tests/` directory
+- [ ] `CHECKS` list exports at least one check per exercise part
+- [ ] Output checks compare captured output against expected values (not just "did it run?")
+- [ ] Checks are interleaved by exercise, not batched by check type
+- [ ] Student variant: **all** checks show 🔴 NO
+- [ ] Solution variant: **all** checks show 🟢 OK
+- [ ] Expectations are loaded via `load_exercise_test_module`, not relative imports
+- [ ] No explicit `variant="student"` is passed to runtime helpers
 
 ## Running Tests
 

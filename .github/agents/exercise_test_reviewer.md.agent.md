@@ -60,6 +60,8 @@ Tests should use:
 - Helper modules in `exercises/<construct>/<exercise_key>/tests/` for expected outputs rather than hard-coding
 
 ### Common pitfalls to flag
+- **Missing `student_checker_support.py`**: Exercise has no self-check verification module. The generic fallback silently passes logic bugs. This is a blocking FAIL for debug, modify, and gaps exercises.
+- **Batched `CHECKS` ordering**: Output checks and explanation checks are grouped by type instead of interleaved by exercise. Causes confusing repeated exercise numbers in the self-check table.
 - **Missing construct check**: Tests that only verify output but not the required construct (e.g., accepting hardcoded answers).
 - **Missing negative check**: Modify tasks that don't verify the old value is gone.
 - **Missing input variable check**: Exercises with `input()` that don't verify the variable is used in output.
@@ -67,7 +69,7 @@ Tests should use:
 - **No task marking**: Tests missing `@pytest.mark.task(taskno=N)`.
 
 ### Validation (required)
-You must run **both** of these checks:
+You must run **all** of these checks:
 
 1. **Solution variant must pass**:
    ```bash
@@ -76,16 +78,33 @@ You must run **both** of these checks:
 
 2. **Student variant must fail** (confirming tests are useful):
    ```bash
-   uv run pytest -q exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py
-   ```
-   or equivalently:
-   ```bash
    uv run python scripts/run_pytest_variant.py --variant student exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q
    ```
 
    Expected failure modes:
    - For debug: buggy student code should fail behaviour tests.
    - For modify/make/gaps: incomplete/placeholder code should fail behaviour tests.
+
+3. **Self-check cell must exist and be correct** (mandatory):
+   Verify `tests/student_checker_support.py` exists and works against both variants:
+
+   ```bash
+   # Student variant — every check must show 🔴 NO
+   PYTUTOR_ACTIVE_VARIANT=student python3 -c "
+   from exercise_runtime_support.student_checker import run_notebook_checks
+   run_notebook_checks('<exercise_key>')
+   "
+
+   # Solution variant — every check must show 🟢 OK
+   PYTUTOR_ACTIVE_VARIANT=solution python3 -c "
+   from exercise_runtime_support.student_checker import run_notebook_checks
+   run_notebook_checks('<exercise_key>')
+   "
+   ```
+
+   **Anti-pattern to flag**: A missing `student_checker_support.py` means the self-check falls back to execution-only verification. Logic bugs that produce wrong output without crashing will show 🟢 OK — misleading students. This is a **blocking FAIL** for debug, modify, and gaps exercises. Only pure runtime-error exercises (where every bug crashes) may defer this, and even then it is strongly discouraged.
+
+   **Grouping to verify**: The `CHECKS` list must interleave checks by exercise (output check → explanation check for Ex1, then Ex2, …). Batched-by-type ordering (all outputs then all explanations) causes confusing repeated exercise numbers in separate table blocks. Flag this as a **FAIL**.
 
 ## Output format
 Return a concise verdict:

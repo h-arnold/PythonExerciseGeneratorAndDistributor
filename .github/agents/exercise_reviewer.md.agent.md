@@ -123,9 +123,10 @@ Treat warnings as prompts for closer manual review (it's heuristic).
 ## Gate C — Notebook structure and tags
 For both student + solution notebooks:
 - Every cell must have `metadata.language` (`markdown` or `python`).
-- If there is an optional self-check cell, verify it uses `run_notebook_checks('<exercise_key>')` with the canonical exercise key string (not a notebook path).
+- The final self-check cell must call `run_notebook_checks('<exercise_key>')` with the canonical exercise key string (not a notebook path).
 - Reject self-check cells that pass a path-like string (e.g., `notebooks/foo.ipynb`, an absolute `.ipynb` path, or `str(path)`) into `run_notebook_checks(...)`.
 - The exercises in the student and solution notebooks must match.
+
 
 Note: existing notebooks may also include a top-level `id` field on cells; preserve it.
 
