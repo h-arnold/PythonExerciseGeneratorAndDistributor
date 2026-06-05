@@ -74,7 +74,6 @@ Exported Classroom repositories are derived packaging outputs and are not part o
 The packaged Classroom layout includes the metadata-backed runtime contract:
 
 - `exercise_metadata/`
-- `exercises/migration_manifest.json`
 - `exercises/<construct>/<exercise_key>/exercise.json`
 - `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 - `exercises/<construct>/<exercise_key>/tests/`

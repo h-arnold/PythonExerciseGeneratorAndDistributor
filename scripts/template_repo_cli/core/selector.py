@@ -26,11 +26,10 @@ class ExerciseSelector:
         """
         self.repo_root = repo_root
         self.exercises_dir = repo_root / "exercises"
-        self.manifest_path = self.exercises_dir / "migration_manifest.json"
 
     def _get_registry(self) -> list[RegistryEntry]:
         """Return the metadata-backed exercise registry."""
-        return build_exercise_registry(self.manifest_path, self.exercises_dir)
+        return build_exercise_registry(exercises_root=self.exercises_dir)
 
     def _all_metadata_exercise_keys(self) -> list[str]:
         """Return every exercise key backed by registry metadata."""
@@ -85,8 +84,6 @@ class ExerciseSelector:
         matches: list[str] = []
         for entry in self._get_registry():
             metadata = entry["metadata"]
-            if metadata is None:
-                continue
             if predicate(entry["exercise_key"], metadata):
                 matches.append(entry["exercise_key"])
         return matches

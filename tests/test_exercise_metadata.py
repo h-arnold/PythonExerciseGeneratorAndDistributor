@@ -1,14 +1,13 @@
 """Tests for the exercise_metadata package - Phase 2.
 
-Covers resolver, loader, and manifest functionality.  All error-case tests use
+Covers resolver and loader functionality.  All error-case tests use
 isolated tmp_path fixtures so they do not depend on the live filesystem.
 
 Contract under test:
 - exercise_key is the ONLY supported resolver input.
 - Notebook resolution is unaffected by unrelated environment variables.
 - Path-based inputs are rejected with TypeError.
-- Legacy exercises cause resolve_notebook_path to fail hard.
-- Missing canonical notebook files cause resolve_notebook_path to fail hard.
+- Missing canonical exercise files cause resolve_notebook_path to fail hard.
 """
 
 from __future__ import annotations
@@ -19,15 +18,12 @@ from typing import ClassVar, cast
 import pytest
 
 from exercise_metadata import (
-    ExerciseLayout,
     load_exercise_metadata,
-    load_migration_manifest,
     resolve_exercise_dir,
     resolve_notebook_path,
 )
-from exercise_metadata.manifest import get_exercise_layout
 from exercise_runtime_support.execution_variant import Variant
-from tests.exercise_metadata_helpers import make_exercise_json, make_manifest
+from tests.exercise_metadata_helpers import make_exercise_json
 
 # ---------------------------------------------------------------------------
 # Resolver tests - resolve_exercise_dir
@@ -41,7 +37,8 @@ class TestResolveExerciseDir:
         """resolve_exercise_dir finds the live ex004 directory."""
         result = resolve_exercise_dir("ex004_sequence_debug_syntax")
         assert result.is_dir()
-        assert result == Path("exercises/sequence/ex004_sequence_debug_syntax").resolve()
+        assert result == Path(
+            "exercises/sequence/ex004_sequence_debug_syntax").resolve()
 
     def test_raises_type_error_for_path_input(self) -> None:
         """Passing a Path instead of str must raise TypeError immediately."""
@@ -52,7 +49,8 @@ class TestResolveExerciseDir:
     def test_raises_lookup_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
         """A nonexistent exercise_key raises LookupError."""
         with pytest.raises(LookupError, match="Canonical exercise directory not found"):
-            resolve_exercise_dir("ex999_sequence_nonexistent", exercises_root=tmp_path)
+            resolve_exercise_dir(
+                "ex999_sequence_nonexistent", exercises_root=tmp_path)
 
     @pytest.mark.parametrize(
         "path_like_input",
@@ -72,7 +70,8 @@ class TestResolveExerciseDir:
         """exercises_root override is respected for canonical path derivation."""
         exercise_dir = tmp_path / "sequence" / "ex999_sequence_fake_exercise"
         exercise_dir.mkdir(parents=True)
-        result = resolve_exercise_dir("ex999_sequence_fake_exercise", exercises_root=tmp_path)
+        result = resolve_exercise_dir(
+            "ex999_sequence_fake_exercise", exercises_root=tmp_path)
         assert result == exercise_dir
 
     def test_ignores_unrelated_environment_for_canonical_directory_resolution(
@@ -81,11 +80,13 @@ class TestResolveExerciseDir:
         """resolve_exercise_dir ignores unrelated environment state."""
         misleading_notebooks_dir = tmp_path / "misleading_notebooks"
         misleading_notebooks_dir.mkdir()
-        monkeypatch.setenv("UNRELATED_NOTEBOOK_OVERRIDE", str(misleading_notebooks_dir))
+        monkeypatch.setenv("UNRELATED_NOTEBOOK_OVERRIDE",
+                           str(misleading_notebooks_dir))
 
         result = resolve_exercise_dir("ex004_sequence_debug_syntax")
 
-        assert result == Path("exercises/sequence/ex004_sequence_debug_syntax").resolve()
+        assert result == Path(
+            "exercises/sequence/ex004_sequence_debug_syntax").resolve()
         assert result.parent.name == "sequence"
         assert result != misleading_notebooks_dir
 
@@ -97,7 +98,8 @@ class TestResolveExerciseDir:
         legacy_dir.mkdir(parents=True)
 
         with pytest.raises(LookupError, match="must not include an exercise_type segment"):
-            resolve_exercise_dir("ex004_sequence_debug_syntax", exercises_root=tmp_path)
+            resolve_exercise_dir(
+                "ex004_sequence_debug_syntax", exercises_root=tmp_path)
 
 
 # ---------------------------------------------------------------------------
@@ -110,13 +112,15 @@ class TestResolveNotebookPath:
 
     def test_student_notebook_exists_for_pilot(self) -> None:
         """resolve_notebook_path returns an existing student.ipynb for ex004."""
-        result = resolve_notebook_path("ex004_sequence_debug_syntax", "student")
+        result = resolve_notebook_path(
+            "ex004_sequence_debug_syntax", "student")
         assert result.exists()
         assert result.name == "student.ipynb"
 
     def test_solution_notebook_exists_for_pilot(self) -> None:
         """resolve_notebook_path returns an existing solution.ipynb for ex004."""
-        result = resolve_notebook_path("ex004_sequence_debug_syntax", "solution")
+        result = resolve_notebook_path(
+            "ex004_sequence_debug_syntax", "solution")
         assert result.exists()
         assert result.name == "solution.ipynb"
 
@@ -128,9 +132,11 @@ class TestResolveNotebookPath:
         misleading_notebooks_dir.mkdir()
         fake_solution = misleading_notebooks_dir / "solution.ipynb"
         fake_solution.write_text('{"cells": []}', encoding="utf-8")
-        monkeypatch.setenv("UNRELATED_NOTEBOOK_OVERRIDE", str(misleading_notebooks_dir))
+        monkeypatch.setenv("UNRELATED_NOTEBOOK_OVERRIDE",
+                           str(misleading_notebooks_dir))
 
-        result = resolve_notebook_path("ex004_sequence_debug_syntax", "solution")
+        result = resolve_notebook_path(
+            "ex004_sequence_debug_syntax", "solution")
 
         assert (
             result
@@ -145,39 +151,20 @@ class TestResolveNotebookPath:
         """Passing a Path instead of str must raise TypeError immediately."""
         with pytest.raises(TypeError, match="exercise_key must be a str"):
             # type: ignore[arg-type]
-            resolve_notebook_path(Path("ex004_sequence_debug_syntax"), "student")
-
-    def test_raises_lookup_error_for_legacy_exercise(self, tmp_path: Path) -> None:
-        """Legacy exercises must cause resolve_notebook_path to fail hard."""
-        manifest_path = make_manifest(
-            tmp_path,
-            {"ex002_sequence_modify_basics": {"layout": "legacy"}},
-        )
-        with pytest.raises(LookupError) as exc_info:
             resolve_notebook_path(
-                "ex002_sequence_modify_basics", "student", manifest_path=manifest_path
-            )
+                Path("ex004_sequence_debug_syntax"), "student")
 
-        message = str(exc_info.value)
-        assert "layout='legacy'" in message
-        assert "resolve_notebook_path() only supports canonical exercises" in message
-        assert "Legacy layouts are not valid input to this resolver" in message
-        assert "legacy notebooks/ path directly" not in message
-
-    def test_raises_lookup_error_for_unknown_manifest_key(self, tmp_path: Path) -> None:
+    def test_raises_lookup_error_for_unknown_exercise_key(self, tmp_path: Path) -> None:
         """Unknown exercise keys are reported as LookupError by resolve_notebook_path."""
-        manifest_path = make_manifest(
-            tmp_path,
-            {"ex002_sequence_modify_basics": {"layout": "legacy"}},
-        )
-
-        with pytest.raises(LookupError, match="not in the migration manifest"):
-            resolve_notebook_path("ex999_nonexistent", "student", manifest_path=manifest_path)
+        with pytest.raises(LookupError, match="does not contain a known construct"):
+            resolve_notebook_path("ex999_nonexistent",
+                                  "student", exercises_root=tmp_path)
 
     def test_raises_value_error_for_invalid_variant(self) -> None:
         """An invalid variant string raises ValueError."""
         with pytest.raises(ValueError, match="variant must be 'student' or 'solution'"):
-            resolve_notebook_path("ex004_sequence_debug_syntax", cast(Variant, "invalid"))
+            resolve_notebook_path(
+                "ex004_sequence_debug_syntax", cast(Variant, "invalid"))
 
     def test_raises_lookup_error_when_notebook_missing_for_canonical(self, tmp_path: Path) -> None:
         """Canonical exercise with missing notebook files raises LookupError."""
@@ -198,17 +185,11 @@ class TestResolveNotebookPath:
             },
         )
 
-        manifest_path = make_manifest(
-            tmp_path,
-            {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
-        )
-
         with pytest.raises(LookupError, match="expected notebook is missing"):
             resolve_notebook_path(
                 "ex004_sequence_debug_syntax",
                 "student",
                 exercises_root=tmp_path,
-                manifest_path=manifest_path,
             )
 
     def test_raises_lookup_error_when_exercise_json_missing_for_canonical(
@@ -220,17 +201,11 @@ class TestResolveNotebookPath:
         notebooks_dir.mkdir(parents=True)
         (notebooks_dir / "student.ipynb").write_text("{}", encoding="utf-8")
 
-        manifest_path = make_manifest(
-            tmp_path,
-            {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
-        )
-
         with pytest.raises(LookupError) as exc_info:
             resolve_notebook_path(
                 "ex004_sequence_debug_syntax",
                 "student",
                 exercises_root=tmp_path,
-                manifest_path=manifest_path,
             )
 
         message = str(exc_info.value)
@@ -248,17 +223,11 @@ class TestResolveNotebookPath:
         (notebooks_dir / "student.ipynb").write_text("{}", encoding="utf-8")
         (exercise_dir / "exercise.json").write_text("null", encoding="utf-8")
 
-        manifest_path = make_manifest(
-            tmp_path,
-            {"ex004_sequence_debug_syntax": {"layout": "canonical"}},
-        )
-
         with pytest.raises(LookupError, match=r"exercise\.json is missing or invalid"):
             resolve_notebook_path(
                 "ex004_sequence_debug_syntax",
                 "student",
                 exercises_root=tmp_path,
-                manifest_path=manifest_path,
             )
 
 
@@ -305,7 +274,8 @@ class TestLoadExerciseMetadata:
 
     def test_raises_value_error_for_missing_required_field(self, tmp_path: Path) -> None:
         """exercise.json missing a required field raises ValueError."""
-        incomplete = {k: v for k, v in self._VALID_DATA.items() if k != "parts"}
+        incomplete = {k: v for k, v in self._VALID_DATA.items()
+                      if k != "parts"}
         make_exercise_json(tmp_path, incomplete)
         with pytest.raises(ValueError, match="missing required fields"):
             load_exercise_metadata(tmp_path)
@@ -316,54 +286,3 @@ class TestLoadExerciseMetadata:
         make_exercise_json(tmp_path, bad_version)
         with pytest.raises(ValueError, match="unsupported schema_version"):
             load_exercise_metadata(tmp_path)
-
-
-# ---------------------------------------------------------------------------
-# Manifest tests - load_migration_manifest and get_exercise_layout
-# ---------------------------------------------------------------------------
-
-
-class TestLoadMigrationManifest:
-    """Tests for load_migration_manifest()."""
-
-    def test_loads_real_manifest_successfully(self) -> None:
-        """load_migration_manifest() loads the live manifest without error."""
-        manifest = load_migration_manifest()
-        assert manifest["schema_version"] == 1
-        assert "exercises" in manifest
-        assert "ex004_sequence_debug_syntax" in manifest["exercises"]
-        assert "ex001_sanity" not in manifest["exercises"]
-
-    def test_raises_file_not_found_for_missing_manifest(self, tmp_path: Path) -> None:
-        """Missing manifest file raises FileNotFoundError."""
-        with pytest.raises(FileNotFoundError, match="Migration manifest not found"):
-            load_migration_manifest(tmp_path / "does_not_exist.json")
-
-    def test_raises_value_error_for_wrong_schema_version(self, tmp_path: Path) -> None:
-        """Manifest with wrong schema_version raises ValueError."""
-        path = make_manifest(tmp_path, exercises={}, schema_version=42)
-        with pytest.raises(ValueError, match="Unsupported migration manifest schema_version"):
-            load_migration_manifest(path)
-
-
-class TestGetExerciseLayout:
-    """Tests for get_exercise_layout()."""
-
-    def test_returns_canonical_for_ex004(self) -> None:
-        """ex004_sequence_debug_syntax is marked canonical in the live manifest."""
-        layout = get_exercise_layout("ex004_sequence_debug_syntax")
-        assert layout == ExerciseLayout.CANONICAL
-
-    def test_returns_canonical_for_ex002(self) -> None:
-        """ex002_sequence_modify_basics is marked canonical in the live manifest."""
-        layout = get_exercise_layout("ex002_sequence_modify_basics")
-        assert layout == ExerciseLayout.CANONICAL
-
-    def test_raises_key_error_for_nonexistent_exercise(self, tmp_path: Path) -> None:
-        """Nonexistent exercise_key raises KeyError."""
-        manifest_path = make_manifest(
-            tmp_path,
-            {"ex002_sequence_modify_basics": {"layout": "legacy"}},
-        )
-        with pytest.raises(KeyError, match="not in the migration manifest"):
-            get_exercise_layout("nonexistent_xyz", manifest_path=manifest_path)

@@ -136,7 +136,8 @@ def build_exercise_registry(
     for exercise_json_path in sorted(root.rglob("exercise.json")):
         exercise_key = exercise_json_path.parent.name
         metadata = _load_registry_metadata(exercise_key, exercises_root)
-        registry.append(RegistryEntry(exercise_key=exercise_key, metadata=metadata))
+        registry.append(RegistryEntry(
+            exercise_key=exercise_key, metadata=metadata))
 
     registry.sort(key=lambda entry: entry["metadata"]["exercise_id"])
     return registry

@@ -81,17 +81,6 @@ def _snapshot_directories(repo_root: Path) -> set[str]:
 
 
 def _build_repo_fixture(repo_root: Path) -> None:
-    _write_json(
-        repo_root / "exercises" / "migration_manifest.json",
-        {
-            "schema_version": 1,
-            "_comment": "layout state",
-            "exercises": {
-                _EX002: {"layout": "legacy"},
-                _EX006: {"layout": "legacy"},
-            },
-        },
-    )
     _write_text(
         repo_root / "exercises" / "sequence" / "OrderOfTeaching.md",
         "# Order of teaching\n\n"
@@ -194,11 +183,6 @@ def test_dry_run_reports_actions_without_mutating_files(
     assert _snapshot_files(tmp_path) == before_files
     assert _snapshot_directories(tmp_path) == before_directories
     assert (tmp_path / "exercises" / "sequence" / "modify").is_dir()
-    manifest = json.loads(
-        (tmp_path / "exercises" / "migration_manifest.json").read_text(encoding="utf-8")
-    )
-    assert manifest["exercises"][_EX002]["layout"] == "legacy"
-    assert manifest["exercises"][_EX006]["layout"] == "legacy"
 
 
 def test_apply_mode_removes_empty_legacy_type_root(
@@ -361,12 +345,6 @@ def test_apply_mode_migrates_notebooks_docs_manifest_and_teaching_order(
     assert f"[Supporting docs](./{_EX006}/)" in order_of_teaching
     assert f"[Notebook](./{_EX006}/notebooks/student.ipynb)" in order_of_teaching
 
-    manifest = json.loads(
-        (tmp_path / "exercises" / "migration_manifest.json").read_text(encoding="utf-8")
-    )
-    assert manifest["exercises"][_EX002]["layout"] == "canonical"
-    assert manifest["exercises"][_EX006]["layout"] == "canonical"
-
 
 def test_apply_mode_fails_on_mismatched_destination_content(
     tmp_path: Path,
@@ -395,11 +373,6 @@ def test_apply_mode_fails_on_mismatched_destination_content(
     assert "already exists and differs" in captured.out
     assert (tmp_path / "notebooks" / f"{_EX002}.ipynb").exists()
     assert (tmp_path / "exercises" / "sequence" / "modify" / _EX002).exists()
-
-    manifest = json.loads(
-        (tmp_path / "exercises" / "migration_manifest.json").read_text(encoding="utf-8")
-    )
-    assert manifest["exercises"][_EX002]["layout"] == "legacy"
 
 
 def test_apply_mode_fails_when_required_notebook_is_missing(
@@ -430,103 +403,6 @@ def test_apply_mode_fails_when_required_notebook_is_missing(
     assert _snapshot_files(tmp_path) == before_files
     assert _snapshot_directories(tmp_path) == before_directories
 
-    manifest = json.loads(
-        (tmp_path / "exercises" / "migration_manifest.json").read_text(encoding="utf-8")
-    )
-    assert manifest["exercises"][_EX002]["layout"] == "legacy"
-
-
-def test_apply_mode_retries_successfully_after_manifest_write_failure(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-) -> None:
-    _build_repo_fixture(tmp_path)
-    original_apply_write = migrate_exercise_data._apply_write
-    manifest_path = tmp_path / "exercises" / "migration_manifest.json"
-    manifest_before = manifest_path.read_text(encoding="utf-8")
-    canonical_readme_path = tmp_path / "exercises" / "sequence" / _EX002 / "README.md"
-    legacy_shadow_readme_path = (
-        tmp_path / "exercises" / "sequence" / "modify" / _EX002 / "README.md"
-    )
-
-    def _failing_apply_write(action: migrate_exercise_data.Action) -> None:
-        if action.destination == manifest_path:
-            raise OSError("simulated manifest write failure")
-        original_apply_write(action)
-
-    monkeypatch.setattr(migrate_exercise_data,
-                        "_apply_write", _failing_apply_write)
-
-    exit_code = migrate_exercise_data.main(
-        [
-            "--construct",
-            "sequence",
-            "--repo-root",
-            str(tmp_path),
-            "--apply",
-        ]
-    )
-    captured = capsys.readouterr()
-
-    assert exit_code == 1
-    assert "simulated manifest write failure" in captured.out
-    assert (tmp_path / "notebooks" / f"{_EX002}.ipynb").exists()
-    assert (tmp_path / "notebooks" / "solutions" / f"{_EX002}.ipynb").exists()
-    assert (tmp_path / "notebooks" / f"{_EX006}.ipynb").exists()
-    assert (tmp_path / "notebooks" / "solutions" / f"{_EX006}.ipynb").exists()
-    assert (tmp_path / "exercises" / "sequence" / "modify" / _EX002).exists()
-    assert (tmp_path / "exercises" / "sequence" /
-            "modify" / _EX002 / "README.md").exists()
-    assert manifest_path.read_text(encoding="utf-8") == manifest_before
-    assert canonical_readme_path.exists()
-    assert legacy_shadow_readme_path.exists()
-    assert canonical_readme_path.read_text(encoding="utf-8") != legacy_shadow_readme_path.read_text(
-        encoding="utf-8"
-    )
-
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest["exercises"][_EX002]["layout"] == "legacy"
-    assert manifest["exercises"][_EX006]["layout"] == "legacy"
-
-    monkeypatch.setattr(migrate_exercise_data,
-                        "_apply_write", original_apply_write)
-
-    retry_exit_code = migrate_exercise_data.main(
-        [
-            "--construct",
-            "sequence",
-            "--repo-root",
-            str(tmp_path),
-            "--apply",
-        ]
-    )
-    retry_captured = capsys.readouterr()
-
-    assert retry_exit_code == 0
-    assert "Mode: apply" in retry_captured.out
-    assert "Remaining legacy sources:\n- none" in retry_captured.out
-
-    ex002_dir = tmp_path / "exercises" / "sequence" / _EX002
-    ex006_dir = tmp_path / "exercises" / "sequence" / _EX006
-
-    assert (ex002_dir / "notebooks" / "student.ipynb").exists()
-    assert (ex002_dir / "notebooks" / "solution.ipynb").exists()
-    assert (ex006_dir / "notebooks" / "student.ipynb").exists()
-    assert (ex006_dir / "notebooks" / "solution.ipynb").exists()
-    assert not (tmp_path / "notebooks" / f"{_EX002}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" /
-                f"{_EX002}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / f"{_EX006}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" /
-                f"{_EX006}.ipynb").exists()
-    assert not (tmp_path / "exercises" / "sequence" /
-                "modify" / _EX002).exists()
-
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    assert manifest["exercises"][_EX002]["layout"] == "canonical"
-    assert manifest["exercises"][_EX006]["layout"] == "canonical"
-
 
 def test_apply_mode_removes_duplicate_identical_legacy_notebook_after_success(
     tmp_path: Path,
@@ -553,8 +429,3 @@ def test_apply_mode_removes_duplicate_identical_legacy_notebook_after_success(
     assert f"remove duplicate legacy file notebooks/{_EX002}.ipynb" in captured.out
     assert canonical_student_notebook.exists()
     assert not (tmp_path / "notebooks" / f"{_EX002}.ipynb").exists()
-
-    manifest = json.loads(
-        (tmp_path / "exercises" / "migration_manifest.json").read_text(encoding="utf-8")
-    )
-    assert manifest["exercises"][_EX002]["layout"] == "canonical"

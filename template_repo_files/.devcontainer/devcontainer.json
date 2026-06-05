@@ -59,7 +59,6 @@
           "exercise_metadata/**": true,
           "**/exercise_metadata": true,
           "**/exercise_metadata/**": true,
-          "exercises/migration_manifest.json": true,
           "exercises/**/exercise.json": true,
           "**/.devcontainer": true,
           ".devcontainer": true,

@@ -147,13 +147,6 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
     else:
         assert not metadata_dest.exists()
 
-    manifest_src = repo_root / "exercises" / "migration_manifest.json"
-    manifest_dest = temp_dir / "exercises" / "migration_manifest.json"
-    if manifest_src.exists():
-        assert manifest_dest.exists()
-    else:
-        assert not manifest_dest.exists()
-
     runtime_src = repo_root / "exercise_runtime_support"
     runtime_dest = temp_dir / "exercise_runtime_support"
     if runtime_src.exists():
@@ -567,8 +560,6 @@ class TestPackageIntegrity:
         "path_to_remove",
         [
             pytest.param("exercise_metadata", id="metadata-package"),
-            pytest.param("exercises/migration_manifest.json",
-                         id="migration-manifest"),
             pytest.param(
                 "exercises/sequence/ex002_sequence_modify_basics/exercise.json",
                 id="exercise-json",
@@ -847,7 +838,6 @@ class TestPackageIntegrity:
                     "exercise.json").exists()
         assert (temp_dir / "exercise_metadata").is_dir()
         assert (temp_dir / "exercise_metadata" / "__init__.py").is_file()
-        assert (temp_dir / "exercises" / "migration_manifest.json").is_file()
         _assert_no_snapshot_artifacts(
             temp_dir / "exercise_runtime_support",
             label="packaged workspace runtime support",

@@ -9,34 +9,6 @@ import pytest
 from scripts.template_repo_cli.core.selector import ExerciseSelector
 
 
-class TestMissingManifest:
-    """Tests for selector-backed flows when the migration manifest is missing."""
-
-    @pytest.mark.parametrize(
-        ("method_name", "method_args"),
-        [
-            ("get_all_exercise_keys", ()),
-            ("select_by_construct", (["sequence"],)),
-            ("select_by_type", (["modify"],)),
-            ("select_by_construct_and_type", (["sequence"], ["modify"])),
-            ("select_by_exercise_keys", (["ex002_sequence_modify_basics"],)),
-            ("select_by_exercise_key_pattern", ("ex00*",)),
-        ],
-    )
-    def test_selector_flows_raise_file_not_found_when_manifest_is_missing(
-        self,
-        tmp_path: Path,
-        method_name: str,
-        method_args: tuple[object, ...],
-    ) -> None:
-        """Selector-backed flows must fail fast when the manifest is absent."""
-        selector = ExerciseSelector(tmp_path)
-        method = getattr(selector, method_name)
-
-        with pytest.raises(FileNotFoundError, match="Migration manifest not found"):
-            method(*method_args)
-
-
 class TestSelectByConstruct:
     """Tests for selecting exercises by construct."""
 
@@ -119,7 +91,8 @@ class TestSelectByConstructAndType:
     def test_select_by_construct_and_type(self, repo_root: Path) -> None:
         """Construct/type selection intersects canonical metadata correctly."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["modify"])
+        exercises = selector.select_by_construct_and_type(
+            constructs=["sequence"], types=["modify"])
 
         assert "ex002_sequence_modify_basics" in exercises
         assert "ex004_sequence_debug_syntax" not in exercises
@@ -130,7 +103,8 @@ class TestSelectByConstructAndType:
     ) -> None:
         """Construct/type selection finds canonical exercises without scanning type folders."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["debug"])
+        exercises = selector.select_by_construct_and_type(
+            constructs=["sequence"], types=["debug"])
 
         assert "ex004_sequence_debug_syntax" in exercises
 
@@ -150,7 +124,8 @@ class TestSelectBySpecificExerciseKeys:
     def test_select_specific_exercise_keys(self, repo_root: Path) -> None:
         """Test selecting an explicit exercise-key list."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_exercise_keys(["ex002_sequence_modify_basics"])
+        exercises = selector.select_by_exercise_keys(
+            ["ex002_sequence_modify_basics"])
 
         assert len(exercises) == 1
         assert "ex002_sequence_modify_basics" in exercises[0]
