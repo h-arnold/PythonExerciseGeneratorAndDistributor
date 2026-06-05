@@ -28,16 +28,35 @@ A 7-stage TDD plan. Tests are written or updated **before** implementation in ea
 - `tests/test_exercise_scaffolder_base.py` — test shared behaviour (header, scratch, self-check with variant, expectations skeleton, student checker skeleton)
 
 **Acceptance criteria**:
-- [ ] `ExerciseScaffold` cannot be instantiated directly (ABC).
-- [ ] `_build_check_answers_cell("student")` produces `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"`.
-- [ ] `_build_check_answers_cell("solution")` produces `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"`.
-- [ ] `build_expectations_module()` with `exercise_id=14, parts=3` produces `EX014_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: "", 2: "", 3: ""}`.
-- [ ] `build_student_checker_support()` produces a module with `CHECKS` list, TODO comment, and references the exercise-ID-prefixed expectations name.
-- [ ] `ruff check` passes on new files.
+- [x] `ExerciseScaffold` cannot be instantiated directly (ABC).
+- [x] `_build_check_answers_cell("student")` produces `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"`.
+- [x] `_build_check_answers_cell("solution")` produces `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"`.
+- [x] `build_expectations_module()` with `exercise_id=14, parts=3` produces `EX014_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: "", 2: "", 3: ""}`.
+- [x] `build_student_checker_support()` produces a module with `CHECKS` list, TODO comment, and references the exercise-ID-prefixed expectations name.
+- [x] `ruff check` passes on new files.
 
 **Review point**: Base class API review before subclasses are written.
 
 **Dependency note**: Stage 1 must be minimally complete (ABC with all method signatures defined) before Stage 2 subclasses can be implemented, since subclasses inherit from `ExerciseScaffold`. Stage 2 can be *designed* in parallel but not *coded* until Stage 1's base class exists.
+
+### Stage 1 — Implementation notes
+
+**Status**: ✅ Complete
+
+**Phase checklist**:
+- [x] Red tests added (44 tests in `tests/test_exercise_scaffolder_base.py`)
+- [x] Red review clean
+- [x] Green implementation complete (`scripts/exercise_scaffolder/base.py`)
+- [x] Green review clean — code smells addressed:
+  - Fixed lint error (un-sorted imports) in test file
+  - Moved `_make_meta()` from `scripts/new_exercise.py` into scaffolder package to eliminate backward dependency
+  - Updated `new_exercise.py` to import from scaffolder
+- [x] Checks passed (44/44 tests, ruff lint clean)
+- [x] Action plan updated
+- [ ] Commit created
+- [ ] Push completed
+
+**Deviations from plan**: Moved `_make_meta()` into `scripts/exercise_scaffolder/base.py` and updated `new_exercise.py` to import from there instead of the opposite direction. This eliminates a backward dependency code smell where the new package depended on a private function from the old monolithic module. Required adjusting `new_exercise.py` imports (replaced `import uuid` with `from scripts.exercise_scaffolder.base import _make_meta`).
 
 ---
 
