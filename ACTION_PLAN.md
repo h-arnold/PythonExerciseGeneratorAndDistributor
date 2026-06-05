@@ -15,7 +15,7 @@ A 7-stage TDD plan. Tests are written or updated **before** implementation in ea
 - `scripts/exercise_scaffolder/base.py` — `ExerciseScaffold` base class with:
   - `__init__(title, exercise_key, parts, test_target, exercise_id: int)`
   - `build_notebook(variant: str) -> dict` — assembles header + type-specific cells + scratch + self-check. Threads `test_target` and `exercise_type` to `_build_header_cells()`.
-  - `_build_header_cells(exercise_type: str, test_target: str) -> list[dict]` — orientation markdown with "How to work" instructions (shared; instructions vary by `exercise_type` — gaps uses "YOUR CODE HERE" language, debug uses explanation cell language, others use standard test-target language)
+  - `_build_header_cells(exercise_type: str, test_target: str) -> list[dict]` — orientation markdown with "How to work" instructions (shared; instructions vary by `exercise_type` — gaps uses "YOUR CODE HERE" language, debug uses explanation cell language, others use standard test-target language). `test_target` is the relative path to the exercise-local test file (e.g. `exercises/sequence/ex014_.../tests/test_ex014_....py`), embedded in the notebook header so students know which pytest command to run.
   - `_build_exercise_cells() -> list[dict]` — abstract, overridden per type
   - `_build_scratch_cell() -> dict` — shared
   - `_build_check_answers_cell(variant: str) -> dict` — sets `PYTUTOR_ACTIVE_VARIANT` per variant
@@ -200,12 +200,13 @@ Each subclass overrides:
 **Objective**: Remove dead code, update docs if needed.
 
 **Files**:
-- `scripts/new_exercise.py` — remove any orphaned private functions.
-- `docs/exercise-agents/exercise-generation-cli.md` — update if the scaffolded file list changes.
+- `scripts/new_exercise.py` — remove orphaned private functions replaced by the scaffold classes: `_make_debug_cells`, `_make_standard_cells`, `_make_gaps_cells`, `_make_check_answers_cell`, `_make_notebook_with_parts`, `_build_readme_lines`, `_build_test_lines`, `_build_exercise_body_test_lines`, `_build_debug_explanation_test_lines`. Keep `_slugify`, `_make_meta`, `_build_exercise_key`, `_build_exercise_metadata`, `_validate_and_parse_args`, `_check_exercise_not_exists` (still used by `main()`).
+- `docs/exercise-agents/exercise-generation-cli.md` — update scaffolded file list to include `tests/expectations.py` and `tests/student_checker_support.py`.
 - `AGENTS.md` — no change needed unless quick reference changes.
 
 **Acceptance criteria**:
 - [ ] No dead code remains in `new_exercise.py`.
+- [ ] No existing tests import removed functions (check `tests/test_new_exercise.py`).
 - [ ] Doc update reflects new scaffolded files.
 - [ ] `ruff check .` passes.
 
