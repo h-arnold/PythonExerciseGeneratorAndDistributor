@@ -7,22 +7,27 @@ from pathlib import Path
 
 def test_scaffolder_runtime_import_contract() -> None:
     """The scaffolder must emit the direct runtime and explanation helper imports."""
-    source = Path("scripts/new_exercise.py").read_text(encoding="utf-8")
+    base_source = Path("scripts/exercise_scaffolder/base.py").read_text(encoding="utf-8")
 
-    assert "from exercise_runtime_support.exercise_framework import (" in source
-    assert "    RuntimeCache," in source
-    assert "    resolve_exercise_notebook_path," in source
-    assert "    run_cell_and_capture_output," in source
-    assert "    get_explanation_cell," in source
+    assert "from exercise_runtime_support.exercise_framework import (" in base_source
+    assert "    RuntimeCache," in base_source
+    assert "    resolve_exercise_notebook_path," in base_source
+    assert "    run_cell_and_capture_output," in base_source
+
+    debug_source = Path("scripts/exercise_scaffolder/debug.py").read_text(encoding="utf-8")
+    assert "    get_explanation_cell," in base_source
+    # Explanation helpers are in the debug subclass only
     assert (
-        "from exercise_runtime_support.exercise_framework.expectations_helpers import (" in source
+        "from exercise_runtime_support.exercise_framework.expectations_helpers import (" in base_source
     )
-    assert "    is_valid_explanation," in source
+    assert "    is_valid_explanation," in base_source
 
-    assert "runtime.run_cell_and_capture_output" not in source
-    assert "runtime.get_explanation_cell" not in source
-    assert "from tests.notebook_grader import run_cell_and_capture_output" not in source
-    assert "from tests.notebook_grader import get_explanation_cell" not in source
+    # Old import paths must not appear in the scaffolder
+    new_exe_source = Path("scripts/new_exercise.py").read_text(encoding="utf-8")
+    assert "runtime.run_cell_and_capture_output" not in new_exe_source
+    assert "runtime.get_explanation_cell" not in new_exe_source
+    assert "from tests.notebook_grader import run_cell_and_capture_output" not in new_exe_source
+    assert "from tests.notebook_grader import get_explanation_cell" not in new_exe_source
 
 
 def test_notebook_grader_wrapper_links_to_canonical_module() -> None:

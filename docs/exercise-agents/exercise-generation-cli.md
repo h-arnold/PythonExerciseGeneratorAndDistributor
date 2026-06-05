@@ -32,6 +32,8 @@ This creates:
 - `exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/student.ipynb`
 - `exercises/sequence/ex042_sequence_modify_variables_and_types/notebooks/solution.ipynb`
 - `exercises/sequence/ex042_sequence_modify_variables_and_types/tests/test_ex042_sequence_modify_variables_and_types.py`
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/tests/expectations.py` — exercise-local expected-output skeleton
+- `exercises/sequence/ex042_sequence_modify_variables_and_types/tests/student_checker_support.py` — exercise-local student checker skeleton
 
 ### Multi-Part Exercise (10 exercises in one notebook)
 
