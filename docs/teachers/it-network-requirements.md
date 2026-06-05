@@ -1,6 +1,6 @@
 # Network Requirements for GitHub Codespaces in Education
 
-This project lets Computer Science teachers run Python coding exercises entirely in the browser — no installers, no Python versions, no "it works on my machine." Students open a link, get a fully configured VS Code environment with notebooks and autograded tests, and the teacher controls everything through the repository. This document is for IT network administrators whose school is adopting this approach. It explains why it's worth supporting, how to scope access safely, and exactly what needs to be unblocked.
+This project lets Computer Science teachers run Python coding exercises entirely in the browser — no installers, no Python versions, it doesn't even need to run on a Windows device. Students open a link, get a fully configured VS Code environment with notebooks and autograded tests, and the teacher controls everything through the repository. This document is for IT network administrators whose school is adopting this approach. It explains why it's worth supporting, how to scope access safely, and exactly what needs to be unblocked.
 
 - [Network Requirements for GitHub Codespaces in Education](#network-requirements-for-github-codespaces-in-education)
   - [Why support this? — It's safer and less work than local Python](#why-support-this--its-safer-and-less-work-than-local-python)

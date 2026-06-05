@@ -64,9 +64,7 @@ Codespaces gives every student a **ready-to-go coding environment in their brows
 - **Works on any device** — Chromebooks, tablets, school laptops — as long as there's a browser and internet connection.
 - **Pre-configured.** The environment comes with the right extensions, settings, and files already in place. Students open it and start coding.
 - **Isolated.** Each student's workspace is separate. Nobody's setup affects anyone else's.
-- **Free.** GitHub Education includes free Codespaces usage for students and teachers.
-
-**The one thing to tell students:** Start their Codespace as soon as they log in — it takes 30-60 seconds to spin up. If they wait until you say "open your work," they'll be staring at a loading spinner.
+- **Free.** All users get 50 hours free Codespaces usage per month. Getting a free GitHub Education licence get 150 hours free usage for students and teachers.
 
 ---
 
@@ -93,7 +91,7 @@ Git is the system that tracks every change to a file. It's built into GitHub and
 
 ## Jupyter Notebooks
 
-Jupyter Notebooks (`.ipynb` files) are documents that mix **instructions** and **code** in one file.
+Jupyter Notebooks (`.ipynb` files) are documents that mix **instructions** and **code** in one file. Commonly used in data science to combine explanations, code, and results, they work well for teaching programming too.
 
 ```text
 ┌─────────────────────────────────┐
@@ -150,6 +148,4 @@ Here's the complete flow, from your desk to your students' screens:
      Autograding runs                                    Classroom dashboard
 ```
 
-**In short:** You create and organise exercises in the source repo. You package them into a template. Classroom hands copies to students. Students work in Codespaces. Git tracks everything. Autograding (if enabled) reports back.
-
-No IT setup, no installers, no version conflicts. Just code.
+**In short:** You create and organise exercises in the source repo. You package them into a template. Classroom hands copies to students. Students work in Codespaces. Git tracks everything. Autograding (currently broken) reports back.
