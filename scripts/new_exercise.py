@@ -263,5 +263,6 @@ def main() -> int:
     print(f"- {test_path.relative_to(ROOT)}")
     return 0
 
+
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -227,7 +227,8 @@ class ExerciseScaffold(ABC):
 
         type_specific_lines = self._build_type_specific_test_lines()
         # Check if debug imports are needed
-        has_debug_imports = any("get_explanation_cell" in line for line in type_specific_lines)
+        has_debug_imports = any(
+            "get_explanation_cell" in line for line in type_specific_lines)
         if has_debug_imports:
             lines.append("    get_explanation_cell,")
 
@@ -306,7 +307,8 @@ class ExerciseScaffold(ABC):
 
     def build_expectations_module(self) -> str:
         """Return the content of ``tests/expectations.py`` as a string."""
-        comma_separated_keys = ", ".join(f'{i}: ""' for i in range(1, self.parts + 1))
+        comma_separated_keys = ", ".join(
+            f'{i}: ""' for i in range(1, self.parts + 1))
         return (
             f'"""Exercise-local expectations for {self.exercise_key}."""\n'
             "from __future__ import annotations\n"
