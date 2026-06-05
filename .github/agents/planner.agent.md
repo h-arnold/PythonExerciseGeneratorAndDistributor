@@ -1,7 +1,7 @@
 ---
 name: Planner
 description: Drafts SPEC.md, optional layout/workflow specs, and ACTION_PLAN.md for exercise-authoring, notebook, grading, packaging, and tooling changes.
-tools: [execute, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/readFile, read/viewImage, read/readNotebookCellOutput, agent, edit/createFile, edit/editFiles, search, web, todo]
+tools: [execute/getTerminalOutput, execute/killTerminal, execute/sendToTerminal, execute/runTask, execute/createAndRunTask, execute/runTests, execute/testFailure, execute/runNotebookCell, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/readFile, read/viewImage, read/readNotebookCellOutput, agent/runSubagent, edit/createFile, edit/editFiles, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/githubRepo, web/githubTextSearch, todo, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
 user-invocable: true
 ---
 
