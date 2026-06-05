@@ -21,11 +21,11 @@ import argparse
 import datetime as _dt
 import json
 import re
-import uuid
 from pathlib import Path
 from typing import Any
 
 from exercise_metadata.schema import SCHEMA_VERSION
+from scripts.exercise_scaffolder.base import _make_meta
 from scripts.template_repo_cli.utils.validation import VALID_CONSTRUCTS, validate_construct_name
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,15 +42,6 @@ def _slugify(text: str) -> str:
     if not text:
         raise SystemExit("Slug is empty; provide --slug or a better title.")
     return text
-
-
-def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
-    """Create cell metadata dictionary."""
-    meta: dict[str, object] = {
-        "id": uuid.uuid4().hex[:8], "language": language}
-    if tags:
-        meta["tags"] = tags
-    return meta
 
 
 def _make_debug_cells(parts: int) -> list[dict[str, Any]]:
