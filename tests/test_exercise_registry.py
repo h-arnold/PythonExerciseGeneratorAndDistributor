@@ -21,9 +21,10 @@ CANONICAL_EXERCISE_ID = 4
 
 
 def _expected_all_keys() -> list[str]:
-    """Return all exercise keys from the filesystem."""
+    """Return all exercise keys from the filesystem, sorted by exercise_id."""
     exercises_root = Path(__file__).resolve().parents[1] / "exercises"
-    return sorted(p.parent.name for p in exercises_root.rglob("exercise.json"))
+    keys = [p.parent.name for p in exercises_root.rglob("exercise.json")]
+    return sorted(keys, key=lambda key: int(key.split("_")[0].removeprefix("ex")))
 
 
 def test_build_exercise_registry_returns_all_exercises() -> None:
