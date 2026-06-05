@@ -313,9 +313,10 @@ class ExerciseScaffold(ABC):
             "\n"
             "from typing import Final\n"
             "\n"
-            f"EX{self.exercise_id:03d}_EXPECTED_OUTPUTS: Final[dict[int, str]] = {{\n"
+            f"EX{self.exercise_id:03d}_EXPECTED_OUTPUTS: Final[dict[int, str]]"
+            f" = {{\n"
             f"    {comma_separated_keys}\n"
-            "}}\n"
+            "}\n"
         )
 
     def build_student_checker_support(self) -> str:

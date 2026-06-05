@@ -245,9 +245,8 @@ Each subclass overrides:
 - [x] Gate I implemented (_check_runtime_self_check with monkeypatch support)
 - [x] Gates wired into main() (only when metadata is valid)
 - [x] Checks passed (all 21 verifier tests pass, full suite passes, ruff lint clean)
-- [x] Action plan updated
-- [ ] Commit created
-- [ ] Push completed
+- [x] Commit created
+- [x] Push completed
 
 **Deviations from plan**: Used direct file import (`_load_exercise_local_module`) instead of `load_exercise_test_module` to avoid dependency on the runtime exercise resolver. Added `_write_notebook` variant parameter to test helper to match new gate expectations. Updated existing assertion strings to match new gate output format.
 
@@ -264,12 +263,20 @@ Each subclass overrides:
 4. Confirm lint: `ruff check .`
 
 **Acceptance criteria**:
-- [ ] Full test suite passes.
-- [ ] Solution variant tests pass.
-- [ ] Scaffolded exercise passes all verification gates.
-- [ ] Zero lint errors.
+- [x] Full test suite passes.
+- [x] Solution variant tests pass.
+- [x] Scaffolded exercise passes all verification gates.
+- [x] Zero lint errors.
 
 **Review point**: Final review before handoff.
+
+### Stage 6 — Implementation notes
+
+**Status**: ✅ Complete
+
+- Fixed `build_expectations_module()` double-brace syntax error in scaffolded output
+- Full suite passes, solution variant passes, lint clean
+- Scaffolded a test exercise and confirmed verifier runs all gates
 
 ---
 
