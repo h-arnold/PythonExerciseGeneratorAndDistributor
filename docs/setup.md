@@ -2,12 +2,6 @@
 
 This guide covers setting up the PythonExerciseGeneratorAndDistributor repository for development or use in a classroom.
 
-> Source of truth: execution/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
-
-## Repository status
-
-Use `--variant` workflows as the canonical way to select student/solution notebooks. The source repository now uses the exercise-local layout under `exercises/<construct>/<exercise_key>/`; packaging may produce derived outputs, but canonical exercise-specific tests stay under each exercise's own `tests/` directory.
-
 ## Recommended environment
 
 For a consistent toolchain, open the repository in GitHub Codespaces or the supplied VS Code Dev Container (`.devcontainer/devcontainer.json`). The container image installs Python 3.11, uv, the GitHub CLI, and Git LFS, then runs `uv sync` and activates the virtual environment automatically. Wait for the post-create tasks to finish before running commands.
