@@ -4,7 +4,7 @@ This document describes the testing framework for the **codebase itself**, ensur
 
 For details on **testing student notebooks**, see [Exercise Testing](exercise-testing.md).
 
-> Source of truth: execution/discovery/runtime contracts are defined in [docs/execution-model.md](execution-model.md).
+> Source of truth: execution/discovery/runtime contracts are defined in [docs/developers/execution-model.md](execution-model.md).
 
 ## Repository status
 
@@ -82,7 +82,7 @@ Integration tests for the template repository CLI. These tests verify:
 
 This repository provides a small set of shared helpers used across infrastructure tests and the CLI; knowing their locations helps future contributors write consistent tests and tools.
 
-- `tests/exercise_framework/` — the current notebook testing framework. Use `runtime.py` for execution helpers, `constructs.py` for AST checks, `assertions.py` for consistent messages, and `reporting.py` for table output. Detailed behaviour for notebook grading is documented in `docs/exercise-testing.md`.
+- `tests/exercise_framework/` — the current notebook testing framework. Use `runtime.py` for execution helpers, `constructs.py` for AST checks, `assertions.py` for consistent messages, and `reporting.py` for table output. Detailed behaviour for notebook grading is documented in `docs/exercise-agents/exercise-testing.md`.
 
 - `exercise_runtime_support/notebook_grader.py` — low-level grading helpers (JSON parsing, tagged cell extraction, execution). The compatibility wrapper at `tests/notebook_grader.py` exists for repository/test-template parity.
 

@@ -18,10 +18,10 @@ You are the post-change reviewer for PythonExerciseGeneratorAndDistributor. Veri
 
 1. Read `AGENTS.md`
 2. Read:
-   - `docs/project-structure.md`
-   - `docs/execution-model.md`
-   - `docs/testing-framework.md`
-   - `docs/development.md`
+   - `docs/developers/project-structure.md`
+   - `docs/developers/execution-model.md`
+   - `docs/developers/testing-framework.md`
+   - `docs/developers/development.md`
 3. Inspect the change summary or diff before drawing conclusions
 
 ## 1. Repository Overview

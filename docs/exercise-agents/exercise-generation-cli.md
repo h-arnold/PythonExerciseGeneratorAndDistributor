@@ -386,7 +386,7 @@ Students are given a partial program and must write the missing line(s) of code 
 2. Code cell with partial program and `# YOUR CODE HERE — <description>` comment(s)
 3. Tests verify the corrected output
 
-See `docs/exercise-types/gaps.md` for full authoring rules.
+See `docs/exercise-agents/exercise-types/gaps.md` for full authoring rules.
 
 ## Multi-Part Notebooks (10 exercises)
 

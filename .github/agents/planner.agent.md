@@ -20,13 +20,13 @@ You turn a request into a concise, reviewable plan. Keep the workflow local, seq
    - whether the work is exercise authoring, notebook content, grading, packaging, or repository tooling
 2. Read the local source of truth before drafting anything:
    - `AGENTS.md`
-   - `docs/project-structure.md`
-   - `docs/execution-model.md`
-   - `docs/testing-framework.md`
-   - `docs/development.md`
-   - `docs/exercise-generation.md`
-   - `docs/exercise-generation-cli.md`
-   - `docs/pedagogy.md`
+   - `docs/developers/project-structure.md`
+   - `docs/developers/execution-model.md`
+   - `docs/developers/testing-framework.md`
+   - `docs/developers/development.md`
+   - `docs/teachers/exercise-generation.md`
+   - `docs/exercise-agents/exercise-generation-cli.md`
+   - `docs/teachers/pedagogy.md`
 3. If the request concerns exercises, confirm the canonical exercise-local model:
    - `exercises/<construct>/<exercise_key>/`
    - `notebooks/student.ipynb`

@@ -27,11 +27,11 @@ If any part is missing, gather the nearest relevant context first and ask only i
 
 1. **Read local source of truth before changing anything:**
    - `AGENTS.md`
-   - `docs/project-structure.md`
-   - `docs/execution-model.md`
-   - `docs/testing-framework.md`
-   - `docs/setup.md`
-   - `docs/development.md`
+   - `docs/developers/project-structure.md`
+   - `docs/developers/execution-model.md`
+   - `docs/developers/testing-framework.md`
+   - `docs/developers/setup.md`
+   - `docs/developers/development.md`
 
 2. **Use the project's `uv`-managed environment:**
    - Prefer `uv run ...`
@@ -117,11 +117,11 @@ If any part is missing, gather the nearest relevant context first and ask only i
 - Use `ruff` for linting
 - Use repository's notebook helpers and variant runner when working with exercises
 - **Primary reference docs:**
-  - `docs/project-structure.md`
-  - `docs/execution-model.md`
-  - `docs/testing-framework.md`
-  - `docs/setup.md`
-  - `docs/development.md`
+  - `docs/developers/project-structure.md`
+  - `docs/developers/execution-model.md`
+  - `docs/developers/testing-framework.md`
+  - `docs/developers/setup.md`
+  - `docs/developers/development.md`
 - If `uv` or `pytest` fails due to stale environment: attempt `uv sync` once before reporting
 - Do NOT treat student-variant failures as bugs when task is about solution validation
 - DO treat solution-variant failures as defects

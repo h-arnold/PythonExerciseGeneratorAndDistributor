@@ -25,7 +25,7 @@ If any part is missing, gather the nearest relevant context first and ask only i
 
 ### Phase 1: Preparation
 
-1. Read the local source of truth before changing anything. Prioritise `AGENTS.md`, `docs/project-structure.md`, `docs/execution-model.md`, `docs/testing-framework.md`, `docs/setup.md`, and `docs/development.md`.
+1. Read the local source of truth before changing anything. Prioritise `AGENTS.md`, `docs/developers/project-structure.md`, `docs/developers/execution-model.md`, `docs/developers/testing-framework.md`, `docs/developers/setup.md`, and `docs/developers/development.md`.
 2. Use the project's `uv`-managed environment. Prefer `uv run ...`; if the environment is not ready, run `uv sync` and then continue in `.venv`.
 3. Keep the search local. Form one falsifiable hypothesis about the controlling code path and one cheap check that could disprove it.
 4. For exercise work, confirm the canonical exercise-local layout first:
@@ -96,11 +96,11 @@ If any part is missing, gather the nearest relevant context first and ask only i
 - Use `ruff` for linting.
 - Use the repository's notebook helpers and variant runner when working with exercises.
 - Use repository docs as the authority for workflow details; treat these files as primary references:
-  - `docs/project-structure.md`
-  - `docs/execution-model.md`
-  - `docs/testing-framework.md`
-  - `docs/setup.md`
-  - `docs/development.md`
+  - `docs/developers/project-structure.md`
+  - `docs/developers/execution-model.md`
+  - `docs/developers/testing-framework.md`
+  - `docs/developers/setup.md`
+  - `docs/developers/development.md`
 - If `uv` or `pytest` fails because the environment is stale, attempt `uv sync` once before reporting the problem.
 - Do not treat student-variant failures as bugs when the task is about solution validation; student failures are expected.
 - Do treat solution-variant failures as defects.

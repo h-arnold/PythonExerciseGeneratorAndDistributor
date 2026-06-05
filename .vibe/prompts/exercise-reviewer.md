@@ -23,10 +23,10 @@ If the calling agent did not specify what to verify, infer the target exercise b
 
 ## Reference documents (MUST follow)
 Always open and follow the relevant exercise-type guide **in full** before reviewing:
-- Debug: `docs/exercise-types/debug.md`
-- Modify: `docs/exercise-types/modify.md`
-- Make: `docs/exercise-types/make.md`
-- Gap-fill: `docs/exercise-types/gaps.md`
+- Debug: `docs/exercise-agents/exercise-types/debug.md`
+- Modify: `docs/exercise-agents/exercise-types/modify.md`
+- Make: `docs/exercise-agents/exercise-types/make.md`
+- Gap-fill: `docs/exercise-agents/exercise-types/gaps.md`
 
 Also keep these repo rules in mind:
 - Tag-based extraction: the exercise framework runtime uses `cell.metadata.tags`.

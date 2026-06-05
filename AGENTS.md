@@ -21,12 +21,12 @@ This repository provides notebook-based Python exercises with automated grading 
 
 **Documentation (fetch on demand)**: Only read these files when a question specifically requires detailed information. Use `cat` or `sed -n` to fetch the exact file needed.
 
-- `docs/project-structure.md` — project layout and file conventions
-- `docs/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
-- `docs/testing-framework.md` — how the grading and test system works
-- `docs/exercise-generation-cli.md` — CLI for scaffolding new exercises
-- `docs/setup.md` — installation and environment setup
-- `docs/development.md` — contributor and development guidelines
+- `docs/developers/project-structure.md` — project layout and file conventions
+- `docs/developers/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
+- `docs/developers/testing-framework.md` — how the grading and test system works
+- `docs/exercise-agents/exercise-generation-cli.md` — CLI for scaffolding new exercises
+- `docs/developers/setup.md` — installation and environment setup
+- `docs/developers/development.md` — contributor and development guidelines
 
 ## Repository Structure
 
@@ -190,8 +190,8 @@ Delegate to the **Exercise Generation** agent and it will handle that workflow.
 ### Tools
 
 - `scripts/new_exercise.py` for scaffolding
-- The testing framework for grading (`docs/testing-framework.md`)
-- `docs/exercise-testing.md` for test creation conventions
+- The testing framework for grading (`docs/developers/testing-framework.md`)
+- `docs/exercise-agents/exercise-testing.md` for test creation conventions
 
 ### Canonical paths
 
@@ -214,7 +214,7 @@ Resolver contract note:
 
 When developing or validating repository-side exercises, run the canonical exercise-local tests directly with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`, or use `uv run ./scripts/verify_solutions.sh -q` for a broader solution pass.
 
-See Testing Framework: `docs/testing-framework.md` for details.
+See Testing Framework: `docs/developers/testing-framework.md` for details.
 
 ## Calling Sub-Agents
 

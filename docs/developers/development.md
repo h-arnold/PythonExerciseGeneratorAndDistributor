@@ -2,7 +2,7 @@
 
 This guide is for contributors and maintainers working on the Python Tutor Exercises infrastructure.
 
-> Source of truth: execution and variant contracts are defined in [docs/execution-model.md](execution-model.md). The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
+> Source of truth: execution and variant contracts are defined in [execution-model.md](execution-model.md). The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
 ## Repository status
 
@@ -138,7 +138,7 @@ When modifying grading logic:
 
 1. **Preserve backwards compatibility**: Existing tests must continue to work
 2. **Keep it simple**: Students need to understand error messages
-3. **Document behaviour**: Update `docs/testing-framework.md`
+3. **Document behaviour**: Update `docs/developers/testing-framework.md`
 4. **Test edge cases**: Invalid JSON, missing tags, malformed cells
 
 ## Autograding Development Workflow
@@ -171,14 +171,14 @@ uv run python scripts/build_autograde_payload.py \
     --results-json=tmp/autograde/results.json
 ```
 
-If you omit `--variant`, the script exercises the solution notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/autograding-cli.md](autograding-cli.md).
+If you omit `--variant`, the script exercises the solution notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/developers/autograding-cli.md](autograding-cli.md).
 
 ### Test workflow changes safely
 
 - Use [act](https://github.com/nektos/act) to dry-run workflow edits against the repository configuration before pushing
 - Push experiment branches to a sandbox Classroom template and run the full workflow end-to-end
 - Keep payload fields backward compatible: preserve the plugin option names, JSON structure, and Base64 encoding so existing Classroom assignments keep working
-- Review the GitHub Classroom integration guidance in [docs/github-classroom-autograding-guide.md](github-classroom-autograding-guide.md) when adjusting CI steps
+- Review the GitHub Classroom integration guidance in [docs/teachers/github-classroom-autograding-guide.md](../teachers/github-classroom-autograding-guide.md) when adjusting CI steps
 
 ## Working on the Exercise Generator
 
@@ -217,7 +217,7 @@ When adding features:
 
 1. **Update argument parsing**: Add new CLI flags if needed
 2. **Update template generation**: Modify `_make_notebook_with_parts()` for notebook changes
-3. **Update documentation**: Reflect changes in `docs/exercise-generation-cli.md` (instructions for using the exercise generation CLI tool to scaffold new Python exercises)
+3. **Update documentation**: Reflect changes in `docs/exercise-agents/exercise-generation-cli.md` (instructions for using the exercise generation CLI tool to scaffold new Python exercises)
 4. **Test the generated output**: Ensure notebooks and tests work correctly
 
 ## Code Quality Standards
@@ -431,8 +431,8 @@ When updating documentation:
 
 Documentation structure:
 
-- `docs/project-structure.md`: Repository organisation
-- `docs/testing-framework.md`: How grading works
-- `docs/exercise-generation-cli.md`: Instructions for using the exercise generation CLI tool to scaffold new Python exercises
-- `docs/setup.md`: Installation and configuration
-- `docs/development.md`: This file - contributor guide
+- `docs/developers/project-structure.md`: Repository organisation
+- `docs/developers/testing-framework.md`: How grading works
+- `docs/exercise-agents/exercise-generation-cli.md`: Instructions for using the exercise generation CLI tool to scaffold new Python exercises
+- `docs/developers/setup.md`: Installation and configuration
+- `docs/developers/development.md`: This file - contributor guide

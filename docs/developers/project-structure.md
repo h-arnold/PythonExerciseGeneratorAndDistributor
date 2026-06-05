@@ -8,6 +8,11 @@ This document describes the organisation of the PythonExerciseGeneratorAndDistri
 PythonExerciseGeneratorAndDistributor/
 ├── .github/                   # Repo automation, workflows, and Copilot instructions
 ├── docs/                      # Project documentation and contributor guides
+│   ├── teachers/              # Teacher-facing documentation
+│   ├── exercise-agents/       # Documentation for exercise generation agents
+│   ├── developers/            # Developer and contributor documentation
+│   ├── agents/                # Agent pipeline specs (plan templates, code review)
+│   └── images/                # Images used in documentation
 ├── exercises/                 # Canonical authoring tree for exercise-specific assets
 │   └── <construct>/<exercise_key>/
 │       ├── exercise.json      # Canonical metadata; exercise type lives here
@@ -36,7 +41,13 @@ PythonExerciseGeneratorAndDistributor/
 
 ### `docs/`
 
-Contributor-facing documentation covering setup, development workflow, testing, and exercise authoring. The `docs/agents/` subdirectory holds specifications for automated reviewers such as the tidy-code agent.
+Documentation is organised by audience:
+
+- `docs/teachers/` — Teacher-facing guides (pedagogy, exercise generation with Copilot, template CLI, Classroom integration)
+- `docs/exercise-agents/` — Agent-facing references for exercise generation and testing (CLI scaffold tool, testing conventions, exercise-type formats)
+- `docs/developers/` — Developer and contributor documentation (setup, architecture, testing framework, execution model, autograding CLI)
+- `docs/agents/` — Agent pipeline specifications (plan templates, tidy code review processes)
+- `docs/images/` — Images used across documentation
 
 ### `exercises/`
 

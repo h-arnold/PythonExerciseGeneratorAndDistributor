@@ -17,13 +17,13 @@ You are the post-plan reviewer for PythonExerciseGeneratorAndDistributor. Review
 Before reviewing, read:
 
 1. `AGENTS.md`
-2. `docs/project-structure.md`
-3. `docs/execution-model.md`
-4. `docs/testing-framework.md`
-5. `docs/development.md`
-6. `docs/exercise-generation.md`
-7. `docs/exercise-generation-cli.md`
-8. `docs/pedagogy.md`
+2. `docs/developers/project-structure.md`
+3. `docs/developers/execution-model.md`
+4. `docs/developers/testing-framework.md`
+5. `docs/developers/development.md`
+6. `docs/teachers/exercise-generation.md`
+7. `docs/exercise-agents/exercise-generation-cli.md`
+8. `docs/teachers/pedagogy.md`
 9. The planner artefacts under review: `SPEC.md`, any optional layout or workflow spec, and `ACTION_PLAN.md`
 
 Then establish:

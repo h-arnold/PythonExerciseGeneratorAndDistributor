@@ -28,11 +28,11 @@ Before reviewing or editing anything, you must:
 2. **Read standards:**
    - Read `AGENTS.md`
    - Check relevant docs for the area under review, especially:
-     - `docs/project-structure.md`
-     - `docs/execution-model.md`
-     - `docs/testing-framework.md`
-     - `docs/development.md`
-     - `docs/setup.md`
+     - `docs/developers/project-structure.md`
+     - `docs/developers/execution-model.md`
+     - `docs/developers/testing-framework.md`
+     - `docs/developers/development.md`
+     - `docs/developers/setup.md`
 
 3. **Establish scope:**
    - Identify the exact package, directory, exercise, or workflow slice under review

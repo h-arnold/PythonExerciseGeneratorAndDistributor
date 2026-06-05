@@ -18,14 +18,14 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 
 1. Read `AGENTS.md`
 2. Read local docs that govern the touched surface:
-   - `docs/project-structure.md`
-   - `docs/execution-model.md`
-   - `docs/testing-framework.md`
-   - `docs/development.md`
-   - `docs/exercise-generation.md`
-   - `docs/exercise-generation-cli.md`
-   - `docs/exercise-testing.md`
-   - `docs/autograding-cli.md`
+   - `docs/developers/project-structure.md`
+   - `docs/developers/execution-model.md`
+   - `docs/developers/testing-framework.md`
+   - `docs/developers/development.md`
+   - `docs/teachers/exercise-generation.md`
+   - `docs/exercise-agents/exercise-generation-cli.md`
+   - `docs/exercise-agents/exercise-testing.md`
+   - `docs/developers/autograding-cli.md`
 
 3. Identify the exact surface before running anything:
    - Repository infrastructure tests in `tests/`
@@ -86,7 +86,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 3. For notebook failures: compare student and solution variants, confirm active variant, inspect tagged cells plus `metadata.language`
 4. For path-resolution issues: confirm whether helper expects `exercise_key`, `Path`, or notebook path string
 5. For autograding issues: inspect raw results JSON before touching payload encoder
-6. For scaffold/template repository issues: compare generated tree against `docs/project-structure.md` and `docs/exercise-generation-cli.md`
+6. For scaffold/template repository issues: compare generated tree against `docs/developers/project-structure.md` and `docs/exercise-agents/exercise-generation-cli.md`
 7. Fix owning surface first, rerun same focused check, only then widen scope
 8. If failure is only on student variant and task is solution validation: treat as expected
 9. If solution variant fails: stop and treat as defect

@@ -23,7 +23,7 @@ Before reviewing or editing anything, you must:
    - Read enough surrounding code to understand the local pattern before judging it.
 2. **Read standards**:
    - Read [AGENTS.md].
-   - Check the relevant docs for the area under review, especially `docs/project-structure.md`, `docs/execution-model.md`, `docs/testing-framework.md`, `docs/development.md`, and `docs/setup.md`.
+   - Check the relevant docs for the area under review, especially `docs/developers/project-structure.md`, `docs/developers/execution-model.md`, `docs/developers/testing-framework.md`, `docs/developers/development.md`, and `docs/developers/setup.md`.
 3. **Establish scope**:
    - Identify the exact package, directory, exercise, or workflow slice under review.
    - Separate confirmed slop from mere style preference.
