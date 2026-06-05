@@ -6,61 +6,63 @@ Documentation is organised by audience. Choose the section that matches your rol
 
 ## 👩‍🏫 For Teachers
 
+If you are new to this project, start with [Getting Started](teachers/getting-started.md) — it walks you through everything from understanding the tools to creating your first assignment.
+
 | Document | What it covers |
-|---|---|
-| [`teachers/getting-started.md`](teachers/getting-started.md) | **Start here.** Five-step tutorial from understanding the tools → creating a template repo → setting up a GitHub Classroom assignment → creating your first exercise. |
-| [`teachers/understanding-the-tools.md`](teachers/understanding-the-tools.md) | Plain-English explanation of GitHub, Classroom, Codespaces, version control, and Jupyter notebooks — and how they fit together. |
-| [`teachers/classroom-practices.md`](teachers/classroom-practices.md) | Day-to-day lesson tips: starting Codespaces early, using the self-checker, good git habits, troubleshooting common issues. |
-| [`teachers/creating-and-editing-exercises.md`](teachers/creating-and-editing-exercises.md) | How to create new exercises (with the AI assistant) or tweak existing ones — including branching, verifying, and committing. |
-| [`teachers/it-network-requirements.md`](teachers/it-network-requirements.md) | For IT teams — what domains to unblock, security isolation model, and why Codespaces is better than local Python installs. |
-| [`teachers/pedagogy.md`](teachers/pedagogy.md) | The MDM (Modify, Debug, Make) pedagogical framework — why this approach works. |
-| [`teachers/exercise-generation.md`](teachers/exercise-generation.md) | Detailed reference for using the Exercise Generation Copilot agent to create new exercises. |
-| [`teachers/how-to-use-the-template-repo-cli.md`](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
-| [`developers/template_repo_cli.md`](developers/template_repo_cli.md) | Full CLI reference — all flags, options, and technical details. |
-| [`developers/github-classroom-autograding-guide.md`](developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
+| --- | --- |
+| [Getting Started](teachers/getting-started.md) | **Start here.** Six-step tutorial from understanding the tools → creating a template repo → setting up a GitHub Classroom assignment → student workflow → creating your first exercise. |
+| [Understanding the Tools](teachers/understanding-the-tools.md) | Plain-English explanation of GitHub, Classroom, Codespaces, version control, and Jupyter notebooks — and how they fit together. |
+| [Classroom Practices](teachers/classroom-practices.md) | Day-to-day lesson tips: starting Codespaces early, using the self-checker, good git habits, troubleshooting common issues. |
+| [Creating and Editing Exercises](teachers/creating-and-editing-exercises.md) | How to create new exercises (with the AI assistant) or tweak existing ones — including branching, verifying, and committing. |
+| [IT Network Requirements](teachers/it-network-requirements.md) | For IT teams — what domains to unblock, security isolation model, and why Codespaces is better than local Python installs. |
+| [Pedagogy](teachers/pedagogy.md) | The MDM (Modify, Debug, Make) pedagogical framework — why this approach works. |
+| [Exercise Generation with Copilot](teachers/exercise-generation.md) | Detailed reference for using the Exercise Generation Copilot agent to create new exercises. |
+| [How to Use the Template Repo CLI](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
+| [Template Repo CLI Reference](../developers/template_repo_cli.md) | Full CLI reference — all flags, options, and technical details. |
+| [GitHub Classroom Autograding Guide](../developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
 
 ---
 
 ## 🤖 For Exercise Generation Agents
 
 | Document | What it covers |
-|---|---|
-| [`exercise-agents/exercise-generation-cli.md`](exercise-agents/exercise-generation-cli.md) | CLI scaffold tool (`new_exercise.py`) — syntax, flags, post-creation workflow. |
-| [`exercise-agents/exercise-testing.md`](exercise-agents/exercise-testing.md) | Testing conventions — philosophy, scoring, patterns, anti-patterns, API reference. |
-| [`exercise-agents/exercise-types/debug.md`](exercise-agents/exercise-types/debug.md) | Debug exercise format — cell structure, error progression, tagging. |
-| [`exercise-agents/exercise-types/modify.md`](exercise-agents/exercise-types/modify.md) | Modify exercise format — cell structure, scaffolding, progression. |
-| [`exercise-agents/exercise-types/make.md`](exercise-agents/exercise-types/make.md) | Make exercise format — cell structure, tagged-cell grading model. |
-| [`exercise-agents/exercise-types/gaps.md`](exercise-agents/exercise-types/gaps.md) | Gap-fill exercise format — gap conventions, scaffolding progression. |
+| --- | --- |
+| [Exercise Generation CLI](exercise-agents/exercise-generation-cli.md) | CLI scaffold tool (`new_exercise.py`) — syntax, flags, post-creation workflow. |
+| [Exercise Testing](exercise-agents/exercise-testing.md) | Testing conventions — philosophy, scoring, patterns, anti-patterns, API reference. |
+| [Debug Exercise Format](exercise-agents/exercise-types/debug.md) | Debug exercise format — cell structure, error progression, tagging. |
+| [Modify Exercise Format](exercise-agents/exercise-types/modify.md) | Modify exercise format — cell structure, scaffolding, progression. |
+| [Make Exercise Format](exercise-agents/exercise-types/make.md) | Make exercise format — cell structure, tagged-cell grading model. |
+| [Gap-fill Exercise Format](exercise-agents/exercise-types/gaps.md) | Gap-fill exercise format — gap conventions, scaffolding progression. |
 
 ---
 
 ## 🛠️ For Developers & Coding Agents
 
 | Document | What it covers |
-|---|---|
-| [`developers/development.md`](developers/development.md) | Contributor guide — architecture, grading internals, autograding dev workflow. |
-| [`developers/execution-model.md`](developers/execution-model.md) | **Canonical contract** — test discovery, runtime imports, variant selection, source-to-export mapping. |
-| [`developers/project-structure.md`](developers/project-structure.md) | Directory layout, naming conventions, tagged cell system, parallel notebook sets. |
-| [`developers/testing-framework.md`](developers/testing-framework.md) | Infrastructure testing — testing the codebase itself (scaffolding, grader, CLI). |
-| [`developers/setup.md`](developers/setup.md) | Environment setup — prerequisites, uv sync, verification. |
-| [`developers/template_repo_cli.md`](developers/template_repo_cli.md) | Full CLI reference for `template_repo_cli` — all flags, options, and technical details. |
-| [`developers/github-classroom-autograding-guide.md`](developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
-| [`developers/docker-devcontainer-setup.md`](developers/docker-devcontainer-setup.md) | Dockerfile, devcontainer configs, GitHub Actions image build. |
-| [`developers/autograding-cli.md`](developers/autograding-cli.md) | Technical reference for `build_autograde_payload.py` — CLI args, outputs, CI usage. |
+| --- | --- |
+| [Development Guide](developers/development.md) | Contributor guide — architecture, grading internals, autograding dev workflow. |
+| [Execution Model](developers/execution-model.md) | **Canonical contract** — test discovery, runtime imports, variant selection, source-to-export mapping. |
+| [Project Structure](developers/project-structure.md) | Directory layout, naming conventions, tagged cell system, parallel notebook sets. |
+| [Testing Framework](developers/testing-framework.md) | Infrastructure testing — testing the codebase itself (scaffolding, grader, CLI). |
+| [Setup Guide](developers/setup.md) | Environment setup — prerequisites, uv sync, verification. |
+| [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `template_repo_cli` — all flags, options, and technical details. |
+| [GitHub Classroom Autograding Guide](developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
+| [Docker & Devcontainer Setup](developers/docker-devcontainer-setup.md) | Dockerfile, devcontainer configs, GitHub Actions image build. |
+| [Autograding CLI Reference](developers/autograding-cli.md) | Technical reference for `build_autograde_payload.py` — CLI args, outputs, CI usage. |
 
 ---
 
 ## ⚙️ Agent Pipeline Specs
 
 | Document | What it covers |
-|---|---|
-| [`agents/plan_templates/`](agents/plan_templates/) | Templates for SPEC and ACTION_PLAN documents used by the Planner and Planner Reviewer agents. |
-| [`agents/tidy_code_review/`](agents/tidy_code_review/) | Automated and manual code review procedures for the Tidy Code Reviewer agent. |
+| --- | --- |
+| [Plan Templates](agents/plan_templates/) | Templates for SPEC and ACTION_PLAN documents used by the Planner and Planner Reviewer agents. |
+| [Tidy Code Review](agents/tidy_code_review/) | Automated and manual code review procedures for the Tidy Code Reviewer agent. |
 
 ---
 
 ## 🖼️ Media
 
 | Path | Contents |
-|---|---|
-| [`images/`](images/) | Screenshots and diagrams used across documentation. |
+| --- | --- |
+| [Images](images/) | Screenshots and diagrams used across documentation. |

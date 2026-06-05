@@ -1,7 +1,7 @@
 ---
 name: Tidy Code Reviewer
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
-tools: [vscode/getProjectSetupInfo, vscode/memory, vscode/vscodeAPI, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, edit/editFiles, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
+tools: [vscode/memory, vscode/vscodeAPI, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/testFailure, execute/runNotebookCell, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, edit/editFiles, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
 user-invocable: true
 ---
 

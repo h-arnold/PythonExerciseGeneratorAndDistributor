@@ -14,7 +14,7 @@ This guide covers the day-to-day habits that make lessons run smoothly, from sta
 
 ## Start of Lesson: Fire Up Codespaces First
 
-Codespaces takes about 30–60 seconds to start. The golden rule is:
+Codespaces can take up to 5 minutes to build. Therefore:
 
 > **Tell students to open their Codespace as soon as they log in, not when you say "open your work."**
 
