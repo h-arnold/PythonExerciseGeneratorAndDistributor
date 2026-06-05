@@ -63,7 +63,7 @@ class ExerciseScaffold(ABC):
         cells.extend(self._build_header_cells(exercise_type, self.test_target))
         cells.extend(self._build_exercise_cells())
         cells.append(self._build_scratch_cell())
-        cells.append(self._build_check_answers_cell(variant))
+        cells.append(self.build_check_answers_cell(variant))
 
         return {
             "cells": cells,
@@ -145,7 +145,7 @@ class ExerciseScaffold(ABC):
             ],
         }
 
-    def _build_check_answers_cell(self, variant: str) -> dict[str, Any]:
+    def build_check_answers_cell(self, variant: str) -> dict[str, Any]:
         """Return the self-checker cell that sets the notebook variant."""
         return {
             "cell_type": "code",

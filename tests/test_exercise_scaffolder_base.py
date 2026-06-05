@@ -16,7 +16,7 @@ from scripts.exercise_scaffolder.base import ExerciseScaffold
 class _ConcreteScaffold(ExerciseScaffold):
     """Minimal concrete subclass for testing base-class behaviour."""
 
-    def _build_exercise_cells(self) -> list[dict]:
+    def _build_exercise_cells(self) -> list[dict[str, Any]]:
         return []
 
     def _build_exercise_body_test_lines(self) -> list[str]:
@@ -70,48 +70,48 @@ class TestBuildCheckAnswersCell:
         )
 
     def test_student_variant_sets_student_env_var(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("student")
+        cell = scaffold.build_check_answers_cell("student")
         source = _source_text(cell)
 
         assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
         assert '"student"' in source
 
     def test_student_variant_does_not_contain_solution(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("student")
+        cell = scaffold.build_check_answers_cell("student")
         source = _source_text(cell)
 
         assert '"solution"' not in source
 
     def test_solution_variant_sets_solution_env_var(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("solution")
+        cell = scaffold.build_check_answers_cell("solution")
         source = _source_text(cell)
 
         assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
         assert '"solution"' in source
 
     def test_solution_variant_does_not_contain_student(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("solution")
+        cell = scaffold.build_check_answers_cell("solution")
         source = _source_text(cell)
 
         assert '"student"' not in source
 
     def test_cell_type_is_code(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("student")
+        cell = scaffold.build_check_answers_cell("student")
         assert cell["cell_type"] == "code"
 
     def test_cell_contains_run_notebook_checks(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("student")
+        cell = scaffold.build_check_answers_cell("student")
         source = _source_text(cell)
 
         assert "run_notebook_checks(" in source
         assert "'ex014'" in source
 
     def test_cell_has_execution_count_none(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("student")
+        cell = scaffold.build_check_answers_cell("student")
         assert cell["execution_count"] is None
 
     def test_cell_has_empty_outputs(self, scaffold: _ConcreteScaffold) -> None:
-        cell = scaffold._build_check_answers_cell("student")
+        cell = scaffold.build_check_answers_cell("student")
         assert cell["outputs"] == []
 
 
@@ -378,7 +378,7 @@ class TestBuildNotebook:
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
         notebook = scaffold.build_notebook("student")
-        cells = notebook["cells"]
+        cells: list[Any] = notebook["cells"]
         assert isinstance(cells, list)
         assert len(cells) > 0
 
@@ -387,7 +387,7 @@ class TestBuildNotebook:
             "My Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
         notebook = scaffold.build_notebook("student")
-        cells = notebook["cells"]
+        cells: list[Any] = notebook["cells"]
         assert cells[0]["cell_type"] == "markdown"
         source = _source_text(cells[0])
         assert "My Title" in source
@@ -397,7 +397,7 @@ class TestBuildNotebook:
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
         notebook = scaffold.build_notebook("student")
-        cells = notebook["cells"]
+        cells: list[Any] = notebook["cells"]
         # The last two cells should be scratch + check-answers
         assert cells[-2]["cell_type"] == "code"
         assert cells[-1]["cell_type"] == "code"
@@ -409,7 +409,7 @@ class TestBuildNotebook:
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
         notebook = scaffold.build_notebook("student")
-        cells = notebook["cells"]
+        cells: list[Any] = notebook["cells"]
         last_source = _source_text(cells[-1])
         assert "run_notebook_checks(" in last_source
         assert "'ex014'" in last_source

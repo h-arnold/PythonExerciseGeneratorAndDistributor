@@ -15,8 +15,6 @@ def test_scaffolder_runtime_import_contract() -> None:
     assert "    resolve_exercise_notebook_path," in base_source
     assert "    run_cell_and_capture_output," in base_source
 
-    debug_source = Path(
-        "scripts/exercise_scaffolder/debug.py").read_text(encoding="utf-8")
     assert "    get_explanation_cell," in base_source
     # Explanation helpers are in the debug subclass only
     assert (
