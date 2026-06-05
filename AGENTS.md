@@ -185,21 +185,7 @@ Exercise creation follows a **two-phase workflow** with a teacher review gate be
 
 ### Phase 1 — Exercise Authoring (notebooks + docs)
 
-Delegate to the **Exercise Generation** agent, then the **Exercise Reviewer** agent:
-
-1. **Exercise Generation** — scaffolds and authors student + solution notebooks
-2. **Exercise Reviewer** (Pass 1) — checks structure, sequencing, type compliance (Gates A, B, C)
-3. **Teacher reviews** and requests changes → loop back until approved
-4. **Exercise Generation** — generates supporting docs (README.md, OVERVIEW.md, OrderOfTeaching.md)
-5. **Exercise Reviewer** (Pass 2) — verifies teacher docs and ordering (Gates E, F)
-
-### Phase 2 — Exercise Testing (tests only)
-
-Once notebooks are approved and docs are in place, delegate to the **Exercise Test Creator**, then the **Exercise Test Reviewer**:
-
-1. **Exercise Test Creator** — writes robust pytest tests against approved notebooks
-2. **Exercise Test Reviewer** — reviews tests (Gate D: solution passes, student fails, coverage adequate)
-3. Loop between test creator and reviewer until tests are clean
+Delegate to the **Exercise Generation** agent and it will handle that workflow.
 
 ### Tools
 
