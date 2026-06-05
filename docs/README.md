@@ -8,8 +8,13 @@ Documentation is organised by audience. Choose the section that matches your rol
 
 | Document | What it covers |
 |---|---|
+| [`teachers/getting-started.md`](teachers/getting-started.md) | **Start here.** Five-step tutorial from understanding the tools → creating a template repo → setting up a GitHub Classroom assignment → creating your first exercise. |
+| [`teachers/understanding-the-tools.md`](teachers/understanding-the-tools.md) | Plain-English explanation of GitHub, Classroom, Codespaces, version control, and Jupyter notebooks — and how they fit together. |
+| [`teachers/classroom-practices.md`](teachers/classroom-practices.md) | Day-to-day lesson tips: starting Codespaces early, using the self-checker, good git habits, troubleshooting common issues. |
+| [`teachers/creating-and-editing-exercises.md`](teachers/creating-and-editing-exercises.md) | How to create new exercises (with the AI assistant) or tweak existing ones — including branching, verifying, and committing. |
+| [`teachers/it-network-requirements.md`](teachers/it-network-requirements.md) | For IT teams — what domains to unblock, security isolation model, and why Codespaces is better than local Python installs. |
 | [`teachers/pedagogy.md`](teachers/pedagogy.md) | The MDM (Modify, Debug, Make) pedagogical framework — why this approach works. |
-| [`teachers/exercise-generation.md`](teachers/exercise-generation.md) | Using the Exercise Generation Copilot agent to create new exercises. |
+| [`teachers/exercise-generation.md`](teachers/exercise-generation.md) | Detailed reference for using the Exercise Generation Copilot agent to create new exercises. |
 | [`teachers/how-to-use-the-template-repo-cli.md`](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
 | [`developers/template_repo_cli.md`](developers/template_repo_cli.md) | Full CLI reference — all flags, options, and technical details. |
 | [`developers/github-classroom-autograding-guide.md`](developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
