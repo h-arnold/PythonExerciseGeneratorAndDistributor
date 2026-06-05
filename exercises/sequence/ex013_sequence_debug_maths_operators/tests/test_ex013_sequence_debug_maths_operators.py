@@ -99,14 +99,6 @@ def _has_binop(tree: ast.AST, operator_type: type[ast.operator]) -> bool:
     )
 
 
-def _name_ids(tree: ast.AST) -> set[str]:
-    return {
-        node.id
-        for node in ast.walk(tree)
-        if isinstance(node, ast.Name)
-    }
-
-
 def _print_uses_name(tree: ast.AST, name: str) -> bool:
     for node in ast.walk(tree):
         if (
@@ -136,7 +128,7 @@ def test_exercise1_construct() -> None:
     assert _has_binop(
         tree, ast.FloorDiv), "Exercise 1 must use // (floor division)"
     source = _exercise_source(1)
-    assert "+ str(" not in source, "Exercise 1 must not use + concatenation"
+    assert "+ str(" not in source and "+str(" not in source, "Exercise 1 must not use + concatenation"
 
 
 @pytest.mark.task(taskno=1)
@@ -164,7 +156,7 @@ def test_exercise2_construct() -> None:
     assert _has_f_string(tree), "Exercise 2 must use an f-string"
     assert _has_binop(tree, ast.Mod), "Exercise 2 must use % (modulus)"
     source = _exercise_source(2)
-    assert "+ str(" not in source, "Exercise 2 must not use + concatenation"
+    assert "+ str(" not in source and "+str(" not in source, "Exercise 2 must not use + concatenation"
 
 
 @pytest.mark.task(taskno=2)
