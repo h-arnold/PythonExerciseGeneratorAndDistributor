@@ -7,7 +7,7 @@ import json
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
-DEFAULT_SCAN_PATHS = ("notebooks",)
+DEFAULT_SCAN_PATHS = ("exercises",)
 
 
 def iter_notebook_paths(paths: Iterable[Path]) -> set[Path]:

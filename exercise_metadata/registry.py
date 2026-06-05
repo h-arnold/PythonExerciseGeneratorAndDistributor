@@ -1,15 +1,15 @@
 """Exercise registry and catalogue helpers.
 
-This module builds shared metadata-derived views of the exercises declared in
-``exercises/migration_manifest.json``.
+This module builds shared metadata-derived views of the exercises discovered
+via filesystem scanning for ``exercise.json`` files under the exercises root.
 
-The registry preserves layout information and tolerates legacy exercises that do
-not yet have metadata. The catalogue is stricter: it requires metadata for every
-listed exercise so callers can rely on consistent ordering, titles, construct
-grouping, and display labels.
+All exercises are canonical (migration is complete); there are no legacy
+exercises. The catalogue requires metadata for every discovered exercise so
+callers can rely on consistent ordering, titles, construct grouping, and
+display labels.
 
-Exported Classroom repositories remain metadata-free by design. This module is a
-source-repository concern only.
+Exported Classroom repositories remain metadata-free by design. This module is
+a source-repository concern only.
 """
 
 from __future__ import annotations
@@ -18,17 +18,17 @@ from pathlib import Path
 from typing import TypedDict
 
 from exercise_metadata.loader import load_exercise_metadata
-from exercise_metadata.manifest import ExerciseLayout, load_migration_manifest
 from exercise_metadata.resolver import resolve_exercise_dir
 from exercise_metadata.schema import ExerciseMetadata
+
+_EXERCISES_ROOT = Path(__file__).resolve().parents[1] / "exercises"
 
 
 class RegistryEntry(TypedDict):
     """A single entry in the exercise registry."""
 
     exercise_key: str
-    layout: str
-    metadata: ExerciseMetadata | None
+    metadata: ExerciseMetadata
 
 
 class ExerciseCatalogueEntry(TypedDict):
@@ -42,7 +42,6 @@ class ExerciseCatalogueEntry(TypedDict):
     construct: str
     exercise_type: str
     parts: int
-    layout: str
 
 
 def build_display_label(exercise_id: int, title: str) -> str:
@@ -88,74 +87,69 @@ def _validate_metadata_identity(
 
 def _load_registry_metadata(
     exercise_key: str,
-    layout: ExerciseLayout,
     exercises_root: Path | None,
-) -> ExerciseMetadata | None:
-    """Load metadata for a registry entry when an ``exercise.json`` file exists."""
+) -> ExerciseMetadata:
+    """Load and validate metadata for a registry entry.
+
+    All exercises are canonical, so metadata is always required. Raises
+    ``RuntimeError`` immediately if the exercise directory or ``exercise.json``
+    cannot be resolved.
+
+    Returns:
+        Validated ``ExerciseMetadata``.
+    """
     try:
         exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
     except LookupError as exc:
-        if layout == ExerciseLayout.CANONICAL:
-            raise RuntimeError(
-                f"Failed to load metadata for canonical exercise {exercise_key!r}: {exc}"
-            ) from exc
-        return None
+        raise RuntimeError(
+            f"Failed to load metadata for exercise {exercise_key!r}: {exc}"
+        ) from exc
 
     try:
         metadata = load_exercise_metadata(exercise_dir)
         _validate_metadata_identity(exercise_key, exercise_dir, metadata)
         return metadata
-    except FileNotFoundError as exc:
-        if layout == ExerciseLayout.LEGACY:
-            return None
+    except (FileNotFoundError, ValueError) as exc:
         raise RuntimeError(
-            f"Failed to load metadata for {layout.value} exercise {exercise_key!r}: {exc}"
-        ) from exc
-    except ValueError as exc:
-        raise RuntimeError(
-            f"Failed to load metadata for {layout.value} exercise {exercise_key!r}: {exc}"
+            f"Failed to load metadata for exercise {exercise_key!r}: {exc}"
         ) from exc
 
 
 def build_exercise_registry(
-    manifest_path: Path | None = None,
     exercises_root: Path | None = None,
 ) -> list[RegistryEntry]:
-    """Build the full exercise registry from the migration manifest."""
-    manifest = load_migration_manifest(manifest_path)
-    exercises = manifest["exercises"]
+    """Build the exercise registry by discovering exercises via filesystem glob.
 
-    canonical_entries: list[RegistryEntry] = []
-    legacy_entries: list[RegistryEntry] = []
+    Scans the exercises root for ``exercise.json`` files using
+    ``rglob("exercise.json")``, loads metadata for each, and returns a
+    single list sorted by ``exercise_id``.
 
-    for exercise_key, entry in exercises.items():
-        layout = ExerciseLayout(entry["layout"])
-        metadata = _load_registry_metadata(
-            exercise_key, layout, exercises_root)
-        target = canonical_entries if layout == ExerciseLayout.CANONICAL else legacy_entries
-        target.append(
-            RegistryEntry(exercise_key=exercise_key,
-                          layout=layout.value, metadata=metadata)
-        )
+    Args:
+        exercises_root: Override the exercises root directory (for testing).
 
-    canonical_entries.sort(key=lambda entry: entry["metadata"]["exercise_id"])
-    return canonical_entries + legacy_entries
+    Returns:
+        List of ``RegistryEntry``, sorted by exercise_id.
+    """
+    root = exercises_root or _EXERCISES_ROOT
+    registry: list[RegistryEntry] = []
+
+    for exercise_json_path in sorted(root.rglob("exercise.json")):
+        exercise_key = exercise_json_path.parent.name
+        metadata = _load_registry_metadata(exercise_key, exercises_root)
+        registry.append(RegistryEntry(exercise_key=exercise_key, metadata=metadata))
+
+    registry.sort(key=lambda entry: entry["metadata"]["exercise_id"])
+    return registry
 
 
 def build_exercise_catalogue(
-    manifest_path: Path | None = None,
     exercises_root: Path | None = None,
 ) -> list[ExerciseCatalogueEntry]:
     """Build the shared metadata-derived exercise catalogue."""
-    registry = build_exercise_registry(manifest_path, exercises_root)
+    registry = build_exercise_registry(exercises_root)
     catalogue: list[ExerciseCatalogueEntry] = []
     for entry in registry:
         metadata = entry["metadata"]
-        if metadata is None:
-            raise RuntimeError(
-                f"Exercise catalogue requires metadata for {entry['exercise_key']!r}, "
-                "but no exercise.json was found."
-            )
         catalogue.append(
             ExerciseCatalogueEntry(
                 exercise_key=entry["exercise_key"],
@@ -167,7 +161,6 @@ def build_exercise_catalogue(
                 construct=metadata["construct"],
                 exercise_type=metadata["exercise_type"],
                 parts=metadata["parts"],
-                layout=entry["layout"],
             )
         )
     _validate_unique_exercise_ids(catalogue)
@@ -175,29 +168,25 @@ def build_exercise_catalogue(
 
 
 def get_catalogue_exercise_keys(
-    manifest_path: Path | None = None,
     exercises_root: Path | None = None,
 ) -> list[str]:
     """Return all exercise keys from the metadata-backed catalogue."""
     return [
         entry["exercise_key"]
-        for entry in build_exercise_catalogue(manifest_path=manifest_path, exercises_root=exercises_root)
+        for entry in build_exercise_catalogue(exercises_root=exercises_root)
     ]
 
 
 def get_canonical_exercise_keys(
-    manifest_path: Path | None = None,
     exercises_root: Path | None = None,
 ) -> list[str]:
-    """Return exercise keys for canonical exercises, ordered by exercise_id."""
-    registry = build_exercise_registry(manifest_path, exercises_root)
-    return [entry["exercise_key"] for entry in registry if entry["layout"] == ExerciseLayout.CANONICAL.value]
+    """Return all exercise keys (all exercises are canonical)."""
+    return get_all_exercise_keys(exercises_root=exercises_root)
 
 
 def get_all_exercise_keys(
-    manifest_path: Path | None = None,
     exercises_root: Path | None = None,
 ) -> list[str]:
-    """Return all exercise keys from the manifest in registry order."""
-    registry = build_exercise_registry(manifest_path, exercises_root)
+    """Return all exercise keys in registry order."""
+    registry = build_exercise_registry(exercises_root)
     return [entry["exercise_key"] for entry in registry]
