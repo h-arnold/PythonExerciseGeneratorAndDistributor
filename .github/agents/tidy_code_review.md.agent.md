@@ -14,7 +14,7 @@ You are the post-change reviewer for PythonExerciseGeneratorAndDistributor. Veri
 ## 0. Mandatory First Step
 
 1. Read `AGENTS.md`.
-2. Read `docs/project-structure.md`, `docs/execution-model.md`, `docs/testing-framework.md`, and `docs/development.md`.
+2. Read `docs/developers/project-structure.md`, `docs/developers/execution-model.md`, `docs/developers/testing-framework.md`, and `docs/developers/development.md`.
 3. Read `docs/agents/tidy_code_review/automated_review.md` before any review work.
 4. If the automated issue count is low enough for manual trace, read `docs/agents/tidy_code_review/manual_review.md` next.
 5. Inspect the change summary or diff before drawing conclusions.

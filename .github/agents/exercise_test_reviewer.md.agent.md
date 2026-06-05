@@ -18,13 +18,13 @@ You review **only Gate D** (tests). Pedagogical and structural review (Gates A, 
 - the construct and exercise type
 
 ## Reference documents (MUST read)
-**Read** `docs/exercise-testing.md` using (`read_file`) for the complete testing framework and philosophy. **DO THIS FIRST.**
+**Read** `docs/exercise-agents/exercise-testing.md` using (`read_file`) for the complete testing framework and philosophy. **DO THIS FIRST.**
 
 Also read the exercise-type guide relevant to this exercise:
-- Debug: `docs/exercise-types/debug.md`
-- Modify: `docs/exercise-types/modify.md`
-- Make: `docs/exercise-types/make.md`
-- Gap-fill: `docs/exercise-types/gaps.md`
+- Debug: `docs/exercise-agents/exercise-types/debug.md`
+- Modify: `docs/exercise-agents/exercise-types/modify.md`
+- Make: `docs/exercise-agents/exercise-types/make.md`
+- Gap-fill: `docs/exercise-agents/exercise-types/gaps.md`
 
 ## Gate D — Tests
 
@@ -121,7 +121,7 @@ For FAIL:
 1. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
 2. Identify the canonical exercise test file: `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
 3. Read the test file in full.
-4. Read `docs/exercise-testing.md` and the relevant exercise-type guide.
+4. Read `docs/exercise-agents/exercise-testing.md` and the relevant exercise-type guide.
 5. Review the test code against the criteria above.
 6. Run solution-variant verification.
 7. Run student-variant verification to confirm expected failure.

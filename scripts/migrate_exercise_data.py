@@ -18,7 +18,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DOC_FILENAMES = ("README.md", "OVERVIEW.md", "solutions.md")
 LEGACY_EXERCISE_TYPES = ("debug", "make", "modify")
-MANIFEST_PATH = Path("exercises") / "migration_manifest.json"
 
 
 class MigrationError(RuntimeError):
@@ -454,43 +453,6 @@ def _plan_order_of_teaching_action(
     ]
 
 
-def _plan_manifest_action(repo_root: Path, exercises: list[ExerciseRecord]) -> list[Action]:
-    manifest_path = repo_root / MANIFEST_PATH
-    manifest = _load_json_object(manifest_path)
-
-    exercises_obj = manifest.get("exercises")
-    if not isinstance(exercises_obj, dict):
-        raise MigrationError(
-            f"Expected an 'exercises' object in {manifest_path}")
-
-    changed = False
-    for record in exercises:
-        entry = exercises_obj.get(record.exercise_key)
-        if not isinstance(entry, dict):
-            exercises_obj[record.exercise_key] = {"layout": "canonical"}
-            changed = True
-            continue
-        if entry.get("layout") != "canonical":
-            entry["layout"] = "canonical"
-            changed = True
-
-    if not changed:
-        return []
-
-    manifest_text = json.dumps(manifest, indent=2) + "\n"
-    return [
-        Action(
-            kind="write_manifest",
-            description=(
-                "mark migrated exercises as canonical in "
-                f"{_relative_to_repo(manifest_path, repo_root)}"
-            ),
-            destination=manifest_path,
-            content=manifest_text,
-        )
-    ]
-
-
 def _plan_legacy_type_root_cleanup_actions(
     repo_root: Path,
     *,
@@ -549,7 +511,6 @@ def _build_actions(
         _plan_order_of_teaching_action(
             repo_root, construct=construct, exercises=exercises)
     )
-    actions.extend(_plan_manifest_action(repo_root, exercises))
     return actions
 
 
@@ -650,7 +611,6 @@ def _apply_actions(actions: list[Action]) -> None:
         handlers={
             "move_file": _apply_move_copy,
             "write_text": _apply_write,
-            "write_manifest": _apply_write,
         },
         skipped_kinds={"remove_file", "cleanup_dir"},
     )
@@ -661,7 +621,7 @@ def _apply_actions(actions: list[Action]) -> None:
             "remove_file": _apply_remove,
             "cleanup_dir": _apply_cleanup,
         },
-        skipped_kinds={"write_text", "write_manifest"},
+        skipped_kinds={"write_text"},
     )
 
 

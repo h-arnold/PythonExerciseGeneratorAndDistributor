@@ -2,11 +2,7 @@
 
 > 🧑‍🤝‍🧑**Note for humans**: This CLI tool is designed to be used by the `Exercise Generation` agent to make exercise creation more reliable. You probably won't need to use this unless you plan to hand write all the exercises, solutions and tests. If you desperately want to use a specific set of exercises, pass them to the `Exercise Generation` agent to reformat and create tests for you.
 
-This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
-
-## Repository status
-
-The scaffolder now writes directly to the canonical authoring tree at `exercises/<construct>/<exercise_key>/`. For new exercises, use the files generated there and do not move scaffold output after creation.
+This document describes how to use the CLI tool to scaffold new Python exercises in the repository. The scaffolder writes directly to the canonical authoring tree at `exercises/<construct>/<exercise_key>/`. Do not move scaffold output after creation. See [execution-model.md](../developers/execution-model.md) for the full runtime contract.
 
 ## Quick Start
 
@@ -149,25 +145,20 @@ Contains:
 - Debug exercises also include parametrised checks ensuring each `explanationN` cell is populated with >10 characters
 - For multi-part exercises, parametrised tests cover every exercise tag
 
-## Post-Scaffolding Steps
+## Post-Scaffolding Workflow
 
-After running `new_exercise.py`, the workflow follows two phases with a teacher review gate between them.
+After running `new_exercise.py`, follow these two phases. **Phase 2 must not start until the teacher has approved Phase 1 output.**
 
-### Phase 1 — Notebook Authoring (before teacher handoff)
+### Phase 1 — Notebook Authoring
 
-### 1. Author the Notebook
+| Step | Action | Go/no-go |
+|---|---|---|
+| 1 | **Author the notebook**: edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`. Add context (goal + 1–2 examples). Keep cells tagged correctly (`exercise1`, `exercise2`, etc.). Replace placeholder `print(...)` with starter code or buggy snippet. Each cell must target one learning objective. | — |
+| 2 | **Verify notebook structure** matches the required layout below. | Must match exactly |
+| 3 | **Run quality gate**: invoke the **Exercise Reviewer** (`.github/agents/exercise_reviewer.md.agent.md`) to check Gates A (type compliance), B (sequencing), C (tags/metadata). | PASS or PASS WITH NITS |
+| 4 | **Teacher handoff**: present notebooks (student + solution) to the teacher for review and approval. Ensure `README.md`, `OVERVIEW.md`, and `OrderOfTeaching.md` are in place. | Teacher approves |
 
-Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
-
-- **Add context**: Explain the goal and provide 1-2 examples
-- **Update exercise cells**:
-  - Keep the cell tagged correctly (`exercise1`, `exercise2`, etc.)
-  - Provide a clear prompt, expected output, and starter code that match the construct being taught. Only require a named function when the exercise itself is about functions.
-  - Add docstrings only when the exercise deliberately teaches functions and students have reached that construct.
-  - Replace the placeholder print with the intended starter code or buggy snippet for debug tasks.
-- **Keep it focused**: Each exercise cell should target a single learning objective
-
-**Notebook structure**:
+**Required notebook structure:**
 
 ```text
 1. Markdown: Title and goal
@@ -175,26 +166,29 @@ Edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`:
 3. Code (tagged exercise1): Student solution cell
 4. [Repeat for exercise2, exercise3, etc. if multi-part]
 5. Code (untagged): Self-check scratch cell
-6. Code (untagged): Auto-appended check-your-answers cell that runs `exercise_runtime_support.student_checker.run_notebook_checks('<exercise_key>')` so students see grouped per-check output
+6. Code (untagged): Auto-appended check-your-answers cell that runs
+   `exercise_runtime_support.student_checker.run_notebook_checks('<exercise_key>')`
 ```
 
-Do not replace `'<exercise_key>'` with `notebooks/...ipynb`, an absolute `.ipynb` path, or `str(path)`. String inputs are interpreted as exercise keys by the checker/runtime contract.
-
-### 2. Quality Gate
-
-Run the **Exercise Reviewer** (`.github/agents/exercise_reviewer.md.agent.md`) to check structure, sequencing, and type compliance (Gates A, B, C).
-
-### 3. Teacher Handoff
-
-Present the notebooks to the teacher for review and approval. Once notebooks are approved and supporting documentation (README, OVERVIEW, OrderOfTeaching) is in place, proceed to Phase 2.
+> **Important**: pass the canonical `exercise_key` string to `run_notebook_checks(...)` — never a notebook path, absolute `.ipynb` path, or `str(path)`. String inputs are exercise keys; resolved `Path` values must stay as `Path`.
 
 ### Phase 2 — Test Authoring (after teacher approval)
 
-### 4. Write Tests
+| Step | Action | Go/no-go |
+|---|---|---|
+| 5 | **Write tests** in `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`. Replace placeholder assertions with real tests (see pattern below). | All tests pass on solution variant |
+| 6 | **Fill in solution notebook** at `notebooks/solution.ipynb`. Keep same tags. Use stepwise, per-line transformations (avoid compact one-liners). | — |
+| 7 | **Verify**: run commands below and confirm green. | All pass |
 
-Author the canonical repository-side test in `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
+**Required test criteria:**
 
-Replace the placeholder test with real assertions. The default pattern matches the scaffold:
+- At least 3 positive tests, 2 edge cases, 1 invalid-input test (where appropriate)
+- Fast (< 1s each), deterministic (no randomness, time, or network)
+- Remove scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) after replacing placeholders
+- For debug exercises: keep or strengthen `explanationN` checks
+- Import helpers from `exercise_runtime_support.exercise_framework` only
+
+**Default test pattern:**
 
 ```python
 from exercise_runtime_support.exercise_framework import (
@@ -213,75 +207,21 @@ def test_exercise1_greets_user() -> None:
   assert output.strip() == "Hello"
 ```
 
-If an authored exercise deliberately defines Python objects instead of printing output, you can use `exec_tagged_code(...)` in a targeted test. That is an exercise-specific choice rather than the default make or multi-part scaffolding contract.
+If the exercise defines Python objects instead of printing, use `exec_tagged_code(...)` for targeted tests. This is an exercise-specific choice, not a default contract.
 
-**Test requirements**:
-
-- At least 3 positive tests
-- At least 2 edge cases
-- 1 invalid input test (where appropriate)
-- Fast (< 1s each)
-- Deterministic (no randomness or time-based checks)
-- Remove the scaffold guard assertions (`assert output.strip()`, `assert 'TODO' not in output`) once you replace the placeholder
-- For debug exercises, keep or strengthen the checks that ensure `explanationN` cells contain meaningful reflections
-
-**Note on scaffolding**: generated placeholder tests import direct helpers from `exercise_runtime_support.exercise_framework`. Keep that contract when editing or extending canonical exercise-local tests and any flattened compatibility tests so local development, CI, and packaged classroom repositories stay aligned.
-
-### 3. Fill in the Solution Notebook
-
-Edit `exercises/<construct>/<exercise_key>/notebooks/solution.ipynb`:
-
-- Complete the exercise cells with correct implementations
-- Keep the same cell tags
-- Ensure the solution is pedagogically appropriate (don't use advanced features students haven't learned)
-- Prefer stepwise, "slow" solutions in the instructor notebook: make each transformation or change on its own line so learners can observe how variables change. For example, in a casting exercise prefer:
-
-```python
-age = input()
-age = int(age)
-age = age + 1
-print("Next year you will be " + str(age))
-```
-
-Avoid compact one-liners such as `print("Next year you will be " + str(int(input()) + 1))`, which hide intermediate steps and make it harder for students to follow the state change.
-
-### 4. Verify
-
-Run tests locally:
+**Verification commands:**
 
 ```bash
-# Test against the student notebook (often fails until authoring is complete)
+# Test student notebook (often fails until authoring is complete)
 uv run pytest exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Test against the solution notebook (should pass)
+# Test solution notebook (must pass)
 uv run python scripts/run_pytest_variant.py --variant solution \
   exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Or use the helper script
-uv run ./scripts/verify_solutions.sh \
-  exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
-
-# Run structural checks against the canonical exercise
-uv run python scripts/verify_exercise_quality.py \
-  <exercise_key>
+# Structural checks
+uv run python scripts/verify_exercise_quality.py <exercise_key>
 ```
-
-### 5. Create Supporting Documentation
-
-Add to `exercises/<construct>/<exercise_key>/`:
-
-**`README.md`** (update the generated template):
-
-```markdown
-# Exercise Title
-
-**ID**: exNNN
-**Construct**: sequence | selection | iteration | ...
-**Type**: debug | modify | make | gaps
-**Difficulty**: very easy | easy | medium | hard
-
-## Learning Objective
-One sentence describing what students will learn.
 
 ## Files
 - Notebook: `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
@@ -386,7 +326,7 @@ Students are given a partial program and must write the missing line(s) of code 
 2. Code cell with partial program and `# YOUR CODE HERE — <description>` comment(s)
 3. Tests verify the corrected output
 
-See `docs/exercise-types/gaps.md` for full authoring rules.
+See `docs/exercise-agents/exercise-types/gaps.md` for full authoring rules.
 
 ## Multi-Part Notebooks (10 exercises)
 

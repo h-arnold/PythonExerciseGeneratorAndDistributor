@@ -129,7 +129,7 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
 2. **Add the Content**:
 
     - Open both `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb` and `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/solution.ipynb`.
-   - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-types](exercise-types/).
+   - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-agents/exercise-types](exercise-agents/exercise-types/).
    - Replace any placeholder `TODO`/`pass` code with the versions supplied by the agent (student copy in the main notebook, full answer in solutions).
 
 3. **Verify (Phase 1 — notebooks only)**:

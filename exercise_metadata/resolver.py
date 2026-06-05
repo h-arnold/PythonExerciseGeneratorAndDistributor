@@ -1,11 +1,11 @@
 """Exercise path resolver.
 
-This module provides the canonical resolver API for the new metadata-driven
+This module provides the canonical resolver API for the metadata-driven
 layout.  It accepts ONLY exercise_key as input; non-string path objects
 raise TypeError and path-like strings fail fast with a clear resolver error.
 
-legacy notebook-root override env var is deliberately ignored; this resolver targets the
-canonical exercise home convention, `exercises/<construct>/<exercise_key>/`.
+Legacy notebook-root override env var is deliberately ignored; this resolver targets the
+canonical exercise home convention, ``exercises/<construct>/<exercise_key>/``.
 """
 
 from __future__ import annotations
@@ -14,7 +14,6 @@ from pathlib import Path
 from typing import Literal
 
 from exercise_metadata.loader import load_exercise_metadata
-from exercise_metadata.manifest import ExerciseLayout, get_exercise_layout
 
 _EXERCISES_ROOT = Path(__file__).resolve().parents[1] / "exercises"
 _KNOWN_CONSTRUCTS = (
@@ -114,18 +113,15 @@ def resolve_notebook_path(
     exercise_key: object,
     variant: Variant,
     exercises_root: Path | None = None,
-    manifest_path: Path | None = None,
 ) -> Path:
     """Return the canonical notebook path for the given exercise and variant.
 
-    Only exercises marked as ``"canonical"`` in the migration manifest are
-    supported.  Legacy exercises fail hard with a clear error.
+    All exercises are canonical; metadata is required for every exercise.
 
     Args:
         exercise_key: The unique exercise identifier.
         variant: ``"student"`` or ``"solution"``.
         exercises_root: Override for testing.
-        manifest_path: Override for testing.
 
     Returns:
         Path to the notebook file (existence guaranteed by this function).
@@ -133,8 +129,8 @@ def resolve_notebook_path(
     Raises:
         TypeError: If exercise_key is not a str.
         ValueError: If variant is not "student" or "solution".
-        LookupError: If the exercise is not in the manifest, its canonical
-            metadata is invalid, or its canonical notebook files are missing.
+        LookupError: If the exercise is not found, its ``exercise.json`` is
+            missing or invalid, or the expected notebook file is missing.
     """
     if not isinstance(exercise_key, str):
         raise TypeError(
@@ -142,37 +138,23 @@ def resolve_notebook_path(
             "Path-based resolution is not supported."
         )
     if variant not in ("student", "solution"):
-        raise ValueError(f"variant must be 'student' or 'solution', not {variant!r}")
-
-    try:
-        layout = get_exercise_layout(exercise_key, manifest_path)
-    except KeyError as exc:
-        raise LookupError(
-            f"exercise {exercise_key!r} is not in the migration manifest. "
-            "Add it to the migration manifest before resolving notebooks."
-        ) from exc
-    if layout != ExerciseLayout.CANONICAL:
-        raise LookupError(
-            f"exercise {exercise_key!r} has layout={layout.value!r} in the migration manifest. "
-            "resolve_notebook_path() only supports canonical exercises. "
-            "Legacy layouts are not valid input to this resolver. "
-            "Migrate this exercise to the canonical layout first."
-        )
+        raise ValueError(
+            f"variant must be 'student' or 'solution', not {variant!r}")
 
     exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
     try:
         load_exercise_metadata(exercise_dir)
     except (FileNotFoundError, TypeError, ValueError) as exc:
         raise LookupError(
-            f"exercise {exercise_key!r} is marked as canonical in the migration manifest "
-            f"but its exercise.json is missing or invalid: {exc}"
+            f"exercise {exercise_key!r} was found but its exercise.json is "
+            f"missing or invalid: {exc}"
         ) from exc
 
     notebook_path = exercise_dir / "notebooks" / f"{variant}.ipynb"
     if not notebook_path.exists():
         raise LookupError(
-            f"exercise {exercise_key!r} is marked as canonical in the migration manifest "
-            f"but the expected notebook is missing: {notebook_path}. "
-            "Add the notebook file or correct the manifest."
+            f"exercise {exercise_key!r} was found but the expected notebook is "
+            f"missing: {notebook_path}. Check that exercise.json exists under "
+            f"exercises/<construct>/{exercise_key}/."
         )
     return notebook_path

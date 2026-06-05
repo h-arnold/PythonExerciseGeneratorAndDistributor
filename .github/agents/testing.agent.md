@@ -16,14 +16,14 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 
 1. Read `AGENTS.md`.
 2. Read the local docs that govern the touched surface:
-   - `docs/project-structure.md`
-   - `docs/execution-model.md`
-   - `docs/testing-framework.md`
-   - `docs/development.md`
-   - `docs/exercise-generation.md`
-   - `docs/exercise-generation-cli.md`
-   - `docs/exercise-testing.md`
-   - `docs/autograding-cli.md`
+   - `docs/developers/project-structure.md`
+   - `docs/developers/execution-model.md`
+   - `docs/developers/testing-framework.md`
+   - `docs/developers/development.md`
+   - `docs/teachers/exercise-generation.md`
+   - `docs/exercise-agents/exercise-generation-cli.md`
+   - `docs/exercise-agents/exercise-testing.md`
+   - `docs/developers/autograding-cli.md`
 3. Identify the exact surface before running anything:
    - repository infrastructure tests in `tests/`
    - canonical exercise-local tests in `exercises/<construct>/<exercise_key>/tests/`
@@ -39,7 +39,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 - Canonical exercise-local tests: use `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py` and any helper modules beside it. Treat top-level flattened mirrors as derived compatibility surfaces only.
 - Notebook grading and runtime: use `exercise_runtime_support/`, `tests/notebook_grader.py`, and `tests/exercise_framework/` when the behaviour depends on tagged cells, variant selection, explanation cells, or notebook path resolution.
 - Autograding tooling: use `scripts/build_autograde_payload.py`, the autograde plugin tests, and the Classroom payload path when the issue is about encoded results, task grouping, or payload size.
-- Exercise scaffolding and validation: use `scripts/new_exercise.py`, `scripts/verify_exercise_quality.py`, `docs/exercise-generation.md`, `docs/exercise-generation-cli.md`, and `docs/exercise-testing.md` when the issue is about generated exercises, canonical layout, or notebook metadata.
+- Exercise scaffolding and validation: use `scripts/new_exercise.py`, `scripts/verify_exercise_quality.py`, `docs/teachers/exercise-generation.md`, `docs/exercise-agents/exercise-generation-cli.md`, and `docs/exercise-agents/exercise-testing.md` when the issue is about generated exercises, canonical layout, or notebook metadata.
 - Template repository tooling: use `scripts/template_repo_cli/`, `template_repo_files/`, and the matching tests when the issue concerns template packaging or exported Classroom assets.
 
 ## 2. Command Selection
@@ -75,7 +75,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 - For notebook failures, compare student and solution variants, confirm the active variant, and inspect the tagged cells plus `metadata.language`.
 - For path-resolution issues, confirm whether the helper expects an `exercise_key`, a `Path`, or a notebook path string.
 - For autograding issues, inspect the raw results JSON before touching the payload encoder.
-- For scaffold or template repository issues, compare the generated tree against `docs/project-structure.md` and `docs/exercise-generation-cli.md`.
+- For scaffold or template repository issues, compare the generated tree against `docs/developers/project-structure.md` and `docs/exercise-agents/exercise-generation-cli.md`.
 - Fix the owning surface first, rerun the same focused check, and only then widen the scope.
 - If the failure is only on the student variant and the task is solution validation, treat it as expected.
 - If a solution variant fails, stop and treat it as a defect.

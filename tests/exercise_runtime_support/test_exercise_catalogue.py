@@ -54,7 +54,6 @@ def test_get_exercise_catalogue_uses_metadata_registry_only(
             "construct": "sequence",
             "exercise_type": "modify",
             "parts": 1,
-            "layout": "canonical",
         },
     ]
     monkeypatch.setattr(

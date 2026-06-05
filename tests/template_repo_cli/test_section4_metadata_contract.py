@@ -51,16 +51,15 @@ def test_dry_run_includes_required_metadata_surfaces(
         f"stderr:\n{result.stderr}"
     )
 
-    exercise_root = output_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics"
+    exercise_root = output_dir / "exercises" / \
+        "sequence" / "ex002_sequence_modify_basics"
     required_paths = {
         "metadata package": output_dir / "exercise_metadata",
         "metadata package __init__": output_dir / "exercise_metadata" / "__init__.py",
         "metadata registry module": output_dir / "exercise_metadata" / "registry.py",
         "metadata resolver module": output_dir / "exercise_metadata" / "resolver.py",
         "metadata loader module": output_dir / "exercise_metadata" / "loader.py",
-        "metadata manifest module": output_dir / "exercise_metadata" / "manifest.py",
         "metadata schema module": output_dir / "exercise_metadata" / "schema.py",
-        "migration manifest": output_dir / "exercises" / "migration_manifest.json",
         "per-exercise exercise.json": exercise_root / "exercise.json",
         "student notebook": exercise_root / "notebooks" / "student.ipynb",
         "canonical exercise test": (
@@ -122,13 +121,13 @@ def test_devcontainer_files_exclude_hides_metadata_clutter(
 ) -> None:
     """The packaged devcontainer should hide metadata surfaces from Explorer."""
 
-    devcontainer_path = repo_root / "template_repo_files" / ".devcontainer" / "devcontainer.json"
+    devcontainer_path = repo_root / "template_repo_files" / \
+        ".devcontainer" / "devcontainer.json"
     content = devcontainer_path.read_text(encoding="utf-8").replace(" ", "")
 
     expected_exclusions = [
         '"exercise_metadata":true',
         '"exercise_metadata/**":true',
-        '"exercises/migration_manifest.json":true',
         '"exercises/**/exercise.json":true',
     ]
 

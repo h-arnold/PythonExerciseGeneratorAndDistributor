@@ -25,7 +25,6 @@ class ExerciseCatalogueEntry:
     construct: str
     exercise_type: str
     parts: int
-    layout: str
 
 
 def _to_runtime_entry(entry: Any) -> ExerciseCatalogueEntry:
@@ -39,7 +38,6 @@ def _to_runtime_entry(entry: Any) -> ExerciseCatalogueEntry:
         construct=entry["construct"],
         exercise_type=entry["exercise_type"],
         parts=entry["parts"],
-        layout=entry["layout"],
     )
 
 

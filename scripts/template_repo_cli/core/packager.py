@@ -8,7 +8,6 @@ import tempfile
 from collections import OrderedDict
 from pathlib import Path
 
-from exercise_metadata.manifest import load_migration_manifest
 from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
 
@@ -51,7 +50,6 @@ class TemplatePackager:
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
     _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = ("notebooks", "tests")
     _STUDENT_NOTEBOOK_FILENAME = "student.ipynb"
-    _MIGRATION_MANIFEST_FILENAME = "migration_manifest.json"
     _EXERCISE_METADATA_FILENAME = "exercise.json"
     _FLATTENED_TEST_GLOB = "test_ex[0-9]*_*.py"
 
@@ -143,14 +141,11 @@ class TemplatePackager:
     def copy_template_base_files(
         self,
         workspace: Path,
-        selected_exercise_keys: set[str] | None = None,
     ) -> None:
         """Copy base template files.
 
         Args:
             workspace: Workspace directory.
-            selected_exercise_keys: Optional set of exercise keys to include in
-                the exported migration manifest.
         """
         if not self.template_files_dir.exists():
             raise FileNotFoundError(
@@ -204,41 +199,8 @@ class TemplatePackager:
                 ignore_patterns=self.COPY_EXCLUDE_PATTERNS,
             )
 
-        self._write_migration_manifest(workspace, selected_exercise_keys)
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
-
-    def _write_migration_manifest(
-        self,
-        workspace: Path,
-        selected_exercise_keys: set[str] | None,
-    ) -> None:
-        """Write the subset migration manifest into the workspace."""
-        source_manifest_path = self.repo_root / "exercises" / "migration_manifest.json"
-        manifest = load_migration_manifest(source_manifest_path)
-        if selected_exercise_keys is None:
-            selected_exercise_keys = {
-                path.parent.name
-                for path in (workspace / "exercises").glob("*/*/exercise.json")
-                if path.is_file()
-            }
-
-        exercise_items = manifest["exercises"].items()
-        exercise_items = (
-            item for item in exercise_items if item[0] in selected_exercise_keys)
-
-        filtered_manifest = {
-            "schema_version": manifest["schema_version"],
-            "exercises": {
-                exercise_key: exercise_entry for exercise_key, exercise_entry in exercise_items
-            },
-        }
-        destination = workspace / "exercises" / "migration_manifest.json"
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(
-            json.dumps(filtered_manifest, indent=2) + "\n",
-            encoding="utf-8",
-        )
 
     def _load_readme_template(self) -> str:
         """Return the README template content, including fallback content."""
@@ -315,11 +277,9 @@ class TemplatePackager:
         readme_path.write_text(content, encoding="utf-8")
 
     def _is_valid_packaged_exercise_path(self, path: Path, exercises_dir: Path) -> bool:
-        """Return whether a path fits the Option A packaged exercises tree."""
+        """Return whether a path fits the packaged exercises tree."""
         relative_parts = path.relative_to(exercises_dir).parts
         part_count = len(relative_parts)
-        is_manifest = part_count == 1 and path.is_file()
-        is_manifest = is_manifest and path.name == self._MIGRATION_MANIFEST_FILENAME
         is_exercise_dir = (
             part_count in (self._CONSTRUCT_DIR_DEPTH,
                            self._EXERCISE_DIR_DEPTH) and path.is_dir()
@@ -329,7 +289,7 @@ class TemplatePackager:
             and path.is_file()
             and path.name == self._EXERCISE_METADATA_FILENAME
         )
-        if is_manifest or is_exercise_dir or is_exercise_json:
+        if is_exercise_dir or is_exercise_json:
             return True
 
         if part_count <= self._SUBDIR_INDEX:
@@ -418,7 +378,6 @@ class TemplatePackager:
             workspace / "README.md",
             workspace / "scripts" / "build_autograde_payload.py",
             workspace / ".github" / "workflows" / "classroom.yml",
-            workspace / "exercises" / "migration_manifest.json",
             workspace / "exercise_metadata" / "__init__.py",
         ]
 

@@ -11,7 +11,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 - **Fast and intelligent feedback loop**: Students get immediate feedback from autograding tests right in their notebooks. Most importantly, the tests check that students are using the correct constructs, not just that they get the right output.
 - **Easy tracking**: A custom GitHub Classroom autograder workflow reports results back to the Classroom interface on every push, so you can track student progress and identify common issues.
 - **Teaches using industry standard tools**: Students learn how to code in an industry standard development environment, learn version control and have access to a proper debugger.
-- **Built on sound pedagogical principles**: PRIMM not working for you? Check out my [Modify, Debug, Make](docs/pedagogy.md) approach.
+- **Built on sound pedagogical principles**: PRIMM not working for you? Check out my [Modify, Debug, Make](docs/teachers/pedagogy.md) approach.
 - **Easily generate new exercises**: Use the built-in Exercise Generation assistant (a custom Copilot Chat mode) to scaffold new exercises in seconds, including student notebooks, solutions, and tests.
 
 ## How it works
@@ -23,7 +23,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 </figure>
 
 1. You generate exercises using the Exercise Generation assistant (a custom Copilot Chat mode) or use the pre-existing exercises in the repo.
-2. You use the [template repo CLI](docs/CLI_README.md) to bundle selected exercises into a GitHub Classroom template repository.
+2. You use the [template repo CLI](docs/developers/template_repo_cli.md) to bundle selected exercises into a GitHub Classroom template repository.
 3. You create a Github Classroom assignment using that template and distribute it to students.
 4. Students open the assignment in Codespaces, complete the exercises in the browser, and get immediate feedback from the autograding tests.
 5. When they commit and push their work, the GitHub Classroom workflow runs the autograding tests again and reports results back to the Classroom interface.
@@ -78,7 +78,7 @@ This repo includes a custom Copilot Chat mode for generating exercises.
 5. Verify the solution notebook passes tests:
    - [scripts/verify_solutions.sh](scripts/verify_solutions.sh) -q
 
-More detail and expected structure: [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises.
+More detail and expected structure: [docs/exercise-agents/exercise-generation-cli.md](docs/exercise-agents/exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises.
 
 ### Creating a GitHub Classroom template repo
 
@@ -93,7 +93,8 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
    - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
 
-Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
+Full CLI reference: [docs/developers/template_repo_cli.md](docs/developers/template_repo_cli.md)
+Teacher guide: [docs/teachers/how-to-use-the-template-repo-cli.md](docs/teachers/how-to-use-the-template-repo-cli.md)
 
 ## Repository layout (high level)
 
@@ -106,12 +107,7 @@ Full CLI reference: [docs/CLI_README.md](docs/CLI_README.md)
 
 ## Documentation
 
-- [docs/project-structure.md](docs/project-structure.md)
-- [docs/testing-framework.md](docs/testing-framework.md)
-- [docs/exercise-generation.md](docs/exercise-generation.md) — Guide to using the Exercise Generation assistant (Copilot) to create exercises quickly.
-- [docs/exercise-generation-cli.md](docs/exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises.
-- [docs/setup.md](docs/setup.md)
-- [docs/CLI_README.md](docs/CLI_README.md)
+See [docs/README.md](docs/README.md) for a full index organised by audience (teachers, exercise agents, developers).
 
 ## License
 

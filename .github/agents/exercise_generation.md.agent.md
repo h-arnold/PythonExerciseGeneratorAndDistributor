@@ -80,10 +80,10 @@ Policy: When generating exercises the agent **MUST** open **THE ENTIRE FILE** an
 
 Use `read_file` to fetch the exact file needed
 
-- For a debug exercise: open and follow `docs/exercise-types/debug.md`.
-- For a modify exercise: open and follow `docs/exercise-types/modify.md`.
-- For a make exercise: open and follow `docs/exercise-types/make.md`.
-- For a gap-fill exercise: open and follow `docs/exercise-types/gaps.md`.
+- For a debug exercise: open and follow `docs/exercise-agents/exercise-types/debug.md`.
+- For a modify exercise: open and follow `docs/exercise-agents/exercise-types/modify.md`.
+- For a make exercise: open and follow `docs/exercise-agents/exercise-types/make.md`.
+- For a gap-fill exercise: open and follow `docs/exercise-agents/exercise-types/gaps.md`.
 
 If the required guide is missing or cannot be read, the agent must stop and ask for clarification before proceeding.
 
@@ -112,8 +112,8 @@ Refer to these key docs:
 
 3) Scaffold files with the generator. Consult these docs using `read_file` to find out how:
 
-[Exercise Generation CLI](../../docs/exercise-generation-cli.md)
-[Exercise Generation](../../docs/exercise-generation.md)
+[Exercise Generation CLI](../../docs/exercise-agents/exercise-generation-cli.md)
+[Exercise Generation](../../docs/teachers/exercise-generation.md)
 
 This scaffolds the canonical source-repo files:
   - `exercises/<construct>/<exercise_key>/exercise.json` (canonical exercise metadata, including exercise type)

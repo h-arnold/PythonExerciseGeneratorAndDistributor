@@ -54,6 +54,7 @@ force-exclude = true
 exclude = [
   "notebooks/**",
   "exercises/**/notebooks/**",
+  "exercises/**/tests/**",
   "*.md",
   "docs/**",
 ]

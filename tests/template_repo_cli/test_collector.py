@@ -85,7 +85,7 @@ class TestCollectMissingFiles:
         collector = FileCollector(repo_root)
 
         with pytest.raises(
-            LookupError, match="exercise 'ex999_nonexistent' is not in the migration manifest"
+            LookupError, match="does not contain a known construct"
         ):
             collector.collect_files("ex999_nonexistent")
 
@@ -146,11 +146,14 @@ class TestCollectValidation:
     ) -> None:
         """Test that canonical-only layout doesn't detect duplicates across different exercises."""
         repo_root = temp_dir
-        exercise_dir = repo_root / "exercises" / "sequence" / "ex004_sequence_debug_syntax"
+        exercise_dir = repo_root / "exercises" / \
+            "sequence" / "ex004_sequence_debug_syntax"
         (exercise_dir / "notebooks").mkdir(parents=True)
         (exercise_dir / "tests").mkdir(parents=True)
-        (exercise_dir / "notebooks" / "student.ipynb").write_text("{}", encoding="utf-8")
-        (exercise_dir / "notebooks" / "solution.ipynb").write_text("{}", encoding="utf-8")
+        (exercise_dir / "notebooks" /
+         "student.ipynb").write_text("{}", encoding="utf-8")
+        (exercise_dir / "notebooks" /
+         "solution.ipynb").write_text("{}", encoding="utf-8")
         (exercise_dir / "tests" / "test_ex004_sequence_debug_syntax.py").write_text(
             "", encoding="utf-8"
         )
@@ -161,15 +164,11 @@ class TestCollectValidation:
             '"exercise_type": "debug", "parts": 10}',
             encoding="utf-8",
         )
-        (repo_root / "exercises" / "migration_manifest.json").write_text(
-            '{"schema_version": 1, "exercises": {"ex004_sequence_debug_syntax": {"layout": "canonical"}}}',
-            encoding="utf-8",
-        )
-
         collector = FileCollector(repo_root)
         # Should not raise an error since we only have one canonical test source
         files = collector.collect_files("ex004_sequence_debug_syntax")
-        assert files["test"] == exercise_dir / "tests" / "test_ex004_sequence_debug_syntax.py"
+        assert files["test"] == exercise_dir / "tests" / \
+            "test_ex004_sequence_debug_syntax.py"
 
 
 class TestCollectEdgeCases:
