@@ -53,8 +53,8 @@ A 7-stage TDD plan. Tests are written or updated **before** implementation in ea
   - Updated `new_exercise.py` to import from scaffolder
 - [x] Checks passed (44/44 tests, ruff lint clean)
 - [x] Action plan updated
-- [ ] Commit created
-- [ ] Push completed
+- [x] Commit created (`d109d11`)
+- [x] Push completed (branch: `feat/ImproveExerciseScaffolding`)
 
 **Deviations from plan**: Moved `_make_meta()` into `scripts/exercise_scaffolder/base.py` and updated `new_exercise.py` to import from there instead of the opposite direction. This eliminates a backward dependency code smell where the new package depended on a private function from the old monolithic module. Required adjusting `new_exercise.py` imports (replaced `import uuid` with `from scripts.exercise_scaffolder.base import _make_meta`).
 
@@ -81,14 +81,31 @@ Each subclass overrides:
 - `_readme_type_hook() -> list[str]` — optional type-specific README lines (e.g. debug adds explanation cell note, gaps adds YOUR CODE HERE note)
 
 **Acceptance criteria**:
-- [ ] `DebugScaffold` produces exerciseN + explanationN cell pairs matching current `_make_debug_cells()` output.
-- [ ] `ModifyScaffold` produces standard code cells matching current `_make_standard_cells()` output.
-- [ ] `MakeScaffold` produces standard code cells matching current `_make_standard_cells()` output.
-- [ ] `GapsScaffold` produces `# YOUR CODE HERE` cells matching current `_make_gaps_cells()` output.
-- [ ] All subclass test scaffolds match current `_build_test_lines()` output for their type.
-- [ ] `ruff check` passes on new files.
+- [x] `DebugScaffold` produces exerciseN + explanationN cell pairs matching current `_make_debug_cells()` output.
+- [x] `ModifyScaffold` produces standard code cells matching current `_make_standard_cells()` output.
+- [x] `MakeScaffold` produces standard code cells matching current `_make_standard_cells()` output.
+- [x] `GapsScaffold` produces `# YOUR CODE HERE` cells matching current `_make_gaps_cells()` output.
+- [x] All subclass test scaffolds match current `_build_test_lines()` output for their type.
+- [x] `ruff check` passes on new files.
 
 **Review point**: Verify each subclass generates identical notebook cells and test files to the current implementation.
+
+### Stage 2 — Implementation notes
+
+**Status**: ✅ Complete
+
+**Phase checklist**:
+- [x] Red tests added (86 tests across 4 test files + shared helper)
+- [x] Red review clean (coverage gaps fixed: parts=3, Make parity, import ordering)
+- [x] Green implementation complete (4 subclass files + __init__.py update)
+- [x] Green review clean — one blocking fix applied:
+  - Fixed `insert_at = 5` → `insert_at = 6` in `base.py:build_readme_lines()` to match original line insertion order
+- [x] Checks passed (86/86 Stage 2 tests, full suite passes, ruff lint clean)
+- [x] Action plan updated
+- [ ] Commit created
+- [ ] Push completed
+
+**Deviations from plan**: None.
 
 ---
 
