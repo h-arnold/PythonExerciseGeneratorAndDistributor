@@ -118,16 +118,30 @@ Each subclass overrides:
 - `tests/test_new_exercise.py` — update tests that reference removed private functions; add assertions for new scaffolded files (expectations.py, student_checker_support.py, variant overrides).
 
 **Acceptance criteria**:
-- [ ] `new_exercise.py` main() now writes `tests/expectations.py` and `tests/student_checker_support.py`.
-- [ ] Student notebook self-checker cell contains `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"`.
-- [ ] Solution notebook self-checker cell contains `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"`.
-- [ ] Student and solution notebooks are no longer byte-identical (variant differs).
-- [ ] All existing `test_new_exercise.py` tests pass (adapted where they referenced removed internals).
-- [ ] New test assertions verify the variant override in both notebooks.
-- [ ] New test assertions verify expectations.py and student_checker_support.py are created.
-- [ ] `ruff check` passes.
+- [x] `new_exercise.py` main() now writes `tests/expectations.py` and `tests/student_checker_support.py`.
+- [x] Student notebook self-checker cell contains `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"`.
+- [x] Solution notebook self-checker cell contains `os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"`.
+- [x] Student and solution notebooks are no longer byte-identical (variant differs).
+- [x] All existing `test_new_exercise.py` tests pass (adapted where they referenced removed internals).
+- [x] New test assertions verify the variant override in both notebooks.
+- [x] New test assertions verify expectations.py and student_checker_support.py are created.
+- [x] `ruff check` passes.
 
 **Review point**: Full integration test — scaffold a real exercise and verify the self-checker works.
+
+### Stage 3 — Implementation notes
+
+**Status**: ✅ Complete
+
+**Phase checklist**:
+- [x] `new_exercise.py` main() delegates to scaffold classes
+- [x] Tests updated (removed old private function bindings, added variant and supporting file assertions)
+- [x] Checks passed (14/14 new_exercise tests, full suite passes, ruff lint clean)
+- [x] Action plan updated
+- [ ] Commit created
+- [ ] Push completed
+
+**Deviations from plan**: None.
 
 ---
 
