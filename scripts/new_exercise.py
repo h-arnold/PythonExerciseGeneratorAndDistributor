@@ -579,6 +579,13 @@ def _build_test_lines(
 
 def main() -> int:
     """Create a new canonical exercise scaffold."""
+    from scripts.exercise_scaffolder import (
+        DebugScaffold,
+        GapsScaffold,
+        MakeScaffold,
+        ModifyScaffold,
+    )
+
     args = _validate_and_parse_args()
     exercise_key = _build_exercise_key(
         args.exercise_id,
@@ -603,15 +610,30 @@ def main() -> int:
     (exercise_dir / "__init__.py").write_text("\n", encoding="utf-8")
 
     today = _dt.date.today().isoformat()
-    readme_lines = _build_readme_lines(
-        args.title,
-        today,
-        exercise_type=args.exercise_type,
-        test_target=test_path.relative_to(ROOT).as_posix(),
-    )
-    (exercise_dir / README_FILENAME).write_text("\n".join(readme_lines) +
-                                                "\n", encoding="utf-8")
+    relative_test_path = test_path.relative_to(ROOT).as_posix()
 
+    # Instantiate the type-specific scaffold
+    scaffold_class = {
+        "debug": DebugScaffold,
+        "modify": ModifyScaffold,
+        "make": MakeScaffold,
+        "gaps": GapsScaffold,
+    }[args.exercise_type]
+    scaffold = scaffold_class(
+        title=args.title,
+        exercise_key=exercise_key,
+        parts=args.parts,
+        test_target=relative_test_path,
+        exercise_id=int(args.exercise_id[2:]),
+    )
+
+    # README
+    readme_lines = scaffold.build_readme_lines(today)
+    (exercise_dir / README_FILENAME).write_text(
+        "\n".join(readme_lines) + "\n", encoding="utf-8"
+    )
+
+    # exercise.json
     exercise_metadata = _build_exercise_metadata(
         args,
         exercise_key=exercise_key,
@@ -621,26 +643,34 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    relative_test_path = test_path.relative_to(ROOT).as_posix()
-    test_lines = _build_test_lines(
-        exercise_key,
-        parts=args.parts,
-        exercise_type=args.exercise_type,
-    )
-
+    # Test file
+    test_lines = scaffold.build_test_lines()
     test_path.write_text("\n".join(test_lines), encoding="utf-8")
 
-    notebook = _make_notebook_with_parts(
-        args.title,
-        parts=args.parts,
-        exercise_type=args.exercise_type,
-        exercise_key=exercise_key,
-        test_target=relative_test_path,
+    # Notebooks (student and solution variants)
+    student_notebook = scaffold.build_notebook(
+        "student", exercise_type=args.exercise_type
+    )
+    solution_notebook = scaffold.build_notebook(
+        "solution", exercise_type=args.exercise_type
     )
     student_notebook_path.write_text(
-        json.dumps(notebook, indent=2), encoding="utf-8")
+        json.dumps(student_notebook, indent=2), encoding="utf-8"
+    )
     solution_notebook_path.write_text(
-        json.dumps(notebook, indent=2), encoding="utf-8")
+        json.dumps(solution_notebook, indent=2), encoding="utf-8"
+    )
+
+    # Supporting files
+    expectations_module = scaffold.build_expectations_module()
+    (tests_dir / "expectations.py").write_text(
+        expectations_module, encoding="utf-8"
+    )
+
+    checker_support = scaffold.build_student_checker_support()
+    (tests_dir / "student_checker_support.py").write_text(
+        checker_support, encoding="utf-8"
+    )
 
     print(f"Created exercise: {exercise_key}")
     print(f"- {exercise_dir.relative_to(ROOT)}")
@@ -649,7 +679,6 @@ def main() -> int:
     print(f"- {solution_notebook_path.relative_to(ROOT)}")
     print(f"- {test_path.relative_to(ROOT)}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

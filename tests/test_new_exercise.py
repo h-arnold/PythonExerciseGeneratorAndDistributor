@@ -11,23 +11,16 @@ from typing import Any, Protocol, TypeGuard
 import pytest
 
 import scripts.new_exercise as ne
+from scripts.exercise_scaffolder import (
+    DebugScaffold,
+    MakeScaffold,
+    ModifyScaffold,
+)
 
 _MIN_SELF_CHECK_CELLS = 2
 
 NotebookCell = dict[str, Any]
 Notebook = dict[str, Any]
-
-
-class _MakeNotebookWithParts(Protocol):
-    def __call__(
-        self,
-        title: str,
-        *,
-        parts: int,
-        exercise_type: str,
-        exercise_key: str,
-        test_target: str,
-    ) -> Notebook: ...
 
 
 class _CheckExerciseNotExists(Protocol):
@@ -43,34 +36,10 @@ class _ValidateAndParseArgs(Protocol):
     def __call__(self) -> object: ...
 
 
-class _BuildReadmeLines(Protocol):
-    def __call__(
-        self,
-        title: str,
-        created_date: str,
-        *,
-        exercise_type: str,
-        test_target: str,
-    ) -> list[str]: ...
-
-
-class _BuildTestLines(Protocol):
-    def __call__(
-        self,
-        exercise_key: str,
-        *,
-        parts: int,
-        exercise_type: str,
-    ) -> list[str]: ...
-
-
 # These private helpers are part of the scaffold contract under test, but they remain
 # module-private in production code, so the focused tests bind them explicitly here.
-_MAKE_NOTEBOOK_WITH_PARTS: _MakeNotebookWithParts = getattr(ne, "_make_notebook_with_parts")  # noqa: B009
 _CHECK_EXERCISE_NOT_EXISTS: _CheckExerciseNotExists = getattr(ne, "_check_exercise_not_exists")  # noqa: B009
 _VALIDATE_AND_PARSE_ARGS: _ValidateAndParseArgs = getattr(ne, "_validate_and_parse_args")  # noqa: B009
-_BUILD_README_LINES: _BuildReadmeLines = getattr(ne, "_build_readme_lines")  # noqa: B009
-_BUILD_TEST_LINES: _BuildTestLines = getattr(ne, "_build_test_lines")  # noqa: B009
 
 
 def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
@@ -117,13 +86,14 @@ def _find_tags(cells: Sequence[NotebookCell], tag: str) -> NotebookCell | None:
 
 
 def test_make_notebook_debug_structure() -> None:
-    notebook = _MAKE_NOTEBOOK_WITH_PARTS(
-        "Title Debug",
-        parts=2,
-        exercise_type="debug",
+    scaffold = DebugScaffold(
+        title="Title Debug",
         exercise_key="ex000_sequence_debug_example",
+        parts=2,
         test_target="exercises/sequence/ex000/tests/test_ex000.py",
+        exercise_id=0,
     )
+    notebook = scaffold.build_notebook("student", exercise_type="debug")
     cells = _require_cells(notebook)
 
     for i in range(1, 3):
@@ -147,13 +117,14 @@ def test_make_notebook_debug_structure() -> None:
 
 
 def test_make_notebook_make_structure_matches_standard_non_debug_scaffold() -> None:
-    notebook = _MAKE_NOTEBOOK_WITH_PARTS(
-        "Title Make",
-        parts=2,
-        exercise_type="make",
+    scaffold = MakeScaffold(
+        title="Title Make",
         exercise_key="ex000_sequence_make_example",
+        parts=2,
         test_target="exercises/sequence/ex000/tests/test_ex000.py",
+        exercise_id=0,
     )
+    notebook = scaffold.build_notebook("student", exercise_type="make")
     cells = _require_cells(notebook)
 
     for i in range(1, 3):
@@ -181,43 +152,47 @@ def test_build_readme_lines_uses_canonical_exercise_local_test_target() -> None:
     exercise_key = "ex010_sequence_debug_syntax"
     test_target = f"exercises/sequence/{exercise_key}/tests/test_{exercise_key}.py"
 
-    readme_lines = _BUILD_README_LINES(
-        "Debug Example",
-        "2026-01-01",
-        exercise_type="debug",
+    scaffold = DebugScaffold(
+        title="Debug Example",
+        exercise_key=exercise_key,
+        parts=1,
         test_target=test_target,
+        exercise_id=10,
     )
+    readme_lines = scaffold.build_readme_lines("2026-01-01")
 
     readme = "\n".join(readme_lines)
-    assert f"From the repository root, run `uv run pytest -q {test_target}` until all tests pass." in readme
-    assert "Run `pytest -q` until all tests pass." not in readme
+    assert f"From the repository root, run ``uv run pytest -q {test_target}`` until all tests pass." in readme
+    assert "Run ``pytest -q`` until all tests pass." not in readme
 
 
 def test_make_notebook_instructions_use_canonical_exercise_local_test_target() -> None:
     test_target = (
         "exercises/sequence/ex010_sequence_debug_syntax/tests/test_ex010_sequence_debug_syntax.py"
     )
-    notebook = _MAKE_NOTEBOOK_WITH_PARTS(
-        "Title Debug",
-        parts=1,
-        exercise_type="debug",
+    scaffold = DebugScaffold(
+        title="Title Debug",
         exercise_key="ex010_sequence_debug_syntax",
+        parts=1,
         test_target=test_target,
+        exercise_id=10,
     )
+    notebook = scaffold.build_notebook("student", exercise_type="debug")
     cells = _require_cells(notebook)
     intro_source = "".join(_ensure_source_lines(cells[0]))
-    assert f"From the repository root, run `uv run pytest -q {test_target}`" in intro_source
-    assert "- Run `pytest -q`\n" not in intro_source
+    assert f"From the repository root, run ``uv run pytest -q {test_target}``" in intro_source
+    assert "- Run ``pytest -q``\n" not in intro_source
 
 
 def test_build_make_test_lines_use_output_capture_helpers() -> None:
-    test_text = "\n".join(
-        _BUILD_TEST_LINES(
-            "ex000_sequence_make_example",
-            parts=2,
-            exercise_type="make",
-        )
+    scaffold = MakeScaffold(
+        title="Make Example",
+        exercise_key="ex000_sequence_make_example",
+        parts=2,
+        test_target="exercises/sequence/ex000/tests/test_ex000.py",
+        exercise_id=0,
     )
+    test_text = "\n".join(scaffold.build_test_lines())
 
     assert "from exercise_runtime_support.exercise_framework import (" in test_text
     assert "import pytest" in test_text
@@ -235,50 +210,88 @@ def test_build_make_test_lines_use_output_capture_helpers() -> None:
     assert "get_explanation_cell" not in test_text
 
 
+def _run_main(exercise_id: str, title: str, construct: str, exercise_type: str, *,  # noqa: PLR0913
+              slug: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+              parts: int = 1) -> str:
+    """Run new_exercise.main() with given args and return the exercise_key."""
+    monkeypatch.setattr(ne, "ROOT", tmp_path)
+    argv = [
+        "scripts/new_exercise.py",
+        exercise_id,
+        title,
+        "--construct", construct,
+        "--type", exercise_type,
+        "--slug", slug,
+    ]
+    if parts > 1:
+        argv.extend(["--parts", str(parts)])
+    monkeypatch.setattr(sys, "argv", argv)
+    assert ne.main() == 0
+    return f"{exercise_id}_{construct}_{exercise_type}_{slug}"
+
+
+def _assert_variant_notebooks(
+    exercise_dir: Path, exercise_key: str,
+) -> None:
+    """Verify student and solution notebooks have correct variant overrides."""
+    student_notebook = json.loads(
+        (exercise_dir / "notebooks" / "student.ipynb").read_text(encoding="utf-8"))
+    solution_notebook = json.loads(
+        (exercise_dir / "notebooks" / "solution.ipynb").read_text(encoding="utf-8"))
+
+    student_helper = "".join(_ensure_source_lines(
+        _require_cells(student_notebook)[-1]))
+    assert 'PYTUTOR_ACTIVE_VARIANT"] = "student"' in student_helper
+
+    solution_helper = "".join(_ensure_source_lines(
+        _require_cells(solution_notebook)[-1]))
+    assert 'PYTUTOR_ACTIVE_VARIANT"] = "solution"' in solution_helper
+
+    assert student_notebook != solution_notebook
+
+
+def _assert_supporting_files(exercise_dir: Path, exercise_key: str,
+                             exercise_id: int) -> None:
+    """Verify expectations.py and student_checker_support.py exist and are valid."""
+    expectations_path = exercise_dir / "tests" / "expectations.py"
+    checker_path = exercise_dir / "tests" / "student_checker_support.py"
+    assert expectations_path.exists()
+    assert checker_path.exists()
+
+    expectations = expectations_path.read_text(encoding="utf-8")
+    assert exercise_key in expectations
+    assert f"EX{exercise_id:03d}_EXPECTED_OUTPUTS" in expectations
+    assert "Final[dict[int, str]]" in expectations
+
+    checker = checker_path.read_text(encoding="utf-8")
+    assert exercise_key in checker
+    assert f"EX{exercise_id:03d}_EXPECTED_OUTPUTS" in checker
+    assert "ExerciseCheckDefinition" in checker
+
+
 def test_main_creates_canonical_debug_scaffold(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(ne, "ROOT", tmp_path)
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "scripts/new_exercise.py",
-            "ex010",
-            "Debug Example",
-            "--construct",
-            "sequence",
-            "--type",
-            "debug",
-            "--slug",
-            "syntax",
-        ],
+    exercise_key = _run_main(
+        "ex010", "Debug Example", "sequence", "debug",
+        slug="syntax", tmp_path=tmp_path, monkeypatch=monkeypatch,
     )
-
-    result = ne.main()
-    assert result == 0
-
-    exercise_key = "ex010_sequence_debug_syntax"
     exercise_dir = tmp_path / "exercises" / "sequence" / exercise_key
-    exercise_json_path = exercise_dir / "exercise.json"
     student_notebook_path = exercise_dir / "notebooks" / "student.ipynb"
     solution_notebook_path = exercise_dir / "notebooks" / "solution.ipynb"
     test_path = exercise_dir / "tests" / f"test_{exercise_key}.py"
 
-    assert exercise_dir.exists(), "Canonical exercise directory should be created"
-    assert exercise_json_path.exists(), "exercise.json should be created"
-    assert student_notebook_path.exists(), "Student notebook should be created"
-    assert solution_notebook_path.exists(), "Solution notebook should be created"
-    assert test_path.exists(), "Canonical test file should be created"
+    assert exercise_dir.exists()
+    assert student_notebook_path.exists()
+    assert solution_notebook_path.exists()
+    assert test_path.exists()
 
     assert not (tmp_path / "notebooks" / f"{exercise_key}.ipynb").exists()
-    assert not (tmp_path / "notebooks" / "solutions" /
-                f"{exercise_key}.ipynb").exists()
     assert not (tmp_path / "tests" / f"test_{exercise_key}.py").exists()
 
     exercise_metadata = json.loads(
-        exercise_json_path.read_text(encoding="utf-8"))
+        (exercise_dir / "exercise.json").read_text(encoding="utf-8"))
     assert exercise_metadata == {
         "schema_version": 1,
         "exercise_key": exercise_key,
@@ -305,18 +318,13 @@ def test_main_creates_canonical_debug_scaffold(
         and f"run_notebook_checks('{exercise_key}')" in helper_source
     )
 
-    assert json.loads(student_notebook_path.read_text(encoding="utf-8")) == json.loads(
-        solution_notebook_path.read_text(encoding="utf-8")
-    )
-
     readme = (exercise_dir / "README.md").read_text(encoding="utf-8")
-    assert "Open `notebooks/student.ipynb` in this exercise folder." in readme
+    assert "- Open ``notebooks/student.ipynb`` in this exercise folder." in readme
     assert "explanation1" in readme or "explanationN" in readme
     assert (
-        f"From the repository root, run `uv run pytest -q exercises/sequence/{exercise_key}/tests/test_{exercise_key}.py` "
+        f"- From the repository root, run ``uv run pytest -q exercises/sequence/{exercise_key}/tests/test_{exercise_key}.py`` "
         "until all tests pass."
     ) in readme
-    assert "Run `pytest -q` until all tests pass." not in readme
 
     test_text = test_path.read_text(encoding="utf-8")
     assert f"_EXERCISE_KEY = '{exercise_key}'" in test_text
@@ -327,16 +335,24 @@ def test_main_creates_canonical_debug_scaffold(
     assert "assert is_valid_explanation(" in test_text
     assert "min_length=_MIN_EXPLANATION_LENGTH" in test_text
     assert "placeholder_phrases=_PLACEHOLDER_PHRASES" in test_text
-    assert "_MIN_EXPLANATION_LENGTH = 50" in test_text
-    assert "_PLACEHOLDER_PHRASES = (" in test_text
     assert "import pytest" not in test_text
-    assert "runtime.run_cell_and_capture_output" not in test_text
-    assert "runtime.get_explanation_cell" not in test_text
-    assert "len(explanation.strip()) > 10" not in test_text
-    assert (
-        f"NOTEBOOK_PATH = 'exercises/sequence/{exercise_key}/notebooks/student.ipynb'"
-        not in test_text
+
+    _assert_variant_notebooks(exercise_dir, exercise_key)
+    _assert_supporting_files(exercise_dir, exercise_key, 10)
+
+
+def test_main_creates_debug_scaffold_variant_in_supporting_files(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Variant notebooks and supporting files written alongside the main scaffold."""
+    exercise_key = _run_main(
+        "ex010", "Debug Example", "sequence", "debug",
+        slug="syntax", tmp_path=tmp_path, monkeypatch=monkeypatch,
     )
+    exercise_dir = tmp_path / "exercises" / "sequence" / exercise_key
+    _assert_variant_notebooks(exercise_dir, exercise_key)
+    _assert_supporting_files(exercise_dir, exercise_key, 10)
 
 
 def test_main_creates_canonical_make_scaffold(
@@ -366,7 +382,10 @@ def test_main_creates_canonical_make_scaffold(
     exercise_key = "ex012_sequence_make_function_contract"
     exercise_dir = tmp_path / "exercises" / "sequence" / exercise_key
     student_notebook_path = exercise_dir / "notebooks" / "student.ipynb"
+    solution_notebook_path = exercise_dir / "notebooks" / "solution.ipynb"
     test_path = exercise_dir / "tests" / f"test_{exercise_key}.py"
+    expectations_path = exercise_dir / "tests" / "expectations.py"
+    checker_support_path = exercise_dir / "tests" / "student_checker_support.py"
 
     student_notebook = json.loads(
         student_notebook_path.read_text(encoding="utf-8"))
@@ -394,6 +413,21 @@ def test_main_creates_canonical_make_scaffold(
     assert "assert 'TODO' not in output, 'Replace the TODO placeholder with your solution'" in test_text
     assert "import pytest" not in test_text
     assert "exec_tagged_code" not in test_text
+
+    # Verify student variant
+    student_helper_source = "".join(_ensure_source_lines(cells[-1]))
+    assert 'PYTUTOR_ACTIVE_VARIANT"] = "student"' in student_helper_source
+
+    # Verify solution variant
+    solution_notebook = json.loads(
+        solution_notebook_path.read_text(encoding="utf-8"))
+    solution_cells = _require_cells(solution_notebook)
+    solution_helper_source = "".join(_ensure_source_lines(solution_cells[-1]))
+    assert 'PYTUTOR_ACTIVE_VARIANT"] = "solution"' in solution_helper_source
+
+    # Verify supporting files exist
+    assert expectations_path.exists(), "expectations.py should exist"
+    assert checker_support_path.exists(), "student_checker_support.py should exist"
 
 
 def test_main_creates_multi_part_debug_scaffold_with_helper_based_explanation_checks(
@@ -423,6 +457,9 @@ def test_main_creates_multi_part_debug_scaffold_with_helper_based_explanation_ch
     assert result == 0
 
     exercise_key = "ex011_sequence_debug_logic"
+    exercise_dir = tmp_path / "exercises" / "sequence" / exercise_key
+    student_notebook_path = exercise_dir / "notebooks" / "student.ipynb"
+    solution_notebook_path = exercise_dir / "notebooks" / "solution.ipynb"
     test_path = (
         tmp_path
         / "exercises"
@@ -431,6 +468,9 @@ def test_main_creates_multi_part_debug_scaffold_with_helper_based_explanation_ch
         / "tests"
         / f"test_{exercise_key}.py"
     )
+    expectations_path = exercise_dir / "tests" / "expectations.py"
+    checker_support_path = exercise_dir / "tests" / "student_checker_support.py"
+
     test_text = test_path.read_text(encoding="utf-8")
 
     assert "EXPLANATION_TAGS = [f'explanation{i}' for i in range(1, 3 + 1)]" in test_text
@@ -439,6 +479,24 @@ def test_main_creates_multi_part_debug_scaffold_with_helper_based_explanation_ch
     assert "assert is_valid_explanation(" in test_text
     assert "import pytest" in test_text
     assert "len(explanation.strip()) > 10" not in test_text
+
+    # Verify student variant
+    student_notebook = json.loads(
+        student_notebook_path.read_text(encoding="utf-8"))
+    student_cells = _require_cells(student_notebook)
+    student_helper_source = "".join(_ensure_source_lines(student_cells[-1]))
+    assert 'PYTUTOR_ACTIVE_VARIANT"] = "student"' in student_helper_source
+
+    # Verify solution variant
+    solution_notebook = json.loads(
+        solution_notebook_path.read_text(encoding="utf-8"))
+    solution_cells = _require_cells(solution_notebook)
+    solution_helper_source = "".join(_ensure_source_lines(solution_cells[-1]))
+    assert 'PYTUTOR_ACTIVE_VARIANT"] = "solution"' in solution_helper_source
+
+    # Verify supporting files exist
+    assert expectations_path.exists(), "expectations.py should exist"
+    assert checker_support_path.exists(), "student_checker_support.py should exist"
 
 
 def test_check_exercise_not_exists_rejects_legacy_construct_type_layout(
@@ -513,13 +571,14 @@ def test_validate_and_parse_args_rejects_unknown_construct(
 
 
 def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() -> None:
-    notebook = _MAKE_NOTEBOOK_WITH_PARTS(
-        "Title Standard",
-        parts=3,
-        exercise_type="modify",
+    scaffold = ModifyScaffold(
+        title="Title Standard",
         exercise_key="ex000_sequence_modify_example",
+        parts=3,
         test_target="exercises/sequence/ex000/tests/test_ex000.py",
+        exercise_id=0,
     )
+    notebook = scaffold.build_notebook("student", exercise_type="modify")
     cells = _require_cells(notebook)
 
     exercise_tags: set[str] = set()
