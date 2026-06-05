@@ -183,8 +183,10 @@ class ExerciseScaffold(ABC):
         ]
         type_lines = self._readme_type_hook()
         if type_lines:
-            # Insert type-specific lines after the test-target line
-            insert_at = 5
+            # Insert type-specific lines after the test-target line (index 5),
+            # before the blank line (index 6) — matching original order in
+            # new_exercise.py:_build_readme_lines().
+            insert_at = 6
             for line in reversed(type_lines):  # reversed to maintain order
                 lines.insert(insert_at, line)
         return lines
