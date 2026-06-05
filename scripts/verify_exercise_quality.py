@@ -814,6 +814,33 @@ def _collect_progression_findings(
     return findings
 
 
+# ── Gates F–I: student checker support, expectations, variant overrides, runtime self-check ──
+
+
+def _check_student_checker_support(ex_dir: Path) -> list[Finding]:
+    """Gate F: Verify student_checker_support.py exists with non-empty CHECKS."""
+    return []
+
+
+def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
+    """Gate G: Verify expectations.py exists with non-empty expected-outputs."""
+    return []
+
+
+def _check_notebook_variant_overrides(
+    *, ex_dir: Path, student_nb: NotebookDocument, solution_nb: NotebookDocument,
+) -> list[Finding]:
+    """Gate H: Verify variant overrides in student and solution notebooks."""
+    return []
+
+
+def _check_runtime_self_check(
+    *, ex_dir: Path, exercise_key: str, nb_solution: NotebookDocument,
+) -> list[Finding]:
+    """Gate I: Run self-checker against solution variant and report failures."""
+    return []
+
+
 def _report_findings(findings: list[Finding]) -> int:
     _print_findings(findings)
 

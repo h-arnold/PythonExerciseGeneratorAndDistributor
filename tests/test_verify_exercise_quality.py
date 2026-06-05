@@ -300,3 +300,300 @@ def test_main_fails_when_student_solution_exercise_tags_do_not_match(
     assert exit_code == 1
     assert "Student and solution notebooks must use the same exerciseN tags" in captured.out
     assert "Student and solution notebooks must use the same explanationN tags" in captured.out
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate F — Student checker support module
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateFStudentCheckerSupport:
+    """Gate F: Verify student_checker_support.py exists with non-empty CHECKS."""
+
+    def _write_checker_support(self, path: Path, content: str) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def _make_exercise_with_checker(
+        self, tmp_path: Path, checker_content: str | None = None,
+    ) -> tuple[Path, str]:
+        slug = "ex004_sequence_modify_variables"
+        metadata = {
+            **_exercise_metadata(slug),
+            "exercise_type": "modify",
+            "parts": 1,
+        }
+        exercise_dir = _write_canonical_exercise(
+            tmp_path, slug,
+            metadata=metadata,
+            include_explanation=False,
+        )
+        if checker_content is not None:
+            self._write_checker_support(
+                exercise_dir / "tests" / "student_checker_support.py",
+                checker_content,
+            )
+        return exercise_dir, slug
+
+    def test_missing_checker_support_returns_error(self, tmp_path: Path) -> None:
+        exercise_dir, _ = self._make_exercise_with_checker(tmp_path, checker_content=None)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        assert len(findings) > 0
+        assert any("student_checker_support" in f.message and f.severity == "ERROR" for f in findings)
+
+    def test_empty_checks_returns_error(self, tmp_path: Path) -> None:
+        content = (
+            "from __future__ import annotations\n"
+            "from typing import Any\n"
+            "CHECKS: list[Any] = []\n"
+        )
+        exercise_dir, _ = self._make_exercise_with_checker(tmp_path, checker_content=content)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        assert len(findings) > 0
+        assert any("CHECKS" in f.message and f.severity == "ERROR" for f in findings)
+
+    def test_non_empty_checks_returns_no_finding(self, tmp_path: Path) -> None:
+        content = (
+            "from __future__ import annotations\n"
+            "from exercise_runtime_support.student_checker.checks.base import "
+            "ExerciseCheckDefinition\n"
+            "CHECKS: list[ExerciseCheckDefinition] = [{'tag': 'exercise1', 'check': None}]\n"
+        )
+        exercise_dir, _ = self._make_exercise_with_checker(tmp_path, checker_content=content)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        assert len(findings) == 0
+
+    def test_unimportable_checker_returns_error(self, tmp_path: Path) -> None:
+        content = "this is synta error!!!"
+        exercise_dir, _ = self._make_exercise_with_checker(tmp_path, checker_content=content)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        assert len(findings) > 0
+        assert any(f.severity == "ERROR" for f in findings)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — Expectations module
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGExpectationsModule:
+    """Gate G: Verify expectations.py exists with non-empty expected-outputs."""
+
+    def _write_expectations(self, path: Path, content: str) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+        return path
+
+    def _make_exercise_with_expectations(
+        self, tmp_path: Path, content: str | None = None, *, parts: int = 1,
+    ) -> tuple[Path, str]:
+        slug = "ex004_sequence_modify_variables"
+        metadata = {
+            **_exercise_metadata(slug),
+            "exercise_type": "modify",
+            "parts": parts,
+        }
+        exercise_dir = _write_canonical_exercise(
+            tmp_path, slug,
+            metadata=metadata,
+            include_explanation=False,
+        )
+        if content is not None:
+            self._write_expectations(
+                exercise_dir / "tests" / "expectations.py",
+                content,
+            )
+        return exercise_dir, slug
+
+    def test_missing_expectations_returns_error(self, tmp_path: Path) -> None:
+        exercise_dir, _ = self._make_exercise_with_expectations(tmp_path, content=None)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
+        assert len(findings) > 0
+        assert any("expectations" in f.message and f.severity == "ERROR" for f in findings)
+
+    def test_empty_dict_returns_error(self, tmp_path: Path) -> None:
+        content = (
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX004_EXPECTED_OUTPUTS: Final[dict[int, str]] = {}\n"
+        )
+        exercise_dir, _ = self._make_exercise_with_expectations(tmp_path, content=content)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
+        assert len(findings) > 0
+        assert any("empty" in f.message.lower() for f in findings)
+
+    def test_non_empty_expected_outputs_returns_no_finding(self, tmp_path: Path) -> None:
+        content = (
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX004_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: 'Hello'}\n"
+        )
+        exercise_dir, _ = self._make_exercise_with_expectations(tmp_path, content=content)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
+        assert len(findings) == 0
+
+    def test_missing_keys_for_all_parts_returns_error(self, tmp_path: Path) -> None:
+        content = (
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX004_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: 'Hello'}\n"
+        )
+        exercise_dir, _ = self._make_exercise_with_expectations(
+            tmp_path, content=content, parts=3,
+        )
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=3)
+        assert len(findings) > 0
+        assert any("1..3" in f.message or "parts" in f.message.lower() for f in findings)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate H — Notebook variant overrides
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateHNotebookVariantOverrides:
+    """Gate H: Verify variant overrides in student and solution notebooks."""
+
+    def _make_notebook(self, source_lines: list[str]) -> dict:
+        return {
+            "cells": [
+                {
+                    "cell_type": "code",
+                    "metadata": {"language": "python"},
+                    "source": source_lines,
+                },
+            ],
+        }
+
+    def _make_exercise_dir(self, tmp_path: Path, slug: str) -> Path:
+        metadata = {
+            **_exercise_metadata(slug),
+            "exercise_type": "modify",
+            "parts": 1,
+        }
+        exercise_dir = _write_canonical_exercise(
+            tmp_path, slug,
+            metadata=metadata,
+            include_explanation=False,
+        )
+        return exercise_dir
+
+    def test_student_missing_variant_returns_warning(self, tmp_path: Path) -> None:
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(nb), encoding="utf-8")
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(nb), encoding="utf-8")
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb")
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb")
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+        )
+        assert len(findings) > 0
+        assert any("PYTUTOR_ACTIVE_VARIANT" in f.message for f in findings)
+
+    def test_solution_missing_variant_returns_error(self, tmp_path: Path) -> None:
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        student_nb = self._make_notebook([
+            "import os\n",
+            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+            "run_notebook_checks('ex004_sequence_modify_vars')\n",
+        ])
+        solution_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8")
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8")
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb")
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb")
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+        )
+        assert len(findings) > 0
+        assert any("solution" in f.message and f.severity == "ERROR" for f in findings)
+
+    def test_solution_wrong_variant_returns_error(self, tmp_path: Path) -> None:
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        student_nb = self._make_notebook([
+            "import os\n",
+            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+            "run_notebook_checks('ex004_sequence_modify_vars')\n",
+        ])
+        solution_nb = self._make_notebook([
+            "import os\n",
+            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+            "run_notebook_checks('ex004_sequence_modify_vars')\n",
+        ])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8")
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8")
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb")
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb")
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+        )
+        assert len(findings) > 0
+        assert any("solution" in f.message and "student" in f.message
+                    and f.severity == "ERROR" for f in findings)
+
+    def test_both_variants_correct_returns_no_finding(self, tmp_path: Path) -> None:
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        student_nb = self._make_notebook([
+            "import os\n",
+            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+            "run_notebook_checks('ex004_sequence_modify_vars')\n",
+        ])
+        solution_nb = self._make_notebook([
+            "import os\n",
+            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+            "run_notebook_checks('ex004_sequence_modify_vars')\n",
+        ])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8")
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8")
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb")
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb")
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+        )
+        assert len(findings) == 0
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate I — Runtime self-check
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateIRuntimeSelfCheck:
+    """Gate I: Run self-checker against solution variant and report failures."""
+
+    def test_valid_solution_returns_no_finding(
+        self, tmp_path: Path,
+    ) -> None:
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = tmp_path / "exercises" / "sequence" / slug
+        exercise_dir.mkdir(parents=True, exist_ok=True)
+        findings = verify_exercise_quality._check_runtime_self_check(
+            ex_dir=exercise_dir, exercise_key=slug, nb_solution={},
+        )
+        assert len(findings) == 0
