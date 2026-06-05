@@ -34,6 +34,9 @@
     },
     "ex012_sequence_modify_maths_operators": {
       "layout": "canonical"
+    },
+    "ex013_sequence_debug_maths_operators": {
+      "layout": "canonical"
     }
   }
 }

@@ -269,6 +269,70 @@ All tests must pass. If any fail, fix the tests or re-read the solution notebook
 
 Do **not** run the student variant. The Exercise Test Reviewer will confirm student-variant failure.
 
+### 8. Create `student_checker_support.py` (mandatory)
+
+Every exercise **must** ship a `tests/student_checker_support.py` module alongside the canonical test file. This module powers the self-check cell (`run_notebook_checks('<exercise_key>')`) that students see before running pytest.
+
+**Why this is mandatory**: The generic fallback only verifies execution success (no crashes). It cannot detect logic bugs that produce wrong-but-crash-free output — a common scenario in debug, modify, and gaps exercises. Without this module, buggy student code can show 🟢 OK in the self-check, misleading students into thinking their work is correct.
+
+#### Module structure
+
+```python
+"""Student-checker support for exNNN_construct_type_slug."""
+
+from __future__ import annotations
+
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+from exercise_runtime_support.notebook_grader import (
+    run_cell_and_capture_output,
+    run_cell_with_input,
+)
+from exercise_runtime_support.student_checker.checks.base import (
+    ExerciseCheckDefinition,
+    build_exercise_check,
+    check_explanation_cell,
+)
+
+_EXERCISE_KEY = "exNNN_construct_type_slug"
+_ex = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+
+# … define _check_static_output, _check_input_output, _check_explanation helpers …
+
+CHECKS: list[ExerciseCheckDefinition] = [
+    # Interleave checks by exercise, NOT by check type:
+    _make_output_check(1, "Title"),
+    build_exercise_check(1, "Explain what went wrong", _check_explanation),
+    _make_output_check(2, "Title"),
+    build_exercise_check(2, "Explain what went wrong", _check_explanation),
+    # …
+]
+```
+
+#### Key rules
+
+- **Interleave checks by exercise**: Place each exercise's output check and explanation check next to each other in `CHECKS`. The table renderer groups consecutive rows with the same exercise number so they appear under one `Exercise N` label.
+- **Do not batch by check type**: Putting all output checks first then all explanation checks causes every exercise number to appear twice in separate blocks — confusing to scan.
+- **Use `load_exercise_test_module` for expectations**: Do not use relative imports (`from .expectations import …`); the module is loaded flat and relative imports fail.
+- **Do not pass `variant="student"` explicitly**: The `run_exercise_checks` context manager sets the variant. Explicit variants break the solution notebook's self-check.
+
+#### Verification
+
+After creating the module, verify both variants:
+
+```bash
+# Student variant — all checks must show 🔴 NO
+PYTUTOR_ACTIVE_VARIANT=student python3 -c "
+from exercise_runtime_support.student_checker import run_notebook_checks
+run_notebook_checks('exNNN_construct_type_slug')
+"
+
+# Solution variant — all checks must show 🟢 OK
+PYTUTOR_ACTIVE_VARIANT=solution python3 -c "
+from exercise_runtime_support.student_checker import run_notebook_checks
+run_notebook_checks('exNNN_construct_type_slug')
+"
+```
+
 ## Output expectations
 
 Report back:

@@ -6,6 +6,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 
 - **No local setup or config**: The most your IT technician will need to do is ensure that connections to GitHub and Codespaces are allowed.
 - **Works on any device with a browser**: Students can work on Chromebooks, tablets, or any device that can run Codespaces. A device with a keyboard and mouse is recommended however.
+- **Simplified Student Interface**: The student's VSCode environment has been configured to be as minimal and user-friendly as possible, stripping out everything except the notebook editor and the file explorer.
 - **Free and open source**: Github and Codespaces are free, and the free GitHub Education plan gives generous increased limits in Codespaces usage.
 - **Fast and intelligent feedback loop**: Students get immediate feedback from autograding tests right in their notebooks. Most importantly, the tests check that students are using the correct constructs, not just that they get the right output.
 - **Easy tracking**: A custom GitHub Classroom autograder workflow reports results back to the Classroom interface on every push, so you can track student progress and identify common issues.

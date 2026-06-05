@@ -2,20 +2,6 @@
 
 This guide explains how to use the **Exercise Generation** assistant in GitHub Copilot to create new Python exercises for students. This tool is designed to help you quickly create pedagogically sound exercises without needing to manually write all the boilerplate code.
 
-> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md).
-
-## Repository status
-
-New exercises scaffold directly into the canonical exercise directory. Canonical exercise identity and fail-fast contracts are defined in the execution model document, and flattened notebook/test mirrors are not part of the supported contract.
-
-## Two-Phase Workflow
-
-Exercise creation follows a two-phase process with a teacher review gate between phases:
-
-- **Phase 1 — Notebook Authoring**: Scaffold, author, and review student + solution notebooks. The **Exercise Generation** agent creates the notebooks, the **Exercise Reviewer** checks structure and pedagogy, then the teacher reviews and approves. Supporting documentation (README, OVERVIEW, OrderOfTeaching) is generated after teacher approval.
-
-- **Phase 2 — Test Authoring**: Once notebooks are approved, the **Exercise Test Creator** writes pytest tests following the testing conventions, and the **Exercise Test Reviewer** verifies them against solution (must pass) and student (must fail) variants.
-
 - [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
   - [First Time Setup](#first-time-setup)
     - [What to expect after cloning (prompts \& tips)](#what-to-expect-after-cloning-prompts--tips)
@@ -27,8 +13,8 @@ Exercise creation follows a two-phase process with a teacher review gate between
     - [3. Iterating on Content](#3-iterating-on-content)
     - [4. Saving Your Work](#4-saving-your-work)
   - [Exercise Reviewer — quick quality checks 🔍](#exercise-reviewer--quick-quality-checks-)
-    - [Recommended models — cost vs. quality 💡](#recommended-models--cost-vs-quality-)
   - [Best Practices](#best-practices)
+    - [Recommended models — cost vs. quality 💡](#recommended-models--cost-vs-quality-)
 
 ## First Time Setup
 
@@ -75,7 +61,7 @@ If any prompt looks unfamiliar, you can safely decline and follow the manual set
 
 ## Using the Exercise Generation Assistant
 
-This repository includes a specialized helper called the **Exercise Generation** agent. It knows how our grading system works and how to structure exercises for our students.
+This repository includes a specialised helper called the **Exercise Generation** agent. It knows how our grading system works and how to structure exercises for our students.
 
 ### 1. Select the Agent
 

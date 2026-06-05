@@ -1,8 +1,8 @@
 # Exercise Generation CLI tool
 
-This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
+> 🧑‍🤝‍🧑**Note for humans**: This CLI tool is designed to be used by the `Exercise Generation` agent to make exercise creation more reliable. You probably won't need to use this unless you plan to hand write all the exercises, solutions and tests. If you desperately want to use a specific set of exercises, pass them to the `Exercise Generation` agent to reformat and create tests for you.
 
-> Source of truth: execution, variant, and mapping contracts are defined in [docs/execution-model.md](execution-model.md). The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
+This document describes how to use the CLI tool to scaffold new Python exercises in the repository.
 
 ## Repository status
 

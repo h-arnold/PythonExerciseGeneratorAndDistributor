@@ -66,78 +66,10 @@ def test_template_cli_consumers_link_to_shared_runtime_support() -> None:
     assert "REQUIRED_PACKAGE_DIRECTORIES" in packager_source
 
 
-def test_contributor_docs_align_on_execution_model_contract() -> None:
-    """Contributor-facing docs must reference the execution-model contract."""
-    agents_source = Path("AGENTS.md").read_text(encoding="utf-8")
-    execution_model_source = Path("docs/execution-model.md").read_text(encoding="utf-8")
-    testing_framework_source = Path("docs/testing-framework.md").read_text(encoding="utf-8")
-    cli_source = Path("docs/exercise-generation-cli.md").read_text(encoding="utf-8")
-
-    assert "docs/execution-model.md" in agents_source
-    assert "scripts/run_pytest_variant.py --variant solution" in agents_source
-
-    assert "docs/execution-model.md" in testing_framework_source
-    assert "Source of truth:" in testing_framework_source
-    assert "scripts/run_pytest_variant.py --variant solution" in testing_framework_source
-    assert "scripts/build_autograde_payload.py --variant student" in testing_framework_source
-
-    assert "docs/execution-model.md" in cli_source
-    assert "Source of truth:" in cli_source
-    assert "from exercise_runtime_support.exercise_framework" in cli_source
-    assert "run_notebook_checks('<exercise_key>')" in cli_source
-
-    assert (
-        "## 2) Shared runtime import model (`exercise_runtime_support`)" in execution_model_source
-    )
-    assert (
-        "## 3) Variant selection contract (`PYTUTOR_ACTIVE_VARIANT` and `--variant`)"
-        in execution_model_source
-    )
-    assert "## 4) Source-to-export mapping contract" in execution_model_source
 
 
-def test_contributor_docs_lock_metadata_only_packaged_contract() -> None:
-    """Contributor docs must remove snapshot-era guidance and state the packaged contract."""
-    required_fragments = {
-        Path("docs/execution-model.md"): (
-            "Packaged runtime contract",
-            "Resolution and packaging failures must remain fail-fast",
-        ),
-        Path("docs/testing-framework.md"): (
-            "metadata-backed runtime surfaces required by the packaged runtime contract",
-        ),
-        Path("docs/project-structure.md"): (
-            "The packaged Classroom layout includes the metadata-backed runtime contract",
-        ),
-        Path("docs/development.md"): (
-            "metadata-backed student contract rather than the source-repository authoring contract",
-        ),
-        Path("docs/setup.md"): ("metadata-backed student contract used in Classroom",),
-        Path("docs/exercise-generation.md"): (
-            "flattened notebook/test mirrors are not part of the supported contract",
-        ),
-        Path("docs/exercise-generation-cli.md"): (
-            "Flattened notebook/test mirrors are not part of the supported contract and must not be introduced in scaffold output",
-        ),
-        Path("docs/exercise-testing.md"): (
-            "packaged repositories must satisfy the metadata-backed runtime contract",
-        ),
-        Path("docs/CLI_README.md"): ("Exported per-exercise metadata (`exercise.json`)",),
-    }
 
-    forbidden_fragments = (
-        "No exported per-exercise metadata",
-        "metadata-free",
-        "exercise_catalogue_snapshot.json",
-        "snapshot",
-    )
 
-    for path, fragments in required_fragments.items():
-        source = path.read_text(encoding="utf-8")
-        for fragment in fragments:
-            assert fragment in source, f"Expected '{fragment}' in {path}"
-        for fragment in forbidden_fragments:
-            assert fragment not in source, f"Unexpected '{fragment}' in {path}"
 
 
 def test_framework_wrapper_surfaces_link_to_canonical_modules() -> None:

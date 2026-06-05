@@ -105,6 +105,7 @@ Provide a concise handoff summary including:
 ## 7. Guardrails
 
 - Do not invent behaviour not present in the code.
+- Always write in British English
 - Do not backfill speculative roadmap content unless explicitly requested.
 - Do not rewrite unrelated docs for style-only changes.
 - Keep documentation changes scoped to the implemented change set.

@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex013_sequence_debug_maths_operators",
+  "exercise_id": 13,
+  "slug": "ex013_sequence_debug_maths_operators",
+  "title": "Debug Maths Operators",
+  "construct": "sequence",
+  "exercise_type": "debug",
+  "parts": 10
+}

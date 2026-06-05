@@ -1,16 +1,33 @@
 # Exercise Testing Conventions
 
-This document outlines the testing philosophy and conventions for verifying student notebook exercises.
+This document is the canonical reference for testing student notebook exercises. It covers the testing philosophy, core rules, scoring model, common patterns and anti-patterns, self-check cell requirements, the exercise testing framework API, and workflow guidance.
 
-> **Note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.github/agents/exercise_test_creator.md.agent.md`) to generate tests, and the **Exercise Test Reviewer** (`.github/agents/exercise_test_reviewer.md.agent.md`) to verify them.
+> **Phase 2 note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.github/agents/exercise_test_creator.md.agent.md`) to generate tests, and the **Exercise Test Reviewer** (`.github/agents/exercise_test_reviewer.md.agent.md`) to verify them.
 
-> Source of truth: execution behaviour and fail-fast rules are defined in [docs/execution-model.md](execution-model.md).
+---
 
-## Repository status
+## Quick Navigation
 
-Prefer explicit variant selection in tooling and CI. Canonical notebook resolution starts from `exercise_key` and the exercise-local source tree, and packaged repositories must satisfy the metadata-backed runtime contract.
+| If you are… | Start here… |
+|---|---|
+| Creating new tests | [Scoring & Test Structure](#scoring--test-structure), [Patterns & Anti-Patterns](#patterns--anti-patterns), [Self-Check Cells](#self-check-cells), [Technical Reference](#technical-reference-exercise-framework) |
+| Reviewing existing tests | [Core Testing Rules](#core-testing-rules), [Scoring & Test Structure](#scoring--test-structure), [Patterns & Anti-Patterns](#patterns--anti-patterns) |
+| Adding a self-check cell | [Self-Check Cells](#self-check-cells) entirely |
+| Understanding the framework API | [Technical Reference](#technical-reference-exercise-framework) |
+| Running tests locally or in CI | [Running Tests](#running-tests) |
 
-## Philosophy: "Task Completion" with Good Habits
+### Non-negotiable rules — read these first
+
+These rules apply to **every** exercise test and must not be skipped:
+
+- **[Initial-Failure Rule](#3-the-initial-failure-rule)**: All tests must fail before the student writes any code. If a test passes on the untouched notebook, tighten it or remove it.
+- **[Construct testing](#5-mandatory-testing-rules)**: If the lesson teaches a specific Python feature (loop, cast, conditional, etc.), you **must** include a test that verifies the construct is present.
+- **[`student_checker_support.py` requirement](#required-pattern-student_checker_supportpy)**: Every exercise with expected outputs must provide a self-check module with output-verification checks. The generic fallback (execution-only) is **not sufficient** for debug, modify, gap-fill, or make exercises.
+- **[`@pytest.mark.task` annotation](#task-markers)**: Every grading test must be annotated with `@pytest.mark.task(taskno=N)`.
+
+---
+
+## Testing Philosophy: "Task Completion" with Good Habits
 
 The goal of our tests is to verify that a student has **achieved the learning objective** while fostering precise coding habits.
 
@@ -19,6 +36,8 @@ We follow a **"Task Completion"** testing model:
 1. **Does the code run?** (No syntax/runtime/logic errors)
 2. **Does it produce the correct outcome?** (Output matches expectation **strictly** by default)
 3. **Does it use the required constructs?** (e.g., If the lesson teaches `for` loops, a `for` loop is mandatory)
+
+---
 
 ## Core Testing Rules
 
@@ -45,15 +64,80 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 
 - **Enforce the Lesson Construct**: If the lesson covers **Iteration**, code that manually prints 10 times instead of looping is **incorrect**.
 - **Use AST Checks**: Verify that the required syntax (`for`, `if`, etc.) is present.
-- **Student notebook tests should always fail before being attempted**: The student notebook tests must *all* fail in their initial state. If any test passes before the student writes code, it is not a useful test.
 - **Allow flexibility in "Make" tasks**: "Make" tasks are strictly about the outcome; if they achieve the result using valid code, be more permissive with implementation details.
 
-### 3. Edge Cases
+### 3. The Initial-Failure Rule
+
+A test is only useful for grading if it distinguishes an unattempted notebook from a completed one.
+
+**Before the student writes any code, all tests should fail.** If any test passes in the initial state, it is not a useful test and should be tightened (preferred) or removed.
+
+#### Good examples (useful tests)
+
+- Checking exact required output against scaffold text that is intentionally wrong.
+
+```python
+# student starter code
+print("Hello from Python!")
+
+# test
+assert output.strip() == "Hi there!"
+```
+
+- Checking an updated input flow with new prompt wording.
+
+```python
+# student starter code
+print("What is your favourite fruit?")
+fruit = input()
+print("My favourite fruit is " + fruit)
+
+# test
+assert ex003.EX003_EXPECTED_PROMPTS[4][0] in constants
+assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants
+```
+
+- Checking explanation quality where the notebook starts with a placeholder prompt.
+
+```python
+# markdown starter prompt
+"""Describe what error you got and why. Fix the code above."""
+
+# test
+assert is_valid_explanation(...)
+```
+
+#### Non-examples (useless tests)
+
+- A test that checks only for `print(` when scaffold code already contains `print(...)`.
+
+```python
+# bad test (passes immediately)
+assert "print(" in code
+```
+
+- A test that checks only for a variable name already present in starter code.
+
+```python
+# bad test (passes immediately if starter already has price = input())
+assert "price" in code
+```
+
+- A test that accepts unchanged placeholder output.
+
+```python
+# bad test (passes immediately)
+assert "Hello from Python!" in output
+```
+
+If a test passes on the untouched student notebook, either tighten the assertion (preferred) or remove the test.
+
+### 4. Edge Cases
 
 - **Only test edge cases requested in the prompt.**
 - Do not test for defensive coding unless specifically asked for.
 
-### 4. Mandatory Testing Rules
+### 5. Mandatory Testing Rules
 
 **Rule 1: Always test the taught construct**
 
@@ -77,11 +161,30 @@ Examples:
 - Updating a prompt → Assert old prompt text not in code constants
 - Fixing a calculation → Assert the wrong answer doesn't appear
 
-## Grouping & Scoring (GitHub Classroom)
+---
+
+## Scoring & Test Structure
 
 We group tests using `@pytest.mark.task(taskno=N)` to align with the GitHub Classroom runner.
 
-### Scoring Strategy: Test Count Guidelines
+### Task Markers
+
+- Annotate every grading test with `@pytest.mark.task(taskno=<int>)`.
+- The optional `name="Short title"` argument overrides the label surfaced to students.
+- Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
+- If a test omits the `task` marker, the plugin records it with `task=None`. These tests still count for one point but appear in the "Ungrouped" bucket. Use this sparingly (for infrastructure smoke tests, for example).
+
+### Scoring Model: One Test, One Point
+
+The autograde plugin assigns one point per collected test. Keep each assertion focused on a single learning objective so Classroom feedback remains clear.
+
+### Authoring Guidance
+
+- Prefer many small tests over one large test.
+- Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label.
+- Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
+
+### Test Count Guidelines
 
 Each exercise should have tests for its **distinct success criteria**. Every test with the same `taskno` contributes to partial credit for that exercise.
 
@@ -101,7 +204,7 @@ Each exercise should have tests for its **distinct success criteria**. Every tes
 | Debug with explanation | 4+ | Logic + Formatting + Construct + Explanation |
 | Pure "Make" task | 1-2 | Logic (+ Construct if applicable) |
 
-### How Many Tests Should an Exercise Have?
+**How Many Tests Should an Exercise Have?**
 
 Ask these questions in order:
 
@@ -115,9 +218,11 @@ Ask these questions in order:
 **Typical:** 2-3 tests for modify/debug tasks with construct requirements
 **Maximum:** 4+ tests only when exercise has distinct explanation/edge cases
 
-### Common Missing Test Patterns
+---
 
-#### Missing Construct Check (INCOMPLETE)
+## Patterns & Anti-Patterns
+
+### Missing Construct Check (INCOMPLETE)
 
 **Exercise:** Cast the input to int and multiply by 2
 
@@ -151,7 +256,7 @@ def test_exercise1_construct():
     assert _has_binop(tree, ast.Mult)  # ✅ Multiplication is used
 ```
 
-#### Missing Input Variable Check (INCOMPLETE)
+### Missing Input Variable Check (INCOMPLETE)
 
 **Exercise:** Ask for name with input() and print it
 
@@ -180,7 +285,7 @@ def test_exercise2_construct():
     assert any(_print_uses_name(tree, var) for var in input_vars)  # ✅ Variable used in print
 ```
 
-#### Missing Negative Check (INCOMPLETE)
+### Missing Negative Check (INCOMPLETE)
 
 **Exercise:** Change the greeting from "Hello" to "Hi"
 
@@ -214,9 +319,7 @@ def test_exercise3_construct():
 
 Apply the decision framework above to determine test count. These examples from the codebase show how different exercise types require different numbers of tests.
 
-#### 1) One-test example (ex006 Exercise 7)
-
-Use one test where there is a single clear success criterion.
+#### 1) One-test example (ex006 Exercise 7) — use only when there is a single clear success criterion
 
 **Starter code (student notebook):**
 
@@ -239,11 +342,9 @@ def test_exercise7_logic() -> None:
     assert expected_output in output
 ```
 
-**Note:** This example is from the current codebase but is actually **incomplete** by our new standards. Since this is a casting lesson exercise, it should include a construct test checking for `float()` and addition. Use one test only when there truly is a single criterion (pure output-only "Make" tasks with no required construct).
+> **Note:** This example is from the current codebase but is actually **incomplete** by our standards. Since this is a casting lesson exercise, it should include a construct test checking for `float()` and addition. Use one test only when there truly is a single criterion (pure output-only "Make" tasks with no required construct).
 
-#### 2) Three-test example (ex003 Exercise 4)
-
-Use three tests when logic, formatting, and construct are all distinct learning goals.
+#### 2) Three-test example (ex003 Exercise 4) — logic, formatting, and construct as distinct learning goals
 
 **Starter code (student notebook):**
 
@@ -285,14 +386,12 @@ def test_exercise4_construct() -> None:
     assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants
 ```
 
-#### 3) 4+ test example (ex004 Exercise 1)
-
-Use more than three tests only when the task genuinely has extra criteria.
+#### 3) 4+ test example (ex004 Exercise 1) — only when the task genuinely has extra criteria
 
 **Starter code + explanation prompt (student notebook):**
 
 ```python
-print("Hello World!"
+print("Hello World!")
 ```
 
 ```markdown
@@ -330,130 +429,203 @@ def test_exercise1_explanation() -> None:
 
 If you cannot justify extra tests with a clear learning objective, do not add them.
 
-## Autograding Integration Details
+---
 
-- **One test, one point**: The autograde plugin assigns one point per collected test. Keep each assertion focused on a single learning objective so Classroom feedback remains clear.
-- **Task markers**: Annotate every grading test with `@pytest.mark.task(taskno=<int>)`. The optional `name="Short title"` argument overrides the label surfaced to students.
-- **Unmarked tests**: If a test omits the `task` marker, the plugin records it with `task=None`. These tests still count for one point but appear in the "Ungrouped" bucket. Use this sparingly (for infrastructure smoke tests, for example).
-- **Authoring guidance**: Prefer many small tests over one large test. Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label. Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
-- **Name collisions**: Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
-- **Tests must fail initially**: Before the student writes any code, all tests should fail. If any test passes in the initial state, it is not a useful test and should be revised or discarded.
+## Template for a Good Test Suite
 
-### Initial-Failure Rule: Examples and Non-Examples
-
-A test is only useful for grading if it distinguishes an unattempted notebook from a completed one.
-
-**Good examples (useful tests):**
-
-- Checking exact required output against scaffold text that is intentionally wrong.
+Below is a self-contained template showing the three common criteria (logic, construct, formatting) in a single test suite. Use this as a starting point when creating tests for a new exercise.
 
 ```python
-# student starter code
-print("Hello from Python!")
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
-# test
-assert output.strip() == "Hi there!"
-```
+# Load the exercise's expectations module
+_ex = load_exercise_test_module("ex001_slug", "expectations")
 
-- Checking an updated input flow with new prompt wording.
-
-```python
-# student starter code
-print("What is your favourite fruit?")
-fruit = input()
-print("My favourite fruit is " + fruit)
-
-# test
-assert ex003.EX003_EXPECTED_PROMPTS[4][0] in constants
-assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants
-```
-
-- Checking explanation quality where the notebook starts with a placeholder prompt.
-
-```python
-# markdown starter prompt
-"""Describe what error you got and why. Fix the code above."""
-
-# test
-assert is_valid_explanation(...)
-```
-
-**Non-examples (useless tests):**
-
-- A test that checks only for `print(` when scaffold code already contains `print(...)`.
-
-```python
-# bad test (passes immediately)
-assert "print(" in code
-```
-
-- A test that checks only for a variable name already present in starter code.
-
-```python
-# bad test (passes immediately if starter already has price = input())
-assert "price" in code
-```
-
-- A test that accepts unchanged placeholder output.
-
-```python
-# bad test (passes immediately)
-assert "Hello from Python!" in output
-```
-
-If a test passes on the untouched student notebook, either tighten the assertion (preferred) or remove the test.
-
-### Simulating Input
-
-Use the runtime helper `run_cell_with_input` to inject data into `input()` calls.
-
-```python
-from tests.exercise_framework import runtime
-
-@pytest.mark.task(taskno=1)
-def test_exercise1_happy_path():
-    # Simulate user typing "Alice" then "Blue"
-    output = runtime.run_cell_with_input(..., tag="exercise1", inputs=["Alice", "Blue"])
-    assert "Alice" in output
-    assert "Blue" in output
-```
-
-## Template for a Good Test Suite (Exercise 1)
-
-```python
-from tests.exercise_framework import runtime
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic():
     """Criteria 1: Arithmetic logic is correct."""
-    output = runtime.run_cell_with_input(..., tag="exercise1", inputs=["5"])
-    assert "25" in output  # The answer
+    output = runtime.run_cell_with_input("ex001_slug", tag="exercise1", inputs=["5"])
+    assert "25" in output
+
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct():
     """Criteria 2: Used the required loop."""
-    code = runtime.extract_tagged_code(..., tag="exercise1")
+    code = runtime.extract_tagged_code("ex001_slug", tag="exercise1")
     assert "for " in code and " in " in code
+
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting():
     """Criteria 3: Output format is precise."""
-    output = runtime.run_cell_with_input(..., tag="exercise1", inputs=["5"])
-    # Strict check for casing/punctuation
+    output = runtime.run_cell_with_input("ex001_slug", tag="exercise1", inputs=["5"])
     assert "The square is: 25" in output
 ```
 
-## Summary Checklist
+---
 
-- [ ] **Strictness**: Does the test enforce correct casing/whitespace (unless explicitly checking for loose constraints)?
-- [ ] **Constructs**: If this is a `for` loop lesson, does the test fail if no loop is used?
-- [ ] **Granularity**: Are logic, constructs, and formatting tested separately (where appropriate) for better partial credit?
-- [ ] **Grouping**: Is every test marked with `@pytest.mark.task(taskno=N)`?
-- [ ] **Failure**: Do all tests fail before the student writes code?
+## Self-Check Cells
+
+Every exercise notebook ends with a self-check cell that calls `run_notebook_checks('<exercise_key>')`. This gives students a fast local table showing which exercises pass or fail before they run the full pytest suite.
+
+### How It Works
+
+`run_notebook_checks` takes **two code paths**:
+
+1. **Exercise-specific checks** (preferred): If `tests/student_checker_support.py` exists in the exercise's canonical test directory, it loads the `CHECKS` list from that module and runs each check.
+2. **Generic fallback**: If no `student_checker_support.py` exists, it runs a basic execution-only check — the cell is executed and if it doesn't crash it shows 🟢 OK.
+
+### Anti-pattern: Relying on the Generic Fallback
+
+The generic fallback **only verifies execution success**. It cannot detect logic bugs where the code runs without crashing but produces wrong output. For example:
+
+```python
+# Buggy student code — runs fine, produces wrong output
+full_groups = students / group_size    # uses / instead of //
+print(f"Full groups: {full_groups}")   # prints 6.25, not 6
+```
+
+This code executes without error, so the generic fallback shows 🟢 OK despite the bug. This is unacceptable for debug, modify, and gaps exercises — all of which rely on the student producing **correct output**, not just crash-free code.
+
+**Do not ship an exercise without `student_checker_support.py` when any exercise part can produce wrong-but-crash-free output.** This includes:
+
+- **Debug exercises**: logic bugs produce wrong output without crashing
+- **Modify exercises**: wrong operator/variable produces wrong output
+- **Gap-fill exercises**: wrong expression in the gap produces wrong output
+- **Make exercises**: the student writes from scratch; the generic fallback can't know the expected output
+
+The only exercises where the generic fallback is acceptable are those where every bug is guaranteed to produce a runtime error (e.g., exercises that exclusively use uncast `input()` with arithmetic — though even there, `student_checker_support.py` provides better feedback).
+
+### Required Pattern: `student_checker_support.py`
+
+Every exercise that has expected outputs **must** provide a `tests/student_checker_support.py` module. This module exports a `CHECKS` list of `ExerciseCheckDefinition` objects, each defining a named check for one exercise part.
+
+```python
+"""Student-checker support for ex013 sequence debug maths operators."""
+
+from __future__ import annotations
+
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
+from exercise_runtime_support.notebook_grader import (
+    run_cell_and_capture_output,
+    run_cell_with_input,
+)
+from exercise_runtime_support.student_checker.checks.base import (
+    ExerciseCheckDefinition,
+    build_exercise_check,
+    check_explanation_cell,
+)
+
+_EXERCISE_KEY = "ex013_sequence_debug_maths_operators"
+_ex = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+
+
+def _check_static_output(exercise_no: int) -> list[str]:
+    """Verify a non-interactive exercise cell produces the correct output."""
+    expected = _ex.EX013_EXPECTED_STATIC_OUTPUTS[exercise_no]
+    try:
+        output = run_cell_and_capture_output(
+            _EXERCISE_KEY,
+            tag=f"exercise{exercise_no}",
+        )
+    except Exception as exc:
+        return [str(exc)]
+    if output != expected:
+        return [
+            f"Expected: {expected.strip()!r}\n"
+            f"     Got: {output.strip()!r}"
+        ]
+    return []
+
+
+def _check_input_output(exercise_no: int) -> list[str]:
+    """Verify an interactive exercise cell produces the correct output."""
+    case = _ex.EX013_INPUT_CASES[exercise_no]
+    try:
+        output = run_cell_with_input(
+            _EXERCISE_KEY,
+            tag=f"exercise{exercise_no}",
+            inputs=case["inputs"],
+        )
+    except Exception as exc:
+        return [str(exc)]
+    expected = case["expected_output"]
+    if output != expected:
+        return [
+            f"Expected: {expected.strip()!r}\n"
+            f"     Got: {output.strip()!r}"
+        ]
+    return []
+
+
+def _check_explanation(exercise_no: int) -> list[str]:
+    """Verify the explanation cell has been filled in."""
+    return check_explanation_cell(
+        _EXERCISE_KEY,
+        exercise_no,
+        min_length=_ex.EX013_MIN_EXPLANATION_LENGTH,
+        placeholder_phrases=_ex.EX013_PLACEHOLDER_PHRASES,
+    )
+
+
+def _make_output_check(exercise_no: int, title: str) -> ExerciseCheckDefinition:
+    """Build an output-verification check for the given exercise."""
+    if exercise_no in _ex.EX013_INPUT_CASES:
+        return build_exercise_check(exercise_no, title, _check_input_output)
+    return build_exercise_check(exercise_no, title, _check_static_output)
+
+
+# ---------------------------------------------------------------------------
+# Public CHECKS list — consumed by the student self-check cell
+# ---------------------------------------------------------------------------
+
+CHECKS: list[ExerciseCheckDefinition] = [
+    _make_output_check(1, "Full groups only"),
+    build_exercise_check(1, "Explain what went wrong", _check_explanation),
+    _make_output_check(2, "Find the leftover"),
+    build_exercise_check(2, "Explain what went wrong", _check_explanation),
+    # … remaining exercises follow the same interleaved pattern
+]
+```
+
+#### Key Rules for `CHECKS` Ordering
+
+**Interleave checks by exercise, not by check type.** Each exercise's output check and explanation check must appear next to each other in the list so the reporting table groups them under a single exercise row:
+
+```
+✅ Correct (interleaved):  Ex1 output, Ex1 explanation, Ex2 output, Ex2 explanation, …
+❌ Wrong (batched by type):  Ex1 output, Ex2 output, …, Ex1 explanation, Ex2 explanation, …
+```
+
+When batched by type, every exercise number repeats twice in separate blocks, making the table confusing to scan. When interleaved, the renderer groups same-exercise rows so the Exercise column shows the label only once.
+
+#### Loading Expectations from `load_exercise_test_module`
+
+Always use `load_exercise_test_module(exercise_key, "expectations")` to load the exercise-local expectations module. Do **not** use relative imports (`from .expectations import …`) — the module is loaded flat by the framework and relative imports will fail with `ImportError`.
+
+#### Do Not Hardcode `variant="student"`
+
+The `run_exercise_checks` context manager already sets the active variant. Let it propagate — do not pass `variant="student"` explicitly to `run_cell_and_capture_output` or `run_cell_with_input`. Explicit variants override the context manager and cause the solution notebook's self-check to test the student notebook instead.
+
+#### Verification Checklist for `student_checker_support.py`
+
+Before considering an exercise complete, verify:
+
+- [ ] `student_checker_support.py` exists in the exercise's `tests/` directory
+- [ ] `CHECKS` list exports at least one check per exercise part
+- [ ] Output checks compare captured output against expected values (not just "did it run?")
+- [ ] Checks are interleaved by exercise, not batched by check type
+- [ ] Student variant: **all** checks show 🔴 NO
+- [ ] Solution variant: **all** checks show 🟢 OK
+- [ ] Expectations are loaded via `load_exercise_test_module`, not relative imports
+- [ ] No explicit `variant="student"` is passed to runtime helpers
+
+---
 
 ## Technical Reference: Exercise Framework
 
-The testing framework now lives under [tests/exercise_framework/](../tests/exercise_framework/).
+The testing framework lives under [tests/exercise_framework/](../tests/exercise_framework/).
 Use the runtime helpers and keep exercise-specific support modules beside the canonical exercise-local test file when authoring or updating tests.
 
 ### Core Modules and Responsibilities
@@ -470,9 +642,9 @@ Treat those exercise-local modules as the canonical source of support data for t
 
 ### Runtime Helpers
 
-### Core Helpers
+#### Core Helpers
 
-#### `runtime.run_cell_and_capture_output(notebook_path, *, tag) -> str`
+##### `runtime.run_cell_and_capture_output(notebook_path, *, tag) -> str`
 
 **Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
 
@@ -488,7 +660,7 @@ output = runtime.run_cell_and_capture_output(
 assert output.strip() == "Hello Python!"
 ```
 
-#### `runtime.run_cell_with_input(notebook_path, *, tag, inputs) -> str`
+##### `runtime.run_cell_with_input(notebook_path, *, tag, inputs) -> str`
 
 For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
 
@@ -506,7 +678,7 @@ output = runtime.run_cell_with_input(
 assert "Alice Smith" in output
 ```
 
-#### `runtime.get_explanation_cell(notebook_path, *, tag) -> str`
+##### `runtime.get_explanation_cell(notebook_path, *, tag) -> str`
 
 Extracts content from markdown reflection cells.
 
@@ -522,9 +694,9 @@ expl = runtime.get_explanation_cell(
 assert len(expl.strip()) > 10
 ```
 
-### Advanced Helpers
+#### Advanced Helpers
 
-#### `runtime.extract_tagged_code(notebook_path, *, tag="student") -> str`
+##### `runtime.extract_tagged_code(notebook_path, *, tag="student") -> str`
 
 Extracts raw source code from tagged cells. Useful for **AST checks** (verifying constructs).
 
@@ -537,13 +709,13 @@ code = runtime.extract_tagged_code(
 assert "for " in code, "Must use a for loop"
 ```
 
-#### `runtime.exec_tagged_code(notebook_path, *, tag="student", filename_hint=None) -> dict`
+##### `runtime.exec_tagged_code(notebook_path, *, tag="student", filename_hint=None) -> dict`
 
 Low-level executor. Returns the variable namespace (dict). Useful if you need to inspect variable values directly (rarely needed).
 
-### Environment & Paths
+#### Environment & Paths
 
-#### `runtime.resolve_notebook_path(notebook_path) -> Path`
+##### `runtime.resolve_notebook_path(notebook_path) -> Path`
 
 Most tests use an `EXERCISE_KEY` constant. This function resolves that key, or an explicit canonical notebook `Path`, using the active variant contract and current resolver settings.
 
@@ -581,6 +753,8 @@ The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`,
 
 `render_grouped_table_with_errors` keeps long error text inside the Error column, so wrapped lines appear as continuation text without inserting extra grid separators. When reading new checker output you will therefore see multi-line errors indented in a single Error cell while the Exercise/Check/Status columns remain blank on the continuation lines.
 
+---
+
 ## Running Tests
 
 ### Locally
@@ -604,6 +778,8 @@ Source-repository validation and exported Classroom autograding are different wo
 - **`.github/workflows/tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional pytest args for targeted solution checks.
 - **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-backed student contract.
 
+---
+
 ## Cell Tagging
 
 Students write code in cells pre-tagged by the generator.
@@ -611,3 +787,14 @@ Students write code in cells pre-tagged by the generator.
 - **Tag format**: `exerciseN` (e.g., `exercise1`).
 - **Matching**: Tags must match exactly.
 - **Marker comments**: `# STUDENT` comments are **deprecated** and ignored. Only metadata tags are used.
+
+---
+
+## Summary Checklist
+
+- [ ] **Strictness**: Does the test enforce correct casing/whitespace (unless explicitly checking for loose constraints)?
+- [ ] **Constructs**: If this is a `for` loop lesson, does the test fail if no loop is used?
+- [ ] **Granularity**: Are logic, constructs, and formatting tested separately (where appropriate) for better partial credit?
+- [ ] **Grouping**: Is every test marked with `@pytest.mark.task(taskno=N)`?
+- [ ] **Failure**: Do all tests fail before the student writes code?
+- [ ] **Self-check cell**: Does `tests/student_checker_support.py` exist with output-verification checks, interleaved by exercise?
