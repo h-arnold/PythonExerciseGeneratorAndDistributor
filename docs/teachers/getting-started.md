@@ -5,7 +5,8 @@ This tutorial walks you through the complete workflow: from understanding the to
 - [Getting Started — Your First Exercise Set](#getting-started--your-first-exercise-set)
   - [The big picture](#the-big-picture)
   - [Step 1: Understand the tools](#step-1-understand-the-tools)
-  - [Step 2: Authenticate with GitHub](#step-2-authenticate-with-github)
+  - [Step 2: Open this repository in GitHub Codespaces](#step-2-open-this-repository-in-github-codespaces)
+  - [Step 3: Authenticate with GitHub](#step-3-authenticate-with-github)
   - [Step 3: Create a template repository](#step-3-create-a-template-repository)
     - [Before moving on](#before-moving-on)
   - [Step 4: Create a GitHub Classroom assignment](#step-4-create-a-github-classroom-assignment)
@@ -52,9 +53,23 @@ It takes about 10 minutes and explains how all the pieces fit together. You can 
 
 **When you're done, return here and move to Step 2.**
 
+--
+## Step 2: Open this repository in GitHub Codespaces
+
+1. Open [this page, which is the root of the repository](https://github.com/h-arnold/PythonExerciseGeneratorAndDistributor) in your browser.
+
+2. Click the green **Code** button, select the **Codespaces** tab, then click **Create codespace on main**.
+
+![A screenshot of the 'Create new Codespace' button.](docs/images/open-in-codespaces.png)
+
+3. Wait a few minutes of the CodeSpace to build. Once it's built, you should have a working VSCode instance in the browser.
+
+> 💡**Tip:** Sign up for a GitHub Education account (free) to get 100 extra free hours of CodeSpaces usage. 
+> [Sign up here](https://github.com/education) 
+
 ---
 
-## Step 2: Authenticate with GitHub
+## Step 3: Authenticate with GitHub
 
 To create template repositories, the command-line tool needs permission to access your GitHub account. You need to do this once per session.
 
@@ -116,6 +131,8 @@ Check the repository exists on GitHub:
 ---
 
 ## Step 4: Create a GitHub Classroom assignment
+
+> ⚠️ **Note:**: GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with it's FOSS replacement when it's ready.
 
 Now you'll turn your template repository into a classroom assignment.
 
@@ -180,9 +197,9 @@ Now that students have accepted the assignment and have their own copies, here's
 
 ### 5.1 Open in Codespaces
 
-Each student's assignment repository has a green **Code** button. They click it, select **Codespaces**, then **Create Codespace**. After about 30–60 seconds, VS Code opens in their browser with all the exercise notebooks ready to go.
+Each student's assignment repository has a green **Code** button. They click it, select **Codespaces**, then **Create Codespace**.
 
-> **Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
+> 💡**Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
 
 ### 5.2 Work through the exercises
 
