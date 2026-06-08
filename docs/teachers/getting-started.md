@@ -7,21 +7,21 @@ This tutorial walks you through the complete workflow: from understanding the to
   - [Step 1: Understand the tools](#step-1-understand-the-tools)
   - [Step 2: Open this repository in GitHub Codespaces](#step-2-open-this-repository-in-github-codespaces)
   - [Step 3: Authenticate with GitHub](#step-3-authenticate-with-github)
-  - [Step 3: Create a template repository](#step-3-create-a-template-repository)
+  - [Step 4: Create a template repository](#step-4-create-a-template-repository)
     - [Before moving on](#before-moving-on)
-  - [Step 4: Create a GitHub Classroom assignment](#step-4-create-a-github-classroom-assignment)
-    - [4.1 Go to GitHub Classroom](#41-go-to-github-classroom)
-    - [4.2 Create a new assignment](#42-create-a-new-assignment)
-    - [4.3 Link your template repository](#43-link-your-template-repository)
-    - [4.4 (Optional) Set up autograding](#44-optional-set-up-autograding)
-    - [4.5 Share the invite link](#45-share-the-invite-link)
-  - [Step 5: Students complete the exercises](#step-5-students-complete-the-exercises)
-    - [5.1 Open in Codespaces](#51-open-in-codespaces)
-    - [5.2 Work through the exercises](#52-work-through-the-exercises)
-    - [5.3 Check progress with the self-checker](#53-check-progress-with-the-self-checker)
-    - [5.4 Save and submit work](#54-save-and-submit-work)
-    - [5.5 What you'll see as a teacher](#55-what-youll-see-as-a-teacher)
-  - [Step 6: Create or tweak exercises](#step-6-create-or-tweak-exercises)
+  - [Step 5: Create a GitHub Classroom assignment](#step-5-create-a-github-classroom-assignment)
+    - [5.1 Go to GitHub Classroom](#51-go-to-github-classroom)
+    - [5.2 Create a new assignment](#52-create-a-new-assignment)
+    - [5.3 Link your template repository](#53-link-your-template-repository)
+    - [5.4 (Optional) Set up autograding](#54-optional-set-up-autograding)
+    - [5.5 Share the invite link](#55-share-the-invite-link)
+  - [Step 6: Students complete the exercises](#step-6-students-complete-the-exercises)
+    - [6.1 Open in Codespaces](#61-open-in-codespaces)
+    - [6.2 Work through the exercises](#62-work-through-the-exercises)
+    - [6.3 Check progress with the self-checker](#63-check-progress-with-the-self-checker)
+    - [6.4 Save and submit work](#64-save-and-submit-work)
+    - [6.5 What you'll see as a teacher](#65-what-youll-see-as-a-teacher)
+  - [Step 7: Create or tweak exercises](#step-7-create-or-tweak-exercises)
   - [What next?](#what-next)
 
 ---
@@ -62,7 +62,7 @@ It takes about 10 minutes and explains how all the pieces fit together. You can 
 
 ![A screenshot of the 'Create new Codespace' button.](docs/images/open-in-codespaces.png)
 
-3. Wait a few minutes of the CodeSpace to build. Once it's built, you should have a working VSCode instance in the browser.
+3. Wait a few minutes for the Codespace to build. Once it's built, you should have a working VSCode instance in the browser.
 
 > 💡**Tip:** Sign up for a GitHub Education account (free) to get 100 extra free hours of CodeSpaces usage. 
 > [Sign up here](https://github.com/education) 
@@ -87,7 +87,7 @@ To create template repositories, the command-line tool needs permission to acces
 
 ---
 
-## Step 3: Create a template repository
+## Step 4: Create a template repository
 
 Now you'll bundle some exercises into a template repository — a ready-to-use package that GitHub Classroom can distribute to students.
 
@@ -130,34 +130,34 @@ Check the repository exists on GitHub:
 
 ---
 
-## Step 4: Create a GitHub Classroom assignment
+## Step 5: Create a GitHub Classroom assignment
 
-> ⚠️ **Note:**: GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with it's FOSS replacement when it's ready.
+> ⚠️ **Note:** GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with its FOSS replacement when it's ready.
 
 Now you'll turn your template repository into a classroom assignment.
 
-### 4.1 Go to GitHub Classroom
+### 5.1 Go to GitHub Classroom
 
 1. Open [classroom.github.com](https://classroom.github.com) in your browser.
-2. Sign in with your GitHub account (the same one you used in Step 2).
+2. Sign in with your GitHub account (the same one you used in Step 3).
 3. If you haven't used Classroom before, you'll be asked to authorise it — click **Authorise GitHub Classroom**.
 4. You'll see a list of your classrooms. If you don't have one yet, click **Create a classroom** and choose your GitHub organisation (or your personal account).
 
-### 4.2 Create a new assignment
+### 5.2 Create a new assignment
 
 1. Inside your classroom, click the **Assignments** tab, then **Create assignment**.
 2. Give it a title — for example, "Week 1: Getting Started with Python".
 3. (Optional) Set a deadline. Students can still submit after the deadline, but late work is marked clearly.
 4. Choose **Individual assignment** or **Group assignment** — most programming exercises use individual.
 
-### 4.3 Link your template repository
+### 5.3 Link your template repository
 
 1. Under **Repository**, choose **Import a repository from GitHub**.
 2. Click **Connect GitHub account** and select the organisation or account where you created the template.
 3. Search for `my-first-exercises` (or whatever you named it) and select it.
 4. Leave the rest of the settings at their defaults — they're already configured for this project.
 
-### 4.4 (Optional) Set up autograding
+### 5.4 (Optional) Set up autograding
 
 If you want tests to run automatically when students push their work:
 
@@ -173,7 +173,7 @@ If you want tests to run automatically when students push their work:
 
 > Without autograding, students still get feedback from the self-checker cell in each notebook. Autograding just reports results back to your Classroom dashboard.
 
-### 4.5 Share the invite link
+### 5.5 Share the invite link
 
 1. Click **Create assignment** at the bottom.
 2. Classroom will show you an **invite link** — something like `https://classroom.github.com/a/AbCdEfGh`.
@@ -191,17 +191,17 @@ If you want tests to run automatically when students push their work:
 
 ---
 
-## Step 5: Students complete the exercises
+## Step 6: Students complete the exercises
 
 Now that students have accepted the assignment and have their own copies, here's what their workflow looks like.
 
-### 5.1 Open in Codespaces
+### 6.1 Open in Codespaces
 
 Each student's assignment repository has a green **Code** button. They click it, select **Codespaces**, then **Create Codespace**.
 
 > 💡**Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
 
-### 5.2 Work through the exercises
+### 6.2 Work through the exercises
 
 The exercises are Jupyter notebooks — each cell is one small task:
 
@@ -213,7 +213,7 @@ The exercises are Jupyter notebooks — each cell is one small task:
 
 Students can run cells as many times as they like. Nothing breaks.
 
-### 5.3 Check progress with the self-checker
+### 6.3 Check progress with the self-checker
 
 At the bottom of each notebook is a **self-checker cell**. Running it shows a table:
 
@@ -231,7 +231,7 @@ Students get immediate, specific feedback on each exercise without waiting for y
 
 > **Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
 
-### 5.4 Save and submit work
+### 6.4 Save and submit work
 
 At the end of each lesson (or after finishing an exercise), students should:
 
@@ -239,9 +239,9 @@ At the end of each lesson (or after finishing an exercise), students should:
 2. Type a short message (e.g., "Finished exercises 1 and 2").
 3. Click **Commit** (✓), then **Sync Changes** to push to GitHub.
 
-This backs up their work and, if you enabled autograding in Step 4, triggers the tests and reports results to your Classroom dashboard.
+This backs up their work and, if you enabled autograding in Step 5, triggers the tests and reports results to your Classroom dashboard.
 
-### 5.5 What you'll see as a teacher
+### 6.5 What you'll see as a teacher
 
 - **After each push**: if autograding is set up, Classroom shows pass/fail results per student in the assignment dashboard.
 - **At a glance**: you can see who's attempted which exercises, who's stuck, and who's finished.
@@ -251,7 +251,7 @@ This backs up their work and, if you enabled autograding in Step 4, triggers the
 
 ---
 
-## Step 6: Create or tweak exercises
+## Step 7: Create or tweak exercises
 
 Now that you know the distribution workflow, you can start creating your own exercises or adjusting the ones already in the repository.
 
