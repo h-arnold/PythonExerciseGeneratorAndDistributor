@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -123,7 +123,8 @@ def _write_canonical_exercise(  # noqa: PLR0913
     if "tests/test_file" not in missing_paths:
         test_path = exercise_dir / "tests" / f"test_{slug}.py"
         test_path.parent.mkdir(parents=True, exist_ok=True)
-        test_path.write_text("def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
+        test_path.write_text(
+            "def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
 
     # Create supporting files to avoid Gate F/G failures
     if "tests/student_checker_support.py" not in missing_paths:
@@ -300,10 +301,13 @@ def test_main_fails_when_debug_explanation_tags_do_not_match_exercise_tags(
             "source": ["print('Hello')\n"],
         },
     ]
-    _write_notebook_cells(exercise_dir / "notebooks" / "student.ipynb", mismatched_cells)
-    _write_notebook_cells(exercise_dir / "notebooks" / "solution.ipynb", mismatched_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" /
+                          "student.ipynb", mismatched_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" /
+                          "solution.ipynb", mismatched_cells)
 
-    exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
+    exit_code = verify_exercise_quality.main(
+        [slug, "--repo-root", str(tmp_path)])
     captured = capsys.readouterr()
 
     assert exit_code == 1
@@ -339,9 +343,11 @@ def test_main_fails_when_student_solution_exercise_tags_do_not_match(
             "source": ["print('Hello again')\n"],
         },
     ]
-    _write_notebook_cells(exercise_dir / "notebooks" / "solution.ipynb", solution_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" /
+                          "solution.ipynb", solution_cells)
 
-    exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
+    exit_code = verify_exercise_quality.main(
+        [slug, "--repo-root", str(tmp_path)])
     captured = capsys.readouterr()
 
     assert exit_code == 1
@@ -367,7 +373,8 @@ def _make_checker_test_exercise_dir(tmp_path: Path, slug: str) -> Path:
         slug,
         metadata=metadata,
         include_explanation=False,
-        missing_paths={"tests/student_checker_support.py", "tests/expectations.py"},
+        missing_paths={"tests/student_checker_support.py",
+                       "tests/expectations.py"},
     )
 
 
@@ -380,7 +387,8 @@ class TestGateFStudentCheckerSupport:
     def test_missing_checker_support_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir)
         assert len(findings) > 0
         assert any(
             "student_checker_support" in f.message and f.severity == "ERROR" for f in findings
@@ -396,9 +404,11 @@ class TestGateFStudentCheckerSupport:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir)
         assert len(findings) > 0
-        assert any("CHECKS" in f.message and f.severity == "ERROR" for f in findings)
+        assert any("CHECKS" in f.message and f.severity ==
+                   "ERROR" for f in findings)
 
     def test_non_empty_checks_returns_no_finding(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
@@ -410,7 +420,8 @@ class TestGateFStudentCheckerSupport:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir)
         assert len(findings) == 0
 
     def test_unimportable_checker_returns_error(self, tmp_path: Path) -> None:
@@ -420,7 +431,8 @@ class TestGateFStudentCheckerSupport:
         checker_path.parent.mkdir(parents=True, exist_ok=True)
         checker_path.write_text("this is synta error!!!\n", encoding="utf-8")
 
-        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir)
         assert len(findings) > 0
         assert any(f.severity == "ERROR" for f in findings)
 
@@ -439,9 +451,11 @@ class TestGateGExpectationsModule:
     def test_missing_expectations_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
+        findings = verify_exercise_quality._check_expectations_module(
+            exercise_dir, parts=1)
         assert len(findings) > 0
-        assert any("expectations" in f.message and f.severity == "ERROR" for f in findings)
+        assert any("expectations" in f.message and f.severity ==
+                   "ERROR" for f in findings)
 
     def test_empty_dict_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
@@ -453,7 +467,8 @@ class TestGateGExpectationsModule:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
+        findings = verify_exercise_quality._check_expectations_module(
+            exercise_dir, parts=1)
         assert len(findings) > 0
         assert any("empty" in f.message.lower() for f in findings)
 
@@ -467,7 +482,8 @@ class TestGateGExpectationsModule:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
+        findings = verify_exercise_quality._check_expectations_module(
+            exercise_dir, parts=1)
         assert len(findings) == 0
 
     def test_missing_keys_for_all_parts_returns_error(self, tmp_path: Path) -> None:
@@ -486,11 +502,416 @@ class TestGateGExpectationsModule:
         meta["parts"] = 3
         meta_path.write_text(json.dumps(meta), encoding="utf-8")
 
-        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=3)
+        findings = verify_exercise_quality._check_expectations_module(
+            exercise_dir, parts=3)
         assert len(findings) > 0
-        assert any("1..3" in f.message or "parts" in f.message.lower() for f in findings)
+        assert any("1..3" in f.message or "parts" in f.message.lower()
+                   for f in findings)
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — expectations input() consistency (regression for hang-on-input)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGInputConsistency:
+    """Cross-check that expectations.py input() classification matches notebook."""
+
+    def _make_exercise_dir(self, tmp_path: Path, slug: str) -> Path:
+        metadata: dict[str, int | str] = {
+            **_exercise_metadata(slug),  # type: ignore[arg-type]
+            "exercise_type": "modify",
+            "parts": 3,
+        }
+        return _write_canonical_exercise(
+            tmp_path,
+            slug,
+            metadata=metadata,
+            include_explanation=False,
+            missing_paths={"tests/expectations.py"},
+        )
+
+    def _write_expectations(
+        self,
+        ex_dir: Path,
+        *,
+        static_outputs: dict[int, str] | None = None,
+        input_cases: dict[int, dict[str, object]] | None = None,
+    ) -> None:
+        path = ex_dir / "tests" / "expectations.py"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        lines: list[str] = ["from __future__ import annotations\n",
+                            "from typing import Final\n"]
+        if static_outputs is not None:
+            lines.append(
+                f"EX004_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {static_outputs!r}\n"
+            )
+        if input_cases is not None:
+            lines.append(
+                f"EX004_INPUT_CASES: Final[dict[int, dict[str, object]]] = {input_cases!r}\n"
+            )
+        path.write_text("".join(lines), encoding="utf-8")
+
+    def _make_notebook_with_cells(self, cells_data: list[tuple[str, str]]) -> dict[str, Any]:
+        """Build a notebook dict.  Each tuple is (tag, source_text)."""
+        cells: list[dict[str, Any]] = []
+        for tag, source in cells_data:
+            cells.append(
+                {
+                    "cell_type": "code",
+                    "metadata": {"language": "python", "tags": [tag]},
+                    "source": [source],
+                }
+            )
+        return {"cells": cells}
+
+    def test_input_in_notebook_but_missing_from_input_cases_returns_error(
+        self, tmp_path: Path
+    ) -> None:
+        """Exercise uses input() but is only in static outputs → ERROR."""
+        slug = "ex004_sequence_modify_variables"
+        ex_dir = self._make_exercise_dir(tmp_path, slug)
+        self._write_expectations(
+            ex_dir,
+            static_outputs={1: "hello\n", 2: "world\n", 3: "static\n"},
+        )
+        nb_solution = self._make_notebook_with_cells(
+            [
+                ("exercise1", 'print("hello")\n'),
+                ("exercise2",
+                 'name = input("Name: ")\nprint(f"Hello {name}")\n'),
+                ("exercise3", 'print("static")\n'),
+            ]
+        )
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=cast(
+                verify_exercise_quality.NotebookDocument, nb_solution),
+            parts=3,
+        )
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) >= 1
+        assert any(
+            "Exercise 2" in e.message
+            and "input()" in e.message.lower()
+            and "hang" in e.message.lower()
+            for e in errors
+        ), f"Expected hang-warning for exercise 2, got: {[e.message for e in errors]}"
+
+    def test_input_in_notebook_and_in_input_cases_returns_no_finding(self, tmp_path: Path) -> None:
+        """Exercise uses input() and is correctly in INPUT_CASES → no finding."""
+        slug = "ex004_sequence_modify_variables"
+        ex_dir = self._make_exercise_dir(tmp_path, slug)
+        self._write_expectations(
+            ex_dir,
+            static_outputs={1: "hello\n"},
+            input_cases={2: {"inputs": ["Alice"],
+                             "expected_output": "Hello Alice\n"}},
+        )
+        nb_solution = self._make_notebook_with_cells(
+            [
+                ("exercise1", 'print("hello")\n'),
+                ("exercise2",
+                 'name = input("Name: ")\nprint(f"Hello {name}")\n'),
+            ]
+        )
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=cast(
+                verify_exercise_quality.NotebookDocument, nb_solution),
+            parts=2,
+        )
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 0, f"Expected no errors, got: {errors}"
+
+    def test_no_input_in_notebook_but_in_input_cases_returns_error(self, tmp_path: Path) -> None:
+        """Exercise does NOT use input() but is in INPUT_CASES → ERROR."""
+        slug = "ex004_sequence_modify_variables"
+        ex_dir = self._make_exercise_dir(tmp_path, slug)
+        self._write_expectations(
+            ex_dir,
+            static_outputs={1: "hello\n"},
+            input_cases={2: {"inputs": ["Alice"],
+                             "expected_output": "Hello Alice\n"}},
+        )
+        nb_solution = self._make_notebook_with_cells(
+            [
+                ("exercise1", 'print("hello")\n'),
+                ("exercise2", 'print("world")\n'),
+            ]
+        )
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=cast(
+                verify_exercise_quality.NotebookDocument, nb_solution),
+            parts=2,
+        )
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) >= 1
+        assert any(
+            "Exercise 2" in e.message and "does not use input()" in e.message.lower()
+            for e in errors
+        ), f"Expected error for exercise 2, got: {[e.message for e in errors]}"
+
+    def test_all_static_exercises_with_no_input_returns_no_finding(self, tmp_path: Path) -> None:
+        """All exercises are static and correctly in static outputs → no finding."""
+        slug = "ex004_sequence_modify_variables"
+        ex_dir = self._make_exercise_dir(tmp_path, slug)
+        self._write_expectations(
+            ex_dir,
+            static_outputs={1: "a\n", 2: "b\n", 3: "c\n"},
+        )
+        nb_solution = self._make_notebook_with_cells(
+            [
+                ("exercise1", 'print("a")\n'),
+                ("exercise2", 'print("b")\n'),
+                ("exercise3", 'print("c")\n'),
+            ]
+        )
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=cast(
+                verify_exercise_quality.NotebookDocument, nb_solution),
+            parts=3,
+        )
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 0, f"Expected no errors, got: {errors}"
+
+    def test_exercise_in_both_dicts_returns_warning(self, tmp_path: Path) -> None:
+        """Exercise in both EX<N>_EXPECTED_OUTPUTS and INPUT_CASES → WARN."""
+        slug = "ex004_sequence_modify_variables"
+        ex_dir = self._make_exercise_dir(tmp_path, slug)
+        self._write_expectations(
+            ex_dir,
+            static_outputs={1: "hello\n"},
+            input_cases={1: {"inputs": ["x"], "expected_output": "hello\n"}},
+        )
+        nb_solution = self._make_notebook_with_cells(
+            [("exercise1", 'name = input("Name: ")\nprint("hello")\n')]
+        )
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=cast(
+                verify_exercise_quality.NotebookDocument, nb_solution),
+            parts=1,
+        )
+        warnings = [f for f in findings if f.severity == "WARN"]
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 0, f"Expected no errors, got: {errors}"
+        assert any(
+            "listed in both" in w.message.lower() for w in warnings
+        ), f"Expected both-dicts warning, got: {[w.message for w in warnings]}"
+
+
+
+
+class TestMainHangRegression:
+    """Regression test: verify_exercise_quality skips Gate I when input-consistency
+    errors would cause a hang.
+
+    When expectations.py misclassifies an interactive exercise as static,
+    calling run_cell_and_capture_output on that cell would block forever
+    on input().  The fix: if _check_expectations_input_consistency returns
+    any ERROR, main() skips _check_runtime_self_check (Gate I) entirely.
+    """
+
+    _SLUG = "ex014_sequence_gaps_regtest"
+
+    @staticmethod
+    def _make_exercise_cells() -> list[tuple[str, str]]:
+        """Return (tag, source) for 3 exercise cells.
+
+        exercise1: static (just print)
+        exercise2: uses input() — the hang trigger
+        exercise3: static (just print)
+        """
+        return [
+            ("exercise1", 'print("static output")\n'),
+            ("exercise2", 'name = input("Name: ")\nprint(f"Hello {name}")\n'),
+            ("exercise3", 'print("also static")\n'),
+        ]
+
+    def _build_synthetic_exercise(
+        self,
+        tmp_path: Path,
+        expectations_content: str,
+    ) -> Path:
+        """Create a complete synthetic exercise directory and return repo_root."""
+        slug = self._SLUG
+        repo_root = tmp_path / "repo"
+        ex_dir = repo_root / "exercises" / "sequence" / slug
+
+        # exercise.json
+        make_exercise_json(ex_dir, {
+            "schema_version": 1,
+            "exercise_key": slug,
+            "exercise_id": 14,
+            "slug": slug,
+            "title": "Hang Regression Test Exercise",
+            "construct": "sequence",
+            "exercise_type": "gaps",
+            "parts": 3,
+        })
+
+        # README.md
+        (ex_dir / "README.md").write_text("# README\n", encoding="utf-8")
+
+        # OrderOfTeaching.md
+        _write_order_of_teaching(repo_root, slug)
+
+        exercise_cells = self._make_exercise_cells()
+
+        # Student notebook
+        student_cells: list[dict[str, Any]] = []
+        for tag, source in exercise_cells:
+            student_cells.append({
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": [tag]},
+                "source": [source],
+            })
+        # Self-checker cell with student variant override
+        student_cells.append({
+            "cell_type": "code",
+            "metadata": {"language": "python"},
+            "source": [
+                'import os\n',
+                'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"\n',
+                'from exercise_runtime_support.student_checker import run_notebook_checks\n',
+                f"run_notebook_checks('{slug}')\n",
+            ],
+        })
+        _write_notebook_cells(ex_dir / "notebooks" / "student.ipynb", student_cells)
+
+        # Solution notebook
+        solution_cells: list[dict[str, Any]] = []
+        for tag, source in exercise_cells:
+            solution_cells.append({
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": [tag]},
+                "source": [source],
+            })
+        # Self-checker cell with solution variant override
+        solution_cells.append({
+            "cell_type": "code",
+            "metadata": {"language": "python"},
+            "source": [
+                'import os\n',
+                'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"\n',
+                'from exercise_runtime_support.student_checker import run_notebook_checks\n',
+                f"run_notebook_checks('{slug}')\n",
+            ],
+        })
+        _write_notebook_cells(ex_dir / "notebooks" / "solution.ipynb", solution_cells)
+
+        # tests/student_checker_support.py
+        checker_path = ex_dir / "tests" / "student_checker_support.py"
+        checker_path.parent.mkdir(parents=True, exist_ok=True)
+        checker_path.write_text(
+            "from __future__ import annotations\n"
+            "from typing import Any\n"
+            'CHECKS: list[Any] = [{"fake": "check"}]\n',
+            encoding="utf-8",
+        )
+
+        # tests/expectations.py
+        expectations_path = ex_dir / "tests" / "expectations.py"
+        expectations_path.parent.mkdir(parents=True, exist_ok=True)
+        expectations_path.write_text(expectations_content, encoding="utf-8")
+
+        # tests/test_{slug}.py
+        test_path = ex_dir / "tests" / f"test_{slug}.py"
+        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_path.write_text("def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
+
+        return repo_root
+
+    def test_main_skips_gate_i_when_input_consistency_errors(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """When expectations misclassifies an input()-using cell as static,
+        main() must skip Gate I and emit a WARN instead of hanging."""
+        expectations_content = (
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX014_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {\n"
+            '    1: "static output\\n",\n'
+            '    2: "Hello Alice\\n",\n'  # exercise 2 uses input() but is in STATIC
+            '    3: "also static\\n",\n'
+            "}\n"
+        )
+        repo_root = self._build_synthetic_exercise(tmp_path, expectations_content)
+
+        exit_code = verify_exercise_quality.main(
+            [self._SLUG, "--repo-root", str(repo_root)]
+        )
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+
+        # Must be non-zero (ERROR findings exist)
+        assert exit_code != 0
+
+        # Must contain the input-consistency ERROR for exercise 2 with "hang" message
+        assert (
+            "Exercise 2" in combined
+            and "input()" in combined.lower()
+            and "hang" in combined.lower()
+        ), f"Missing hang-warning for exercise 2 in:\n{combined}"
+
+        # Must contain the WARN about skipping Gate I
+        assert (
+            "Skipping runtime self-check (Gate I)" in combined
+        ), f"Missing Gate-I-skip warning in:\n{combined}"
+
+        # Must NOT contain a runtime self-check error (proving Gate I was skipped)
+        assert (
+            "Self-check failed" not in combined
+            and "Runtime self-check raised" not in combined
+        ), f"Gate I should have been skipped but found runtime self-check output:\n{combined}"
+
+    def test_main_completes_normally_with_correct_expectations(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Positive control: when expectations are correct, the verifier
+        completes normally — Gate I may produce errors but there is no hang."""
+        expectations_content = (
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX014_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {\n"
+            '    1: "static output\\n",\n'
+            '    2: "Hello Alice\\n",\n'
+            '    3: "also static\\n",\n'
+            "}\n"
+            "EX014_INPUT_CASES: Final[dict[int, dict[str, object]]] = {\n"
+            "    2: {'inputs': ['Alice'], 'expected_output': 'Hello Alice\\n'},\n"
+            "}\n"
+        )
+        repo_root = self._build_synthetic_exercise(tmp_path, expectations_content)
+
+        _ = verify_exercise_quality.main(
+            [self._SLUG, "--repo-root", str(repo_root)]
+        )
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+
+        # Must NOT contain the hang-related skip warning (Gate I was not
+        # skipped due to input-consistency errors)
+        assert (
+            "Skipping runtime self-check (Gate I)" not in combined
+        ), f"Gate I should not have been skipped for correct expectations:\n{combined}"
+
+        # Must NOT contain the hang-related error
+        assert "hang" not in combined.lower(), (
+            f"No hang-related messages expected for correct expectations:\n{combined}"
+        )
 # ═══════════════════════════════════════════════════════════════════════════════
 # Gate H — Notebook variant overrides
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -527,9 +948,12 @@ class TestGateHNotebookVariantOverrides:
     def test_student_missing_variant_returns_warning(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
-        (exercise_dir / "notebooks" / "student.ipynb").write_text(json.dumps(nb), encoding="utf-8")
-        (exercise_dir / "notebooks" / "solution.ipynb").write_text(json.dumps(nb), encoding="utf-8")
+        nb = self._make_notebook(
+            ["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        (exercise_dir / "notebooks" /
+         "student.ipynb").write_text(json.dumps(nb), encoding="utf-8")
+        (exercise_dir / "notebooks" /
+         "solution.ipynb").write_text(json.dumps(nb), encoding="utf-8")
         nb_solution = verify_exercise_quality._load_notebook(
             exercise_dir / "notebooks" / "solution.ipynb"
         )
@@ -555,7 +979,8 @@ class TestGateHNotebookVariantOverrides:
                 "run_notebook_checks('ex004_sequence_modify_vars')\n",
             ]
         )
-        solution_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        solution_nb = self._make_notebook(
+            ["run_notebook_checks('ex004_sequence_modify_vars')\n"])
         (exercise_dir / "notebooks" / "student.ipynb").write_text(
             json.dumps(student_nb), encoding="utf-8"
         )
@@ -575,7 +1000,8 @@ class TestGateHNotebookVariantOverrides:
             solution_nb=nb_solution,
         )
         assert len(findings) > 0
-        assert any("solution" in f.message and f.severity == "ERROR" for f in findings)
+        assert any("solution" in f.message and f.severity ==
+                   "ERROR" for f in findings)
 
     def test_solution_wrong_variant_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
@@ -613,7 +1039,8 @@ class TestGateHNotebookVariantOverrides:
             solution_nb=nb_solution,
         )
         assert len(findings) > 0
-        assert any("instead of 'solution'" in f.message and f.severity == "ERROR" for f in findings)
+        assert any("instead of 'solution'" in f.message and f.severity ==
+                   "ERROR" for f in findings)
 
     def test_both_variants_correct_returns_no_finding(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"

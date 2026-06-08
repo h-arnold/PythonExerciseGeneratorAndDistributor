@@ -146,7 +146,8 @@ def _load_notebook(path: Path) -> NotebookDocument:
         raise SystemExit(f"Invalid JSON in notebook: {path}: {exc}") from exc
 
     if not _is_notebook_document(raw):
-        raise SystemExit(f"Notebook {path} is missing a top-level 'cells' list.")
+        raise SystemExit(
+            f"Notebook {path} is missing a top-level 'cells' list.")
     return raw
 
 
@@ -177,6 +178,10 @@ def _cell_source_text(cell: NotebookCell) -> str:
 
 _EXERCISE_TAG_RE = re.compile(r"^exercise(?P<n>\d+)$")
 _EXPLANATION_TAG_RE = re.compile(r"^explanation(?P<n>\d+)$")
+# Heuristic detection of input() calls — used to cross-check expectations.py
+# classification (static vs interactive).  May produce false positives for
+# input in comments/strings, which is acceptable for a lint-style verifier.
+_INPUT_CALL_RE = re.compile(r"\binput\s*\(")
 
 
 def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
@@ -445,7 +450,8 @@ def _check_notebook_structure(
 
     for idx, cell in enumerate(cells_list, start=1):
         if not isinstance(cell, dict):
-            findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
+            findings.append(
+                Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
         cell_mapping = cast(dict[str, Any], cell)
         if not _is_notebook_cell(cell_mapping):
@@ -564,13 +570,14 @@ def _scan_for_progression_violations(  # noqa: C901
         ]
 
     # If we're in construct K, then constructs strictly after K are disallowed.
-    disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
+    disallowed = CONSTRUCT_ORDER[allowed_idx + 1:]
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(re.finditer(
+                    r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -591,9 +598,11 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
+                        e = func_defs[idx + 1].start() if idx + \
+                            1 < len(func_defs) else len(text)
                         regions.append((s, e))
-                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [m.start()
+                                        for m in re.finditer(r"\breturn\b", text)]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
@@ -649,8 +658,10 @@ def _collect_notebook_tag_sets(nb: NotebookDocument) -> tuple[set[str], set[str]
         if not _is_notebook_cell(cell):
             continue
         tags = _cell_tags(cell)
-        exercise_tags.update(tag for tag in tags if _EXERCISE_TAG_RE.match(tag))
-        explanation_tags.update(tag for tag in tags if _EXPLANATION_TAG_RE.match(tag))
+        exercise_tags.update(
+            tag for tag in tags if _EXERCISE_TAG_RE.match(tag))
+        explanation_tags.update(
+            tag for tag in tags if _EXPLANATION_TAG_RE.match(tag))
     return exercise_tags, explanation_tags
 
 
@@ -662,8 +673,10 @@ def _check_student_solution_notebook_parity(
 ) -> list[Finding]:
     """Ensure the student and solution notebooks expose the same tagged exercise surface."""
     findings: list[Finding] = []
-    student_exercise_tags, student_explanation_tags = _collect_notebook_tag_sets(student_nb)
-    solution_exercise_tags, solution_explanation_tags = _collect_notebook_tag_sets(solution_nb)
+    student_exercise_tags, student_explanation_tags = _collect_notebook_tag_sets(
+        student_nb)
+    solution_exercise_tags, solution_explanation_tags = _collect_notebook_tag_sets(
+        solution_nb)
 
     if student_exercise_tags != solution_exercise_tags:
         findings.append(
@@ -788,7 +801,8 @@ def _load_solution_notebook(
     expect_debug: bool,
 ) -> tuple[Path, NotebookDocument | None, list[Finding]]:
     nb_solution_path = (
-        ex_dir / "notebooks" / "solution.ipynb" if ex_dir is not None else Path("solution.ipynb")
+        ex_dir / "notebooks" /
+        "solution.ipynb" if ex_dir is not None else Path("solution.ipynb")
     )
     if not nb_solution_path.exists():
         return nb_solution_path, None, []
@@ -947,10 +961,11 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
         )
         return findings
 
-    # Find the exercise-ID-prefixed expected outputs dict
+    # Find the exercise-ID-prefixed expected outputs dict (matches both
+    # EX<N>_EXPECTED_OUTPUTS and EX<N>_EXPECTED_STATIC_OUTPUTS conventions).
     expected_outputs = None
     for attr_name in dir(module):
-        if attr_name.endswith("_EXPECTED_OUTPUTS") and isinstance(getattr(module, attr_name), dict):
+        if attr_name.endswith("_OUTPUTS") and isinstance(getattr(module, attr_name), dict):
             expected_outputs = getattr(module, attr_name)
             break
 
@@ -958,7 +973,8 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
         findings.append(
             Finding(
                 "ERROR",
-                "expectations.py must define EX<N>_EXPECTED_OUTPUTS dict",
+                "expectations.py must define an EX<N>_EXPECTED_OUTPUTS or "
+                "EX<N>_EXPECTED_STATIC_OUTPUTS dict",
                 path=expectations_path,
             )
         )
@@ -986,6 +1002,124 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
                 path=expectations_path,
             )
         )
+
+    return findings
+
+
+def _detect_interactive_exercises(nb: NotebookDocument) -> set[int]:  # noqa: C901
+    """Return exercise numbers whose tagged code cells contain ``input()`` calls.
+
+    The detection is heuristic (a regex for ``input(``) and may false-positive
+    on ``input`` inside comments or strings, which is acceptable for a
+    lint-style verifier.
+    """
+    interactive: set[int] = set()
+    cells = nb.get("cells")
+    if not isinstance(cells, list):
+        return interactive
+    for cell in cells:
+        if not _is_notebook_cell(cell):
+            continue
+        if cell.get("cell_type") != "code":
+            continue
+        tags = _cell_tags(cell)
+        exercise_tags = [t for t in tags if _EXERCISE_TAG_RE.match(t)]
+        if not exercise_tags:
+            continue
+        source = _cell_source_text(cell)
+        if _INPUT_CALL_RE.search(source):
+            for tag in exercise_tags:
+                m = _EXERCISE_TAG_RE.match(tag)
+                if m:
+                    interactive.add(int(m.group("n")))
+    return interactive
+
+
+def _check_expectations_input_consistency(  # noqa: C901
+    *,
+    ex_dir: Path,
+    nb_solution: NotebookDocument,
+    parts: int,
+) -> list[Finding]:
+    """Cross-check expectations.py classification against notebook ``input()`` usage.
+
+    Any exercise whose code cell uses ``input()`` must appear in the
+    ``EX<N>_INPUT_CASES`` dict (not only in ``EX<N>_EXPECTED_OUTPUTS`` /
+    ``EX<N>_EXPECTED_STATIC_OUTPUTS``).  Conversely, exercises that do **not**
+    use ``input()`` should not be listed as interactive.
+
+    Without this check the runtime self-check (Gate I) will hang because
+    ``run_cell_and_capture_output`` provides no stdin and the cell blocks
+    forever on ``input()``.
+    """
+    findings: list[Finding] = []
+    expectations_path = ex_dir / "tests" / "expectations.py"
+
+    module = _load_exercise_local_module(ex_dir, "expectations")
+    if module is None:
+        return findings  # Gate G already reports the import error
+
+    # Locate the static-outputs and input-cases dicts
+    static_outputs: dict[int, object] | None = None
+    input_cases: dict[int, object] | None = None
+    for attr_name in dir(module):
+        value = getattr(module, attr_name)
+        if not isinstance(value, dict):
+            continue
+        if attr_name.endswith("_INPUT_CASES"):
+            input_cases = cast(dict[int, object], value)
+        elif attr_name.endswith("_OUTPUTS"):
+            static_outputs = cast(dict[int, object], value)
+
+    interactive_exercises = _detect_interactive_exercises(nb_solution)
+
+    for ex_no in range(1, parts + 1):
+        uses_input = ex_no in interactive_exercises
+        in_input_cases = input_cases is not None and ex_no in input_cases
+        in_static = static_outputs is not None and ex_no in static_outputs
+
+        if uses_input and not in_input_cases:
+            if in_static:
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        f"Exercise {ex_no} uses input() in the notebook but is "
+                        f"declared as a static-output exercise in "
+                        f"expectations.py — this will cause the runtime "
+                        f"self-check to hang.  Move exercise {ex_no} from "
+                        f"EX<N>_EXPECTED_OUTPUTS to EX<N>_INPUT_CASES.",
+                        path=expectations_path,
+                    )
+                )
+            else:
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        f"Exercise {ex_no} uses input() in the notebook but is "
+                        f"missing from EX<N>_INPUT_CASES in expectations.py.",
+                        path=expectations_path,
+                    )
+                )
+        elif uses_input and in_static and in_input_cases:
+            findings.append(
+                Finding(
+                    "WARN",
+                    f"Exercise {ex_no} is listed in both "
+                    f"EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES — "
+                    f"it should only appear in one.",
+                    path=expectations_path,
+                )
+            )
+        elif not uses_input and in_input_cases:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    f"Exercise {ex_no} does not use input() in the notebook "
+                    f"but is declared as an interactive exercise in "
+                    f"EX<N>_INPUT_CASES.",
+                    path=expectations_path,
+                )
+            )
 
     return findings
 
@@ -1141,7 +1275,7 @@ def _report_findings(findings: list[Finding]) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901
     parser = _build_parser()
     args = parser.parse_args(argv)
 
@@ -1173,7 +1307,8 @@ def main(argv: list[str] | None = None) -> int:
 
     nb_student = _load_notebook(nb_path)
     expect_debug = ex_type == "debug"
-    findings.extend(_check_notebook_structure(nb_path, nb_student, expect_debug=expect_debug))
+    findings.extend(_check_notebook_structure(
+        nb_path, nb_student, expect_debug=expect_debug))
 
     nb_solution_path, nb_solution, solution_findings = _load_solution_notebook(
         ex_dir=ex_dir,
@@ -1227,6 +1362,13 @@ def main(argv: list[str] | None = None) -> int:
         findings.extend(_check_expectations_module(ex_dir, parts))
 
         if nb_solution is not None:
+            input_consistency_findings = _check_expectations_input_consistency(
+                ex_dir=ex_dir,
+                nb_solution=nb_solution,
+                parts=parts,
+            )
+            findings.extend(input_consistency_findings)
+
             findings.extend(
                 _check_notebook_variant_overrides(
                     ex_dir=ex_dir,
@@ -1234,12 +1376,31 @@ def main(argv: list[str] | None = None) -> int:
                     solution_nb=nb_solution,
                 )
             )
-            findings.extend(
-                _check_runtime_self_check(
-                    ex_dir=ex_dir,
-                    exercise_key=slug,
-                )
+
+            # Skip runtime self-check (Gate I) when input-consistency errors
+            # are present — calling run_cell_and_capture_output on a cell
+            # that uses input() but is classified as static would hang.
+            has_input_errors = any(
+                f.severity == "ERROR" for f in input_consistency_findings
             )
+            if has_input_errors:
+                findings.append(
+                    Finding(
+                        "WARN",
+                        "Skipping runtime self-check (Gate I) because "
+                        "expectations.py misclassifies interactive exercises "
+                        "as static — fix the input-consistency errors above "
+                        "first to prevent a hang.",
+                        path=ex_dir / "tests" / "student_checker_support.py",
+                    )
+                )
+            else:
+                findings.extend(
+                    _check_runtime_self_check(
+                        ex_dir=ex_dir,
+                        exercise_key=slug,
+                    )
+                )
 
     return _report_findings(findings)
 
