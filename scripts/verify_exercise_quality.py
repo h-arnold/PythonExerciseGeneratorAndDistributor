@@ -842,7 +842,7 @@ def _load_exercise_local_module(ex_dir: Path, module_name: str) -> object | None
     _sys.modules[qualified_name] = module
     try:
         spec.loader.exec_module(module)
-    except (SyntaxError, ImportError):
+    except (SyntaxError, ImportError, NameError, AttributeError, TypeError):
         _sys.modules.pop(qualified_name, None)
         return None
     return module
@@ -1066,7 +1066,8 @@ def _check_runtime_self_check(
         return findings
 
     # Save current variant and set to solution
-    original_variant = configure_variant_environment(os.environ, "solution")
+    original_variant = os.environ.get("PYTUTOR_ACTIVE_VARIANT")
+    configure_variant_environment(os.environ, "solution")
 
     try:
         results = run_exercise_checks(exercise_key)

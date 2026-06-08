@@ -680,6 +680,6 @@ class TestGateIRuntimeSelfCheck:
         )
 
         findings = verify_exercise_quality._check_runtime_self_check(
-            ex_dir=exercise_dir, exercise_key=slug, nb_solution={},
+            ex_dir=exercise_dir, exercise_key=slug,
         )
         assert len(findings) == 0

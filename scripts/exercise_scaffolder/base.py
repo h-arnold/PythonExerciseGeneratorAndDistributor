@@ -338,7 +338,8 @@ class ExerciseScaffold(ABC):
             ")\n"
             "\n"
             f"_EXERCISE_KEY = {self.exercise_key!r}\n"
-            f'{expectations_var} = load_exercise_test_module(_EXERCISE_KEY, "expectations")\n'
+            f"expectations_mod = load_exercise_test_module(_EXERCISE_KEY, \"expectations\")\n"
+            f"{expectations_var} = expectations_mod.{expectations_var}\n"
             "\n"
             "# TODO: Define check functions and build the CHECKS list.\n"
             "# See exercises/sequence/ex012_sequence_modify_maths_operators/tests/"
