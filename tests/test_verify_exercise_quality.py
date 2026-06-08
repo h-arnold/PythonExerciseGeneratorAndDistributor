@@ -683,3 +683,204 @@ class TestGateIRuntimeSelfCheck:
             ex_dir=exercise_dir, exercise_key=slug,
         )
         assert len(findings) == 0
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 1 — Filter progression scanning to only exerciseN tagged cells
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestSection1ProgressionScanFiltering:
+    """Tests for filtering _collect_code_cell_text to exerciseN tagged cells only.
+
+    These tests will fail (red phase) until _collect_code_cell_text() is
+    modified to exclude untagged code cells.
+    """
+
+    def test_collect_code_cell_text_excludes_untagged_cells(
+        self, tmp_path: Path,
+    ) -> None:
+        """Only exercise-tagged code cells should appear in the result."""
+        cells: list[dict[str, object]] = [
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise1"]},
+                "source": ["print('Hello')\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python"},
+                "source": ["x = 42\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python"},
+                "source": [
+                    "import os\n",
+                    'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"\n',
+                    "run_notebook_checks('test')\n",
+                ],
+            },
+        ]
+        nb_path = tmp_path / "test.ipynb"
+        _write_notebook_cells(nb_path, cells)
+        nb = verify_exercise_quality._load_notebook(nb_path)
+
+        result = verify_exercise_quality._collect_code_cell_text(nb)
+
+        assert "print('Hello')" in result
+        assert "x = 42" not in result
+        assert "import os" not in result
+
+    def test_collect_code_cell_text_includes_all_exerciseN_cells(
+        self, tmp_path: Path,
+    ) -> None:
+        """All exerciseN tagged cells must be present in the combined result."""
+        cells: list[dict[str, object]] = [
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise1"]},
+                "source": ["print('one')\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise2"]},
+                "source": ["print('two')\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise3"]},
+                "source": ["print('three')\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python"},
+                "source": ["x = 0\n"],
+            },
+        ]
+        nb_path = tmp_path / "test.ipynb"
+        _write_notebook_cells(nb_path, cells)
+        nb = verify_exercise_quality._load_notebook(nb_path)
+
+        result = verify_exercise_quality._collect_code_cell_text(nb)
+
+        assert "print('one')" in result
+        assert "print('two')" in result
+        assert "print('three')" in result
+        assert "x = 0" not in result
+
+    def test_collect_code_cell_text_excludes_explanationN_cells(
+        self, tmp_path: Path,
+    ) -> None:
+        """Explanation markdown cells should be excluded by cell_type filter."""
+        cells: list[dict[str, object]] = [
+            {
+                "cell_type": "markdown",
+                "metadata": {"language": "markdown", "tags": ["explanation1"]},
+                "source": ["What happened?\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise1"]},
+                "source": ["print('Hello')\n"],
+            },
+        ]
+        nb_path = tmp_path / "test.ipynb"
+        _write_notebook_cells(nb_path, cells)
+        nb = verify_exercise_quality._load_notebook(nb_path)
+
+        result = verify_exercise_quality._collect_code_cell_text(nb)
+
+        assert "What happened?" not in result
+        assert "print('Hello')" in result
+
+    def test_progression_scan_ignores_self_check_imports(
+        self, tmp_path: Path,
+    ) -> None:
+        """Untagged self-check cells with import statements should not cause
+        false-positive progression violations."""
+        cells: list[dict[str, object]] = [
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python"},
+                "source": [
+                    "import os\n",
+                    'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"\n',
+                    "from exercise_runtime_support.student_checker import "
+                    "run_notebook_checks\n",
+                    "run_notebook_checks('test_exercise')\n",
+                ],
+            },
+        ]
+        nb_path = tmp_path / "test.ipynb"
+        _write_notebook_cells(nb_path, cells)
+        nb_student = verify_exercise_quality._load_notebook(nb_path)
+
+        findings = verify_exercise_quality._collect_progression_findings(
+            construct="sequence",
+            nb_path=nb_path,
+            nb_solution=None,
+            nb_solution_path=tmp_path / "solution.ipynb",
+            nb_student=nb_student,
+        )
+
+        assert len(findings) == 0
+
+    def test_progression_scan_still_detects_real_violations(
+        self, tmp_path: Path,
+    ) -> None:
+        """A real progression violation inside an exerciseN-tagged cell must
+        still be detected — guards against over-filtering."""
+        cells: list[dict[str, object]] = [
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise1"]},
+                "source": ["def foo():\n    pass\n"],
+            },
+        ]
+        nb_path = tmp_path / "test.ipynb"
+        _write_notebook_cells(nb_path, cells)
+        nb_student = verify_exercise_quality._load_notebook(nb_path)
+
+        findings = verify_exercise_quality._collect_progression_findings(
+            construct="sequence",
+            nb_path=nb_path,
+            nb_solution=None,
+            nb_solution_path=tmp_path / "solution.ipynb",
+            nb_student=nb_student,
+        )
+
+        # A function definition in a sequence exercise is a violation
+        assert len(findings) > 0
+        assert any("progression violation" in f.message for f in findings)
+
+    def test_collect_code_cell_text_excludes_mixed_untagged_and_tagged(
+        self, tmp_path: Path,
+    ) -> None:
+        """Untagged cells with progression-violating patterns must not affect
+        the collected text."""
+        cells: list[dict[str, object]] = [
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python", "tags": ["exercise1"]},
+                "source": ["print('safe code')\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python"},
+                "source": ["def bad_func():\n    pass\n"],
+            },
+            {
+                "cell_type": "code",
+                "metadata": {"language": "python"},
+                "source": ["import sys\n"],
+            },
+        ]
+        nb_path = tmp_path / "test.ipynb"
+        _write_notebook_cells(nb_path, cells)
+        nb = verify_exercise_quality._load_notebook(nb_path)
+
+        result = verify_exercise_quality._collect_code_cell_text(nb)
+
+        assert "print('safe code')" in result
+        assert "bad_func" not in result
+        assert "import sys" not in result

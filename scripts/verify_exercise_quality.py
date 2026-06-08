@@ -612,6 +612,12 @@ def _scan_for_progression_violations(  # noqa: C901
 
 
 def _collect_code_cell_text(nb: NotebookDocument) -> str:
+    """Collect source text from code cells that have an ``exerciseN`` tag.
+
+    Only cells tagged with ``exercise1``, ``exercise2``, etc. are included.
+    Untagged infrastructure cells (scratch, self-checker) are excluded to
+    avoid false-positive progression warnings.
+    """
     cells = nb.get("cells")
     if not isinstance(cells, list):
         return ""
@@ -621,6 +627,9 @@ def _collect_code_cell_text(nb: NotebookDocument) -> str:
             continue
         cell_type = cell.get("cell_type")
         if cell_type != "code":
+            continue
+        tags = _cell_tags(cell)
+        if not any(_EXERCISE_TAG_RE.match(tag) for tag in tags):
             continue
         code_chunks.append(_cell_source_text(cell))
     return "\n\n".join(code_chunks)
