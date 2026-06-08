@@ -236,6 +236,8 @@ uv run pytest \
   exercises/sequence/ex042_sequence_modify_variables_and_types/tests/test_ex042_sequence_modify_variables_and_types.py -v
 
 # 8. Run the quality checks
+# Use --skip-empty-checks during Phase 1 (notebook authoring) when
+# student_checker_support.py has an empty CHECKS list
 uv run python scripts/verify_exercise_quality.py \
   ex042_sequence_modify_variables_and_types
 

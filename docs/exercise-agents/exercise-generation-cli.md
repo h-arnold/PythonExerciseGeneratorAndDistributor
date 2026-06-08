@@ -223,7 +223,7 @@ uv run pytest exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py 
 uv run python scripts/run_pytest_variant.py --variant solution \
   exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -v
 
-# Structural checks
+# Structural checks (add --skip-empty-checks during Phase 1 when student_checker_support.py is not yet populated)
 uv run python scripts/verify_exercise_quality.py <exercise_key>
 ```
 

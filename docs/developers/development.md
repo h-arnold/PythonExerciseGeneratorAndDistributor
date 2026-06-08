@@ -203,7 +203,8 @@ ls exercises/sequence/ex999_sequence_modify_test_exercise/notebooks/
 ls exercises/sequence/ex999_sequence_modify_test_exercise/tests/
 
 # Run static verification (fast checks for structure and metadata)
-uv run scripts/verify_exercise_quality.py ex999_sequence_modify_test_exercise
+# Use --skip-empty-checks during Phase 1 when student_checker_support.py is empty
+uv run scripts/verify_exercise_quality.py ex999_sequence_modify_test_exercise --skip-empty-checks
 
 # Remove the scaffolding when done experimenting
 rm -rf exercises/sequence/ex999_sequence_modify_test_exercise

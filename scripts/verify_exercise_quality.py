@@ -8,6 +8,13 @@ objective checks against ``exercises/<construct>/<exercise_key>/``:
 - Basic concept progression scanning (heuristic keyword checks)
 - Presence of required canonical exercise files under exercises/
 - Construct teaching order updated (exercises/<construct>/OrderOfTeaching.md)
+- Student checker support module, expectations module, variant overrides,
+  and runtime self-check (Gates F-I)
+
+The ``--skip-empty-checks`` flag suppresses the Gate F error when the
+``CHECKS`` list in ``student_checker_support.py`` is empty, allowing the
+verifier to be used during Phase 1 (notebook authoring) before checker
+definitions are written.
 
 The public CLI accepts the canonical ``exercise_key`` only. It is not a
 replacement for reading the exercise prompts.
