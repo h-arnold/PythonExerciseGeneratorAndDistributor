@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from scripts import verify_exercise_quality
 from tests.exercise_metadata_helpers import make_exercise_json
+
+# pyright: reportPrivateUsage=false
 
 
 def _write_notebook(
@@ -59,7 +62,7 @@ def _write_notebook(
     path.write_text(json.dumps(notebook), encoding="utf-8")
 
 
-def _write_notebook_cells(path: Path, cells: list[dict[str, object]]) -> None:
+def _write_notebook_cells(path: Path, cells: list[dict[str, Any]]) -> None:
     notebook = {"cells": cells}
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(notebook), encoding="utf-8")
@@ -496,7 +499,7 @@ class TestGateGExpectationsModule:
 class TestGateHNotebookVariantOverrides:
     """Gate H: Verify variant overrides in student and solution notebooks."""
 
-    def _make_notebook(self, source_lines: list[str]) -> dict:
+    def _make_notebook(self, source_lines: list[str]) -> dict[str, Any]:
         return {
             "cells": [
                 {
@@ -684,7 +687,7 @@ class TestGateIRuntimeSelfCheck:
 
         monkeypatch.setattr(
             "exercise_runtime_support.student_checker.checks.run_exercise_checks",
-            lambda key: [mock_result],
+            lambda key: [mock_result],  # type: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
         )
 
         findings = verify_exercise_quality._check_runtime_self_check(
