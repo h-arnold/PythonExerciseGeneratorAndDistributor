@@ -100,3 +100,21 @@ These exercises are intended to be taught in the following order:
 - Focus: Floor division `//`, modulus `%`, and rounding with `round()`.
 - Type: Modification exercises where students replace incorrect operators in working programs.
 - Purpose: Introduce integer division and remainder concepts alongside controlled rounding, preparing students for iteration and data-type work.
+
+1. [**Debug Maths Operators**](`ex013_sequence_debug_maths_operators`)
+
+[Supporting docs](./ex013_sequence_debug_maths_operators/)
+[Notebook](./ex013_sequence_debug_maths_operators/notebooks/student.ipynb)
+
+- Focus: Debugging errors with floor division `//`, modulus `%`, and rounding `round()`.
+- Type: Debug exercises where students find and fix operator-related bugs.
+- Purpose: Reinforce correct use of arithmetic operators by identifying common mistakes.
+
+1. [**Advanced Arithmetic Operators**](`ex014_sequence_gaps_advanced_arithmetic`)
+
+[Supporting docs](./ex014_sequence_gaps_advanced_arithmetic/)
+[Notebook](./ex014_sequence_gaps_advanced_arithmetic/notebooks/student.ipynb)
+
+- Focus: Squaring (`n ** 2`), cubing (`n ** 3`), square root (`n ** 0.5`), and exponentiation (`base ** exponent`) with `input()` and casting.
+- Type: Gap-fill exercises with decreasing scaffolding — from single-line gaps with hardcoded values to full programs with input.
+- Purpose: Introduce the `**` operator for powers and roots, building on earlier arithmetic skills and the split-cast pattern.

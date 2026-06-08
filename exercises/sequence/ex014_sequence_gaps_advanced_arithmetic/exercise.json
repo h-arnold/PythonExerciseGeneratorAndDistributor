@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex014_sequence_gaps_advanced_arithmetic",
+  "exercise_id": 14,
+  "slug": "ex014_sequence_gaps_advanced_arithmetic",
+  "title": "Advanced Arithmetic Operators",
+  "construct": "sequence",
+  "exercise_type": "gaps",
+  "parts": 10
+}
