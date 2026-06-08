@@ -9,7 +9,7 @@ This document describes how to use the CLI tool to scaffold new Python exercises
 ### Single Exercise
 
 ```bash
-uv run python scripts/new_exercise.py ex042 "Variables and Types" \
+uv run python -m scripts.new_exercise ex042 "Variables and Types" \
   --construct sequence \
   --type modify \
   --slug variables_and_types
@@ -18,7 +18,7 @@ uv run python scripts/new_exercise.py ex042 "Variables and Types" \
 For a debug exercise (scaffolds expected-output and explanation cells plus explanation tags):
 
 ```bash
-uv run python scripts/new_exercise.py ex004 "Debug Syntax" \
+uv run python -m scripts.new_exercise ex004 "Debug Syntax" \
   --construct sequence \
   --type debug \
   --slug syntax
@@ -38,7 +38,7 @@ This creates:
 ### Multi-Part Exercise (10 exercises in one notebook)
 
 ```bash
-uv run python scripts/new_exercise.py ex043 "Week 1 Practice" \
+uv run python -m scripts.new_exercise ex043 "Week 1 Practice" \
   --construct sequence \
   --type modify \
   --slug week1 \
@@ -59,7 +59,9 @@ Scaffolds the boilerplate for new exercises to ensure consistency across the rep
 python scripts/new_exercise.py <id> <title> --construct CONSTRUCT --type TYPE [--slug SLUG] [--parts N]
 ```
 
-Run it through the managed environment, for example `uv run python scripts/new_exercise.py ...`, so the correct dependencies are used.
+Run it through the managed environment, for example `uv run python -m scripts.new_exercise ...`, so the correct dependencies are used and local package imports resolve correctly.
+
+> **Note**: You can also run `uv run python scripts/new_exercise.py ...`, but the `-m` form is preferred because it keeps the repository root on `sys.path`, preventing `ModuleNotFoundError` in local imports.
 
 **Required**:
 

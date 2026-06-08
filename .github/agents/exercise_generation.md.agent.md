@@ -183,14 +183,20 @@ Metadata tips:
 - When you tag a cell for grading, ensure the tag exactly matches `exercise1`, `exercise2`, etc.; the grader locates cells by this metadata tag.
 - Do not place multiple independent student solutions in the same tagged cell; the grader executes only the tagged cell's content.
 
-5) ### Quality gate (run the Exercise Reviewer — before teacher handoff)
-After scaffolding + authoring the notebooks (student + solution mirror), use your `runSubAgent` tool to run the **Exercise Reviewer** sub-agent. The reviewer checks:
+5) ### Quality gate (run automation checks + Exercise Reviewer — before teacher handoff)
+After scaffolding + authoring the notebooks (student + solution mirror), first run the automated quality verifier as an initial gate:
+
+```bash
+uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+```
+
+Then use your `runSubAgent` tool to run the **Exercise Reviewer** sub-agent. The reviewer checks:
 - exercise-type compliance (debug/modify/make/gaps format rules)
 - concept sequencing (no later constructs accidentally introduced in prompts/starter code)
 - notebook structure, tags, and metadata (`metadata.language`, `exerciseN` tags)
 - solution notebook quality and accuracy
 
-Only once the reviewer passes should you hand off to the teacher.
+Only once both checks pass should you hand off to the teacher.
 
 6) ### Hand off to the teacher
 Present the work to the teacher for review. The teacher may request changes — loop back to step 4 or 3 as needed until the teacher approves the notebooks.
@@ -209,13 +215,19 @@ Once the teacher has approved the notebooks, generate the supporting teacher-fac
   - a link to the supporting docs folder under `exercises/<construct>/<exercise_key>/`
   - a link to the canonical student notebook under `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 
-8) ### Quality gate (run the Exercise Reviewer — after docs)
-After generating the supporting documentation, run the **Exercise Reviewer** sub-agent again. This second pass verifies Gates E and F:
+8) ### Quality gate (run automation checks + Exercise Reviewer — after docs)
+After generating the supporting documentation, first run the automated quality verifier again:
+
+```bash
+uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+```
+
+Then run the **Exercise Reviewer** sub-agent again. This second pass verifies Gates E and F:
 - teacher guidance files exist and are filled in (README.md, OVERVIEW.md)
 - solution notebook quality (stepwise examples, no compact one-liners)
 - OrderOfTeaching.md is updated with the new exercise listed
 
-Once the reviewer passes, the exercise is ready for Phase 2.
+Once both checks pass, the exercise is ready for Phase 2.
 
 ### Hand off to Phase 2 — Exercise Testing
 The exercise authoring phase is complete. Delegate to the **Exercise Test Creator** sub-agent to write robust pytest tests, followed by the **Exercise Test Reviewer** to verify them. Provide the exercise key, construct, and type so the test creator can locate the notebooks and supporting docs.

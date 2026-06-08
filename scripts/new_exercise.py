@@ -2,9 +2,9 @@
 """Scaffold a new exercise in the canonical exercise layout.
 
 Usage:
-  python scripts/new_exercise.py ex001 "Variables and Types" \
+  python -m scripts.new_exercise ex001 "Variables and Types" \
       --construct sequence --type modify --slug variables_and_types
-  python scripts/new_exercise.py ex010 "Week 1" \
+  python -m scripts.new_exercise ex010 "Week 1" \
       --construct sequence --type debug --slug week1 --parts 3
 
 This creates:
@@ -21,12 +21,22 @@ import argparse
 import datetime as _dt
 import json
 import re
+import sys
 from pathlib import Path
 
 from exercise_metadata.schema import SCHEMA_VERSION
 from scripts.template_repo_cli.utils.validation import VALID_CONSTRUCTS, validate_construct_name
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# Ensure the repo root is on sys.path so that local package imports
+# (e.g. scripts.exercise_scaffolder) work even when the script is
+# invoked as ``python scripts/new_exercise.py`` (which would otherwise
+# put only ``scripts/`` on sys.path[0]).
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+
 MAX_PARTS = 20
 README_FILENAME = "README.md"
 STUDENT_NOTEBOOK_FILENAME = "student.ipynb"

@@ -18,6 +18,11 @@ Your job is to write tests that accurately assess whether a student has achieved
 
 ## Before you start
 
+0. **Run the automated quality verifier as a first gate**:
+   ```bash
+   uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+   ```
+   This ensures the notebooks are structurally sound before you invest time writing tests.
 1. Read the exercise testing conventions: `docs/exercise-agents/exercise-testing.md` (read the full file).
 2. Read the testing framework overview: `docs/developers/testing-framework.md` (read the full file).
 3. Open the exercise-type guide for the exercise you are testing:

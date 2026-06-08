@@ -165,15 +165,19 @@ For FAIL:
 - include which file(s) to change.
 
 ## Recommended workflow
-1. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
-2. Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
-3. Open the appropriate exercise-type guide in full.
-4. Determine which pass is requested:
+1. **Run the automated quality verifier as a first gate**:
+   ```bash
+   uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+   ```
+   This catches structural issues, tag problems, and progression violations before manual review.
+2. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
+3. Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
+4. Open the appropriate exercise-type guide in full.
+5. Determine which pass is requested:
    - **Pass 1** (notebooks only): Run checks for Gates A, B, C.
-   - **Pass 2** (after supporting docs): Run checks for Gates E, F. Also run the quick script:
-     `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make|gaps>`
-5. Inspect manually:
+   - **Pass 2** (after supporting docs): Run checks for Gates E, F.
+6. Inspect manually:
    - canonical student notebook
    - canonical solution notebook
    - (Pass 2 only) README, OVERVIEW, OrderOfTeaching.md
-6. Produce verdict.
+7. Produce verdict.

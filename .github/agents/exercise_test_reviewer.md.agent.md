@@ -118,13 +118,18 @@ For FAIL:
 - include the exact commands you ran and their output
 
 ## Recommended workflow
-1. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
-2. Identify the canonical exercise test file: `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
-3. Read the test file in full.
-4. Read `docs/exercise-agents/exercise-testing.md` and the relevant exercise-type guide.
-5. Review the test code against the criteria above.
-6. Run solution-variant verification.
-7. Run student-variant verification to confirm expected failure.
-8. Produce verdict.
+1. **Run the automated quality verifier as a first gate**:
+   ```bash
+   uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+   ```
+   This catches structural or tag problems before you invest time reviewing tests.
+2. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
+3. Identify the canonical exercise test file: `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
+4. Read the test file in full.
+5. Read `docs/exercise-agents/exercise-testing.md` and the relevant exercise-type guide.
+6. Review the test code against the criteria above.
+7. Run solution-variant verification.
+8. Run student-variant verification to confirm expected failure.
+9. Produce verdict.
 
 If the verdict is FAIL, return to the **Exercise Test Creator** with the full report. Do not attempt to fix the tests yourself unless the issue is trivially small (e.g., a typo or missing import).
