@@ -46,7 +46,7 @@ class ExerciseScaffold(ABC):
 
     # ── Notebook assembly ────────────────────────────────────────────────────
 
-    def build_notebook(self, variant: str, exercise_type: str = "modify") -> dict[str, Any]:
+    def build_notebook(self, variant: str, exercise_type: str) -> dict[str, Any]:
         """Assemble a full notebook dict for the given *variant*.
 
         Parameters

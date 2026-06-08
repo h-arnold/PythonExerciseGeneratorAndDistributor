@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from scripts.exercise_scaffolder.base import ExerciseScaffold
+from tests._scaffold_test_helpers import source_text
 
 
 class _ConcreteScaffold(ExerciseScaffold):
@@ -21,14 +22,6 @@ class _ConcreteScaffold(ExerciseScaffold):
 
     def _build_exercise_body_test_lines(self) -> list[str]:
         return ["def test_placeholder() -> None:\n    assert True\n"]
-
-
-# ── helpers ──────────────────────────────────────────────────────────────────
-
-
-def _source_text(cell: dict[str, Any]) -> str:
-    """Join a notebook cell's source lines into a single string."""
-    return "".join(cell["source"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -71,27 +64,27 @@ class TestBuildCheckAnswersCell:
 
     def test_student_variant_sets_student_env_var(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
-        source = _source_text(cell)
+        source = source_text(cell)
 
         assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
         assert '"student"' in source
 
     def test_student_variant_does_not_contain_solution(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
-        source = _source_text(cell)
+        source = source_text(cell)
 
         assert '"solution"' not in source
 
     def test_solution_variant_sets_solution_env_var(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("solution")
-        source = _source_text(cell)
+        source = source_text(cell)
 
         assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
         assert '"solution"' in source
 
     def test_solution_variant_does_not_contain_student(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("solution")
-        source = _source_text(cell)
+        source = source_text(cell)
 
         assert '"student"' not in source
 
@@ -101,7 +94,7 @@ class TestBuildCheckAnswersCell:
 
     def test_cell_contains_run_notebook_checks(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
-        source = _source_text(cell)
+        source = source_text(cell)
 
         assert "run_notebook_checks(" in source
         assert "'ex014'" in source
@@ -360,7 +353,7 @@ class TestBuildNotebook:
         scaffold = _ConcreteScaffold(
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         assert isinstance(notebook, dict)
         assert "cells" in notebook
         assert "nbformat" in notebook
@@ -370,14 +363,14 @@ class TestBuildNotebook:
         scaffold = _ConcreteScaffold(
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         assert notebook["nbformat"] == 4  # noqa: PLR2004
 
     def test_cells_is_non_empty_list(self) -> None:
         scaffold = _ConcreteScaffold(
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
         assert isinstance(cells, list)
         assert len(cells) > 0
@@ -386,31 +379,31 @@ class TestBuildNotebook:
         scaffold = _ConcreteScaffold(
             "My Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
         assert cells[0]["cell_type"] == "markdown"
-        source = _source_text(cells[0])
+        source = source_text(cells[0])
         assert "My Title" in source
 
     def test_scratch_cell_is_before_check_cell(self) -> None:
         scaffold = _ConcreteScaffold(
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
         # The last two cells should be scratch + check-answers
         assert cells[-2]["cell_type"] == "code"
         assert cells[-1]["cell_type"] == "code"
-        scratch_source = _source_text(cells[-2])
+        scratch_source = source_text(cells[-2])
         assert "Self-check scratch cell" in scratch_source
 
     def test_last_cell_is_check_answers(self) -> None:
         scaffold = _ConcreteScaffold(
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
-        last_source = _source_text(cells[-1])
+        last_source = source_text(cells[-1])
         assert "run_notebook_checks(" in last_source
         assert "'ex014'" in last_source
 
@@ -418,7 +411,7 @@ class TestBuildNotebook:
         scaffold = _ConcreteScaffold(
             "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
         )
-        notebook = scaffold.build_notebook("student")
+        notebook = scaffold.build_notebook("student", exercise_type="modify")
         metadata = notebook.get("metadata", {})
         assert "kernelspec" in metadata
         assert metadata["kernelspec"]["language"] == "python"

@@ -48,22 +48,9 @@ The refactor is well-structured and the TDD discipline is evident. However, ther
 
 ## 🟡 Improvement
 
-### 2. `MakeScaffold` and `ModifyScaffold` are line-for-line identical **IGNORE - THIS IS INTENTIONAL PER ACTION_PLAN**
+### 2. **IGNORE - THIS IS INTENTIONAL PER ACTION_PLAN**
 
-- **Location**: `scripts/exercise_scaffolder/make.py` vs `scripts/exercise_scaffolder/modify.py`
-- **Evidence**: `diff` shows only docstrings and class names differ. All method bodies (`_build_exercise_cells`, `_build_exercise_body_test_lines`, `_readme_type_hook`) are identical byte-for-byte.
-- **Why it matters**: Two separate modules exist purely to hold a class name each. The `exercise_type` argument already selects the scaffold class in `new_exercise.py:main()`. Both classes always resolve to the same behaviour. The docstrings claim "kept as separate classes intentionally — may diverge in future" — this is the canonical "speculative generality" smell.
-- **Recommended fix**: Either:
-  1. Collapse into a single `StandardScaffold` (or rename one to a shared base and make both trivial subclasses), or
-  2. If the team insists on keeping them separate, at minimum extract the shared implementation into a private mixin or module-level helper so the duplication is eliminated.
-- **Counterargument from ACTION_PLAN**: The plan explicitly calls this out as intentional. Even so, the current implementation provides zero behavioural difference, and the "future divergence" argument has already cost: two files to maintain, two test files to maintain, and every change to the standard exercise type must be made in two places.
-
-### 3. `test_exercise_scaffolder_make.py` and `test_exercise_scaffolder_modify.py` are near-identical **IGNORE - THIS IS INTENTIONAL PER ACTION_PLAN**
-
-- **Location**: `tests/test_exercise_scaffolder_make.py` vs `tests/test_exercise_scaffolder_modify.py`
-- **Evidence**: `diff` shows only the import (`MakeScaffold` vs `ModifyScaffold`) and the `exercise_type` string (`"make"` vs `"modify"`) differ across ~200 lines. All 6 test classes (`TestCellStructure`, `TestExerciseCellTags`, `TestTodoPlaceholder`, `TestNoDebugSpecificLines`, `TestTodoGuardInTestLines`, `TestReadmeHook`) are identical in structure.
-- **Why it matters**: This is the test-side mirror of finding #2. If Make/Modify diverge, the tests should diverge too. But right now they test identical behaviour with duplicated assertions. Every test change must be made in two files.
-- **Recommended fix**: If Make/Modify classes are collapsed, collapse the tests too. If they stay separate, at minimum use a parametrised test class or shared base test class to eliminate the duplicated test methods.
+### 3. **IGNORE - THIS IS INTENTIONAL PER ACTION_PLAN**
 
 ### 4. `nb_solution` parameter is unused in `_check_runtime_self_check`
 
@@ -77,9 +64,8 @@ The refactor is well-structured and the TDD discipline is evident. However, ther
 - **Location**: `scripts/exercise_scaffolder/base.py`, line ~44
 - **Evidence**: The signature is `def build_notebook(self, variant: str, exercise_type: str = "modify")`. All production call sites in `new_exercise.py:main()` pass the explicit exercise type. The only callers that rely on the default are base-class tests in `test_exercise_scaffolder_base.py` (lines 363–421), which use `_ConcreteScaffold` and call `build_notebook("student")` without the second argument.
 - **Why it matters**: The default `"modify"` controls which header instructions appear (via `_build_header_cells`). If a future scaffold subclass forgets to pass `exercise_type`, the notebook silently gets "modify"-style instructions even if it's a debug or gaps exercise. The base class tests don't validate the header content, so they wouldn't catch it.
-- **Recommended fix**: Either:
-  1. Remove the default entirely (require the caller to be explicit), or
-  2. Document why `"modify"` is the safe default and add a test that verifies header content for each exercise_type.
+- **Recommended fix**:
+  1. Remove the default entirely (require the caller to be explicit)
 
 ### 6. Duplicate `source_text` helpers across test files
 

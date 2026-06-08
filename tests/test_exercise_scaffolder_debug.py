@@ -8,6 +8,10 @@ from __future__ import annotations
 from scripts.exercise_scaffolder.debug import DebugScaffold
 from tests._scaffold_test_helpers import source_text
 
+_CELLS_FOR_3_PARTS = 12
+_CELLS_FOR_2_PARTS = 9
+_CELLS_FOR_1_PART = 6
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1.  Cell structure
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -23,7 +27,7 @@ class TestCellStructure:
         cells = scaffold.build_notebook(
             "student", exercise_type="debug")["cells"]
         # header + (markdown + code + explanation) * 3 + scratch + check-answers
-        assert len(cells) == 12  # noqa: PLR2004
+        assert len(cells) == _CELLS_FOR_3_PARTS
 
     def test_cell_count_for_parts_2(self) -> None:
         scaffold = DebugScaffold(
@@ -31,7 +35,7 @@ class TestCellStructure:
         cells = scaffold.build_notebook(
             "student", exercise_type="debug")["cells"]
         # header + (markdown + code + explanation) * 2 + scratch + check-answers
-        assert len(cells) == 9  # noqa: PLR2004
+        assert len(cells) == _CELLS_FOR_2_PARTS
 
     def test_cell_count_for_parts_1(self) -> None:
         scaffold = DebugScaffold(
@@ -39,7 +43,7 @@ class TestCellStructure:
         cells = scaffold.build_notebook(
             "student", exercise_type="debug")["cells"]
         # header + 3 + scratch + check-answers
-        assert len(cells) == 6  # noqa: PLR2004
+        assert len(cells) == _CELLS_FOR_1_PART
 
     def test_first_cell_is_header_markdown(self) -> None:
         scaffold = DebugScaffold(

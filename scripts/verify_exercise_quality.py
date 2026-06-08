@@ -1042,7 +1042,7 @@ def _find_variant_in_notebook(nb: NotebookDocument) -> str | None:
 
 
 def _check_runtime_self_check(
-    *, ex_dir: Path, exercise_key: str, nb_solution: NotebookDocument,
+    *, ex_dir: Path, exercise_key: str,
 ) -> list[Finding]:
     """Gate I: Run self-checker against solution variant and report failures."""
     findings: list[Finding] = []
@@ -1205,7 +1205,6 @@ def main(argv: list[str] | None = None) -> int:
                 _check_runtime_self_check(
                     ex_dir=ex_dir,
                     exercise_key=slug,
-                    nb_solution=nb_solution,
                 )
             )
 

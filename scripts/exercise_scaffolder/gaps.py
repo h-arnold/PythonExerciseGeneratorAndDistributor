@@ -48,8 +48,8 @@ class GapsScaffold(ExerciseScaffold):
                     "execution_count": None,
                     "outputs": [],
                     "source": [
-                        "# Exercise {i} — replace this scaffold with the real "
-                        "partially-written program.\n",
+                        f"# Exercise {i} — replace this scaffold with the real "
+                        f"partially-written program.\n",
                         "# Keep the YOUR CODE HERE comment where the student "
                         "must write their line(s).\n",
                         "\n",
