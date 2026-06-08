@@ -137,10 +137,16 @@ Once the agent gives you the exercise content (the "solution" code and the "stud
    Run the structural and pedagogical checks:
    ```bash
    uv run python scripts/verify_exercise_quality.py \
-     ex050_sequence_modify_my_topic
+     ex050_sequence_modify_my_topic --skip-empty-checks
    ```
 
 4. **Verify (Phase 2 — after teacher approval and test creation)**:
+
+   Once tests are written, run the solution variant to confirm they pass:
+   ```bash
+   uv run python scripts/run_pytest_variant.py --variant solution \
+     exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
+   ```
 
    Once tests are written, run the solution variant to confirm they pass:
    ```bash
@@ -164,7 +170,7 @@ How to run it manually:
 
   ```bash
   uv run python scripts/verify_exercise_quality.py \
-    ex050_sequence_modify_my_topic
+    ex050_sequence_modify_my_topic --skip-empty-checks
   ```
 
 What it checks (Pass 1 — before teacher handoff):

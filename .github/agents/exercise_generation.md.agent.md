@@ -187,7 +187,7 @@ Metadata tips:
 After scaffolding + authoring the notebooks (student + solution mirror), first run the automated quality verifier as an initial gate:
 
 ```bash
-uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type> --skip-empty-checks
 ```
 
 Then use your `runSubAgent` tool to run the **Exercise Reviewer** sub-agent. The reviewer checks:

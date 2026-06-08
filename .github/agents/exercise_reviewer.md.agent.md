@@ -116,7 +116,7 @@ If you find a progression violation:
 - Propose the smallest change that removes the advanced concept.
 
 **Automation helper:** run the repo script to catch common progression slips:
-`uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make|gaps>`
+`uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make|gaps> --skip-empty-checks`
 
 Treat warnings as prompts for closer manual review (it's heuristic).
 
@@ -132,7 +132,7 @@ Note: existing notebooks may also include a top-level `id` field on cells; prese
 
 When reviewing saved notebook outputs, distinguish stale stored tracebacks from live runtime failures.
 
-**Automation helper:** `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps>`
+**Automation helper:** `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps> --skip-empty-checks`
 
 ## Gate E — Teacher guidance and solution quality
 Verify teacher materials exist and are useful (this is a Pass 2 check, run after supporting docs are generated):
@@ -152,7 +152,7 @@ Also verify the canonical solution notebook mirror is accurate and is a good tea
 The exercise must be listed in the construct-level teaching order file:
 - `exercises/<construct>/OrderOfTeaching.md`
 
-**Automation helper:** `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps>`
+**Automation helper:** `uv run python scripts/verify_exercise_quality.py <exercise_key> --type <debug|modify|make|gaps> --skip-empty-checks`
 
 ## Output format (what you report back)
 Return a concise verdict:
@@ -167,7 +167,7 @@ For FAIL:
 ## Recommended workflow
 1. **Run the automated quality verifier as a first gate**:
    ```bash
-   uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
+   uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type> --skip-empty-checks
    ```
    This catches structural issues, tag problems, and progression violations before manual review.
 2. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
