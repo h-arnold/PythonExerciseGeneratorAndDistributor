@@ -146,8 +146,7 @@ def _load_notebook(path: Path) -> NotebookDocument:
         raise SystemExit(f"Invalid JSON in notebook: {path}: {exc}") from exc
 
     if not _is_notebook_document(raw):
-        raise SystemExit(
-            f"Notebook {path} is missing a top-level 'cells' list.")
+        raise SystemExit(f"Notebook {path} is missing a top-level 'cells' list.")
     return raw
 
 
@@ -446,8 +445,7 @@ def _check_notebook_structure(
 
     for idx, cell in enumerate(cells_list, start=1):
         if not isinstance(cell, dict):
-            findings.append(
-                Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
+            findings.append(Finding("ERROR", f"Cell {idx} is not an object", path=nb_path))
             continue
         cell_mapping = cast(dict[str, Any], cell)
         if not _is_notebook_cell(cell_mapping):
@@ -566,14 +564,13 @@ def _scan_for_progression_violations(  # noqa: C901
         ]
 
     # If we're in construct K, then constructs strictly after K are disallowed.
-    disallowed = CONSTRUCT_ORDER[allowed_idx + 1:]
+    disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
 
     for construct in disallowed:
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(
-                    r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -594,11 +591,9 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + \
-                            1 < len(func_defs) else len(text)
+                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
                         regions.append((s, e))
-                    return_positions = [m.start()
-                                        for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
@@ -654,10 +649,8 @@ def _collect_notebook_tag_sets(nb: NotebookDocument) -> tuple[set[str], set[str]
         if not _is_notebook_cell(cell):
             continue
         tags = _cell_tags(cell)
-        exercise_tags.update(
-            tag for tag in tags if _EXERCISE_TAG_RE.match(tag))
-        explanation_tags.update(
-            tag for tag in tags if _EXPLANATION_TAG_RE.match(tag))
+        exercise_tags.update(tag for tag in tags if _EXERCISE_TAG_RE.match(tag))
+        explanation_tags.update(tag for tag in tags if _EXPLANATION_TAG_RE.match(tag))
     return exercise_tags, explanation_tags
 
 
@@ -669,10 +662,8 @@ def _check_student_solution_notebook_parity(
 ) -> list[Finding]:
     """Ensure the student and solution notebooks expose the same tagged exercise surface."""
     findings: list[Finding] = []
-    student_exercise_tags, student_explanation_tags = _collect_notebook_tag_sets(
-        student_nb)
-    solution_exercise_tags, solution_explanation_tags = _collect_notebook_tag_sets(
-        solution_nb)
+    student_exercise_tags, student_explanation_tags = _collect_notebook_tag_sets(student_nb)
+    solution_exercise_tags, solution_explanation_tags = _collect_notebook_tag_sets(solution_nb)
 
     if student_exercise_tags != solution_exercise_tags:
         findings.append(
@@ -797,8 +788,7 @@ def _load_solution_notebook(
     expect_debug: bool,
 ) -> tuple[Path, NotebookDocument | None, list[Finding]]:
     nb_solution_path = (
-        ex_dir / "notebooks" /
-        "solution.ipynb" if ex_dir is not None else Path("solution.ipynb")
+        ex_dir / "notebooks" / "solution.ipynb" if ex_dir is not None else Path("solution.ipynb")
     )
     if not nb_solution_path.exists():
         return nb_solution_path, None, []
@@ -873,7 +863,9 @@ def _load_exercise_local_module(ex_dir: Path, module_name: str) -> object | None
 
 
 def _check_student_checker_support(
-    ex_dir: Path, *, skip_empty_checks: bool = False,
+    ex_dir: Path,
+    *,
+    skip_empty_checks: bool = False,
 ) -> list[Finding]:
     """Gate F: Verify student_checker_support.py exists with non-empty CHECKS.
 
@@ -958,9 +950,7 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
     # Find the exercise-ID-prefixed expected outputs dict
     expected_outputs = None
     for attr_name in dir(module):
-        if attr_name.endswith("_EXPECTED_OUTPUTS") and isinstance(
-            getattr(module, attr_name), dict
-        ):
+        if attr_name.endswith("_EXPECTED_OUTPUTS") and isinstance(getattr(module, attr_name), dict):
             expected_outputs = getattr(module, attr_name)
             break
 
@@ -1001,7 +991,10 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
 
 
 def _check_notebook_variant_overrides(
-    *, ex_dir: Path, student_nb: NotebookDocument, solution_nb: NotebookDocument,
+    *,
+    ex_dir: Path,
+    student_nb: NotebookDocument,
+    solution_nb: NotebookDocument,
 ) -> list[Finding]:
     """Gate H: Verify variant overrides in student and solution notebooks."""
     findings: list[Finding] = []
@@ -1075,7 +1068,9 @@ def _find_variant_in_notebook(nb: NotebookDocument) -> str | None:
 
 
 def _check_runtime_self_check(
-    *, ex_dir: Path, exercise_key: str,
+    *,
+    ex_dir: Path,
+    exercise_key: str,
 ) -> list[Finding]:
     """Gate I: Run self-checker against solution variant and report failures."""
     findings: list[Finding] = []
@@ -1178,8 +1173,7 @@ def main(argv: list[str] | None = None) -> int:
 
     nb_student = _load_notebook(nb_path)
     expect_debug = ex_type == "debug"
-    findings.extend(_check_notebook_structure(
-        nb_path, nb_student, expect_debug=expect_debug))
+    findings.extend(_check_notebook_structure(nb_path, nb_student, expect_debug=expect_debug))
 
     nb_solution_path, nb_solution, solution_findings = _load_solution_notebook(
         ex_dir=ex_dir,
@@ -1226,7 +1220,8 @@ def main(argv: list[str] | None = None) -> int:
 
         findings.extend(
             _check_student_checker_support(
-                ex_dir, skip_empty_checks=args.skip_empty_checks,
+                ex_dir,
+                skip_empty_checks=args.skip_empty_checks,
             ),
         )
         findings.extend(_check_expectations_module(ex_dir, parts))

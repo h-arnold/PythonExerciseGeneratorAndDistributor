@@ -687,7 +687,8 @@ class TestGateIRuntimeSelfCheck:
 
         monkeypatch.setattr(
             "exercise_runtime_support.student_checker.checks.run_exercise_checks",
-            lambda key: [mock_result],  # type: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
+            # type: ignore[reportUnknownLambdaType,reportUnknownArgumentType]
+            lambda key: [mock_result],
         )
 
         findings = verify_exercise_quality._check_runtime_self_check(
