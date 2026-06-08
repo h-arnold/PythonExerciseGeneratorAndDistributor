@@ -10,7 +10,9 @@ from tests.exercise_metadata_helpers import make_exercise_json
 
 
 def _write_notebook(
-    path: Path, *, include_explanation: bool = True,
+    path: Path,
+    *,
+    include_explanation: bool = True,
     variant: str | None = "student",
 ) -> None:
     cells: list[dict[str, object]] = []
@@ -46,8 +48,7 @@ def _write_notebook(
                 "source": [
                     "import os\n",
                     f'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "{variant}"\n',
-                    "from exercise_runtime_support.student_checker import "
-                    "run_notebook_checks\n",
+                    "from exercise_runtime_support.student_checker import run_notebook_checks\n",
                     "run_notebook_checks('placeholder')\n",
                 ],
             }
@@ -119,8 +120,7 @@ def _write_canonical_exercise(  # noqa: PLR0913
     if "tests/test_file" not in missing_paths:
         test_path = exercise_dir / "tests" / f"test_{slug}.py"
         test_path.parent.mkdir(parents=True, exist_ok=True)
-        test_path.write_text(
-            "def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
+        test_path.write_text("def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
 
     # Create supporting files to avoid Gate F/G failures
     if "tests/student_checker_support.py" not in missing_paths:
@@ -297,13 +297,10 @@ def test_main_fails_when_debug_explanation_tags_do_not_match_exercise_tags(
             "source": ["print('Hello')\n"],
         },
     ]
-    _write_notebook_cells(exercise_dir / "notebooks" /
-                          "student.ipynb", mismatched_cells)
-    _write_notebook_cells(exercise_dir / "notebooks" /
-                          "solution.ipynb", mismatched_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" / "student.ipynb", mismatched_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" / "solution.ipynb", mismatched_cells)
 
-    exit_code = verify_exercise_quality.main(
-        [slug, "--repo-root", str(tmp_path)])
+    exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
     captured = capsys.readouterr()
 
     assert exit_code == 1
@@ -339,11 +336,9 @@ def test_main_fails_when_student_solution_exercise_tags_do_not_match(
             "source": ["print('Hello again')\n"],
         },
     ]
-    _write_notebook_cells(exercise_dir / "notebooks" /
-                          "solution.ipynb", solution_cells)
+    _write_notebook_cells(exercise_dir / "notebooks" / "solution.ipynb", solution_cells)
 
-    exit_code = verify_exercise_quality.main(
-        [slug, "--repo-root", str(tmp_path)])
+    exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
     captured = capsys.readouterr()
 
     assert exit_code == 1
@@ -365,11 +360,11 @@ def _make_checker_test_exercise_dir(tmp_path: Path, slug: str) -> Path:
         "parts": 1,
     }
     return _write_canonical_exercise(
-        tmp_path, slug,
+        tmp_path,
+        slug,
         metadata=metadata,
         include_explanation=False,
-        missing_paths={"tests/student_checker_support.py",
-                       "tests/expectations.py"},
+        missing_paths={"tests/student_checker_support.py", "tests/expectations.py"},
     )
 
 
@@ -382,11 +377,11 @@ class TestGateFStudentCheckerSupport:
     def test_missing_checker_support_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
         assert len(findings) > 0
-        assert any("student_checker_support" in f.message and f.severity ==
-                   "ERROR" for f in findings)
+        assert any(
+            "student_checker_support" in f.message and f.severity == "ERROR" for f in findings
+        )
 
     def test_empty_checks_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
@@ -394,17 +389,13 @@ class TestGateFStudentCheckerSupport:
         checker_path = exercise_dir / "tests" / "student_checker_support.py"
         checker_path.parent.mkdir(parents=True, exist_ok=True)
         checker_path.write_text(
-            "from __future__ import annotations\n"
-            "from typing import Any\n"
-            "CHECKS: list[Any] = []\n",
+            "from __future__ import annotations\nfrom typing import Any\nCHECKS: list[Any] = []\n",
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
         assert len(findings) > 0
-        assert any("CHECKS" in f.message and f.severity ==
-                   "ERROR" for f in findings)
+        assert any("CHECKS" in f.message and f.severity == "ERROR" for f in findings)
 
     def test_non_empty_checks_returns_no_finding(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
@@ -416,8 +407,7 @@ class TestGateFStudentCheckerSupport:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
         assert len(findings) == 0
 
     def test_unimportable_checker_returns_error(self, tmp_path: Path) -> None:
@@ -427,8 +417,7 @@ class TestGateFStudentCheckerSupport:
         checker_path.parent.mkdir(parents=True, exist_ok=True)
         checker_path.write_text("this is synta error!!!\n", encoding="utf-8")
 
-        findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir)
+        findings = verify_exercise_quality._check_student_checker_support(exercise_dir)
         assert len(findings) > 0
         assert any(f.severity == "ERROR" for f in findings)
 
@@ -442,27 +431,14 @@ class TestGateGExpectationsModule:
     """Gate G: Verify expectations.py exists with non-empty expected-outputs."""
 
     def _make_exercise_dir(self, tmp_path: Path, slug: str) -> Path:
-        metadata = {
-            **_exercise_metadata(slug),
-            "exercise_type": "modify",
-            "parts": 1,
-        }
-        return _write_canonical_exercise(
-            tmp_path, slug,
-            metadata=metadata,
-            include_explanation=False,
-            missing_paths={"tests/student_checker_support.py",
-                           "tests/expectations.py"},
-        )
+        return _make_checker_test_exercise_dir(tmp_path, slug)
 
     def test_missing_expectations_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        findings = verify_exercise_quality._check_expectations_module(
-            exercise_dir, parts=1)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
         assert len(findings) > 0
-        assert any("expectations" in f.message and f.severity ==
-                   "ERROR" for f in findings)
+        assert any("expectations" in f.message and f.severity == "ERROR" for f in findings)
 
     def test_empty_dict_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
@@ -474,8 +450,7 @@ class TestGateGExpectationsModule:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_expectations_module(
-            exercise_dir, parts=1)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
         assert len(findings) > 0
         assert any("empty" in f.message.lower() for f in findings)
 
@@ -489,8 +464,7 @@ class TestGateGExpectationsModule:
             encoding="utf-8",
         )
 
-        findings = verify_exercise_quality._check_expectations_module(
-            exercise_dir, parts=1)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=1)
         assert len(findings) == 0
 
     def test_missing_keys_for_all_parts_returns_error(self, tmp_path: Path) -> None:
@@ -509,11 +483,9 @@ class TestGateGExpectationsModule:
         meta["parts"] = 3
         meta_path.write_text(json.dumps(meta), encoding="utf-8")
 
-        findings = verify_exercise_quality._check_expectations_module(
-            exercise_dir, parts=3)
+        findings = verify_exercise_quality._check_expectations_module(exercise_dir, parts=3)
         assert len(findings) > 0
-        assert any("1..3" in f.message or "parts" in f.message.lower()
-                   for f in findings)
+        assert any("1..3" in f.message or "parts" in f.message.lower() for f in findings)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -542,7 +514,8 @@ class TestGateHNotebookVariantOverrides:
             "parts": 1,
         }
         exercise_dir = _write_canonical_exercise(
-            tmp_path, slug,
+            tmp_path,
+            slug,
             metadata=metadata,
             include_explanation=False,
         )
@@ -551,19 +524,20 @@ class TestGateHNotebookVariantOverrides:
     def test_student_missing_variant_returns_warning(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        nb = self._make_notebook(
-            ["run_notebook_checks('ex004_sequence_modify_vars')\n"])
-        (exercise_dir / "notebooks" / "student.ipynb").write_text(
-            json.dumps(nb), encoding="utf-8")
-        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
-            json.dumps(nb), encoding="utf-8")
+        nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(json.dumps(nb), encoding="utf-8")
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(json.dumps(nb), encoding="utf-8")
         nb_solution = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "solution.ipynb")
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
         nb_student = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "student.ipynb")
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
 
         findings = verify_exercise_quality._check_notebook_variant_overrides(
-            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
         )
         assert len(findings) > 0
         assert any("PYTUTOR_ACTIVE_VARIANT" in f.message for f in findings)
@@ -571,82 +545,107 @@ class TestGateHNotebookVariantOverrides:
     def test_solution_missing_variant_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        student_nb = self._make_notebook([
-            "import os\n",
-            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
-            "run_notebook_checks('ex004_sequence_modify_vars')\n",
-        ])
-        solution_nb = self._make_notebook(
-            ["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        student_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        solution_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
         (exercise_dir / "notebooks" / "student.ipynb").write_text(
-            json.dumps(student_nb), encoding="utf-8")
+            json.dumps(student_nb), encoding="utf-8"
+        )
         (exercise_dir / "notebooks" / "solution.ipynb").write_text(
-            json.dumps(solution_nb), encoding="utf-8")
+            json.dumps(solution_nb), encoding="utf-8"
+        )
         nb_solution = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "solution.ipynb")
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
         nb_student = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "student.ipynb")
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
 
         findings = verify_exercise_quality._check_notebook_variant_overrides(
-            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
         )
         assert len(findings) > 0
-        assert any("solution" in f.message and f.severity ==
-                   "ERROR" for f in findings)
+        assert any("solution" in f.message and f.severity == "ERROR" for f in findings)
 
     def test_solution_wrong_variant_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        student_nb = self._make_notebook([
-            "import os\n",
-            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
-            "run_notebook_checks('ex004_sequence_modify_vars')\n",
-        ])
-        solution_nb = self._make_notebook([
-            "import os\n",
-            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
-            "run_notebook_checks('ex004_sequence_modify_vars')\n",
-        ])
+        student_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        solution_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
         (exercise_dir / "notebooks" / "student.ipynb").write_text(
-            json.dumps(student_nb), encoding="utf-8")
+            json.dumps(student_nb), encoding="utf-8"
+        )
         (exercise_dir / "notebooks" / "solution.ipynb").write_text(
-            json.dumps(solution_nb), encoding="utf-8")
+            json.dumps(solution_nb), encoding="utf-8"
+        )
         nb_solution = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "solution.ipynb")
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
         nb_student = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "student.ipynb")
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
 
         findings = verify_exercise_quality._check_notebook_variant_overrides(
-            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
         )
         assert len(findings) > 0
-        assert any("instead of 'solution'" in f.message
-                   and f.severity == "ERROR" for f in findings)
+        assert any("instead of 'solution'" in f.message and f.severity == "ERROR" for f in findings)
 
     def test_both_variants_correct_returns_no_finding(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        student_nb = self._make_notebook([
-            "import os\n",
-            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
-            "run_notebook_checks('ex004_sequence_modify_vars')\n",
-        ])
-        solution_nb = self._make_notebook([
-            "import os\n",
-            "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
-            "run_notebook_checks('ex004_sequence_modify_vars')\n",
-        ])
+        student_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'student'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        solution_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
         (exercise_dir / "notebooks" / "student.ipynb").write_text(
-            json.dumps(student_nb), encoding="utf-8")
+            json.dumps(student_nb), encoding="utf-8"
+        )
         (exercise_dir / "notebooks" / "solution.ipynb").write_text(
-            json.dumps(solution_nb), encoding="utf-8")
+            json.dumps(solution_nb), encoding="utf-8"
+        )
         nb_solution = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "solution.ipynb")
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
         nb_student = verify_exercise_quality._load_notebook(
-            exercise_dir / "notebooks" / "student.ipynb")
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
 
         findings = verify_exercise_quality._check_notebook_variant_overrides(
-            ex_dir=exercise_dir, student_nb=nb_student, solution_nb=nb_solution,
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
         )
         assert len(findings) == 0
 
@@ -660,7 +659,9 @@ class TestGateIRuntimeSelfCheck:
     """Gate I: Run self-checker against solution variant and report failures."""
 
     def test_valid_solution_returns_no_finding(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         slug = "ex004_sequence_modify_vars"
         exercise_dir = tmp_path / "exercises" / "sequence" / slug
@@ -674,6 +675,7 @@ class TestGateIRuntimeSelfCheck:
         )
 
         import types
+
         mock_result = types.SimpleNamespace()
         mock_result.passed = True
         mock_result.exercise_no = 1
@@ -686,9 +688,11 @@ class TestGateIRuntimeSelfCheck:
         )
 
         findings = verify_exercise_quality._check_runtime_self_check(
-            ex_dir=exercise_dir, exercise_key=slug,
+            ex_dir=exercise_dir,
+            exercise_key=slug,
         )
         assert len(findings) == 0
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Section 1 — Filter progression scanning to only exerciseN tagged cells
@@ -699,7 +703,8 @@ class TestSection1ProgressionScanFiltering:
     """Tests for filtering _collect_code_cell_text to exerciseN tagged cells only."""
 
     def test_collect_code_cell_text_excludes_untagged_cells(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Only exercise-tagged code cells should appear in the result."""
         cells: list[dict[str, object]] = [
@@ -734,7 +739,8 @@ class TestSection1ProgressionScanFiltering:
         assert "import os" not in result
 
     def test_collect_code_cell_text_includes_all_exerciseN_cells(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """All exerciseN tagged cells must be present in the combined result."""
         cells: list[dict[str, object]] = [
@@ -771,7 +777,8 @@ class TestSection1ProgressionScanFiltering:
         assert "x = 0" not in result
 
     def test_collect_code_cell_text_excludes_explanationN_cells(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Explanation markdown cells should be excluded by cell_type filter."""
         cells: list[dict[str, object]] = [
@@ -796,7 +803,8 @@ class TestSection1ProgressionScanFiltering:
         assert "print('Hello')" in result
 
     def test_progression_scan_ignores_self_check_imports(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Untagged self-check cells with import statements should not cause
         false-positive progression violations."""
@@ -807,8 +815,7 @@ class TestSection1ProgressionScanFiltering:
                 "source": [
                     "import os\n",
                     'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "student"\n',
-                    "from exercise_runtime_support.student_checker import "
-                    "run_notebook_checks\n",
+                    "from exercise_runtime_support.student_checker import run_notebook_checks\n",
                     "run_notebook_checks('test_exercise')\n",
                 ],
             },
@@ -828,7 +835,8 @@ class TestSection1ProgressionScanFiltering:
         assert len(findings) == 0
 
     def test_progression_scan_still_detects_real_violations(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """A real progression violation inside an exerciseN-tagged cell must
         still be detected — guards against over-filtering."""
@@ -856,7 +864,8 @@ class TestSection1ProgressionScanFiltering:
         assert any("progression violation" in f.message for f in findings)
 
     def test_collect_code_cell_text_excludes_mixed_untagged_and_tagged(
-        self, tmp_path: Path,
+        self,
+        tmp_path: Path,
     ) -> None:
         """Untagged cells with progression-violating patterns must not affect
         the collected text."""
@@ -914,14 +923,13 @@ class TestSection2SkipEmptyChecks:
         checker_path = exercise_dir / "tests" / "student_checker_support.py"
         checker_path.parent.mkdir(parents=True, exist_ok=True)
         checker_path.write_text(
-            "from __future__ import annotations\n"
-            "from typing import Any\n"
-            "CHECKS: list[Any] = []\n",
+            "from __future__ import annotations\nfrom typing import Any\nCHECKS: list[Any] = []\n",
             encoding="utf-8",
         )
 
         findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir, skip_empty_checks=True)
+            exercise_dir, skip_empty_checks=True
+        )
         assert len(findings) == 0
 
     def test_skip_empty_checks_does_not_suppress_missing_file(self, tmp_path: Path) -> None:
@@ -931,10 +939,13 @@ class TestSection2SkipEmptyChecks:
         # Deliberately NOT writing the checker file
 
         findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir, skip_empty_checks=True)
+            exercise_dir, skip_empty_checks=True
+        )
         assert len(findings) > 0
-        assert any("Missing student_checker_support.py" in f.message
-                   and f.severity == "ERROR" for f in findings)
+        assert any(
+            "Missing student_checker_support.py" in f.message and f.severity == "ERROR"
+            for f in findings
+        )
 
     def test_skip_empty_checks_does_not_suppress_unimportable_file(self, tmp_path: Path) -> None:
         """skip_empty_checks=True still reports an unimportable checker."""
@@ -945,7 +956,8 @@ class TestSection2SkipEmptyChecks:
         checker_path.write_text("this is synta error!!!\n", encoding="utf-8")
 
         findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir, skip_empty_checks=True)
+            exercise_dir, skip_empty_checks=True
+        )
         assert len(findings) > 0
         assert any(f.severity == "ERROR" for f in findings)
 
@@ -961,21 +973,26 @@ class TestSection2SkipEmptyChecks:
         )
 
         findings = verify_exercise_quality._check_student_checker_support(
-            exercise_dir, skip_empty_checks=True)
+            exercise_dir, skip_empty_checks=True
+        )
         assert len(findings) == 0
 
     # ── Integration test ─────────────────────────────────────────────────────
 
     def test_main_respects_skip_empty_checks_flag(
-        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
     ) -> None:
-        """``verify_exercise_quality.main`` returns exit code 0 when
-        ``--skip-empty-checks`` is passed and the only error is empty CHECKS."""
+        """``verify_exercise_quality.main`` produces no empty-CHECKS error in
+        output when ``--skip-empty-checks`` is passed and the only error
+        is an empty CHECKS list."""
         slug = "ex004_sequence_modify_variables"
         # Build a full canonical exercise, but skip the default non-empty
         # student_checker_support.py so we can write an empty-CHECKS variant.
         exercise_dir = _write_canonical_exercise(
-            tmp_path, slug,
+            tmp_path,
+            slug,
             metadata={
                 **_exercise_metadata(slug),
                 "exercise_type": "modify",
@@ -988,22 +1005,25 @@ class TestSection2SkipEmptyChecks:
         checker_path = exercise_dir / "tests" / "student_checker_support.py"
         checker_path.parent.mkdir(parents=True, exist_ok=True)
         checker_path.write_text(
-            "from __future__ import annotations\n"
-            "from typing import Any\n"
-            "CHECKS: list[Any] = []\n",
+            "from __future__ import annotations\nfrom typing import Any\nCHECKS: list[Any] = []\n",
             encoding="utf-8",
         )
 
         # Run the full verifier with --skip-empty-checks. Even though other
         # gates (H/I) may produce errors in this bare exercise environment,
         # the empty-CHECKS error from Gate F must be suppressed.
-        _ = verify_exercise_quality.main([
-            slug,
-            "--repo-root", str(tmp_path),
-            "--construct", "sequence",
-            "--type", "modify",
-            "--skip-empty-checks",
-        ])
+        _ = verify_exercise_quality.main(
+            [
+                slug,
+                "--repo-root",
+                str(tmp_path),
+                "--construct",
+                "sequence",
+                "--type",
+                "modify",
+                "--skip-empty-checks",
+            ]
+        )
         captured = capsys.readouterr()
 
         # The empty-CHECKS error must not appear in output
