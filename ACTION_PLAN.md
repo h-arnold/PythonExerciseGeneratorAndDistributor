@@ -36,8 +36,7 @@ A 3-section TDD plan. Tests are written or updated **before** implementation in 
 2. **`test_collect_code_cell_text_includes_all_exerciseN_cells`**: Create a notebook with exercise1, exercise2, exercise3 tagged cells plus untagged cells. Assert all three exerciseN cells are included.
 3. **`test_collect_code_cell_text_excludes_explanationN_cells`**: Create a notebook with an explanation1 markdown cell (already excluded by cell_type filter, but verify). Assert it's not in the result.
 4. **`test_progression_scan_ignores_self_check_imports`**: Create a notebook with only an untagged self-check cell containing `import os` / `from ... import ...`. Assert `_collect_progression_findings()` returns empty (no `libraries` progression violation).
-5. **`test_progression_scan_ignores_student_checker_support_file`**: Verify that `_collect_progression_findings()` is only called on notebook files, not on `.py` support files. (This is a structural/coverage test — the function already only takes notebook paths.)
-6. **`test_progression_scan_still_detects_real_violations`**: Create a notebook with an exercise1 cell containing a later-construct pattern (e.g. `def foo():` in a `sequence` exercise). Assert the violation is still detected — this guards against over-filtering.
+5. **`test_progression_scan_still_detects_real_violations`**: Create a notebook with an exercise1 cell containing a later-construct pattern (e.g. `def foo():` in a `sequence` exercise). Assert the violation is still detected — this guards against over-filtering.
 
 **Section checks**:
 - All 6 new tests pass

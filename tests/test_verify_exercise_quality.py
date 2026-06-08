@@ -356,22 +356,28 @@ def test_main_fails_when_student_solution_exercise_tags_do_not_match(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+def _make_checker_test_exercise_dir(tmp_path: Path, slug: str) -> Path:
+    """Create an exercise directory without student_checker_support.py
+    or expectations.py for checker-module tests."""
+    metadata: dict[str, int | str] = {
+        **_exercise_metadata(slug),  # type: ignore[arg-type]
+        "exercise_type": "modify",
+        "parts": 1,
+    }
+    return _write_canonical_exercise(
+        tmp_path, slug,
+        metadata=metadata,
+        include_explanation=False,
+        missing_paths={"tests/student_checker_support.py",
+                       "tests/expectations.py"},
+    )
+
+
 class TestGateFStudentCheckerSupport:
     """Gate F: Verify student_checker_support.py exists with non-empty CHECKS."""
 
     def _make_exercise_dir(self, tmp_path: Path, slug: str) -> Path:
-        metadata = {
-            **_exercise_metadata(slug),
-            "exercise_type": "modify",
-            "parts": 1,
-        }
-        return _write_canonical_exercise(
-            tmp_path, slug,
-            metadata=metadata,
-            include_explanation=False,
-            missing_paths={"tests/student_checker_support.py",
-                           "tests/expectations.py"},
-        )
+        return _make_checker_test_exercise_dir(tmp_path, slug)
 
     def test_missing_checker_support_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_variables"
@@ -690,11 +696,7 @@ class TestGateIRuntimeSelfCheck:
 
 
 class TestSection1ProgressionScanFiltering:
-    """Tests for filtering _collect_code_cell_text to exerciseN tagged cells only.
-
-    These tests will fail (red phase) until _collect_code_cell_text() is
-    modified to exclude untagged code cells.
-    """
+    """Tests for filtering _collect_code_cell_text to exerciseN tagged cells only."""
 
     def test_collect_code_cell_text_excludes_untagged_cells(
         self, tmp_path: Path,
@@ -901,22 +903,7 @@ class TestSection2SkipEmptyChecks:
     """
 
     def _make_exercise_dir(self, tmp_path: Path, slug: str) -> Path:
-        """Create an exercise directory without student_checker_support.py.
-
-        Callers write the checker file themselves to control its content.
-        """
-        metadata = {
-            **_exercise_metadata(slug),
-            "exercise_type": "modify",
-            "parts": 1,
-        }
-        return _write_canonical_exercise(
-            tmp_path, slug,
-            metadata=metadata,
-            include_explanation=False,
-            missing_paths={"tests/student_checker_support.py",
-                           "tests/expectations.py"},
-        )
+        return _make_checker_test_exercise_dir(tmp_path, slug)
 
     # ── Unit tests for _check_student_checker_support(..., skip_empty_checks=) ──
 
@@ -1021,5 +1008,5 @@ class TestSection2SkipEmptyChecks:
 
         # The empty-CHECKS error must not appear in output
         assert "CHECKS list in student_checker_support.py is empty" not in captured.out
-        # The missing-file error would be different — confirm we didn't suppress that
+        # File exists so missing-file error is absent (already tested by unit test)
         assert "Missing student_checker_support.py" not in captured.out
