@@ -1,7 +1,7 @@
 ---
 name: Exercise Generation
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
-tools: [vscode/askQuestions, vscode/runCommand, vscode/vscodeAPI, execute, read, agent, edit, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
+tools: [vscode/askQuestions, vscode/runCommand, vscode/vscodeAPI, execute/getTerminalOutput, execute/killTerminal, execute/sendToTerminal, execute/runTask, execute/createAndRunTask, execute/runTests, execute/testFailure, execute/runNotebookCell, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getTaskOutput, read/getNotebookSummary, read/problems, read/readFile, read/viewImage, read/readNotebookCellOutput, agent/runSubagent, edit/createDirectory, edit/createFile, edit/createJupyterNotebook, edit/editFiles, edit/editNotebook, edit/rename, search/codebase, search/fileSearch, search/listDirectory, search/textSearch, search/usages, web/githubRepo, web/githubTextSearch, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages]
 user-invocable: true
 ---
 # Bassaleg Python Tutor — Exercise Generation Mode

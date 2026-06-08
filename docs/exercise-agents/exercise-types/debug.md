@@ -126,7 +126,7 @@ Remove comments that point out the fault (for example, `# missing brackets`). Le
 ### 5. **Separate student and teacher messaging**
 
 - Student notebook (`notebooks/student.ipynb` inside the exercise folder): neutral titles and prompts, buggy code, concise reflection prompt.
-- Solution notebook (`notebooks/solution.ipynb` inside the same exercise folder): includes the corrected code plus optional teaching notes, keeping the same tag structure so tests can run against either version via the explicit variant contract (`--variant student|solution`). When writing the corrected code, favour stepwise, one-change-per-line examples so students can observe how variables change (for example, cast the input to `age` on one line, then increment with `age = age + 1` on the next). Avoid compressing multiple transformations into single, compact expressions which hide intermediate steps.
+- Solution notebook (`notebooks/solution.ipynb` inside the same exercise folder): includes the corrected code plus optional teaching notes, keeping the same tag structure so tests can run against either version via the explicit variant contract (`--variant student|solution`). When writing the corrected code, favour stepwise, one-change-per-line examples so students can observe how variables change (for example, use `age_input = input(...)` and `age = int(age_input)` on separate lines, then increment with `age = age + 1` on the next). Avoid compressing multiple transformations into single, compact expressions which hide intermediate steps.
 
 ### 6. **Progress difficulty deliberately**
 

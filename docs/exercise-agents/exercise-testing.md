@@ -228,8 +228,9 @@ Ask these questions in order:
 
 ```python
 # Student code
-num = input()
-print(int(num) * 2)
+number_input = input()
+number_int = int(number_input)
+print(number_int * 2)
 ```
 
 **Inadequate test (only checks output):**
