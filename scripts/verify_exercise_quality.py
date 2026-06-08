@@ -717,6 +717,14 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Exercise type (default: inferred from canonical metadata)",
     )
+    parser.add_argument(
+        "--skip-empty-checks",
+        action="store_true",
+        default=False,
+        help="Suppress the empty-CHECKS error in Gate F, allowing the verifier "
+        "to be used during Phase 1 (notebook authoring) before checker "
+        "definitions are written",
+    )
     return parser
 
 
@@ -857,8 +865,17 @@ def _load_exercise_local_module(ex_dir: Path, module_name: str) -> object | None
     return module
 
 
-def _check_student_checker_support(ex_dir: Path) -> list[Finding]:
-    """Gate F: Verify student_checker_support.py exists with non-empty CHECKS."""
+def _check_student_checker_support(
+    ex_dir: Path, *, skip_empty_checks: bool = False,
+) -> list[Finding]:
+    """Gate F: Verify student_checker_support.py exists with non-empty CHECKS.
+
+    Args:
+        ex_dir: Exercise directory path.
+        skip_empty_checks: When True, suppress the empty-CHECKS error so the
+            verifier can be used during Phase 1 (notebook authoring) before
+            checker definitions are written.
+    """
     findings: list[Finding] = []
     checker_path = ex_dir / "tests" / "student_checker_support.py"
 
@@ -892,7 +909,7 @@ def _check_student_checker_support(ex_dir: Path) -> list[Finding]:
                 path=checker_path,
             )
         )
-    elif not checks:
+    elif not checks and not skip_empty_checks:
         findings.append(
             Finding(
                 "ERROR",
@@ -1200,7 +1217,11 @@ def main(argv: list[str] | None = None) -> int:
         except _ExerciseMetadataError:
             parts = 1
 
-        findings.extend(_check_student_checker_support(ex_dir))
+        findings.extend(
+            _check_student_checker_support(
+                ex_dir, skip_empty_checks=args.skip_empty_checks,
+            ),
+        )
         findings.extend(_check_expectations_module(ex_dir, parts))
 
         if nb_solution is not None:

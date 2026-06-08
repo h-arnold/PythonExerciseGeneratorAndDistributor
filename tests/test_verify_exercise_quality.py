@@ -884,3 +884,142 @@ class TestSection1ProgressionScanFiltering:
         assert "print('safe code')" in result
         assert "bad_func" not in result
         assert "import sys" not in result
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 2 — --skip-empty-checks flag
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestSection2SkipEmptyChecks:
+    """Gate F: --skip-empty-checks suppresses empty-CHECKS findings.
+
+    The _check_student_checker_support() function accepts a skip_empty_checks
+    kwarg.  When True, the empty-CHECKS error is suppressed so that Phase 1
+    (notebook authoring) does not fail.  All other errors (missing file,
+    unimportable module) are still reported.
+    """
+
+    def _make_exercise_dir(self, tmp_path: Path, slug: str) -> Path:
+        """Create an exercise directory without student_checker_support.py.
+
+        Callers write the checker file themselves to control its content.
+        """
+        metadata = {
+            **_exercise_metadata(slug),
+            "exercise_type": "modify",
+            "parts": 1,
+        }
+        return _write_canonical_exercise(
+            tmp_path, slug,
+            metadata=metadata,
+            include_explanation=False,
+            missing_paths={"tests/student_checker_support.py",
+                           "tests/expectations.py"},
+        )
+
+    # ── Unit tests for _check_student_checker_support(..., skip_empty_checks=) ──
+
+    def test_skip_empty_checks_suppresses_empty_checks(self, tmp_path: Path) -> None:
+        """skip_empty_checks=True suppresses the empty-CHECKS error."""
+        slug = "ex004_sequence_modify_variables"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        checker_path = exercise_dir / "tests" / "student_checker_support.py"
+        checker_path.parent.mkdir(parents=True, exist_ok=True)
+        checker_path.write_text(
+            "from __future__ import annotations\n"
+            "from typing import Any\n"
+            "CHECKS: list[Any] = []\n",
+            encoding="utf-8",
+        )
+
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir, skip_empty_checks=True)
+        assert len(findings) == 0
+
+    def test_skip_empty_checks_does_not_suppress_missing_file(self, tmp_path: Path) -> None:
+        """skip_empty_checks=True still reports missing student_checker_support.py."""
+        slug = "ex004_sequence_modify_variables"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        # Deliberately NOT writing the checker file
+
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir, skip_empty_checks=True)
+        assert len(findings) > 0
+        assert any("Missing student_checker_support.py" in f.message
+                   and f.severity == "ERROR" for f in findings)
+
+    def test_skip_empty_checks_does_not_suppress_unimportable_file(self, tmp_path: Path) -> None:
+        """skip_empty_checks=True still reports an unimportable checker."""
+        slug = "ex004_sequence_modify_variables"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        checker_path = exercise_dir / "tests" / "student_checker_support.py"
+        checker_path.parent.mkdir(parents=True, exist_ok=True)
+        checker_path.write_text("this is synta error!!!\n", encoding="utf-8")
+
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir, skip_empty_checks=True)
+        assert len(findings) > 0
+        assert any(f.severity == "ERROR" for f in findings)
+
+    def test_skip_empty_checks_non_empty_checks_still_pass(self, tmp_path: Path) -> None:
+        """skip_empty_checks=True with valid CHECKS — no findings."""
+        slug = "ex004_sequence_modify_variables"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        checker_path = exercise_dir / "tests" / "student_checker_support.py"
+        checker_path.parent.mkdir(parents=True, exist_ok=True)
+        checker_path.write_text(
+            "CHECKS = [{'tag': 'exercise1', 'check': None}]\n",
+            encoding="utf-8",
+        )
+
+        findings = verify_exercise_quality._check_student_checker_support(
+            exercise_dir, skip_empty_checks=True)
+        assert len(findings) == 0
+
+    # ── Integration test ─────────────────────────────────────────────────────
+
+    def test_main_respects_skip_empty_checks_flag(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """``verify_exercise_quality.main`` returns exit code 0 when
+        ``--skip-empty-checks`` is passed and the only error is empty CHECKS."""
+        slug = "ex004_sequence_modify_variables"
+        # Build a full canonical exercise, but skip the default non-empty
+        # student_checker_support.py so we can write an empty-CHECKS variant.
+        exercise_dir = _write_canonical_exercise(
+            tmp_path, slug,
+            metadata={
+                **_exercise_metadata(slug),
+                "exercise_type": "modify",
+                "parts": 1,
+            },
+            include_explanation=False,
+            missing_paths={"tests/student_checker_support.py"},
+        )
+        # Write student_checker_support.py with an empty CHECKS list.
+        checker_path = exercise_dir / "tests" / "student_checker_support.py"
+        checker_path.parent.mkdir(parents=True, exist_ok=True)
+        checker_path.write_text(
+            "from __future__ import annotations\n"
+            "from typing import Any\n"
+            "CHECKS: list[Any] = []\n",
+            encoding="utf-8",
+        )
+
+        # Run the full verifier with --skip-empty-checks. Even though other
+        # gates (H/I) may produce errors in this bare exercise environment,
+        # the empty-CHECKS error from Gate F must be suppressed.
+        _ = verify_exercise_quality.main([
+            slug,
+            "--repo-root", str(tmp_path),
+            "--construct", "sequence",
+            "--type", "modify",
+            "--skip-empty-checks",
+        ])
+        captured = capsys.readouterr()
+
+        # The empty-CHECKS error must not appear in output
+        assert "CHECKS list in student_checker_support.py is empty" not in captured.out
+        # The missing-file error would be different — confirm we didn't suppress that
+        assert "Missing student_checker_support.py" not in captured.out
