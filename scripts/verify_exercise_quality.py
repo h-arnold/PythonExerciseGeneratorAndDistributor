@@ -883,7 +883,7 @@ def _check_student_checker_support(ex_dir: Path) -> list[Finding]:
                 path=checker_path,
             )
         )
-    elif len(checks) == 0:
+    elif not checks:
         findings.append(
             Finding(
                 "ERROR",
