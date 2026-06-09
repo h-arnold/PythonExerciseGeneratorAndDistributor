@@ -213,7 +213,7 @@ def test_build_make_test_lines_use_output_capture_helpers() -> None:
     assert "get_explanation_cell" not in test_text
 
 
-def _run_main(
+def _run_main(  # noqa: PLR0913
     exercise_id: str,
     title: str,
     construct: str,
