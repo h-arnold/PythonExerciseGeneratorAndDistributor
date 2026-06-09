@@ -3,6 +3,7 @@ name: Tidy Code Reviewer
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
 tools: [vscode/memory, vscode/vscodeAPI, execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/testFailure, execute/runNotebookCell, execute/runInTerminal, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, edit/editFiles, search, web, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
 user-invocable: true
+model: DeepSeek V4 Pro (deepseek)
 ---
 
 > Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.

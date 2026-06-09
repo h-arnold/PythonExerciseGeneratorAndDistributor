@@ -2,6 +2,7 @@
 name: 'De-Sloppification'
 description: 'Finds and removes AI-slop, duplication, and unnecessary complexity'
 user-invocable: true
+model: DeepSeek V4 Pro (deepseek)
 
 tools: [vscode/askQuestions, vscode/memory, vscode/runCommand, execute, read, edit/createFile, edit/editFiles, search, web, todo]
 ---
