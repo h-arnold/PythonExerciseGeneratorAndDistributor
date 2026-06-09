@@ -264,7 +264,7 @@ def _handle_github_error_hints(error_msg: str, args: argparse.Namespace) -> str:
     if exists_hint:
         return (
             f"{error_msg}\n\n{exists_hint}\n"
-            "Use the update-repo command to push new contents to the existing repository."
+            "Use the update command to push new contents to the existing repository."
         )
 
     hint = GitHubClient.github_error_hint(error_msg, args.repo_name)
@@ -664,7 +664,7 @@ def create_command(args: argparse.Namespace) -> int:
 
 
 def update_repo_command(args: argparse.Namespace) -> int:
-    """Handle update-repo command to push new contents to an existing repository."""
+    """Handle update command to push new contents to an existing repository."""
 
     if not validate_repo_name(args.repo_name, allow_owner_prefix=True):
         suggestion = sanitize_repo_name(args.repo_name)
@@ -876,7 +876,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Update command
     update_parser = subparsers.add_parser(
-        "update-repo",
+        "update",
         help="Update an existing template repository by pushing new contents",
     )
     update_parser.add_argument(
@@ -910,7 +910,7 @@ def main(argv: list[str] | None = None) -> int:
     # Execute command
     if args.command == "create":
         return create_command(args)
-    elif args.command == "update-repo":
+    elif args.command == "update":
         return update_repo_command(args)
     elif args.command == "list":
         return list_command(args)

@@ -29,13 +29,13 @@ Alternatively, run the CLI as a module: `uv run python -m template_repo_cli --he
 The CLI provides four main commands:
 
 1. **`create`** — Create a GitHub template repository
-2. **`update-repo`** — Push a refreshed template into an existing repository
+2. **`update`** — Push a refreshed template into an existing repository
 3. **`list`** — List available exercises
 4. **`validate`** — Validate exercise selection
 
 ### Global Options
 
-- `--dry-run` — Build and validate without executing `gh` commands (create and update-repo)
+- `--dry-run` — Build and validate without executing `gh` commands (create and update)
 - `--verbose` / `-v` — Show detailed progress information
 - `--output-dir PATH` — Copy the packaged workspace to `PATH` instead of cleaning up the temp directory
 
@@ -159,22 +159,22 @@ template_repo_cli --verbose create \
 
 ### Update Existing Repository
 
-`update-repo` packages the selected exercises and force-pushes them into an existing repository. The target repository must already exist; supply it as either a simple slug (for your personal account) or `owner/repo` when pushing elsewhere. The branch defaults to `main`.
+`update` packages the selected exercises and force-pushes them into an existing repository. The target repository must already exist; supply it as either a simple slug (for your personal account) or `owner/repo` when pushing elsewhere. The branch defaults to `main`.
 
 ```bash
 # Push updated content into an existing repository
-template_repo_cli update-repo \
+template_repo_cli update \
   --construct sequence \
   --repo-name organisation/sequence-exercises \
   --branch main
 
 # Preview the update without pushing
-template_repo_cli --dry-run update-repo \
+template_repo_cli --dry-run update \
   --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name organisation/sequence-exercises
 
 # Keep a local copy of the packaged workspace after the push
-template_repo_cli --output-dir ./latest-template update-repo \
+template_repo_cli --output-dir ./latest-template update \
   --construct sequence \
   --repo-name organisation/sequence-exercises
 ```
@@ -354,7 +354,7 @@ When adding features:
 
 ## Authentication Notes
 
-When running inside a GitHub Codespace, the environment sets a `GITHUB_TOKEN` scoped only to the current repository. This token does **not** have permission to create repositories in other organisations or your personal account. If you encounter authentication failures when running `create` or `update-repo`:
+When running inside a GitHub Codespace, the environment sets a `GITHUB_TOKEN` scoped only to the current repository. This token does **not** have permission to create repositories in other organisations or your personal account. If you encounter authentication failures when running `create` or `update`:
 
 ```bash
 unset GITHUB_TOKEN

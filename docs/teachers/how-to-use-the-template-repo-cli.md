@@ -98,10 +98,10 @@ This creates a template called `week1-python` in the `my-school-org` organisatio
 
 ## Updating an existing template repository
 
-If you have already created a template and want to refresh it (for example, you fixed a typo in an exercise), use the `update-repo` command:
+If you have already created a template and want to refresh it (for example, you fixed a typo in an exercise), use the `update` command:
 
 ```bash
-template_repo_cli update-repo \
+template_repo_cli update \
   --construct sequence \
   --repo-name my-org/sequence-exercises
 ```

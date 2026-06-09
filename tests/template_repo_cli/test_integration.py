@@ -465,7 +465,8 @@ class TestEndToEndDryRun:
             f"stderr:\n{check.stderr}"
         )
 
-        summary = cast(dict[str, Any], json.loads(check.stdout.strip().splitlines()[-1]))
+        summary = cast(dict[str, Any], json.loads(
+            check.stdout.strip().splitlines()[-1]))
         notebook_count = cast(int, summary["notebook_count"])
         failing_exercises = cast(list[str], summary["failing_exercises"])
 
@@ -1119,7 +1120,8 @@ class TestEndToEndErrorRecovery:
         """Test error handling in full flow."""
         from scripts.template_repo_cli.cli import main
 
-        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Error")
+        mock_run.return_value = MagicMock(
+            returncode=1, stdout="", stderr="Error")
 
         # Invalid construct should cause error
         result = main(
@@ -1255,7 +1257,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1267,7 +1270,8 @@ class TestCliCreateCommand:
                 },
             ),
         ):
-            result = main(["create", "--construct", "sequence", "--repo-name", "test-repo"])
+            result = main(["create", "--construct", "sequence",
+                          "--repo-name", "test-repo"])
 
         assert result == 0
         # By default the CLI should set template=True
@@ -1297,7 +1301,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1346,7 +1351,8 @@ class TestCliCreateCommand:
 
         with (
             patch.object(GitHubClient, "create_repository", new=fake_create),
-            patch.object(GitHubClient, "check_gh_installed", return_value=True),
+            patch.object(GitHubClient, "check_gh_installed",
+                         return_value=True),
             patch.object(
                 GitHubClient,
                 "check_scopes",
@@ -1536,7 +1542,8 @@ class TestCliCreateCommand:
         assert result == 0
         EXPECT_CREATE_CALLS = 2
         assert mock_create.call_count == EXPECT_CREATE_CALLS
-        mock_subprocess_run.assert_any_call(["gh", "auth", "login"], check=False)
+        mock_subprocess_run.assert_any_call(
+            ["gh", "auth", "login"], check=False)
 
     @patch("subprocess.run")
     def test_cli_create_with_all_options(
@@ -1639,7 +1646,7 @@ class TestCliOutputDir:
 
 
 class TestCliUpdateRepo:
-    """Tests for update-repo command."""
+    """Tests for update command."""
 
     @patch("subprocess.run")
     def test_cli_update_dry_run(
@@ -1652,7 +1659,7 @@ class TestCliUpdateRepo:
         result = main(
             [
                 "--dry-run",
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1690,7 +1697,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1730,7 +1737,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1771,7 +1778,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1815,7 +1822,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",

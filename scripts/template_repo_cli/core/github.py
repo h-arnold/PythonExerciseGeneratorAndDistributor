@@ -539,6 +539,11 @@ class GitHubClient:
             branch: Branch name to push.
             force: Whether to force push (default: True for template updates).
         """
+        # Configure Git to use the gh CLI's OAuth token for HTTPS authentication.
+        # This is idempotent and avoids 403 errors when GITHUB_TOKEN is set
+        # in the environment with insufficient permissions.
+        run_subprocess(["gh", "auth", "setup-git"], check=False)
+
         # Ensure the local branch is named correctly (rename current branch if needed)
         current_branch_result = run_subprocess(
             ["git", "branch", "--show-current"],
