@@ -14,7 +14,6 @@ This guide explains how to use the **Exercise Generation** assistant in GitHub C
     - [4. Saving Your Work](#4-saving-your-work)
   - [Exercise Reviewer — quick quality checks 🔍](#exercise-reviewer--quick-quality-checks-)
   - [Best Practices](#best-practices)
-    - [Recommended models — cost vs. quality 💡](#recommended-models--cost-vs-quality-)
 
 ## First Time Setup
 
@@ -75,7 +74,7 @@ In the Chat panel you just opened:
 
 The most important step is asking the right question. The agent works best when you give it **teaching context**.
 
-Instead of asking "Write a loop exercise", explains what the students need to practice.
+Instead of asking "Write a loop exercise", explain what the students need to practise.
 
 #### Example Scenario A: Reinforcing Recent Lessons
 
@@ -111,99 +110,82 @@ The agent will generate a response, often including a plan or code snippets.
 
 ### 4. Saving Your Work
 
-Once the agent gives you the exercise content (the "solution" code and the "student" instructions):
+The Exercise Generation agent will scaffold the files and populate the content for you. Here is what happens and what you need to do.
 
-1. **Create the file structure**:
+**Create the file structure** — the agent runs this command for you:
 
-   Open the **Terminal** (`Ctrl + \`` or **Terminal > New Terminal**) and run the command the agent suggests inside the managed environment:
+```bash
+uv run python scripts/new_exercise.py ex050 "My New Topic" \
+  --construct sequence \
+  --type modify \
+  --slug my_topic
+```
 
-   ```bash
-    uv run python scripts/new_exercise.py ex050 "My New Topic" \
-      --construct sequence \
-      --type modify \
-      --slug my_topic
-   ```
+The scaffolder writes directly to `exercises/sequence/ex050_sequence_modify_my_topic/` with:
 
-     The scaffolder writes directly to `exercises/sequence/ex050_sequence_modify_my_topic/` with `exercise.json`, `notebooks/student.ipynb`, `notebooks/solution.ipynb`, and `tests/test_ex050_sequence_modify_my_topic.py`. Do not move the scaffold after generation. Exercise type belongs in `exercise.json`, not in an extra path segment.
+- `exercise.json` — exercise metadata (type is stored here, not in the folder path)
+- `notebooks/student.ipynb` — the student-facing notebook
+- `notebooks/solution.ipynb` — instructor solution mirror
+- `tests/test_ex050_sequence_modify_my_topic.py` — placeholder test file
+- `tests/expectations.py` — expected-output constants (for debug exercises)
+- `tests/student_checker_support.py` — self-check support module
 
-2. **Add the Content**:
+The agent then adds the exercise content to the notebooks. Your main job is to **review and refine** what the agent produces.
 
-    - Open both `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/student.ipynb` and `exercises/sequence/ex050_sequence_modify_my_topic/notebooks/solution.ipynb`.
-   - Keep the generated metadata tags (`exercise1`, `explanation1`, etc.) in place and shape the prompts/solutions following the patterns in [docs/exercise-agents/exercise-types](exercise-agents/exercise-types/).
-   - Replace any placeholder `TODO`/`pass` code with the versions supplied by the agent (student copy in the main notebook, full answer in solutions).
+**Review the content** — Open both notebooks and check:
 
-3. **Verify (Phase 1 — notebooks only)**:
+- The difficulty progression is appropriate for your class.
+- The prompts are clear but do not give away the answer.
+- The solution notebook provides correct, step-by-step solutions (not compact one-liners).
+- The metadata tags (`exercise1`, `explanation1`, etc.) are preserved.
 
-   Run the structural and pedagogical checks:
-   ```bash
-   uv run python scripts/verify_exercise_quality.py \
-     ex050_sequence_modify_my_topic --skip-empty-checks
-   ```
+If something is not right, just tell the agent: *"Simplify the second task"*, *"Too much maths, focus on strings"*, or *"Add a worked example before exercise 3"*.
 
-4. **Verify (Phase 2 — after teacher approval and test creation)**:
+**Verify the notebook structure** — run the structural checks:
 
-   Once tests are written, run the solution variant to confirm they pass:
-   ```bash
-   uv run python scripts/run_pytest_variant.py --variant solution \
-     exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
-   ```
+```bash
+uv run python scripts/verify_exercise_quality.py \
+  ex050_sequence_modify_my_topic --skip-empty-checks
+```
 
-   Once tests are written, run the solution variant to confirm they pass:
-   ```bash
-   uv run python scripts/run_pytest_variant.py --variant solution \
-     exercises/sequence/ex050_sequence_modify_my_topic/tests/test_ex050_sequence_modify_my_topic.py -q
-   ```
+The `--skip-empty-checks` flag is safe to use during notebook authoring — it allows the check to pass before the self-check module has been filled in. If you want more precise validation, add `--construct sequence --type modify`.
+
+**What happens next (Phase 2 — tests)** — Once you are happy with the notebooks, tell the agent. The Exercise Test Creator agent will then write the pytest tests and the Exercise Test Reviewer will verify them. You do not need to write or run tests yourself.
 
 
 ## Exercise Reviewer — quick quality checks 🔍
 
-The **Exercise Reviewer** (`.github/agents/exercise_reviewer.md.agent.md`) is a review agent that examines newly-created or updated exercises for pedagogical soundness, structure, sequencing, and teacher-facing documentation. It does **not** review tests — test review is handled by the separate **Exercise Test Reviewer**.
+The **Exercise Reviewer** is a review agent that checks newly-created exercises for pedagogical soundness, structure, and correct sequencing. It does **not** review tests — that is handled separately by the **Exercise Test Reviewer**.
 
-It is typically invoked automatically as a sub-agent by the **Exercise Generation** agent, but you can also call it manually if you want an immediate review.
+The Exercise Generation agent runs the reviewer automatically as part of its workflow. You should not normally need to run it yourself, but you can if you want a quick check.
 
-How to run it manually:
+**How the review works (two passes):**
 
-- **From Copilot Chat**: Select the **Exercise Reviewer** chatmode and ask something like:
-  - "Review exercise ex050_sequence_modify_my_topic" or
-  - "Please review exercise_key ex050_sequence_modify_my_topic"
-- **Locally (command line)**:
+| Pass | When it runs | What it checks |
+|------|-------------|----------------|
+| **Pass 1** | After notebooks are written, before you review them | Exercise type is correct, concepts follow the right teaching order, tags and metadata are in place |
+| **Pass 2** | After you approve the notebooks and supporting docs are generated | Teacher guidance files (README, OVERVIEW) are complete, solution quality is good, the exercise is listed in the teaching order |
 
-  ```bash
-  uv run python scripts/verify_exercise_quality.py \
-    ex050_sequence_modify_my_topic --skip-empty-checks
-  ```
+**Output:** The reviewer returns a verdict: **PASS**, **PASS WITH NITS** (minor improvements), or **FAIL** (must fix), along with specific suggestions.
 
-What it checks (Pass 1 — before teacher handoff):
+To run it manually from Copilot Chat, select **Exercise Reviewer** in the chat mode selector and ask: *"Review exercise ex050_sequence_modify_my_topic"*
 
-- Exercise-type compliance (Gates A).
-- Construct sequencing and progression (Gate B).
-- Notebook tags, `metadata.language`, and debug explanation-cell structure (Gate C).
-
-What it checks (Pass 2 — after supporting docs generated):
-
-- Teacher guidance files exist and are accurate (README.md, OVERVIEW.md) (Gate E).
-- Solution notebook quality (stepwise examples, no compact one-liners) (Gate E).
-- Inclusion in `OrderOfTeaching.md` (Gate F).
-
-Output:
-
-- The reviewer returns a concise verdict such as **PASS**, **PASS WITH NITS**, or **FAIL**, plus specific, minimal fixes (file(s) and suggestions).
-
-**Tip:** Provide the canonical `exercise_key` (for example, `ex050_sequence_modify_my_topic`) when asking — the reviewer targets exercises by `exercise_key`, not by notebook path.
+**Tip:** Always use the exercise key (for example, `ex050_sequence_modify_my_topic`) — the reviewer finds exercises by key, not by file path.
 
 ## Best Practices
 
-### Recommended models — cost vs. quality 💡
-
-- **Raptor-mini (Preview)** — The best of the free models available in Copilot. It can produce good results but is sometimes inconsistent. The tests it generates are less good. It is available with **50 free messages/month** on the free plan and **unlimited messages** for users with GitHub Education.
-
-- **GPT 5.4** — This is the best of the current line of paid models. It's precise, follows instructions well and is particularly adept at generating tests that account for the ways in which students might bypass the required construct (e.g. using a while loop instead of a for loop) so that they are only told their solution is correct when it's correct in the intended way. It is available with the Copilot Education plan, which is free for students and teachers.
-
-- **Small Batches:** Generate one set of exercises at a time.
-- **Fresh Context**: Start a new chat for each exercise for best results.
-- **Be Specific about Type:**
+- **Be specific about exercise type** — The agent tailors the notebook format to the type you ask for:
   - **Debug**: Students fix broken code.
-  - **Modify**: Students change working code.
+  - **Modify**: Students change working code to meet new requirements.
   - **Gap-Fill**: Students write missing lines inside a partially written program.
-  - **Make**: Students write from scratch.
-  The agent knows the specific templates for these types.
+  - **Make**: Students write a solution from scratch.
+
+  See the [exercise-type guides](../exercise-agents/exercise-types/) for detailed format rules.
+
+- **Give teaching context, not just a title** — Instead of *"Write a loop exercise"*, tell the agent what students have covered recently and what they find difficult. The agent produces better content when it understands the classroom context.
+
+- **Generate one set at a time** — Work through one exercise notebook fully before starting the next. This keeps each session focused and makes it easier to spot progression issues.
+
+- **Fresh chat for each exercise** — Start a new chat for each exercise rather than continuing the same conversation. The agent works best with a clean context.
+
+- **Review the agent's output** — The agent is helpful but not perfect. Read through the notebook, check that the difficulty is right for your class, and ask for adjustments before running the verification checks.

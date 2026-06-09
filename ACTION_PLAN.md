@@ -16,6 +16,12 @@ Write the complete test suite first. All tests will fail initially (no implement
 | 1.4 | `TestGenerateDocsPage` | 7 tests | Small |
 | 1.5 | `TestMainCLI` | 5 tests | Small |
 
+**Script design notes to carry into tests:**
+- Target org is read from `TEMPLATE_REPO_ORG` env var (default: `h-arnold`), **not** a CLI flag. Tests should set this env var or mock `os.environ`.
+- `--docs-output-path` CLI flag controls where the generated docs page is written (default: `docs/teachers/construct-template-repos.md`).
+- Docs page timestamp uses `datetime.now()`.
+- Continue-on-error: the script accumulates per-construct errors but continues.
+
 **Validation:** `uv run pytest tests/test_sync_construct_template_repos.py --collect-only -q` shows all tests collected. Running them yields failures (expected — no implementation yet).
 
 **Review point:** Confirm test coverage is adequate before moving to Stage 2.
@@ -35,7 +41,12 @@ Implement `scripts/sync_construct_template_repos.py` to make Stage 1 tests pass.
 | 2.1 | `discover_constructs()` | `TestDiscoverConstructs` |
 | 2.2 | `build_construct_workspace()` | `TestBuildConstructWorkspace` |
 | 2.3 | `sync_construct()` + `main()` | `TestSyncConstruct`, `TestMainCLI` |
+
+  **Note on error handling**: `main()` accumulates errors across constructs; logs per-construct failures but continues to the next. Exits non-zero if any construct failed. `sync_construct()` returns a `SyncResult` with `success` and optional `error` — the caller inspects this rather than raising.
+
 | 2.4 | `generate_docs_page()` + `write_docs_page()` | `TestGenerateDocsPage` |
+
+  **Note on docs path**: The script accepts `--docs-output-path` (default: `docs/teachers/construct-template-repos.md`). The CI workflow controls this path. The script always writes the file; the workflow decides whether to commit it.
 
 **Validation:** `uv run pytest tests/test_sync_construct_template_repos.py -q` passes. `uv run ruff check scripts/sync_construct_template_repos.py --fix` passes.
 
@@ -50,6 +61,14 @@ Create the GitHub Actions workflow file.
 **Files:** `.github/workflows/sync-template-repos.yml`
 
 **Validation:** Workflow syntax valid. Dry-run locally using `uv run python scripts/sync_construct_template_repos.py --dry-run --verbose`.
+
+**Auth setup:** The workflow sets `GH_TOKEN: ${{ secrets.PAT_FOR_TEMPLATE_REPOS }}` in the job env. The `gh` CLI and git credential helpers both recognise `GH_TOKEN`, enabling `GitHubClient.push_to_existing_repository()` for cross-repo pushes.
+
+**Docs commit-back:** The CI workflow (not the Python script) handles git add/commit/push of the generated docs page. Steps:
+1. Script writes the file (no git operations in the script)
+2. Workflow conditionally runs `git add docs/teachers/construct-template-repos.md`
+3. `git diff --staged --quiet || (git commit -m "docs: update [skip ci]" && git push)`
+4. Only runs on `push` to `main` or `workflow_dispatch` — never on PR
 
 **Review point:** Confirm the workflow matches the trigger specification (PR → dry-run + artifact, push to main → publish + docs commit).
 

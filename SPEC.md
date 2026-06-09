@@ -37,12 +37,15 @@ The teacher docs page at `docs/teachers/construct-template-repos.md` will list e
 
 ## Constraints and Invariants
 
-- Target org: `h-arnold`. Template repo naming: `python-exercises-{construct}`.
+- Target org configured via `TEMPLATE_REPO_ORG` environment variable (default: `h-arnold`). This makes the repo forkable — anyone can fork and set their own org. Template repo naming: `python-exercises-{construct}`.
 - Must use existing `repoman` internals without modifying them.
 - Must follow repository conventions: `snake_case`, type hints, TypedDicts, docstrings, Fail Fast, Ruff-compliant.
-- Auth in CI needs a PAT with `repo` scope (`PAT_FOR_TEMPLATE_REPOS` secret) — `GITHUB_TOKEN` cannot create/push to other repos.
+- Auth in CI: `GH_TOKEN` environment variable set from `secrets.PAT_FOR_TEMPLATE_REPOS` in the workflow. The `gh` CLI and git credential helpers both recognise `GH_TOKEN`, so `GitHubClient.push_to_existing_repository()` works without extra auth steps.
+- The default `GITHUB_TOKEN` provided by GitHub Actions is scoped to the current repository only and **cannot** create or push to other repos. A PAT with `repo` scope (`PAT_FOR_TEMPLATE_REPOS` secret) is required for cross-repo operations.
 - PR trigger runs full build + docs gen but does **not** push to template repos. Uploads artifact for inspection.
-- Docs page auto-committed when publishing (push to main or workflow_dispatch), **not** on PR.
+- Docs page auto-committed when publishing (push to main or workflow_dispatch), **not** on PR. The commit-back is handled by the CI workflow (git add/commit/push steps), not by the Python script — the script only writes the file to a configurable path.
+- Continue on error: if `sync_construct()` fails for one construct, the script logs the error and continues to the next. Exits non-zero if any construct failed.
+- Docs page timestamp uses `datetime.now()` local time. The generated date reflects when the script ran, not the remote repo's last push time.
 
 ## Relevant Docs and File Evidence
 
@@ -64,4 +67,9 @@ The teacher docs page at `docs/teachers/construct-template-repos.md` will list e
 ## Open Questions and Risks
 
 - **Risk**: `PAT_FOR_TEMPLATE_REPOS` secret must be created in the repo settings before the workflow can publish. Until then, only dry-run works.
-- **Question**: Should the script fail fast on the first construct error, or continue and report all errors? Decision: continue (report all), exit non-zero at end.
+- **Risk**: The default `GITHUB_TOKEN` cannot push to external repos. If `PAT_FOR_TEMPLATE_REPOS` is not set, CI will fail with auth errors on publish.
+- **Decision**: Script continues on per-construct error, reports all, exits non-zero at end.
+- **Decision**: Docs page committed by CI workflow (not the Python script). Script writes to `--docs-output-path`; workflow conditionally commits on publish events.
+- **Decision**: CI auth via `GH_TOKEN` env var from `secrets.PAT_FOR_TEMPLATE_REPOS`.
+- **Decision**: Target org read from `TEMPLATE_REPO_ORG` environment variable (default `h-arnold`), not a CLI flag — makes repo forkable.
+- **Decision**: Docs page timestamp uses `datetime.now()` local time at script runtime.
