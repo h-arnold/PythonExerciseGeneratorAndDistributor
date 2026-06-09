@@ -334,7 +334,7 @@ scripts/template_repo_cli/
 ├── core/
 │   ├── selector.py     # Exercise selection logic
 │   ├── collector.py    # File collection
-│   ├── packager.py     # Template assembly
+│   ├── packager/       # Template assembly (package)
 │   └── github.py       # GitHub operations (gh CLI wrapper)
 └── utils/
     ├── validation.py   # Input validation
