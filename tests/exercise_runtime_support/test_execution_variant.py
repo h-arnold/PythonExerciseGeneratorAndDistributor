@@ -67,9 +67,7 @@ def test_resolve_variant_notebook_path_anchors_relative_canonical_path() -> None
     [
         (Path("notebooks") / "ex002_sequence_modify_basics.ipynb", "solution"),
         (
-            Path("notebooks")
-            / "solutions"
-            / "ex002_sequence_modify_basics.ipynb",
+            Path("notebooks") / "solutions" / "ex002_sequence_modify_basics.ipynb",
             "student",
         ),
     ],

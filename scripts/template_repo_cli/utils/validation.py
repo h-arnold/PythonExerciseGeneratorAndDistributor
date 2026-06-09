@@ -57,7 +57,7 @@ def validate_repo_name(repo_name: str, *, allow_owner_prefix: bool = False) -> b
 
     When ``allow_owner_prefix`` is True, ``owner/repo`` strings are accepted
     as long as both parts follow the same convention. This is useful for
-    commands (like update-repo) that may target repositories outside the
+    commands (like update) that may target repositories outside the
     authenticated user's account.
 
     Args:

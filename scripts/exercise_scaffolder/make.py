@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.exercise_scaffolder.base import ExerciseScaffold, _make_meta
+from scripts.exercise_scaffolder.base import ExerciseScaffold, make_meta
 
 
 class MakeScaffold(ExerciseScaffold):
@@ -34,7 +34,7 @@ class MakeScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "markdown",
-                    "metadata": _make_meta("markdown"),
+                    "metadata": make_meta("markdown"),
                     "source": [
                         f"## Exercise {i}\n",
                         "(Write the prompt here.)\n",
@@ -44,7 +44,7 @@ class MakeScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "code",
-                    "metadata": _make_meta("python", tags=[exercise_tag]),
+                    "metadata": make_meta("python", tags=[exercise_tag]),
                     "execution_count": None,
                     "outputs": [],
                     "source": [
@@ -77,9 +77,7 @@ class MakeScaffold(ExerciseScaffold):
                 "",
             ]
 
-        exercise_tags = ", ".join(
-            f"'exercise{i}'" for i in range(1, self.parts + 1)
-        )
+        exercise_tags = ", ".join(f"'exercise{i}'" for i in range(1, self.parts + 1))
         return [
             f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
             "def test_exercise_cells_execute(tag: str) -> None:",
@@ -92,5 +90,5 @@ class MakeScaffold(ExerciseScaffold):
 
     # ── README hook ──────────────────────────────────────────────────────────
 
-    def _readme_type_hook(self) -> list[str]:
+    def readme_type_hook(self) -> list[str]:
         return []

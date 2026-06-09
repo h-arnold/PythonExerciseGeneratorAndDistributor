@@ -107,6 +107,3 @@ class TestSafeCopyDirectory:
 
         assert dest.exists()
         assert dest.is_dir()
-
-
-

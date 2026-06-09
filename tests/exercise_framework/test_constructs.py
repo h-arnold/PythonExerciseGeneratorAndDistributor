@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests.exercise_framework import constructs, runtime
+from exercise_runtime_support.exercise_framework import constructs, runtime
 
 _EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 

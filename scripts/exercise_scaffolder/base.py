@@ -11,11 +11,9 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 
-def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
+def make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
     """Create cell metadata dictionary with a unique ID."""
-    meta: dict[str, object] = {
-        "id": uuid.uuid4().hex[:8], "language": language
-    }
+    meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
     if tags:
         meta["tags"] = tags
     return meta
@@ -112,7 +110,7 @@ class ExerciseScaffold(ABC):
         return [
             {
                 "cell_type": "markdown",
-                "metadata": _make_meta("markdown"),
+                "metadata": make_meta("markdown"),
                 "source": [
                     f"# {self.title}\n",
                     "\n",
@@ -136,7 +134,7 @@ class ExerciseScaffold(ABC):
         """Return the shared scratch-pad cell."""
         return {
             "cell_type": "code",
-            "metadata": _make_meta("python"),
+            "metadata": make_meta("python"),
             "execution_count": None,
             "outputs": [],
             "source": [
@@ -149,7 +147,7 @@ class ExerciseScaffold(ABC):
         """Return the self-checker cell that sets the notebook variant."""
         return {
             "cell_type": "code",
-            "metadata": _make_meta("python"),
+            "metadata": make_meta("python"),
             "execution_count": None,
             "outputs": [],
             "source": [
@@ -181,7 +179,7 @@ class ExerciseScaffold(ABC):
             f"- Created: {created_date}",
             "- Target concepts: (fill in)",
         ]
-        type_lines = self._readme_type_hook()
+        type_lines = self.readme_type_hook()
         if type_lines:
             # Insert type-specific lines after the test-target line (index 5),
             # before the blank line (index 6) — matching original order in
@@ -191,7 +189,7 @@ class ExerciseScaffold(ABC):
                 lines.insert(insert_at, line)
         return lines
 
-    def _readme_type_hook(self) -> list[str]:
+    def readme_type_hook(self) -> list[str]:
         """Override in subclasses to inject type-specific README lines."""
         return []
 
@@ -227,8 +225,7 @@ class ExerciseScaffold(ABC):
 
         type_specific_lines = self._build_type_specific_test_lines()
         # Check if debug imports are needed
-        has_debug_imports = any(
-            "get_explanation_cell" in line for line in type_specific_lines)
+        has_debug_imports = any("get_explanation_cell" in line for line in type_specific_lines)
         if has_debug_imports:
             lines.append("    get_explanation_cell,")
 
@@ -307,8 +304,7 @@ class ExerciseScaffold(ABC):
 
     def build_expectations_module(self) -> str:
         """Return the content of ``tests/expectations.py`` as a string."""
-        comma_separated_keys = ", ".join(
-            f'{i}: ""' for i in range(1, self.parts + 1))
+        comma_separated_keys = ", ".join(f'{i}: ""' for i in range(1, self.parts + 1))
         return (
             f'"""Exercise-local expectations for {self.exercise_key}."""\n'
             "from __future__ import annotations\n"
@@ -338,7 +334,7 @@ class ExerciseScaffold(ABC):
             ")\n"
             "\n"
             f"_EXERCISE_KEY = {self.exercise_key!r}\n"
-            f"expectations_mod = load_exercise_test_module(_EXERCISE_KEY, \"expectations\")\n"
+            f'expectations_mod = load_exercise_test_module(_EXERCISE_KEY, "expectations")\n'
             f"{expectations_var} = expectations_mod.{expectations_var}\n"
             "\n"
             "# TODO: Define check functions and build the CHECKS list.\n"

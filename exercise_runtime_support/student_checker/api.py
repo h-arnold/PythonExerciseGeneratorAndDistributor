@@ -40,8 +40,7 @@ def check_exercise(exercise_key: str) -> None:
     check = checks.get(exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(
-            f"Unknown exercise key '{exercise_key}'. Available: {available}")
+        raise ValueError(f"Unknown exercise key '{exercise_key}'. Available: {available}")
     run_check(check)
 
 

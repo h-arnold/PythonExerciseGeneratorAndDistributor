@@ -47,7 +47,7 @@ uv run pytest tests/exercise_framework/test_runtime.py
 # Test the exercise generator script
 uv run pytest tests/test_new_exercise.py
 
-# Test the template repo CLI
+# Test the template repo CLI (`repoman`)
 uv run pytest tests/template_repo_cli/
 ```
 
@@ -61,7 +61,7 @@ Tests for `scripts/new_exercise.py`. Checks include:
 - Creating valid JSON notebook structures.
 - Populating default content.
 
-### 2. Template CLI (`tests/template_repo_cli/`)
+### 2. Template CLI (`tests/template_repo_cli/`) — `repoman`
 
 Integration tests for the template repository CLI. These tests verify:
 

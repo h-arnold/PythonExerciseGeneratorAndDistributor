@@ -38,13 +38,11 @@ def test_run_tagged_cell_uses_static_runner_when_no_input_calls(
         assert variant == "student"
         return ""
 
-    monkeypatch.setattr(
-        notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_with_input", fake_run_with_input)
+    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
+    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
+    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
 
+    # pyright: ignore[reportPrivateUsage]
     notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
 
     assert calls == {"static": 1, "interactive": 0}
@@ -79,13 +77,11 @@ def test_run_tagged_cell_uses_mocked_inputs_for_interactive_cells(
         assert variant == "student"
         return "ok\n"
 
-    monkeypatch.setattr(
-        notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_with_input", fake_run_with_input)
+    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
+    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
+    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
 
+    # pyright: ignore[reportPrivateUsage]
     notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
 
     assert calls == {"static": 0, "interactive": 1}
@@ -99,11 +95,11 @@ def test_count_input_calls_detects_name_and_builtins_calls(monkeypatch: pytest.M
         assert kwargs["variant"] == "student"
         return source
 
-    monkeypatch.setattr(
-        notebook_runtime, "extract_tagged_code", fake_extract_tagged_code)
+    monkeypatch.setattr(notebook_runtime, "extract_tagged_code", fake_extract_tagged_code)
 
-    count = notebook_runtime._count_input_calls(
-        "dummy_exercise", tag="exercise1")
+    count = notebook_runtime._count_input_calls(  # pyright: ignore[reportPrivateUsage]
+        "dummy_exercise", tag="exercise1"
+    )
 
     assert count == expected_count
 
@@ -118,6 +114,7 @@ def test_load_notebook_json_rejects_non_mapping_json(
         NotebookGradingError,
         match="Notebook JSON must be a JSON object",
     ):
+        # pyright: ignore[reportPrivateUsage]
         notebook_runtime._load_notebook_json(path)
 
 
@@ -137,6 +134,7 @@ def test_load_notebook_json_rejects_non_string_object_keys(
         NotebookGradingError,
         match="Notebook JSON must be a JSON object",
     ):
+        # pyright: ignore[reportPrivateUsage]
         notebook_runtime._load_notebook_json(path)
 
 
@@ -168,6 +166,7 @@ def test_load_notebook_json_rejects_missing_or_invalid_cells(
     path.write_text(content, encoding="utf-8")
 
     with pytest.raises(NotebookGradingError, match=match):
+        # pyright: ignore[reportPrivateUsage]
         notebook_runtime._load_notebook_json(path)
 
 
@@ -177,11 +176,11 @@ def test_run_notebook_checks_marks_failure_when_execution_raises(
     def fake_run_tagged_cell(notebook_path: str, tag: str) -> None:
         raise NotebookGradingError("Execution failed")
 
-    monkeypatch.setattr(
-        notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
+    monkeypatch.setattr(notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
 
-    results = notebook_runtime._run_notebook_checks(
-        Path("dummy_exercise"), ["exercise1"])
+    results = notebook_runtime._run_notebook_checks(  # pyright: ignore[reportPrivateUsage]
+        Path("dummy_exercise"), ["exercise1"]
+    )
 
     assert len(results) == 1
     assert results[0].passed is False
@@ -199,11 +198,11 @@ def test_run_notebook_checks_passes_path_object_to_tagged_runner(
         received.append(notebook_path)
 
     notebook_path = Path("dummy_exercise.ipynb")
-    monkeypatch.setattr(
-        notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
+    monkeypatch.setattr(notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
 
-    results = notebook_runtime._run_notebook_checks(
-        notebook_path, ["exercise1"])
+    results = notebook_runtime._run_notebook_checks(  # pyright: ignore[reportPrivateUsage]
+        notebook_path, ["exercise1"]
+    )
 
     assert [result.passed for result in results] == [True]
     assert received == [notebook_path]
@@ -363,13 +362,11 @@ def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: pytest.MonkeyP
     def fake_run_static(*_args: object, **_kwargs: object) -> str:
         return ""
 
-    monkeypatch.setattr(
-        notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_with_input", fake_run_with_input)
+    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
+    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
+    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
 
+    # pyright: ignore[reportPrivateUsage]
     notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
 
     assert attempt_lengths == [1, 2]
@@ -392,14 +389,12 @@ def test_run_tagged_cell_propagates_real_errors(monkeypatch: pytest.MonkeyPatch)
     def fake_run_static(*_args: object, **_kwargs: object) -> str:
         return ""
 
-    monkeypatch.setattr(
-        notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_with_input", fake_run_with_input)
+    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
+    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
+    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
 
     with pytest.raises(NotebookGradingError, match="Execution failed"):
+        # pyright: ignore[reportPrivateUsage]
         notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
 
 
@@ -426,15 +421,13 @@ def test_run_tagged_cell_stops_after_max_attempts(monkeypatch: pytest.MonkeyPatc
     def fake_run_static(*_args: object, **_kwargs: object) -> str:
         return ""
 
-    monkeypatch.setattr(
-        notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(
-        notebook_runtime, "run_cell_with_input", fake_run_with_input)
+    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
+    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
+    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
     monkeypatch.setattr(notebook_runtime, "_MAX_AUTOMATED_INPUTS", limit)
 
     with pytest.raises(NotebookGradingError):
+        # pyright: ignore[reportPrivateUsage]
         notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
 
     assert attempts == limit
@@ -444,5 +437,4 @@ def _raise_missing_input_error() -> None:
     try:
         raise RuntimeError("Test expected more input values")
     except RuntimeError as exc:
-        raise NotebookGradingError(
-            "Execution failed for missing input") from exc
+        raise NotebookGradingError("Execution failed for missing input") from exc

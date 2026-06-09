@@ -32,7 +32,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
    - Canonical exercise-local tests in `exercises/<construct>/<exercise_key>/tests/`
    - Notebook grading helpers in `exercise_runtime_support/`
    - Autograding tooling in `scripts/`
-   - Scaffolding and template repository tooling in `scripts/template_repo_cli/` and `template_repo_files/`
+   - Scaffolding and template repository tooling in `scripts/template_repo_cli/` and `template_repo_files/` (invoked via `repoman`)
 
 4. Confirm whether a failing student variant is expected classroom behaviour or a real defect
 5. Start with the smallest credible check that can falsify the current hypothesis
@@ -49,7 +49,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
   - When issue is about encoded results, task grouping, or payload size
 - **Exercise scaffolding and validation:** `scripts/new_exercise.py`, `scripts/verify_exercise_quality.py`
   - When issue is about generated exercises, canonical layout, or notebook metadata
-- **Template repository tooling:** `scripts/template_repo_cli/`, `template_repo_files/`
+- **Template repository tooling:** `scripts/template_repo_cli/`, `template_repo_files/` (invoked via `repoman`)
   - When issue concerns template packaging or exported Classroom assets
 
 ## 2. Command Selection

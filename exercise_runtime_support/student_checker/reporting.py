@@ -79,8 +79,7 @@ def print_results(results: list[CheckResult]) -> None:
     table = render_table([(label, passed) for label, passed, _ in results])
     print(table)
 
-    failures = [(label, issues)
-                for label, passed, issues in results if not passed]
+    failures = [(label, issues) for label, passed, issues in results if not passed]
     if not failures:
         print("\nGreat work! Everything that can be checked here looks good.")
 

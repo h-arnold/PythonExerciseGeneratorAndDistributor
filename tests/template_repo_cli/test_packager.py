@@ -101,8 +101,7 @@ def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
 def _assert_no_snapshot_artifacts(root: Path, *, label: str) -> None:
     """Assert that a workspace subtree does not contain snapshot artifacts."""
 
-    snapshot_paths = sorted(str(path.relative_to(root))
-                            for path in root.rglob("*snapshot*"))
+    snapshot_paths = sorted(str(path.relative_to(root)) for path in root.rglob("*snapshot*"))
     assert not snapshot_paths, f"{label} must not contain snapshot artifacts: {snapshot_paths}"
 
 
@@ -113,7 +112,6 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         "__init__.py",
         "autograde_plugin.py",
         "helpers.py",
-        "notebook_grader.py",
         "test_autograde_plugin.py",
         "test_build_autograde_payload.py",
     )
@@ -280,10 +278,8 @@ class TestCopyFiles:
         template_packager.copy_exercise_files(temp_dir, files)
 
         # Structure should be preserved
-        assert (
-            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks").exists()
-        assert (
-            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").exists()
+        assert (temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks").exists()
+        assert (temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").exists()
 
 
 class TestGenerateFiles:
@@ -365,8 +361,7 @@ class TestGenerateFiles:
             ],
         )
 
-        content_lines = [line.strip() for line in (
-            temp_dir / "README.md").read_text().splitlines()]
+        content_lines = [line.strip() for line in (temp_dir / "README.md").read_text().splitlines()]
 
         assert any(line == "## Control Flow" for line in content_lines)
         assert any(line == "## Sequence" for line in content_lines)
@@ -427,10 +422,8 @@ class TestGenerateFiles:
             ],
         )
 
-        content_lines = [line.strip() for line in (
-            temp_dir / "README.md").read_text().splitlines()]
-        list_lines = [line for line in content_lines if line.startswith(
-            ("1. [", "2. [", "3. ["))]
+        content_lines = [line.strip() for line in (temp_dir / "README.md").read_text().splitlines()]
+        list_lines = [line for line in content_lines if line.startswith(("1. [", "2. [", "3. ["))]
 
         assert list_lines == [
             "1. [Control Flow Intro](exercises/control_flow/ex010_control_flow_intro/notebooks/student.ipynb)",
@@ -462,8 +455,9 @@ class TestGenerateFiles:
         fixture_root = temp_dir / "fixture_repo"
         self._create_readme_contract_repo_fixture(fixture_root)
         broken_key = "ex040_sequence_broken"
-        broken_metadata_path = fixture_root / "exercises" / \
-            "sequence" / broken_key / "exercise.json"
+        broken_metadata_path = (
+            fixture_root / "exercises" / "sequence" / broken_key / "exercise.json"
+        )
         broken_metadata_path.parent.mkdir(parents=True, exist_ok=True)
         broken_metadata_writer(broken_metadata_path)
 
@@ -471,16 +465,14 @@ class TestGenerateFiles:
         template_packager.template_files_dir = fixture_root / "template_repo_files"
 
         with pytest.raises(ValueError) as exc_info:
-            template_packager.generate_readme(
-                temp_dir, "README Contract", [broken_key])
+            template_packager.generate_readme(temp_dir, "README Contract", [broken_key])
 
         assert broken_key in str(exc_info.value)
         assert exc_info.value.__cause__ is not None
 
     def test_generate_readme(self, template_packager: TemplatePackager, temp_dir: Path) -> None:
         """Test creating custom README with exercise list."""
-        exercises = ["ex002_sequence_modify_basics",
-                     "ex004_sequence_debug_syntax"]
+        exercises = ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
 
         template_packager.generate_readme(temp_dir, "Test Template", exercises)
 
@@ -524,8 +516,7 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(
-            temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
         if not autograde_path.exists():
@@ -546,8 +537,7 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(
-            temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         plugin_path = temp_dir / "tests" / "autograde_plugin.py"
         if not plugin_path.exists():
@@ -626,8 +616,7 @@ class TestPackageIntegrity:
             build_exercise_file_map,
         )
 
-        assert (
-            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").is_dir()
+        assert (temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").is_dir()
         assert (
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/exercise.json"
         ).is_file()
@@ -653,8 +642,7 @@ class TestPackageIntegrity:
             temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics"
         )
         (exported_exercises_dir / "notebooks").mkdir(parents=True, exist_ok=True)
-        (exported_exercises_dir / "notebooks" /
-         "extra.ipynb").write_text("{}\n", encoding="utf-8")
+        (exported_exercises_dir / "notebooks" / "extra.ipynb").write_text("{}\n", encoding="utf-8")
 
         assert not template_packager.validate_package(temp_dir)
 
@@ -696,8 +684,7 @@ class TestPackageIntegrity:
             temp_dir,
             build_exercise_file_map,
         )
-        tests_dir = temp_dir / "exercises" / "sequence" / \
-            "ex002_sequence_modify_basics" / "tests"
+        tests_dir = temp_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics" / "tests"
         shutil.rmtree(tests_dir)
         tests_dir.write_text("not a directory\n", encoding="utf-8")
 
@@ -708,8 +695,7 @@ class TestPackageIntegrity:
         [
             pytest.param("tests/exercise_framework", id="exercise-framework"),
             pytest.param("tests/helpers.py", id="helpers"),
-            pytest.param("tests/test_autograde_plugin.py",
-                         id="autograde-test"),
+            pytest.param("tests/test_autograde_plugin.py", id="autograde-test"),
             pytest.param(
                 "tests/test_build_autograde_payload.py",
                 id="payload-test",
@@ -729,13 +715,11 @@ class TestPackageIntegrity:
 
         template_packager.copy_exercise_files(temp_dir, files)
         template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(
-            temp_dir, "Test", ["ex002_sequence_modify_basics"])
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         path_to_remove = temp_dir / missing_path
         if not path_to_remove.exists():
-            pytest.skip(
-                f"Required path not available in template copy: {missing_path}")
+            pytest.skip(f"Required path not available in template copy: {missing_path}")
 
         if path_to_remove.is_dir():
             shutil.rmtree(path_to_remove)
@@ -747,16 +731,17 @@ class TestPackageIntegrity:
     def test_package_has_notebook_grader(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
-        """Test that notebook_grader.py is copied from project tests when present."""
+        """Test that notebook_grader.py is NOT in tests/ (canonical module is in exercise_runtime_support)."""
         template_packager.copy_template_base_files(temp_dir)
 
         grader = temp_dir / "tests/notebook_grader.py"
-        repo_grader = repo_root / "tests/notebook_grader.py"
-        if repo_grader.exists():
-            assert grader.exists()
-            assert grader.read_text() == repo_grader.read_text()
-        else:
-            assert not grader.exists()
+        assert not grader.exists(), (
+            "notebook_grader.py should not be in tests/ — "
+            "canonical module is exercise_runtime_support/notebook_grader.py"
+        )
+        # Verify canonical module is present
+        canonical_grader = temp_dir / "exercise_runtime_support" / "notebook_grader.py"
+        assert canonical_grader.exists()
 
     def test_copy_template_base_files_fails_fast_for_missing_required_sources(
         self,
@@ -834,16 +819,14 @@ class TestPackageIntegrity:
             env=env,
         )
 
-        assert not (temp_dir / "exercise_runtime_support" /
-                    "exercise.json").exists()
+        assert not (temp_dir / "exercise_runtime_support" / "exercise.json").exists()
         assert (temp_dir / "exercise_metadata").is_dir()
         assert (temp_dir / "exercise_metadata" / "__init__.py").is_file()
         _assert_no_snapshot_artifacts(
             temp_dir / "exercise_runtime_support",
             label="packaged workspace runtime support",
         )
-        assert (
-            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").is_dir()
+        assert (temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").is_dir()
         assert (
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
         ).is_file()
@@ -867,34 +850,17 @@ class TestPackageIntegrity:
     def test_copies_notebook_grader_when_present(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
-        """Test that notebook_grader.py is present; project grader takes precedence over template grader."""
-        template_tests_dir = repo_root / "template_repo_files" / "tests"
-        template_tests_dir.mkdir(parents=True, exist_ok=True)
-        grader_src = template_tests_dir / "notebook_grader.py"
-        try:
-            # Create a dummy grader in the template files directory
-            grader_src.write_text("# grader helper")
+        """Test that notebook_grader.py is NOT in tests/ (canonical module in exercise_runtime_support)."""
+        template_packager.copy_template_base_files(temp_dir)
 
-            template_packager.copy_template_base_files(temp_dir)
-
-            grader = temp_dir / "tests/notebook_grader.py"
-            assert grader.exists()
-            repo_grader = repo_root / "tests/notebook_grader.py"
-            if repo_grader.exists():
-                # The packager copies the project's grader, not the template one
-                assert grader.read_text() == repo_grader.read_text()
-            else:
-                # When no project grader exists, the template grader should be used
-                assert grader.read_text().startswith("# grader helper")
-        finally:
-            # Cleanup created files
-            if grader_src.exists():
-                grader_src.unlink()
-            # Remove the temporary template tests directory if empty
-            from contextlib import suppress
-
-            with suppress(OSError):
-                template_tests_dir.rmdir()
+        grader = temp_dir / "tests/notebook_grader.py"
+        assert not grader.exists(), (
+            "notebook_grader.py should not be in tests/ — "
+            "canonical module is exercise_runtime_support/notebook_grader.py"
+        )
+        # Verify canonical module is present
+        canonical_grader = temp_dir / "exercise_runtime_support" / "notebook_grader.py"
+        assert canonical_grader.exists()
 
 
 class TestPackageCleanup:

@@ -43,10 +43,7 @@ def _to_runtime_entry(entry: Any) -> ExerciseCatalogueEntry:
 
 def _build_metadata_catalogue() -> tuple[ExerciseCatalogueEntry, ...]:
     """Load the runtime catalogue from the metadata registry."""
-    return tuple(
-        _to_runtime_entry(entry)
-        for entry in metadata_registry.build_exercise_catalogue()
-    )
+    return tuple(_to_runtime_entry(entry) for entry in metadata_registry.build_exercise_catalogue())
 
 
 @lru_cache(maxsize=1)
@@ -60,10 +57,8 @@ def get_catalogue_entry(exercise_key: str) -> ExerciseCatalogueEntry:
     for entry in get_exercise_catalogue():
         if entry.exercise_key == exercise_key:
             return entry
-    available = ", ".join(
-        item.exercise_key for item in get_exercise_catalogue())
-    raise ValueError(
-        f"Unknown exercise key '{exercise_key}'. Available: {available}")
+    available = ", ".join(item.exercise_key for item in get_exercise_catalogue())
+    raise ValueError(f"Unknown exercise key '{exercise_key}'. Available: {available}")
 
 
 def get_catalogue_key_for_exercise_id(exercise_id: int) -> str:

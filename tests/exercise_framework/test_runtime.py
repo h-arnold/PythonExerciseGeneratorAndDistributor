@@ -9,8 +9,7 @@ import pytest
 
 from exercise_runtime_support import notebook_grader
 from exercise_runtime_support.execution_variant import Variant
-from exercise_runtime_support.exercise_framework import runtime
-from tests.exercise_framework import paths
+from exercise_runtime_support.exercise_framework import paths, runtime
 
 EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
@@ -229,16 +228,10 @@ def test_runtime_input_cache_uses_separate_entry_for_different_inputs(
 def test_paths_solution_variant_resolves_migrated_exercise_key() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     expected = (
-        repo_root
-        / "exercises"
-        / "sequence"
-        / EX007_EXERCISE_KEY
-        / "notebooks"
-        / "solution.ipynb"
+        repo_root / "exercises" / "sequence" / EX007_EXERCISE_KEY / "notebooks" / "solution.ipynb"
     )
 
-    resolved = paths.resolve_notebook_path(
-        EX007_EXERCISE_KEY, variant="solution")
+    resolved = paths.resolve_notebook_path(EX007_EXERCISE_KEY, variant="solution")
 
     assert resolved == expected
     assert resolved.exists()

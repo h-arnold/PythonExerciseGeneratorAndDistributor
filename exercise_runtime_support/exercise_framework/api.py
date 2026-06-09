@@ -109,8 +109,7 @@ def run_notebook_check(exercise_key: str) -> list[NotebookCheckResult]:
     check = checks.get(catalogue_entry.exercise_key)
     if check is None:
         available = ", ".join(sorted(checks))
-        raise ValueError(
-            f"Unknown exercise key '{exercise_key}'. Available: {available}")
+        raise ValueError(f"Unknown exercise key '{exercise_key}'. Available: {available}")
 
     return _run_definitions([check])
 

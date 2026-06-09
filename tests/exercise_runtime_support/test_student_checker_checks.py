@@ -41,8 +41,7 @@ def _make_check(
         ("ex005_sequence_debug_logic", student_checks.ExerciseCheckDefinition),
         ("ex006_sequence_modify_casting", student_checks.ExerciseCheckDefinition),
         ("ex007_sequence_debug_casting", student_checks.ExerciseCheckDefinition),
-        ("ex008_sequence_make_consolidation",
-         student_checks.ExerciseCheckDefinition),
+        ("ex008_sequence_make_consolidation", student_checks.ExerciseCheckDefinition),
     ],
 )
 def test_cached_checks_override_loader(
@@ -71,8 +70,7 @@ def test_run_exercise_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> No
     sentinel_title = "Sentinel ex003"
     sentinel_no = 303
     sentinel_checks = [
-        _make_check(student_checks.ExerciseCheckDefinition,
-                    sentinel_no, sentinel_title)
+        _make_check(student_checks.ExerciseCheckDefinition, sentinel_no, sentinel_title)
     ]
     cache: dict[str, list[Any]] = {}
     load_calls: list[str] = []
@@ -82,8 +80,7 @@ def test_run_exercise_checks_loads_lazily(monkeypatch: pytest.MonkeyPatch) -> No
         return sentinel_checks
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
-    monkeypatch.setattr(student_checks, "_load_check_list",
-                        fake_load_check_list)
+    monkeypatch.setattr(student_checks, "_load_check_list", fake_load_check_list)
 
     first_results = student_checks.run_exercise_checks(exercise_key)
     second_results = student_checks.run_exercise_checks(exercise_key)
@@ -106,12 +103,10 @@ def test_run_exercise_checks_supports_generic_ex002_path(
 
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
 
-    results = student_checks.run_exercise_checks(
-        "ex002_sequence_modify_basics")
+    results = student_checks.run_exercise_checks("ex002_sequence_modify_basics")
 
     assert len(results) == _EX002_CHECK_RESULT_COUNT
-    assert {result.title for result in results} == {
-        "Construct", "Formatting", "Logic"}
+    assert {result.title for result in results} == {"Construct", "Formatting", "Logic"}
     assert {result.exercise_no for result in results} == set(range(1, 11))
 
 
@@ -177,15 +172,10 @@ def test_run_exercise_checks_reports_failures_for_unsolved_ex002_without_variant
     monkeypatch.setattr(student_checks, "_CHECK_CACHE", cache)
     monkeypatch.delenv(ACTIVE_VARIANT_ENV_VAR, raising=False)
 
-    results = student_checks.run_exercise_checks(
-        "ex002_sequence_modify_basics")
+    results = student_checks.run_exercise_checks("ex002_sequence_modify_basics")
 
     assert any(not result.passed for result in results)
-    assert any(
-        "Hello Python!" in issue
-        for result in results
-        for issue in result.issues
-    )
+    assert any("Hello Python!" in issue for result in results for issue in result.issues)
 
 
 def test_check_explanation_cell_forwards_variant(

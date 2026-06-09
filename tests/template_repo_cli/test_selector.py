@@ -91,8 +91,7 @@ class TestSelectByConstructAndType:
     def test_select_by_construct_and_type(self, repo_root: Path) -> None:
         """Construct/type selection intersects canonical metadata correctly."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_construct_and_type(
-            constructs=["sequence"], types=["modify"])
+        exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["modify"])
 
         assert "ex002_sequence_modify_basics" in exercises
         assert "ex004_sequence_debug_syntax" not in exercises
@@ -103,8 +102,7 @@ class TestSelectByConstructAndType:
     ) -> None:
         """Construct/type selection finds canonical exercises without scanning type folders."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_construct_and_type(
-            constructs=["sequence"], types=["debug"])
+        exercises = selector.select_by_construct_and_type(constructs=["sequence"], types=["debug"])
 
         assert "ex004_sequence_debug_syntax" in exercises
 
@@ -124,8 +122,7 @@ class TestSelectBySpecificExerciseKeys:
     def test_select_specific_exercise_keys(self, repo_root: Path) -> None:
         """Test selecting an explicit exercise-key list."""
         selector = ExerciseSelector(repo_root)
-        exercises = selector.select_by_exercise_keys(
-            ["ex002_sequence_modify_basics"])
+        exercises = selector.select_by_exercise_keys(["ex002_sequence_modify_basics"])
 
         assert len(exercises) == 1
         assert "ex002_sequence_modify_basics" in exercises[0]

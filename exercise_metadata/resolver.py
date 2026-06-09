@@ -138,8 +138,7 @@ def resolve_notebook_path(
             "Path-based resolution is not supported."
         )
     if variant not in ("student", "solution"):
-        raise ValueError(
-            f"variant must be 'student' or 'solution', not {variant!r}")
+        raise ValueError(f"variant must be 'student' or 'solution', not {variant!r}")
 
     exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
     try:

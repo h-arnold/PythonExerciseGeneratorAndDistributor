@@ -52,6 +52,3 @@ def safe_copy_directory(
     if ignore_patterns:
         ignore = shutil.ignore_patterns(*ignore_patterns)
     shutil.copytree(source, dest, dirs_exist_ok=True, ignore=ignore)
-
-
-

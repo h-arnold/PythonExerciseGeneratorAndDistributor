@@ -1638,8 +1638,8 @@ class TestCliOutputDir:
         assert temp_dir.exists()
 
 
-class TestCliUpdateRepo:
-    """Tests for update-repo command."""
+class TestCliUpdateCommand:
+    """Tests for update command."""
 
     @patch("subprocess.run")
     def test_cli_update_dry_run(
@@ -1652,7 +1652,7 @@ class TestCliUpdateRepo:
         result = main(
             [
                 "--dry-run",
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1690,7 +1690,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1730,7 +1730,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1771,7 +1771,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",
@@ -1815,7 +1815,7 @@ class TestCliUpdateRepo:
 
         result = main(
             [
-                "update-repo",
+                "update",
                 "--construct",
                 "sequence",
                 "--repo-name",

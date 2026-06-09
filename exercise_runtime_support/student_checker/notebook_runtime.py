@@ -127,16 +127,14 @@ def _load_notebook_json(path: Path) -> NotebookJson:
     except FileNotFoundError as exc:
         raise NotebookGradingError(f"Notebook not found: {path}") from exc
     except json.JSONDecodeError as exc:
-        raise NotebookGradingError(
-            f"Unable to parse notebook JSON: {path}") from exc
+        raise NotebookGradingError(f"Unable to parse notebook JSON: {path}") from exc
     if not _is_json_object(data):
-        raise NotebookGradingError(
-            f"Notebook JSON must be a JSON object: {path}")
+        raise NotebookGradingError(f"Notebook JSON must be a JSON object: {path}")
     cells = data.get("cells")
     if not _is_notebook_cell_list(cells):
         raise NotebookGradingError(
-            f"Notebook JSON must contain a 'cells' list of notebook cell "
-            f"objects: {path}")
+            f"Notebook JSON must contain a 'cells' list of notebook cell objects: {path}"
+        )
     notebook_json: NotebookJson = {"cells": cells}
     return notebook_json
 
@@ -172,11 +170,9 @@ def _run_notebook_checks(path: Path, tags: list[str]) -> list[NotebookTagCheckRe
     for tag in tags:
         try:
             _run_tagged_cell(path, tag)
-            results.append(NotebookTagCheckResult(
-                tag=tag, passed=True, message=""))
+            results.append(NotebookTagCheckResult(tag=tag, passed=True, message=""))
         except NotebookGradingError as exc:
-            results.append(NotebookTagCheckResult(
-                tag=tag, passed=False, message=str(exc)))
+            results.append(NotebookTagCheckResult(tag=tag, passed=False, message=str(exc)))
     return results
 
 
@@ -185,8 +181,7 @@ def _run_tagged_cell(notebook_path: str | Path, tag: str) -> None:
     if input_calls == 0:
         run_cell_and_capture_output(notebook_path, tag=tag, variant="student")
         return
-    _run_interactive_cell_with_backfill(
-        notebook_path, tag=tag, input_calls=input_calls)
+    _run_interactive_cell_with_backfill(notebook_path, tag=tag, input_calls=input_calls)
 
 
 def _run_interactive_cell_with_backfill(

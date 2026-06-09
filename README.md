@@ -90,7 +90,7 @@ The template‑repo CLI packages selected exercises into a ready‑to‑use GitH
 2. Authenticate GitHub CLI:
    - `gh auth login`
 3. Create a template repo (example: all sequence exercises):
-   - `template_repo_cli create --construct sequence --repo-name sequence-exercises`
+   - `repoman create --construct sequence --repo-name sequence-exercises`
 4. In GitHub Classroom, create a new assignment and select the template repo.
 
 Full CLI reference: [docs/developers/template_repo_cli.md](docs/developers/template_repo_cli.md)

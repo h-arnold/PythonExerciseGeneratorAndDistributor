@@ -101,18 +101,14 @@ def _load_registry_metadata(
     try:
         exercise_dir = resolve_exercise_dir(exercise_key, exercises_root)
     except LookupError as exc:
-        raise RuntimeError(
-            f"Failed to load metadata for exercise {exercise_key!r}: {exc}"
-        ) from exc
+        raise RuntimeError(f"Failed to load metadata for exercise {exercise_key!r}: {exc}") from exc
 
     try:
         metadata = load_exercise_metadata(exercise_dir)
         _validate_metadata_identity(exercise_key, exercise_dir, metadata)
         return metadata
     except (FileNotFoundError, ValueError) as exc:
-        raise RuntimeError(
-            f"Failed to load metadata for exercise {exercise_key!r}: {exc}"
-        ) from exc
+        raise RuntimeError(f"Failed to load metadata for exercise {exercise_key!r}: {exc}") from exc
 
 
 def build_exercise_registry(
@@ -136,8 +132,7 @@ def build_exercise_registry(
     for exercise_json_path in sorted(root.rglob("exercise.json")):
         exercise_key = exercise_json_path.parent.name
         metadata = _load_registry_metadata(exercise_key, exercises_root)
-        registry.append(RegistryEntry(
-            exercise_key=exercise_key, metadata=metadata))
+        registry.append(RegistryEntry(exercise_key=exercise_key, metadata=metadata))
 
     registry.sort(key=lambda entry: entry["metadata"]["exercise_id"])
     return registry
@@ -157,8 +152,7 @@ def build_exercise_catalogue(
                 exercise_id=metadata["exercise_id"],
                 slug=metadata["slug"],
                 title=metadata["title"],
-                display_label=build_display_label(
-                    metadata["exercise_id"], metadata["title"]),
+                display_label=build_display_label(metadata["exercise_id"], metadata["title"]),
                 construct=metadata["construct"],
                 exercise_type=metadata["exercise_type"],
                 parts=metadata["parts"],
@@ -173,8 +167,7 @@ def get_catalogue_exercise_keys(
 ) -> list[str]:
     """Return all exercise keys from the metadata-backed catalogue."""
     return [
-        entry["exercise_key"]
-        for entry in build_exercise_catalogue(exercises_root=exercises_root)
+        entry["exercise_key"] for entry in build_exercise_catalogue(exercises_root=exercises_root)
     ]
 
 

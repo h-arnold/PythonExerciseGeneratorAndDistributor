@@ -51,8 +51,7 @@ def test_dry_run_includes_required_metadata_surfaces(
         f"stderr:\n{result.stderr}"
     )
 
-    exercise_root = output_dir / "exercises" / \
-        "sequence" / "ex002_sequence_modify_basics"
+    exercise_root = output_dir / "exercises" / "sequence" / "ex002_sequence_modify_basics"
     required_paths = {
         "metadata package": output_dir / "exercise_metadata",
         "metadata package __init__": output_dir / "exercise_metadata" / "__init__.py",
@@ -121,8 +120,7 @@ def test_devcontainer_files_exclude_hides_metadata_clutter(
 ) -> None:
     """The packaged devcontainer should hide metadata surfaces from Explorer."""
 
-    devcontainer_path = repo_root / "template_repo_files" / \
-        ".devcontainer" / "devcontainer.json"
+    devcontainer_path = repo_root / "template_repo_files" / ".devcontainer" / "devcontainer.json"
     content = devcontainer_path.read_text(encoding="utf-8").replace(" ", "")
 
     expected_exclusions = [
