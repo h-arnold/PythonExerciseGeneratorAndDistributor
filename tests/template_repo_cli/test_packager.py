@@ -389,6 +389,10 @@ class TestPackageIntegrity:
         resource_dir = temp_dir / "exercises" / "sequence" / "additional-resources"
         resource_dir.mkdir(parents=True)
         (resource_dir / "cheat-sheet.md").write_text("# Cheat Sheet\n", encoding="utf-8")
+        (resource_dir / "reference.ipynb").write_text(
+            '{"cells":[],"metadata":{},"nbformat":4,"nbformat_minor":5}',
+            encoding="utf-8",
+        )
         (resource_dir / "images").mkdir()
         (resource_dir / "images" / "diagram.png").write_text("fake-png", encoding="utf-8")
 

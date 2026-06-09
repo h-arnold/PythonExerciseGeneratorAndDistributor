@@ -294,10 +294,12 @@ class TemplatePackager:
         # Construct-level additional-resources directories and their contents.
         # These live at depth 2 (same as exercise dirs) but with a well-known name,
         # so files/folders within them bypass the exercise-subdirectory index check.
+        # We accept any file type here because _contains_authoring_only_assets already
+        # globally bans solution.ipynb across the whole workspace.
         if part_count >= self._EXERCISE_DIR_DEPTH and (
             relative_parts[self._EXERCISE_DIR_DEPTH - 1] == self._CONSTRUCT_RESOURCE_DIRNAME
         ):
-            return self._is_valid_packaged_tests_path(path)
+            return True
 
         # For paths deeper than the subdirectory level, validate inside known subdirectories
         if part_count > self._SUBDIR_INDEX:
