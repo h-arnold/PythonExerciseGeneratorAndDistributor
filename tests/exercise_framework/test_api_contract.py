@@ -14,14 +14,14 @@ from exercise_runtime_support.exercise_catalogue import (
     get_catalogue_key_for_exercise_id,
     get_exercise_catalogue,
 )
-from exercise_runtime_support.support_matrix import SupportRole, has_support_role
-from tests.exercise_framework.api import (
+from exercise_runtime_support.exercise_framework.api import (
     ExerciseCheckResult,
     NotebookCheckResult,
     run_all_checks,
     run_detailed_ex002_check,
     run_notebook_check,
 )
+from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 
 EXPECTED_EX002_DETAILED_CHECK_COUNT = 30
 EXPECTED_EX002_CHECK_TITLES = {"Logic", "Formatting", "Construct"}

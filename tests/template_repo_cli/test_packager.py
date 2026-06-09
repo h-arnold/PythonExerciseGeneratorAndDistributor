@@ -112,7 +112,6 @@ def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -
         "__init__.py",
         "autograde_plugin.py",
         "helpers.py",
-        "notebook_grader.py",
         "test_autograde_plugin.py",
         "test_build_autograde_payload.py",
     )
@@ -732,16 +731,17 @@ class TestPackageIntegrity:
     def test_package_has_notebook_grader(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
-        """Test that notebook_grader.py is copied from project tests when present."""
+        """Test that notebook_grader.py is NOT in tests/ (canonical module is in exercise_runtime_support)."""
         template_packager.copy_template_base_files(temp_dir)
 
         grader = temp_dir / "tests/notebook_grader.py"
-        repo_grader = repo_root / "tests/notebook_grader.py"
-        if repo_grader.exists():
-            assert grader.exists()
-            assert grader.read_text() == repo_grader.read_text()
-        else:
-            assert not grader.exists()
+        assert not grader.exists(), (
+            "notebook_grader.py should not be in tests/ — "
+            "canonical module is exercise_runtime_support/notebook_grader.py"
+        )
+        # Verify canonical module is present
+        canonical_grader = temp_dir / "exercise_runtime_support" / "notebook_grader.py"
+        assert canonical_grader.exists()
 
     def test_copy_template_base_files_fails_fast_for_missing_required_sources(
         self,
@@ -850,34 +850,17 @@ class TestPackageIntegrity:
     def test_copies_notebook_grader_when_present(
         self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
     ) -> None:
-        """Test that notebook_grader.py is present; project grader takes precedence over template grader."""
-        template_tests_dir = repo_root / "template_repo_files" / "tests"
-        template_tests_dir.mkdir(parents=True, exist_ok=True)
-        grader_src = template_tests_dir / "notebook_grader.py"
-        try:
-            # Create a dummy grader in the template files directory
-            grader_src.write_text("# grader helper")
+        """Test that notebook_grader.py is NOT in tests/ (canonical module in exercise_runtime_support)."""
+        template_packager.copy_template_base_files(temp_dir)
 
-            template_packager.copy_template_base_files(temp_dir)
-
-            grader = temp_dir / "tests/notebook_grader.py"
-            assert grader.exists()
-            repo_grader = repo_root / "tests/notebook_grader.py"
-            if repo_grader.exists():
-                # The packager copies the project's grader, not the template one
-                assert grader.read_text() == repo_grader.read_text()
-            else:
-                # When no project grader exists, the template grader should be used
-                assert grader.read_text().startswith("# grader helper")
-        finally:
-            # Cleanup created files
-            if grader_src.exists():
-                grader_src.unlink()
-            # Remove the temporary template tests directory if empty
-            from contextlib import suppress
-
-            with suppress(OSError):
-                template_tests_dir.rmdir()
+        grader = temp_dir / "tests/notebook_grader.py"
+        assert not grader.exists(), (
+            "notebook_grader.py should not be in tests/ — "
+            "canonical module is exercise_runtime_support/notebook_grader.py"
+        )
+        # Verify canonical module is present
+        canonical_grader = temp_dir / "exercise_runtime_support" / "notebook_grader.py"
+        assert canonical_grader.exists()
 
 
 class TestPackageCleanup:

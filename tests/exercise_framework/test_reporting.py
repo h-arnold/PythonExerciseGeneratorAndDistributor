@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import textwrap
 
-from tests.exercise_framework.reporting import (
+from exercise_runtime_support.exercise_framework.reporting import (
     ERROR_COLUMN_WIDTH,
     format_status,
     normalise_issue_lines,

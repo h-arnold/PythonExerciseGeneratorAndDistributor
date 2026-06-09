@@ -30,17 +30,6 @@ def test_scaffolder_runtime_import_contract() -> None:
     assert "from tests.notebook_grader import get_explanation_cell" not in new_exe_source
 
 
-def test_notebook_grader_wrapper_links_to_canonical_module() -> None:
-    """The compatibility wrapper must point at the canonical notebook grader module."""
-    source = Path("tests/notebook_grader.py").read_text(encoding="utf-8")
-
-    assert (
-        '"""Compatibility wrapper for :mod:`exercise_runtime_support.notebook_grader`."""' in source
-    )
-    assert "exercise_runtime_support.notebook_grader" in source
-    assert "from exercise_runtime_support.notebook_grader import *" in source
-
-
 def test_workflow_variant_script_contract() -> None:
     """Workflow files must invoke the explicit variant-aware scripts."""
     tests_workflow = Path(".github/workflows/tests.yml").read_text(encoding="utf-8")
@@ -70,34 +59,3 @@ def test_template_cli_consumers_link_to_shared_runtime_support() -> None:
     assert '"exercise_runtime_support",' in packager_source
     assert "REQUIRED_PACKAGE_DIRECTORIES" in packager_source
 
-
-def test_framework_wrapper_surfaces_link_to_canonical_modules() -> None:
-    """The framework wrapper surface files must point at the canonical modules."""
-    expected_targets = {
-        Path("tests/exercise_framework/runtime.py"): (
-            "exercise_runtime_support.exercise_framework.runtime"
-        ),
-        Path("tests/exercise_framework/api.py"): "exercise_runtime_support.exercise_framework.api",
-        Path("tests/exercise_framework/reporting.py"): (
-            "exercise_runtime_support.exercise_framework.reporting"
-        ),
-        Path("tests/exercise_framework/assertions.py"): (
-            "exercise_runtime_support.exercise_framework.assertions"
-        ),
-        Path("tests/exercise_framework/constructs.py"): (
-            "exercise_runtime_support.exercise_framework.constructs"
-        ),
-        Path("tests/exercise_framework/expectations_helpers.py"): (
-            "exercise_runtime_support.exercise_framework.expectations_helpers"
-        ),
-        Path("tests/exercise_framework/fixtures.py"): (
-            "exercise_runtime_support.exercise_framework.fixtures"
-        ),
-        Path("tests/exercise_framework/paths.py"): (
-            "from exercise_runtime_support.exercise_framework.paths import ("
-        ),
-    }
-
-    for path, target in expected_targets.items():
-        source = path.read_text(encoding="utf-8")
-        assert target in source

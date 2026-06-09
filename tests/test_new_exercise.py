@@ -218,7 +218,7 @@ def _run_main(
     title: str,
     construct: str,
     exercise_type: str,
-    *,  # noqa: PLR0913
+    *,
     slug: str,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

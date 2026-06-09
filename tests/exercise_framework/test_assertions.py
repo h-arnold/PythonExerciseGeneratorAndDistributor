@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from tests.exercise_framework import assertions
+from exercise_runtime_support.exercise_framework import assertions
 
 
 def test_assert_has_print_statement_failure_message() -> None:

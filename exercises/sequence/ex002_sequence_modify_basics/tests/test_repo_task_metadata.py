@@ -11,7 +11,7 @@ from types import ModuleType
 from exercise_runtime_support.exercise_framework import EX002_CHECKS
 from exercise_runtime_support.exercise_framework.fixtures import TaskMark
 
-pytest_plugins = ("tests.exercise_framework.fixtures",)
+pytest_plugins = ("exercise_runtime_support.exercise_framework.fixtures",)
 
 _CANONICAL_TEST_PATH = Path(__file__).with_name("test_ex002_sequence_modify_basics.py")
 

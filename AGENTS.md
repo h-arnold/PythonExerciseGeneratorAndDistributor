@@ -200,7 +200,7 @@ Exercise-specific assets belong under `exercises/<construct>/<exercise_key>/`, w
 
 ## Working with the Grading System
 
-The grading system (`tests/notebook_grader.py`) provides:
+The grading system (`exercise_runtime_support/notebook_grader.py`) provides:
 
 - `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
 - `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace.

@@ -35,7 +35,6 @@ class TemplatePackager:
         "__init__.py",
         "autograde_plugin.py",
         "helpers.py",
-        "notebook_grader.py",
         "test_autograde_plugin.py",
         "test_build_autograde_payload.py",
     )

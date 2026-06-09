@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.exercise_framework import paths
+from exercise_runtime_support.exercise_framework import paths
 
 EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"
 

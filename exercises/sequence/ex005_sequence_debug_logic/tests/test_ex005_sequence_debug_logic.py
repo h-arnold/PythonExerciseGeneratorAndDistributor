@@ -8,7 +8,7 @@ from exercise_runtime_support.exercise_framework.expectations_helpers import (
     is_valid_explanation,
 )
 from exercise_runtime_support.exercise_test_support import load_exercise_test_module
-from tests.exercise_framework import (
+from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     get_explanation_cell,

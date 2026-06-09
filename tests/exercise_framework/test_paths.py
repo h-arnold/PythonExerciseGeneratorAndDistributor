@@ -6,7 +6,7 @@ import pytest
 
 import exercise_metadata.resolver as metadata_resolver
 from exercise_runtime_support.execution_variant import Variant
-from tests.exercise_framework import paths
+from exercise_runtime_support.exercise_framework import paths
 
 EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
 EX004_EXERCISE_KEY = "ex004_sequence_debug_syntax"

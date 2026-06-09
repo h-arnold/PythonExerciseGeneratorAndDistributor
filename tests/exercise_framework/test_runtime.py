@@ -9,8 +9,7 @@ import pytest
 
 from exercise_runtime_support import notebook_grader
 from exercise_runtime_support.execution_variant import Variant
-from exercise_runtime_support.exercise_framework import runtime
-from tests.exercise_framework import paths
+from exercise_runtime_support.exercise_framework import paths, runtime
 
 EX002_EXERCISE_KEY = "ex002_sequence_modify_basics"
 EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
