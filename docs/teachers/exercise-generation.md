@@ -1,191 +1,195 @@
 # Generating Exercises with GitHub Copilot
 
-This guide explains how to use the **Exercise Generation** assistant in GitHub Copilot to create new Python exercises for students. This tool is designed to help you quickly create pedagogically sound exercises without needing to manually write all the boilerplate code.
+This guide explains how to use the **Exercise Generation** assistant in GitHub Copilot to create new Python exercises for your students — without needing to write all the boilerplate code yourself.
 
-- [Generating Exercises with GitHub Copilot](#generating-exercises-with-github-copilot)
-  - [First Time Setup](#first-time-setup)
-    - [What to expect after cloning (prompts \& tips)](#what-to-expect-after-cloning-prompts--tips)
-  - [Using the Exercise Generation Assistant](#using-the-exercise-generation-assistant)
-    - [1. Select the Agent](#1-select-the-agent)
-    - [2. Crafting Your Prompt](#2-crafting-your-prompt)
-      - [Example Scenario A: Reinforcing Recent Lessons](#example-scenario-a-reinforcing-recent-lessons)
-      - [Example Scenario B: Targeting Misconceptions](#example-scenario-b-targeting-misconceptions)
-    - [3. Iterating on Content](#3-iterating-on-content)
-    - [4. Saving Your Work](#4-saving-your-work)
-  - [Exercise Reviewer — quick quality checks 🔍](#exercise-reviewer--quick-quality-checks-)
-  - [Best Practices](#best-practices)
+The agent handles the technical details: it creates the right files in the right places, writes the student notebook, prepares a solution notebook for you, and structures everything so students can self-assess against automated tests. You focus on the teaching.
 
-## First Time Setup
+---
 
-If you are new to Visual Studio Code (VS Code) or GitHub Copilot, follow these steps to get ready:
+## Getting Started
 
-1. **Create a GitHub account**: You will need a GitHub account so you can clone the repository and sign in to Copilot. If you don't have an account, sign up at <https://github.com>. Note: your organisation may require a Copilot subscription.
+### 1. Open the repository in VS Code
 
-2. **Clone the repository**: In VS Code use **Source Control** → **Clone Repository**, or open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **Git: Clone**. Paste your repository URL for `PythonExerciseGeneratorAndDistributor`. (If you already have a local copy, you can instead use **File > Open Folder...** and select the `PythonExerciseGeneratorAndDistributor` folder.) After opening the workspace, see the [What to expect after cloning (prompts & tips)](#what-to-expect-after-cloning-prompts--tips) section below for guidance on common VS Code prompts and recommended actions.
+**If this is your first time:**
 
-3. **Sign in to GitHub in VS Code**: Click the Accounts icon in the bottom-left of VS Code and sign in with your GitHub account so extensions (Copilot) can access it.
+1. Open Visual Studio Code.
+2. Open the Command Palette by pressing `Ctrl+Shift+P` (Windows) or `Cmd+Shift+P` (Mac).
+3. Type **Git: Clone** and select it.
+4. Paste the repository URL for `PythonExerciseGeneratorAndDistributor` and choose where to save it.
+5. Once cloned, use **File > Open Folder...** to open the folder you just downloaded.
 
-4. **Check Extensions**:
-   - Click the **Extensions** icon in the left sidebar (it looks like four squares with one detached).
-   - Search for "GitHub Copilot" and install **GitHub Copilot** and **GitHub Copilot Chat** if they are not already installed.
+**If you have already cloned the repository before:**
 
-5. **Open Chat**: Click the **Chat** icon in the sidebar (a speech bubble) or press `Ctrl + Alt + I` (Windows) / `Cmd + Ctrl + I` (Mac) to open Copilot Chat.
+Open the folder in VS Code (**File > Open Folder...**), then open a terminal (**Terminal > New Terminal**) and run:
 
-6. **Select Exercise Generation chatmode**: In the Chat panel, open the model/agent selector (top of the chat window) and choose **Exercise Generation** so the assistant uses the repository-specific exercise templates and guidelines. If you don't see it, sign out and sign back in to Copilot or reload the window (`Ctrl+Shift+P` / `Cmd+Shift+P` → "Developer: Reload Window").
+```bash
+git pull
+```
 
-![Copilot Chat screenshot showing example prompts and the model selector](images/copilot-chat-example.png)
+This ensures you have the latest version of the exercise tools and templates.
 
-*Figure: Copilot Chat — the model/agent selector appears at the top of the chat panel (used to select **Exercise Generation**); the conversation area shows example prompts you can copy and edit.*
+### 2. Sign in to GitHub
 
-### What to expect after cloning (prompts & tips)
+Click the Accounts icon in the bottom-left corner of VS Code and sign in with your GitHub account. This lets Copilot know who you are.
 
-When you open the cloned repository in VS Code you may see a few helpful prompts — these are normal and aimed at making the workspace easier to work with. Here's what you might see and what to do:
+### 3. Open Copilot Chat
 
-- **Recommended extensions pop-up**: The workspace recommends extensions including `ms-python.python`, `ms-python.vscode-pylance`, `charliermarsh.ruff`, `github.copilot`, and `github.copilot-chat`. Installing these is recommended (particularly Copilot and Pylance) but you can decline if your school has restrictions.
+In the top toolbar, click the **Chat** button — it looks like a speech bubble icon next to the command palette.
 
-- **Python interpreter / virtual environment prompt**: VS Code will try to use the interpreter at `${workspaceFolder}/.venv/bin/python` (configured in the workspace settings). If `.venv` doesn't exist yet, you'll be prompted to select an interpreter or create a virtual environment. Recommended quick setup:
+![VS Code toolbar showing the Chat (speech bubble) icon highlighted](../images/copilot-chat-button.png)
 
-  ```bash
-  python -m pip install --upgrade pip uv
-  uv sync
-  ```
+### 4. Select the Exercise Generation agent
 
-- **Test discovery prompt**: Because the workspace enables pytest in the workspace settings, VS Code may ask to enable test discovery; allow this if you want to run tests from the Test sidebar.
+At the top of the Chat panel there is a dropdown menu showing the current model or agent. Open it and select **Exercise Generation**.
 
-- **Format-on-save / code actions**: The workspace config enables `editor.formatOnSave` and code-actions-on-save for Python. If you prefer not to change files automatically, you can disable format-on-save in the Command Palette or your personal settings.
+![Chat panel with the agent dropdown open and Exercise Generation selected](../images/exercise-generation-selector.png)
 
-- **Debug configurations**: `launch.json` includes useful debug entries (run a single file or run pytest). These won't prompt you, but they appear in the Run & Debug view.
+> If you don't see **Exercise Generation** in the list, make sure you have the repository folder open as your workspace root, then try signing out and back in to Copilot, or reload the window (`Ctrl+Shift+P` → "Developer: Reload Window").
 
-If any prompt looks unfamiliar, you can safely decline and follow the manual setup steps above — or consult your IT admin if your school restricts extension installation.
+---
 
-## Using the Exercise Generation Assistant
+## Writing Your First Prompt
 
-This repository includes a specialised helper called the **Exercise Generation** agent. It knows how our grading system works and how to structure exercises for our students.
+The agent works best when you describe what your students need to practise. Think of it like telling a colleague what you want — the more context you give, the better the result.
 
-### 1. Select the Agent
+Instead of: *"Write a loop exercise"*
 
-In the Chat panel you just opened:
+Try: *"Create a set of exercises for my Year 9 class practising for loops. They have just finished learning about range() and need more practice counting through sequences."*
 
-- Look for the model/agent selector (usually at the top or bottom of the chat window).
-- Select **Exercise Generation** (you might see it in a dropdown list or by typing `@Exercise Generation`).
-- *Note: If you don't see it, ensure you have the repository folder open as your workspace root.*
+### Example prompts you can copy
 
-### 2. Crafting Your Prompt
+**Reinforcing a recent lesson:**
 
-The most important step is asking the right question. The agent works best when you give it **teaching context**.
-
-Instead of asking "Write a loop exercise", explain what the students need to practise.
-
-#### Example Scenario A: Reinforcing Recent Lessons
-
-*You want to solidify knowledge after a specific exercise.*
-
-> **Prompt to copy:**
 > "Please create a set of logical error debug tasks that build on the most common logical errors you might find when writing code similar to those in ex003"
 
-**Why this works:**
+This works because it references a previous exercise (so the agent knows the difficulty level) and asks for logical errors (code that runs but gives the wrong answer), which forces students to read code carefully.
 
-- It references `ex003`, so the agent knows the difficulty level.
-- It asks for "logical error debug tasks" (code that runs but gives the wrong answer), which forces students to read code carefully.
+**Targeting a common misconception:**
 
-#### Example Scenario B: Targeting Misconceptions
-
-*You want to address common mistakes you see in class.*
-
-> **Prompt to copy:**
 > "Please create me a set of debug exercises around the most common syntax errors that would crop up when attempting the tasks in the previous two modify activities."
 
-**Why this works:**
+This works because it asks for syntax errors (code that crashes) and links to work students have already done.
 
-- It asks for "syntax errors" (code that breaks/crashes).
-- It contextualizes it to the "previous two modify activities", creating a realistic follow-up to their recent work.
+### Saying what type of exercise you want
 
-### 3. Iterating on Content
+The agent tailors the notebook format depending on the exercise type. You can mix types across different notebooks, but keep one notebook to one type:
 
-The agent will generate a response, often including a plan or code snippets.
+| Type | What students do |
+|------|-----------------|
+| [**Debug**](../exercise-agents/exercise-types/debug.md) | Fix broken code that either crashes or gives the wrong answer |
+| [**Modify**](../exercise-agents/exercise-types/modify.md) | Change working code to meet new requirements |
+| [**Gap-fill**](../exercise-agents/exercise-types/gaps.md) | Write missing lines inside a partially written program |
+| [**Make**](../exercise-agents/exercise-types/make.md) | Write a solution from scratch |
 
-- **Too hard?** Reply: "Simplify the second task for a beginner."
-- **Wrong focus?** Reply: "Less focus on math, more on string manipulation."
-- **Need files?** Reply: "What command should I run to create these files?"
+---
 
-### 4. Saving Your Work
+## What Happens Next
 
-The Exercise Generation agent will scaffold the files and populate the content for you. Here is what happens and what you need to do.
+Once you send your prompt, the agent will:
 
-**Create the file structure** — the agent runs this command for you:
+1. **Create the files** — It sets up a student notebook and a matching solution notebook in the correct folder.
+2. **Write the exercises** — It fills in the notebooks one exercise at a time, gradually increasing the difficulty. For a 10-exercise notebook, it will create exercises 1 through 10, each harder than the last.
+3. **Check its own work** — It runs automated quality checks on the notebooks to catch problems like incorrect tags or concepts that are too advanced.
 
-```bash
-uv run python scripts/new_exercise.py ex050 "My New Topic" \
-  --construct sequence \
-  --type modify \
-  --slug my_topic
-```
+The agent will show you what it has created and ask for your feedback before moving on.
 
-The scaffolder writes directly to `exercises/sequence/ex050_sequence_modify_my_topic/` with:
+---
 
-- `exercise.json` — exercise metadata (type is stored here, not in the folder path)
-- `notebooks/student.ipynb` — the student-facing notebook
-- `notebooks/solution.ipynb` — instructor solution mirror
-- `tests/test_ex050_sequence_modify_my_topic.py` — placeholder test file
-- `tests/expectations.py` — expected-output constants (for debug exercises)
-- `tests/student_checker_support.py` — self-check support module
+## Reviewing and Refining
 
-The agent then adds the exercise content to the notebooks. Your main job is to **review and refine** what the agent produces.
+Your main job is to review what the agent produces and ask for changes.
 
-**Review the content** — Open both notebooks and check:
+**Open both notebooks** (you can find them under the `exercises/` folder in the file explorer). Look for:
 
-- The difficulty progression is appropriate for your class.
-- The prompts are clear but do not give away the answer.
-- The solution notebook provides correct, step-by-step solutions (not compact one-liners).
-- The metadata tags (`exercise1`, `explanation1`, etc.) are preserved.
+- Is the difficulty right for your class? If not, just say: *"Simplify the second task"* or *"Make exercise 5 harder"*.
+- Are the instructions clear without giving away the answer? If a prompt is too obvious, say: *"Do not hint at the answer in exercise 3"*.
+- Does the solution notebook show correct, step-by-step solutions? If it uses shortcuts, say: *"Show each step on a separate line in the solution"*.
 
-If something is not right, just tell the agent: *"Simplify the second task"*, *"Too much maths, focus on strings"*, or *"Add a worked example before exercise 3"*.
+Keep going back and forth until you are happy. The agent is designed to be iterative — you do not need to get it perfect on the first try.
 
-**Verify the notebook structure** — run the structural checks:
+> 💡**Tip**: Be as specific and precise as possible. The better your instructions are, the better the outcome will be.
 
-```bash
-uv run python scripts/verify_exercise_quality.py \
-  ex050_sequence_modify_my_topic --skip-empty-checks
-```
+---
 
-The `--skip-empty-checks` flag is safe to use during notebook authoring — it allows the check to pass before the self-check module has been filled in. If you want more precise validation, add `--construct sequence --type modify`.
+## What Happens After You Approve
 
-**What happens next (Phase 2 — tests)** — Once you are happy with the notebooks, tell the agent. The Exercise Test Creator agent will then write the pytest tests and the Exercise Test Reviewer will verify them. You do not need to write or run tests yourself.
+Once you have reviewed both notebooks and are happy with them, tell the agent something like: *"Looks good, please proceed."*
 
+The agent then:
 
-## Exercise Reviewer — quick quality checks 🔍
+- Generates supporting materials (a short README for the exercise and teacher notes).
+- Runs a final quality check to make sure everything is complete.
+- Hands off to the **Exercise Test Creator**, which writes automated tests for the exercises.
 
-The **Exercise Reviewer** is a review agent that checks newly-created exercises for pedagogical soundness, structure, and correct sequencing. It does **not** review tests — that is handled separately by the **Exercise Test Reviewer**.
+**You do not need to write or run any tests.** Those are generated automatically and checked for you. The tests are what let your students check their own work — they run the notebook, write their code, and the tests tell them whether they got it right.
 
-The Exercise Generation agent runs the reviewer automatically as part of its workflow. You should not normally need to run it yourself, but you can if you want a quick check.
+---
 
-**How the review works (two passes):**
+## Modifying an Existing Exercise
 
-| Pass | When it runs | What it checks |
-|------|-------------|----------------|
-| **Pass 1** | After notebooks are written, before you review them | Exercise type is correct, concepts follow the right teaching order, tags and metadata are in place |
-| **Pass 2** | After you approve the notebooks and supporting docs are generated | Teacher guidance files (README, OVERVIEW) are complete, solution quality is good, the exercise is listed in the teaching order |
+You can also use the Exercise Generation agent to update or extend exercises you have already created. The process works the same way as creating new ones — the agent makes the changes, you review them, and the tests are updated to match.
 
-**Output:** The reviewer returns a verdict: **PASS**, **PASS WITH NITS** (minor improvements), or **FAIL** (must fix), along with specific suggestions.
+**Example prompt:**
 
-To run it manually from Copilot Chat, select **Exercise Reviewer** in the chat mode selector and ask: *"Review exercise ex050_sequence_modify_my_topic"*
+> "I need to update ex012 to change the focus from for loops to while loops. Keep the same topic (running totals), just change the construct. Also update the tests to match the new approach."
 
-**Tip:** Always use the exercise key (for example, `ex050_sequence_modify_my_topic`) — the reviewer finds exercises by key, not by file path.
+Or for smaller tweaks:
 
-## Best Practices
+> "The third task in ex008 is too difficult for my class. Can you simplify it so it only asks them to fill in one missing line instead of three?"
 
-- **Be specific about exercise type** — The agent tailors the notebook format to the type you ask for:
-  - **Debug**: Students fix broken code.
-  - **Modify**: Students change working code to meet new requirements.
-  - **Gap-Fill**: Students write missing lines inside a partially written program.
-  - **Make**: Students write a solution from scratch.
+**What happens:**
 
-  See the [exercise-type guides](../exercise-agents/exercise-types/) for detailed format rules.
+1. The agent reads the existing exercise files.
+2. It makes the changes you asked for in the student notebook and solution notebook.
+3. It runs the quality checks to make sure everything still holds together.
+4. It updates the tests to match the new or changed exercises.
 
-- **Give teaching context, not just a title** — Instead of *"Write a loop exercise"*, tell the agent what students have covered recently and what they find difficult. The agent produces better content when it understands the classroom context.
+**Your job is the same:** review the updated notebooks and tests, ask for refinements if needed, and then approve.
 
-- **Generate one set at a time** — Work through one exercise notebook fully before starting the next. This keeps each session focused and makes it easier to spot progression issues.
+---
 
-- **Fresh chat for each exercise** — Start a new chat for each exercise rather than continuing the same conversation. The agent works best with a clean context.
+## Saving Your Changes
 
-- **Review the agent's output** — The agent is helpful but not perfect. Read through the notebook, check that the difficulty is right for your class, and ask for adjustments before running the verification checks.
+Once you are happy with your exercises, you need to save them back to GitHub so they are backed up and ready to use.
+
+### Commit and push
+
+1. In VS Code, click the **Source Control** icon in the left sidebar (it looks like a branching tree).
+2. You will see a list of changed files. Review them to make sure everything looks right.
+3. At the top of the Source Control panel, type a short message describing what you changed — for example, *"Added ex050 (modify: string concatenation)"* or *"Simplified exercise 3 in ex008"*.
+4. Click the **Commit** button (✓) to save a snapshot of your changes locally.
+5. Click **Sync Changes** or **Push** to upload your changes to GitHub.
+
+### Creating a pull request (for bigger changes)
+
+For larger edits — especially if you are unsure about them — it is safer to use a pull request. This keeps the original work intact until you are certain the changes are ready.
+
+1. In the bottom-left corner of VS Code, click the branch name (it will say **main** by default).
+2. Select **Create new branch...** and give it a name, such as *add-ex050* or *simplify-ex008*.
+3. Make your changes and commit them as normal (the commit goes to your new branch).
+4. Open the **Source Control** panel, click the **...** menu, and select **Push**.
+5. VS Code will show a prompt offering to create a pull request on GitHub — follow the prompts. This opens a page in your browser where you can review and submit the request.
+
+Once the pull request is merged, your changes are saved to the main branch. You can then go back to VS Code, switch back to the **main** branch, and use **git pull** to get the latest version.
+
+---
+
+## Tips
+
+- **Be specific about what you want** — A good prompt explains what students already know, what they find difficult, and what you want them to practise.
+- **Work through one notebook at a time** — Finish reviewing one set of exercises before starting the next.
+- **Start a fresh chat for each new exercise** — The agent works best with a clean context.
+- **Say exactly what needs to change** — Instead of "fix this", say "add a worked example before exercise 3" or "make exercise 7 focus on string concatenation instead".
+- **Do not worry about the file structure** — The agent handles all of that. If you are curious about how things are organised under the hood, see the [developer documentation](../developers/project-structure.md).
+
+---
+
+*Need help? Ask the Exercise Generation agent directly, or check the [developer docs](../developers/) for detailed technical information.*
+
+---
+
+## Next Steps — Sharing Exercises with Students
+
+Once your exercises are saved on GitHub, the next step is to turn them into a **template repository** that you can use in GitHub Classroom. This is how students get their own copies to work on.
+
+See the guide: [Creating Template Repositories for GitHub Classroom](how-to-use-the-template-repo-cli.md)
