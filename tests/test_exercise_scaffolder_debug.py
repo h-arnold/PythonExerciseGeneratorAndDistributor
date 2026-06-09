@@ -169,17 +169,17 @@ class TestExplanationMarkdown:
 
 
 class TestReadmeHook:
-    """DebugScaffold._readme_type_hook() returns a line about explaining behaviour."""
+    """DebugScaffold.readme_type_hook() returns a line about explaining behaviour."""
 
     def test_readme_hook_returns_non_empty_list(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 1, "tests/test_ex001.py", exercise_id=1)
-        lines = scaffold._readme_type_hook()
+        lines = scaffold.readme_type_hook()
         assert isinstance(lines, list)
         assert len(lines) > 0
 
     def test_readme_hook_mentions_explanation(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 1, "tests/test_ex001.py", exercise_id=1)
-        lines = scaffold._readme_type_hook()
+        lines = scaffold.readme_type_hook()
         text = "\n".join(lines)
         assert "describe what happened" in text.lower()
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.exercise_scaffolder.base import ExerciseScaffold, _make_meta
+from scripts.exercise_scaffolder.base import ExerciseScaffold, make_meta
 
 
 class DebugScaffold(ExerciseScaffold):
@@ -29,7 +29,7 @@ class DebugScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "markdown",
-                    "metadata": _make_meta("markdown"),
+                    "metadata": make_meta("markdown"),
                     "source": [
                         f"# Exercise {i} — Expected behaviour\n",
                         "Describe what the corrected program should output.\n",
@@ -43,7 +43,7 @@ class DebugScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "code",
-                    "metadata": _make_meta("python", tags=[exercise_tag]),
+                    "metadata": make_meta("python", tags=[exercise_tag]),
                     "execution_count": None,
                     "outputs": [],
                     "source": [
@@ -57,7 +57,7 @@ class DebugScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "markdown",
-                    "metadata": _make_meta("markdown", tags=[explanation_tag]),
+                    "metadata": make_meta("markdown", tags=[explanation_tag]),
                     "source": [
                         "### What actually happened\n",
                         "Describe briefly what happened when you ran the code "
@@ -134,7 +134,7 @@ class DebugScaffold(ExerciseScaffold):
 
     # ── README hook ──────────────────────────────────────────────────────────
 
-    def _readme_type_hook(self) -> list[str]:
+    def readme_type_hook(self) -> list[str]:
         return [
             "- After running your corrected solution, describe what happened in the cell "
             "tagged `explanation1` (or `explanationN`).",

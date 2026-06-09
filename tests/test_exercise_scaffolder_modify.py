@@ -173,9 +173,9 @@ class TestTodoGuardInTestLines:
 
 
 class TestReadmeHook:
-    """ModifyScaffold._readme_type_hook() returns an empty list."""
+    """ModifyScaffold.readme_type_hook() returns an empty list."""
 
     def test_readme_hook_returns_empty_list(self) -> None:
         scaffold = ModifyScaffold("Title", "ex001", 1, "tests/test_ex001.py", exercise_id=1)
-        lines = scaffold._readme_type_hook()
+        lines = scaffold.readme_type_hook()
         assert lines == []

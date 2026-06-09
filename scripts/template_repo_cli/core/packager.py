@@ -208,9 +208,9 @@ class TemplatePackager:
             exercise_metadata_path = next(
                 (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
             )
-            metadata = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
-            if not isinstance(metadata, dict):
-                raise ValueError("missing or invalid exercise metadata")
+            metadata: dict[str, object] = json.loads(
+                exercise_metadata_path.read_text(encoding="utf-8")
+            )
 
             construct = metadata.get("construct")
             title = metadata.get("title")

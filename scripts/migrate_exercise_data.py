@@ -14,6 +14,7 @@ import shutil
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import cast
 
 ROOT = Path(__file__).resolve().parents[1]
 DOC_FILENAMES = ("README.md", "OVERVIEW.md", "solutions.md")
@@ -95,7 +96,7 @@ def _load_json_object(path: Path) -> dict[str, object]:
 
     if not isinstance(data, dict):
         raise MigrationError(f"Expected a JSON object in {path}")
-    return data
+    return cast("dict[str, object]", data)
 
 
 def _relative_to_repo(path: Path, repo_root: Path) -> str:

@@ -17,7 +17,8 @@ from exercise_runtime_support.exercise_framework import (
 )
 
 _EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
-construct_checks = load_exercise_test_module(_EX007_EXERCISE_KEY, "construct_checks")
+construct_checks = load_exercise_test_module(
+    _EX007_EXERCISE_KEY, "construct_checks")
 ex007 = load_exercise_test_module(_EX007_EXERCISE_KEY, "expectations")
 has_binop = construct_checks.has_binop
 has_call = construct_checks.has_call
@@ -71,7 +72,8 @@ def _assert_interactive_constructs(exercise_no: int) -> None:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     issues = interactive_construct_issues(
         tree,
-        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        expected_input_count=len(
+            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),

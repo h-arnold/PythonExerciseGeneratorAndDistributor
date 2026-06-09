@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from scripts.exercise_scaffolder.base import ExerciseScaffold, _make_meta
+from scripts.exercise_scaffolder.base import ExerciseScaffold, make_meta
 
 
 class GapsScaffold(ExerciseScaffold):
@@ -29,7 +29,7 @@ class GapsScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "markdown",
-                    "metadata": _make_meta("markdown"),
+                    "metadata": make_meta("markdown"),
                     "source": [
                         f"## Exercise {i}\n",
                         "(Describe the task and show the expected output here.)\n",
@@ -44,7 +44,7 @@ class GapsScaffold(ExerciseScaffold):
             cells.append(
                 {
                     "cell_type": "code",
-                    "metadata": _make_meta("python", tags=[exercise_tag]),
+                    "metadata": make_meta("python", tags=[exercise_tag]),
                     "execution_count": None,
                     "outputs": [],
                     "source": [
@@ -90,7 +90,7 @@ class GapsScaffold(ExerciseScaffold):
 
     # ── README hook ──────────────────────────────────────────────────────────
 
-    def _readme_type_hook(self) -> list[str]:
+    def readme_type_hook(self) -> list[str]:
         return [
             "- Find the `# YOUR CODE HERE` comment in each tagged cell and write the "
             "missing line(s) of code in its place.",

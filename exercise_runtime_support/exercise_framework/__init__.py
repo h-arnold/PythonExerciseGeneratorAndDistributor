@@ -1,8 +1,9 @@
 """Exercise testing framework public surface."""
 
+# pyright: reportImportCycles=false
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from . import expectations as _expectations
 from .expectations import expected_output_lines, expected_output_text, expected_print_call_count
@@ -15,6 +16,16 @@ from .runtime import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+
+if TYPE_CHECKING:
+    from .api import (
+        ExerciseCheckResult,
+        NotebookCheckResult,
+        run_all_checks,
+        run_detailed_ex002_check,
+        run_notebook_check,
+    )
+    from .expectations import EX002_CHECKS, Ex002CheckDefinition
 
 __all__ = [
     "EX002_CHECKS",

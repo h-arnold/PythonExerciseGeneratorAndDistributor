@@ -152,6 +152,29 @@ If you're creating or modifying exercises, follow the two-phase workflow:
       exercises/sequence/ex042_sequence_modify_your_slug/tests/test_ex042_sequence_modify_your_slug.py -q
    ```
 
+## Git Hooks
+
+The repository ships a pre-commit hook in `.githooks/pre-commit` that:
+
+- Strips execution metadata from exercise notebooks (via `scripts/clear_notebook_metadata.py`)
+- Runs `ruff format` to auto-format staged code
+- Aborts the commit if formatting changed any tracked file (prompting you to review and restage)
+- Runs `ruff check .` for lint violations
+
+### Enable the hook
+
+Git does not use `.githooks/` by default. Run this once after cloning to point Git at the correct directory:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After this, the pre-commit hook runs automatically on every `git commit`. To skip the hook for a single commit (e.g., WIP), pass `--no-verify`:
+
+```bash
+git commit --no-verify -m "WIP: ..."
+```
+
 ## Linting and Code Quality
 
 ### Run Ruff Linter

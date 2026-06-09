@@ -21,12 +21,12 @@ def find_duplicate_exercise_test_sources(paths: Iterable[Path]) -> dict[str, lis
     canonical_by_key: dict[str, list[Path]] = defaultdict(list)
 
     for path in paths:
-        exercise_key = _exercise_key_for_path(path)
+        exercise_key = exercise_key_for_path(path)
         if exercise_key is None:
             continue
-        if _is_top_level_test_path(path):
+        if is_top_level_test_path(path):
             top_level_by_key[exercise_key].append(path)
-        elif _is_canonical_test_path(path):
+        elif is_canonical_test_path(path):
             canonical_by_key[exercise_key].append(path)
 
     duplicates: dict[str, list[Path]] = {}
@@ -40,17 +40,17 @@ def find_duplicate_exercise_test_sources(paths: Iterable[Path]) -> dict[str, lis
 def find_noncanonical_exercise_test_sources(paths: Iterable[Path]) -> list[Path]:
     """Return ``test_exNNN*.py`` paths that do not live in canonical exercise-local tests."""
 
-    offenders = []
+    offenders: list[Path] = []
     for path in paths:
-        if _exercise_key_for_path(path) is None:
+        if exercise_key_for_path(path) is None:
             continue
-        if _is_canonical_test_path(path):
+        if is_canonical_test_path(path):
             continue
         offenders.append(path)
     return sorted(offenders)
 
 
-def _exercise_key_for_path(path: Path) -> str | None:
+def exercise_key_for_path(path: Path) -> str | None:
     if path.suffix != ".py":
         return None
     stem = path.stem
@@ -59,11 +59,11 @@ def _exercise_key_for_path(path: Path) -> str | None:
     return stem.removeprefix("test_")
 
 
-def _is_top_level_test_path(path: Path) -> bool:
+def is_top_level_test_path(path: Path) -> bool:
     return len(path.parts) == _TOP_LEVEL_TEST_PATH_PARTS and path.parts[0] == "tests"
 
 
-def _is_canonical_test_path(path: Path) -> bool:
+def is_canonical_test_path(path: Path) -> bool:
     """Return True only for canonical exercise-local tests.
 
     Canonical layout (per ACTION_PLAN design rules):
@@ -87,7 +87,7 @@ def _is_canonical_test_path(path: Path) -> bool:
         return False
 
     # Filename must be a valid test_ex* file, and its key must match the directory name.
-    exercise_key = _exercise_key_for_path(path)
+    exercise_key = exercise_key_for_path(path)
     if exercise_key is None:
         return False
 

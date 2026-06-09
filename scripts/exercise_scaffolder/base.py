@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 
-def _make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
+def make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
     """Create cell metadata dictionary with a unique ID."""
     meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
     if tags:
@@ -110,7 +110,7 @@ class ExerciseScaffold(ABC):
         return [
             {
                 "cell_type": "markdown",
-                "metadata": _make_meta("markdown"),
+                "metadata": make_meta("markdown"),
                 "source": [
                     f"# {self.title}\n",
                     "\n",
@@ -134,7 +134,7 @@ class ExerciseScaffold(ABC):
         """Return the shared scratch-pad cell."""
         return {
             "cell_type": "code",
-            "metadata": _make_meta("python"),
+            "metadata": make_meta("python"),
             "execution_count": None,
             "outputs": [],
             "source": [
@@ -147,7 +147,7 @@ class ExerciseScaffold(ABC):
         """Return the self-checker cell that sets the notebook variant."""
         return {
             "cell_type": "code",
-            "metadata": _make_meta("python"),
+            "metadata": make_meta("python"),
             "execution_count": None,
             "outputs": [],
             "source": [
@@ -179,7 +179,7 @@ class ExerciseScaffold(ABC):
             f"- Created: {created_date}",
             "- Target concepts: (fill in)",
         ]
-        type_lines = self._readme_type_hook()
+        type_lines = self.readme_type_hook()
         if type_lines:
             # Insert type-specific lines after the test-target line (index 5),
             # before the blank line (index 6) — matching original order in
@@ -189,7 +189,7 @@ class ExerciseScaffold(ABC):
                 lines.insert(insert_at, line)
         return lines
 
-    def _readme_type_hook(self) -> list[str]:
+    def readme_type_hook(self) -> list[str]:
         """Override in subclasses to inject type-specific README lines."""
         return []
 

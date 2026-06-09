@@ -6,6 +6,8 @@ import os
 from importlib import import_module
 from pathlib import Path
 
+import pytest
+
 import exercise_runtime_support.helpers
 from exercise_runtime_support.execution_variant import ACTIVE_VARIANT_ENV_VAR
 from exercise_runtime_support.helpers import build_autograde_env
@@ -27,7 +29,7 @@ def test_build_autograde_env_sets_pythonpath_to_repo_root_when_absent() -> None:
 
 
 def test_build_autograde_env_with_empty_base_env_does_not_inherit_process_vars(
-    monkeypatch,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("AUTOGRADE_SENTINEL", "present-in-process")
 

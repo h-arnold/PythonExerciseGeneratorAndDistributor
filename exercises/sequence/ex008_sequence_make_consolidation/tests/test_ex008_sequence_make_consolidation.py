@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from typing import cast
 
 import pytest
 
@@ -52,7 +53,8 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
 
 def _has_call(tree: ast.AST, func_name: str) -> bool:
     return any(
-        isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == func_name
+        isinstance(node, ast.Call) and isinstance(
+            node.func, ast.Name) and node.func.id == func_name
         for node in ast.walk(tree)
     )
 
@@ -215,19 +217,21 @@ def test_exercise2_construct() -> None:
     assert _has_binop(tree, ast.Mult)
     assert _has_call(tree, "str")
     string_names = _assigned_constant_names(tree, str)
-    numeric_names = _assigned_constant_names(tree, int) | _assigned_constant_names(tree, float)
+    numeric_names = _assigned_constant_names(
+        tree, int) | _assigned_constant_names(tree, float)
     printed_names = _printed_names(tree)
     multiplied_names = _names_used_in_binop(tree, ast.Mult)
     total_names = _assigned_names_from_binop(tree, ast.Mult)
     assert len(printed_names & string_names) >= 1
-    assert len(multiplied_names & numeric_names) >= _MIN_EXERCISE2_NUMERIC_FACTORS
+    assert len(multiplied_names &
+               numeric_names) >= _MIN_EXERCISE2_NUMERIC_FACTORS
     assert len(printed_names & total_names) >= 1
 
 
 @pytest.mark.task(taskno=3)
 @pytest.mark.parametrize("case", ex008.EX008_INTERACTIVE_CASES[3])
 def test_exercise3_logic(case: dict[str, object]) -> None:
-    output = _run_with_inputs(3, list(case["inputs"]))
+    output = _run_with_inputs(3, cast("list[str]", case["inputs"]))
     assert output == case["expected_output"]
 
 
@@ -242,7 +246,7 @@ def test_exercise3_construct() -> None:
 @pytest.mark.task(taskno=4)
 @pytest.mark.parametrize("case", ex008.EX008_INTERACTIVE_CASES[4])
 def test_exercise4_logic(case: dict[str, object]) -> None:
-    output = _run_with_inputs(4, list(case["inputs"]))
+    output = _run_with_inputs(4, cast("list[str]", case["inputs"]))
     assert output == case["expected_output"]
 
 
@@ -257,7 +261,7 @@ def test_exercise4_construct() -> None:
 @pytest.mark.task(taskno=5)
 @pytest.mark.parametrize("case", ex008.EX008_INTERACTIVE_CASES[5])
 def test_exercise5_logic(case: dict[str, object]) -> None:
-    output = _run_with_inputs(5, list(case["inputs"]))
+    output = _run_with_inputs(5, cast("list[str]", case["inputs"]))
     assert output == case["expected_output"]
 
 
