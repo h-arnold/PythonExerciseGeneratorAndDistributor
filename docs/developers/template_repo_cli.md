@@ -28,7 +28,8 @@ Alternatively, run the CLI as a module: `uv run python -m scripts.template_repo_
 
 ### Basic Commands
 
-The CLI provides four main commands:
+The CLI is available as both `repoman` and `template_repo_cli` (aliases for the same entry point).
+It provides four main commands:
 
 1. **`create`** — Create a GitHub template repository
 2. **`update`** — Push a refreshed template into an existing repository

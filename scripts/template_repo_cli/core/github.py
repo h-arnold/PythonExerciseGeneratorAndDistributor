@@ -322,11 +322,13 @@ class GitHubClient:
 
             # Parse stderr to extract scopes
             # Format: "  - Token scopes: 'scope1', 'scope2', 'scope3'"
-            output: str = (auth_result.stderr or "") + (auth_result.stdout or "")
+            output: str = (auth_result.stderr or "") + \
+                (auth_result.stdout or "")
             for line in output.split("\n"):
                 if "Token scopes:" in line:
                     # Extract the scopes part after "Token scopes:"
-                    scopes_part: str = line.split("Token scopes:", 1)[1].strip()
+                    scopes_part: str = line.split(
+                        "Token scopes:", 1)[1].strip()
                     # Remove quotes and split by comma, filtering empty strings
                     scopes: list[str] = [
                         stripped
@@ -337,7 +339,8 @@ class GitHubClient:
                     break
 
             # Check if all required scopes are present
-            missing: list[str] = [s for s in required_scopes if s not in result["scopes"]]
+            missing: list[str] = [
+                s for s in required_scopes if s not in result["scopes"]]
             result["missing_scopes"] = missing
             result["has_scopes"] = len(missing) == 0
 
@@ -420,7 +423,8 @@ class GitHubClient:
 
         # Mark repository as a template if requested
         if result["success"] and template:
-            template_result: ExecResult = self.mark_repository_as_template(repo_name, org)
+            template_result: ExecResult = self.mark_repository_as_template(
+                repo_name, org)
             if not template_result.get("success", False):
                 return {
                     "success": False,
@@ -445,7 +449,8 @@ class GitHubClient:
         Returns:
             Result dictionary.
         """
-        repo_ref, ref_error = self._resolve_repo_ref(repo_name, org, require_owner=True)
+        repo_ref, ref_error = self._resolve_repo_ref(
+            repo_name, org, require_owner=True)
         if ref_error:
             return {
                 "success": False,
@@ -528,6 +533,10 @@ class GitHubClient:
     ) -> None:
         """Push local workspace to a remote.
 
+        Calls ``gh auth setup-git`` first (idempotent) to ensure Git uses the gh CLI's
+        OAuth token for HTTPS authentication, avoiding 403 errors when the environment
+        sets a GITHUB_TOKEN with insufficient permissions.
+
         Args:
             workspace: Workspace directory.
             remote_url: Remote repository URL.
@@ -556,7 +565,8 @@ class GitHubClient:
             )
 
         # Ensure we replace any existing origin to avoid failures
-        run_subprocess(["git", "remote", "remove", "origin"], cwd=workspace, check=False)
+        run_subprocess(["git", "remote", "remove", "origin"],
+                       cwd=workspace, check=False)
         run_subprocess(
             ["git", "remote", "add", "origin", remote_url],
             cwd=workspace,
@@ -597,7 +607,8 @@ class GitHubClient:
                 "message": ("Dry run - repository would be updated via push"),
             }
 
-        repo_ref, ref_error = self._resolve_repo_ref(repo_name, org, require_owner=True)
+        repo_ref, ref_error = self._resolve_repo_ref(
+            repo_name, org, require_owner=True)
         if ref_error:
             return {
                 "success": False,
@@ -698,7 +709,8 @@ class GitHubClient:
             (result.get("error") or "").lower(),
             (result.get("output") or "").lower(),
         )
-        combined_message: str = " ".join(part for part in message_parts if part)
+        combined_message: str = " ".join(
+            part for part in message_parts if part)
 
         if all(marker in combined_message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS):
             return True

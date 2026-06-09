@@ -1645,7 +1645,7 @@ class TestCliOutputDir:
         assert temp_dir.exists()
 
 
-class TestCliUpdateRepo:
+class TestCliUpdateCommand:
     """Tests for update command."""
 
     @patch("subprocess.run")

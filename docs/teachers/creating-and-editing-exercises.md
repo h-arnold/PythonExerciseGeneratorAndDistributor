@@ -4,11 +4,23 @@ This guide covers how to create new exercises and tweak existing ones. Whether y
 
 - [Creating and Editing Exercises](#creating-and-editing-exercises)
   - [Before You Start: Branch First](#before-you-start-branch-first)
+    - [How to create a branch (no command line needed)](#how-to-create-a-branch-no-command-line-needed)
   - [Creating New Exercises with the AI Assistant](#creating-new-exercises-with-the-ai-assistant)
+    - [Quick steps](#quick-steps)
   - [Tweaking an Existing Exercise](#tweaking-an-existing-exercise)
+    - [Finding the right files](#finding-the-right-files)
+    - [What you can change](#what-you-can-change)
+    - [A typical edit: fixing a typo in an instruction](#a-typical-edit-fixing-a-typo-in-an-instruction)
+    - [Important: keep student and solution in sync](#important-keep-student-and-solution-in-sync)
   - [Verifying Your Changes](#verifying-your-changes)
+    - [Quick check — one exercise](#quick-check--one-exercise)
+    - [Full check — all exercises](#full-check--all-exercises)
+    - [Quality check — structural and pedagogical](#quality-check--structural-and-pedagogical)
   - [Committing and Pushing](#committing-and-pushing)
+    - [With VS Code (no command line)](#with-vs-code-no-command-line)
+    - [Good commit messages](#good-commit-messages)
   - [Merging Your Branch Back](#merging-your-branch-back)
+  - [Summary](#summary)
 
 ---
 
