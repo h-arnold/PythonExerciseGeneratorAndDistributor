@@ -266,26 +266,6 @@ class TemplatePackager:
         self._copy_directory(".devcontainer", workspace)
         self._copy_directory(".github", workspace)
 
-    def _load_readme_template(self) -> str:
-        """Return the README template content, including fallback content."""
-        return _readme.load_readme_template(self.template_files_dir)
-
-    def _readme_entry_from_exercise_key(self, exercise_key: str) -> tuple[str, str, str, str]:
-        """Resolve the raw construct, display construct, title, and notebook path."""
-        return _readme.readme_entry_from_exercise_key(self.repo_root, exercise_key)
-
-    @staticmethod
-    def _render_grouped_readme_sections(
-        grouped_entries: dict[str, list[tuple[str, str]]],
-        *,
-        constructs_with_resources: dict[str, str] | None = None,
-    ) -> str:
-        """Render grouped construct sections with numbered markdown links."""
-        return _readme.render_grouped_readme_sections(
-            grouped_entries,
-            constructs_with_resources=constructs_with_resources,
-        )
-
     def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
         """Generate README file.
 

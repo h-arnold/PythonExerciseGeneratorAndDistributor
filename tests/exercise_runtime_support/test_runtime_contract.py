@@ -51,7 +51,9 @@ def test_template_cli_consumers_link_to_shared_runtime_support() -> None:
     collector_source = Path("scripts/template_repo_cli/core/collector.py").read_text(
         encoding="utf-8"
     )
-    packager_source = Path("scripts/template_repo_cli/core/packager.py").read_text(encoding="utf-8")
+    packager_source = Path("scripts/template_repo_cli/core/packager/__init__.py").read_text(
+        encoding="utf-8"
+    )
 
     assert "exercise_runtime_support.pytest_collection_guard" in collector_source
     assert "find_duplicate_exercise_test_sources" in collector_source

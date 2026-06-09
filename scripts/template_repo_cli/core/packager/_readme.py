@@ -91,6 +91,7 @@ def render_grouped_readme_sections(
             sections.append(f"{index}. [{title}]({link_target})")
         raw_construct = constructs_with_resources.get(display_construct)
         if raw_construct is not None:
+            sections.append("")
             sections.append(
                 f"📁 **Additional Resources**: [View resources]"
                 f"(exercises/{raw_construct}/additional-resources/)"
