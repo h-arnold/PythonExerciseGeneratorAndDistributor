@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-import json
 from collections import OrderedDict
 from collections.abc import Callable
 from pathlib import Path
+
+from ._helpers import load_exercise_metadata
 
 
 def load_readme_template(template_files_dir: Path) -> str:
@@ -43,20 +44,16 @@ def readme_entry_from_exercise_key(
         ValueError: If the exercise metadata cannot be read or is invalid.
     """
     try:
-        exercise_metadata_path = next(
-            (repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
-        )
-        metadata: dict[str, object] = json.loads(exercise_metadata_path.read_text(encoding="utf-8"))
+        metadata = load_exercise_metadata(repo_root, exercise_key)
         construct = metadata.get("construct")
         if not isinstance(construct, str) or not construct.strip():
             raise ValueError("missing or invalid construct metadata")
         title = metadata.get("title")
         if not isinstance(title, str) or not title.strip():
             raise ValueError("missing or invalid title metadata")
-    except Exception as cause:
-        reason = str(cause)
+    except ValueError as cause:
         raise ValueError(
-            f"README generation failed for exercise '{exercise_key}': {reason}"
+            f"README generation failed for exercise '{exercise_key}': {cause}"
         ) from cause
 
     display_construct = construct.replace("_", " ").title()

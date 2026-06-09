@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import shutil
 import tempfile
 from pathlib import Path
@@ -10,7 +9,7 @@ from pathlib import Path
 from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
 
-from . import _readme
+from . import _helpers, _readme
 
 
 class TemplatePackager:
@@ -112,20 +111,14 @@ class TemplatePackager:
             ValueError: If the exercise metadata cannot be read.
         """
         try:
-            exercise_metadata_path = next(
-                (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
-            )
-            metadata: dict[str, object] = json.loads(
-                exercise_metadata_path.read_text(encoding="utf-8")
-            )
+            metadata = _helpers.load_exercise_metadata(self.repo_root, exercise_key)
             construct = metadata.get("construct")
             if not isinstance(construct, str) or not construct.strip():
                 raise ValueError("missing or invalid construct metadata")
             return construct
-        except Exception as cause:
-            reason = str(cause)
+        except ValueError as cause:
             raise ValueError(
-                f"Failed to resolve construct for exercise '{exercise_key}': {reason}"
+                f"Failed to resolve construct for exercise '{exercise_key}': {cause}"
             ) from cause
 
     def _construct_has_additional_resources(self, construct: str) -> bool:
