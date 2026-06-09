@@ -39,12 +39,10 @@ def test_resolve_exercise_tests_dir_prefers_canonical_exercise_local_dir(
     canonical_dir.mkdir(parents=True)
     packaged_dir.mkdir(parents=True)
 
-    monkeypatch.setattr(exercise_test_support,
-                        "get_catalogue_entry", _catalogue_entry_for)
+    monkeypatch.setattr(exercise_test_support, "get_catalogue_entry", _catalogue_entry_for)
     monkeypatch.setattr(exercise_test_support, "_REPO_ROOT", tmp_path)
 
-    assert exercise_test_support.resolve_exercise_tests_dir(
-        exercise_key) == canonical_dir
+    assert exercise_test_support.resolve_exercise_tests_dir(exercise_key) == canonical_dir
 
 
 def test_resolve_exercise_tests_dir_rejects_packaged_fallback_when_canonical_dir_is_missing(
@@ -56,8 +54,7 @@ def test_resolve_exercise_tests_dir_rejects_packaged_fallback_when_canonical_dir
     packaged_dir = tmp_path / "tests" / "sequence" / exercise_key
     packaged_dir.mkdir(parents=True)
 
-    monkeypatch.setattr(exercise_test_support,
-                        "get_catalogue_entry", _catalogue_entry_for)
+    monkeypatch.setattr(exercise_test_support, "get_catalogue_entry", _catalogue_entry_for)
     monkeypatch.setattr(exercise_test_support, "_REPO_ROOT", tmp_path)
 
     with pytest.raises(
@@ -80,8 +77,7 @@ def test_load_exercise_test_module_rejects_packaged_fallback_when_canonical_dir_
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(exercise_test_support,
-                        "get_catalogue_entry", _catalogue_entry_for)
+    monkeypatch.setattr(exercise_test_support, "get_catalogue_entry", _catalogue_entry_for)
     monkeypatch.setattr(exercise_test_support, "_REPO_ROOT", tmp_path)
 
     with pytest.raises(
@@ -113,8 +109,7 @@ def test_load_exercise_test_module_prefers_canonical_module_when_packaged_copy_e
         encoding="utf-8",
     )
 
-    monkeypatch.setattr(exercise_test_support,
-                        "get_catalogue_entry", _catalogue_entry_for)
+    monkeypatch.setattr(exercise_test_support, "get_catalogue_entry", _catalogue_entry_for)
     monkeypatch.setattr(exercise_test_support, "_REPO_ROOT", tmp_path)
 
     module = exercise_test_support.load_exercise_test_module(

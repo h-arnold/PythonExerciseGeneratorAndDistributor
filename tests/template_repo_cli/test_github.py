@@ -53,8 +53,7 @@ class TestBuildCreateRepoCommand:
     def test_build_create_with_description(self, repo_root: Path) -> None:
         """Test building command with description."""
         client = GitHubClient()
-        cmd = client.build_create_command(
-            "test-repo", description="Test description")
+        cmd = client.build_create_command("test-repo", description="Test description")
 
         assert "--description" in cmd
         assert "Test description" in cmd
@@ -62,8 +61,7 @@ class TestBuildCreateRepoCommand:
     def test_build_create_with_template_repo(self, repo_root: Path) -> None:
         """Test building command with template repository."""
         client = GitHubClient()
-        cmd = client.build_create_command(
-            "test-repo", template_repo="owner/template-repo")
+        cmd = client.build_create_command("test-repo", template_repo="owner/template-repo")
 
         assert "--template" in cmd
         assert "owner/template-repo" in cmd
@@ -71,8 +69,7 @@ class TestBuildCreateRepoCommand:
     def test_build_create_with_source_path(self, repo_root: Path) -> None:
         """Test building command with source path."""
         client = GitHubClient()
-        cmd = client.build_create_command(
-            "test-repo", source_path="/tmp/workspace")
+        cmd = client.build_create_command("test-repo", source_path="/tmp/workspace")
 
         assert "--source" in cmd
         assert "/tmp/workspace" in cmd
@@ -85,8 +82,7 @@ class TestValidateGhInstalled:
     @patch("subprocess.run")
     def test_validate_gh_installed(self, mock_run: MagicMock) -> None:
         """Test checking gh CLI is installed."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="gh version 2.0.0")
+        mock_run.return_value = MagicMock(returncode=0, stdout="gh version 2.0.0")
 
         client = GitHubClient()
         is_installed = client.check_gh_installed()
@@ -110,8 +106,7 @@ class TestValidateGhAuthenticated:
     @patch("subprocess.run")
     def test_validate_gh_authenticated(self, mock_run: MagicMock) -> None:
         """Test checking gh authentication status."""
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="Logged in to github.com")
+        mock_run.return_value = MagicMock(returncode=0, stdout="Logged in to github.com")
 
         is_authenticated = check_authentication()
 
@@ -154,8 +149,7 @@ class TestCreateRepository:
     def test_create_repository_success(self, mock_run: MagicMock, temp_dir: Path) -> None:
         """Test successful repository creation."""
         # Return value that works for all subprocess calls
-        mock_run.return_value = MagicMock(
-            returncode=0, stdout="testuser\n", stderr="")
+        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
 
         client = GitHubClient()
         result: ExecResult = client.create_repository(
@@ -412,8 +406,7 @@ class TestGitOperations:
                 text=True,
                 check=True,
             ),
-            call(["git", "add", "."], cwd=temp_dir,
-                 capture_output=True, text=True, check=False),
+            call(["git", "add", "."], cwd=temp_dir, capture_output=True, text=True, check=False),
             call(
                 ["git", "commit", "-m", "Test commit"],
                 cwd=temp_dir,
@@ -465,8 +458,7 @@ class TestPushOperations:
                 check=False,
             ),
             call(
-                ["git", "remote", "add", "origin",
-                    "https://github.com/user/repo.git"],
+                ["git", "remote", "add", "origin", "https://github.com/user/repo.git"],
                 cwd=temp_dir,
                 capture_output=True,
                 text=True,
@@ -508,8 +500,7 @@ class TestPushToExistingRepository:
         ]
 
         client = GitHubClient()
-        result: ExecResult = client.push_to_existing_repository(
-            "user/repo", temp_dir)
+        result: ExecResult = client.push_to_existing_repository("user/repo", temp_dir)
 
         assert result["success"] is True
         assert result.get("remote_url") == "https://github.com/user/repo.git"
@@ -539,8 +530,7 @@ class TestPushToExistingRepository:
         mock_run.side_effect = side_effect
 
         client = GitHubClient()
-        result: ExecResult = client.push_to_existing_repository(
-            "repo", temp_dir)
+        result: ExecResult = client.push_to_existing_repository("repo", temp_dir)
 
         assert result["success"] is False
         error_text = result.get("error") or ""

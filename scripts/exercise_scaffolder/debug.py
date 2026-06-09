@@ -86,9 +86,7 @@ class DebugScaffold(ExerciseScaffold):
                 "",
             ]
 
-        exercise_tags = ", ".join(
-            f"'exercise{i}'" for i in range(1, self.parts + 1)
-        )
+        exercise_tags = ", ".join(f"'exercise{i}'" for i in range(1, self.parts + 1))
         return [
             f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
             "def test_exercise_cells_execute(tag: str) -> None:",
@@ -105,29 +103,33 @@ class DebugScaffold(ExerciseScaffold):
         """Return debug explanation cell check lines."""
         lines = ["# Explanation cell checks for debug exercises", ""]
         if self.parts == 1:
-            lines.extend([
-                "def test_explanation_has_content() -> None:",
-                "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
-                "    assert is_valid_explanation(",
-                "        explanation,",
-                "        min_length=_MIN_EXPLANATION_LENGTH,",
-                "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
-                "    )",
-                "",
-            ])
+            lines.extend(
+                [
+                    "def test_explanation_has_content() -> None:",
+                    "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag='explanation1')",
+                    "    assert is_valid_explanation(",
+                    "        explanation,",
+                    "        min_length=_MIN_EXPLANATION_LENGTH,",
+                    "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
+                    "    )",
+                    "",
+                ]
+            )
         else:
-            lines.extend([
-                f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {self.parts} + 1)]",
-                "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
-                "def test_explanations_have_content(tag: str) -> None:",
-                "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
-                "    assert is_valid_explanation(",
-                "        explanation,",
-                "        min_length=_MIN_EXPLANATION_LENGTH,",
-                "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
-                "    )",
-                "",
-            ])
+            lines.extend(
+                [
+                    f"EXPLANATION_TAGS = [f'explanation{{i}}' for i in range(1, {self.parts} + 1)]",
+                    "@pytest.mark.parametrize('tag', EXPLANATION_TAGS)",
+                    "def test_explanations_have_content(tag: str) -> None:",
+                    "    explanation = get_explanation_cell(_NOTEBOOK_PATH, tag=tag)",
+                    "    assert is_valid_explanation(",
+                    "        explanation,",
+                    "        min_length=_MIN_EXPLANATION_LENGTH,",
+                    "        placeholder_phrases=_PLACEHOLDER_PHRASES,",
+                    "    )",
+                    "",
+                ]
+            )
         return lines
 
     # ── README hook ──────────────────────────────────────────────────────────

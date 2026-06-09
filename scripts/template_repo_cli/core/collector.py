@@ -111,13 +111,11 @@ class FileCollector:
         # Resolve canonical test path
         test_path = self._canonical_test_path(exercise_id)
         if not test_path.exists():
-            raise FileNotFoundError(
-                f"Canonical exercise test not found: {test_path}")
+            raise FileNotFoundError(f"Canonical exercise test not found: {test_path}")
 
         return ExerciseFiles(
             exercise_json=exercise_json_path,
-            exercise_json_export=self._canonical_exercise_json_export_path(
-                exercise_id),
+            exercise_json_export=self._canonical_exercise_json_export_path(exercise_id),
             notebook=notebook_path,
             notebook_export=self._canonical_notebook_export_path(exercise_id),
             test=test_path,

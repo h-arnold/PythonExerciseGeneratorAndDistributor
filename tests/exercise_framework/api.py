@@ -14,5 +14,4 @@ def __getattr__(name: str):
     return getattr(_impl, name)
 
 
-__all__ = getattr(_impl, "__all__", [
-                  name for name in globals() if not name.startswith("_")])
+__all__ = getattr(_impl, "__all__", [name for name in globals() if not name.startswith("_")])

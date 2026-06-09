@@ -78,8 +78,7 @@ def test_main_uses_solution_variant_by_default(monkeypatch: pytest.MonkeyPatch) 
         return subprocess.CompletedProcess(command, 0)
 
     monkeypatch.setattr("scripts.run_pytest_variant.subprocess.run", fake_run)
-    monkeypatch.setattr(
-        "scripts.run_pytest_variant.sys.executable", fake_executable)
+    monkeypatch.setattr("scripts.run_pytest_variant.sys.executable", fake_executable)
 
     exit_code = main([])
 

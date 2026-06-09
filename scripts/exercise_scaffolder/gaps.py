@@ -77,9 +77,7 @@ class GapsScaffold(ExerciseScaffold):
                 "",
             ]
 
-        exercise_tags = ", ".join(
-            f"'exercise{i}'" for i in range(1, self.parts + 1)
-        )
+        exercise_tags = ", ".join(f"'exercise{i}'" for i in range(1, self.parts + 1))
         return [
             f"@pytest.mark.parametrize('tag', [{exercise_tags}])",
             "def test_exercise_cells_execute(tag: str) -> None:",

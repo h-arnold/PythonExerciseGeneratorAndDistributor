@@ -28,8 +28,7 @@ def _write_notebook(path: Path, metadata: object | None) -> Path:
 
 
 def test_clear_metadata_removes_existing(tmp_path: Path) -> None:
-    notebook = _write_notebook(
-        tmp_path / "run.ipynb", {"kernelspec": {"name": "python"}})
+    notebook = _write_notebook(tmp_path / "run.ipynb", {"kernelspec": {"name": "python"}})
     assert clear_notebook_metadata(notebook)
     content = json.loads(notebook.read_text(encoding="utf-8"))
     assert content["metadata"] == {}
@@ -43,8 +42,7 @@ def test_clear_metadata_skips_clean(tmp_path: Path) -> None:
 def test_main_detects_updates_in_directory(tmp_path: Path) -> None:
     notebooks = tmp_path / "notebooks"
     notebooks.mkdir()
-    note = _write_notebook(notebooks / "lesson.ipynb",
-                           {"metadata": "should go"})
+    note = _write_notebook(notebooks / "lesson.ipynb", {"metadata": "should go"})
     result = main(["--paths", str(notebooks)])
     assert result == 1
     assert json.loads(note.read_text(encoding="utf-8"))["metadata"] == {}

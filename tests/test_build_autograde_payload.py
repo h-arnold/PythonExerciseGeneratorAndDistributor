@@ -14,8 +14,7 @@ import pytest
 
 from tests.helpers import build_autograde_env
 
-CLI_SCRIPT = Path(__file__).resolve(
-).parents[1] / "scripts" / "build_autograde_payload.py"
+CLI_SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "build_autograde_payload.py"
 REPO_ROOT = CLI_SCRIPT.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
@@ -301,8 +300,7 @@ def test_cli_handles_missing_results_file(
             path.unlink()
         return code
 
-    monkeypatch.setattr(build_autograde_payload,
-                        "run_pytest", run_pytest_and_remove)
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_remove)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -340,8 +338,7 @@ def test_cli_handles_malformed_json(
         path.write_text("{ invalid json", encoding="utf-8")
         return code
 
-    monkeypatch.setattr(build_autograde_payload,
-                        "run_pytest", run_pytest_and_corrupt)
+    monkeypatch.setattr(build_autograde_payload, "run_pytest", run_pytest_and_corrupt)
     _set_cli_env(monkeypatch)
 
     exit_code = build_autograde_payload.main(
@@ -402,8 +399,7 @@ def test_main_builds_variant_specific_pytest_environment(
         captured_env.update(env)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps({"status": "pass", "max_score": 1,
-                       "score": 1, "tests": []}),
+            json.dumps({"status": "pass", "max_score": 1, "score": 1, "tests": []}),
             encoding="utf-8",
         )
         return 0
@@ -443,8 +439,7 @@ def test_main_uses_solution_variant_environment_by_default(
         captured_env.update(env)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
-            json.dumps({"status": "pass", "max_score": 1,
-                       "score": 1, "tests": []}),
+            json.dumps({"status": "pass", "max_score": 1, "score": 1, "tests": []}),
             encoding="utf-8",
         )
         return 0

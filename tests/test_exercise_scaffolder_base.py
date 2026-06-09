@@ -35,12 +35,20 @@ class TestAbcEnforcement:
     def test_cannot_instantiate_abstract_class_directly(self) -> None:
         with pytest.raises(TypeError):
             ExerciseScaffold(  # type: ignore[abstract]
-                "Title", "ex000", 1, "tests/test_ex000.py", exercise_id=0,
+                "Title",
+                "ex000",
+                1,
+                "tests/test_ex000.py",
+                exercise_id=0,
             )
 
     def test_concrete_subclass_can_be_instantiated(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex000", 1, "tests/test_ex000.py", exercise_id=0,
+            "Title",
+            "ex000",
+            1,
+            "tests/test_ex000.py",
+            exercise_id=0,
         )
         assert isinstance(scaffold, ExerciseScaffold)
 
@@ -59,7 +67,11 @@ class TestBuildCheckAnswersCell:
     @pytest.fixture
     def scaffold(self) -> _ConcreteScaffold:
         return _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
 
     def test_student_variant_sets_student_env_var(self, scaffold: _ConcreteScaffold) -> None:
@@ -118,21 +130,33 @@ class TestBuildExpectationsModule:
 
     def test_variable_name_is_exercise_id_prefixed(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         module = scaffold.build_expectations_module()
         assert "EX014_EXPECTED_OUTPUTS" in module
 
     def test_contains_final_type_annotation(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         module = scaffold.build_expectations_module()
         assert "Final[dict[int, str]]" in module
 
     def test_keys_match_parts_count(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         module = scaffold.build_expectations_module()
         assert '1: ""' in module
@@ -141,7 +165,11 @@ class TestBuildExpectationsModule:
 
     def test_single_part_produces_single_key(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex015", 1, "tests/test_ex015.py", exercise_id=15,
+            "Title",
+            "ex015",
+            1,
+            "tests/test_ex015.py",
+            exercise_id=15,
         )
         module = scaffold.build_expectations_module()
         assert '1: ""' in module
@@ -149,7 +177,11 @@ class TestBuildExpectationsModule:
 
     def test_five_parts_produces_five_keys(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex020", 5, "tests/test_ex020.py", exercise_id=20,
+            "Title",
+            "ex020",
+            5,
+            "tests/test_ex020.py",
+            exercise_id=20,
         )
         module = scaffold.build_expectations_module()
         for i in range(1, 6):
@@ -158,7 +190,11 @@ class TestBuildExpectationsModule:
 
     def test_has_docstring_with_exercise_key(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         module = scaffold.build_expectations_module()
         first_line = module.splitlines()[0]
@@ -166,14 +202,22 @@ class TestBuildExpectationsModule:
 
     def test_has_future_annotations_import(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         module = scaffold.build_expectations_module()
         assert "from __future__ import annotations" in module
 
     def test_has_typing_import(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         module = scaffold.build_expectations_module()
         assert "from typing import Final" in module
@@ -190,7 +234,11 @@ class TestBuildStudentCheckerSupport:
     @pytest.fixture
     def scaffold(self) -> _ConcreteScaffold:
         return _ConcreteScaffold(
-            "Title", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
 
     def test_contains_checks_list(self, scaffold: _ConcreteScaffold) -> None:
@@ -202,7 +250,8 @@ class TestBuildStudentCheckerSupport:
         assert "TODO" in source
 
     def test_references_exercise_id_prefixed_expectations(
-        self, scaffold: _ConcreteScaffold,
+        self,
+        scaffold: _ConcreteScaffold,
     ) -> None:
         source = scaffold.build_student_checker_support()
         assert "EX014_EXPECTED_OUTPUTS" in source
@@ -212,7 +261,8 @@ class TestBuildStudentCheckerSupport:
         assert "ex012" in source
 
     def test_loads_expectations_via_load_exercise_test_module(
-        self, scaffold: _ConcreteScaffold,
+        self,
+        scaffold: _ConcreteScaffold,
     ) -> None:
         source = scaffold.build_student_checker_support()
         assert "load_exercise_test_module" in source
@@ -244,7 +294,11 @@ class TestBuildReadmeLines:
 
     def test_returns_non_empty_list(self) -> None:
         scaffold = _ConcreteScaffold(
-            "My Exercise", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "My Exercise",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_readme_lines("2026-06-05")
         assert isinstance(lines, list)
@@ -252,7 +306,11 @@ class TestBuildReadmeLines:
 
     def test_contains_title(self) -> None:
         scaffold = _ConcreteScaffold(
-            "My Exercise", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "My Exercise",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_readme_lines("2026-06-05")
         text = "\n".join(lines)
@@ -260,7 +318,11 @@ class TestBuildReadmeLines:
 
     def test_contains_created_date(self) -> None:
         scaffold = _ConcreteScaffold(
-            "My Exercise", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "My Exercise",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_readme_lines("2026-06-05")
         text = "\n".join(lines)
@@ -268,7 +330,11 @@ class TestBuildReadmeLines:
 
     def test_contains_uv_run_pytest_instruction(self) -> None:
         scaffold = _ConcreteScaffold(
-            "My Exercise", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "My Exercise",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_readme_lines("2026-06-05")
         text = "\n".join(lines)
@@ -277,7 +343,11 @@ class TestBuildReadmeLines:
 
     def test_contains_student_notebook_reference(self) -> None:
         scaffold = _ConcreteScaffold(
-            "My Exercise", "ex014", 3, "tests/test_ex014.py", exercise_id=14,
+            "My Exercise",
+            "ex014",
+            3,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_readme_lines("2026-06-05")
         text = "\n".join(lines)
@@ -294,7 +364,11 @@ class TestBuildTestLines:
 
     def test_contains_shared_imports(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_test_lines()
         text = "\n".join(lines)
@@ -306,7 +380,11 @@ class TestBuildTestLines:
 
     def test_contains_exercise_key_constant(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_test_lines()
         text = "\n".join(lines)
@@ -314,7 +392,11 @@ class TestBuildTestLines:
 
     def test_contains_resolve_exercise_notebook_path(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_test_lines()
         text = "\n".join(lines)
@@ -322,7 +404,11 @@ class TestBuildTestLines:
 
     def test_includes_concrete_body_test_lines(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_test_lines()
         text = "\n".join(lines)
@@ -330,7 +416,11 @@ class TestBuildTestLines:
 
     def test_no_debug_specific_lines_by_default(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         lines = scaffold.build_test_lines()
         text = "\n".join(lines)
@@ -351,7 +441,11 @@ class TestBuildNotebook:
 
     def test_returns_notebook_dict(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         assert isinstance(notebook, dict)
@@ -361,14 +455,22 @@ class TestBuildNotebook:
 
     def test_nbformat_is_4(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         assert notebook["nbformat"] == 4  # noqa: PLR2004
 
     def test_cells_is_non_empty_list(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
@@ -377,7 +479,11 @@ class TestBuildNotebook:
 
     def test_first_cell_is_header_markdown(self) -> None:
         scaffold = _ConcreteScaffold(
-            "My Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "My Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
@@ -387,7 +493,11 @@ class TestBuildNotebook:
 
     def test_scratch_cell_is_before_check_cell(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
@@ -399,7 +509,11 @@ class TestBuildNotebook:
 
     def test_last_cell_is_check_answers(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
@@ -409,7 +523,11 @@ class TestBuildNotebook:
 
     def test_notebook_has_kernelspec_metadata(self) -> None:
         scaffold = _ConcreteScaffold(
-            "Title", "ex014", 1, "tests/test_ex014.py", exercise_id=14,
+            "Title",
+            "ex014",
+            1,
+            "tests/test_ex014.py",
+            exercise_id=14,
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         metadata = notebook.get("metadata", {})

@@ -18,8 +18,7 @@ def validate_variant(variant: str) -> Variant:
         return "student"
     if variant == "solution":
         return "solution"
-    raise RuntimeError(
-        f"{ACTIVE_VARIANT_ENV_VAR} must be 'student' or 'solution', not {variant!r}")
+    raise RuntimeError(f"{ACTIVE_VARIANT_ENV_VAR} must be 'student' or 'solution', not {variant!r}")
 
 
 def get_active_variant(*, default: Variant = "solution") -> Variant:
@@ -51,8 +50,7 @@ def resolve_variant_notebook_path(
     """Return the notebook path selected by the explicit variant contract."""
     selected_variant = variant or get_active_variant()
     original = Path(notebook_path)
-    resolved = _anchor_path(
-        original, repo_root) if anchor_to_repo_root else original
+    resolved = _anchor_path(original, repo_root) if anchor_to_repo_root else original
     return _resolve_canonical_notebook_path(resolved, selected_variant)
 
 

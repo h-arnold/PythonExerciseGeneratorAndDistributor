@@ -30,15 +30,13 @@ def _expected_all_keys() -> list[str]:
 def test_build_exercise_registry_returns_all_exercises() -> None:
     """``build_exercise_registry()`` returns an entry for every filesystem-discovered exercise."""
     registry = build_exercise_registry()
-    assert {entry["exercise_key"]
-            for entry in registry} == set(_expected_all_keys())
+    assert {entry["exercise_key"] for entry in registry} == set(_expected_all_keys())
 
 
 def test_canonical_entry_has_correct_metadata() -> None:
     """The canonical ex004 entry exposes its metadata."""
     registry = build_exercise_registry()
-    canonical = next(
-        entry for entry in registry if entry["exercise_key"] == CANONICAL_KEY)
+    canonical = next(entry for entry in registry if entry["exercise_key"] == CANONICAL_KEY)
     assert canonical["metadata"] is not None
     assert canonical["metadata"]["exercise_key"] == CANONICAL_KEY
     assert canonical["metadata"]["exercise_id"] == CANONICAL_EXERCISE_ID
@@ -60,24 +58,17 @@ def test_build_exercise_catalogue_orders_by_exercise_id() -> None:
     """The catalogue order follows metadata exercise IDs."""
     catalogue = build_exercise_catalogue()
     expected_keys = _expected_all_keys()
-    expected_ids = [
-        int(key.split("_")[0].removeprefix("ex"))
-        for key in expected_keys
-    ]
-    assert [entry["exercise_id"]
-            for entry in catalogue] == expected_ids
-    assert [entry["exercise_key"]
-            for entry in catalogue] == expected_keys
+    expected_ids = [int(key.split("_")[0].removeprefix("ex")) for key in expected_keys]
+    assert [entry["exercise_id"] for entry in catalogue] == expected_ids
+    assert [entry["exercise_key"] for entry in catalogue] == expected_keys
 
 
 def test_build_exercise_catalogue_exposes_metadata_derived_labels() -> None:
     """Display labels come from metadata-derived titles and IDs."""
     catalogue = build_exercise_catalogue()
-    ex004 = next(
-        entry for entry in catalogue if entry["exercise_key"] == CANONICAL_KEY)
+    ex004 = next(entry for entry in catalogue if entry["exercise_key"] == CANONICAL_KEY)
     assert ex004["title"] == "Debug Syntax Errors"
-    assert ex004["display_label"] == build_display_label(
-        4, "Debug Syntax Errors")
+    assert ex004["display_label"] == build_display_label(4, "Debug Syntax Errors")
 
 
 def test_get_catalogue_exercise_keys_returns_metadata_order() -> None:
@@ -97,8 +88,7 @@ def test_canonical_exercise_with_mismatched_metadata_key_raises_runtime_error(
     tmp_path: Path,
 ) -> None:
     """Canonical metadata must match the filesystem exercise_key exactly."""
-    exercise_dir = tmp_path / "exercises" / \
-        "sequence" / "ex004_sequence_debug_syntax"
+    exercise_dir = tmp_path / "exercises" / "sequence" / "ex004_sequence_debug_syntax"
     make_exercise_json(
         exercise_dir,
         {
@@ -126,8 +116,7 @@ def test_canonical_exercise_with_mismatched_construct_raises_runtime_error(
     tmp_path: Path,
 ) -> None:
     """Canonical metadata construct must match the canonical directory path."""
-    exercise_dir = tmp_path / "exercises" / \
-        "sequence" / "ex004_sequence_debug_syntax"
+    exercise_dir = tmp_path / "exercises" / "sequence" / "ex004_sequence_debug_syntax"
     make_exercise_json(
         exercise_dir,
         {
