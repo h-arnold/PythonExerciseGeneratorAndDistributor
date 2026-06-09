@@ -47,7 +47,12 @@ class TemplatePackager:
     )
 
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
-    _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = ("notebooks", "tests")
+    _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = (
+        "notebooks",
+        "tests",
+        "additional-resources",
+    )
+    _CONSTRUCT_RESOURCE_DIRNAME = "additional-resources"
     _STUDENT_NOTEBOOK_FILENAME = "student.ipynb"
     _EXERCISE_METADATA_FILENAME = "exercise.json"
     _FLATTENED_TEST_GLOB = "test_ex[0-9]*_*.py"
@@ -92,6 +97,71 @@ class TemplatePackager:
                 tests_export_dir,
                 ignore_patterns=self.EXERCISE_TEST_COPY_EXCLUDE_PATTERNS,
             )
+
+    def _resolve_exercise_construct(self, exercise_key: str) -> str:
+        """Resolve the raw construct slug for an exercise key.
+
+        Args:
+            exercise_key: The exercise key.
+
+        Returns:
+            The construct string (e.g. "sequence").
+
+        Raises:
+            ValueError: If the exercise metadata cannot be read.
+        """
+        try:
+            exercise_metadata_path = next(
+                (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
+            )
+            metadata: dict[str, object] = json.loads(
+                exercise_metadata_path.read_text(encoding="utf-8")
+            )
+            construct = metadata.get("construct")
+            if not isinstance(construct, str) or not construct.strip():
+                raise ValueError("missing or invalid construct metadata")
+            return construct
+        except Exception as cause:
+            reason = str(cause)
+            raise ValueError(
+                f"Failed to resolve construct for exercise '{exercise_key}': {reason}"
+            ) from cause
+
+    def _construct_has_additional_resources(self, construct: str) -> bool:
+        """Return whether a construct has an additional-resources folder in the source repo.
+
+        Args:
+            construct: Raw construct slug (e.g. "sequence").
+
+        Returns:
+            True if the folder exists in the source repo.
+        """
+        resource_dir = self.repo_root / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
+        return resource_dir.exists() and resource_dir.is_dir()
+
+    def copy_construct_resources(self, workspace: Path, exercises: list[str]) -> None:
+        """Copy construct-level additional-resources folders to the workspace.
+
+        For each unique construct derived from the exercise keys, copies the
+        ``additional-resources/`` directory from the source repo into the
+        workspace if it exists. Constructs without this folder are silently
+        skipped.
+
+        Args:
+            workspace: Workspace directory.
+            exercises: List of exercise keys.
+        """
+        constructs: set[str] = set()
+        for exercise_key in exercises:
+            construct = self._resolve_exercise_construct(exercise_key)
+            constructs.add(construct)
+
+        for construct in constructs:
+            if not self._construct_has_additional_resources(construct):
+                continue
+            src = self.repo_root / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
+            dest = workspace / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
+            safe_copy_directory(src, dest)
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -202,8 +272,14 @@ class TemplatePackager:
             return template_path.read_text(encoding="utf-8")
         return "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
 
-    def _readme_entry_from_exercise_key(self, exercise_key: str) -> tuple[str, str, str]:
-        """Resolve the README section key, display title, and canonical student notebook path."""
+    def _readme_entry_from_exercise_key(self, exercise_key: str) -> tuple[str, str, str, str]:
+        """Resolve the raw construct, display construct, title, and notebook path.
+
+        Returns:
+            Tuple of (raw_construct, display_construct, title, link_target).
+        """
+        raw_construct = self._resolve_exercise_construct(exercise_key)
+
         try:
             exercise_metadata_path = next(
                 (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
@@ -211,33 +287,51 @@ class TemplatePackager:
             metadata: dict[str, object] = json.loads(
                 exercise_metadata_path.read_text(encoding="utf-8")
             )
-
-            construct = metadata.get("construct")
             title = metadata.get("title")
             if not isinstance(title, str) or not title.strip():
                 raise ValueError("missing or invalid title metadata")
-            if not isinstance(construct, str) or not construct.strip():
-                raise ValueError("missing or invalid construct metadata")
         except Exception as cause:
             reason = str(cause)
             raise ValueError(
                 f"README generation failed for exercise '{exercise_key}': {reason}"
             ) from cause
 
-        display_construct = construct.replace("_", " ").title()
-        link_target = f"exercises/{construct}/{exercise_key}/notebooks/student.ipynb"
-        return display_construct, title, link_target
+        display_construct = raw_construct.replace("_", " ").title()
+        link_target = f"exercises/{raw_construct}/{exercise_key}/notebooks/student.ipynb"
+        return raw_construct, display_construct, title, link_target
 
     @staticmethod
     def _render_grouped_readme_sections(
         grouped_entries: OrderedDict[str, list[tuple[str, str]]],
+        *,
+        constructs_with_resources: set[str] | None = None,
     ) -> str:
-        """Render grouped construct sections with numbered markdown links."""
+        """Render grouped construct sections with numbered markdown links.
+
+        Args:
+            grouped_entries: Mapping of display construct to list of (title, link) tuples.
+            constructs_with_resources: Set of display-construct names that have
+                an additional-resources folder. When a construct is in this set,
+                a link to the resources folder is appended after its exercise list.
+
+        Returns:
+            Rendered Markdown string.
+        """
+        if constructs_with_resources is None:
+            constructs_with_resources = set()
+
         sections: list[str] = []
         for display_construct, entries in grouped_entries.items():
             sections.append(f"## {display_construct}")
             for index, (title, link_target) in enumerate(entries, start=1):
                 sections.append(f"{index}. [{title}]({link_target})")
+            if display_construct in constructs_with_resources:
+                # Reverse the title-cased display name back to a snake_case slug
+                raw_construct = display_construct.lower().replace(" ", "_")
+                sections.append(
+                    f"📁 **Additional Resources**: [View resources]"
+                    f"(exercises/{raw_construct}/additional-resources/)"
+                )
             sections.append("")
 
         return "\n".join(sections).rstrip()
@@ -253,13 +347,19 @@ class TemplatePackager:
         template_content = self._load_readme_template()
 
         grouped_entries: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
+        constructs_with_resources: set[str] = set()
         for exercise_key in sorted(exercises):
-            display_construct, title, link_target = self._readme_entry_from_exercise_key(
-                exercise_key
+            raw_construct, display_construct, title, link_target = (
+                self._readme_entry_from_exercise_key(exercise_key)
             )
             grouped_entries.setdefault(display_construct, []).append((title, link_target))
+            if self._construct_has_additional_resources(raw_construct):
+                constructs_with_resources.add(display_construct)
 
-        exercise_list = self._render_grouped_readme_sections(grouped_entries)
+        exercise_list = self._render_grouped_readme_sections(
+            grouped_entries,
+            constructs_with_resources=constructs_with_resources,
+        )
         content = template_content.replace("{TEMPLATE_NAME}", template_name)
         content = content.replace("{EXERCISE_LIST}", exercise_list)
         readme_path = workspace / "README.md"
@@ -269,32 +369,36 @@ class TemplatePackager:
         """Return whether a path fits the packaged exercises tree."""
         relative_parts = path.relative_to(exercises_dir).parts
         part_count = len(relative_parts)
-        is_exercise_dir = (
+
+        # Exercise directory or canonical exercise.json metadata file
+        if (
             part_count in (self._CONSTRUCT_DIR_DEPTH, self._EXERCISE_DIR_DEPTH) and path.is_dir()
-        )
-        is_exercise_json = (
+        ) or (
             part_count == self._SUBDIR_INDEX + 1
             and path.is_file()
             and path.name == self._EXERCISE_METADATA_FILENAME
-        )
-        if is_exercise_dir or is_exercise_json:
+        ):
             return True
 
-        if part_count <= self._SUBDIR_INDEX:
-            return False
+        # Construct-level additional-resources directories and their contents.
+        # These live at depth 2 (same as exercise dirs) but with a well-known name,
+        # so files/folders within them bypass the exercise-subdirectory index check.
+        if part_count >= self._EXERCISE_DIR_DEPTH and (
+            relative_parts[self._EXERCISE_DIR_DEPTH - 1] == self._CONSTRUCT_RESOURCE_DIRNAME
+        ):
+            return self._is_valid_packaged_tests_path(path)
 
-        subdirectory = relative_parts[self._SUBDIR_INDEX]
-        is_allowed_subdirectory = subdirectory in self._ALLOWED_EXERCISE_SUBDIRECTORIES
-        if not is_allowed_subdirectory:
-            return False
+        # For paths deeper than the subdirectory level, validate inside known subdirectories
+        if part_count > self._SUBDIR_INDEX:
+            subdirectory = relative_parts[self._SUBDIR_INDEX]
+            if subdirectory in self._ALLOWED_EXERCISE_SUBDIRECTORIES:
+                if part_count == self._SUBDIR_INDEX + 1:
+                    return path.is_dir()
+                if subdirectory == "notebooks":
+                    return self._is_valid_packaged_notebook_path(path, part_count)
+                return self._is_valid_packaged_tests_path(path)
 
-        if part_count == self._SUBDIR_INDEX + 1:
-            return path.is_dir()
-
-        if subdirectory == "notebooks":
-            return self._is_valid_packaged_notebook_path(path, part_count)
-
-        return self._is_valid_packaged_tests_path(path)
+        return False
 
     def _is_valid_packaged_notebook_path(self, path: Path, part_count: int) -> bool:
         """Return whether a path is the allowed exercise-local student notebook."""
@@ -352,6 +456,9 @@ class TemplatePackager:
 
         for exercise_dir in exercises_dir.glob("*/*"):
             if not exercise_dir.is_dir():
+                continue
+            # Skip construct-level resource directories (e.g. additional-resources)
+            if exercise_dir.name == self._CONSTRUCT_RESOURCE_DIRNAME:
                 continue
             if not (exercise_dir / "exercise.json").is_file():
                 return False

@@ -73,4 +73,6 @@ The mapping layer must preserve exercise identity by `exercise_key` and must not
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 - **Template CLI contract**: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
 
+**Construct-level resources**: When packaging, the CLI preserves construct-level `additional-resources/` directories (e.g. `exercises/sequence/additional-resources/`) in the exported output. These are optional reference materials for students and are not part of the grading contract.
+
 Key runtime contract checks are enforced by direct file-based tests, without a consumer matrix table.

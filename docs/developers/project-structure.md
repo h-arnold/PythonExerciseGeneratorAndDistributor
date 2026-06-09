@@ -62,6 +62,8 @@ Where:
 
 `exercise.json` belongs in this canonical directory. Exercise type is metadata in `exercise.json`; it is **not** a path segment in the canonical layout.
 
+Construct-level directories may also include an `additional-resources/` folder with reference materials (cheat sheets, guides, etc.) shared across all exercises in that construct. This folder is automatically included in packaged template outputs.
+
 Each exercise folder contains:
 
 - `README.md`: Teacher-facing exercise notes

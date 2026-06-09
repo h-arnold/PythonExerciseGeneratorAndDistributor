@@ -115,6 +115,32 @@ def test_dry_run_emits_no_flattened_notebook_or_test_mirrors(
         assert not path.exists(), f"forbidden {label} was exported: {path}"
 
 
+def test_dry_run_includes_additional_resources(
+    section4_dry_run: tuple[Path, subprocess.CompletedProcess[str]],
+) -> None:
+    """Dry-run packaging should include construct-level additional-resources when present."""
+
+    output_dir, result = section4_dry_run
+
+    assert result.returncode == 0, (
+        "Dry-run packaging did not complete successfully:\n"
+        f"stdout:\n{result.stdout}\n"
+        f"stderr:\n{result.stderr}"
+    )
+
+    resource_dir = output_dir / "exercises" / "sequence" / "additional-resources"
+    assert resource_dir.exists(), f"missing additional-resources: {resource_dir}"
+    assert (resource_dir / "sequence-cheat-sheet.md").is_file()
+    assert (resource_dir / "ARITHMETIC_CHEATSHEET.md").is_file()
+
+    # Verify README links to the resources
+    readme = output_dir / "README.md"
+    assert readme.exists()
+    content = readme.read_text()
+    assert "Additional Resources" in content
+    assert "exercises/sequence/additional-resources/" in content
+
+
 def test_devcontainer_files_exclude_hides_metadata_clutter(
     repo_root: Path,
 ) -> None:

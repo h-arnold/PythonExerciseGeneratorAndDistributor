@@ -282,6 +282,89 @@ class TestCopyFiles:
         assert (temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").exists()
 
 
+class TestCopyConstructResources:
+    """Tests for copying construct-level additional-resources."""
+
+    def test_copies_additional_resources_folder(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Copy the folder when it exists in the source repo."""
+        exercises = ["ex002_sequence_modify_basics"]
+        template_packager.copy_construct_resources(temp_dir, exercises)
+
+        resource_dir = temp_dir / "exercises" / "sequence" / "additional-resources"
+        assert resource_dir.exists()
+        assert resource_dir.is_dir()
+        assert (resource_dir / "sequence-cheat-sheet.md").is_file()
+        assert (resource_dir / "ARITHMETIC_CHEATSHEET.md").is_file()
+
+    def test_copies_only_once_per_construct(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Multiple exercises from the same construct copy resources only once."""
+        exercises = [
+            "ex002_sequence_modify_basics",
+            "ex003_sequence_modify_variables",
+        ]
+        template_packager.copy_construct_resources(temp_dir, exercises)
+
+        resource_dir = temp_dir / "exercises" / "sequence" / "additional-resources"
+        assert resource_dir.exists()
+        assert resource_dir.is_dir()
+        assert (resource_dir / "sequence-cheat-sheet.md").is_file()
+
+    def test_does_nothing_for_empty_exercise_list(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Silently do nothing when no exercises are provided."""
+        template_packager.copy_construct_resources(temp_dir, [])
+
+        assert not (temp_dir / "exercises").exists()
+
+    def test_skips_construct_without_resources(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Silently skip constructs that do not have an additional-resources folder."""
+        # Use a fixture repo with a construct that has no additional-resources
+        from scripts.template_repo_cli.core.packager import TemplatePackager
+
+        repo_root = temp_dir / "fixture_repo"
+        construct = "selection"
+        exercise_key = "ex100_selection_intro"
+        exercise_dir = repo_root / "exercises" / construct / exercise_key
+        exercise_dir.mkdir(parents=True)
+        (exercise_dir / "exercise.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "exercise_key": exercise_key,
+                    "exercise_id": 100,
+                    "slug": exercise_key,
+                    "title": "Selection Intro",
+                    "construct": construct,
+                    "exercise_type": "modify",
+                    "parts": 1,
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        packager = TemplatePackager(repo_root)
+        packager.copy_construct_resources(temp_dir / "workspace", [exercise_key])
+
+        resource_dir = temp_dir / "workspace" / "exercises" / construct / "additional-resources"
+        assert not resource_dir.exists()
+
+
 class TestGenerateFiles:
     """Tests for generating template files."""
 
@@ -491,6 +574,47 @@ class TestGenerateFiles:
         content = gitignore.read_text()
         assert "__pycache__" in content
 
+    def test_generate_readme_includes_resource_link_when_construct_has_resources(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """README includes an additional-resources link for constructs that have the folder."""
+        exercises = ["ex002_sequence_modify_basics", "ex004_sequence_debug_syntax"]
+        template_packager.generate_readme(temp_dir, "Test Template", exercises)
+
+        content = (temp_dir / "README.md").read_text()
+        assert "Additional Resources" in content
+        assert "exercises/sequence/additional-resources/" in content
+
+    def test_generate_readme_omits_resource_link_when_construct_has_no_resources(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """README does not include a resources link when the construct has no additional-resources."""
+        # Use a fixture repo where the construct has no additional-resources
+        fixture_root = temp_dir / "fixture_repo"
+        self._create_readme_contract_repo_fixture(fixture_root)
+        self._write_exercise_metadata(
+            fixture_root,
+            exercise_key="ex010_control_flow_intro",
+            construct="control_flow",
+            title="Control Flow Intro",
+        )
+
+        template_packager.repo_root = fixture_root
+        template_packager.template_files_dir = fixture_root / "template_repo_files"
+
+        template_packager.generate_readme(
+            temp_dir,
+            "No Resources",
+            ["ex010_control_flow_intro"],
+        )
+
+        content = (temp_dir / "README.md").read_text()
+        assert "Additional Resources" not in content
+
 
 class TestPackageIntegrity:
     """Tests for package validation."""
@@ -623,6 +747,27 @@ class TestPackageIntegrity:
         assert (
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
         ).is_file()
+        assert template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_accepts_additional_resources(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Validation accepts a workspace containing additional-resources at construct level."""
+        _create_valid_packaged_workspace(
+            template_packager,
+            temp_dir,
+            build_exercise_file_map,
+        )
+        # Add additional-resources to the packaged workspace
+        resource_dir = temp_dir / "exercises" / "sequence" / "additional-resources"
+        resource_dir.mkdir(parents=True)
+        (resource_dir / "cheat-sheet.md").write_text("# Cheat Sheet\n", encoding="utf-8")
+        (resource_dir / "images").mkdir()
+        (resource_dir / "images" / "diagram.png").write_text("fake-png", encoding="utf-8")
+
         assert template_packager.validate_package(temp_dir)
 
     def test_package_integrity_rejects_exported_exercises_tree_non_allowed_notebook_asset(
