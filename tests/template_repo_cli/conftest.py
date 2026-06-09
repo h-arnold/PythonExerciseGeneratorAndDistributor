@@ -15,14 +15,8 @@ def repo_root() -> Path:
     return Path(__file__).parent.parent.parent
 
 
-
-
-
 @pytest.fixture
 def temp_dir() -> Generator[Path, None, None]:
     """Create a temporary directory for testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)
-
-
-

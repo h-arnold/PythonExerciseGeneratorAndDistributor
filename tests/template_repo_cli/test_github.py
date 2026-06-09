@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -16,7 +17,6 @@ from scripts.template_repo_cli.core.github import (
 from tests.template_repo_cli.github_test_helpers import (
     check_authentication,
     is_command_sequence,
-    parse_json_output,
 )
 
 
@@ -134,7 +134,7 @@ class TestParseGhOutput:
         """Test parsing JSON response from gh."""
         output = '{"name": "test-repo", "html_url": "https://github.com/user/test-repo"}'
 
-        parsed: dict[str, Any] = parse_json_output(output)
+        parsed: dict[str, Any] = json.loads(output)
 
         assert parsed["name"] == "test-repo"
         assert "html_url" in parsed
@@ -143,8 +143,8 @@ class TestParseGhOutput:
         """Test handling invalid JSON."""
         output = "Not valid JSON"
 
-        with pytest.raises(ValueError):
-            parse_json_output(output)
+        with pytest.raises(json.JSONDecodeError):
+            json.loads(output)
 
 
 class TestCreateRepository:

@@ -35,24 +35,27 @@ class FileCollector:
         self.repo_root: Path = repo_root
         self.exercises_dir: Path = repo_root / "exercises"
 
+    def _resolve_exercise_dir(self, exercise_id: str) -> Path:
+        """Resolve the canonical exercise directory for *exercise_id*."""
+        return resolve_exercise_dir(exercise_id, self.exercises_dir)
+
     def _canonical_test_path(self, exercise_id: str) -> Path:
-        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        exercise_dir = self._resolve_exercise_dir(exercise_id)
         return exercise_dir / "tests" / f"test_{exercise_id}.py"
 
     def _canonical_exercise_json_path(self, exercise_id: str) -> Path:
-        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
-        return exercise_dir / "exercise.json"
+        return self._resolve_exercise_dir(exercise_id) / "exercise.json"
 
     def _canonical_tests_export_dir(self, exercise_id: str) -> Path:
-        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        exercise_dir = self._resolve_exercise_dir(exercise_id)
         return Path("exercises") / exercise_dir.relative_to(self.exercises_dir) / "tests"
 
     def _canonical_exercise_json_export_path(self, exercise_id: str) -> Path:
-        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        exercise_dir = self._resolve_exercise_dir(exercise_id)
         return Path("exercises") / exercise_dir.relative_to(self.exercises_dir) / "exercise.json"
 
     def _canonical_notebook_export_path(self, exercise_id: str) -> Path:
-        exercise_dir = resolve_exercise_dir(exercise_id, self.exercises_dir)
+        exercise_dir = self._resolve_exercise_dir(exercise_id)
         return (
             Path("exercises")
             / exercise_dir.relative_to(self.exercises_dir)

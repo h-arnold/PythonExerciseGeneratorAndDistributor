@@ -8,20 +8,14 @@ from pathlib import Path
 from typing import Literal, TypedDict
 
 
-# TypedDicts for well-known result shapes to improve static typing
-class ExecBase(TypedDict):
-    """Base TypedDict requiring `success` key (always present)."""
-
-    success: bool
-
-
-class ExecResult(ExecBase, total=False):
+class ExecResult(TypedDict, total=False):
     """Common dictionary shape returned by subprocess-related helpers.
 
-    `success` is required; other fields are optional depending on the
+    `success` is always present; other fields are optional depending on the
     context (dry-run messages, errors, etc.).
     """
 
+    success: bool
     output: str
     error: str
     returncode: int
@@ -404,7 +398,7 @@ class GitHubClient:
         # Execute command (this will create repo and push files)
         result: ExecResult = self.execute_command(cmd)
 
-        if not result["success"] and self._should_retry_with_fresh_auth(result):
+        if not result["success"] and self.should_retry_with_fresh_auth(result):
             # Return error with instructions for the user to resolve authentication
             return {
                 "success": False,
@@ -699,12 +693,8 @@ class GitHubClient:
 
         return "\n\n".join(sections)
 
-    def _should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
-        """Determine if an authentication error was encountered (internal).
-
-        This keeps the original private behaviour but accepts a properly typed
-        result dict which aids static analyzers.
-        """
+    def should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
+        """Determine if an authentication error was encountered."""
         message_parts: tuple[str, str] = (
             (result.get("error") or "").lower(),
             (result.get("output") or "").lower(),
@@ -716,10 +706,6 @@ class GitHubClient:
             return True
 
         return any(marker in combined_message for marker in AUTH_TOKEN_HINT_MARKERS)
-
-    def should_retry_with_fresh_auth(self, result: ExecResult) -> bool:
-        """Public wrapper around the internal auth-retry detection logic."""
-        return self._should_retry_with_fresh_auth(result)
 
     def should_offer_reauth_retry(
         self,
@@ -738,26 +724,6 @@ class GitHubClient:
         return not scope_check["has_scopes"]
 
     @staticmethod
-    def detect_auth_token_env() -> str | None:
-        """Return which GitHub auth-related environment variable is set, if any."""
-        return GitHubClient._detect_auth_token_env()
-
-    @staticmethod
-    def is_integration_permission_error(error: str | None) -> bool:
-        """Return True if createRepository permissions error is reported."""
-        return GitHubClient._is_integration_permission_error(error)
-
-    @staticmethod
-    def github_permission_hint(error: str | None) -> str | None:
-        """Return actionable hint for permission-related GitHub errors."""
-        return GitHubClient._github_permission_hint(error)
-
-    @staticmethod
-    def github_already_exists_hint(error: str | None, repo_name: str) -> str | None:
-        """Return actionable hint for repository name collisions."""
-        return GitHubClient._github_already_exists_hint(error, repo_name)
-
-    @staticmethod
     def github_error_hint(error: str | None, repo_name: str) -> str | None:
         """Return the best available actionable hint for GitHub create errors."""
         permission_hint = GitHubClient.github_permission_hint(error)
@@ -767,7 +733,7 @@ class GitHubClient:
         return GitHubClient.github_already_exists_hint(error, repo_name)
 
     @staticmethod
-    def _detect_auth_token_env() -> str | None:
+    def detect_auth_token_env() -> str | None:
         """Return which GitHub auth-related environment variable is set, if any."""
         for key in GITHUB_TOKEN_ENV_KEYS:
             if os.getenv(key):
@@ -775,7 +741,7 @@ class GitHubClient:
         return None
 
     @staticmethod
-    def _is_integration_permission_error(error: str | None) -> bool:
+    def is_integration_permission_error(error: str | None) -> bool:
         """Return True if createRepository permissions error is reported."""
         if not error:
             return False
@@ -784,13 +750,13 @@ class GitHubClient:
         return all(marker in message for marker in INTEGRATION_PERMISSION_ERROR_MARKERS)
 
     @staticmethod
-    def _github_permission_hint(error: str | None) -> str | None:
+    def github_permission_hint(error: str | None) -> str | None:
         """Return actionable hint for permission-related GitHub errors."""
         if not error:
             return None
 
-        if GitHubClient._is_integration_permission_error(error):
-            env_key = GitHubClient._detect_auth_token_env()
+        if GitHubClient.is_integration_permission_error(error):
+            env_key = GitHubClient.detect_auth_token_env()
             base = (
                 "The current GitHub authentication token cannot create repositories. "
                 "Run `gh auth login` with a user account/token that has the `repo` scope "
@@ -811,7 +777,7 @@ class GitHubClient:
         return None
 
     @staticmethod
-    def _github_already_exists_hint(error: str | None, repo_name: str) -> str | None:
+    def github_already_exists_hint(error: str | None, repo_name: str) -> str | None:
         """Return actionable hint for 'repository already exists' errors."""
         if not error:
             return None

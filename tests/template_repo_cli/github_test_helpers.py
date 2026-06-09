@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import subprocess
-from typing import Any, TypeGuard, cast
+from typing import TypeGuard, cast
 
 
 def is_command_sequence(obj: object) -> TypeGuard[list[str] | tuple[str, ...]]:
@@ -36,21 +35,3 @@ def check_authentication() -> bool:
         return result.returncode == 0
     except FileNotFoundError:
         return False
-
-
-def parse_json_output(output: str) -> dict[str, Any]:
-    """Parse JSON output from gh.
-
-    Args:
-        output: JSON string.
-
-    Returns:
-        Parsed dictionary.
-
-    Raises:
-        ValueError: If output is not valid JSON.
-    """
-    try:
-        return json.loads(output)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON: {e}") from e
