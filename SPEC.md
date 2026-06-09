@@ -37,11 +37,11 @@ The teacher docs page at `docs/teachers/construct-template-repos.md` will list e
 
 ## Constraints and Invariants
 
-- Target org configured via `TEMPLATE_REPO_ORG` environment variable (default: `h-arnold`). This makes the repo forkable — anyone can fork and set their own org. Template repo naming: `python-exercises-{construct}`.
+- Target org/user is always derived from the authenticated GitHub credentials via `gh api user --jq .login`. No env var needed — whoever is authenticated (via `GH_TOKEN` in CI, or `gh auth` locally) is the owner. Template repo naming: `python-exercises-{construct}`.
 - Must use existing `repoman` internals without modifying them.
 - Must follow repository conventions: `snake_case`, type hints, TypedDicts, docstrings, Fail Fast, Ruff-compliant.
-- Auth in CI: `GH_TOKEN` environment variable set from `secrets.PAT_FOR_TEMPLATE_REPOS` in the workflow. The `gh` CLI and git credential helpers both recognise `GH_TOKEN`, so `GitHubClient.push_to_existing_repository()` works without extra auth steps.
-- The default `GITHUB_TOKEN` provided by GitHub Actions is scoped to the current repository only and **cannot** create or push to other repos. A PAT with `repo` scope (`PAT_FOR_TEMPLATE_REPOS` secret) is required for cross-repo operations.
+- Auth in CI: `GH_TOKEN` environment variable set from `secrets.PAT_FOR_TEMPLATE_REPOS` in the workflow. The `gh` CLI reads `GH_TOKEN` for all API calls (`gh api`, `gh repo create`, etc.), and `gh auth setup-git` configures git's credential helper to delegate to `gh`, so `git push` works transparently. The default `GITHUB_TOKEN` remains set in the CI environment but `gh` prefers `GH_TOKEN`.
+- The default `GITHUB_TOKEN` provided by GitHub Actions is intentionally scoped to the single repository that invoked the workflow ([docs](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)). It cannot create or push to other repos like `python-exercises-sequence`. A PAT with `repo` scope (`PAT_FOR_TEMPLATE_REPOS` secret) **is required** for cross-repo operations. This is unavoidable — there is no built-in GitHub Actions mechanism for cross-repo write access without an external credential.
 - PR trigger runs full build + docs gen but does **not** push to template repos. Uploads artifact for inspection.
 - Docs page auto-committed when publishing (push to main or workflow_dispatch), **not** on PR. The commit-back is handled by the CI workflow (git add/commit/push steps), not by the Python script — the script only writes the file to a configurable path.
 - Continue on error: if `sync_construct()` fails for one construct, the script logs the error and continues to the next. Exits non-zero if any construct failed.
@@ -71,5 +71,5 @@ The teacher docs page at `docs/teachers/construct-template-repos.md` will list e
 - **Decision**: Script continues on per-construct error, reports all, exits non-zero at end.
 - **Decision**: Docs page committed by CI workflow (not the Python script). Script writes to `--docs-output-path`; workflow conditionally commits on publish events.
 - **Decision**: CI auth via `GH_TOKEN` env var from `secrets.PAT_FOR_TEMPLATE_REPOS`.
-- **Decision**: Target org read from `TEMPLATE_REPO_ORG` environment variable (default `h-arnold`), not a CLI flag — makes repo forkable.
+- **Decision**: Target org/user derived from authenticated GitHub credentials (`gh api user --jq .login`). No env var or CLI flag needed.
 - **Decision**: Docs page timestamp uses `datetime.now()` local time at script runtime.

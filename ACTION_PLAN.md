@@ -17,7 +17,7 @@ Write the complete test suite first. All tests will fail initially (no implement
 | 1.5 | `TestMainCLI` | 5 tests | Small |
 
 **Script design notes to carry into tests:**
-- Target org is read from `TEMPLATE_REPO_ORG` env var (default: `h-arnold`), **not** a CLI flag. Tests should set this env var or mock `os.environ`.
+- Target org/user is always derived from `gh api user --jq .login` (the authenticated GitHub credentials). No env var or CLI flag for owner. Tests should mock `subprocess.run` for the `gh api user` call.
 - `--docs-output-path` CLI flag controls where the generated docs page is written (default: `docs/teachers/construct-template-repos.md`).
 - Docs page timestamp uses `datetime.now()`.
 - Continue-on-error: the script accumulates per-construct errors but continues.
@@ -62,7 +62,11 @@ Create the GitHub Actions workflow file.
 
 **Validation:** Workflow syntax valid. Dry-run locally using `uv run python scripts/sync_construct_template_repos.py --dry-run --verbose`.
 
-**Auth setup:** The workflow sets `GH_TOKEN: ${{ secrets.PAT_FOR_TEMPLATE_REPOS }}` in the job env. The `gh` CLI and git credential helpers both recognise `GH_TOKEN`, enabling `GitHubClient.push_to_existing_repository()` for cross-repo pushes.
+**Auth setup:** The workflow sets `GH_TOKEN: ${{ secrets.PAT_FOR_TEMPLATE_REPOS }}` in the job env. The `gh` CLI reads `GH_TOKEN` for all API calls (`gh api`, `gh repo create`, etc.), and `gh auth setup-git` configures git's credential helper to delegate to `gh`, so `git push` works transparently. The default `GITHUB_TOKEN` remains set in CI but `gh` prefers `GH_TOKEN`. The script derives the target org/user from `gh api user --jq .login` using this same credential — no separate config needed.
+
+> **Note:** `gh auth setup-git` may emit warnings about the coexisting `GITHUB_TOKEN`; these are harmless (the existing code calls it with `check=False`).
+
+**Why a PAT is required:** The default `GITHUB_TOKEN` in GitHub Actions is intentionally scoped to the single repository that invoked the workflow ([docs](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)). It cannot create or push to other repos like `python-exercises-sequence`. A PAT with `repo` scope stored as `PAT_FOR_TEMPLATE_REPOS` is the standard approach for cross-repo operations in Actions — there is no built-in alternative.
 
 **Docs commit-back:** The CI workflow (not the Python script) handles git add/commit/push of the generated docs page. Steps:
 1. Script writes the file (no git operations in the script)
