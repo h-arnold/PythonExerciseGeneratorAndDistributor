@@ -38,7 +38,7 @@ def test_notebook_grader_wrapper_links_to_canonical_module() -> None:
         '"""Compatibility wrapper for :mod:`exercise_runtime_support.notebook_grader`."""' in source
     )
     assert "exercise_runtime_support.notebook_grader" in source
-    assert '_import_module("exercise_runtime_support.notebook_grader")' in source
+    assert "from exercise_runtime_support.notebook_grader import *" in source
 
 
 def test_workflow_variant_script_contract() -> None:
