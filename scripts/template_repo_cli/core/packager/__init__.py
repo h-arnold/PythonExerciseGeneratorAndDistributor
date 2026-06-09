@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 import shutil
 import tempfile
-from collections import OrderedDict
 from pathlib import Path
 
 from scripts.template_repo_cli.core.collector import ExerciseFiles
 from scripts.template_repo_cli.utils.filesystem import safe_copy_directory, safe_copy_file
+
+from . import _readme
 
 
 class TemplatePackager:
@@ -267,74 +268,23 @@ class TemplatePackager:
 
     def _load_readme_template(self) -> str:
         """Return the README template content, including fallback content."""
-        template_path = self.template_files_dir / "README.md.template"
-        if template_path.exists():
-            return template_path.read_text(encoding="utf-8")
-        return "# {TEMPLATE_NAME}\n\n{EXERCISE_LIST}\n"
+        return _readme.load_readme_template(self.template_files_dir)
 
     def _readme_entry_from_exercise_key(self, exercise_key: str) -> tuple[str, str, str, str]:
-        """Resolve the raw construct, display construct, title, and notebook path.
-
-        Returns:
-            Tuple of (raw_construct, display_construct, title, link_target).
-        """
-        raw_construct = self._resolve_exercise_construct(exercise_key)
-
-        try:
-            exercise_metadata_path = next(
-                (self.repo_root / "exercises").glob(f"*/{exercise_key}/exercise.json")
-            )
-            metadata: dict[str, object] = json.loads(
-                exercise_metadata_path.read_text(encoding="utf-8")
-            )
-            title = metadata.get("title")
-            if not isinstance(title, str) or not title.strip():
-                raise ValueError("missing or invalid title metadata")
-        except Exception as cause:
-            reason = str(cause)
-            raise ValueError(
-                f"README generation failed for exercise '{exercise_key}': {reason}"
-            ) from cause
-
-        display_construct = raw_construct.replace("_", " ").title()
-        link_target = f"exercises/{raw_construct}/{exercise_key}/notebooks/student.ipynb"
-        return raw_construct, display_construct, title, link_target
+        """Resolve the raw construct, display construct, title, and notebook path."""
+        return _readme.readme_entry_from_exercise_key(self.repo_root, exercise_key)
 
     @staticmethod
     def _render_grouped_readme_sections(
-        grouped_entries: OrderedDict[str, list[tuple[str, str]]],
+        grouped_entries: dict[str, list[tuple[str, str]]],
         *,
-        constructs_with_resources: set[str] | None = None,
+        constructs_with_resources: dict[str, str] | None = None,
     ) -> str:
-        """Render grouped construct sections with numbered markdown links.
-
-        Args:
-            grouped_entries: Mapping of display construct to list of (title, link) tuples.
-            constructs_with_resources: Set of display-construct names that have
-                an additional-resources folder. When a construct is in this set,
-                a link to the resources folder is appended after its exercise list.
-
-        Returns:
-            Rendered Markdown string.
-        """
-        if constructs_with_resources is None:
-            constructs_with_resources = set()
-
-        sections: list[str] = []
-        for display_construct, entries in grouped_entries.items():
-            sections.append(f"## {display_construct}")
-            for index, (title, link_target) in enumerate(entries, start=1):
-                sections.append(f"{index}. [{title}]({link_target})")
-            if display_construct in constructs_with_resources:
-                # Reverse the title-cased display name back to a snake_case slug
-                raw_construct = display_construct.lower().replace(" ", "_")
-                sections.append(
-                    f"📁 **Additional Resources**: [View resources]"
-                    f"(exercises/{raw_construct}/additional-resources/)"
-                )
-            sections.append("")
-
-        return "\n".join(sections).rstrip()
+        """Render grouped construct sections with numbered markdown links."""
+        return _readme.render_grouped_readme_sections(
+            grouped_entries,
+            constructs_with_resources=constructs_with_resources,
+        )
 
     def generate_readme(self, workspace: Path, template_name: str, exercises: list[str]) -> None:
         """Generate README file.
@@ -344,26 +294,14 @@ class TemplatePackager:
             template_name: Name of the template.
             exercises: List of exercise keys.
         """
-        template_content = self._load_readme_template()
-
-        grouped_entries: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
-        constructs_with_resources: set[str] = set()
-        for exercise_key in sorted(exercises):
-            raw_construct, display_construct, title, link_target = (
-                self._readme_entry_from_exercise_key(exercise_key)
-            )
-            grouped_entries.setdefault(display_construct, []).append((title, link_target))
-            if self._construct_has_additional_resources(raw_construct):
-                constructs_with_resources.add(display_construct)
-
-        exercise_list = self._render_grouped_readme_sections(
-            grouped_entries,
-            constructs_with_resources=constructs_with_resources,
+        _readme.generate_readme(
+            self.repo_root,
+            self.template_files_dir,
+            workspace,
+            template_name,
+            exercises,
+            self._construct_has_additional_resources,
         )
-        content = template_content.replace("{TEMPLATE_NAME}", template_name)
-        content = content.replace("{EXERCISE_LIST}", exercise_list)
-        readme_path = workspace / "README.md"
-        readme_path.write_text(content, encoding="utf-8")
 
     def _is_valid_packaged_exercise_path(self, path: Path, exercises_dir: Path) -> bool:
         """Return whether a path fits the packaged exercises tree."""
