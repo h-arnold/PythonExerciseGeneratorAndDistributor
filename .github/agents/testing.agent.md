@@ -2,6 +2,7 @@
 name: Testing Specialist
 description: Verifies repository infrastructure tests, exercise-local tests, notebook grading, autograding tooling, scaffolding, and template repo tooling.
 tools: [execute/getTerminalOutput, execute/killTerminal, execute/createAndRunTask, execute/runTests, execute/runInTerminal, execute/runNotebookCell, execute/testFailure, read/terminalSelection, read/terminalLastCommand, read/getNotebookSummary, read/problems, read/readFile, read/readNotebookCellOutput, search, todo, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment]
+model: DeepSeek V4 Flash (deepseek)
 user-invocable: true
 ---
 
@@ -29,7 +30,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
    - canonical exercise-local tests in `exercises/<construct>/<exercise_key>/tests/`
    - notebook grading helpers in `exercise_runtime_support/`
    - autograding tooling in `scripts/`
-   - scaffolding and template repository tooling in `scripts/template_repo_cli/` and `template_repo_files/`
+   - scaffolding and template repository tooling in `scripts/template_repo_cli/` and `template_repo_files/` (invoked via `repoman`)
 4. Confirm whether a failing student variant is expected classroom behaviour or a real defect.
 5. Start with the smallest credible check that can falsify the current hypothesis.
 
@@ -40,7 +41,7 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 - Notebook grading and runtime: use `exercise_runtime_support/`, `tests/notebook_grader.py`, and `tests/exercise_framework/` when the behaviour depends on tagged cells, variant selection, explanation cells, or notebook path resolution.
 - Autograding tooling: use `scripts/build_autograde_payload.py`, the autograde plugin tests, and the Classroom payload path when the issue is about encoded results, task grouping, or payload size.
 - Exercise scaffolding and validation: use `scripts/new_exercise.py`, `scripts/verify_exercise_quality.py`, `docs/teachers/exercise-generation.md`, `docs/exercise-agents/exercise-generation-cli.md`, and `docs/exercise-agents/exercise-testing.md` when the issue is about generated exercises, canonical layout, or notebook metadata.
-- Template repository tooling: use `scripts/template_repo_cli/`, `template_repo_files/`, and the matching tests when the issue concerns template packaging or exported Classroom assets.
+- Template repository tooling: use `scripts/template_repo_cli/`, `template_repo_files/`, and the matching tests when the issue concerns template packaging or exported Classroom assets (invoked via `repoman`).
 
 ## 2. Command Selection
 

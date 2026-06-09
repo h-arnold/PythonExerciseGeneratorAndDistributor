@@ -94,7 +94,7 @@ Now you'll bundle some exercises into a template repository — a ready-to-use p
 Run this in the **Terminal**:
 
 ```bash
-template_repo_cli create --construct sequence --repo-name my-first-exercises
+repoman create --construct sequence --repo-name my-first-exercises
 ```
 
 This takes all the exercises from the `sequence` topic and creates a new public template repository called `my-first-exercises` on your GitHub account.
@@ -103,15 +103,15 @@ This takes all the exercises from the `sequence` topic and creates a new public 
 
 ```bash
 # Only modify exercises
-template_repo_cli create --construct sequence --type modify --repo-name sequence-modify
+repoman create --construct sequence --type modify --repo-name sequence-modify
 
 # Specific exercises by key
-template_repo_cli create \
+repoman create \
   --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name getting-started
 
 # Exercises from multiple topics
-template_repo_cli create \
+repoman create \
   --construct sequence selection \
   --type modify \
   --repo-name week1-python \
@@ -126,7 +126,7 @@ Check the repository exists on GitHub:
 2. You should see `my-first-exercises` (or whatever you named it) in your repositories list.
 3. Click into it — you should see the notebooks and test files inside.
 
-> **Trouble?** See the full guide at [How to Use the Template Repo CLI](how-to-use-the-template-repo-cli.md), or run `template_repo_cli create --help`.
+> **Trouble?** See the full guide at [How to Use the Template Repo CLI](how-to-use-the-template-repo-cli.md), or run `repoman create --help`.
 
 ---
 

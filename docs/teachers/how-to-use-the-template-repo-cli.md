@@ -34,7 +34,7 @@ The first line clears the temporary token. The second starts the GitHub authenti
 This command bundles every exercise from the `sequence` topic into a new template repository called `sequence-exercises`:
 
 ```bash
-template_repo_cli create --construct sequence --repo-name sequence-exercises
+repoman create --construct sequence --repo-name sequence-exercises
 ```
 
 After it finishes, you will have a new repository on GitHub. It will be public and marked as a template — ready to use in GitHub Classroom.
@@ -44,7 +44,7 @@ After it finishes, you will have a new repository on GitHub. It will be public a
 You can narrow the selection to only `modify` exercises (or only `debug` or `make`):
 
 ```bash
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --type modify \
   --repo-name sequence-modify
@@ -55,7 +55,7 @@ template_repo_cli create \
 If you want only a handful of specific exercises:
 
 ```bash
-template_repo_cli create \
+repoman create \
   --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name getting-started
 ```
@@ -65,7 +65,7 @@ template_repo_cli create \
 If your school uses a GitHub organisation to organise repositories, add the `--org` flag:
 
 ```bash
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --repo-name sequence-exercises \
   --org my-school-organisation
@@ -84,7 +84,7 @@ Replace `my-school-organisation` with your organisation's GitHub name. If you do
 ### Putting it all together — a realistic example
 
 ```bash
-template_repo_cli create \
+repoman create \
   --construct sequence selection \
   --type modify \
   --repo-name week1-python \
@@ -101,7 +101,7 @@ This creates a template called `week1-python` in the `my-school-org` organisatio
 If you have already created a template and want to refresh it (for example, you fixed a typo in an exercise), use the `update` command:
 
 ```bash
-template_repo_cli update \
+repoman update \
   --construct sequence \
   --repo-name my-org/sequence-exercises
 ```
@@ -115,13 +115,13 @@ This force-pushes the latest version of the exercises into the existing reposito
 To see a list of every exercise in the repository:
 
 ```bash
-template_repo_cli list
+repoman list
 ```
 
 To see only exercises in a specific topic:
 
 ```bash
-template_repo_cli list --construct sequence
+repoman list --construct sequence
 ```
 
 ---

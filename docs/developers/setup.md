@@ -44,7 +44,7 @@ If uv is already available (e.g., in Codespaces or the dev container), you can s
 uv sync
 ```
 
-`uv sync` creates the `.venv` folder, installs every dependency from `pyproject.toml`, and makes the console scripts (like `template_repo_cli`) available on your PATH when the virtual environment is activated (so you can call them directly as `template_repo_cli` or use `python -m template_repo_cli`).
+`uv sync` creates the `.venv` folder, installs every dependency from `pyproject.toml`, and makes the console scripts (like `repoman`) available on your PATH when the virtual environment is activated (so you can call them directly as `repoman` or use `uv run python -m scripts.template_repo_cli`).
 
 This installs:
 

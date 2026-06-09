@@ -12,9 +12,11 @@ The CLI is part of this repository. Install the development dependencies via uv:
 uv sync
 ```
 
-After syncing, run `template_repo_cli --help` to confirm the console script is available (the script is on your `PATH` when the virtual environment is activated).
+After syncing, run `repoman --help` to confirm the console script is available (the script is on your `PATH` when the virtual environment is activated).
 
-Alternatively, run the CLI as a module: `uv run python -m template_repo_cli --help`.
+Alternatively, run the CLI as a module: `uv run python -m scripts.template_repo_cli --help`.
+
+> **Note on naming:** The package source lives under `scripts/template_repo_cli/`, but the preferred console entry point is `repoman` (short for *repository manager*). Both `template_repo_cli` and `repoman` invoke the same CLI — use `repoman` for everyday work.
 
 ## Prerequisites
 
@@ -45,23 +47,23 @@ The CLI provides four main commands:
 
 ```bash
 # List all exercises
-template_repo_cli list
+repoman list
 
 # List exercises in a specific construct
-template_repo_cli list --construct sequence
+repoman list --construct sequence
 
 # Output as JSON
-template_repo_cli list --format json
+repoman list --format json
 ```
 
 ### Validate Selection
 
 ```bash
 # Validate exercises by construct
-template_repo_cli validate --construct sequence
+repoman validate --construct sequence
 
 # Validate by construct and type
-template_repo_cli validate --construct sequence --type modify
+repoman validate --construct sequence --type modify
 ```
 
 ### Create Template Repository
@@ -70,12 +72,12 @@ template_repo_cli validate --construct sequence --type modify
 
 ```bash
 # Create template with all sequence exercises
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --repo-name sequence-exercises
 
 # Create template with multiple constructs
-template_repo_cli create \
+repoman create \
   --construct sequence selection iteration \
   --repo-name week1-exercises \
   --name "Week 1: Control Flow Exercises"
@@ -85,7 +87,7 @@ template_repo_cli create \
 
 ```bash
 # Create template with only modify exercises from sequence
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --type modify \
   --repo-name sequence-modify \
@@ -100,13 +102,13 @@ template_repo_cli create \
 
 ```bash
 # Create template with specific exercises
-template_repo_cli create \
+repoman create \
   --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name getting-started \
   --name "Getting Started with Python"
 
 # Create template with pattern matching
-template_repo_cli create \
+repoman create \
   --exercise-keys "ex00*" \
   --repo-name first-ten \
   --name "First Ten Exercises"
@@ -116,19 +118,19 @@ template_repo_cli create \
 
 ```bash
 # Create private repository in an organisation
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --repo-name sequence-exercises \
   --private \
   --org my-organization
 
 # Test without creating the repository (dry-run)
-template_repo_cli --dry-run create \
+repoman --dry-run create \
   --construct sequence \
   --repo-name test-repo
 
 # Save to local directory instead of creating repository
-template_repo_cli \
+repoman \
   --output-dir ./my-template \
   --dry-run \
   create \
@@ -136,13 +138,13 @@ template_repo_cli \
   --repo-name sequence-exercises
 
 # Create a repository but do NOT mark it as a template (opposite of the default)
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --repo-name sequence-exercises \
   --no-template
 
 # Create a repository based on an existing GitHub template repository
-template_repo_cli create \
+repoman create \
   --construct sequence \
   --repo-name sequence-exercises \
   --template-repo "owner/template-repo"
@@ -152,29 +154,29 @@ template_repo_cli create \
 
 ```bash
 # Show detailed progress
-template_repo_cli --verbose create \
+repoman --verbose create \
   --construct sequence \
   --repo-name sequence-exercises
 ```
 
 ### Update Existing Repository
 
-`update` packages the selected exercises and force-pushes them into an existing repository. The target repository must already exist; supply it as either a simple slug (for your personal account) or `owner/repo` when pushing elsewhere. The branch defaults to `main`.
+`update` (formerly `update-repo`) packages the selected exercises and force-pushes them into an existing repository. The target repository must already exist; supply it as either a simple slug (for your personal account) or `owner/repo` when pushing elsewhere. The branch defaults to `main`.
 
 ```bash
 # Push updated content into an existing repository
-template_repo_cli update \
+repoman update \
   --construct sequence \
   --repo-name organisation/sequence-exercises \
   --branch main
 
 # Preview the update without pushing
-template_repo_cli --dry-run update \
+repoman --dry-run update \
   --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
   --repo-name organisation/sequence-exercises
 
 # Keep a local copy of the packaged workspace after the push
-template_repo_cli --output-dir ./latest-template update \
+repoman --output-dir ./latest-template update \
   --construct sequence \
   --repo-name organisation/sequence-exercises
 ```
@@ -291,7 +293,7 @@ Make sure:
 Run the `validate` command to check for missing files:
 
 ```bash
-template_repo_cli validate --construct sequence
+repoman validate --construct sequence
 ```
 
 ## Development

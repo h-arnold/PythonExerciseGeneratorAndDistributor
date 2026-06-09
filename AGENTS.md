@@ -117,7 +117,7 @@ Student exercise code in notebooks may omit these standards as exercises are des
 - Prefer using `TypeGuard` functions to narrow runtime types instead of scattering `cast(...)` calls; they are clearer and Pylance understands them.
 - Keep guards close to the code they protect: create a `_typeguards.py` or `<module>_typeguards.py` alongside the module they support (e.g., `scripts/template_repo_cli/core/_typeguards.py`). For cross-cutting types you can also create a small `types/` package or a shared `tests/typeguards/` package for test-only helpers.
 - Name guards `is_<thing>` and keep each guard small and fast; they should check only the surface-level properties required for safe narrowing.
-- Add unit tests for type guards (e.g., see `scripts/template_repo_cli/core/github.py` and its tests in `tests/template_repo_cli/test_github.py`).
+- Add unit tests for type guards (e.g., see `scripts/template_repo_cli/core/github.py` and its tests in `tests/template_repo_cli/test_github.py`). The CLI is invoked via `repoman`.
 - Example TypeGuard (place in the same module or in `<module>_typeguards.py`):
 
 ```py

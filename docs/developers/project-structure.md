@@ -94,7 +94,7 @@ Contains pytest-based automated grading and support tooling tests. Canonical exe
 - `notebook_grader.py`: Low-level notebook parsing and execution helpers wrapped by the framework
 - `autograde_plugin.py`: Captures test outcomes in the format required by GitHub Classroom and powers the Base64 payload CLI
 - `test_debug_explanations.py`: Validates teacher-facing explanations that accompany debug exercises
-- `template_repo_cli/`: Ensures the template-repo packaging CLI remains stable
+- `template_repo_cli/`: Ensures the template-repo packaging CLI (`repoman`) remains stable
 
 Tests use the exercise framework runtime helpers (for example, `runtime.exec_tagged_code()`) to extract student code from tagged cells and assert correctness.
 
@@ -108,7 +108,7 @@ Automation tools that help maintain the repository and publish exercises:
 - `new_exercise.py`: Scaffolds new exercises (notebooks, tests, and metadata)
 - `verify_exercise_quality.py`: Runs linting, tests, and structural checks used in CI and local development
 - `verify_solutions.sh`: Convenience wrapper that executes tests against solution notebooks
-- `template_repo_cli/`: CLI and utilities for packaging and publishing template repositories. The supporting modules expose a `run_subprocess()` wrapper that standardises subprocess handling for `git`/`gh` commands and simplifies testing by offering `capture`, `stream`, and `silent` output modes.
+- `template_repo_cli/`: CLI and utilities for packaging and publishing template repositories (invoked via `repoman`). The supporting modules expose a `run_subprocess()` wrapper that standardises subprocess handling for `git`/`gh` commands and simplifies testing by offering `capture`, `stream`, and `silent` output modes.
 
 ### `template_repo_files/`
 

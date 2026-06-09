@@ -35,7 +35,7 @@ There are three types of repo involved in this workflow:
 | Type | What it's for |
 | --- | --- |
 | **Source repo** | Where you author and edit exercises (this repo: `PythonExerciseGeneratorAndDistributor`). |
-| **Template repo** | A packaged subset of exercises, created by the `template_repo_cli` tool, ready to use in Classroom. |
+| **Template repo** | A packaged subset of exercises, created by the `repoman` tool, ready to use in Classroom. |
 | **Student repos** | Individual copies that GitHub Classroom creates when students accept an assignment. Each student gets their own. |
 
 ---
@@ -126,7 +126,7 @@ Here's the complete flow, from your desk to your students' screens:
      the source repo           (PythonExerciseGenerator            
                                AndDistributor)                     
          │                                                         
-  2. Run template_repo_cli ──►  Creates a template repo ──►        
+  2. Run repoman ──►  Creates a template repo ──►        
                                on GitHub                           
                                                                     
   3. Create Classroom           Assignment linked                  

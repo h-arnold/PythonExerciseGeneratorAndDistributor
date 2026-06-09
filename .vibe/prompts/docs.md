@@ -40,7 +40,7 @@ docs/
 │   ├── github-classroom-autograding-guide.md  ← Autograding integration
 │   ├── project-structure.md
 │   ├── setup.md
-│   ├── template_repo_cli.md   ← Full CLI reference
+│   ├── template_repo_cli.md   ← Full CLI reference (`repoman`)
 │   └── testing-framework.md
 ├── agents/                    ← Agent pipeline specs
 │   ├── plan_templates/

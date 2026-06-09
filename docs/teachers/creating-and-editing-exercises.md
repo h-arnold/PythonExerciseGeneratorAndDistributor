@@ -79,7 +79,7 @@ exercises/sequence/ex004_sequence_debug_syntax/
 | Code students start with | `student.ipynb` (code cells) | Change the starting code. |
 | The solution | `solution.ipynb` | Keep this in sync with the student version. |
 | The passing criteria | `tests/test_*.py` | Make the tests stricter or more lenient. |
-| Exercise order or groupings | `template_repo_cli` command | This is handled when you create the template (see `how-to-use-the-template-repo-cli.md`). |
+| Exercise order or groupings | `repoman` command | This is handled when you create the template (see `how-to-use-the-template-repo-cli.md`). |
 
 ### A typical edit: fixing a typo in an instruction
 
