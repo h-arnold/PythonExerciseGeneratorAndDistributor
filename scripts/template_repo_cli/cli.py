@@ -181,6 +181,7 @@ def _build_template_package(  # noqa: PLR0913
         True if successful, False otherwise.
     """
     packager.copy_exercise_files(workspace, files)
+    packager.copy_construct_resources(workspace, exercises)
     packager.copy_template_base_files(workspace)
     packager.generate_readme(workspace, template_name, exercises)
 

@@ -84,7 +84,7 @@ This repository provides a small set of shared helpers used across infrastructur
   - `filesystem.py` (e.g., `safe_copy_file`, `safe_copy_directory`)
   - `validation.py` (name/construct/type validators; note that exercise type is canonical metadata rather than a canonical path segment)
 
-- `scripts/template_repo_cli/core/` — core components implementing CLI behaviour: `collector.py`, `packager.py`, `selector.py`, and `github.py`.
+- `scripts/template_repo_cli/core/` — core components implementing CLI behaviour: `collector.py`, `packager/`, `selector.py`, and `github.py`.
 
 Important note on similarly-named helpers:
 

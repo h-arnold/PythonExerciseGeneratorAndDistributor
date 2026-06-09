@@ -1,196 +1,95 @@
-# ACTION_PLAN — Pyright Typing Cleanup
+# ACTION_PLAN: CI Workflow + Docs for Construct Template Repos
 
-**Branch**: `fix/template_repo_cli-update-repo_command`
-**Goal**: Eliminate all 143 pyright errors across the codebase with minimal, safe changes.
+## Stage 1 — Tests (TDD)
 
----
+Write the complete test suite first. All tests will fail initially (no implementation yet).
 
-## Global Constraints
+**Files:** `tests/test_sync_construct_template_repos.py`
 
-- **No functional changes**: Only type annotations, re-exports, and compatibility wrapper changes.
-- **Tests must remain green**: `uv run pytest` and `uv run ./scripts/verify_solutions.sh` must pass after each batch.
-- **Student notebooks untouched**: Only infrastructure code.
-- **pyright must pass clean**: `uv run pyright` must show 0 errors, 0 warnings.
+**Sub-stages:**
 
----
+| Step | Test Class | Tests | Est. |
+|------|-----------|-------|------|
+| 1.1 | `TestDiscoverConstructs` | 5 tests | Small |
+| 1.2 | `TestBuildConstructWorkspace` | 7 tests | Medium |
+| 1.3 | `TestSyncConstruct` (mocked) | 8 tests | Medium |
+| 1.4 | `TestGenerateDocsPage` | 7 tests | Small |
+| 1.5 | `TestMainCLI` | 5 tests | Small |
 
-## Error Overview (143 total)
+**Script design notes to carry into tests:**
+- Target org/user is always derived from `gh api user --jq .login` (the authenticated GitHub credentials). No env var or CLI flag for owner. Tests should mock `subprocess.run` for the `gh api user` call.
+- `--docs-output-path` CLI flag controls where the generated docs page is written (default: `docs/teachers/construct-template-repos.md`).
+- Docs page timestamp uses `datetime.now()`.
+- Continue-on-error: the script accumulates per-construct errors but continues.
 
-| Category | Count | Root Cause |
-|----------|-------|-----------|
-| `reportUnknownMemberType` / `reportUnknownVariableType` / `reportUnknownArgumentType` / `reportUnknownParameterType` / `reportUnknownLambdaType` | 96 | Compatibility wrappers use `importlib` + `globals()` runtime injection; pyright cannot statically resolve symbols |
-| `reportPrivateUsage` | 24 | Private (`_prefixed`) functions accessed across module boundaries |
-| `reportAttributeAccessIssue` | 18 | Same as unknown types — wrappers hide the real exports |
-| `reportUnsupportedDunderAll` | 15 | `__all__ = getattr(...)` is not statically analyzable |
-| `reportArgumentType` | 3 | Type incompatibilities in exercise test code |
-| `reportMissingParameterType` | 1 | Missing annotation in test helper |
-| `reportImportCycles` | 1 | TBD |
-| `reportConstantRedefinition` | 1 | `_PYTEST_FATAL_TYPES` redefined |
+**Validation:** `uv run pytest tests/test_sync_construct_template_repos.py --collect-only -q` shows all tests collected. Running them yields failures (expected — no implementation yet).
 
----
-
-## Section 1: Fix Compatibility Wrappers (~126 errors)
-
-### Objective
-Replace the `importlib` + `globals()` runtime injection pattern in wrapper modules with static `from ... import *` re-exports, matching the pattern already used by `tests/exercise_framework/__init__.py`.
-
-### Files to change (8 wrapper modules):
-1. `tests/exercise_framework/api.py`
-2. `tests/exercise_framework/assertions.py`
-3. `tests/exercise_framework/constructs.py`
-4. `tests/exercise_framework/expectations_helpers.py`
-5. `tests/exercise_framework/fixtures.py`
-6. `tests/exercise_framework/reporting.py`
-7. `tests/exercise_framework/runtime.py`
-8. `tests/notebook_grader.py`
-
-### Acceptance criteria
-- All wrappers use `from <source_module> import *` with `# noqa: F403`
-- `tests/exercise_framework/test_reporting.py`: 0 pyright errors (was 62)
-- `tests/exercise_framework/test_constructs.py`: 0 pyright errors (was 16)
-- `tests/exercise_framework/test_assertions.py`: 0 pyright errors (was 9)
-- `reportUnsupportedDunderAll` errors: 0 (was 15)
-- `reportAttributeAccessIssue` errors: 0 (was 18)
-- `uv run pytest` passes
-- `uv run ./scripts/verify_solutions.sh` passes
-
-### Implementation notes
-- The `__getattr__` fallback in `api.py` should be preserved if the source module has one; otherwise drop it.
-- Each wrapper simply becomes: `from <real_module> import *  # noqa: F403`
+**Review point:** Confirm test coverage is adequate before moving to Stage 2.
 
 ---
 
-## Section 2: Fix Private Member Access (~24 errors)
+## Stage 2 — Sync Script
 
-### Objective
-Make intentionally-public-but-underscore-prefixed functions publicly accessible, or suppress pyright where the private access is legitimate test access.
+Implement `scripts/sync_construct_template_repos.py` to make Stage 1 tests pass.
 
-### Files to change
+**Files:** `scripts/sync_construct_template_repos.py`
 
-**2a. `_make_meta` (8 errors across 4 source + 4 test files)**
-- Source: `scripts/exercise_scaffolder/debug.py`, `gaps.py`, `make.py`, `modify.py`
-- Tests: `tests/test_exercise_scaffolder_debug.py`, `test_exercise_scaffolder_gaps.py`, `test_exercise_scaffolder_make.py`, `test_exercise_scaffolder_modify.py`
-- Fix: Rename `_make_meta` to `make_meta` in the source module and update all callers.
+**Sub-stages:**
 
-**2b. `_readme_type_hook` (5 errors across test files)**
-- Tests: `tests/test_exercise_scaffolder_debug.py`, `test_exercise_scaffolder_gaps.py`, `test_exercise_scaffolder_make.py`, `test_exercise_scaffolder_modify.py`
-- Fix: Add `# pyright: ignore[reportPrivateUsage]` at the call sites (tests legitimately access protected class members).
+| Step | Function | Makes tests pass |
+|------|----------|-----------------|
+| 2.1 | `discover_constructs()` | `TestDiscoverConstructs` |
+| 2.2 | `build_construct_workspace()` | `TestBuildConstructWorkspace` |
+| 2.3 | `sync_construct()` + `main()` | `TestSyncConstruct`, `TestMainCLI` |
 
-**2c. `pytest_collection_guard` private functions (7 errors)**
-- Source: `exercise_runtime_support/pytest_collection_guard.py` (`_exercise_key_for_path`, `_is_canonical_test_path`, `_is_top_level_test_path`)
-- Test: `tests/test_pytest_collection_guard.py`
-- Fix: Rename to public (`exercise_key_for_path`, `is_canonical_test_path`, `is_top_level_test_path`) and update all callers.
+  **Note on error handling**: `main()` accumulates errors across constructs; logs per-construct failures but continues to the next. Exits non-zero if any construct failed. `sync_construct()` returns a `SyncResult` with `success` and optional `error` — the caller inspects this rather than raising.
 
-**2d. Student checker private functions (12 errors)**
-- Test: `tests/exercise_runtime_support/test_student_checker_notebook_runtime.py`
-- Fix: Add `# pyright: ignore[reportPrivateUsage]` at call sites (tests legitimately access private internals).
+| 2.4 | `generate_docs_page()` + `write_docs_page()` | `TestGenerateDocsPage` |
 
-### Acceptance criteria
-- `reportPrivateUsage` errors: 0 (was 24)
-- `uv run pytest` passes
-- `uv run ./scripts/verify_solutions.sh` passes
+  **Note on docs path**: The script accepts `--docs-output-path` (default: `docs/teachers/construct-template-repos.md`). The CI workflow controls this path. The script always writes the file; the workflow decides whether to commit it.
+
+**Validation:** `uv run pytest tests/test_sync_construct_template_repos.py -q` passes. `uv run ruff check scripts/sync_construct_template_repos.py --fix` passes.
+
+**Review point:** Run the Tidy Code Reviewer agent over the script and tests.
 
 ---
 
-### Section 3: Remaining Type Issues ✅ COMPLETED
-- [x] `__init__.py`: 7 `reportUnsupportedDunderAll` + 1 `reportImportCycles` suppressed (lazy-loaded symbols by design)
-- [x] `pytest_collection_guard.py`: Added `: list[Path]` type annotation
-- [x] `ex008` test: Changed `list(case['inputs'])` to `cast('list[str]', ...)`
-- [x] `migrate_exercise_data.py`: Inline ignore for `reportUnknownVariableType` (function already correctly annotated)
-- [x] `packager.py`: Added `: dict[str, object]` to `metadata` variable
-- [x] `autograde_plugin.py`: Inline ignore for `reportConstantRedefinition`
-- [x] `test_build_autograde_env.py`: Added `pytest.MonkeyPatch` annotation
-- [x] `test_verify_exercise_quality.py`: Inline ignore for `reportUnknownLambdaType`
-- [x] `api.py`: Added `Any` return type on `__getattr__`
-- [x] pyright: 0 errors, 0 warnings (was 27)
-- [x] pytest: 100% pass
-- [x] verify_solutions.sh: 100% pass
-- [x] Commits pushed to `fix/template_repo_cli-update-repo_command`
+## Stage 3 — CI Workflow
 
-**3a. `scripts/template_repo_cli/core/packager.py` (5 errors)**
-- Fix: Add explicit type annotations for `construct` and `title` variables from `metadata.get()`.
+Create the GitHub Actions workflow file.
 
-**3b. `scripts/migrate_exercise_data.py` (2 errors)**
-- Fix: Add return type annotation `dict[str, object]` to the function.
+**Files:** `.github/workflows/sync-template-repos.yml`
 
-**3c. `exercises/sequence/ex008_sequence_make_consolidation/tests/test_ex008_sequence_make_consolidation.py` (7 errors)**
-- Fix: Add `cast()` or explicit type annotations for `range()` calls being passed where `Iterable` is expected.
+**Validation:** Workflow syntax valid. Dry-run locally using `uv run python scripts/sync_construct_template_repos.py --dry-run --verbose`.
 
-**3d. `tests/autograde_plugin.py` (2 errors)**
-- Fix: Rename `_PYTEST_FATAL_TYPES` to `_pytest_fatal_types` (lowercase) to avoid constant redefinition complaint.
+**Auth setup:** The workflow sets `GH_TOKEN: ${{ secrets.PAT_FOR_TEMPLATE_REPOS }}` in the job env. The `gh` CLI reads `GH_TOKEN` for all API calls (`gh api`, `gh repo create`, etc.), and `gh auth setup-git` configures git's credential helper to delegate to `gh`, so `git push` works transparently. The default `GITHUB_TOKEN` remains set in CI but `gh` prefers `GH_TOKEN`. The script derives the target org/user from `gh api user --jq .login` using this same credential — no separate config needed.
 
-**3e. `tests/exercise_runtime_support/test_build_autograde_env.py` (4 errors)**
-- Fix: Add type annotation for `monkeypatch` parameter and resolve unknown types.
+> **Note:** `gh auth setup-git` may emit warnings about the coexisting `GITHUB_TOKEN`; these are harmless (the existing code calls it with `check=False`).
 
-**3f. `tests/test_verify_exercise_quality.py` (3 errors)**
-- Fix: Add type annotations for lambda parameter.
+**Why a PAT is required:** The default `GITHUB_TOKEN` in GitHub Actions is intentionally scoped to the single repository that invoked the workflow ([docs](https://docs.github.com/en/actions/security-guides/automatic-token-authentication)). It cannot create or push to other repos like `python-exercises-sequence`. A PAT with `repo` scope stored as `PAT_FOR_TEMPLATE_REPOS` is the standard approach for cross-repo operations in Actions — there is no built-in alternative.
 
-**3g. `exercise_runtime_support/exercise_framework/__init__.py` (10 errors)**
-- Fix: TBD after reading full file context.
+**Docs commit-back:** The CI workflow (not the Python script) handles git add/commit/push of the generated docs page. Steps:
+1. Script writes the file (no git operations in the script)
+2. Workflow conditionally runs `git add docs/teachers/construct-template-repos.md`
+3. `git diff --staged --quiet || (git commit -m "docs: update [skip ci]" && git push)`
+4. Only runs on `push` to `main` or `workflow_dispatch` — never on PR
 
-**3h. `exercise_runtime_support/exercise_framework/api.py` (1 error)**
-- Fix: TBD after reading full context.
-
-### Acceptance criteria
-- All pyright errors: 0
-- `uv run pytest` passes
-- `uv run ./scripts/verify_solutions.sh` passes
+**Review point:** Confirm the workflow matches the trigger specification (PR → dry-run + artifact, push to main → publish + docs commit).
 
 ---
 
-## Section Checklist
+## Stage 4 — Docs Page (auto-generated)
 
-### Section 1: Compatibility Wrappers ✅ COMPLETED
-- [x] Green implementation complete — 10 wrappers deleted, ~18 call sites updated
-- [x] Green review clean — Tidy Code Reviewer approved (3 minor docs findings fixed)
-- [x] pyright: 51 errors remaining (all from Sections 2 & 3)
-- [x] pytest passes — 100%
-- [x] Action plan updated
-- [x] Commit: `5089711` — "Section 1: Delete compatibility wrappers, update all call sites to canonical imports"
-- [x] Push: branch `fix/template_repo_cli-update-repo_command`
+The docs page is generated by the script in Stage 2.4. After the first successful publish on main, verify it at `docs/teachers/construct-template-repos.md`.
 
-**Implementation notes:**
-- Deleted all 10 wrapper files; no more `tests.exercise_framework` re-export package
-- All call sites now import directly from `exercise_runtime_support.exercise_framework.*`
-- Packager and its tests updated to remove `notebook_grader.py` references
-- AGENTS.md updated to reference canonical `exercise_runtime_support/notebook_grader.py`
-- Known benign warning: `PytestAssertRewriteWarning` for `fixtures` module (import order)
+**Validation:** `docs/teachers/construct-template-repos.md` exists, has correct table, links resolve.
 
-### Section 2: Private Member Access ✅ COMPLETED
-- [x] `_make_meta` → `make_meta` — renamed to public (6 files)
-- [x] `_readme_type_hook` → `readme_type_hook` — renamed to public (9 files, 6 suppressions removed)
-- [x] `_exercise_key_for_path` et al. → public — renamed 3 functions in `pytest_collection_guard.py` + test
-- [x] Student checker privates — 11 `# pyright: ignore[reportPrivateUsage]` inline suppressions (reviewer-confirmed justified)
-- [x] pyright: 0 `reportPrivateUsage` errors (was 24)
-- [x] pytest passes — 100%
-- [x] Commit: TBD
-- [x] Push: TBD
+---
 
-**Implementation notes:**
-- Reviewer determined `_readme_type_hook` should be public (template-method hook); renamed accordingly
-- Reviewer confirmed `student_checker` private function suppressions are justified (genuine implementation details)
-- Fixed a bug in `find_duplicate_exercise_test_sources` discovered during rename
-- Suppression comments must be inline (same line) for pyright to honor them in multi-line calls
+## Rollback Plan
 
-### Section 3: Remaining Type Issues ✅ COMPLETED
-- [x] `__init__.py`: Added `TYPE_CHECKING` block for lazy-loaded `__all__` symbols; `reportImportCycles=false` justified
-- [x] `pytest_collection_guard.py`: Added `list[Path]` type annotation to `offenders`
-- [x] `test_ex008...`: Changed `list(case["inputs"])` to `cast("list[str]", case["inputs"])` ×3
-- [x] `migrate_exercise_data.py`: Replaced suppression with `cast("dict[str, object]", data)`
-- [x] `packager.py`: Added `dict[str, object]` annotation to `metadata` from `json.loads`
-- [x] `autograde_plugin.py`: Renamed `_PYTEST_FATAL_TYPES` → `_pytest_fatal_types` + hoisted annotation
-- [x] `test_build_autograde_env.py`: Added `pytest.MonkeyPatch` annotation
-- [x] `test_verify_exercise_quality.py`: Suppression justified (test mock)
-- [x] **pyright: 0 errors, 0 warnings, 0 informations** ✅
-- [x] pytest passes — 100%
-- [x] Commit: TBD
-- [x] Push: TBD
-
-**Review-determined suppressions (justified):**
-- `reportImportCycles=false` in `__init__.py` — benign lazy import cycle
-- `# type: ignore[arg-type]` in `test_verify_exercise_quality.py` — test mock
-
-**Review-determined fixes (implemented):**
-- `TYPE_CHECKING` block instead of 7 inline `reportUnsupportedDunderAll` suppressions
-- `cast()` instead of `reportUnknownVariableType` suppression
-- Hoisted type annotation instead of `reportConstantRedefinition` suppression
+If any stage fails validation:
+- **Stage 1**: Delete `tests/test_sync_construct_template_repos.py` — no other code affected.
+- **Stage 2**: Delete `scripts/sync_construct_template_repos.py` — no other code affected.
+- **Stage 3**: Revert `.github/workflows/sync-template-repos.yml` — no other code affected.
+- **Stage 4**: Remove `docs/teachers/construct-template-repos.md` — reverted on next commit.

@@ -8,6 +8,9 @@
 | `/` | Division (float) | Divides and gives a decimal answer | `20 / 3` | `6.666...` |
 | `//` | Floor division | Divides and **drops the decimal** — gives a whole number | `20 // 3` | `6` |
 | `%` | Modulus (remainder) | Divides and gives the **remainder** left over | `20 % 3` | `2` |
+| `**` | Exponentiation (power) | Raises a number to the power of another | `2 ** 10` | `1024` |
+| `int()` | Integer conversion | Converts a value to a whole number (truncates decimals) | `int(3.77)` | `3` |
+| `float()` | Float conversion | Converts a value to a decimal number | `float("5.5")` | `5.5` |
 | `round()` | Rounding | Rounds a number to a set number of decimal places | `round(6.666, 1)` | `6.7` |
 
 ---
@@ -116,6 +119,111 @@ print(f"{pence}p is £{pounds} and {leftover_pence}p")
 
 ---
 
+### `**` Exponentiation — raise to a power
+
+The `**` operator raises a number (the **base**) to the power of another number (the **exponent**).
+
+```python
+base = 3
+exponent = 4
+result = base ** exponent
+print(result)    # 81
+```
+
+> `3 ** 4` means 3 × 3 × 3 × 3 = 81.
+
+---
+
+#### Square a number (`** 2`)
+
+```python
+number = 8
+square = number ** 2
+print(square)    # 64
+```
+
+> `8 ** 2` is the same as `8 * 8`.
+
+---
+
+#### Cube a number (`** 3`)
+
+```python
+number = 6
+cube = number ** 3
+print(cube)    # 216
+```
+
+> `6 ** 3` is the same as `6 * 6 * 6`.
+
+---
+
+#### Square root (`** 0.5`)
+
+Raising to the power of `0.5` gives the square root.
+
+```python
+number = 144
+root = number ** 0.5
+print(root)    # 12.0
+```
+
+> `144 ** 0.5` is the square root of 144. The result is a float (`12.0`), even when the answer is a whole number.
+
+---
+
+#### Area of a circle (`pi * radius ** 2`)
+
+```python
+pi = 3.14159
+radius = 5
+area = pi * radius ** 2
+print(area)    # 78.53975
+```
+
+> `radius ** 2` squares the radius, then `pi *` multiplies by π to get the area.
+
+> **Order of operations**: `**` is calculated before `*`, so `pi * radius ** 2` works correctly without parentheses.
+
+---
+
+### `int()` — convert to a whole number
+
+When you read input with `input()`, the result is always text (a string). Use `int()` to turn it into a whole number before doing maths.
+
+```python
+age_input = input("Enter your age: ")
+age = int(age_input)
+next_year = age + 1
+print(f"Next year you will be {next_year}")
+```
+
+> Without `int()`, `age_input + 1` would fail because you can't add a number to text.
+
+Store the input and conversion in **separate steps** to keep each step clear:
+
+```python
+number_input = input("Enter a number: ")   # Step 1: read the text
+number_int = int(number_input)             # Step 2: convert to integer
+```
+
+---
+
+### `float()` — convert to a decimal number
+
+Use `float()` when your number might have a decimal point (e.g. lengths, weights, money).
+
+```python
+side_input = input("Enter the side length: ")
+side_float = float(side_input)
+area = side_float ** 2
+print(area)
+```
+
+> `float("9")` gives `9.0` — it works with whole numbers too, but always produces a decimal.
+
+---
+
 ### `round()` — tidy up decimal answers
 
 ```python
@@ -147,4 +255,10 @@ print(total)    # 3.77
 | Divide (decimal) | `/` | `20 / 3 → 6.666` |
 | Divide (whole numbers only) | `//` | `20 // 3 → 6` |
 | Find the remainder | `%` | `20 % 3 → 2` |
+| Raise to a power | `**` | `2 ** 10 → 1024` |
+| Square a number | `** 2` | `8 ** 2 → 64` |
+| Cube a number | `** 3` | `6 ** 3 → 216` |
+| Square root | `** 0.5` | `144 ** 0.5 → 12.0` |
+| Convert text to integer | `int(text)` | `int("8") → 8` |
+| Convert text to float | `float(text)` | `float("5.5") → 5.5` |
 | Round a decimal | `round(n, d)` | `round(6.666, 1) → 6.7` |

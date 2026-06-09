@@ -53,22 +53,22 @@ Status tracker for the README exercise-links feature plan:
 
 - Helper: README exercise-entry formatter in packager (`_readme_entry_from_exercise_key`)
 - Decision: extend
-- Owning path: scripts/template_repo_cli/core/packager.py
+- Owning path: scripts/template_repo_cli/core/packager/_readme.py
 - Status: Implemented
 
 - Helper: construct display normaliser (snake_case to title-case words)
 - Decision: new
-- Owning path: scripts/template_repo_cli/core/packager.py
+- Owning path: scripts/template_repo_cli/core/packager/_readme.py
 - Status: Not implemented as a standalone helper (normalisation is currently inlined in `_readme_entry_from_exercise_key`)
 
 - Helper: grouped README list composer (`_render_grouped_readme_sections`)
 - Decision: new
-- Owning path: scripts/template_repo_cli/core/packager.py
+- Owning path: scripts/template_repo_cli/core/packager/_readme.py
 - Status: Implemented
 
 - Helper: README list composition helpers from Section 2
 - Decision: reuse
-- Owning path: scripts/template_repo_cli/core/packager.py
+- Owning path: scripts/template_repo_cli/core/packager/_readme.py
 - Status: Implemented (reused via `generate_readme`)
 
 Delivered README semantics:

@@ -193,6 +193,7 @@ Each generated template repository includes:
 - `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`
 - `exercises/<construct>/<exercise_key>/tests/`
 - Exported per-exercise metadata (`exercise.json`); no solution notebooks and no flattened notebook/test mirrors
+- `exercises/<construct>/additional-resources/` — Construct-level reference materials (e.g. cheat sheets), included when the folder exists in the source repository
 
 ### Infrastructure Files
 
@@ -333,7 +334,7 @@ scripts/template_repo_cli/
 ├── core/
 │   ├── selector.py     # Exercise selection logic
 │   ├── collector.py    # File collection
-│   ├── packager.py     # Template assembly
+│   ├── packager/       # Template assembly (package)
 │   └── github.py       # GitHub operations (gh CLI wrapper)
 └── utils/
     ├── validation.py   # Input validation
