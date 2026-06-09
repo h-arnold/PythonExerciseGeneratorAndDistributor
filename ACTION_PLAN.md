@@ -133,18 +133,20 @@ Add explicit type annotations to resolve remaining partially-unknown and argumen
 ## Section Checklist
 
 ### Section 1: Compatibility Wrappers ✅ COMPLETED
-- [x] Green implementation complete — 8 wrappers converted to `from ... import *`
-- [x] Green review clean — Tidy Code Reviewer approved
-- [x] pyright: 0 errors in affected files (92 errors eliminated, 143→51)
+- [x] Green implementation complete — 10 wrappers deleted, ~18 call sites updated
+- [x] Green review clean — Tidy Code Reviewer approved (3 minor docs findings fixed)
+- [x] pyright: 51 errors remaining (all from Sections 2 & 3)
 - [x] pytest passes — 100%
 - [x] Action plan updated
-- [x] Commit: TBD
-- [x] Push: TBD
+- [x] Commit: `5089711` — "Section 1: Delete compatibility wrappers, update all call sites to canonical imports"
+- [x] Push: branch `fix/template_repo_cli-update-repo_command`
 
 **Implementation notes:**
-- All 8 wrappers now use `from <canonical_module> import *  # noqa: F403`
-- `tests/exercise_runtime_support/test_runtime_contract.py` updated to match new pattern
-- Runtime behaviour preserved; `import *` from `runtime.py` source module exports only `__all__` which is a correctness improvement over the old globals dump
+- Deleted all 10 wrapper files; no more `tests.exercise_framework` re-export package
+- All call sites now import directly from `exercise_runtime_support.exercise_framework.*`
+- Packager and its tests updated to remove `notebook_grader.py` references
+- AGENTS.md updated to reference canonical `exercise_runtime_support/notebook_grader.py`
+- Known benign warning: `PytestAssertRewriteWarning` for `fixtures` module (import order)
 
 ### Section 2: Private Member Access
 - [ ] Red tests added (N/A)

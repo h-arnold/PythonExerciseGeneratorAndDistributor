@@ -58,4 +58,3 @@ def test_template_cli_consumers_link_to_shared_runtime_support() -> None:
     assert "exercise_runtime_support" in packager_source
     assert '"exercise_runtime_support",' in packager_source
     assert "REQUIRED_PACKAGE_DIRECTORIES" in packager_source
-
