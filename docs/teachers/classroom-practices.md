@@ -72,16 +72,12 @@ At the bottom of each exercise notebook, there is a **self-checker cell**. This 
 │  Exercise 1: greeting  ✅ Pass  Well done! │
 │  Exercise 2: message   ❌ Fail  Expected   │
 │                        output to contain   │
-│                        "Hello", got "Hi"   │
-│  Exercise 3: loop      ⚠️ Not  Did you     │
-│                        run    complete this │
-│                        this?  exercise?    │
+│                        "Hello", got "Hi"   │    │
 └────────────────────────────────────────────┘
 ```
 
 - **✅ Pass** — That exercise is correct.
 - **❌ Fail** — Something is wrong. Read the feedback to see what the test expected vs. what it got.
-- **⚠️ Not run this?** — The checker couldn't find work for that exercise. Either it hasn't been attempted yet, or the cell tag is missing.
 
 **Why the self-checker is useful:**
 
