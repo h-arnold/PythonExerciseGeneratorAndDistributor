@@ -343,7 +343,7 @@ def generate_docs_page(constructs: list[str], repo_root: Path) -> str:
 
     Args:
         constructs: List of construct names.
-        repo_root: Root directory of the repository (unused, kept for API compat).
+        repo_root: Root directory of the repository (used for exercise counting).
 
     Returns:
         Markdown content as a string.

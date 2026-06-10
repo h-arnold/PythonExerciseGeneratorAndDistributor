@@ -1,8 +1,4 @@
-"""Tests for sync_construct_template_repos script.
-
-These tests follow the TDD approach from the action plan. All tests will fail
-initially because no implementation exists yet.
-"""
+"""Tests for the construct template repository sync script."""
 
 from __future__ import annotations
 
@@ -330,7 +326,7 @@ class TestSyncConstruct:
         )
 
         assert result["success"] is True
-        assert "exists" in result.get("message", "").lower() or result["success"]
+        assert "already exists" in result.get("message", "").lower()
 
     @patch("subprocess.run")
     def test_sync_construct_repo_name_format(
@@ -516,5 +512,6 @@ class TestMainCLI:
             ]
         )
 
-        # In dry-run mode, gh is not called, so it should succeed
+        # gh auth failure is non-fatal because dry-run mode skips gh
+        # operations and docs generation falls back gracefully
         assert exit_code == 0
