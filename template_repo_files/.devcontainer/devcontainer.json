@@ -1,6 +1,6 @@
 {
   "name": "Python Tutor Student Environment",
-  "image": "ghcr.io/h-arnold/pythonexercisegeneratoranddistributor/student-environment:latest",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14",
 
   // Configure VS Code settings
   "customizations": {
