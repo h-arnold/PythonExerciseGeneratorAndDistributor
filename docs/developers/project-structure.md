@@ -23,6 +23,7 @@ PythonExerciseGeneratorAndDistributor/
 ├── scripts/                   # Automation and utilities
 │   ├── build_autograde_payload.py
 │   ├── new_exercise.py
+│   ├── sync_construct_template_repos.py
 │   ├── verify_exercise_quality.py
 │   ├── verify_solutions.sh
 │   └── template_repo_cli/

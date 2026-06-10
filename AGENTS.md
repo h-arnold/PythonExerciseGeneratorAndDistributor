@@ -44,6 +44,7 @@ tests/                 # Shared pytest suites and repository-level integration t
 scripts/               # Automation utilities
   new_exercise.py      # Exercise scaffolding tool
   run_pytest_variant.py# Explicit student/solution variant test runner
+  sync_construct_template_repos.py  # Sync construct directories to GitHub template repos
   verify_solutions.sh  # Convenience wrapper for solution-variant validation
 docs/                  # Project documentation
 ```
@@ -174,6 +175,9 @@ uv run python scripts/run_pytest_variant.py --variant solution -q
 
 # Convenience wrapper for broader solution validation
 uv run ./scripts/verify_solutions.sh -q
+
+# Sync construct template repos (dry-run)
+uv run python scripts/sync_construct_template_repos.py --dry-run --verbose
 
 # Lint code
 ruff check . --fix
