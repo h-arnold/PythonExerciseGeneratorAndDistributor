@@ -125,6 +125,11 @@ def build_construct_workspace(repo_root: Path, construct: str, output_dir: Path)
     return workspace
 
 
+def _ignore_pycache(dir: str, contents: list[str]) -> list[str]:
+    """Return list of names to ignore: ``__pycache__`` directories."""
+    return ["__pycache__"] if "__pycache__" in contents else []
+
+
 def _copy_exercise_files(src: Path, dst: Path) -> None:
     """Copy exercise files from *src* to *dst*, excluding solution notebooks."""
     for item in src.iterdir():
@@ -133,7 +138,12 @@ def _copy_exercise_files(src: Path, dst: Path) -> None:
         if item.name == "notebooks":
             _copy_notebooks(item, dst / "notebooks")
         elif item.is_dir():
-            shutil.copytree(item, dst / item.name, dirs_exist_ok=True)
+            shutil.copytree(
+                item,
+                dst / item.name,
+                dirs_exist_ok=True,
+                ignore=_ignore_pycache,
+            )
         elif item.is_file():
             shutil.copy2(item, dst / item.name)
 
