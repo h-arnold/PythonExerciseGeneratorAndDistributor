@@ -65,20 +65,22 @@ class TestDiscoverConstructs:
         assert "not_a_dir" not in constructs
         assert "real_construct" in constructs
 
-    def test_discover_constructs_excludes_hidden_directories(
+    def test_discover_constructs_excludes_hidden_and_dunder_directories(
         self, repo_root: Path, tmp_path: Path
     ) -> None:
-        """Hidden directories (starting with '.') inside exercises/ are excluded."""
+        """Hidden and dunder directories inside exercises/ are excluded."""
         from scripts.sync_construct_template_repos import discover_constructs
 
         exercises_dir = tmp_path / "exercises"
         exercises_dir.mkdir()
         (exercises_dir / ".hidden").mkdir()
+        (exercises_dir / "__pycache__").mkdir()
         (exercises_dir / "visible").mkdir()
 
         constructs = discover_constructs(tmp_path)
 
         assert ".hidden" not in constructs
+        assert "__pycache__" not in constructs
         assert "visible" in constructs
 
 

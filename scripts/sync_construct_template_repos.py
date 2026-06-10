@@ -65,7 +65,7 @@ def discover_constructs(repo_root: Path) -> list[str]:
     constructs: list[str] = [
         entry.name
         for entry in sorted(exercises_dir.iterdir())
-        if entry.is_dir() and not entry.name.startswith(".")
+        if entry.is_dir() and not entry.name.startswith(".") and not entry.name.startswith("__")
     ]
     return constructs
 
