@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import contextlib
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -44,9 +43,7 @@ class TestDiscoverConstructs:
 
         assert constructs == []
 
-    def test_discover_constructs_excludes_non_directory_entries(
-        self, repo_root: Path, tmp_path: Path
-    ) -> None:
+    def test_discover_constructs_excludes_non_directory_entries(self, tmp_path: Path) -> None:
         """Non-directory entries inside exercises/ are excluded."""
         from scripts.sync_construct_template_repos import discover_constructs
 
@@ -62,7 +59,7 @@ class TestDiscoverConstructs:
         assert "real_construct" in constructs
 
     def test_discover_constructs_excludes_hidden_and_dunder_directories(
-        self, repo_root: Path, tmp_path: Path
+        self, tmp_path: Path
     ) -> None:
         """Hidden and dunder directories inside exercises/ are excluded."""
         from scripts.sync_construct_template_repos import discover_constructs
@@ -276,6 +273,7 @@ class TestSyncConstruct:
         result = sync_construct("sequence", workspace, dry_run=False, repo_root=repo_root)
 
         assert result["success"] is True
+        assert "custom-owner" in result.get("message", "")
 
     @patch("subprocess.run")
     def test_sync_construct_verbose_output(
@@ -296,6 +294,7 @@ class TestSyncConstruct:
         )
 
         assert result["success"] is True
+        assert result.get("dry_run") is True
 
     @patch("subprocess.run")
     def test_sync_construct_handles_existing_repo(
@@ -326,7 +325,7 @@ class TestSyncConstruct:
         )
 
         assert result["success"] is True
-        assert "already exists" in result.get("message", "").lower()
+        assert "successfully synced" in result.get("message", "").lower()
 
     @patch("subprocess.run")
     def test_sync_construct_repo_name_format(
@@ -441,7 +440,7 @@ class TestMainCLI:
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
 
         # Just check it doesn't raise for help text
-        with contextlib.suppress(SystemExit):
+        with pytest.raises(SystemExit):
             main(["--help"])
 
     @patch("subprocess.run")

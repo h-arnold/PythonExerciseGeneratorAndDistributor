@@ -43,11 +43,6 @@ class SyncResult(TypedDict, total=False):
     message: str
 
 
-# ---------------------------------------------------------------------------
-# 2.1 discover_constructs()
-# ---------------------------------------------------------------------------
-
-
 def discover_constructs(repo_root: Path) -> list[str]:
     """Discover construct directories under the ``exercises/`` directory.
 
@@ -68,11 +63,6 @@ def discover_constructs(repo_root: Path) -> list[str]:
         if entry.is_dir() and not entry.name.startswith(".") and not entry.name.startswith("__")
     ]
     return constructs
-
-
-# ---------------------------------------------------------------------------
-# 2.2 build_construct_workspace()
-# ---------------------------------------------------------------------------
 
 
 def build_construct_workspace(repo_root: Path, construct: str, output_dir: Path) -> Path:
@@ -104,7 +94,10 @@ def build_construct_workspace(repo_root: Path, construct: str, output_dir: Path)
     additional_resources = construct_dir / "additional-resources"
     if additional_resources.exists() and additional_resources.is_dir():
         shutil.copytree(
-            additional_resources, workspace / "additional-resources", dirs_exist_ok=True
+            additional_resources,
+            workspace / "additional-resources",
+            dirs_exist_ok=True,
+            ignore=_ignore_pycache,
         )
 
     # Copy each exercise directory, excluding solution notebooks
@@ -126,7 +119,6 @@ def build_construct_workspace(repo_root: Path, construct: str, output_dir: Path)
 
 
 def _ignore_pycache(dir: str, contents: list[str]) -> list[str]:
-    """Return list of names to ignore: ``__pycache__`` directories."""
     return ["__pycache__"] if "__pycache__" in contents else []
 
 
@@ -158,17 +150,21 @@ def _copy_notebooks(src: Path, dst: Path) -> None:
             shutil.copy2(nb_file, dst / nb_file.name)
 
 
-# ---------------------------------------------------------------------------
-# 2.3 sync_construct()
-# ---------------------------------------------------------------------------
+def _get_authenticated_owner(*, owner: str | None = None) -> str | None:
+    """Return the GitHub owner for template repositories.
 
+    If an explicit *owner* is provided, it takes precedence.
+    Otherwise, the authenticated GitHub username is looked up
+    via ``gh api user``.
 
-def _get_authenticated_owner() -> str | None:
-    """Return the authenticated GitHub username via ``gh api user``.
+    Args:
+        owner: Explicit owner (GitHub username or organization name).
 
     Returns:
-        Username string if available, otherwise ``None``.
+        Owner string if available, otherwise ``None``.
     """
+    if owner:
+        return owner
     try:
         result: subprocess.CompletedProcess[str] = subprocess.run(
             ["gh", "api", "user", "--jq", ".login"],
@@ -177,25 +173,25 @@ def _get_authenticated_owner() -> str | None:
             check=False,
         )
         if result.returncode == 0:
-            owner = result.stdout.strip()
-            return owner if owner else None
+            gh_owner = result.stdout.strip()
+            return gh_owner if gh_owner else None
         return None
     except FileNotFoundError:
         return None
 
 
 def _construct_repo_name(construct: str) -> str:
-    """Derive the template repository name from a construct name."""
     return f"python-exercises-{construct}"
 
 
-def sync_construct(
+def sync_construct(  # noqa: PLR0913
     construct: str,
     workspace: Path,
     *,
     dry_run: bool = False,
     repo_root: Path | None = None,
     verbose: bool = False,
+    github_owner: str | None = None,
 ) -> SyncResult:
     """Sync a construct to a GitHub template repository.
 
@@ -205,12 +201,14 @@ def sync_construct(
         dry_run: If True, simulate without making GitHub API calls.
         repo_root: Root of the repository (used for reference).
         verbose: If True, print progress information.
+        github_owner: Explicit GitHub owner (user or org). Falls back to
+            authenticated user if not provided.
 
     Returns:
         A ``SyncResult`` dictionary with success status and details.
     """
     repo_name = _construct_repo_name(construct)
-    owner = _get_authenticated_owner()
+    owner = _get_authenticated_owner(owner=github_owner)
     repo_ref = f"{owner}/{repo_name}" if owner else repo_name
 
     if verbose:
@@ -233,6 +231,7 @@ def sync_construct(
         )
 
     # Check if the repo already exists
+    repo_exists = False
     try:
         view_result: subprocess.CompletedProcess[str] = subprocess.run(
             ["gh", "repo", "view", repo_ref],
@@ -240,13 +239,7 @@ def sync_construct(
             text=True,
             check=False,
         )
-        if view_result.returncode == 0:
-            return SyncResult(
-                success=True,
-                construct=construct,
-                repo_name=repo_name,
-                message=f"Repository already exists: {repo_ref}",
-            )
+        repo_exists = view_result.returncode == 0
     except FileNotFoundError:
         return SyncResult(
             success=False,
@@ -255,9 +248,9 @@ def sync_construct(
             error="gh CLI not found. Is GitHub CLI installed?",
         )
 
-    # Initialize git repo, commit, and push
+    # Initialize git repo, commit, and push (force-push if repo exists)
     try:
-        _init_and_push(workspace, repo_ref, verbose)
+        _init_and_push(workspace, repo_ref, verbose, repo_exists=repo_exists)
     except (subprocess.SubprocessError, OSError, RuntimeError) as e:
         return SyncResult(
             success=False,
@@ -266,18 +259,53 @@ def sync_construct(
             error=str(e),
         )
 
+    # Mark as template (for new repos, also set template flag)
+    if not repo_exists:
+        subprocess.run(
+            ["gh", "repo", "edit", repo_ref, "--template"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    action = "Created" if not repo_exists else "Updated"
     return SyncResult(
         success=True,
         construct=construct,
         repo_name=repo_name,
-        message=f"Successfully synced {repo_ref}",
+        message=f"Successfully synced {repo_ref} ({action})",
     )
 
 
-def _init_and_push(workspace: Path, repo_ref: str, verbose: bool = False) -> None:
-    """Initialize git repo, create on GitHub, and push."""
+def _init_and_push(
+    workspace: Path,
+    repo_ref: str,
+    verbose: bool = False,
+    repo_exists: bool = False,
+) -> None:
+    """Initialize git repo, create/update on GitHub, and push.
+
+    Args:
+        workspace: Path to the workspace directory.
+        repo_ref: GitHub repository reference (e.g., ``owner/name``).
+        verbose: If True, print progress information.
+        repo_exists: If True, force-push to the existing repository
+            instead of creating a new one.
+
+    Raises:
+        RuntimeError: If git or gh operations fail.
+    """
     # Initialize git
     subprocess.run(["git", "init"], cwd=workspace, capture_output=True, text=True, check=True)
+
+    # Ensure default branch is 'main'
+    subprocess.run(
+        ["git", "checkout", "-b", "main"],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
 
     # Configure git user if not set globally
     user_name = subprocess.run(
@@ -309,7 +337,7 @@ def _init_and_push(workspace: Path, repo_ref: str, verbose: bool = False) -> Non
     # Add all files and commit
     subprocess.run(["git", "add", "."], cwd=workspace, capture_output=True, text=True, check=True)
     commit_result = subprocess.run(
-        ["git", "commit", "-m", "Initial commit"],
+        ["git", "commit", "-m", "Sync template repository"],
         cwd=workspace,
         capture_output=True,
         text=True,
@@ -318,42 +346,57 @@ def _init_and_push(workspace: Path, repo_ref: str, verbose: bool = False) -> Non
     if commit_result.returncode != 0 and "nothing to commit" not in commit_result.stderr:
         raise RuntimeError(f"Failed to commit files: {commit_result.stderr.strip()}")
 
-    # Create repository on GitHub
-    create_result = subprocess.run(
-        ["gh", "repo", "create", repo_ref, "--public", "--source", ".", "--push"],
-        cwd=workspace,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    if repo_exists:
+        # Force-push to existing repository
+        subprocess.run(
+            ["git", "remote", "add", "origin", f"https://github.com/{repo_ref}.git"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        push_result = subprocess.run(
+            ["git", "push", "--force", "origin", "main"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if push_result.returncode != 0:
+            error_msg = push_result.stderr.strip() or "Unknown error"
+            raise RuntimeError(f"Failed to push to existing repository {repo_ref}: {error_msg}")
+    else:
+        # Create repository on GitHub
+        create_result = subprocess.run(
+            ["gh", "repo", "create", repo_ref, "--public", "--source", ".", "--push"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
 
-    if create_result.returncode != 0:
-        error_msg = create_result.stderr.strip() or "Unknown error"
-        raise RuntimeError(f"Failed to create repository {repo_ref}: {error_msg}")
-
-    # Mark as template
-    subprocess.run(
-        ["gh", "repo", "edit", repo_ref, "--template"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+        if create_result.returncode != 0:
+            error_msg = create_result.stderr.strip() or "Unknown error"
+            raise RuntimeError(f"Failed to create repository {repo_ref}: {error_msg}")
 
     if verbose:
-        logger.info("Created and pushed repository: %s", repo_ref)
+        action = "Updated" if repo_exists else "Created and pushed"
+        logger.info("%s repository: %s", action, repo_ref)
 
 
-# ---------------------------------------------------------------------------
-# 2.4 generate_docs_page() + write_docs_page()
-# ---------------------------------------------------------------------------
-
-
-def generate_docs_page(constructs: list[str], repo_root: Path) -> str:
+def generate_docs_page(
+    constructs: list[str],
+    repo_root: Path,
+    *,
+    github_owner: str | None = None,
+) -> str:
     """Generate a markdown documentation page listing construct template repos.
 
     Args:
         constructs: List of construct names.
         repo_root: Root directory of the repository (used for exercise counting).
+        github_owner: Explicit GitHub owner (user or org). Falls back to
+            authenticated user if not provided.
 
     Returns:
         Markdown content as a string.
@@ -374,7 +417,7 @@ def generate_docs_page(constructs: list[str], repo_root: Path) -> str:
     lines.append("| Construct | Template Repository | Exercises |")
     lines.append("|-----------|-------------------|-----------|")
 
-    owner = _get_authenticated_owner()
+    owner = _get_authenticated_owner(owner=github_owner)
 
     for construct in constructs:
         repo_name = _construct_repo_name(construct)
@@ -452,10 +495,19 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default="docs/teachers/construct-template-repos.md",
         help="Path to write the generated docs page.",
     )
+    parser.add_argument(
+        "--github-owner",
+        type=str,
+        default=None,
+        help=(
+            "GitHub owner (user or organization) for template repositories. "
+            "Defaults to the authenticated GitHub user."
+        ),
+    )
     return parser.parse_args(argv)
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
     """Main entry point for the sync script.
 
     Args:
@@ -479,10 +531,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.verbose:
         logger.info("Discovered constructs: %s", ", ".join(constructs))
 
-    errors: list[str] = _process_all_constructs(constructs, repo_root, args.dry_run, args.verbose)
+    resolved_owner = _get_authenticated_owner(owner=args.github_owner)
+    errors: list[str] = []
+
+    for construct in constructs:
+        _process_single_construct(
+            construct,
+            repo_root,
+            args.dry_run,
+            args.verbose,
+            errors,
+            github_owner=resolved_owner,
+        )
 
     # Generate and write docs page
-    docs_content = generate_docs_page(constructs, repo_root)
+    docs_content = generate_docs_page(constructs, repo_root, github_owner=resolved_owner)
     docs_path = Path(args.docs_output_path)
     if not docs_path.is_absolute():
         docs_path = repo_root / docs_path
@@ -491,31 +554,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.verbose and docs_path.exists():
         logger.info("Docs page written to: %s", docs_path)
 
-    _report_errors(errors, args.verbose)
+    if errors and args.verbose:
+        logger.info("\nErrors encountered:")
+        for error in errors:
+            logger.info("  - %s", error)
     return 1 if errors else 0
 
 
-def _process_all_constructs(
-    constructs: list[str],
-    repo_root: Path,
-    dry_run: bool,
-    verbose: bool,
-) -> list[str]:
-    """Process all constructs and return a list of error messages."""
-    errors: list[str] = []
-
-    for construct in constructs:
-        _process_single_construct(construct, repo_root, dry_run, verbose, errors)
-
-    return errors
-
-
-def _process_single_construct(
+def _process_single_construct(  # noqa: PLR0913
     construct: str,
     repo_root: Path,
     dry_run: bool,
     verbose: bool,
     errors: list[str],
+    *,
+    github_owner: str | None = None,
 ) -> None:
     """Sync a single construct and record any errors."""
     workspace: Path | None = None
@@ -529,6 +582,7 @@ def _process_single_construct(
             dry_run=dry_run,
             repo_root=repo_root,
             verbose=verbose,
+            github_owner=github_owner,
         )
 
         if not result["success"]:
@@ -547,14 +601,6 @@ def _process_single_construct(
     finally:
         if workspace is not None:
             shutil.rmtree(workspace, ignore_errors=True)
-
-
-def _report_errors(errors: list[str], verbose: bool) -> None:
-    """Report accumulated errors if any."""
-    if errors and verbose:
-        logger.info("\nErrors encountered:")
-        for error in errors:
-            logger.info("  - %s", error)
 
 
 if __name__ == "__main__":
