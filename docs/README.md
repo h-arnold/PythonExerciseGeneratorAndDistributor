@@ -18,6 +18,7 @@ If you are new to this project, start with [Getting Started](teachers/getting-st
 | [Pedagogy](teachers/pedagogy.md) | The MDM (Modify, Debug, Make) pedagogical framework — why this approach works. |
 | [Exercise Generation with Copilot](teachers/exercise-generation.md) | Detailed reference for using the Exercise Generation Copilot agent to create new exercises. |
 | [How to Use the Template Repo CLI](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
+| [Construct Template Repos](teachers/construct-template-repos.md) | Auto-generated index of per-construct template repositories, updated on each push to main. |
 | [Template Repo CLI Reference](../developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
 | [GitHub Classroom Autograding Guide](../developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
 
