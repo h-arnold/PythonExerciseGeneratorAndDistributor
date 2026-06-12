@@ -62,7 +62,7 @@ class TestAbcEnforcement:
 
 
 class TestBuildCheckAnswersCell:
-    """The self-checker cell must set ``PYTUTOR_ACTIVE_VARIANT`` per variant."""
+    """The self-checker cell imports ``run_notebook_checks`` and calls it with the exercise key."""
 
     @pytest.fixture
     def scaffold(self) -> _ConcreteScaffold:
@@ -74,31 +74,37 @@ class TestBuildCheckAnswersCell:
             exercise_id=14,
         )
 
-    def test_student_variant_sets_student_env_var(self, scaffold: _ConcreteScaffold) -> None:
+    def test_student_variant_imports_run_notebook_checks(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
         source = source_text(cell)
 
-        assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
-        assert '"student"' in source
+        assert "from exercise_runtime_support.student_checker import run_notebook_checks" in source
 
-    def test_student_variant_does_not_contain_solution(self, scaffold: _ConcreteScaffold) -> None:
+    def test_student_variant_calls_run_notebook_checks(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
         source = source_text(cell)
 
-        assert '"solution"' not in source
+        assert "run_notebook_checks(" in source
 
-    def test_solution_variant_sets_solution_env_var(self, scaffold: _ConcreteScaffold) -> None:
+    def test_solution_variant_imports_run_notebook_checks(
+        self, scaffold: _ConcreteScaffold
+    ) -> None:
         cell = scaffold.build_check_answers_cell("solution")
         source = source_text(cell)
 
-        assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
-        assert '"solution"' in source
+        assert "from exercise_runtime_support.student_checker import run_notebook_checks" in source
 
-    def test_solution_variant_does_not_contain_student(self, scaffold: _ConcreteScaffold) -> None:
+    def test_solution_variant_calls_run_notebook_checks(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("solution")
         source = source_text(cell)
 
-        assert '"student"' not in source
+        assert "run_notebook_checks(" in source
+
+    def test_cell_contains_exercise_key(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("student")
+        source = source_text(cell)
+
+        assert "'ex014'" in source
 
     def test_cell_type_is_code(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
@@ -118,6 +124,47 @@ class TestBuildCheckAnswersCell:
     def test_cell_has_empty_outputs(self, scaffold: _ConcreteScaffold) -> None:
         cell = scaffold.build_check_answers_cell("student")
         assert cell["outputs"] == []
+
+    # ── Solution-variant extras ──────────────────────────────────────────────
+
+    def test_solution_variant_has_os_import(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("solution")
+        source = source_text(cell)
+
+        assert "import os" in source
+
+    def test_solution_variant_has_pytutor_env_var(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("solution")
+        source = source_text(cell)
+
+        assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in source
+        assert '"solution"' in source
+
+    def test_student_variant_does_not_have_os_import(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("student")
+        source = source_text(cell)
+
+        assert "import os" not in source
+
+    def test_student_variant_does_not_have_env_var(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("student")
+        source = source_text(cell)
+
+        assert "PYTUTOR_ACTIVE_VARIANT" not in source
+
+    # ── Comment removed from both variants ───────────────────────────────────
+
+    def test_student_variant_no_comment(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("student")
+        source = source_text(cell)
+
+        assert "Pass the canonical exercise_key here" not in source
+
+    def test_solution_variant_no_comment(self, scaffold: _ConcreteScaffold) -> None:
+        cell = scaffold.build_check_answers_cell("solution")
+        source = source_text(cell)
+
+        assert "Pass the canonical exercise_key here" not in source
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

@@ -103,8 +103,8 @@ Core helpers (via `exercise_runtime_support.exercise_framework`):
 2. **`resolve_notebook_path()`**: Resolves an explicit notebook location using the same active variant contract
 3. **`extract_tagged_code()`**: Parses `.ipynb` JSON and concatenates source from tagged cells
 4. **`exec_tagged_code()`**: Extracts and executes code, returning the namespace
-5. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout (primary test helper)
-6. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values
+5. **`run_cell_and_capture_output()`**: Executes a tagged code cell and returns stdout with trailing `\n` stripped (primary test helper)
+6. **`run_cell_with_input()`**: Executes a tagged code cell while supplying mocked `input()` values; returns stdout with trailing `\n` stripped
 7. **`get_explanation_cell()`**: Retrieves markdown content for tagged explanation/reflection cells
 
 Exercise-specific expected outputs, prompts, and input data should live in helper modules within

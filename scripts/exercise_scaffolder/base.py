@@ -144,21 +144,38 @@ class ExerciseScaffold(ABC):
         }
 
     def build_check_answers_cell(self, variant: str) -> dict[str, Any]:
-        """Return the self-checker cell that sets the notebook variant."""
+        """Return the self-checker cell.
+
+        Parameters
+        ----------
+        variant : str
+            ``"student"`` or ``"solution"`` — the solution variant includes
+            ``import os`` and sets ``PYTUTOR_ACTIVE_VARIANT`` so the checker
+            runs against the solution notebook tag.
+        """
+        if variant == "solution":
+            source = [
+                "import os\n",
+                "\n",
+                'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"\n',
+                "\n",
+                "from exercise_runtime_support.student_checker import run_notebook_checks\n",
+                "\n",
+                f"run_notebook_checks({self.exercise_key!r})\n",
+            ]
+        else:
+            source = [
+                "from exercise_runtime_support.student_checker import run_notebook_checks\n",
+                "\n",
+                f"run_notebook_checks({self.exercise_key!r})\n",
+            ]
+
         return {
             "cell_type": "code",
             "metadata": make_meta("python"),
             "execution_count": None,
             "outputs": [],
-            "source": [
-                "import os\n",
-                "\n",
-                f'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "{variant}"\n',
-                "from exercise_runtime_support.student_checker import run_notebook_checks\n",
-                "\n",
-                "# Pass the canonical exercise_key here; do not pass a notebook path.\n",
-                f"run_notebook_checks({self.exercise_key!r})\n",
-            ],
+            "source": source,
         }
 
     # ── README ───────────────────────────────────────────────────────────────

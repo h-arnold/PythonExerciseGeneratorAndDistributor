@@ -130,14 +130,14 @@ def _assigns_call(tree: ast.AST, name: str, func_name: str) -> bool:
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[1]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[1]
     assert "TODO" not in output
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[1]
 
 
 @pytest.mark.task(taskno=1)
@@ -148,7 +148,8 @@ def test_exercise1_construct() -> None:
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(1))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(1))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -159,13 +160,13 @@ def test_exercise1_explanation() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic() -> None:
     output = _exercise_output(2)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[2]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[2]
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[2]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[2]
 
 
 @pytest.mark.task(taskno=2)
@@ -176,7 +177,8 @@ def test_exercise2_construct() -> None:
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(2))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(2))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -187,25 +189,27 @@ def test_exercise2_explanation() -> None:
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[3]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[3]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_construct() -> None:
     tree = _exercise_ast(3)
     strings = _string_constants(tree)
-    assert ex004.EX004_EXPECTED_SINGLE_LINE[3] in strings or ({"Learning", "Python"} <= strings)
+    assert ex004.EX004_EXPECTED_SINGLE_LINE[3] in strings or (
+        {"Learning", "Python"} <= strings)
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(3))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(3))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -216,13 +220,13 @@ def test_exercise3_explanation() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
     output = _exercise_output(4)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[4]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[4]
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[4]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[4]
 
 
 @pytest.mark.task(taskno=4)
@@ -236,7 +240,8 @@ def test_exercise4_construct() -> None:
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(4))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(4))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -247,13 +252,13 @@ def test_exercise4_explanation() -> None:
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
     output = _exercise_output(5)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[5]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[5]
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
     output = _exercise_output(5)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[5]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[5]
 
 
 @pytest.mark.task(taskno=5)
@@ -265,7 +270,8 @@ def test_exercise5_construct() -> None:
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(5))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(5))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -276,25 +282,27 @@ def test_exercise5_explanation() -> None:
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[6]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[6]
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[6]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[6]
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_construct() -> None:
     tree = _exercise_ast(6)
-    assert _assigns_constant(tree, "greeting", ex004.EX004_EXPECTED_SINGLE_LINE[6])
+    assert _assigns_constant(
+        tree, "greeting", ex004.EX004_EXPECTED_SINGLE_LINE[6])
     assert _print_uses_name(tree, "greeting")
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(6))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(6))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -313,7 +321,7 @@ def test_exercise7_logic() -> None:
 def test_exercise7_formatting() -> None:
     output = _exercise_output_with_input(7, ["5"])
     assert output.startswith(ex004.EX004_PROMPT_STRINGS[7])
-    assert output.rstrip().endswith(ex004.EX004_FORMAT_VALIDATION[7])
+    assert output.endswith(ex004.EX004_FORMAT_VALIDATION[7])
 
 
 @pytest.mark.task(taskno=7)
@@ -325,7 +333,8 @@ def test_exercise7_construct() -> None:
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(7))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(7))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -345,7 +354,7 @@ def test_exercise8_logic() -> None:
 def test_exercise8_formatting() -> None:
     name = "Alice"
     output = _exercise_output_with_input(8, [name])
-    expected = f"{ex004.EX004_PROMPT_STRINGS[8]} {ex004.EX004_FORMAT_VALIDATION[8]}\n"
+    expected = f"{ex004.EX004_PROMPT_STRINGS[8]} {ex004.EX004_FORMAT_VALIDATION[8]}"
     assert output == expected
 
 
@@ -358,7 +367,8 @@ def test_exercise8_construct() -> None:
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(8))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(8))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -369,13 +379,13 @@ def test_exercise8_explanation() -> None:
 @pytest.mark.task(taskno=9)
 def test_exercise9_logic() -> None:
     output = _exercise_output(9)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[9]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[9]
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[9]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[9]
 
 
 @pytest.mark.task(taskno=9)
@@ -386,7 +396,8 @@ def test_exercise9_construct() -> None:
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(9))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(9))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,
@@ -406,7 +417,7 @@ def test_exercise10_logic() -> None:
 def test_exercise10_formatting() -> None:
     colour = "Blue"
     output = _exercise_output_with_input(10, [colour])
-    expected = f"{ex004.EX004_PROMPT_STRINGS[10]} {ex004.EX004_FORMAT_VALIDATION[10]}\n"
+    expected = f"{ex004.EX004_PROMPT_STRINGS[10]} {ex004.EX004_FORMAT_VALIDATION[10]}"
     assert output == expected
 
 
@@ -419,7 +430,8 @@ def test_exercise10_construct() -> None:
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_explanation() -> None:
-    explanation = get_explanation_cell(_EX004_EXERCISE_KEY, tag=_explanation_tag(10))
+    explanation = get_explanation_cell(
+        _EX004_EXERCISE_KEY, tag=_explanation_tag(10))
     assert is_valid_explanation(
         explanation,
         min_length=ex004.EX004_MIN_EXPLANATION_LENGTH,

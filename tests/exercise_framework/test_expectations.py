@@ -37,8 +37,10 @@ def test_expected_output_lines_normalises_multi_line() -> None:
     assert lines == _MULTI_LINE[6]
 
 
-def test_expected_output_text_uses_trailing_newline() -> None:
-    expected = "\n".join(_MULTI_LINE[9]) + "\n"
+def test_expected_output_text_no_trailing_newline() -> None:
+    """expected_output_text no longer appends a trailing newline — the runtime
+    functions strip it automatically."""
+    expected = "\n".join(_MULTI_LINE[9])
     assert (
         expected_output_text(
             9,

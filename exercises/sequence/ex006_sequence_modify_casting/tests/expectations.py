@@ -15,13 +15,13 @@ class Ex006InputExpectation(TypedDict):
 
 
 EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
-    1: "15\n",
-    2: "6.0\n",
-    3: "28\n",
-    4: "Your score is 500\n",
-    5: "25\n",
-    8: "Area: 50\n",
-    9: "The Burger costs \u00a35.5\n",
+    1: "15",
+    2: "6.0",
+    3: "28",
+    4: "Your score is 500",
+    5: "25",
+    8: "Area: 50",
+    9: "The Burger costs \u00a35.5",
 }
 
 EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {

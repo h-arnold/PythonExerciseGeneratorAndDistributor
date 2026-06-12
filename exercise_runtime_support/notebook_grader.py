@@ -186,18 +186,19 @@ def run_cell_and_capture_output(
         tag: Cell metadata tag to execute (e.g., "exercise1")
 
     Returns:
-        The captured stdout output as a string
+        The captured stdout output as a string, with the trailing newline
+        (always added by :func:`print`) stripped.
 
     Example:
         >>> output = run_cell_and_capture_output(
         ...     "ex002_sequence_modify_basics",
         ...     tag="exercise1",
         ... )
-        >>> assert output.strip() == "Hello Python!"
+        >>> assert output == "Hello Python!"
     """
     with contextlib.redirect_stdout(StringIO()) as buffer:
         exec_tagged_code(notebook_path, tag=tag, variant=variant)
-        return buffer.getvalue()
+        return buffer.getvalue().rstrip("\n")
 
 
 def run_cell_with_input(
@@ -218,7 +219,8 @@ def run_cell_with_input(
         inputs: List of strings to provide as input() values
 
     Returns:
-        The captured stdout output as a string
+        The captured stdout output as a string, with the trailing newline
+        (always added by :func:`print`) stripped.
 
     Raises:
         RuntimeError: If the code calls input() more times than provided
@@ -248,7 +250,7 @@ def run_cell_with_input(
     try:
         with contextlib.redirect_stdout(StringIO()) as buffer:
             exec_tagged_code(notebook_path, tag=tag, variant=variant)
-            return buffer.getvalue()
+            return buffer.getvalue().rstrip("\n")
     finally:
         builtins.input = original_input
 

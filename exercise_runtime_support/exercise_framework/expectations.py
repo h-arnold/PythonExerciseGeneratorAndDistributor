@@ -30,7 +30,11 @@ def expected_output_text(
     single_line: Mapping[int, str],
     multi_line: Mapping[int, Sequence[str]],
 ) -> str | None:
-    """Return expected output text with trailing newline, or None when missing."""
+    """Return expected output text, or None when missing.
+
+    The trailing newline normally added by :func:`print` is not included;
+    :func:`run_cell_and_capture_output` strips it automatically.
+    """
     lines = expected_output_lines(
         exercise_no,
         single_line=single_line,
@@ -38,7 +42,7 @@ def expected_output_text(
     )
     if lines is None:
         return None
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines)
 
 
 def expected_print_call_count(

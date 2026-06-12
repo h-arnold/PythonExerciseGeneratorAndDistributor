@@ -129,7 +129,7 @@ def test_exercise6_logic() -> None:
         6, list(ex006.EX006_INPUT_EXPECTATIONS[6]["inputs"]))
     assert ex006.EX006_INPUT_EXPECTATIONS[6]["prompt_contains"] in output
     # final line should be 12
-    last = output.strip().splitlines()[-1]
+    last = output.splitlines()[-1]
     expected_last = ex006.EX006_INPUT_EXPECTATIONS[6].get("last_line")
     assert expected_last is not None
     assert last == expected_last

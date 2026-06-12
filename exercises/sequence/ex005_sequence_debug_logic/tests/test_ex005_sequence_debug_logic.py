@@ -128,23 +128,23 @@ def _expected_io_output(exercise_no: int, inputs: list[str]) -> str:
     prompt_first, prompt_second = ex005.EX005_INPUT_PROMPTS[exercise_no]
     if exercise_no == ex005.EX005_FULL_NAME_EXERCISE:
         first, last = inputs
-        return f"{prompt_first}{prompt_second}{first} {last}\n"
+        return f"{prompt_first}{prompt_second}{first} {last}"
     if exercise_no == ex005.EX005_PROFILE_EXERCISE:
         age, city = inputs
-        return f"{prompt_first}{prompt_second}You are {age} years old and live in {city}\n"
+        return f"{prompt_first}{prompt_second}You are {age} years old and live in {city}"
     raise ValueError(f"Unexpected interactive exercise: {exercise_no}")
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[1]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[1]
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[1]
 
 
 @pytest.mark.task(taskno=1)
@@ -178,13 +178,13 @@ def test_exercise1_explanation() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic() -> None:
     output = _exercise_output(2)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[2]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[2]
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_formatting() -> None:
     output = _exercise_output(2)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[2]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[2]
 
 
 @pytest.mark.task(taskno=2)
@@ -209,13 +209,13 @@ def test_exercise2_explanation() -> None:
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[3]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[3]
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_formatting() -> None:
     output = _exercise_output(3)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[3]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[3]
 
 
 @pytest.mark.task(taskno=3)
@@ -249,13 +249,13 @@ def test_exercise3_explanation() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
     output = _exercise_output(4)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[4]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[4]
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output(4)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[4]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[4]
 
 
 @pytest.mark.task(taskno=4)
@@ -324,13 +324,13 @@ def test_exercise5_explanation() -> None:
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
     output = _exercise_output(6)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[6]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[6]
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
     output = _exercise_output(6)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[6]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[6]
 
 
 @pytest.mark.task(taskno=6)
@@ -356,13 +356,13 @@ def test_exercise6_explanation() -> None:
 @pytest.mark.task(taskno=7)
 def test_exercise7_logic() -> None:
     output = _exercise_output(7)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[7]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[7]
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_formatting() -> None:
     output = _exercise_output(7)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[7]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[7]
 
 
 @pytest.mark.task(taskno=7)
@@ -407,13 +407,13 @@ def test_exercise7_explanation() -> None:
 @pytest.mark.task(taskno=8)
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[8]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[8]
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_formatting() -> None:
     output = _exercise_output(8)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[8]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[8]
 
 
 @pytest.mark.task(taskno=8)
@@ -441,13 +441,13 @@ def test_exercise8_explanation() -> None:
 @pytest.mark.task(taskno=9)
 def test_exercise9_logic() -> None:
     output = _exercise_output(9)
-    assert output.strip() == ex005.EX005_EXPECTED_SINGLE_LINE[9]
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[9]
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_formatting() -> None:
     output = _exercise_output(9)
-    assert output == f"{ex005.EX005_EXPECTED_SINGLE_LINE[9]}\n"
+    assert output == ex005.EX005_EXPECTED_SINGLE_LINE[9]
 
 
 @pytest.mark.task(taskno=9)

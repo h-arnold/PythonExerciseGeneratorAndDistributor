@@ -34,8 +34,8 @@ def _check_static_output(exercise_no: int) -> list[str]:
         return [str(exc)]
     if output != expected:
         return [
-            f"Expected: {expected.strip()!r}\n"
-            f"     Got: {output.strip()!r}"
+            f"Expected: {expected!r}\n"
+            f"     Got: {output!r}"
         ]
     return []
 
@@ -54,8 +54,8 @@ def _check_input_output(exercise_no: int) -> list[str]:
     expected = case["expected_output"]
     if output != expected:
         return [
-            f"Expected: {expected.strip()!r}\n"
-            f"     Got: {output.strip()!r}"
+            f"Expected: {expected!r}\n"
+            f"     Got: {output!r}"
         ]
     return []
 

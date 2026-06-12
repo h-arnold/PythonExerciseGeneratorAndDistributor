@@ -28,9 +28,9 @@ EX007_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
     "...",
 )
 EX007_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
-    1: "You have 3 pens\n",
-    2: "Total price: \u00a37.5\n",
-    4: "Average per day: 3.5 km\n",
+    1: "You have 3 pens",
+    2: "Total price: \u00a37.5",
+    4: "Average per day: 3.5 km",
 }
 EX007_INTERACTIVE_CONSTRUCTS: Final[dict[int, Ex007InteractiveConstructs]] = {
     3: {"required_calls": ("int", "str")},
@@ -51,93 +51,105 @@ EX007_INTERACTIVE_CONSTRUCTS: Final[dict[int, Ex007InteractiveConstructs]] = {
 }
 EX007_INPUT_CASES: Final[dict[int, tuple[Ex007InputCase, ...]]] = {
     3: (
-        {"inputs": ["14"], "expected_output": "Enter your age: Next year you will be 15\n"},
-        {"inputs": ["9"], "expected_output": "Enter your age: Next year you will be 10\n"},
-        {"inputs": ["0"], "expected_output": "Enter your age: Next year you will be 1\n"},
-        {"inputs": ["41"], "expected_output": "Enter your age: Next year you will be 42\n"},
+        {"inputs": [
+            "14"], "expected_output": "Enter your age: Next year you will be 15"},
+        {"inputs": [
+            "9"], "expected_output": "Enter your age: Next year you will be 10"},
+        {"inputs": [
+            "0"], "expected_output": "Enter your age: Next year you will be 1"},
+        {"inputs": [
+            "41"], "expected_output": "Enter your age: Next year you will be 42"},
     ),
     5: (
-        {"inputs": ["hi", "3"], "expected_output": "Word to repeat: How many times? hihihi\n"},
-        {"inputs": ["go", "2"], "expected_output": "Word to repeat: How many times? gogo\n"},
-        {"inputs": ["z", "5"], "expected_output": "Word to repeat: How many times? zzzzz\n"},
-        {"inputs": ["wow", "1"], "expected_output": "Word to repeat: How many times? wow\n"},
+        {"inputs": ["hi", "3"],
+            "expected_output": "Word to repeat: How many times? hihihi"},
+        {"inputs": ["go", "2"],
+            "expected_output": "Word to repeat: How many times? gogo"},
+        {"inputs": ["z", "5"],
+            "expected_output": "Word to repeat: How many times? zzzzz"},
+        {"inputs": ["wow", "1"],
+            "expected_output": "Word to repeat: How many times? wow"},
     ),
     6: (
         {
             "inputs": ["20"],
-            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: 68.0\n",
+            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: 68.0",
         },
         {
             "inputs": ["0"],
-            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: 32.0\n",
+            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: 32.0",
         },
         {
             "inputs": ["-40"],
-            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: -40.0\n",
+            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: -40.0",
         },
         {
             "inputs": ["37.5"],
-            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: 99.5\n",
+            "expected_output": "Enter temperature in Celsius: Temperature in Fahrenheit: 99.5",
         },
     ),
     7: (
         {
             "inputs": ["1.5", "4"],
-            "expected_output": "Enter price per item (£): Enter quantity: Total cost: £6.0\n",
+            "expected_output": "Enter price per item (\u00a3): Enter quantity: Total cost: \u00a36.0",
         },
         {
             "inputs": ["2.5", "4"],
-            "expected_output": "Enter price per item (£): Enter quantity: Total cost: £10.0\n",
+            "expected_output": "Enter price per item (\u00a3): Enter quantity: Total cost: \u00a310.0",
         },
         {
             "inputs": ["3.2", "5"],
-            "expected_output": "Enter price per item (£): Enter quantity: Total cost: £16.0\n",
+            "expected_output": "Enter price per item (\u00a3): Enter quantity: Total cost: \u00a316.0",
         },
         {
             "inputs": ["0.5", "7"],
-            "expected_output": "Enter price per item (£): Enter quantity: Total cost: £3.5\n",
+            "expected_output": "Enter price per item (\u00a3): Enter quantity: Total cost: \u00a33.5",
         },
     ),
     8: (
         {
             "inputs": ["12", "15", "9"],
-            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 12.0\n",
+            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 12.0",
         },
         {
             "inputs": ["50", "60", "70"],
-            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 60.0\n",
+            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 60.0",
         },
         {
             "inputs": ["2", "4", "6"],
-            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 4.0\n",
+            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 4.0",
         },
         {
             "inputs": ["7", "8", "9"],
-            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 8.0\n",
+            "expected_output": "Enter score 1: Enter score 2: Enter score 3: Average score: 8.0",
         },
     ),
     9: (
-        {"inputs": ["3", "45"], "expected_output": "Pounds: Pence: Total pence: 345\n"},
-        {"inputs": ["4", "50"], "expected_output": "Pounds: Pence: Total pence: 450\n"},
-        {"inputs": ["0", "99"], "expected_output": "Pounds: Pence: Total pence: 99\n"},
-        {"inputs": ["12", "0"], "expected_output": "Pounds: Pence: Total pence: 1200\n"},
+        {"inputs": ["3", "45"],
+            "expected_output": "Pounds: Pence: Total pence: 345"},
+        {"inputs": ["4", "50"],
+            "expected_output": "Pounds: Pence: Total pence: 450"},
+        {"inputs": ["0", "99"],
+            "expected_output": "Pounds: Pence: Total pence: 99"},
+        {"inputs": ["12", "0"],
+            "expected_output": "Pounds: Pence: Total pence: 1200"},
     ),
     10: (
         {
             "inputs": ["20", "4"],
-            "expected_output": "Total bill (£): Number of people: Each person pays: £5.5\n",
+            "expected_output": "Total bill (\u00a3): Number of people: Each person pays: \u00a35.5",
         },
         {
             "inputs": ["120", "4"],
-            "expected_output": "Total bill (£): Number of people: Each person pays: £33.0\n",
+            "expected_output": "Total bill (\u00a3): Number of people: Each person pays: \u00a333.0",
         },
         {
             "inputs": ["30", "2"],
-            "expected_output": "Total bill (£): Number of people: Each person pays: £16.5\n",
+            "expected_output": "Total bill (\u00a3): Number of people: Each person pays: \u00a316.5",
         },
         {
             "inputs": ["10", "4"],
-            "expected_output": "Total bill (£): Number of people: Each person pays: £2.75\n",
+            "expected_output": "Total bill (\u00a3): Number of people: Each person pays: \u00a32.75",
         },
     ),
 }

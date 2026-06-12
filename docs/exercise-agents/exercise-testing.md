@@ -81,7 +81,7 @@ A test is only useful for grading if it distinguishes an unattempted notebook fr
 print("Hello from Python!")
 
 # test
-assert output.strip() == "Hi there!"
+assert output == "Hi there!"
 ```
 
 - Checking an updated input flow with new prompt wording.
@@ -365,7 +365,7 @@ def test_exercise4_logic() -> None:
     fruit = "dragonfruit"
     descriptor = "sweet"
     output = _exercise_output_with_inputs(4, [fruit, descriptor])
-    lines = output.strip().splitlines()
+    lines = output.splitlines()
     assert lines == [
         ex003.EX003_EXPECTED_PROMPTS[4][0],
         ex003.EX003_EXPECTED_PROMPTS[4][1],
@@ -375,7 +375,7 @@ def test_exercise4_logic() -> None:
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
     output = _exercise_output_with_inputs(4, ["mango", "tropical"])
-    expected = f"{ex003.EX003_EXPECTED_PROMPTS[4][0]}\n{ex003.EX003_EXPECTED_PROMPTS[4][1]}\n{ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}\n"
+    expected = f"{ex003.EX003_EXPECTED_PROMPTS[4][0]}\n{ex003.EX003_EXPECTED_PROMPTS[4][1]}\n{ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}"
     assert output == expected
 
 @pytest.mark.task(taskno=4)
@@ -406,12 +406,12 @@ Describe what error you got and why. Fix the code above.
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    assert output.strip() == ex004.EX004_EXPECTED_SINGLE_LINE[1]
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[1]
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_formatting() -> None:
     output = _exercise_output(1)
-    assert output == f"{ex004.EX004_EXPECTED_SINGLE_LINE[1]}\n"
+    assert output == ex004.EX004_EXPECTED_SINGLE_LINE[1]
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct() -> None:
@@ -534,8 +534,8 @@ def _check_static_output(exercise_no: int) -> list[str]:
         return [str(exc)]
     if output != expected:
         return [
-            f"Expected: {expected.strip()!r}\n"
-            f"     Got: {output.strip()!r}"
+            f"Expected: {expected!r}\n"
+            f"     Got: {output!r}"
         ]
     return []
 
@@ -554,8 +554,8 @@ def _check_input_output(exercise_no: int) -> list[str]:
     expected = case["expected_output"]
     if output != expected:
         return [
-            f"Expected: {expected.strip()!r}\n"
-            f"     Got: {output.strip()!r}"
+            f"Expected: {expected!r}\n"
+            f"     Got: {output!r}"
         ]
     return []
 
@@ -643,6 +643,13 @@ Treat those exercise-local modules as the canonical source of support data for t
 
 ### Runtime Helpers
 
+> **Trailing newline contract**: Both `run_cell_and_capture_output()` and `run_cell_with_input()`
+> strip the trailing `\n` that Python's `print()` always appends. The returned string is
+> **already clean** — callers must not call `.strip()` or `.rstrip()` on the output.
+> Expected output strings in expectations modules and tests must not include a trailing
+> `\n`. This is a deliberate contract change: the trailing newline is a runtime artifact,
+> never part of the output a student is asked to produce.
+
 #### Core Helpers
 
 ##### `runtime.run_cell_and_capture_output(notebook_path, *, tag) -> str`
@@ -650,7 +657,7 @@ Treat those exercise-local modules as the canonical source of support data for t
 **Primary testing function** for notebook exercises. Executes a tagged cell and captures its print output.
 
 - **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str)
-- **Returns**: Captured stdout. `input()` prompts are included.
+- **Returns**: Captured stdout with the trailing `\n` already stripped. `input()` prompts are included in the output.
 
 ```python
 output = runtime.run_cell_and_capture_output(
@@ -658,7 +665,7 @@ output = runtime.run_cell_and_capture_output(
     tag="exercise1",
     variant="solution",
 )
-assert output.strip() == "Hello Python!"
+assert output == "Hello Python!"
 ```
 
 ##### `runtime.run_cell_with_input(notebook_path, *, tag, inputs) -> str`
@@ -666,7 +673,7 @@ assert output.strip() == "Hello Python!"
 For exercises requiring user input, this function mocks `input()` with predetermined values while capturing print output.
 
 - **Parameters**: `notebook_path` (exercise key `str` or canonical `Path`), `tag` (str), `inputs` (list[str])
-- **Returns**: Captured stdout (including prompts).
+- **Returns**: Captured stdout with the trailing `\n` already stripped (including prompts).
 - **Raises**: `RuntimeError` if code calls `input()` more times than provided.
 
 ```python

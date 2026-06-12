@@ -208,8 +208,8 @@ The grading system (`exercise_runtime_support/notebook_grader.py`) provides:
 
 - `extract_tagged_code(notebook_path, *, tag="student")` - Extract source from tagged cells
 - `exec_tagged_code(notebook_path, *, tag="student")` - Execute tagged cells and return namespace.
-- `run_cell_and_capture_output(notebook_path, *, tag="student")` - Execute a tagged code cell and capture stdout; this is the primary helper for non-debug exercise behaviour checks.
-- `run_cell_with_input(notebook_path, *, tag="student", inputs=[...])` - Execute a tagged code cell while supplying deterministic `input()` values.
+- `run_cell_and_capture_output(notebook_path, *, tag="student")` - Execute a tagged code cell and capture stdout with the trailing `\n` already stripped; this is the primary helper for non-debug exercise behaviour checks.
+- `run_cell_with_input(notebook_path, *, tag="student", inputs=[...])` - Execute a tagged code cell while supplying deterministic `input()` values; returns stdout with trailing `\n` already stripped.
 - `get_explanation_cell(notebook_path, *, tag="explanation1")` - Read explanation or reflection markdown cells for debug-style checks.
 
 Resolver contract note:

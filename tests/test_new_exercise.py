@@ -257,10 +257,13 @@ def _assert_variant_notebooks(
     )
 
     student_helper = "".join(_ensure_source_lines(_require_cells(student_notebook)[-1]))
-    assert 'PYTUTOR_ACTIVE_VARIANT"] = "student"' in student_helper
+    assert "import os" not in student_helper
+    assert "PYTUTOR_ACTIVE_VARIANT" not in student_helper
 
     solution_helper = "".join(_ensure_source_lines(_require_cells(solution_notebook)[-1]))
-    assert 'PYTUTOR_ACTIVE_VARIANT"] = "solution"' in solution_helper
+    assert "import os" in solution_helper
+    assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in solution_helper
+    assert '"solution"' in solution_helper
 
     assert student_notebook != solution_notebook
 
@@ -330,10 +333,9 @@ def test_main_creates_canonical_debug_scaffold(
     assert "explanation1" in tags
 
     helper_source = "".join(_ensure_source_lines(cells[-1]))
-    assert (
-        "Pass the canonical exercise_key here; do not pass a notebook path." in helper_source
-        and f"run_notebook_checks('{exercise_key}')" in helper_source
-    )
+    assert "import os" not in helper_source
+    assert "PYTUTOR_ACTIVE_VARIANT" not in helper_source
+    assert f"run_notebook_checks('{exercise_key}')" in helper_source
 
     readme = (exercise_dir / "README.md").read_text(encoding="utf-8")
     assert "- Open ``notebooks/student.ipynb`` in this exercise folder." in readme
@@ -442,7 +444,8 @@ def test_main_creates_canonical_make_scaffold(
 
     # Verify student variant
     student_helper_source = "".join(_ensure_source_lines(cells[-1]))
-    assert 'PYTUTOR_ACTIVE_VARIANT"] = "student"' in student_helper_source
+    assert "import os" not in student_helper_source
+    assert "PYTUTOR_ACTIVE_VARIANT" not in student_helper_source
 
     # Verify solution variant
     solution_notebook = json.loads(solution_notebook_path.read_text(encoding="utf-8"))
@@ -504,13 +507,16 @@ def test_main_creates_multi_part_debug_scaffold_with_helper_based_explanation_ch
     student_notebook = json.loads(student_notebook_path.read_text(encoding="utf-8"))
     student_cells = _require_cells(student_notebook)
     student_helper_source = "".join(_ensure_source_lines(student_cells[-1]))
-    assert 'PYTUTOR_ACTIVE_VARIANT"] = "student"' in student_helper_source
+    assert "import os" not in student_helper_source
+    assert "PYTUTOR_ACTIVE_VARIANT" not in student_helper_source
 
     # Verify solution variant
     solution_notebook = json.loads(solution_notebook_path.read_text(encoding="utf-8"))
     solution_cells = _require_cells(solution_notebook)
     solution_helper_source = "".join(_ensure_source_lines(solution_cells[-1]))
-    assert 'PYTUTOR_ACTIVE_VARIANT"] = "solution"' in solution_helper_source
+    assert "import os" in solution_helper_source
+    assert 'os.environ["PYTUTOR_ACTIVE_VARIANT"]' in solution_helper_source
+    assert '"solution"' in solution_helper_source
 
     # Verify supporting files exist
     assert expectations_path.exists(), "expectations.py should exist"
@@ -624,7 +630,5 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     assert (
         "from exercise_runtime_support.student_checker import run_notebook_checks" in joined_source
     )
-    assert (
-        "Pass the canonical exercise_key here; do not pass a notebook path." in joined_source
-        and "run_notebook_checks('ex000_sequence_modify_example')" in joined_source
-    )
+    assert "Pass the canonical exercise_key here" not in joined_source
+    assert "run_notebook_checks('ex000_sequence_modify_example')" in joined_source

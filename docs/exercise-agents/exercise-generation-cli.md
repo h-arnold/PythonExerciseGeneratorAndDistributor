@@ -208,7 +208,7 @@ _CACHE = RuntimeCache()
 
 def test_exercise1_greets_user() -> None:
   output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag="exercise1", cache=_CACHE)
-  assert output.strip() == "Hello"
+  assert output == "Hello"
 ```
 
 If the exercise defines Python objects instead of printing, use `exec_tagged_code(...)` for targeted tests. This is an exercise-specific choice, not a default contract.
@@ -374,7 +374,7 @@ def test_exercise_cells_execute(tag):
 )
 def test_exercise_behaviour(tag, expected):
   output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)
-  assert output.strip() == expected
+  assert output == expected
 ```
 
 ## Canonical vs Transitional Paths

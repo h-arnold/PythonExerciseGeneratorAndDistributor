@@ -196,7 +196,7 @@ _CACHE = RuntimeCache()
 )
 def test_exercise_output(tag: str, expected: str) -> None:
     output = run_cell_and_capture_output(_NOTEBOOK_PATH, tag=tag, cache=_CACHE)
-    assert output.strip() == expected
+    assert output == expected
 
 
 def test_exercise4_uses_fstring() -> None:

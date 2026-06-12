@@ -13,8 +13,8 @@ class Ex008InteractiveCase(TypedDict):
 
 
 EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
-    1: "Welcome to Oakwood Coding Club!\n",
-    2: "Snack box: muffins\nTotal cost: 8 pounds\n",
+    1: "Welcome to Oakwood Coding Club!",
+    2: "Snack box: muffins\nTotal cost: 8 pounds",
 }
 
 EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
@@ -24,7 +24,7 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
             "expected_output": (
                 "Enter your name:\n"
                 "Enter your favourite hobby:\n"
-                "Hello Aisha! Your hobby is drawing.\n"
+                "Hello Aisha! Your hobby is drawing."
             ),
         },
         {
@@ -32,7 +32,7 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
             "expected_output": (
                 "Enter your name:\n"
                 "Enter your favourite hobby:\n"
-                "Hello Leo! Your hobby is chess.\n"
+                "Hello Leo! Your hobby is chess."
             ),
         },
     ],
@@ -42,7 +42,7 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
             "expected_output": (
                 "Books read in one week:\n"
                 "Number of weeks:\n"
-                "Books read altogether: 18\n"
+                "Books read altogether: 18"
             ),
         },
         {
@@ -50,7 +50,7 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
             "expected_output": (
                 "Books read in one week:\n"
                 "Number of weeks:\n"
-                "Books read altogether: 0\n"
+                "Books read altogether: 0"
             ),
         },
     ],
@@ -60,7 +60,7 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
             "expected_output": (
                 "Distance for one walk in km:\n"
                 "Number of walks:\n"
-                "Total distance: 7.5 km\n"
+                "Total distance: 7.5 km"
             ),
         },
         {
@@ -68,7 +68,7 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
             "expected_output": (
                 "Distance for one walk in km:\n"
                 "Number of walks:\n"
-                "Total distance: 4.8 km\n"
+                "Total distance: 4.8 km"
             ),
         },
     ],

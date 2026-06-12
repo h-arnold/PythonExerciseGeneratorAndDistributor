@@ -80,7 +80,7 @@ CACHE = RuntimeCache()
 )
 def test_make_outputs(tag: str, expected: str) -> None:
     output = run_cell_and_capture_output(NOTEBOOK_PATH, tag=tag, cache=CACHE)
-    assert output.strip() == expected
+    assert output == expected
 ```
 
 For input-driven tasks, use `run_cell_with_input(...)` instead of calling `input()` interactively inside the test.

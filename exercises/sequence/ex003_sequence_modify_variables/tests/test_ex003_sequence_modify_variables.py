@@ -52,11 +52,8 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
 
 
 def _assert_strict_output(exercise_no: int, output: str, expected: str) -> None:
-    assert output.strip() == expected, (
-        f"Exercise {exercise_no}: expected exact text '{expected}' but got '{output.strip()}'."
-    )
-    assert output == f"{expected}\n", (
-        f"Exercise {exercise_no}: output must end with a single newline."
+    assert output == expected, (
+        f"Exercise {exercise_no}: expected exact text '{expected}' but got '{output}'."
     )
 
 
@@ -209,7 +206,7 @@ def test_exercise4_logic() -> None:
     fruit = "dragonfruit"
     descriptor = "sweet"
     output = _exercise_output_with_inputs(4, [fruit, descriptor])
-    lines = output.strip().splitlines()
+    lines = output.splitlines()
     assert lines == [
         ex003.EX003_EXPECTED_PROMPTS[4][0],
         ex003.EX003_EXPECTED_PROMPTS[4][1],
@@ -224,7 +221,7 @@ def test_exercise4_formatting() -> None:
     expected = (
         f"{ex003.EX003_EXPECTED_PROMPTS[4][0]}\n"
         f"{ex003.EX003_EXPECTED_PROMPTS[4][1]}\n"
-        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}\n"
+        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}"
     )
     assert output == expected
 
@@ -254,7 +251,7 @@ def test_exercise5_logic() -> None:
     town = "Newport"
     country = "Wales"
     output = _exercise_output_with_inputs(5, [town, country])
-    lines = output.strip().splitlines()
+    lines = output.splitlines()
     assert lines == [
         ex003.EX003_EXPECTED_PROMPTS[5][0],
         ex003.EX003_EXPECTED_PROMPTS[5][1],
@@ -269,7 +266,7 @@ def test_exercise5_formatting() -> None:
     expected = (
         f"{ex003.EX003_EXPECTED_PROMPTS[5][0]}\n"
         f"{ex003.EX003_EXPECTED_PROMPTS[5][1]}\n"
-        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[5].format(town='Cardiff', country='Wales')}\n"
+        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[5].format(town='Cardiff', country='Wales')}"
     )
     assert output == expected
 
@@ -299,7 +296,7 @@ def test_exercise6_logic() -> None:
     first = "Jess"
     last = "Jones"
     output = _exercise_output_with_inputs(6, [first, last])
-    lines = output.strip().splitlines()
+    lines = output.splitlines()
     assert lines == [
         ex003.EX003_EXPECTED_PROMPTS[6][0],
         ex003.EX003_EXPECTED_PROMPTS[6][1],
@@ -313,7 +310,7 @@ def test_exercise6_formatting() -> None:
     expected = (
         f"{ex003.EX003_EXPECTED_PROMPTS[6][0]}\n"
         f"{ex003.EX003_EXPECTED_PROMPTS[6][1]}\n"
-        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[6].format(first='Alex', last='Morgan')}\n"
+        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[6].format(first='Alex', last='Morgan')}"
     )
     assert output == expected
 
