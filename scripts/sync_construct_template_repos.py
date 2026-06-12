@@ -285,6 +285,8 @@ def _init_and_push(
 ) -> None:
     """Initialize git repo, create/update on GitHub, and push.
 
+    Assumes git is already installed and configured on the local machine.
+
     Args:
         workspace: Path to the workspace directory.
         repo_ref: GitHub repository reference (e.g., ``owner/name``).
@@ -306,33 +308,6 @@ def _init_and_push(
         text=True,
         check=False,
     )
-
-    # Configure git user if not set globally
-    user_name = subprocess.run(
-        ["git", "config", "--global", "user.name"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    user_email = subprocess.run(
-        ["git", "config", "--global", "user.email"],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    if not user_name.stdout.strip():
-        subprocess.run(
-            ["git", "config", "user.name", "Template Sync Bot"],
-            cwd=workspace,
-            check=True,
-        )
-    if not user_email.stdout.strip():
-        subprocess.run(
-            ["git", "config", "user.email", "template-sync@example.com"],
-            cwd=workspace,
-            check=True,
-        )
 
     # Add all files and commit
     subprocess.run(["git", "add", "."], cwd=workspace, capture_output=True, text=True, check=True)
