@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex001_selection_modify_basics",
+  "exercise_id": 1,
+  "slug": "ex001_selection_modify_basics",
+  "title": "Selection Modify Basics",
+  "construct": "selection",
+  "exercise_type": "modify",
+  "parts": 10
+}
