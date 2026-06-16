@@ -1,5 +1,0 @@
-name = "exercise-generation"
-type = "subagent"
-system_prompt_id = "exercise-generation"
-
-[tools]

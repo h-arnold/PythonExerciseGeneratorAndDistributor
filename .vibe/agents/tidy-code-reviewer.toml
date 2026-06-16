@@ -1,5 +1,0 @@
-name = "tidy-code-reviewer"
-type = "subagent"
-system_prompt_id = "tidy-code-reviewer"
-
-[tools]

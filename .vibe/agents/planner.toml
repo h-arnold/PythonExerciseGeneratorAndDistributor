@@ -1,5 +1,0 @@
-name = "planner"
-type = "subagent"
-system_prompt_id = "planner"
-
-[tools]

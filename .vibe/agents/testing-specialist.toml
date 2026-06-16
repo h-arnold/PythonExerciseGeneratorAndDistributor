@@ -1,5 +1,0 @@
-name = "testing-specialist"
-type = "subagent"
-system_prompt_id = "testing-specialist"
-
-[tools]

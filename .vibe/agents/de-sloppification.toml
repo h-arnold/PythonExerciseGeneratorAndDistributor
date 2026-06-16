@@ -1,5 +1,0 @@
-name = "de-sloppification"
-type = "subagent"
-system_prompt_id = "de-sloppification"
-
-[tools]

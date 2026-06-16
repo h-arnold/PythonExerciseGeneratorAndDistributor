@@ -1,5 +1,0 @@
-name = "agent-orchestrator"
-type = "subagent"
-system_prompt_id = "agent-orchestrator"
-
-[tools]
