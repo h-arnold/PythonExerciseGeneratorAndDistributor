@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex015_sequence_make_consolidation_v2",
+  "exercise_id": 15,
+  "slug": "ex015_sequence_make_consolidation_v2",
+  "title": "Sequence Make Consolidation",
+  "construct": "sequence",
+  "exercise_type": "make",
+  "parts": 10
+}

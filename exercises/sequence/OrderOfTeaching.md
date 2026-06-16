@@ -118,3 +118,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Squaring (`n ** 2`), cubing (`n ** 3`), square root (`n ** 0.5`), and exponentiation (`base ** exponent`) with `input()` and casting.
 - Type: Gap-fill exercises with decreasing scaffolding — from single-line gaps with hardcoded values to full programs with input.
 - Purpose: Introduce the `**` operator for powers and roots, building on earlier arithmetic skills and the split-cast pattern.
+
+1. [**Sequence Make Consolidation**](`ex015_sequence_make_consolidation_v2`)
+
+[Supporting docs](./ex015_sequence_make_consolidation_v2/)
+[Notebook](./ex015_sequence_make_consolidation_v2/notebooks/student.ipynb)
+
+- Focus: Writing complete programs from scratch using every sequence construct — variables, `input()`, arithmetic (`+`, `-`, `*`, `/`, `//`, `%`, `**`), `round()`, f-strings, and casting (`int()`, `float()`, `str()`).
+- Type: Make exercises with 10 parts that ramp from highly scaffolded (exact variable names and formulas) to completely open-ended (just a real-world scenario).
+- Purpose: Consolidate the full sequence strand and prepare students for the selection construct by moving them from guided practice into independent program design.

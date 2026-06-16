@@ -14,12 +14,13 @@
 - Leaving old concatenation fragments while partially rewriting to f-strings.
 - Changing output text correctly but forgetting to fix the arithmetic logic.
 
-## Suggested teaching flow
+ ## Suggested teaching flow
 
 1. Model one quick conversion from concatenation to f-string on the board.
-2. Let learners complete exercises 1-3 as confidence builders around changing existing f-string text.
-3. Pause after exercise 7 to review how f-strings remove the need for `str()` in output lines.
-4. Use exercises 8-10 as logic-plus-output checks where arithmetic and text must both be correct.
+2. Let learners complete exercises 1-3 as confidence builders converting simple concatenation `print()` calls into f-strings.
+3. Exercise 4 combines conversion with changing a variable value.
+4. Pause after exercise 7 to review how f-strings remove the need for `str()` in output lines.
+5. Use exercises 8-10 as logic-plus-output checks where arithmetic and text must both be correct.
 
 ## Suggested hints
 
