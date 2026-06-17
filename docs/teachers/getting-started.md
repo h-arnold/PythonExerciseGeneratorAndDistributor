@@ -4,17 +4,22 @@ This guide shows you the fastest way to get Python exercises into your students'
 
 - [Getting Started — Your First Exercise Set](#getting-started--your-first-exercise-set)
   - [The big picture](#the-big-picture)
+  - [Prerequisites](#prerequisites)
   - [Step 1: Understand the tools](#step-1-understand-the-tools)
   - [Step 2: Pick a template repository](#step-2-pick-a-template-repository)
   - [Step 3: Create a GitHub Classroom assignment](#step-3-create-a-github-classroom-assignment)
-    - [3.1 Go to GitHub Classroom](#31-go-to-github-classroom)
+    - [3.1 Create a new GitHub Classroom](#31-create-a-new-github-classroom)
     - [3.2 Create a new assignment](#32-create-a-new-assignment)
     - [3.3 Link your template repository](#33-link-your-template-repository)
-    - [3.4 (Optional) Set up autograding](#34-optional-set-up-autograding)
+    - [3.4 Creating your assignment](#34-creating-your-assignment)
     - [3.5 Share the invite link](#35-share-the-invite-link)
+  - [3.6 What the students need to do](#36-what-the-students-need-to-do)
   - [Step 4: Students complete the exercises](#step-4-students-complete-the-exercises)
-    - [4.1 Open in Codespaces](#41-open-in-codespaces)
-    - [4.2 Work through the exercises](#42-work-through-the-exercises)
+    - [4.1 Choose an exercise](#41-choose-an-exercise)
+    - [4.2 Selecting the python kernel](#42-selecting-the-python-kernel)
+    - [4.2 Completing the exercises](#42-completing-the-exercises)
+      - [How to tell if it has been selected or not](#how-to-tell-if-it-has-been-selected-or-not)
+      - [How to select the correct kernel](#how-to-select-the-correct-kernel)
     - [4.3 Check progress with the self-checker](#43-check-progress-with-the-self-checker)
     - [4.4 Save and submit work](#44-save-and-submit-work)
     - [4.5 What you'll see as a teacher](#45-what-youll-see-as-a-teacher)
@@ -32,7 +37,12 @@ Existing template repo ──► Classroom assignment ──► Student copies
  ready to use)            students accept)         gets their own)
 ```
 
-> **ℹ️ Note:** Some schools block GitHub and WebSocket connections, which are required for GitHub Codespaces. If that's the case at your school, speak to your IT team — you can share this document with them that explains exactly what needs unblocking and why it's safe: [IT Network Requirements](it-network-requirements.md).
+## Prerequisites
+
+- Access to Github and Github Codespaces. Some schools block these by so check with your IT team if you have trouble accessing them. More information here: [IT Network Requirements](it-network-requirements.md)
+- A GitHub account. If you don't have one, sign up at [github.com](github.com).
+
+> Tip: Sign up to [GitHub Education](https://github.com/education) to get extra Codespaces hours (50 on free, 150 on GitHub Education), amongst other benefits.
 
 ---
 
@@ -54,11 +64,6 @@ The **[Construct Template Repositories](construct-template-repos.md)** page list
 
 Browse the table, then choose the template repo that matches what you want to teach this week. Here's a quick example:
 
-| Construct | Template Repository |
-|-----------|-------------------|
-| `sequence` | `python-exercises-sequence` |
-| `selection` | `python-exercises-selection` |
-
 > **🛠️ Can't find the combination you need?** See [Creating Custom Exercise Sets](creating-exercise-sets.md) for how to build your own template repos or create new exercises.
 
 ---
@@ -69,82 +74,106 @@ Browse the table, then choose the template repo that matches what you want to te
 
 Now you'll turn your chosen template repository into a classroom assignment.
 
-### 3.1 Go to GitHub Classroom
+### 3.1 Create a new GitHub Classroom
 
 1. Open [classroom.github.com](https://classroom.github.com) in your browser.
 2. Sign in with your GitHub account.
 3. If you haven't used Classroom before, you'll be asked to authorise it — click **Authorise GitHub Classroom**.
-4. You'll see a list of your classrooms. If you don't have one yet, click **Create a classroom** and choose your GitHub organisation (or your personal account).
+4. Click **New classroom** and follow the instructions to create one.
 
 ### 3.2 Create a new assignment
 
-1. Inside your classroom, click the **Assignments** tab, then **Create assignment**.
+1. Inside your classroom, click the **Assignments** tab, then **New assignment**.
 2. Give it a title — for example, "Week 1: Getting Started with Python".
 3. (Optional) Set a deadline. Students can still submit after the deadline, but late work is marked clearly.
 4. Choose **Individual assignment** or **Group assignment** — most programming exercises use individual.
+5. Click **Continue**.
 
 ### 3.3 Link your template repository
 
-1. Under **Repository**, choose **Import a repository from GitHub**.
-2. Click **Connect GitHub account** and select the account where the template repo lives.
-3. Search for the template repo you picked in Step 2 (for example, `python-exercises-sequence`) and select it.
-4. Leave the rest of the settings at their defaults — they're already configured for this project.
+1. Under **Find a Github repository**, enter one of the template repository names you picked in Step 2 (for example, `h-arnold/python-exercises-sequence`) and select it.
 
-### 3.4 (Optional) Set up autograding
+![Selecting a Template Repository on GitHub Classroom](../images/choosing-a-template-repo.png)
 
-If you want tests to run automatically when students push their work:
+2. **Optional but recommended**: set **Repository visibility** to **Private**. This keeps students from seeing each other's work. and leave **Give students admin access to their repository** unchecked. This prevents students from accidentally deleting their work.
+3. On **Add a supported editor**, select **Codespaces**. 
 
-1. Scroll down to **Add autograding test**.
-2. Click **Add test** and choose **Run python**.
-3. In the **Test command** field, enter:
+![Selecting Github Codespaces on the 'Add a supported editor' screen](../images/selecting-code-spaces-on-github-classroom-assignment.png)
+4. Click **Continue** to move to the next step.
 
-   ```bash
-   pytest
-   ```
+### 3.4 Creating your assignment
 
-4. Click **Save test case**.
+This will take you to the **Set up autograding and feedback** page. You can skip this step - it gets set up autmatically for you anyway. 
 
-> Without autograding, students still get feedback from the self-checker cell in each notebook. Autograding just reports results back to your Classroom dashboard.
+1. Scroll to the bottom of the page and click **Create assignment**.
 
 ### 3.5 Share the invite link
 
-1. Click **Create assignment** at the bottom.
-2. Classroom will show you an **invite link** — something like `https://classroom.github.com/a/AbCdEfGh`.
-3. Share this link with your students (email, your school's VLE, or however you normally communicate).
-4. When students click it and accept, GitHub Classroom creates a personal copy of the template repository for each of them. They'll see:
+This will take you to the Github Classroom Assignment page that you just created.
 
-   ```text
-   my-school/python-exercises-sequence-student1
-   my-school/python-exercises-sequence-student2
-   my-school/python-exercises-sequence-student3
-   ...
-   ```
+1. Copy the invite link:
+  
+![The GitHub Classroom invite Link](../images/github-classroom-invite-link.png)
 
-**That's it — your first assignment is live.**
+2. Share this link with your students in the normal way (e.g. on MS Teams or Google Classroom).
+
+## 3.6 What the students need to do
+
+1. They need to click on the link you gave them. This will invite them to the assignment and if they haven't joined the classroom already, accepting this assignment will add them to the GitHub Classroom.
+2. They need to click 'Accept this assignment'.
+3. They need click the **Open in Codespaces** button to start their Codespace. 
+
+> Tip: Opening codespaces will take a few minutes to get started the first time, so tell students to do this at the start of the lesson, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
 
 ---
 
 ## Step 4: Students complete the exercises
 
-Now that students have accepted the assignment and have their own copies, here's what their workflow looks like.
+Now that students have accepted the assignment and opened their codespaces, here's what their workflow looks like:
 
-### 4.1 Open in Codespaces
+### 4.1 Choose an exercise
 
-Each student's assignment repository has a green **Code** button. They click it, select **Codespaces**, then **Create Codespace**.
+When the codespace opens for the first time, it should automatically open up the README page which has links to all the exercises in the assignment. Students can click on any exercise to open it in a new tab.
 
-> **👩‍🏫 Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
+![alt text](../images/README-page-in-student-codespace.png)
 
-### 4.2 Work through the exercises
 
-The exercises are Jupyter notebooks — each cell is one small task:
+If the README page doesn't open automatically, students need to click on the `exercises` folder on the left hand side of the window, select the exercise they want to work on (e.g. `ex003_sequence_modify_variables`) and click on `student.ipynb` to open the exercise notebook.
 
-1. **Read the instruction** (the text above the code cell).
-2. **Run the code cell** (`Shift+Enter` or click the play button).
-3. **Edit the code** as instructed.
-4. **Run it again** to check the output.
-5. **Move to the next cell.**
+![alt text](../images/selecting-exercise-not-from-README.png)
 
-Students can run cells as many times as they like. Nothing breaks.
+### 4.2 Selecting the python kernel
+
+When the exercise opens, the python kernel *should* be selected automatically, but this is flaky so it may not work.
+
+
+
+### 4.2 Completing the exercises
+
+The exercises are Jupyter notebooks — these are interactive documents that combine text, code and output. Students can read the instructions, write code, and see the results all in one place.
+
+#### How to tell if it has been selected or not
+
+** Correct Kernel has been selected **
+
+Figure: The Jupyter kernel in the top right corner of the notebook shows `.venv (Python {version number}` e.g. `.venv (Python 3.11.4)`. If the kernel doesn't start with `.venv` then the wrong kernel has been selected and it won't work.
+
+![alt text](../images/jupyter-kernel-has-been-selected.png)
+
+** Kernel has NOT been selected **
+
+![alt text](../images/jupyter-kernel-has-not-been-selected.png)
+
+#### How to select the correct kernel
+
+1. Click on `Select Kernel` in the top right corner of the notebook.
+2. Choose `Python Environments` from the source list.
+
+![alt text](../images/jupyter-kernel-source-selector.png)
+
+3. Select the recommended kernel, which has a star next to it.
+![alt text](../images/select-recommend-jupyter-kernel.png)
+
 
 ### 4.3 Check progress with the self-checker
 

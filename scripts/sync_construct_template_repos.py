@@ -413,7 +413,7 @@ def generate_docs_page(
             exercise_count = 0
 
         lines.append(
-            f"| [{construct.capitalize()}]({repo_url}) | `{repo_url}` | {exercise_count} |"
+            f"| [{construct.capitalize()}]({repo_url}) | `{repo_ref}` | {exercise_count} |"
         )
 
     lines.append("")
