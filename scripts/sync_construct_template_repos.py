@@ -394,7 +394,7 @@ def generate_docs_page(
 
     owner = _get_authenticated_owner(owner=github_owner)
 
-    for construct in constructs:
+    for construct in reversed(constructs):
         repo_name = _construct_repo_name(construct)
         repo_ref = f"{owner}/{repo_name}" if owner else repo_name
         repo_url = f"https://github.com/{repo_ref}"
@@ -412,7 +412,9 @@ def generate_docs_page(
         else:
             exercise_count = 0
 
-        lines.append(f"| `{construct}` | [{repo_name}]({repo_url}) | {exercise_count} |")
+        lines.append(
+            f"| [{construct.capitalize()}]({repo_url}) | `{repo_url}` | {exercise_count} |"
+        )
 
     lines.append("")
     lines.append("---")
