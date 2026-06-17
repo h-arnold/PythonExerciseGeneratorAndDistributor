@@ -273,6 +273,7 @@ Key points from that guide:
 | If you want to... | Read this |
 | --- | --- |
 | Use pre-built template repos (no CLI needed) | [Getting Started](getting-started.md) — quick path from template repo to Classroom assignment |
+| Guide students through exercises | [In the Classroom](in-the-classroom.md) — student workflow: opening notebooks, running code, self-checker, submitting |
 | Run lessons smoothly | [Classroom Practices](classroom-practices.md) — start-of-lesson routines, self-checker, git habits, troubleshooting |
 | Understand the pedagogy | [Pedagogy](pedagogy.md) — why the Modify-Debug-Make framework works |
 | Create or edit individual exercises | [Creating and Editing Exercises](creating-and-editing-exercises.md) — with the AI assistant or by hand |

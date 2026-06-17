@@ -13,16 +13,7 @@ This guide shows you the fastest way to get Python exercises into your students'
     - [3.3 Link your template repository](#33-link-your-template-repository)
     - [3.4 Creating your assignment](#34-creating-your-assignment)
     - [3.5 Share the invite link](#35-share-the-invite-link)
-  - [3.6 What the students need to do](#36-what-the-students-need-to-do)
-  - [Step 4: Students complete the exercises](#step-4-students-complete-the-exercises)
-    - [4.1 Choose an exercise](#41-choose-an-exercise)
-    - [4.2 Selecting the python kernel](#42-selecting-the-python-kernel)
-    - [4.2 Completing the exercises](#42-completing-the-exercises)
-      - [How to tell if it has been selected or not](#how-to-tell-if-it-has-been-selected-or-not)
-      - [How to select the correct kernel](#how-to-select-the-correct-kernel)
-    - [4.3 Check progress with the self-checker](#43-check-progress-with-the-self-checker)
-    - [4.4 Save and submit work](#44-save-and-submit-work)
-    - [4.5 What you'll see as a teacher](#45-what-youll-see-as-a-teacher)
+    - [3.6 What the students need to do](#36-what-the-students-need-to-do)
   - [What next?](#what-next)
 
 ---
@@ -93,17 +84,23 @@ Now you'll turn your chosen template repository into a classroom assignment.
 
 1. Under **Find a Github repository**, enter one of the template repository names you picked in Step 2 (for example, `h-arnold/python-exercises-sequence`) and select it.
 
-![Selecting a Template Repository on GitHub Classroom](../images/choosing-a-template-repo.png)
+<figure>
+  <img src="../images/choosing-a-template-repo.png" alt="Selecting a Template Repository on GitHub Classroom">
+  <figcaption>Selecting a Template Repository on GitHub Classroom</figcaption>
+</figure>
 
-2. **Optional but recommended**: set **Repository visibility** to **Private**. This keeps students from seeing each other's work. and leave **Give students admin access to their repository** unchecked. This prevents students from accidentally deleting their work.
-3. On **Add a supported editor**, select **Codespaces**. 
+2. **Optional but recommended**: set **Repository visibility** to **Private**. This keeps students from seeing each other's work. Leave **Give students admin access to their repository** unchecked. This prevents students from accidentally deleting their work.
+3. On **Add a supported editor**, select **Codespaces**.
 
-![Selecting Github Codespaces on the 'Add a supported editor' screen](../images/selecting-code-spaces-on-github-classroom-assignment.png)
+<figure>
+  <img src="../images/selecting-code-spaces-on-github-classroom-assignment.png" alt="Selecting GitHub Codespaces on the 'Add a supported editor' screen">
+  <figcaption>Selecting GitHub Codespaces on the 'Add a supported editor' screen</figcaption>
+</figure>
 4. Click **Continue** to move to the next step.
 
 ### 3.4 Creating your assignment
 
-This will take you to the **Set up autograding and feedback** page. You can skip this step - it gets set up autmatically for you anyway. 
+This will take you to the **Set up autograding and feedback** page. You can skip this step — it gets set up automatically for you anyway.
 
 1. Scroll to the bottom of the page and click **Create assignment**.
 
@@ -113,103 +110,35 @@ This will take you to the Github Classroom Assignment page that you just created
 
 1. Copy the invite link:
   
-![The GitHub Classroom invite Link](../images/github-classroom-invite-link.png)
+<figure>
+  <img src="../images/github-classroom-invite-link.png" alt="The GitHub Classroom invite link">
+  <figcaption>The GitHub Classroom invite link</figcaption>
+</figure>
 
 2. Share this link with your students in the normal way (e.g. on MS Teams or Google Classroom).
 
-## 3.6 What the students need to do
+### 3.6 What the students need to do
 
 1. They need to click on the link you gave them. This will invite them to the assignment and if they haven't joined the classroom already, accepting this assignment will add them to the GitHub Classroom.
 2. They need to click 'Accept this assignment'.
-3. They need click the **Open in Codespaces** button to start their Codespace. 
+3. They need to click the **Open in Codespaces** button to start their Codespace. 
 
 > Tip: Opening codespaces will take a few minutes to get started the first time, so tell students to do this at the start of the lesson, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
 
 ---
 
-## Step 4: Students complete the exercises
+## Ready to teach?
 
-Now that students have accepted the assignment and opened their codespaces, here's what their workflow looks like:
+Your assignment is live and students have accepted the invite. The next guide covers everything that happens in the classroom — from opening exercises to submitting work:
 
-### 4.1 Choose an exercise
+> **[In the Classroom — Running Exercises with Students](in-the-classroom.md)**
 
-When the codespace opens for the first time, it should automatically open up the README page which has links to all the exercises in the assignment. Students can click on any exercise to open it in a new tab.
-
-![alt text](../images/README-page-in-student-codespace.png)
-
-
-If the README page doesn't open automatically, students need to click on the `exercises` folder on the left hand side of the window, select the exercise they want to work on (e.g. `ex003_sequence_modify_variables`) and click on `student.ipynb` to open the exercise notebook.
-
-![alt text](../images/selecting-exercise-not-from-README.png)
-
-### 4.2 Selecting the python kernel
-
-When the exercise opens, the python kernel *should* be selected automatically, but this is flaky so it may not work.
-
-
-
-### 4.2 Completing the exercises
-
-The exercises are Jupyter notebooks — these are interactive documents that combine text, code and output. Students can read the instructions, write code, and see the results all in one place.
-
-#### How to tell if it has been selected or not
-
-** Correct Kernel has been selected **
-
-Figure: The Jupyter kernel in the top right corner of the notebook shows `.venv (Python {version number}` e.g. `.venv (Python 3.11.4)`. If the kernel doesn't start with `.venv` then the wrong kernel has been selected and it won't work.
-
-![alt text](../images/jupyter-kernel-has-been-selected.png)
-
-** Kernel has NOT been selected **
-
-![alt text](../images/jupyter-kernel-has-not-been-selected.png)
-
-#### How to select the correct kernel
-
-1. Click on `Select Kernel` in the top right corner of the notebook.
-2. Choose `Python Environments` from the source list.
-
-![alt text](../images/jupyter-kernel-source-selector.png)
-
-3. Select the recommended kernel, which has a star next to it.
-![alt text](../images/select-recommend-jupyter-kernel.png)
-
-
-### 4.3 Check progress with the self-checker
-
-At the bottom of each notebook is a **self-checker cell**. Running it shows a table:
-
-```text
-┌────────────────────────────────────────────┐
-│  Test                 Result   Feedback    │
-├────────────────────────────────────────────┤
-│  Exercise 1: greeting  ✅ Pass  Well done! │
-│  Exercise 2: message   ❌ Fail  Expected   │
-│                        output to contain   │
-│                        "Hello", got "Hi"   │
-```
-
-Students get immediate, specific feedback on each exercise without waiting for you to mark their work.
-
-> **👩‍🏫 Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
-
-### 4.4 Save and submit work
-
-At the end of each lesson (or after finishing an exercise), students should:
-
-1. Click the **Source Control** icon in the left sidebar (branch icon).
-2. Type a short message (e.g., "Finished exercises 1 and 2").
-3. Click **Commit** (✓), then **Sync Changes** to push to GitHub.
-
-This backs up their work and, if you enabled autograding in Step 3, triggers the tests and reports results to your Classroom dashboard.
-
-### 4.5 What you'll see as a teacher
-
-- **After each push**: if autograding is set up, Classroom shows pass/fail results per student in the assignment dashboard.
-- **At a glance**: you can see who's attempted which exercises, who's stuck, and who's finished.
-- **Without autograding**: the self-checker still gives students feedback — you just won't see the results in the dashboard. You can ask students to run it and show you, or check their notebooks directly.
-
-> **📖 Detailed classroom tips:** See [Classroom Practices](classroom-practices.md) for start-of-lesson routines, troubleshooting common issues, and building good git habits.
+That guide covers:
+- Choosing and opening exercises
+- Selecting the Python kernel (a common stumbling block)
+- Running code and using the self-checker
+- Saving and submitting work
+- What you'll see as a teacher
 
 ---
 
@@ -218,6 +147,7 @@ This backs up their work and, if you enabled autograding in Step 3, triggers the
 | If you want to... | Read this |
 | --- | --- |
 | Build custom exercise sets with the `repoman` CLI | [Creating Custom Exercise Sets](creating-exercise-sets.md) — full walkthrough including Codespaces, authentication, and the repoman tool |
+| Guide students through exercises | [In the Classroom](in-the-classroom.md) — student workflow: opening notebooks, running code, self-checker, submitting |
 | Understand the tools in more depth | [Understanding the Tools](understanding-the-tools.md) |
 | Run lessons smoothly | [Classroom Practices](classroom-practices.md) — start-of-lesson routines, self-checker, git habits, troubleshooting |
 | Understand the pedagogy | [Pedagogy](pedagogy.md) — why the Modify-Debug-Make framework works |

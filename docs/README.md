@@ -14,6 +14,7 @@ If you are new to this project, start with one of these two guides:
 | Document | What it covers |
 | --- | --- |
 | [Getting Started](teachers/getting-started.md) | **Start here if you want to use existing exercises.** Quick path: pick a pre-built template repo → create Classroom assignment → share with students. No command line needed. |
+| [In the Classroom](teachers/in-the-classroom.md) | **Companion to Getting Started.** Student workflow: opening notebooks, selecting the Python kernel, running code, using the self-checker, saving and submitting work. |
 | [Creating Custom Exercise Sets](teachers/creating-exercise-sets.md) | **Start here if you need to build custom template repos or create new exercises.** Requires Codespaces, GitHub authentication, and the repoman CLI. |
 | [Understanding the Tools](teachers/understanding-the-tools.md) | Plain-English explanation of GitHub, Classroom, Codespaces, version control, and Jupyter notebooks — and how they fit together. |
 | [Classroom Practices](teachers/classroom-practices.md) | Day-to-day lesson tips: starting Codespaces early, using the self-checker, good git habits, troubleshooting common issues. |
