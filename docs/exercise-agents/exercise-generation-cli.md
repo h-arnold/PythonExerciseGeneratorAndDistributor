@@ -61,7 +61,7 @@ python scripts/new_exercise.py <id> <title> --construct CONSTRUCT --type TYPE [-
 
 Run it through the managed environment, for example `uv run python -m scripts.new_exercise ...`, so the correct dependencies are used and local package imports resolve correctly.
 
-> **Note**: You can also run `uv run python scripts/new_exercise.py ...`, but the `-m` form is preferred because it keeps the repository root on `sys.path`, preventing `ModuleNotFoundError` in local imports.
+> **ℹ️ Note**: You can also run `uv run python scripts/new_exercise.py ...`, but the `-m` form is preferred because it keeps the repository root on `sys.path`, preventing `ModuleNotFoundError` in local imports.
 
 **Required**:
 
@@ -174,7 +174,7 @@ After running `new_exercise.py`, follow these two phases. **Phase 2 must not sta
    `exercise_runtime_support.student_checker.run_notebook_checks('<exercise_key>')`
 ```
 
-> **Important**: pass the canonical `exercise_key` string to `run_notebook_checks(...)` — never a notebook path, absolute `.ipynb` path, or `str(path)`. String inputs are exercise keys; resolved `Path` values must stay as `Path`.
+> **⚠️ Important**: pass the canonical `exercise_key` string to `run_notebook_checks(...)` — never a notebook path, absolute `.ipynb` path, or `str(path)`. String inputs are exercise keys; resolved `Path` values must stay as `Path`.
 
 ### Phase 2 — Test Authoring (after teacher approval)
 

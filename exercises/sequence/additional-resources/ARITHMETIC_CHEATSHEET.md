@@ -183,7 +183,7 @@ print(area)    # 78.53975
 
 > `radius ** 2` squares the radius, then `pi *` multiplies by π to get the area.
 
-> **Order of operations**: `**` is calculated before `*`, so `pi * radius ** 2` works correctly without parentheses.
+> **📋 Order of operations**: `**` is calculated before `*`, so `pi * radius ** 2` works correctly without parentheses.
 
 ---
 

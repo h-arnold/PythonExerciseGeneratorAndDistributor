@@ -98,7 +98,7 @@ GitHub Codespaces requires outbound HTTPS and WebSocket connections to the follo
 | HTTPS | TCP 443 | Outbound | All API calls, git operations, asset downloads, and web UI access. |
 | WSS (WebSocket Secure) | TCP 443 | Outbound | Real-time communication between the browser editor and the Codespace container — this is what makes the editor feel responsive. WSS runs over the same HTTPS connection (standard port 443). |
 
-> **Note on IP addresses:** Codespaces IP addresses are dynamically assigned and change regularly. The `gh api meta --jq .domains.codespaces` command returns the most up-to-date list of required domains at any time. Allowlisting by domain (as listed above) is more reliable than trying to maintain a static IP allowlist. If you need a full list of GitHub's IP ranges, they are published at the GitHub Meta API endpoint (`https://api.github.com/meta`).
+> **ℹ️ Note on IP addresses:** Codespaces IP addresses are dynamically assigned and change regularly. The `gh api meta --jq .domains.codespaces` command returns the most up-to-date list of required domains at any time. Allowlisting by domain (as listed above) is more reliable than trying to maintain a static IP allowlist. If you need a full list of GitHub's IP ranges, they are published at the GitHub Meta API endpoint (`https://api.github.com/meta`).
 
 ### Source references
 

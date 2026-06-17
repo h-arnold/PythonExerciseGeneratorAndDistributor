@@ -27,7 +27,7 @@ In this project, you'll use GitHub for two things:
 - **Storing your exercises** — this repository (`PythonExerciseGeneratorAndDistributor`) is where you create, edit, and organise exercises.
 - **Distributing work to students** — you'll push a copy of selected exercises to a new repository, then use GitHub Classroom to give each student their own copy.
 
-> **What you need:** A free GitHub account. If your school uses GitHub, you may already have one. Sign up at [github.com](https://github.com).
+> **📌 What you need:** A free GitHub account. If your school uses GitHub, you may already have one. Sign up at [github.com](https://github.com).
 
 ---
 
@@ -55,7 +55,7 @@ GitHub Classroom is a free tool that helps you manage coding assignments. When y
 
 **You don't need to install anything.** Classroom runs in your browser at [classroom.github.com](https://classroom.github.com).
 
-> **Getting started:** You'll need to authorise Classroom to access your GitHub account (or your school's GitHub organisation). Follow the on-screen prompts — it takes about two minutes.
+> **📌 Getting started:** You'll need to authorise Classroom to access your GitHub account (or your school's GitHub organisation). Follow the on-screen prompts — it takes about two minutes.
 
 ---
 
@@ -97,7 +97,7 @@ To back your work up to GitHub (and make it available to others):
 
 Now your changes are backed up. If your computer breaks, or you switch to another machine, your work is still there.
 
-> **Tip:** Push regularly — at least at the end of each session. There is no downside, and it means you never lose progress.
+> **💡 Tip:** Push regularly — at least at the end of each session. There is no downside, and it means you never lose progress.
 
 ### Pulling the latest version
 

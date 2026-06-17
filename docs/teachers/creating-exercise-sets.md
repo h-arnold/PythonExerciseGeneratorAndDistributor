@@ -2,7 +2,7 @@
 
 This guide walks you through the complete workflow for creating your own exercise sets: from understanding the tools, to bundling exercises with the `repoman` CLI, to distributing them via GitHub Classroom. Follow the steps in order — each one builds on the last.
 
-> **Just want to use existing exercises?** See the simpler [Getting Started](getting-started.md) guide — no command line needed.
+> **🔀 Just want to use existing exercises?** See the simpler [Getting Started](getting-started.md) guide — no command line needed.
 
 - [Creating Custom Exercise Sets](#creating-custom-exercise-sets)
   - [The big picture](#the-big-picture)
@@ -41,7 +41,7 @@ Your source repo ──► Template repo ──► Classroom assignment ──�
 
 You only need a browser and a GitHub account. No installation, no IT department (usually).
 
-> **Note:** Some schools block GitHub and WebSocket connections, which are required for GitHub Codespaces. If that's the case at your school, speak to your IT team — you can share this document with them that explains exactly what needs unblocking and why it's safe: [IT Network Requirements](it-network-requirements.md).
+> **ℹ️ Note:** Some schools block GitHub and WebSocket connections, which are required for GitHub Codespaces. If that's the case at your school, speak to your IT team — you can share this document with them that explains exactly what needs unblocking and why it's safe: [IT Network Requirements](it-network-requirements.md).
 
 ---
 
@@ -85,7 +85,7 @@ To create template repositories, the command-line tool needs permission to acces
 
 3. Follow the on-screen prompts (choose **Login with a browser** if asked, then enter the code shown in the terminal on the GitHub website).
 
-> **Why two commands?** Codespaces starts with a temporary token that only has permission for this repository. The first command clears it. The second lets you sign in with your full GitHub account so the tool can create repositories on your behalf.
+> **🤔 Why two commands?** Codespaces starts with a temporary token that only has permission for this repository. The first command clears it. The second lets you sign in with your full GitHub account so the tool can create repositories on your behalf.
 
 ---
 
@@ -128,7 +128,7 @@ Check the repository exists on GitHub:
 2. You should see `my-first-exercises` (or whatever you named it) in your repositories list.
 3. Click into it — you should see the notebooks and test files inside.
 
-> **Trouble?** See the full guide at [How to Use the Template Repo CLI](how-to-use-the-template-repo-cli.md), or run `repoman create --help`.
+> **🛠️ Trouble?** See the full guide at [How to Use the Template Repo CLI](how-to-use-the-template-repo-cli.md), or run `repoman create --help`.
 
 ---
 
@@ -231,7 +231,7 @@ At the bottom of each notebook is a **self-checker cell**. Running it shows a ta
 
 Students get immediate, specific feedback on each exercise without waiting for you to mark their work.
 
-> **Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
+> **👩‍🏫 Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
 
 ### 6.4 Save and submit work
 
@@ -249,7 +249,7 @@ This backs up their work and, if you enabled autograding in Step 5, triggers the
 - **At a glance**: you can see who's attempted which exercises, who's stuck, and who's finished.
 - **Without autograding**: the self-checker still gives students feedback — you just won't see the results in the dashboard. You can ask students to run it and show you, or check their notebooks directly.
 
-> **Detailed classroom tips:** See [Classroom Practices](classroom-practices.md) for start-of-lesson routines, troubleshooting common issues, and building good git habits.
+> **📖 Detailed classroom tips:** See [Classroom Practices](classroom-practices.md) for start-of-lesson routines, troubleshooting common issues, and building good git habits.
 
 ---
 

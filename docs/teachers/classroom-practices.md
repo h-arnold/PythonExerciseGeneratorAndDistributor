@@ -16,7 +16,7 @@ This guide covers the day-to-day habits that make lessons run smoothly, from sta
 
 Codespaces can take up to 5 minutes to build. Therefore:
 
-> **Tell students to open their Codespace as soon as they log in, not when you say "open your work."**
+> **👩‍🏫 Tell students to open their Codespace as soon as they log in, not when you say "open your work."**
 
 This simple habit saves 5–10 minutes of dead time per lesson. Here's the routine:
 
@@ -28,7 +28,7 @@ This simple habit saves 5–10 minutes of dead time per lesson. Here's the routi
 
 While that loads, you can take the register, recap the previous lesson, or hand out starter activities. By the time you're ready to start, their environment is ready.
 
-> **Tip:** Bookmark the GitHub Classroom assignment page, or give students a short link to their repo. The fewer steps they have to remember, the better.
+> **💡 Tip:** Bookmark the GitHub Classroom assignment page, or give students a short link to their repo. The fewer steps they have to remember, the better.
 
 ---
 
@@ -85,7 +85,7 @@ At the bottom of each exercise notebook, there is a **self-checker cell**. This 
 - The feedback is **specific** — it tells them what went wrong, not just "try again."
 - It encourages **self-assessment** — students can check their own work before moving on.
 
-> **Encourage students to run the self-checker after every exercise**, not just at the end. That way they catch mistakes early.
+> **👩‍🏫 Encourage students to run the self-checker after every exercise**, not just at the end. That way they catch mistakes early.
 
 ---
 
@@ -145,4 +145,4 @@ Make this the last 2-3 minutes of every lesson. Build the habit:
 2. **Push** — Click Sync Changes to upload.
 3. **Stop the Codespace** — Close the tab, or stop it from the Codespaces dashboard at [github.com/codespaces](https://github.com/codespaces). This frees up usage time.
 
-> **Why stop the Codespace?** Codespaces has a monthly usage limit (free tier includes 60 hours). Stopping unused Codespaces saves those hours for when students are actually working.
+> **🤔 Why stop the Codespace?** Codespaces has a monthly usage limit (free tier includes 60 hours). Stopping unused Codespaces saves those hours for when students are actually working.

@@ -70,7 +70,7 @@ Integration tests for the template repository CLI. These tests verify:
 - Configuration parsing and selection logic.
 - Packaging behaviour (e.g., that `TemplatePackager` copies the required base files, runtime-only shared `tests/` infrastructure for exercise checks and notebook self-checks, and the `.github` workflow directory).
 
-> **Note:** Test-only helpers and fixtures are kept under `tests/` and are not part of the runtime surface. The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
+> **ℹ️ Note:** Test-only helpers and fixtures are kept under `tests/` and are not part of the runtime surface. The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
 ### 3. Supporting helpers & locations
 

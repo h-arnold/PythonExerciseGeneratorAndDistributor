@@ -113,6 +113,38 @@ Match the tone, depth, and scope to the target audience when writing or updating
 - Same as §3.2, with the addition of explicit handoff criteria — state clearly when the agent should pass control to another agent or report back to the orchestrator.
 - Include concrete review checklists with pass/fail thresholds.
 
+### 3.5 Callout emoji convention (all doc types)
+
+Use emoji-prefixed bold callouts (blockquote style) consistently across all documentation. The pattern is:
+
+```
+> **ℹ️ Note:** General information here.
+> **💡 Tip:** Helpful advice here.
+> **⚠️ Important:** Important caveat here.
+```
+
+Place the emoji immediately after the opening `**`, before the label text, keeping the original capitalisation and colon.
+
+**Standard callout types:**
+
+| Emoji | Label | When to use |
+|---|---|---|
+| ℹ️ | Note | General informational aside (including compound labels like "Note on naming", "Note on IP addresses", "Phase 2 note") |
+| 💡 | Tip | Helpful advice or best-practice recommendation |
+| ⚠️ | Important | Important caveat, gotcha, or non-obvious constraint |
+| 📖 | Full guide / Full reference / Detailed ... tips / Need more detail? | Cross-reference or pointer to another document |
+| 📌 | What you need / Getting started | Prerequisites or entry-level setup info |
+| 🔀 | Just want to ...? | Alternative-path or shortcut callout |
+| 🤔 | Why ...? | Explanatory aside explaining rationale |
+| 🛠️ | Trouble? / Can't ...? | Troubleshooting guidance |
+| 📋 | ... contract / ... convention | Specification, rule, or convention (not an opinion) |
+| 👩‍🏫 | Tell students to ... / Encourage students to ... | Pedagogical instruction for teachers |
+| 📝 | Example | Example block or illustrative snippet |
+
+For one-off descriptive callouts not listed above, pick the emoji whose semantic category fits best (e.g. an explanatory callout gets 🤔, a reference gets 📖, a rule gets 📋).
+
+Do not add emoji to plain bold section headings like `**Key points**:`, `**Notebook structure**:`, or `**Key functions**:` — these are structural markers, not callouts.
+
 ## 4. AGENTS and Component-Doc Update Rules
 
 Only update agent instruction files when one of these is true:

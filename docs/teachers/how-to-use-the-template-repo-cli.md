@@ -2,7 +2,7 @@
 
 This guide explains how to turn a set of Python exercises into a **template repository** on GitHub. A template repository is a special kind of repository that you use as a starting point for GitHub Classroom assignments. Once you create one, students get a copy with their own workspace when they accept the assignment.
 
-> **Full reference:** If you need details on every possible flag and option, see the developer guide at [`docs/developers/template_repo_cli.md`](../developers/template_repo_cli.md).
+> **📖 Full reference:** If you need details on every possible flag and option, see the developer guide at [`docs/developers/template_repo_cli.md`](../developers/template_repo_cli.md).
 
 ## What you will need
 
@@ -23,7 +23,7 @@ gh auth login
 
 The first line clears the temporary token. The second starts the GitHub authentication process — follow the on-screen instructions (choose "Login with a browser" if prompted, then enter the code shown in the terminal on the GitHub website).
 
-> **Why is this needed?** When a GitHub Codespace starts, it sets a `GITHUB_TOKEN` environment variable with permissions limited to just that Codespace's repository. This token cannot create new repositories in your account or organisation. Running `unset GITHUB_TOKEN` removes that restricted token, and `gh auth login` lets you sign in with your own credentials so the CLI has the permissions it needs.
+> **🤔 Why is this needed?** When a GitHub Codespace starts, it sets a `GITHUB_TOKEN` environment variable with permissions limited to just that Codespace's repository. This token cannot create new repositories in your account or organisation. Running `unset GITHUB_TOKEN` removes that restricted token, and `gh auth login` lets you sign in with your own credentials so the CLI has the permissions it needs.
 
 ---
 
@@ -144,4 +144,4 @@ repoman list --construct sequence
 | "No exercises found" | Check your spelling: construct names are lowercase (e.g., `sequence`, not `Sequence`). |
 | Want to check before creating | Add `--dry-run` to preview without actually creating anything. |
 
-> **Need more detail?** The full CLI reference (all flags, options, and technical details) is at [`docs/developers/template_repo_cli.md`](../developers/template_repo_cli.md).
+> **📖 Need more detail?** The full CLI reference (all flags, options, and technical details) is at [`docs/developers/template_repo_cli.md`](../developers/template_repo_cli.md).

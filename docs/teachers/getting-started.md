@@ -32,7 +32,7 @@ Existing template repo ──► Classroom assignment ──► Student copies
  ready to use)            students accept)         gets their own)
 ```
 
-> **Note:** Some schools block GitHub and WebSocket connections, which are required for GitHub Codespaces. If that's the case at your school, speak to your IT team — you can share this document with them that explains exactly what needs unblocking and why it's safe: [IT Network Requirements](it-network-requirements.md).
+> **ℹ️ Note:** Some schools block GitHub and WebSocket connections, which are required for GitHub Codespaces. If that's the case at your school, speak to your IT team — you can share this document with them that explains exactly what needs unblocking and why it's safe: [IT Network Requirements](it-network-requirements.md).
 
 ---
 
@@ -59,13 +59,13 @@ Browse the table, then choose the template repo that matches what you want to te
 | `sequence` | `python-exercises-sequence` |
 | `selection` | `python-exercises-selection` |
 
-> **Can't find the combination you need?** See [Creating Custom Exercise Sets](creating-exercise-sets.md) for how to build your own template repos or create new exercises.
+> **🛠️ Can't find the combination you need?** See [Creating Custom Exercise Sets](creating-exercise-sets.md) for how to build your own template repos or create new exercises.
 
 ---
 
 ## Step 3: Create a GitHub Classroom assignment
 
-> **Note:** GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with its FOSS replacement when it's ready.
+> **ℹ️ Note:** GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with its FOSS replacement when it's ready.
 
 Now you'll turn your chosen template repository into a classroom assignment.
 
@@ -132,7 +132,7 @@ Now that students have accepted the assignment and have their own copies, here's
 
 Each student's assignment repository has a green **Code** button. They click it, select **Codespaces**, then **Create Codespace**.
 
-> **Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
+> **👩‍🏫 Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
 
 ### 4.2 Work through the exercises
 
@@ -162,7 +162,7 @@ At the bottom of each notebook is a **self-checker cell**. Running it shows a ta
 
 Students get immediate, specific feedback on each exercise without waiting for you to mark their work.
 
-> **Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
+> **👩‍🏫 Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
 
 ### 4.4 Save and submit work
 
@@ -180,7 +180,7 @@ This backs up their work and, if you enabled autograding in Step 3, triggers the
 - **At a glance**: you can see who's attempted which exercises, who's stuck, and who's finished.
 - **Without autograding**: the self-checker still gives students feedback — you just won't see the results in the dashboard. You can ask students to run it and show you, or check their notebooks directly.
 
-> **Detailed classroom tips:** See [Classroom Practices](classroom-practices.md) for start-of-lesson routines, troubleshooting common issues, and building good git habits.
+> **📖 Detailed classroom tips:** See [Classroom Practices](classroom-practices.md) for start-of-lesson routines, troubleshooting common issues, and building good git habits.
 
 ---
 

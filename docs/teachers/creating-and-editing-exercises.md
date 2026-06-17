@@ -35,7 +35,7 @@ Before you make any changes, create a **branch**. A branch is like a separate co
 3. Give it a short name, like `edit-ex003` or `new-loops-exercise`.
 4. Press Enter. You're now working on your new branch.
 
-> **Why branch?** If you accidentally break an exercise, you can switch back to `main` and all your originals are safe. You can also have multiple changes in progress at once — a new exercise on one branch, a fix on another.
+> **🤔 Why branch?** If you accidentally break an exercise, you can switch back to `main` and all your originals are safe. You can also have multiple changes in progress at once — a new exercise on one branch, a fix on another.
 
 ---
 
@@ -61,7 +61,7 @@ This repository includes a specialised Copilot assistant called the **Exercise G
 6. **Add the content** — The agent generates the notebook structure. Open both `student.ipynb` and `solution.ipynb` and paste in the exercise content the agent provided.
 7. **Verify** — Run the quality check (see [Verifying Your Changes](#verifying-your-changes) below).
 
-> **Full guide:** For a detailed walkthrough with examples and best practices, see [exercise-generation.md](exercise-generation.md).
+> **📖 Full guide:** For a detailed walkthrough with examples and best practices, see [exercise-generation.md](exercise-generation.md).
 
 ---
 
@@ -171,7 +171,7 @@ When you're happy with your changes and they've been committed and pushed, you c
 4. Click **Create pull request**, then **Merge pull request**, then **Confirm merge**.
 5. Back in VS Code, switch back to the `main` branch (click the branch name in the bottom-left, select `main`) and run **Pull** or **Sync** to get the merged version.
 
-> **Can't see the banner?** Go to the **Pull requests** tab on GitHub and click **New pull request**. Set `main` as the base and your branch as the compare.
+> **🛠️ Can't see the banner?** Go to the **Pull requests** tab on GitHub and click **New pull request**. Set `main` as the base and your branch as the compare.
 
 ---
 

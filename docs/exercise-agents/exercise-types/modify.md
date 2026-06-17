@@ -31,7 +31,7 @@ print("Next year you will be " + str(age))
 
 Avoid compressing multiple operations into a single expression in solution examples, as that hides intermediate steps and reduces learning value.
 
-> **Input and casting convention:** When an exercise requires reading user input and converting it to a numeric type, always split the operation across two lines with clear variable names (e.g., `age_input = input(...)` then `age = int(age_input)`). This makes each step explicit for students: `input()` returns a string, and casting to `int` or `float` is a separate, deliberate operation. Avoid the inline form `age = int(input(...))`, which conflates two concepts in a single expression and can confuse novice learners.
+> **📋 Input and casting convention:** When an exercise requires reading user input and converting it to a numeric type, always split the operation across two lines with clear variable names (e.g., `age_input = input(...)` then `age = int(age_input)`). This makes each step explicit for students: `input()` returns a string, and casting to `int` or `float` is a separate, deliberate operation. Avoid the inline form `age = int(input(...))`, which conflates two concepts in a single expression and can confuse novice learners.
 
 The snippet below reflects the structure emitted by the current scaffolding commands:
 

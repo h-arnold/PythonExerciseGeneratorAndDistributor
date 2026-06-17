@@ -16,7 +16,7 @@ After syncing, run `repoman --help` to confirm the console script is available (
 
 Alternatively, run the CLI as a module: `uv run python -m scripts.template_repo_cli --help`.
 
-> **Note on naming:** The package source lives under `scripts/template_repo_cli/`, but the preferred console entry point is `repoman` (short for *repository manager*). Both `template_repo_cli` and `repoman` invoke the same CLI — use `repoman` for everyday work.
+> **ℹ️ Note on naming:** The package source lives under `scripts/template_repo_cli/`, but the preferred console entry point is `repoman` (short for *repository manager*). Both `template_repo_cli` and `repoman` invoke the same CLI — use `repoman` for everyday work.
 
 ## Prerequisites
 

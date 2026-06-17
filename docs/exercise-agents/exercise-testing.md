@@ -2,7 +2,7 @@
 
 This document is the canonical reference for testing student notebook exercises. It covers the testing philosophy, core rules, scoring model, common patterns and anti-patterns, self-check cell requirements, the exercise testing framework API, and workflow guidance.
 
-> **Phase 2 note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.github/agents/exercise_test_creator.md.agent.md`) to generate tests, and the **Exercise Test Reviewer** (`.github/agents/exercise_test_reviewer.md.agent.md`) to verify them.
+> **ℹ️ Phase 2 note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.github/agents/exercise_test_creator.md.agent.md`) to generate tests, and the **Exercise Test Reviewer** (`.github/agents/exercise_test_reviewer.md.agent.md`) to verify them.
 
 ---
 
@@ -343,7 +343,7 @@ def test_exercise7_logic() -> None:
     assert expected_output in output
 ```
 
-> **Note:** This example is from the current codebase but is actually **incomplete** by our standards. Since this is a casting lesson exercise, it should include a construct test checking for `float()` and addition. Use one test only when there truly is a single criterion (pure output-only "Make" tasks with no required construct).
+> **ℹ️ Note:** This example is from the current codebase but is actually **incomplete** by our standards. Since this is a casting lesson exercise, it should include a construct test checking for `float()` and addition. Use one test only when there truly is a single criterion (pure output-only "Make" tasks with no required construct).
 
 #### 2) Three-test example (ex003 Exercise 4) — logic, formatting, and construct as distinct learning goals
 
@@ -643,7 +643,7 @@ Treat those exercise-local modules as the canonical source of support data for t
 
 ### Runtime Helpers
 
-> **Trailing newline contract**: Both `run_cell_and_capture_output()` and `run_cell_with_input()`
+> **📋 Trailing newline contract**: Both `run_cell_and_capture_output()` and `run_cell_with_input()`
 > strip the trailing `\n` that Python's `print()` always appends. The returned string is
 > **already clean** — callers must not call `.strip()` or `.rstrip()` on the output.
 > Expected output strings in expectations modules and tests must not include a trailing
