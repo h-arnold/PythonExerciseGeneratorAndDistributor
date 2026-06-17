@@ -1,6 +1,6 @@
 ---
 description: Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy
-mode: subagent
+mode: all
 model: opencode/deepseek-v4-flash-free
 permission:
   read: allow
