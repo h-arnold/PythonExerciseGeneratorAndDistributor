@@ -1,27 +1,23 @@
 # Getting Started — Your First Exercise Set
 
-This tutorial walks you through the complete workflow: from understanding the tools, to packaging exercises, to distributing them in GitHub Classroom. Follow the steps in order — each one builds on the last.
+This guide shows you the fastest way to get Python exercises into your students' hands using pre-built template repositories. You only need a browser and a GitHub account — no installation, no command line, no exercise creation.
 
 - [Getting Started — Your First Exercise Set](#getting-started--your-first-exercise-set)
   - [The big picture](#the-big-picture)
   - [Step 1: Understand the tools](#step-1-understand-the-tools)
-  - [Step 2: Open this repository in GitHub Codespaces](#step-2-open-this-repository-in-github-codespaces)
-  - [Step 3: Authenticate with GitHub](#step-3-authenticate-with-github)
-  - [Step 4: Create a template repository](#step-4-create-a-template-repository)
-    - [Before moving on](#before-moving-on)
-  - [Step 5: Create a GitHub Classroom assignment](#step-5-create-a-github-classroom-assignment)
-    - [5.1 Go to GitHub Classroom](#51-go-to-github-classroom)
-    - [5.2 Create a new assignment](#52-create-a-new-assignment)
-    - [5.3 Link your template repository](#53-link-your-template-repository)
-    - [5.4 (Optional) Set up autograding](#54-optional-set-up-autograding)
-    - [5.5 Share the invite link](#55-share-the-invite-link)
-  - [Step 6: Students complete the exercises](#step-6-students-complete-the-exercises)
-    - [6.1 Open in Codespaces](#61-open-in-codespaces)
-    - [6.2 Work through the exercises](#62-work-through-the-exercises)
-    - [6.3 Check progress with the self-checker](#63-check-progress-with-the-self-checker)
-    - [6.4 Save and submit work](#64-save-and-submit-work)
-    - [6.5 What you'll see as a teacher](#65-what-youll-see-as-a-teacher)
-  - [Step 7: Create or tweak exercises](#step-7-create-or-tweak-exercises)
+  - [Step 2: Pick a template repository](#step-2-pick-a-template-repository)
+  - [Step 3: Create a GitHub Classroom assignment](#step-3-create-a-github-classroom-assignment)
+    - [3.1 Go to GitHub Classroom](#31-go-to-github-classroom)
+    - [3.2 Create a new assignment](#32-create-a-new-assignment)
+    - [3.3 Link your template repository](#33-link-your-template-repository)
+    - [3.4 (Optional) Set up autograding](#34-optional-set-up-autograding)
+    - [3.5 Share the invite link](#35-share-the-invite-link)
+  - [Step 4: Students complete the exercises](#step-4-students-complete-the-exercises)
+    - [4.1 Open in Codespaces](#41-open-in-codespaces)
+    - [4.2 Work through the exercises](#42-work-through-the-exercises)
+    - [4.3 Check progress with the self-checker](#43-check-progress-with-the-self-checker)
+    - [4.4 Save and submit work](#44-save-and-submit-work)
+    - [4.5 What you'll see as a teacher](#45-what-youll-see-as-a-teacher)
   - [What next?](#what-next)
 
 ---
@@ -31,13 +27,10 @@ This tutorial walks you through the complete workflow: from understanding the to
 Here's what you'll end up with by the end of this tutorial:
 
 ```text
-Your source repo ──► Template repo ──► Classroom assignment ──► Student copies
-(PythonExercise      (packaged set      (you create this,     (each student
- GeneratorAnd         of exercises)      students accept)      gets their own)
- Distributor)
+Existing template repo ──► Classroom assignment ──► Student copies
+(already built and       (you create this,        (each student
+ ready to use)            students accept)         gets their own)
 ```
-
-You only need a browser and a GitHub account. No installation, no IT department (usually).
 
 > **Note:** Some schools block GitHub and WebSocket connections, which are required for GitHub Codespaces. If that's the case at your school, speak to your IT team — you can share this document with them that explains exactly what needs unblocking and why it's safe: [IT Network Requirements](it-network-requirements.md).
 
@@ -53,111 +46,51 @@ It takes about 10 minutes and explains how all the pieces fit together. You can 
 
 **When you're done, return here and move to Step 2.**
 
---
-## Step 2: Open this repository in GitHub Codespaces
+---
 
-1. Open [this page, which is the root of the repository](https://github.com/h-arnold/PythonExerciseGeneratorAndDistributor) in your browser.
+## Step 2: Pick a template repository
 
-2. Click the green **Code** button, select the **Codespaces** tab, then click **Create codespace on main**.
+The **[Construct Template Repositories](construct-template-repos.md)** page lists every pre-built template repository available in this project. Each one bundles all the exercises for a topic — for example, `sequence` or `selection` — and is ready to use in GitHub Classroom.
 
-![A screenshot of the 'Create new Codespace' button.](docs/images/open-in-codespaces.png)
+Browse the table, then choose the template repo that matches what you want to teach this week. Here's a quick example:
 
-3. Wait a few minutes for the Codespace to build. Once it's built, you should have a working VSCode instance in the browser.
+| Construct | Template Repository |
+|-----------|-------------------|
+| `sequence` | `python-exercises-sequence` |
+| `selection` | `python-exercises-selection` |
 
-> 💡**Tip:** Sign up for a GitHub Education account (free) to get 100 extra free hours of CodeSpaces usage. 
-> [Sign up here](https://github.com/education) 
+> **Can't find the combination you need?** See [Creating Custom Exercise Sets](creating-exercise-sets.md) for how to build your own template repos or create new exercises.
 
 ---
 
-## Step 3: Authenticate with GitHub
+## Step 3: Create a GitHub Classroom assignment
 
-To create template repositories, the command-line tool needs permission to access your GitHub account. You need to do this once per session.
+> **Note:** GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with its FOSS replacement when it's ready.
 
-1. Open the **Terminal** in VS Code (`Ctrl + `` ` or **Terminal > New Terminal** from the menu).
-2. Run these two commands, one at a time:
+Now you'll turn your chosen template repository into a classroom assignment.
 
-   ```bash
-   unset GITHUB_TOKEN
-   gh auth login
-   ```
-
-3. Follow the on-screen prompts (choose **Login with a browser** if asked, then enter the code shown in the terminal on the GitHub website).
-
-> **Why two commands?** Codespaces starts with a temporary token that only has permission for this repository. The first command clears it. The second lets you sign in with your full GitHub account so the tool can create repositories on your behalf.
-
----
-
-## Step 4: Create a template repository
-
-Now you'll bundle some exercises into a template repository — a ready-to-use package that GitHub Classroom can distribute to students.
-
-Run this in the **Terminal**:
-
-```bash
-repoman create --construct sequence --repo-name my-first-exercises
-```
-
-This takes all the exercises from the `sequence` topic and creates a new public template repository called `my-first-exercises` on your GitHub account.
-
-**What if I want different exercises?**
-
-```bash
-# Only modify exercises
-repoman create --construct sequence --type modify --repo-name sequence-modify
-
-# Specific exercises by key
-repoman create \
-  --exercise-keys ex002_sequence_modify_basics ex003_sequence_modify_variables \
-  --repo-name getting-started
-
-# Exercises from multiple topics
-repoman create \
-  --construct sequence selection \
-  --type modify \
-  --repo-name week1-python \
-  --name "Week 1: Sequence and Selection"
-```
-
-### Before moving on
-
-Check the repository exists on GitHub:
-
-1. Go to [github.com](https://github.com) and log in.
-2. You should see `my-first-exercises` (or whatever you named it) in your repositories list.
-3. Click into it — you should see the notebooks and test files inside.
-
-> **Trouble?** See the full guide at [How to Use the Template Repo CLI](how-to-use-the-template-repo-cli.md), or run `repoman create --help`.
-
----
-
-## Step 5: Create a GitHub Classroom assignment
-
-> ⚠️ **Note:** GitHub Classroom is being sunsetted by GitHub. This workflow will work for at least the next year and will be updated with its FOSS replacement when it's ready.
-
-Now you'll turn your template repository into a classroom assignment.
-
-### 5.1 Go to GitHub Classroom
+### 3.1 Go to GitHub Classroom
 
 1. Open [classroom.github.com](https://classroom.github.com) in your browser.
-2. Sign in with your GitHub account (the same one you used in Step 3).
+2. Sign in with your GitHub account.
 3. If you haven't used Classroom before, you'll be asked to authorise it — click **Authorise GitHub Classroom**.
 4. You'll see a list of your classrooms. If you don't have one yet, click **Create a classroom** and choose your GitHub organisation (or your personal account).
 
-### 5.2 Create a new assignment
+### 3.2 Create a new assignment
 
 1. Inside your classroom, click the **Assignments** tab, then **Create assignment**.
 2. Give it a title — for example, "Week 1: Getting Started with Python".
 3. (Optional) Set a deadline. Students can still submit after the deadline, but late work is marked clearly.
 4. Choose **Individual assignment** or **Group assignment** — most programming exercises use individual.
 
-### 5.3 Link your template repository
+### 3.3 Link your template repository
 
 1. Under **Repository**, choose **Import a repository from GitHub**.
-2. Click **Connect GitHub account** and select the organisation or account where you created the template.
-3. Search for `my-first-exercises` (or whatever you named it) and select it.
+2. Click **Connect GitHub account** and select the account where the template repo lives.
+3. Search for the template repo you picked in Step 2 (for example, `python-exercises-sequence`) and select it.
 4. Leave the rest of the settings at their defaults — they're already configured for this project.
 
-### 5.4 (Optional) Set up autograding
+### 3.4 (Optional) Set up autograding
 
 If you want tests to run automatically when students push their work:
 
@@ -173,7 +106,7 @@ If you want tests to run automatically when students push their work:
 
 > Without autograding, students still get feedback from the self-checker cell in each notebook. Autograding just reports results back to your Classroom dashboard.
 
-### 5.5 Share the invite link
+### 3.5 Share the invite link
 
 1. Click **Create assignment** at the bottom.
 2. Classroom will show you an **invite link** — something like `https://classroom.github.com/a/AbCdEfGh`.
@@ -181,9 +114,9 @@ If you want tests to run automatically when students push their work:
 4. When students click it and accept, GitHub Classroom creates a personal copy of the template repository for each of them. They'll see:
 
    ```text
-   my-school/my-first-exercises-student1
-   my-school/my-first-exercises-student2
-   my-school/my-first-exercises-student3
+   my-school/python-exercises-sequence-student1
+   my-school/python-exercises-sequence-student2
+   my-school/python-exercises-sequence-student3
    ...
    ```
 
@@ -191,17 +124,17 @@ If you want tests to run automatically when students push their work:
 
 ---
 
-## Step 6: Students complete the exercises
+## Step 4: Students complete the exercises
 
 Now that students have accepted the assignment and have their own copies, here's what their workflow looks like.
 
-### 6.1 Open in Codespaces
+### 4.1 Open in Codespaces
 
 Each student's assignment repository has a green **Code** button. They click it, select **Codespaces**, then **Create Codespace**.
 
-> 💡**Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
+> **Tell students to start their Codespace at the beginning of the lesson**, not when you say "open your work." By the time you're ready to teach, their environment will be ready.
 
-### 6.2 Work through the exercises
+### 4.2 Work through the exercises
 
 The exercises are Jupyter notebooks — each cell is one small task:
 
@@ -213,7 +146,7 @@ The exercises are Jupyter notebooks — each cell is one small task:
 
 Students can run cells as many times as they like. Nothing breaks.
 
-### 6.3 Check progress with the self-checker
+### 4.3 Check progress with the self-checker
 
 At the bottom of each notebook is a **self-checker cell**. Running it shows a table:
 
@@ -231,7 +164,7 @@ Students get immediate, specific feedback on each exercise without waiting for y
 
 > **Encourage students to run the self-checker after every exercise**, not just at the end. They catch mistakes sooner.
 
-### 6.4 Save and submit work
+### 4.4 Save and submit work
 
 At the end of each lesson (or after finishing an exercise), students should:
 
@@ -239,9 +172,9 @@ At the end of each lesson (or after finishing an exercise), students should:
 2. Type a short message (e.g., "Finished exercises 1 and 2").
 3. Click **Commit** (✓), then **Sync Changes** to push to GitHub.
 
-This backs up their work and, if you enabled autograding in Step 5, triggers the tests and reports results to your Classroom dashboard.
+This backs up their work and, if you enabled autograding in Step 3, triggers the tests and reports results to your Classroom dashboard.
 
-### 6.5 What you'll see as a teacher
+### 4.5 What you'll see as a teacher
 
 - **After each push**: if autograding is set up, Classroom shows pass/fail results per student in the assignment dashboard.
 - **At a glance**: you can see who's attempted which exercises, who's stuck, and who's finished.
@@ -251,26 +184,12 @@ This backs up their work and, if you enabled autograding in Step 5, triggers the
 
 ---
 
-## Step 7: Create or tweak exercises
-
-Now that you know the distribution workflow, you can start creating your own exercises or adjusting the ones already in the repository.
-
-> **[Creating and Editing Exercises](creating-and-editing-exercises.md)** — learn how to use the AI exercise generation assistant, edit existing notebooks by hand, verify your changes, and commit/push safely.
-
-Key points from that guide:
-
-- **Branch first** — create a branch before editing, so you can always revert.
-- **Use the Exercise Generation agent** — describe what you want in Copilot Chat, and it creates the notebook structure for you.
-- **Always verify** — run the solution tests to check your changes work.
-- **Commit and push** — save your work to GitHub with a clear message.
-
----
-
 ## What next?
 
 | If you want to... | Read this |
 | --- | --- |
+| Build custom exercise sets with the `repoman` CLI | [Creating Custom Exercise Sets](creating-exercise-sets.md) — full walkthrough including Codespaces, authentication, and the repoman tool |
+| Understand the tools in more depth | [Understanding the Tools](understanding-the-tools.md) |
 | Run lessons smoothly | [Classroom Practices](classroom-practices.md) — start-of-lesson routines, self-checker, git habits, troubleshooting |
 | Understand the pedagogy | [Pedagogy](pedagogy.md) — why the Modify-Debug-Make framework works |
-| Create exercises in detail | [Exercise Generation with Copilot](exercise-generation.md) — full reference for the AI assistant |
-| Explore all CLI options | [Template Repo CLI reference](../developers/template_repo_cli.md) — every flag and option |
+| Create brand-new exercises | [Creating and Editing Exercises](creating-and-editing-exercises.md) — with the AI assistant or by hand |

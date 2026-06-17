@@ -6,11 +6,15 @@ Documentation is organised by audience. Choose the section that matches your rol
 
 ## 👩‍🏫 For Teachers
 
-If you are new to this project, start with [Getting Started](teachers/getting-started.md) — it walks you through everything from understanding the tools to creating your first assignment.
+If you are new to this project, start with one of these two guides:
+
+- **[Getting Started](teachers/getting-started.md)** — use pre-built template repos, no command line needed.
+- **[Creating Custom Exercise Sets](teachers/creating-exercise-sets.md)** — bundle your own exercises with the CLI, or create new ones.
 
 | Document | What it covers |
 | --- | --- |
-| [Getting Started](teachers/getting-started.md) | **Start here.** Six-step tutorial from understanding the tools → creating a template repo → setting up a GitHub Classroom assignment → student workflow → creating your first exercise. |
+| [Getting Started](teachers/getting-started.md) | **Start here if you want to use existing exercises.** Quick path: pick a pre-built template repo → create Classroom assignment → share with students. No command line needed. |
+| [Creating Custom Exercise Sets](teachers/creating-exercise-sets.md) | **Start here if you need to build custom template repos or create new exercises.** Requires Codespaces, GitHub authentication, and the repoman CLI. |
 | [Understanding the Tools](teachers/understanding-the-tools.md) | Plain-English explanation of GitHub, Classroom, Codespaces, version control, and Jupyter notebooks — and how they fit together. |
 | [Classroom Practices](teachers/classroom-practices.md) | Day-to-day lesson tips: starting Codespaces early, using the self-checker, good git habits, troubleshooting common issues. |
 | [Creating and Editing Exercises](teachers/creating-and-editing-exercises.md) | How to create new exercises (with the AI assistant) or tweak existing ones — including branching, verifying, and committing. |

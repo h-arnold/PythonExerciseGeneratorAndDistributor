@@ -50,7 +50,10 @@ A teaching platform for secondary-school programming that keeps everything in th
   <img src="docs/images/version-control-example.png" alt="Tests are generated to check that students have got the correct output, used the correct constructs and in debug activities, explained their thinking." width="50%">
 </figure>
 
-[Read the full getting started guide for teachers here](docs/teachers/getting-started.md)
+Teacher guides:
+
+- **[Getting Started](docs/teachers/getting-started.md)** — quick path: use pre-built template repos with GitHub Classroom.
+- **[Creating Custom Exercise Sets](docs/teachers/creating-exercise-sets.md)** — full walkthrough for building your own exercise sets.
 
 
 ## Status
