@@ -1,7 +1,7 @@
 ---
 description: Review exercise notebooks for pedagogical soundness, structure, sequencing, and teacher-facing documentation (no test verification)
 mode: subagent
-model: nvidia/minimax-m3
+model: opencode/big-pickle
 permission:
   read: allow
   edit: allow

@@ -64,6 +64,7 @@ Most exercises are designed to teach specific constructs (Sequence, Selection, I
 
 - **Enforce the Lesson Construct**: If the lesson covers **Iteration**, code that manually prints 10 times instead of looping is **incorrect**.
 - **Use AST Checks**: Verify that the required syntax (`for`, `if`, etc.) is present.
+- **For modify exercises, verify new values**: When the student must change a threshold, message, or comparison target, use `check_has_string_constant` or `check_has_int_constant` to confirm the new value appears in the code — not just the construct type. This ensures the initial-failure rule is met (unmodified code still has the old value).
 - **Allow flexibility in "Make" tasks**: "Make" tasks are strictly about the outcome; if they achieve the result using valid code, be more permissive with implementation details.
 
 ### 3. The Initial-Failure Rule
@@ -151,9 +152,11 @@ Examples:
 - Concatenation lesson → Check variables are used in the print statement
 - Arithmetic lesson → Check for the required operator (`+`, `*`, etc.)
 
-**Rule 2: Test for absence of old/incorrect values**
+**Rule 2: Test for absence of old/incorrect values — and presence of new values**
 
-When modifying existing code, verify the original value is gone.
+When modifying existing code, verify the original value is gone. In addition, construct tests must verify that the **new value** the student should introduce is present in the code. A construct test that only checks the construct type (`if`, `for`, etc.) will pass on unmodified code, violating the initial-failure rule.
+
+Use `check_has_string_constant(code, "new value")` for string changes (messages, prompts) and `check_has_int_constant(code, 25)` for numeric changes (thresholds, comparison targets).
 
 Examples:
 
@@ -209,7 +212,7 @@ Each exercise should have tests for its **distinct success criteria**. Every tes
 Ask these questions in order:
 
 1. **Does it teach a specific construct?** → YES = Add construct test
-2. **Does it modify existing code?** → YES = Add negative assertion (old value absent)
+2. **Does it modify existing code?** → YES = Add negative assertion (old value absent) + construct test verifying new value is present
 3. **Does output format matter (exact whitespace/punctuation)?** → YES = Add formatting test
 4. **Does it accept input?** → YES = Check prompt text + variable usage
 5. **Does it produce output?** → YES = Add logic test (always)
@@ -314,6 +317,36 @@ def test_exercise3_construct():
     constants = _string_constants(tree)
     assert "Hi there!" in constants  # ✅ New value in code
     assert "Hello from Python" not in constants  # ✅ Old constant removed
+```
+
+### Missing Value Check (INCOMPLETE)
+
+**Exercise:** Change the discount threshold from `30` to `25`
+
+```python
+# Student starter code
+price = int(input())
+if price > 30:
+    print("Discount applied!")
+```
+
+**Inadequate test (only checks construct type, not the new value):**
+
+```python
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct():
+    code = extract_tagged_code(EXERCISE_KEY, tag="exercise1")
+    assert "if " in code  # ❌ Passes on unmodified code — threshold still 30
+```
+
+**Complete test:**
+
+```python
+@pytest.mark.task(taskno=1)
+def test_exercise1_construct():
+    code = extract_tagged_code(EXERCISE_KEY, tag="exercise1")
+    assert "if " in code                                      # ✅ Construct still required
+    assert check_has_int_constant(code, 25)                    # ✅ New threshold value present
 ```
 
 ### Real Repository Examples
@@ -634,7 +667,7 @@ Use the runtime helpers and keep exercise-specific support modules beside the ca
 - `runtime.py`: notebook loading, tag extraction, execution, input simulation.
 - `expectations.py`: normalised output and print-call expectations (exercise-level).
 - `assertions.py`: consistent error messages for construct checks.
-- `constructs.py`: AST-first construct checks (print usage, operators).
+- `constructs.py`: AST-first construct checks (print usage, operators, string/int constant verification via `check_has_string_constant` and `check_has_int_constant`).
 - `reporting.py`: table formatting and error normalisation for student-facing output.
 - `api.py`: stable entry points for scripts and CLI checks.
 

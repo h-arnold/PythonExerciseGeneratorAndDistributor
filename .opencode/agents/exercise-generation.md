@@ -1,7 +1,7 @@
 ---
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
 mode: all
-model: nvidia/glm-5.1
+model: opencode/big-pickle
 permission:
   read: allow
   edit: allow

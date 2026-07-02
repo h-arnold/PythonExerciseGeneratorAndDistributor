@@ -1,7 +1,7 @@
 ---
 description: Review exercise tests for correctness, coverage, and construct enforcement — verifies tests pass on solution and fail on student notebooks
 mode: subagent
-model: nvidia/minimax-m3
+model: opencode/big-pickle
 permission:
   read: allow
   edit: allow

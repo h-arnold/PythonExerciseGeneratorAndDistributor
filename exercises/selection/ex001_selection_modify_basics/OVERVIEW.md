@@ -1,7 +1,7 @@
 # Teaching Notes: Selection Modify Basics (ex001)
 
 ## Prerequisites
-- Students should know: variables, `print()`, `input()`, `int()` casting, basic arithmetic
+- Students should know: variables, `print()`, `input()`, `int()` casting (for numeric input), basic arithmetic
 - Previous construct: Sequence (exercises ex002–ex015)
 
 ## Common Misconceptions
@@ -16,8 +16,9 @@
 1. Demonstrate the worked example from the notebook introduction first.
 2. Let students work through exercises 1–5 independently, checking their understanding of the basic operators.
 3. Pause after exercise 5 to reinforce the difference between `==` and `!=`.
-4. Exercises 6–10 reinforce and extend the same skills. Exercise 10 is the hardest, combining operator change, value change, and message change.
-5. Encourage students to run the code and observe the output before and after their changes.
+4. Teach the `else` keyword using the "Introducing `else`" section. Demonstrate how `if-else` handles both true and false conditions.
+5. Have students work through exercises 6–10, which build `if-else` logic progressively. Exercise 10 is the hardest, combining operator change, value change, and swapped branch messages.
+6. Encourage students to run the code and observe the output before and after their changes.
 
 ## Exercise Guidance
 
@@ -28,11 +29,11 @@
 | 3 | Number guessing | Introducing `!=` (not equal to) |
 | 4 | Age classification | Changing a `<` threshold with message |
 | 5 | Maths quiz | Replacing `==` with `!=` |
-| 6 | Score threshold | Changing a `>` number (single change) |
-| 7 | Name check | `!=` with string values |
-| 8 | Height restriction | Changing threshold and message together |
-| 9 | Drink order | Changing string comparison and output |
-| 10 | Password check | Combining `!=`, new string, and new message |
+| 6 | Score threshold (if-else) | Changing a `>` number and if-branch message |
+| 7 | Name check (if-else) | Changing string comparison value and both messages |
+| 8 | Height restriction (if-else) | Changing threshold and both messages |
+| 9 | Drink order (if-else) | Changing string comparison and both messages |
+| 10 | Password check (if-else) | Inverting logic (`==` → `!=`) with swapped branches |
 
 ## Worked Example (for teaching)
 Display this on the board before students begin:
