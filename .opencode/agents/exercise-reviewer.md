@@ -1,7 +1,7 @@
 ---
 description: Review exercise notebooks for pedagogical soundness, structure, sequencing, and teacher-facing documentation (no test verification)
 mode: subagent
-model: opencode/big-pickle
+model: opencode-go/deepseek-v4-pro
 permission:
   read: allow
   edit: allow
