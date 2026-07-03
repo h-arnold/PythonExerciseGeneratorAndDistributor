@@ -12,7 +12,7 @@ from exercise_runtime_support.exercise_framework.expectations_helpers import (
     is_valid_explanation,
 )
 
-_EXERCISE_KEY = 'ex002_selection_debug_syntax_errors'
+_EXERCISE_KEY = 'ex002_selection_debug_if_then_else'
 _NOTEBOOK_PATH = resolve_exercise_notebook_path(_EXERCISE_KEY)
 _CACHE = RuntimeCache()
 _MIN_EXPLANATION_LENGTH = 50

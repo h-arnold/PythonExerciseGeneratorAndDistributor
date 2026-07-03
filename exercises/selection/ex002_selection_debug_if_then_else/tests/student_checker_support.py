@@ -1,4 +1,4 @@
-"""Exercise-local student checker definitions for ex002_selection_debug_syntax_errors."""
+"""Exercise-local student checker definitions for ex002_selection_debug_if_then_else."""
 from __future__ import annotations
 
 from exercise_runtime_support.exercise_test_support import (
@@ -10,7 +10,7 @@ from exercise_runtime_support.student_checker.checks.base import (
     exercise_tag,
 )
 
-_EXERCISE_KEY = 'ex002_selection_debug_syntax_errors'
+_EXERCISE_KEY = 'ex002_selection_debug_if_then_else'
 expectations_mod = load_exercise_test_module(_EXERCISE_KEY, "expectations")
 EX002_EXPECTED_OUTPUTS = expectations_mod.EX002_EXPECTED_OUTPUTS
 

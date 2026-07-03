@@ -1,4 +1,4 @@
-"""Exercise-local expectations for ex002_selection_debug_syntax_errors."""
+"""Exercise-local expectations for ex002_selection_debug_if_then_else."""
 from __future__ import annotations
 
 from typing import Final
