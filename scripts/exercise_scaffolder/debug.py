@@ -20,6 +20,10 @@ class DebugScaffold(ExerciseScaffold):
 
     # ── Type-specific cells ──────────────────────────────────────────────────
 
+    @property
+    def _cells_per_exercise(self) -> int:
+        return 3  # markdown + code + explanation
+
     def _build_exercise_cells(self) -> list[dict[str, Any]]:
         """Return debug exercise cells: description + buggy code + explanation."""
         cells: list[dict[str, Any]] = []

@@ -11,9 +11,9 @@ from __future__ import annotations
 from scripts.exercise_scaffolder.make import MakeScaffold
 from tests._scaffold_test_helpers import source_text
 
-_CELLS_FOR_3_PARTS = 9
-_CELLS_FOR_2_PARTS = 7
-_CELLS_FOR_1_PART = 5
+_CELLS_FOR_3_PARTS = 13
+_CELLS_FOR_2_PARTS = 10
+_CELLS_FOR_1_PART = 7
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1.  Cell structure (identical to ModifyScaffold)
@@ -46,10 +46,11 @@ class TestCellStructure:
         cells = scaffold.build_notebook("student", exercise_type="make")["cells"]
         assert cells[0]["cell_type"] == "markdown"
 
-    def test_last_two_cells_are_scratch_and_check(self) -> None:
+    def test_last_four_cells_are_scratch_prompt_heading_and_check(self) -> None:
         scaffold = MakeScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="make")["cells"]
-        assert "Self-check scratch cell" in source_text(cells[-2])
+        assert "Self-check scratch cell" in source_text(cells[-3])
+        assert cells[-2]["cell_type"] == "markdown"  # heading
         assert "run_notebook_checks(" in source_text(cells[-1])
 
 
@@ -72,20 +73,20 @@ class TestExerciseCellTags:
     def test_second_exercise_cell_tagged_exercise2(self) -> None:
         scaffold = MakeScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="make")["cells"]
-        code_cell = cells[4]
+        code_cell = cells[5]
         assert code_cell["cell_type"] == "code"
         assert code_cell["metadata"].get("tags") == ["exercise2"]
 
     def test_code_cells_have_execution_count_none(self) -> None:
         scaffold = MakeScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="make")["cells"]
-        for i in [2, 4]:
+        for i in [2, 5]:
             assert cells[i]["execution_count"] is None
 
     def test_code_cells_have_empty_outputs(self) -> None:
         scaffold = MakeScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="make")["cells"]
-        for i in [2, 4]:
+        for i in [2, 5]:
             assert cells[i]["outputs"] == []
 
 
@@ -106,7 +107,7 @@ class TestTodoPlaceholder:
     def test_multiple_parts_all_contain_todo(self) -> None:
         scaffold = MakeScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="make")["cells"]
-        for i in [2, 4]:
+        for i in [2, 5]:
             assert "TODO: Write your solution" in source_text(cells[i])
 
 

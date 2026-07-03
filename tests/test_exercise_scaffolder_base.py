@@ -17,6 +17,10 @@ from tests._scaffold_test_helpers import source_text
 class _ConcreteScaffold(ExerciseScaffold):
     """Minimal concrete subclass for testing base-class behaviour."""
 
+    @property
+    def _cells_per_exercise(self) -> int:
+        return 2
+
     def _build_exercise_cells(self) -> list[dict[str, Any]]:
         return []
 
@@ -385,8 +389,7 @@ class TestBuildReadmeLines:
         )
         lines = scaffold.build_readme_lines("2026-06-05")
         text = "\n".join(lines)
-        assert "uv run pytest" in text
-        assert "tests/test_ex014.py" in text
+        assert "uv run pytest" not in text
 
     def test_contains_student_notebook_reference(self) -> None:
         scaffold = _ConcreteScaffold(
@@ -548,10 +551,11 @@ class TestBuildNotebook:
         )
         notebook = scaffold.build_notebook("student", exercise_type="modify")
         cells: list[Any] = notebook["cells"]
-        # The last two cells should be scratch + check-answers
-        assert cells[-2]["cell_type"] == "code"
-        assert cells[-1]["cell_type"] == "code"
-        scratch_source = source_text(cells[-2])
+        # No exercise cells → no prompt cells; trailing cells are scratch + heading + checker
+        assert cells[-3]["cell_type"] == "code"  # scratch
+        assert cells[-2]["cell_type"] == "markdown"  # heading
+        assert cells[-1]["cell_type"] == "code"  # checker
+        scratch_source = source_text(cells[-3])
         assert "Self-check scratch cell" in scratch_source
 
     def test_last_cell_is_check_answers(self) -> None:

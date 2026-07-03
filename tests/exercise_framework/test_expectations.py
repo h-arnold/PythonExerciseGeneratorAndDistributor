@@ -107,7 +107,7 @@ def test_get_ex002_checks_loads_support_lazily(monkeypatch: pytest.MonkeyPatch) 
     sentinel_checks = [object()]
     calls: list[tuple[str, str]] = []
 
-    def fake_get_catalogue_key_for_exercise_id(exercise_id: int) -> str:
+    def fake_get_catalogue_key_for_exercise_id(exercise_id: int, **kwargs: object) -> str:
         assert exercise_id == _EX002_EXERCISE_ID
         return "ex002_sequence_modify_basics"
 

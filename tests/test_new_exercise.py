@@ -162,10 +162,7 @@ def test_build_readme_lines_uses_canonical_exercise_local_test_target() -> None:
     readme_lines = scaffold.build_readme_lines("2026-01-01")
 
     readme = "\n".join(readme_lines)
-    assert (
-        f"From the repository root, run ``uv run pytest -q {test_target}`` until all tests pass."
-        in readme
-    )
+    assert "uv run pytest" not in readme
     assert "Run ``pytest -q`` until all tests pass." not in readme
 
 
@@ -183,7 +180,8 @@ def test_make_notebook_instructions_use_canonical_exercise_local_test_target() -
     notebook = scaffold.build_notebook("student", exercise_type="debug")
     cells = _require_cells(notebook)
     intro_source = "".join(_ensure_source_lines(cells[0]))
-    assert f"From the repository root, run ``uv run pytest -q {test_target}``" in intro_source
+    assert "running the self checker" in intro_source
+    assert "check-your-work" in intro_source
     assert "- Run ``pytest -q``\n" not in intro_source
 
 
@@ -340,10 +338,7 @@ def test_main_creates_canonical_debug_scaffold(
     readme = (exercise_dir / "README.md").read_text(encoding="utf-8")
     assert "- Open ``notebooks/student.ipynb`` in this exercise folder." in readme
     assert "explanation1" in readme or "explanationN" in readme
-    assert (
-        f"- From the repository root, run ``uv run pytest -q exercises/sequence/{exercise_key}/tests/test_{exercise_key}.py`` "
-        "until all tests pass."
-    ) in readme
+    assert "uv run pytest" not in readme
 
     test_text = test_path.read_text(encoding="utf-8")
     assert f"_EXERCISE_KEY = '{exercise_key}'" in test_text
@@ -616,7 +611,7 @@ def test_standard_template_only_grades_exercise_tags_and_selfcheck_untagged() ->
     assert exercise_tags == {"exercise1", "exercise2", "exercise3"}
 
     assert len(cells) >= _MIN_SELF_CHECK_CELLS
-    self_check_cell = cells[-2]
+    self_check_cell = cells[-3]
     assert self_check_cell["cell_type"] == "code"
     metadata = self_check_cell.get("metadata")
     assert not _string_tags(metadata), "Self-check cell should not be tagged"

@@ -1,7 +1,7 @@
 ---
 description: Create robust pytest tests for approved exercise notebooks, following the repository testing framework and conventions
 mode: all
-model: nvidia/glm-5.1
+model: opencode/big-pickle
 permission:
   read: allow
   edit: allow

@@ -58,9 +58,14 @@ class ExerciseScaffold(ABC):
         """
         cells: list[dict[str, Any]] = []
 
-        cells.extend(self._build_header_cells(exercise_type, self.test_target))
-        cells.extend(self._build_exercise_cells())
+        cells.extend(self._build_header_cells(exercise_type))
+        exercise_cells = self._build_exercise_cells()
+        n = self._cells_per_exercise
+        for i in range(0, len(exercise_cells), n):
+            cells.extend(exercise_cells[i : i + n])
+            cells.append(self._build_check_prompt_cell())
         cells.append(self._build_scratch_cell())
+        cells.append(self._build_check_heading_cell())
         cells.append(self.build_check_answers_cell(variant))
 
         return {
@@ -82,29 +87,31 @@ class ExerciseScaffold(ABC):
     def _build_header_cells(
         self,
         exercise_type: str,
-        test_target: str,
     ) -> list[dict[str, Any]]:
         """Build the orientation markdown cell at the top of every notebook."""
         if exercise_type == "gaps":
-            how_to_work = [
-                "## How to work\n",
+            instructions = [
+                "## Instructions\n",
                 "- Find the ``# YOUR CODE HERE`` comment in each exercise cell\n",
                 "- Delete the comment and write the missing line(s) of code in its place\n",
-                f"- From the repository root, run ``uv run pytest -q {test_target}``\n",
+                "- Check whether you got it right by "
+                "[running the self checker](#check-your-work) below. \U0001f447\n",
             ]
         elif exercise_type == "debug":
-            how_to_work = [
-                "## How to work\n",
+            instructions = [
+                "## Instructions\n",
                 "- Write your corrected solution in the exercise cell(s)\n",
                 "- After running your corrected solution, describe what happened "
                 "in the explanation cell(s)\n",
-                f"- From the repository root, run ``uv run pytest -q {test_target}``\n",
+                "- Check whether you got it right by "
+                "[running the self checker](#check-your-work) below. \U0001f447\n",
             ]
         else:
-            how_to_work = [
-                "## How to work\n",
+            instructions = [
+                "## Instructions\n",
                 "- Write your solution(s) in the exercise cell(s)\n",
-                f"- From the repository root, run ``uv run pytest -q {test_target}``\n",
+                "- Check whether you got it right by "
+                "[running the self checker](#check-your-work) below. \U0001f447\n",
             ]
 
         return [
@@ -114,15 +121,17 @@ class ExerciseScaffold(ABC):
                 "source": [
                     f"# {self.title}\n",
                     "\n",
-                    "## Goal\n",
-                    "Complete each exercise cell, then run the tests from the repository root.\n",
-                    "\n",
-                    *how_to_work,
+                    *instructions,
                 ],
             }
         ]
 
     # ── Abstract: type-specific exercise cells ───────────────────────────────
+
+    @property
+    @abstractmethod
+    def _cells_per_exercise(self) -> int:
+        """Return the number of cells produced per exercise part."""
 
     @abstractmethod
     def _build_exercise_cells(self) -> list[dict[str, Any]]:
@@ -141,6 +150,26 @@ class ExerciseScaffold(ABC):
                 "# Self-check scratch cell (not graded)\n",
                 "# You can run small experiments here.\n",
             ],
+        }
+
+    def _build_check_heading_cell(self) -> dict[str, Any]:
+        """Return the 'Self-Checker' heading cell above the self-checker."""
+        return {
+            "cell_type": "markdown",
+            "metadata": make_meta("markdown"),
+            "source": [
+                "## Check your work\n",
+                "Run the code below to find out if you have completed your tasks correctly\n",
+            ],
+        }
+
+    @staticmethod
+    def _build_check_prompt_cell() -> dict[str, Any]:
+        """Return the prompt cell encouraging students to run the self checker."""
+        return {
+            "cell_type": "markdown",
+            "metadata": make_meta("markdown"),
+            "source": ["🏁️ **Finished?** ✅ [Check your work](#check-your-work).\n"],
         }
 
     def build_check_answers_cell(self, variant: str) -> dict[str, Any]:
@@ -189,8 +218,6 @@ class ExerciseScaffold(ABC):
             "- Open ``notebooks/student.ipynb`` in this exercise folder.",
             "- Write your solution in the notebook cell tagged ``exercise1`` "
             "(or ``exercise2``, …).",
-            f"- From the repository root, run ``uv run pytest -q {self.test_target}`` "
-            "until all tests pass.",
             "",
             "## Teacher notes",
             f"- Created: {created_date}",
@@ -198,10 +225,10 @@ class ExerciseScaffold(ABC):
         ]
         type_lines = self.readme_type_hook()
         if type_lines:
-            # Insert type-specific lines after the test-target line (index 5),
-            # before the blank line (index 6) — matching original order in
-            # new_exercise.py:_build_readme_lines().
-            insert_at = 6
+            # Insert type-specific lines after the student prompt items (index 4),
+            # before the blank line (index 5) — matching the original ordering
+            # in new_exercise.py:_build_readme_lines().
+            insert_at = 5
             for line in reversed(type_lines):  # reversed to maintain order
                 lines.insert(insert_at, line)
         return lines

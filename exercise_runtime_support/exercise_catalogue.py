@@ -61,9 +61,18 @@ def get_catalogue_entry(exercise_key: str) -> ExerciseCatalogueEntry:
     raise ValueError(f"Unknown exercise key '{exercise_key}'. Available: {available}")
 
 
-def get_catalogue_key_for_exercise_id(exercise_id: int) -> str:
-    """Return the exercise key for a numeric exercise identifier."""
+def get_catalogue_key_for_exercise_id(
+    exercise_id: int, *, construct: str | None = None
+) -> str:
+    """Return the exercise key for a numeric exercise identifier.
+
+    Args:
+        exercise_id: The numeric exercise identifier to look up.
+        construct: When provided, restrict the lookup to exercises in this
+            construct.  Required when the same ``exercise_id`` exists in
+            multiple constructs.
+    """
     for entry in get_exercise_catalogue():
-        if entry.exercise_id == exercise_id:
+        if entry.exercise_id == exercise_id and (construct is None or entry.construct == construct):
             return entry.exercise_key
     raise ValueError(f"Unknown exercise_id {exercise_id!r}")

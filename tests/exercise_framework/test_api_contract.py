@@ -82,7 +82,7 @@ def test_run_notebook_check_supports_ex002_summary_path(
 ) -> None:
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
-    results = run_notebook_check(get_catalogue_key_for_exercise_id(2))
+    results = run_notebook_check(get_catalogue_key_for_exercise_id(2, construct="sequence"))
 
     assert len(results) == 1
     assert results[0].label == "ex002 Sequence Modify Basics"
