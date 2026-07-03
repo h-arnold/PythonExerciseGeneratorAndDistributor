@@ -1,8 +1,11 @@
 """DebugScaffold — exercise type scaffold for debug exercises.
 
-Each part produces a 5-cell sequence:
-markdown-description + read-only buggy-code cell + explanation markdown cell +
-"Debug this code" header markdown + editable buggy-code cell tagged ``exerciseN``.
+Each part produces 5 cells (the base class adds a 6th — the check-prompt):
+  1. markdown description (expected behaviour)
+  2. read-only buggy code cell
+  3. explanation markdown (tagged explanationN)
+  4. "Debug this code" header markdown
+  5. editable buggy code cell (tagged exerciseN)
 """
 
 from __future__ import annotations
@@ -24,11 +27,12 @@ class DebugScaffold(ExerciseScaffold):
     @property
     def _cells_per_exercise(self) -> int:
         return 5  # md + readonly + explanation + debug_header + code
+        # (base class adds a 6th — the check-prompt)
 
     def _build_exercise_cells(self) -> list[dict[str, Any]]:
         """Return debug exercise cells for one part.
 
-        Produces 5 cells:
+        Produces 5 cells (the base class adds a 6th — the check-prompt):
         1. Markdown description (expected behaviour)
         2. Read-only buggy code (not tested, deletable:false, editable:false)
         3. Explanation markdown (tagged explanationN)

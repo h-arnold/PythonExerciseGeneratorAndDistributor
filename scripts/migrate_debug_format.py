@@ -54,7 +54,7 @@ def _make_finished_prompt_cell() -> dict[str, Any]:
             "id": "finished_prompt",
             "language": "markdown",
         },
-        "source": ["\U0001f3c1\uFE0F **Finished?** \u2705 [Check your work](#check-your-work).\n"],
+        "source": ["\U0001f3c1\ufe0f **Finished?** \u2705 [Check your work](#check-your-work).\n"],
     }
 
 
@@ -98,17 +98,21 @@ def _make_check_answers_cell(exercise_key: str, variant: str) -> dict[str, Any]:
     """
     source_lines: list[str] = []
     if variant == "solution":
-        source_lines.extend([
-            "import os\n",
+        source_lines.extend(
+            [
+                "import os\n",
+                "\n",
+                'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"\n',
+                "\n",
+            ]
+        )
+    source_lines.extend(
+        [
+            "from exercise_runtime_support.student_checker import run_notebook_checks\n",
             "\n",
-            'os.environ["PYTUTOR_ACTIVE_VARIANT"] = "solution"\n',
-            "\n",
-        ])
-    source_lines.extend([
-        "from exercise_runtime_support.student_checker import run_notebook_checks\n",
-        "\n",
-        f"run_notebook_checks('{exercise_key}')\n",
-    ])
+            f"run_notebook_checks('{exercise_key}')\n",
+        ]
+    )
     return {
         "cell_type": "code",
         "execution_count": None,
@@ -150,7 +154,9 @@ def _is_description(cell: dict[str, Any]) -> bool:
     return not _has_tag(cell, r"^exercise\d+$") and not _has_tag(cell, r"^explanation\d+$")
 
 
-def _find_description_before(cells: list[dict[str, Any]], code_idx: int, consumed: set[int]) -> int | None:
+def _find_description_before(
+    cells: list[dict[str, Any]], code_idx: int, consumed: set[int]
+) -> int | None:
     """Find the description markdown cell before a code cell."""
     idx = code_idx - 1
     while idx >= 0:
@@ -158,16 +164,15 @@ def _find_description_before(cells: list[dict[str, Any]], code_idx: int, consume
             idx -= 1
             continue
         cell = cells[idx]
-        if cell.get("cell_type") != "markdown":
-            break
-        if _is_description(cell):
+        if cell.get("cell_type") == "markdown" and _is_description(cell):
             return idx
         break
-        idx -= 1
     return None
 
 
-def _find_explanation_after(cells: list[dict[str, Any]], code_idx: int, consumed: set[int]) -> int | None:
+def _find_explanation_after(
+    cells: list[dict[str, Any]], code_idx: int, consumed: set[int]
+) -> int | None:
     """Find the explanation markdown cell after a code cell."""
     idx = code_idx + 1
     while idx < len(cells):
@@ -175,12 +180,9 @@ def _find_explanation_after(cells: list[dict[str, Any]], code_idx: int, consumed
             idx += 1
             continue
         cell = cells[idx]
-        if cell.get("cell_type") == "markdown":
-            if _is_explanation(cell):
-                return idx
-            break
+        if cell.get("cell_type") == "markdown" and _is_explanation(cell):
+            return idx
         break
-        idx += 1
     return None
 
 

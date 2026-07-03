@@ -105,14 +105,25 @@ class ExerciseScaffold(ABC):
                 "[running the self checker](#check-your-work) below. \U0001f447\n",
             ]
         elif exercise_type == "debug":
-            instructions = [
-                "## Instructions\n",
-                "- Run the buggy code in the first cell to observe what happened\n",
-                "- Write down what actually happened in the explanation cell\n",
-                "- Fix the code in the `Debug this code` cell below\n",
-                "- Check whether you got it right by "
-                "[running the self checker](#check-your-work) below. \U0001f447\n",
-            ]
+            if self.parts == 1:
+                instructions = [
+                    "## Instructions\n",
+                    "- Run the buggy code in the first cell to observe what happened\n",
+                    "- Write down what actually happened in the explanation cell\n",
+                    "- Fix the code in the `Debug this code` cell below\n",
+                    "- Check whether you got it right by "
+                    "[running the self checker](#check-your-work) below. \U0001f447\n",
+                ]
+            else:
+                instructions = [
+                    "## Instructions\n",
+                    "- For each exercise, run the buggy code in the read-only cell to "
+                    "observe what happened\n",
+                    "- Write down what actually happened in the corresponding explanation cell\n",
+                    "- Fix the code in the `Debug this code` cell for that exercise\n",
+                    "- Check whether you got it right by "
+                    "[running the self checker](#check-your-work) below. \U0001f447\n",
+                ]
         else:
             instructions = [
                 "## Instructions\n",

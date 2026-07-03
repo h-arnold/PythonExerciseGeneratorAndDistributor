@@ -208,4 +208,4 @@ marimo/_lsp/
 __marimo__/
 
 # Jupyter Watchdog HealthCheck script logs
-.devcontainer/jupyter_watchdog.sh
+.devcontainer/jupyter_watchdog.log

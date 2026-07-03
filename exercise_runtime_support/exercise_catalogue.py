@@ -61,9 +61,7 @@ def get_catalogue_entry(exercise_key: str) -> ExerciseCatalogueEntry:
     raise ValueError(f"Unknown exercise key '{exercise_key}'. Available: {available}")
 
 
-def get_catalogue_key_for_exercise_id(
-    exercise_id: int, *, construct: str | None = None
-) -> str:
+def get_catalogue_key_for_exercise_id(exercise_id: int, *, construct: str | None = None) -> str:
     """Return the exercise key for a numeric exercise identifier.
 
     Args:

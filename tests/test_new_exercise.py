@@ -112,9 +112,11 @@ def test_make_notebook_debug_structure() -> None:
         # precedes the "Debug this code" header, which precedes the editable code.
         # Find the expected-output cell by looking backwards from the explanation cell.
         expl_index = cells.index(explanation_cell)
+        _min_expl_offset = 2
+        assert expl_index >= _min_expl_offset, "Explanation cell must appear after at least 2 cells"
         # The expected-output markdown is 2 cells before the explanation cell
         # (md → readonly → explanation)
-        expected_output_cell = cells[expl_index - 2]
+        expected_output_cell = cells[expl_index - _min_expl_offset]
         assert expected_output_cell["cell_type"] == "markdown"
         assert "Expected output" in "".join(_ensure_source_lines(expected_output_cell))
 

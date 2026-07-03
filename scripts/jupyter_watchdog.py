@@ -15,6 +15,7 @@ This watchdog:
 
 Logs to .devcontainer/jupyter_watchdog.log.
 """
+
 from __future__ import annotations
 
 import glob
@@ -24,6 +25,7 @@ import signal
 import subprocess
 import sys
 import time
+
 import zmq
 
 # Configuration
@@ -108,6 +110,36 @@ def heartbeat_alive(hb_port: str, timeout_ms: int) -> bool:
         sock.close(0)
 
 
+def _send_signal(pid_int: int, sig: signal.Signals, action: str) -> bool:
+    """Send a signal to a process. Returns True if the signal was sent, False otherwise."""
+    try:
+        os.kill(pid_int, sig)
+        log(f"  -> {action} to PID {pid_int}")
+        return True
+    except ProcessLookupError:
+        log(f"  -> PID {pid_int} already gone")
+        return False
+    except PermissionError:
+        log(f"  ! Permission denied {action.lower()} to PID {pid_int}")
+        return False
+
+
+def _wait_for_exit(pid_int: int) -> bool:
+    """Wait for a process to exit. Returns True if exited, False on timeout."""
+    deadline = time.monotonic() + SHUTDOWN_GRACE_SECONDS
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid_int, 0)
+        except ProcessLookupError:
+            log(f"  -> PID {pid_int} exited cleanly")
+            return True
+        except PermissionError:
+            log(f"  ! Permission denied checking status of PID {pid_int}")
+            return True
+        time.sleep(0.2)
+    return False
+
+
 def kill_kernel(pid: str, runtime_file: str) -> None:
     """Terminate a kernel process, escalating to SIGKILL if it ignores SIGTERM."""
     try:
@@ -115,33 +147,14 @@ def kill_kernel(pid: str, runtime_file: str) -> None:
     except ValueError:
         log(f"  ! Invalid PID: {pid}")
         return
-    try:
-        os.kill(pid_int, signal.SIGTERM)
-        log(f"  -> Sent SIGTERM to PID {pid_int}")
-    except ProcessLookupError:
-        log(f"  -> PID {pid_int} already gone")
-        return
-    except PermissionError:
-        log(f"  ! Permission denied sending SIGTERM to PID {pid_int}")
+
+    if not _send_signal(pid_int, signal.SIGTERM, "Sent SIGTERM"):
         return
 
-    # Wait for the process to exit, then escalate to SIGKILL.
-    deadline = time.monotonic() + SHUTDOWN_GRACE_SECONDS
-    while time.monotonic() < deadline:
-        try:
-            os.kill(pid_int, 0)
-        except ProcessLookupError:
-            log(f"  -> PID {pid_int} exited cleanly")
-            return
-        time.sleep(0.2)
+    if _wait_for_exit(pid_int):
+        return
 
-    try:
-        os.kill(pid_int, signal.SIGKILL)
-        log(f"  -> Sent SIGKILL to PID {pid_int}")
-    except ProcessLookupError:
-        log(f"  -> PID {pid_int} already gone")
-    except PermissionError:
-        log(f"  ! Permission denied sending SIGKILL to PID {pid_int}")
+    _send_signal(pid_int, signal.SIGKILL, "Sent SIGKILL")
 
 
 def main() -> int:
@@ -169,8 +182,10 @@ def main() -> int:
         iteration += 1
         kernels = discover_kernels()
         if not kernels:
-            log(f"[iter {iteration}] No active kernels found "
-                f"(open a notebook in VS Code to start one)")
+            log(
+                f"[iter {iteration}] No active kernels found "
+                f"(open a notebook in VS Code to start one)"
+            )
             time.sleep(INTERVAL_SECONDS)
             continue
 
