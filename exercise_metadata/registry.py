@@ -50,17 +50,19 @@ def build_display_label(exercise_id: int, title: str) -> str:
 
 
 def _validate_unique_exercise_ids(catalogue: list[ExerciseCatalogueEntry]) -> None:
-    """Fail fast when multiple exercises claim the same exercise_id."""
-    seen_ids: dict[int, str] = {}
+    """Fail fast when multiple exercises in the same construct claim the same exercise_id."""
+    seen_ids: dict[tuple[str, int], str] = {}
     for entry in catalogue:
-        duplicate_key = seen_ids.get(entry["exercise_id"])
+        key = (entry["construct"], entry["exercise_id"])
+        duplicate_key = seen_ids.get(key)
         if duplicate_key is not None:
             raise RuntimeError(
-                "Exercise catalogue requires unique exercise_id values, but "
-                f"exercise_id {entry['exercise_id']} is claimed by both "
+                "Exercise catalogue requires unique exercise_id values within each "
+                f"construct, but exercise_id {entry['exercise_id']} in construct "
+                f"{entry['construct']!r} is claimed by both "
                 f"{duplicate_key!r} and {entry['exercise_key']!r}."
             )
-        seen_ids[entry["exercise_id"]] = entry["exercise_key"]
+        seen_ids[key] = entry["exercise_key"]
 
 
 def _validate_metadata_identity(
@@ -118,13 +120,13 @@ def build_exercise_registry(
 
     Scans the exercises root for ``exercise.json`` files using
     ``rglob("exercise.json")``, loads metadata for each, and returns a
-    single list sorted by ``exercise_id``.
+    single list sorted by ``(exercise_id, construct)``.
 
     Args:
         exercises_root: Override the exercises root directory (for testing).
 
     Returns:
-        List of ``RegistryEntry``, sorted by exercise_id.
+        List of ``RegistryEntry``, sorted by exercise_id then construct.
     """
     root = exercises_root or _EXERCISES_ROOT
     registry: list[RegistryEntry] = []
@@ -134,7 +136,7 @@ def build_exercise_registry(
         metadata = _load_registry_metadata(exercise_key, exercises_root)
         registry.append(RegistryEntry(exercise_key=exercise_key, metadata=metadata))
 
-    registry.sort(key=lambda entry: entry["metadata"]["exercise_id"])
+    registry.sort(key=lambda entry: (entry["metadata"]["exercise_id"], entry["metadata"]["construct"]))
     return registry
 
 
@@ -159,7 +161,7 @@ def build_exercise_catalogue(
             )
         )
     _validate_unique_exercise_ids(catalogue)
-    return sorted(catalogue, key=lambda entry: entry["exercise_id"])
+    return sorted(catalogue, key=lambda entry: (entry["exercise_id"], entry["construct"]))
 
 
 def get_catalogue_exercise_keys(

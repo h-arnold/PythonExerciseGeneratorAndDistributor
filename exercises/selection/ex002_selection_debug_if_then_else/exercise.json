@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "exercise_key": "ex002_selection_debug_if_then_else",
-  "exercise_id": 16,
+  "exercise_id": 2,
   "slug": "ex002_selection_debug_if_then_else",
   "title": "Selection Debug If Then Else",
   "construct": "selection",

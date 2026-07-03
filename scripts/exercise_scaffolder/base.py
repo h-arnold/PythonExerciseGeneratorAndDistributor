@@ -158,7 +158,7 @@ class ExerciseScaffold(ABC):
             "cell_type": "markdown",
             "metadata": make_meta("markdown"),
             "source": [
-                "## ✅ Self-Checker\n",
+                "## Check your work\n",
                 "Run the code below to find out if you have completed your tasks correctly\n",
             ],
         }

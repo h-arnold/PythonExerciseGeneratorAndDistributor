@@ -100,7 +100,7 @@ else:
 3. If the user typed `"duck"`, the condition is **true** and `"Quack! Ducks are the best!"` is printed.
 4. If the user typed anything else, the condition is **false** and `"No one's perfect I guess..."` is printed instead.
 
-### 6. Common Mistakes to Avoid
+### 7. Common Mistakes to Avoid
 
 - **Using `=` instead of `==`:** Remember, `=` assigns a value, `==` checks equality.
 - **Forgetting the colon (`:`):** Every `if` statement must end with a colon on the condition line.

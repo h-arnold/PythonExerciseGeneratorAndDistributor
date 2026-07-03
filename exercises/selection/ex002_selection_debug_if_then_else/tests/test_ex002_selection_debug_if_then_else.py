@@ -113,42 +113,44 @@ def _has_comparison(tree: ast.AST | None, left_name: str, ops: tuple, right_val:
     return False
 
 
-def _has_gt(node_val: object) -> tuple[ast.cmpop, ...]:
+def _has_gt(_node_val: object) -> tuple[ast.cmpop, ...]:
     """Return a (>) comparison operator tuple for AST matching."""
     return (ast.Gt(),)
 
 
-def _has_gte(node_val: object) -> tuple[ast.cmpop, ...]:
+def _has_gte(_node_val: object) -> tuple[ast.cmpop, ...]:
     """Return a (>=) comparison operator tuple for AST matching."""
     return (ast.GtE(),)
 
 
-def _has_lt(node_val: object) -> tuple[ast.cmpop, ...]:
+def _has_lt(_node_val: object) -> tuple[ast.cmpop, ...]:
     """Return a (<) comparison operator tuple for AST matching."""
     return (ast.Lt(),)
 
 
-def _has_lte(node_val: object) -> tuple[ast.cmpop, ...]:
+def _has_lte(_node_val: object) -> tuple[ast.cmpop, ...]:
     """Return a (<=) comparison operator tuple for AST matching."""
     return (ast.LtE(),)
 
 
-def _has_eq(node_val: object) -> tuple[ast.cmpop, ...]:
+def _has_eq(_node_val: object) -> tuple[ast.cmpop, ...]:
     """Return a (==) comparison operator tuple for AST matching."""
     return (ast.Eq(),)
 
 
-def _has_not_eq(node_val: object) -> tuple[ast.cmpop, ...]:
+def _has_not_eq(_node_val: object) -> tuple[ast.cmpop, ...]:
     """Return a (!=) comparison operator tuple for AST matching."""
     return (ast.NotEq(),)
 
 
-def _print_in_if_body(tree: ast.AST, text: str) -> bool:
+def _print_in_if_body(tree: ast.AST | None, text: str) -> bool:
     """Check if a specific string is printed inside the if-body (not else-body).
 
-    Walks the AST for the first if/else, then checks if any print call in
-    the if body (node.body) contains the given text.
+    Walks the AST and checks if any print call in the if body (node.body)
+    contains the given text.
     """
+    if tree is None:
+        return False
     for node in ast.walk(tree):
         if isinstance(node, ast.If) and node.orelse:
             for stmt in node.body:
@@ -161,12 +163,13 @@ def _print_in_if_body(tree: ast.AST, text: str) -> bool:
                         for arg in child.args:
                             if isinstance(arg, ast.Constant) and arg.value == text:
                                 return True
-            break
     return False
 
 
-def _print_in_else_body(tree: ast.AST, text: str) -> bool:
+def _print_in_else_body(tree: ast.AST | None, text: str) -> bool:
     """Check if a specific string is printed inside the else-body (not if-body)."""
+    if tree is None:
+        return False
     for node in ast.walk(tree):
         if isinstance(node, ast.If) and node.orelse:
             for stmt in node.orelse:
@@ -179,7 +182,6 @@ def _print_in_else_body(tree: ast.AST, text: str) -> bool:
                         for arg in child.args:
                             if isinstance(arg, ast.Constant) and arg.value == text:
                                 return True
-            break
     return False
 
 

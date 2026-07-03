@@ -63,7 +63,7 @@ def _load_ex002_support() -> ModuleType:
     global _ex002_support_module
     if _ex002_support_module is None:
         _ex002_support_module = load_exercise_test_module(
-            get_catalogue_key_for_exercise_id(2),
+            get_catalogue_key_for_exercise_id(2, construct="sequence"),
             "framework_support",
         )
     return _ex002_support_module
