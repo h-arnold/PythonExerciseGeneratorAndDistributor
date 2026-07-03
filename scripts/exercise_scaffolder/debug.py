@@ -1,7 +1,8 @@
 """DebugScaffold — exercise type scaffold for debug exercises.
 
-Each part produces a markdown-description + buggy-code cell tagged
-``exerciseN`` + explanation markdown cell tagged ``explanationN``.
+Each part produces a 5-cell sequence:
+markdown-description + read-only buggy-code cell + explanation markdown cell +
+"Debug this code" header markdown + editable buggy-code cell tagged ``exerciseN``.
 """
 
 from __future__ import annotations
@@ -22,20 +23,30 @@ class DebugScaffold(ExerciseScaffold):
 
     @property
     def _cells_per_exercise(self) -> int:
-        return 3  # markdown + code + explanation
+        return 5  # md + readonly + explanation + debug_header + code
 
     def _build_exercise_cells(self) -> list[dict[str, Any]]:
-        """Return debug exercise cells: description + buggy code + explanation."""
+        """Return debug exercise cells for one part.
+
+        Produces 5 cells:
+        1. Markdown description (expected behaviour)
+        2. Read-only buggy code (not tested, deletable:false, editable:false)
+        3. Explanation markdown (tagged explanationN)
+        4. "Debug this code" header markdown
+        5. Editable buggy code (tagged exerciseN, tested by self-checker)
+        """
         cells: list[dict[str, Any]] = []
         for i in range(1, self.parts + 1):
             exercise_tag = f"exercise{i}"
             explanation_tag = f"explanation{i}"
+
+            # 1. Expected behaviour markdown
             cells.append(
                 {
                     "cell_type": "markdown",
                     "metadata": make_meta("markdown"),
                     "source": [
-                        f"# Exercise {i} — Expected behaviour\n",
+                        f"# Exercise {i} \u2014 Expected behaviour\n",
                         "Describe what the corrected program should output.\n",
                         "### Expected output\n",
                         "```\n",
@@ -44,6 +55,51 @@ class DebugScaffold(ExerciseScaffold):
                     ],
                 }
             )
+
+            # 2. Read-only buggy code cell (not tested, not editable)
+            cells.append(
+                {
+                    "cell_type": "code",
+                    "metadata": make_meta(
+                        "python",
+                        extra={"deletable": False, "editable": False},
+                    ),
+                    "execution_count": None,
+                    "outputs": [],
+                    "source": [
+                        "# READ-ONLY \u2014 observe the buggy code below\n",
+                        "# This cell is not tested. Run it to see what happens.\n",
+                        "\n",
+                        "print('TODO: Fix this code')\n",
+                    ],
+                }
+            )
+
+            # 3. Explanation markdown (tagged)
+            cells.append(
+                {
+                    "cell_type": "markdown",
+                    "metadata": make_meta("markdown", tags=[explanation_tag]),
+                    "source": [
+                        "### What actually happened\n",
+                        "Describe briefly what happened when you ran the code "
+                        "(include any error messages or incorrect output).\n",
+                    ],
+                }
+            )
+
+            # 4. "Debug this code" header markdown
+            cells.append(
+                {
+                    "cell_type": "markdown",
+                    "metadata": make_meta("markdown"),
+                    "source": [
+                        "### \U0001f41e Debug this code\n",
+                    ],
+                }
+            )
+
+            # 5. Editable buggy code cell (tested by exercise checker)
             cells.append(
                 {
                     "cell_type": "code",
@@ -55,17 +111,6 @@ class DebugScaffold(ExerciseScaffold):
                         "# Fix the code below and run the cell.\n",
                         "\n",
                         "print('TODO: Fix this code')\n",
-                    ],
-                }
-            )
-            cells.append(
-                {
-                    "cell_type": "markdown",
-                    "metadata": make_meta("markdown", tags=[explanation_tag]),
-                    "source": [
-                        "### What actually happened\n",
-                        "Describe briefly what happened when you ran the code "
-                        "(include any error messages or incorrect output).\n",
                     ],
                 }
             )

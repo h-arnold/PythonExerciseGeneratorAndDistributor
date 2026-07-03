@@ -107,11 +107,16 @@ def test_make_notebook_debug_structure() -> None:
         assert explanation_cell is not None, f"Missing explanation cell tagged {explanation_tag}"
         assert explanation_cell["cell_type"] == "markdown"
 
-        cell_index = cells.index(code_cell)
-        assert cell_index > 0
-        previous_cell = cells[cell_index - 1]
-        assert previous_cell["cell_type"] == "markdown"
-        assert "Expected output" in "".join(_ensure_source_lines(previous_cell))
+        # In the new 5-cell structure, the expected-output markdown precedes the
+        # read-only buggy code cell, which precedes the explanation cell, which
+        # precedes the "Debug this code" header, which precedes the editable code.
+        # Find the expected-output cell by looking backwards from the explanation cell.
+        expl_index = cells.index(explanation_cell)
+        # The expected-output markdown is 2 cells before the explanation cell
+        # (md → readonly → explanation)
+        expected_output_cell = cells[expl_index - 2]
+        assert expected_output_cell["cell_type"] == "markdown"
+        assert "Expected output" in "".join(_ensure_source_lines(expected_output_cell))
 
 
 def test_make_notebook_make_structure_matches_standard_non_debug_scaffold() -> None:

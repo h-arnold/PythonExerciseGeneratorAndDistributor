@@ -11,10 +11,12 @@ Students should be presented with a mixture of syntactic and logical errors. Whe
 **Notebook structure produced by the scaffolder**
 
 - Every debug notebook starts with an orientation markdown cell (title, what to practise, how to work).
-- For each exercise part `N`, the generator emits:
-  - A markdown cell describing the goal and showing the **expected output**.
-  - A buggy code cell tagged `exerciseN` that students edit directly.
-  - A markdown reflection cell tagged `explanationN` prompting the student to record what went wrong.
+- For each exercise part `N`, the generator emits 5 cells:
+  1. A markdown cell describing the goal and showing the **expected output**.
+  2. A **read-only** buggy code cell (not tested, with `deletable: false` and `editable: false` metadata) that students run to observe the bug.
+  3. A markdown reflection cell tagged `explanationN` prompting the student to record what went wrong.
+  4. A `### 🐞 Debug this code` markdown header.
+  5. A buggy code cell tagged `exerciseN` that students edit and that the self-checker tests.
 - After the final exercise, an optional untagged scratch cell can remain for experiments; the grader ignores it.
 
 A shortened JSON excerpt from a finished two-part debug notebook is shown below. It illustrates the exercise-local tag and cell structure that `scripts/new_exercise.py --type debug` scaffolds and that the tests rely on after you replace the generic placeholders with real exercise content:
@@ -43,10 +45,11 @@ A shortened JSON excerpt from a finished two-part debug notebook is shown below.
     },
     {
       "cell_type": "code",
-      "metadata": { "id": "e4cb98a1", "language": "python", "tags": ["exercise1"] },
+      "metadata": { "id": "e4cb98a1", "language": "python", "deletable": false, "editable": false },
       "execution_count": null,
       "outputs": [],
       "source": [
+        "# READ-ONLY — observe the buggy code below\n",
         "print(\"Hello World!\"\n"
       ]
     },
@@ -56,6 +59,23 @@ A shortened JSON excerpt from a finished two-part debug notebook is shown below.
       "source": [
         "### What actually happened\n",
         "Describe briefly what happened when you ran the code.\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": { "id": "a1b2c3d4", "language": "markdown" },
+      "source": [
+        "### 🐞 Debug this code\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": { "id": "f5ca98b2", "language": "python", "tags": ["exercise1"] },
+      "execution_count": null,
+      "outputs": [],
+      "source": [
+        "# BUGGY CODE (students edit this tagged cell)\n",
+        "print(\"Hello World!\"\n"
       ]
     },
     {
@@ -71,10 +91,11 @@ A shortened JSON excerpt from a finished two-part debug notebook is shown below.
     },
     {
       "cell_type": "code",
-      "metadata": { "id": "3f2ab471", "language": "python", "tags": ["exercise2"] },
+      "metadata": { "id": "b7dc09c3", "language": "python", "deletable": false, "editable": false },
       "execution_count": null,
       "outputs": [],
       "source": [
+        "# READ-ONLY — observe the buggy code below\n",
         "print(\"Learning\" \"Python\")\n"
       ]
     },
@@ -85,6 +106,23 @@ A shortened JSON excerpt from a finished two-part debug notebook is shown below.
         "### What actually happened\n",
         "Explain the error or incorrect output you observed.\n"
       ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": { "id": "c3d4e5f6", "language": "markdown" },
+      "source": [
+        "### 🐞 Debug this code\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": { "id": "3f2ab471", "language": "python", "tags": ["exercise2"] },
+      "execution_count": null,
+      "outputs": [],
+      "source": [
+        "# BUGGY CODE (students edit this tagged cell)\n",
+        "print(\"Learning\" \"Python\")\n"
+      ]
     }
   ]
 }
@@ -92,7 +130,8 @@ A shortened JSON excerpt from a finished two-part debug notebook is shown below.
 
 **Tag requirements**
 
-- Each buggy code cell that the grader executes **must** carry exactly one `exerciseN` tag. Tests such as [exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py](../../exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py) and [exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py](../../exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py) rely on these tags when calling `run_cell_and_capture_output()`.
+- Each **editable** buggy code cell that the grader executes **must** carry exactly one `exerciseN` tag. Tests such as [exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py](../../exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py) and [exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py](../../exercises/sequence/ex004_sequence_debug_syntax/tests/test_ex004_sequence_debug_syntax.py) rely on these tags when calling `run_cell_and_capture_output()`.
+- The **read-only** buggy code cell must **not** carry an `exerciseN` tag. It should have `deletable: false` and `editable: false` metadata to prevent editing in Jupyter front-ends.
 - The reflection markdown cell after each buggy implementation **must** carry the matching `explanationN` tag. Automated checks use `get_explanation_cell()` to enforce this.
 - Tags are case-sensitive; do not use variations like `Exercise1` or `exercise_1`.
 
@@ -195,9 +234,11 @@ def test_explanations_have_content(tag: str) -> None:
 
 ## Summary checklist for authoring debug exercises
 
-- [ ] Every exercise cell contains a real bug (syntax, runtime, or logic).
+- [ ] Every exercise contains a real bug (syntax, runtime, or logic).
 - [ ] Exercise titles and prompts remain neutral (no spoilers, no hints).
-- [ ] Buggy code cells are tagged `exercise1` … `exerciseN` and contain executable code.
+- [ ] Each part has a read-only buggy code cell (`deletable: false`, `editable: false`) for students to observe the bug.
+- [ ] Each part has an editable buggy code cell tagged `exercise1` … `exerciseN` that students fix.
+- [ ] Each part has a `### 🐞 Debug this code` markdown header between the explanation and the editable cell.
 - [ ] Reflection markdown cells are tagged `explanation1` … `explanationN` and the default text encourages students to describe what went wrong.
 - [ ] Solution notebooks mirror the structure and tags while demonstrating the corrected code.
 - [ ] Tests verify the corrected behaviour *and* enforce explanation content using the helpers in `exercise_runtime_support.exercise_framework`.
