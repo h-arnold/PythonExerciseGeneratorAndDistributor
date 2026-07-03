@@ -21,6 +21,10 @@ class GapsScaffold(ExerciseScaffold):
 
     # ── Type-specific cells ──────────────────────────────────────────────────
 
+    @property
+    def _cells_per_exercise(self) -> int:
+        return 2  # markdown + code
+
     def _build_exercise_cells(self) -> list[dict[str, Any]]:
         """Return gap-fill exercise cells: description + code cell per part."""
         cells: list[dict[str, Any]] = []

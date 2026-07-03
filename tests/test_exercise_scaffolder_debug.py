@@ -8,9 +8,9 @@ from __future__ import annotations
 from scripts.exercise_scaffolder.debug import DebugScaffold
 from tests._scaffold_test_helpers import source_text
 
-_CELLS_FOR_3_PARTS = 12
-_CELLS_FOR_2_PARTS = 9
-_CELLS_FOR_1_PART = 6
+_CELLS_FOR_3_PARTS = 16
+_CELLS_FOR_2_PARTS = 12
+_CELLS_FOR_1_PART = 8
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1.  Cell structure
@@ -44,10 +44,11 @@ class TestCellStructure:
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
         assert cells[0]["cell_type"] == "markdown"
 
-    def test_last_two_cells_are_scratch_and_check(self) -> None:
+    def test_last_four_cells_are_scratch_prompt_heading_and_check(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        assert "Self-check scratch cell" in source_text(cells[-2])
+        assert "Self-check scratch cell" in source_text(cells[-3])
+        assert cells[-2]["cell_type"] == "markdown"  # heading
         assert "run_notebook_checks(" in source_text(cells[-1])
 
 
@@ -70,22 +71,21 @@ class TestExerciseCellTags:
     def test_second_exercise_cell_tagged_exercise2(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        # Second exercise code cell is at index 5 (header @0, markdown1@1, code1@2, expl1@3,
-        # markdown2@4, code2@5, expl2@6)
-        code_cell = cells[5]
+        # Header@0, md1@1, code1@2, expl1@3, prompt@4, md2@5, code2@6
+        code_cell = cells[6]
         assert code_cell["cell_type"] == "code"
         assert code_cell["metadata"].get("tags") == ["exercise2"]
 
     def test_code_cells_have_execution_count_none(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        for i in [2, 5]:
+        for i in [2, 6]:
             assert cells[i]["execution_count"] is None
 
     def test_code_cells_have_empty_outputs(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        for i in [2, 5]:
+        for i in [2, 6]:
             assert cells[i]["outputs"] == []
 
 
@@ -108,8 +108,8 @@ class TestExplanationCellTags:
     def test_second_explanation_tagged_explanation2(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        # Explanation 2 is at index 6
-        expl_cell = cells[6]
+        # Header@0, md1@1, code1@2, expl1@3, prompt@4, md2@5, code2@6, expl2@7
+        expl_cell = cells[7]
         assert expl_cell["cell_type"] == "markdown"
         assert expl_cell["metadata"].get("tags") == ["explanation2"]
 
@@ -132,7 +132,7 @@ class TestBuggyCodeMarker:
     def test_multiple_parts_all_contain_buggy_code(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        for i in [2, 5]:
+        for i in [2, 6]:
             assert "BUGGY CODE" in source_text(cells[i])
 
     def test_source_contains_todo_placeholder(self) -> None:
@@ -159,7 +159,7 @@ class TestExplanationMarkdown:
     def test_all_parts_have_explanation_section(self) -> None:
         scaffold = DebugScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="debug")["cells"]
-        for i in [3, 6]:
+        for i in [3, 7]:
             assert "What actually happened" in source_text(cells[i])
 
 

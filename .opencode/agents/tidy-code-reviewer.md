@@ -1,7 +1,7 @@
 ---
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
-mode: subagent
-model: nvidia/deepseek-v4-pro
+mode: all
+model: opencode/nemotron-3-ultra-free
 permission:
   read: allow
   edit: allow

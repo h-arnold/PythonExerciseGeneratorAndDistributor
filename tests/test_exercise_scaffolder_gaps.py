@@ -8,9 +8,9 @@ from __future__ import annotations
 from scripts.exercise_scaffolder.gaps import GapsScaffold
 from tests._scaffold_test_helpers import source_text
 
-_CELLS_FOR_3_PARTS = 9
-_CELLS_FOR_2_PARTS = 7
-_CELLS_FOR_1_PART = 5
+_CELLS_FOR_3_PARTS = 13
+_CELLS_FOR_2_PARTS = 10
+_CELLS_FOR_1_PART = 7
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 1.  Cell structure
@@ -43,10 +43,11 @@ class TestCellStructure:
         cells = scaffold.build_notebook("student", exercise_type="gaps")["cells"]
         assert cells[0]["cell_type"] == "markdown"
 
-    def test_last_two_cells_are_scratch_and_check(self) -> None:
+    def test_last_four_cells_are_scratch_prompt_heading_and_check(self) -> None:
         scaffold = GapsScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="gaps")["cells"]
-        assert "Self-check scratch cell" in source_text(cells[-2])
+        assert "Self-check scratch cell" in source_text(cells[-3])
+        assert cells[-2]["cell_type"] == "markdown"  # heading
         assert "run_notebook_checks(" in source_text(cells[-1])
 
 
@@ -67,14 +68,14 @@ class TestYourCodeHereMarker:
     def test_multiple_parts_all_contain_your_code_here(self) -> None:
         scaffold = GapsScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="gaps")["cells"]
-        for i in [2, 4]:
+        for i in [2, 5]:
             assert "# YOUR CODE HERE" in source_text(cells[i])
 
     def test_code_cells_tagged_correctly(self) -> None:
         scaffold = GapsScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="gaps")["cells"]
         assert cells[2]["metadata"].get("tags") == ["exercise1"]
-        assert cells[4]["metadata"].get("tags") == ["exercise2"]
+        assert cells[5]["metadata"].get("tags") == ["exercise2"]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -176,7 +177,7 @@ class TestExpectedOutputMarkdown:
     def test_all_parts_have_expected_output(self) -> None:
         scaffold = GapsScaffold("Title", "ex001", 2, "tests/test_ex001.py", exercise_id=1)
         cells = scaffold.build_notebook("student", exercise_type="gaps")["cells"]
-        for i in [1, 3]:  # markdown cells for parts 1 and 2
+        for i in [1, 4]:  # markdown cells for parts 1 and 2
             assert "Expected output" in source_text(cells[i])
 
 
