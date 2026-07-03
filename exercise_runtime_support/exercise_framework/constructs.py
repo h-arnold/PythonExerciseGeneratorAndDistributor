@@ -46,10 +46,7 @@ def _has_operator(tree: ast.AST, operator_type: type[ast.operator]) -> bool:
 
 def _has_string_constant(tree: ast.AST, value: str) -> bool:
     """Return True when the AST contains a string constant matching *value*."""
-    return any(
-        isinstance(node, ast.Constant) and node.value == value
-        for node in ast.walk(tree)
-    )
+    return any(isinstance(node, ast.Constant) and node.value == value for node in ast.walk(tree))
 
 
 def _has_int_constant(tree: ast.AST, value: int) -> bool:

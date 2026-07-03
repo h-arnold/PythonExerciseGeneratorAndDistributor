@@ -11,11 +11,18 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 
-def make_meta(language: str, *, tags: list[str] | None = None) -> dict[str, Any]:
+def make_meta(
+    language: str,
+    *,
+    tags: list[str] | None = None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Create cell metadata dictionary with a unique ID."""
     meta: dict[str, object] = {"id": uuid.uuid4().hex[:8], "language": language}
     if tags:
         meta["tags"] = tags
+    if extra:
+        meta.update(extra)
     return meta
 
 
@@ -98,14 +105,25 @@ class ExerciseScaffold(ABC):
                 "[running the self checker](#check-your-work) below. \U0001f447\n",
             ]
         elif exercise_type == "debug":
-            instructions = [
-                "## Instructions\n",
-                "- Write your corrected solution in the exercise cell(s)\n",
-                "- After running your corrected solution, describe what happened "
-                "in the explanation cell(s)\n",
-                "- Check whether you got it right by "
-                "[running the self checker](#check-your-work) below. \U0001f447\n",
-            ]
+            if self.parts == 1:
+                instructions = [
+                    "## Instructions\n",
+                    "- Run the buggy code in the first cell to observe what happened\n",
+                    "- Write down what actually happened in the explanation cell\n",
+                    "- Fix the code in the `Debug this code` cell below\n",
+                    "- Check whether you got it right by "
+                    "[running the self checker](#check-your-work) below. \U0001f447\n",
+                ]
+            else:
+                instructions = [
+                    "## Instructions\n",
+                    "- For each exercise, run the buggy code in the read-only cell to "
+                    "observe what happened\n",
+                    "- Write down what actually happened in the corresponding explanation cell\n",
+                    "- Fix the code in the `Debug this code` cell for that exercise\n",
+                    "- Check whether you got it right by "
+                    "[running the self checker](#check-your-work) below. \U0001f447\n",
+                ]
         else:
             instructions = [
                 "## Instructions\n",
@@ -158,7 +176,7 @@ class ExerciseScaffold(ABC):
             "cell_type": "markdown",
             "metadata": make_meta("markdown"),
             "source": [
-                "## Check your work\n",
+                "## ✅ Check your work\n",
                 "Run the code below to find out if you have completed your tasks correctly\n",
             ],
         }

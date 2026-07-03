@@ -75,7 +75,7 @@ Run it through the managed environment, for example `uv run python -m scripts.ne
 - `--slug`: Snake-case slug suffix (default: auto-generated from title)
 - `--parts`: Number of exercise parts in one notebook (default: 1, max: 20)
 
-When `--type debug` is used the scaffolder includes an "Expected output" markdown cell and an `explanationN` markdown cell for each exercise part.
+When `--type debug` is used the scaffolder includes an "Expected output" markdown cell, a read-only buggy code cell, an `explanationN` markdown cell, a "Debug this code" header, and an editable buggy code cell for each exercise part.
 
 ### What Gets Created
 
@@ -122,10 +122,12 @@ On notebooks with multiple exercises (ex003 and later) that final helper now pri
 Debug notebooks contain, for each part:
 
 - A markdown cell describing expected behaviour and output
-- A tagged code cell containing placeholder buggy code (`exerciseN`)
-- A tagged explanation markdown cell (`explanationN`) that students complete after fixing the bug
+- A read-only code cell containing the buggy code (not tested, with `deletable: false` and `editable: false` metadata)
+- A tagged explanation markdown cell (`explanationN`) where students describe what happened
+- A `### 🐞 Debug this code` markdown header
+- A tagged code cell containing placeholder buggy code (`exerciseN`) that students edit and that the self-checker tests
 
-For `--parts N`, creates N tagged exercise cells.
+For `--parts N`, creates N sets of the above cells.
 
 #### 3. Solution Notebook
 
@@ -275,8 +277,10 @@ Students fix broken code.
 **Notebook structure**:
 
 1. Show the expected behaviour in a markdown cell
-2. Student fixes the buggy starter code in the tagged `exerciseN` cell
-3. Tests verify the fix
+2. Student runs the read-only buggy code cell to observe the bug
+3. Student writes what happened in the explanation cell
+4. Student fixes the buggy starter code in the tagged `exerciseN` cell
+5. Tests verify the fix
 
 ### Modify Exercises
 
