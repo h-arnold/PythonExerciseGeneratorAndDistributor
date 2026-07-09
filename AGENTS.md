@@ -15,9 +15,9 @@ This repository provides notebook-based Python exercises with automated grading 
 
 ## Quick Reference
 
-**For exercise creation (Phase 1 — notebooks)**: Use the exercise generation custom agent (`.github/agents/exercise_generation.md.agent.md`), then the exercise reviewer (`.github/agents/exercise_reviewer.md.agent.md`).
+**For exercise creation (Phase 1 — notebooks)**: Use the exercise generation custom agent (`.opencode/agents/exercise-generation.md`), then the exercise reviewer (`.opencode/agents/exercise-reviewer.md`).
 
-**For exercise testing (Phase 2 — tests)**: After notebooks are approved, use the exercise test creator (`.github/agents/exercise_test_creator.md.agent.md`), then the exercise test reviewer (`.github/agents/exercise_test_reviewer.md.agent.md`).
+**For exercise testing (Phase 2 — tests)**: After notebooks are approved, use the exercise test creator (`.opencode/agents/exercise-test-creator.md`), then the exercise test reviewer (`.opencode/agents/exercise-test-reviewer.md`).
 
 **Documentation (fetch on demand)**: Only read these files when a question specifically requires detailed information. Use `cat` or `sed -n` to fetch the exact file needed.
 
@@ -27,6 +27,7 @@ This repository provides notebook-based Python exercises with automated grading 
 - `docs/exercise-agents/exercise-generation-cli.md` — CLI for scaffolding new exercises
 - `docs/developers/setup.md` — installation and environment setup
 - `docs/developers/development.md` — contributor and development guidelines
+- `docs/developers/jupyter-watchdog.md` — Jupyter kernel watchdog for devcontainers (heartbeat monitoring, kill-or-restart behaviour)
 
 ## Repository Structure
 

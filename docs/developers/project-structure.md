@@ -108,8 +108,9 @@ Type guard helpers (using `typing.TypeGuard`) — place TypeGuard functions clos
 Automation tools that help maintain the repository and publish exercises:
 
 - `build_autograde_payload.py`: Wraps pytest, encodes results, and exposes outputs consumed by the GitHub Classroom autograding reporter
+- `jupyter_watchdog.py`: Kernel health watchdog for VS Code devcontainers — pings Jupyter kernels via ZeroMQ heartbeat and kills unresponsive ones so VS Code can restart them (runs as a background `nohup` process from both devcontainer `postStartCommand` entries). See [jupyter-watchdog.md](jupyter-watchdog.md) for details.
 - `new_exercise.py`: Scaffolds new exercises (notebooks, tests, and metadata)
-- `verify_exercise_quality.py`: Runs linting, tests, and structural checks used in CI and local development
+- `verify_exercise_quality.py`: Runs linting, checks, and structural validation used in CI and local development
 - `verify_solutions.sh`: Convenience wrapper that executes tests against solution notebooks
 - `template_repo_cli/`: CLI and utilities for packaging and publishing template repositories (invoked via `repoman`). The supporting modules expose a `run_subprocess()` wrapper that standardises subprocess handling for `git`/`gh` commands and simplifies testing by offering `capture`, `stream`, and `silent` output modes.
 
@@ -123,11 +124,16 @@ The autograding workflow distributed to classrooms resides at `template_repo_fil
 
 GitHub-specific configuration:
 
-- `agents/exercise_generation.md.agent.md`: Custom agent for exercise generation (Phase 1 — notebooks)
-- `agents/exercise_reviewer.md.agent.md`: Reviews exercise notebooks for pedagogical soundness and structure
-- `agents/exercise_test_creator.md.agent.md`: Creates pytest tests for approved exercises (Phase 2)
-- `agents/exercise_test_reviewer.md.agent.md`: Reviews exercise tests for correctness and coverage
 - `workflows/`: CI/CD workflows for testing
+
+### `.opencode/`
+
+Agent instruction files for the OpenCode workflow system:
+
+- `agents/exercise-generation.md`: Custom agent for exercise generation (Phase 1 — notebooks)
+- `agents/exercise-reviewer.md`: Reviews exercise notebooks for pedagogical soundness and structure
+- `agents/exercise-test-creator.md`: Creates pytest tests for approved exercises (Phase 2)
+- `agents/exercise-test-reviewer.md`: Reviews exercise tests for correctness and coverage
 
 ### Root files
 

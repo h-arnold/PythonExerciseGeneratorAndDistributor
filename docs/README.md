@@ -54,6 +54,7 @@ If you are new to this project, start with one of these two guides:
 | [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
 | [GitHub Classroom Autograding Guide](developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
 | [Docker & Devcontainer Setup](developers/docker-devcontainer-setup.md) | Dockerfile, devcontainer configs, GitHub Actions image build. |
+| [Jupyter Kernel Watchdog](developers/jupyter-watchdog.md) | Kernel health monitor for VS Code devcontainers — detects and kills unresponsive Jupyter kernels so VS Code can restart them. |
 | [Autograding CLI Reference](developers/autograding-cli.md) | Technical reference for `build_autograde_payload.py` — CLI args, outputs, CI usage. |
 
 ---
