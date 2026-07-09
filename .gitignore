@@ -209,3 +209,4 @@ __marimo__/
 
 # Jupyter Watchdog HealthCheck script logs
 .devcontainer/jupyter_watchdog.log
+nohup.out

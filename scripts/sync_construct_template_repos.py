@@ -87,13 +87,10 @@ def _looks_like_auth_error(text: str) -> bool:
 
 def _log_repoman_output(combined: str, verbose: bool) -> None:
     """Emit repoman subprocess output at the appropriate log level."""
-    if not combined:
+    if not combined or not verbose:
         return
-    if verbose:
-        for line in combined.rstrip("\n").splitlines():
-            logger.info("[repoman] %s", line)
-    else:
-        logger.error("[repoman] %s", combined.strip())
+    for line in combined.rstrip("\n").splitlines():
+        logger.info("[repoman] %s", line)
 
 
 def _get_authenticated_owner(*, owner: str | None = None) -> str | None:
@@ -413,9 +410,10 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
     if args.verbose:
         logger.info("Discovered constructs: %s", ", ".join(constructs))
 
-    resolved_owner = _get_authenticated_owner(owner=args.github_owner)
+    resolved_owner = _get_authenticated_owner(owner=args.github_owner or args.org)
 
-    # Auth pre-check (skipped in dry-run, which never contacts GitHub).
+    # Auth pre-check (skipped in dry-run, which never pushes to or creates
+    # repositories on GitHub).
     if not args.dry_run and not _check_gh_auth():
         logger.error(
             "Not authenticated with GitHub. Run `gh auth login` (and "
