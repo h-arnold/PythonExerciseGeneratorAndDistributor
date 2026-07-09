@@ -1,8 +1,11 @@
 """Sync construct template repositories.
 
-This script discovers construct directories under ``exercises/``, builds
-workspace directories containing exercise files (notebooks, tests, metadata)
-for each construct, and syncs them to GitHub template repositories.
+This script discovers construct directories under ``exercises/`` and delegates
+package construction and push to GitHub template repositories to ``repoman``
+(via ``scripts/template_repo_cli``) using subprocess. The sync script is a thin
+orchestrator: it does not copy exercise files itself, so ``repoman`` remains the
+single source of truth for template-repo contents (including base files such as
+``.devcontainer`` and the Classroom workflow).
 
 Usage::
 
@@ -21,26 +24,16 @@ from __future__ import annotations
 
 import argparse
 import logging
-import shutil
 import subprocess
-import tempfile
+import sys
 from collections.abc import Sequence
 from datetime import datetime
 from pathlib import Path
-from typing import Required, TypedDict
+from typing import TypedDict
 
 logger = logging.getLogger(__name__)
 
-
-class SyncResult(TypedDict, total=False):
-    """Result of syncing a single construct to a template repository."""
-
-    success: Required[bool]
-    construct: str
-    repo_name: str
-    dry_run: bool
-    error: str
-    message: str
+_AUTH_ERROR_MARKERS = ("not authenticated", "gh auth", "401", "403", "unauthorized")
 
 
 def discover_constructs(repo_root: Path) -> list[str]:
@@ -65,89 +58,39 @@ def discover_constructs(repo_root: Path) -> list[str]:
     return constructs
 
 
-def build_construct_workspace(repo_root: Path, construct: str, output_dir: Path) -> Path:
-    """Build a workspace directory containing exercise files for a construct.
+def _check_gh_auth() -> bool:
+    """Return whether the GitHub CLI is authenticated.
 
-    Copies exercise files (student notebooks, exercise.json, and tests) from
-    the construct's exercises into a workspace directory. Solution notebooks
-    are excluded.
-
-    Args:
-        repo_root: Root directory of the repository.
-        construct: Name of the construct (e.g., ``"sequence"``).
-        output_dir: Directory where the workspace will be created.
+    Runs ``gh auth status``. Returns ``False`` if ``gh`` is missing or not
+    authenticated.
 
     Returns:
-        Path to the created workspace directory.
-
-    Raises:
-        FileNotFoundError: If the construct directory does not exist.
+        ``True`` if authenticated, ``False`` otherwise.
     """
-    construct_dir = repo_root / "exercises" / construct
-    if not construct_dir.exists() or not construct_dir.is_dir():
-        raise FileNotFoundError(f"Construct directory not found: {construct_dir}")
-
-    workspace = output_dir / construct
-    workspace.mkdir(parents=True, exist_ok=True)
-
-    # Copy construct-level additional-resources if present
-    additional_resources = construct_dir / "additional-resources"
-    if additional_resources.exists() and additional_resources.is_dir():
-        shutil.copytree(
-            additional_resources,
-            workspace / "additional-resources",
-            dirs_exist_ok=True,
-            ignore=_ignore_pycache,
+    try:
+        result = subprocess.run(
+            ["gh", "auth", "status"],
+            capture_output=True,
+            text=True,
+            check=False,
         )
-
-    # Copy each exercise directory, excluding solution notebooks
-    for exercise_dir in sorted(construct_dir.iterdir()):
-        if not exercise_dir.is_dir() or exercise_dir.name.startswith("."):
-            continue
-
-        # Skip non-exercise directories
-        if not (exercise_dir / "exercise.json").exists():
-            continue
-
-        # Build the destination path preserving the exercise structure
-        dest_dir = workspace / exercise_dir.name
-        dest_dir.mkdir(parents=True, exist_ok=True)
-
-        _copy_exercise_files(exercise_dir, dest_dir)
-
-    return workspace
+    except FileNotFoundError:
+        return False
+    return result.returncode == 0
 
 
-def _ignore_pycache(dir: str, contents: list[str]) -> list[str]:
-    return ["__pycache__"] if "__pycache__" in contents else []
+def _looks_like_auth_error(text: str) -> bool:
+    """Return whether *text* indicates a GitHub authentication problem."""
+    lowered = text.lower()
+    return any(marker in lowered for marker in _AUTH_ERROR_MARKERS)
 
 
-def _copy_exercise_files(src: Path, dst: Path) -> None:
-    """Copy exercise files from *src* to *dst*, excluding solution notebooks."""
-    for item in src.iterdir():
-        if item.name == "__pycache__":
-            continue
-        if item.name == "notebooks":
-            _copy_notebooks(item, dst / "notebooks")
-        elif item.is_dir():
-            shutil.copytree(
-                item,
-                dst / item.name,
-                dirs_exist_ok=True,
-                ignore=_ignore_pycache,
-            )
-        elif item.is_file():
-            shutil.copy2(item, dst / item.name)
-
-
-def _copy_notebooks(src: Path, dst: Path) -> None:
-    """Copy notebook files from *src* to *dst*, excluding solution notebooks."""
-    dst.mkdir(parents=True, exist_ok=True)
-    for nb_file in src.iterdir():
-        if nb_file.name == "solution.ipynb":
-            continue
-        if nb_file.is_file():
-            shutil.copy2(nb_file, dst / nb_file.name)
+def _log_repoman_output(combined: str, verbose: bool) -> None:
+    """Emit repoman subprocess output at the appropriate log level."""
+    if not combined or not verbose:
+        return
+    for line in combined.rstrip("\n").splitlines():
+        logger.info("[repoman] %s", line)
 
 
 def _get_authenticated_owner(*, owner: str | None = None) -> str | None:
@@ -184,179 +127,129 @@ def _construct_repo_name(construct: str) -> str:
     return f"python-exercises-{construct}"
 
 
-def sync_construct(  # noqa: PLR0913
+_AUTH_HINT = (
+    "GitHub authentication failed. Run `gh auth login` and "
+    "`gh auth refresh -s repo` to grant the required scopes, then retry."
+)
+
+
+class RepomanOptions(TypedDict):
+    """Options forwarded to repoman subprocess invocations."""
+
+    dry_run: bool
+    verbose: bool
+    org: str | None
+
+
+def _run_repoman_command(
+    subcommand: str,
     construct: str,
-    workspace: Path,
-    *,
-    dry_run: bool = False,
-    repo_root: Path | None = None,
-    verbose: bool = False,
-    github_owner: str | None = None,
-) -> SyncResult:
-    """Sync a construct to a GitHub template repository.
+    repo_root: Path,
+    options: RepomanOptions,
+) -> subprocess.CompletedProcess[str]:
+    """Run a repoman subcommand as a subprocess with *repo_root* as cwd.
 
-    Args:
-        construct: Name of the construct (e.g., ``"sequence"``).
-        workspace: Path to the workspace directory containing exercise files.
-        dry_run: If True, simulate without making GitHub API calls.
-        repo_root: Root of the repository (used for reference).
-        verbose: If True, print progress information.
-        github_owner: Explicit GitHub owner (user or org). Falls back to
-            authenticated user if not provided.
-
-    Returns:
-        A ``SyncResult`` dictionary with success status and details.
+    repoman expects its global ``--dry-run``/``--verbose`` flags before the
+    subcommand, so they are inserted ahead of *subcommand*.
     """
     repo_name = _construct_repo_name(construct)
-    owner = _get_authenticated_owner(owner=github_owner)
-    repo_ref = f"{owner}/{repo_name}" if owner else repo_name
+    cmd = [sys.executable, "-m", "scripts.template_repo_cli"]
+    if options["dry_run"]:
+        cmd.append("--dry-run")
+    if options["verbose"]:
+        cmd.append("--verbose")
+    cmd.extend([subcommand, "--repo-name", repo_name, "--construct", construct])
+    if options["org"]:
+        cmd.extend(["--org", options["org"]])
+    return subprocess.run(cmd, cwd=repo_root, capture_output=True, text=True)
 
-    if verbose:
-        src_info = f" from {repo_root}" if repo_root else ""
-        logger.info(
-            "Construct '%s': workspace=%s, target=%s%s",
-            construct,
-            workspace,
-            repo_ref,
-            src_info,
+
+def _report_repoman_failure(
+    subcommand: str, construct: str, combined: str
+) -> tuple[bool, str | None]:
+    """Build a ``(success, error)`` result for a failed repoman command."""
+    if _looks_like_auth_error(combined):
+        return (
+            False,
+            f"repoman {subcommand} failed for '{construct}':\n{combined.strip()}\n\n{_AUTH_HINT}",
         )
-
-    if dry_run:
-        return SyncResult(
-            success=True,
-            construct=construct,
-            repo_name=repo_name,
-            dry_run=True,
-            message=f"Dry-run: would create repository {repo_ref}",
-        )
-
-    # Check if the repo already exists
-    repo_exists = False
-    try:
-        view_result: subprocess.CompletedProcess[str] = subprocess.run(
-            ["gh", "repo", "view", repo_ref],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        repo_exists = view_result.returncode == 0
-    except FileNotFoundError:
-        return SyncResult(
-            success=False,
-            construct=construct,
-            repo_name=repo_name,
-            error="gh CLI not found. Is GitHub CLI installed?",
-        )
-
-    # Initialize git repo, commit, and push (force-push if repo exists)
-    try:
-        _init_and_push(workspace, repo_ref, verbose, repo_exists=repo_exists)
-    except (subprocess.SubprocessError, OSError, RuntimeError) as e:
-        return SyncResult(
-            success=False,
-            construct=construct,
-            repo_name=repo_name,
-            error=str(e),
-        )
-
-    # Mark as template (for new repos, also set template flag)
-    if not repo_exists:
-        subprocess.run(
-            ["gh", "repo", "edit", repo_ref, "--template"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-    action = "Created" if not repo_exists else "Updated"
-    return SyncResult(
-        success=True,
-        construct=construct,
-        repo_name=repo_name,
-        message=f"Successfully synced {repo_ref} ({action})",
-    )
+    return False, f"repoman {subcommand} failed for '{construct}':\n{combined.strip()}"
 
 
-def _init_and_push(
-    workspace: Path,
-    repo_ref: str,
+def _create_fallback(
+    construct: str,
+    repo_root: Path,
+    options: RepomanOptions,
+) -> tuple[bool, str | None]:
+    """Fall back to ``repoman create`` after a missing-repo update failure."""
+    if options["verbose"]:
+        repo_name = _construct_repo_name(construct)
+        logger.info("Repository '%s' does not exist; creating via repoman", repo_name)
+
+    if options["dry_run"]:
+        # update --dry-run never contacts GitHub, so a missing repo is not real.
+        return True, None
+
+    create_result = _run_repoman_command("create", construct, repo_root, options)
+    create_combined = (create_result.stdout or "") + (create_result.stderr or "")
+    _log_repoman_output(create_combined, options["verbose"])
+
+    if create_result.returncode == 0:
+        return True, None
+
+    return _report_repoman_failure("create", construct, create_combined)
+
+
+def _sync_via_repoman(
+    construct: str,
+    repo_root: Path,
+    *,
+    dry_run: bool = False,
     verbose: bool = False,
-    repo_exists: bool = False,
-) -> None:
-    """Initialize git repo, create/update on GitHub, and push.
+    org: str | None = None,
+) -> tuple[bool, str | None]:
+    """Sync a construct's template repository by delegating to repoman.
 
-    Assumes git is already installed and configured on the local machine.
+    Runs ``repoman update`` (and, if the repo is missing, falls back to
+    ``repoman create``) via subprocess. This keeps the sync script decoupled
+    from repoman's internal package/push logic.
 
     Args:
-        workspace: Path to the workspace directory.
-        repo_ref: GitHub repository reference (e.g., ``owner/name``).
-        verbose: If True, print progress information.
-        repo_exists: If True, force-push to the existing repository
-            instead of creating a new one.
+        construct: Construct name (e.g. ``"sequence"``).
+        repo_root: Repository root, used as the working directory for the
+            child process (repoman resolves its root via ``Path.cwd()``).
+        dry_run: If True, only attempt ``repoman update --dry-run``.
+        verbose: If True, print repoman output and progress.
+        org: Optional GitHub organization to host the template repos.
 
-    Raises:
-        RuntimeError: If git or gh operations fail.
+    Returns:
+        Tuple of ``(success, error_message)`` where ``error_message`` is
+        ``None`` on success.
     """
-    # Initialize git
-    subprocess.run(["git", "init"], cwd=workspace, capture_output=True, text=True, check=True)
-
-    # Ensure default branch is 'main'
-    subprocess.run(
-        ["git", "checkout", "-b", "main"],
-        cwd=workspace,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    # Add all files and commit
-    subprocess.run(["git", "add", "."], cwd=workspace, capture_output=True, text=True, check=True)
-    commit_result = subprocess.run(
-        ["git", "commit", "-m", "Sync template repository"],
-        cwd=workspace,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if commit_result.returncode != 0 and "nothing to commit" not in commit_result.stderr:
-        raise RuntimeError(f"Failed to commit files: {commit_result.stderr.strip()}")
-
-    if repo_exists:
-        # Force-push to existing repository
-        subprocess.run(
-            ["git", "remote", "add", "origin", f"https://github.com/{repo_ref}.git"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        push_result = subprocess.run(
-            ["git", "push", "--force", "origin", "main"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if push_result.returncode != 0:
-            error_msg = push_result.stderr.strip() or "Unknown error"
-            raise RuntimeError(f"Failed to push to existing repository {repo_ref}: {error_msg}")
-    else:
-        # Create repository on GitHub
-        create_result = subprocess.run(
-            ["gh", "repo", "create", repo_ref, "--public", "--source", ".", "--push"],
-            cwd=workspace,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-
-        if create_result.returncode != 0:
-            error_msg = create_result.stderr.strip() or "Unknown error"
-            raise RuntimeError(f"Failed to create repository {repo_ref}: {error_msg}")
+    options: RepomanOptions = {"dry_run": dry_run, "verbose": verbose, "org": org}
 
     if verbose:
-        action = "Updated" if repo_exists else "Created and pushed"
-        logger.info("%s repository: %s", action, repo_ref)
+        repo_name = _construct_repo_name(construct)
+        logger.info("Syncing construct '%s' via repoman (repo=%s)", construct, repo_name)
+
+    update_result = _run_repoman_command("update", construct, repo_root, options)
+    combined = (update_result.stdout or "") + (update_result.stderr or "")
+
+    if update_result.returncode == 0:
+        if verbose:
+            logger.info("repoman update succeeded for '%s'", construct)
+        return True, None
+
+    _log_repoman_output(combined, verbose)
+
+    if _looks_like_auth_error(combined):
+        return _report_repoman_failure("update", construct, combined)
+
+    if "Run the create command first" not in combined:
+        # Some other failure (validation, network, etc.) - do not fall back.
+        return False, f"repoman update failed for '{construct}':\n{combined.strip()}"
+
+    return _create_fallback(construct, repo_root, options)
 
 
 def generate_docs_page(
@@ -449,8 +342,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         argv: Command-line arguments (defaults to ``sys.argv[1:]``).
 
     Returns:
-        Parsed namespace with ``dry_run``, ``verbose``, and
-        ``docs_output_path`` attributes.
+        Parsed namespace with ``dry_run``, ``verbose``, ``docs_output_path``,
+        ``github_owner``, and ``org`` attributes.
     """
     parser = argparse.ArgumentParser(
         description="Sync construct template repositories to GitHub.",
@@ -477,8 +370,17 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         type=str,
         default=None,
         help=(
-            "GitHub owner (user or organization) for template repositories. "
+            "GitHub owner (user or organization) used in docs links. "
             "Defaults to the authenticated GitHub user."
+        ),
+    )
+    parser.add_argument(
+        "--org",
+        type=str,
+        default=None,
+        help=(
+            "GitHub organization to host the construct template repositories. "
+            "Forwarded to repoman; defaults to the authenticated user account."
         ),
     )
     return parser.parse_args(argv)
@@ -491,7 +393,7 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
         argv: Command-line arguments (defaults to ``sys.argv[1:]``).
 
     Returns:
-        Exit code: 0 on success, 1 if any construct failed.
+        Exit code: 0 on success, 1 if any construct failed or auth is missing.
     """
     args = parse_args(argv)
 
@@ -508,7 +410,17 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
     if args.verbose:
         logger.info("Discovered constructs: %s", ", ".join(constructs))
 
-    resolved_owner = _get_authenticated_owner(owner=args.github_owner)
+    resolved_owner = _get_authenticated_owner(owner=args.github_owner or args.org)
+
+    # Auth pre-check (skipped in dry-run, which never pushes to or creates
+    # repositories on GitHub).
+    if not args.dry_run and not _check_gh_auth():
+        logger.error(
+            "Not authenticated with GitHub. Run `gh auth login` (and "
+            "`gh auth refresh -s repo` for the required scopes) first."
+        )
+        return 1
+
     errors: list[str] = []
 
     for construct in constructs:
@@ -518,7 +430,7 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
             args.dry_run,
             args.verbose,
             errors,
-            github_owner=resolved_owner,
+            org=args.org,
         )
 
     # Generate and write docs page
@@ -545,39 +457,25 @@ def _process_single_construct(  # noqa: PLR0913
     verbose: bool,
     errors: list[str],
     *,
-    github_owner: str | None = None,
+    org: str | None = None,
 ) -> None:
-    """Sync a single construct and record any errors."""
-    workspace: Path | None = None
+    """Sync a single construct via repoman and record any errors."""
     try:
-        workspace = Path(tempfile.mkdtemp(prefix=f"{construct}_"))
-        build_construct_workspace(repo_root, construct, workspace)
-
-        result = sync_construct(
+        success, error = _sync_via_repoman(
             construct,
-            workspace,
+            repo_root,
             dry_run=dry_run,
-            repo_root=repo_root,
             verbose=verbose,
-            github_owner=github_owner,
+            org=org,
         )
-
-        if not result["success"]:
-            error = result.get("error", "Unknown error")
+        if not success:
             errors.append(f"{construct}: {error}")
             logger.error("Failed to sync construct '%s': %s", construct, error)
         elif verbose:
-            logger.info(
-                "Synced construct '%s': %s",
-                construct,
-                result.get("message", ""),
-            )
+            logger.info("Synced construct '%s'", construct)
     except Exception as e:  # noqa: BLE001
         errors.append(f"{construct}: {e}")
         logger.error("Error syncing construct '%s': %s", construct, e)
-    finally:
-        if workspace is not None:
-            shutil.rmtree(workspace, ignore_errors=True)
 
 
 if __name__ == "__main__":

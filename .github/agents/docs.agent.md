@@ -34,9 +34,9 @@ Before writing documentation updates, you must:
    - Use clear scope in the filename and opening section (for example, `notebook-resolution.md` or `exercise-export-mapping.md`).
 
 3. **Agent guidance maintenance**:
-   - Update `AGENTS.md` or `.github/agents/*.agent.md` only when new constraints are not discoverable by reading code alone, or when agent instructions are out of date.
+   - Update `AGENTS.md` or `.opencode/agents/*.md` only when new constraints are not discoverable by reading code alone, or when agent instructions are out of date.
    - Do not add bulky discoverable implementation detail to top-level agent files.
-   - Keep `.github/agents` as the source of truth for repo-specific agent behaviour.
+   - Keep `.opencode/agents` as the source of truth for repo-specific agent behaviour.
 
 4. **JSDoc correctness**:
    - Ensure changed public methods/classes have accurate JSDoc descriptions, parameters, return values, and behaviour notes.

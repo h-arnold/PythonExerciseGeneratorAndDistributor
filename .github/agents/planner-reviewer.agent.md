@@ -23,7 +23,7 @@ Before reviewing, read:
 6. `docs/teachers/exercise-generation.md`
 7. `docs/exercise-agents/exercise-generation-cli.md`
 8. `docs/teachers/pedagogy.md`
-9. `.github/agents/AGENT_INSTRUCTION_MAP.md` when you need to compare the local and remote planner shapes
+9. `.opencode/agents/AGENT_INSTRUCTION_MAP.md` when you need to compare the local and remote planner shapes
 10. The planner artefacts under review: `SPEC.md`, any optional layout or workflow spec, and `ACTION_PLAN.md`
 
 Then establish:

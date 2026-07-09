@@ -2,7 +2,7 @@
 
 This document is the canonical reference for testing student notebook exercises. It covers the testing philosophy, core rules, scoring model, common patterns and anti-patterns, self-check cell requirements, the exercise testing framework API, and workflow guidance.
 
-> **ℹ️ Phase 2 note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.github/agents/exercise_test_creator.md.agent.md`) to generate tests, and the **Exercise Test Reviewer** (`.github/agents/exercise_test_reviewer.md.agent.md`) to verify them.
+> **ℹ️ Phase 2 note**: Tests are created in **Phase 2** of the exercise creation workflow, after notebooks have been approved by the teacher. Use the **Exercise Test Creator** agent (`.opencode/agents/exercise-test-creator.md`) to generate tests, and the **Exercise Test Reviewer** (`.opencode/agents/exercise-test-reviewer.md`) to verify them.
 
 ---
 

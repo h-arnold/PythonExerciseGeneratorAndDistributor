@@ -78,276 +78,159 @@ class TestDiscoverConstructs:
 
 
 # =============================================================================
-# 1.2 TestBuildConstructWorkspace — 7 tests
+# 1.2 TestSyncViaRepoman — delegates build + push to repoman (mock subprocess)
 # =============================================================================
 
 
-class TestBuildConstructWorkspace:
-    """Tests for ``build_construct_workspace()``."""
+def _ok(stdout: str = "", stderr: str = "") -> MagicMock:
+    return MagicMock(returncode=0, stdout=stdout, stderr=stderr)
 
-    def test_build_construct_workspace_creates_directory(
-        self, repo_root: Path, temp_dir: Path
+
+def _fail(stderr: str, stdout: str = "") -> MagicMock:
+    return MagicMock(returncode=1, stdout=stdout, stderr=stderr)
+
+
+class TestSyncViaRepoman:
+    """Tests for ``_sync_via_repoman()`` (delegation to repoman)."""
+
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_update_success_invokes_repoman(self, mock_run: MagicMock, repo_root: Path) -> None:
+        """A successful repoman update syncs the construct without create."""
+        from scripts.sync_construct_template_repos import _sync_via_repoman
+
+        mock_run.return_value = _ok()
+
+        success, error = _sync_via_repoman("sequence", repo_root)
+
+        assert success is True
+        assert error is None
+        cmd = mock_run.call_args.args[0]
+        assert "-m" in cmd and "scripts.template_repo_cli" in cmd
+        assert "update" in cmd
+        assert "--repo-name" in cmd and "python-exercises-sequence" in cmd
+        assert "--construct" in cmd and "sequence" in cmd
+        assert mock_run.call_args.kwargs.get("cwd") == repo_root
+        # No create fallback when update succeeds
+        assert "create" not in cmd
+
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_falls_back_to_create_when_repo_missing(
+        self, mock_run: MagicMock, repo_root: Path
     ) -> None:
-        """Building a workspace creates the output directory."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
+        """A missing-repo update failure triggers a repoman create fallback."""
 
-        workspace = build_construct_workspace(repo_root, "sequence", temp_dir)
-
-        assert workspace.exists()
-        assert workspace.is_dir()
-
-    def test_build_construct_workspace_includes_notebooks(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Student notebooks from construct exercises are present in the workspace."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
-
-        workspace = build_construct_workspace(repo_root, "sequence", temp_dir)
-
-        # At least one student notebook should be copied
-        notebooks = list(workspace.rglob("student.ipynb"))
-        assert len(notebooks) >= 1
-
-    def test_build_construct_workspace_includes_tests(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Exercise-local tests are present in the workspace."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
-
-        workspace = build_construct_workspace(repo_root, "sequence", temp_dir)
-
-        # At least one test file should be present
-        test_files = list(workspace.rglob("test_*.py"))
-        assert len(test_files) >= 1
-
-    def test_build_construct_workspace_includes_exercise_json(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """exercise.json files are present in the workspace."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
-
-        workspace = build_construct_workspace(repo_root, "sequence", temp_dir)
-
-        json_files = list(workspace.rglob("exercise.json"))
-        assert len(json_files) >= 1
-
-    def test_build_construct_workspace_excludes_solution_notebooks(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Solution notebooks are excluded from the workspace."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
-
-        workspace = build_construct_workspace(repo_root, "sequence", temp_dir)
-
-        solution_notebooks = list(workspace.rglob("solution.ipynb"))
-        assert len(solution_notebooks) == 0
-
-    def test_build_construct_workspace_raises_for_missing_construct(
-        self, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """A nonexistent construct raises FileNotFoundError."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
-
-        with pytest.raises(FileNotFoundError, match="not found"):
-            build_construct_workspace(repo_root, "nonexistent_construct", temp_dir)
-
-    def test_build_construct_workspace_returns_path(self, repo_root: Path, temp_dir: Path) -> None:
-        """The returned value is a Path pointing to the workspace."""
-        from scripts.sync_construct_template_repos import build_construct_workspace
-
-        workspace = build_construct_workspace(repo_root, "sequence", temp_dir)
-
-        assert isinstance(workspace, Path)
-
-
-# =============================================================================
-# 1.3 TestSyncConstruct — 8 tests
-# =============================================================================
-
-
-class TestSyncConstruct:
-    """Tests for ``sync_construct()``."""
-
-    def test_sync_construct_dry_run_returns_success(self, repo_root: Path, temp_dir: Path) -> None:
-        """Dry-run mode returns a SyncResult with dry_run=True and success=True."""
-        from scripts.sync_construct_template_repos import sync_construct
-
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
-
-        result = sync_construct("sequence", workspace, dry_run=True, repo_root=repo_root)
-
-        assert result["success"] is True
-        assert result.get("dry_run") is True
-
-    @patch("subprocess.run")
-    def test_sync_construct_creates_repo(
-        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """sync_construct calls gh repo create with the construct name."""
-        from scripts.sync_construct_template_repos import sync_construct
-
-        # Mock: gh api user succeeds, gh repo view fails (repo doesn't exist),
-        # and git/gh repo create/gh repo edit succeed
         def side_effect(cmd: list[str], **kwargs: Any) -> MagicMock:
-            if "api" in cmd and "user" in cmd:
-                return MagicMock(returncode=0, stdout="testuser\n", stderr="")
-            if "view" in cmd:
-                # Repo doesn't exist yet
-                return MagicMock(returncode=1, stdout="", stderr="not found")
-            return MagicMock(returncode=0, stdout="", stderr="")
+            if "update" in cmd:
+                return _fail(
+                    "Error: Repository 'python-exercises-sequence' does not exist. "
+                    "Run the create command first to create it."
+                )
+            return _ok()
+
+        from scripts.sync_construct_template_repos import _sync_via_repoman
 
         mock_run.side_effect = side_effect
 
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
+        success, error = _sync_via_repoman("sequence", repo_root)
 
-        result = sync_construct("sequence", workspace, dry_run=False, repo_root=repo_root)
+        assert success is True
+        assert error is None
+        commands = [call.args[0] for call in mock_run.call_args_list]
+        assert any("update" in c for c in commands)
+        assert any("create" in c for c in commands)
 
-        assert result["success"] is True
-        # gh repo create should have been called
-        create_calls = [
-            call
-            for call in mock_run.call_args_list
-            if "gh" in str(call) and "repo" in str(call) and "create" in str(call)
-        ]
-        assert len(create_calls) >= 1
-
-    def test_sync_construct_returns_sync_result_type(self, repo_root: Path, temp_dir: Path) -> None:
-        """The return value has the expected SyncResult keys."""
-        from scripts.sync_construct_template_repos import sync_construct
-
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
-
-        result = sync_construct("sequence", workspace, dry_run=True, repo_root=repo_root)
-
-        assert "success" in result
-        assert "construct" in result
-
-    @patch("subprocess.run")
-    def test_sync_construct_reports_error(
-        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_no_create_fallback_on_auth_error(
+        self, mock_run: MagicMock, repo_root: Path
     ) -> None:
-        """When gh fails, sync_construct returns success=False with an error message."""
-        from scripts.sync_construct_template_repos import sync_construct
+        """An auth error bubbles up without attempting create."""
+        from scripts.sync_construct_template_repos import _sync_via_repoman
 
-        # Mock gh api user success, then gh repo create failure
-        def side_effect(cmd: list[str], **kwargs: Any) -> MagicMock:
-            if "api" in cmd and "user" in cmd:
-                return MagicMock(returncode=0, stdout="testuser\n", stderr="")
-            return MagicMock(returncode=1, stdout="", stderr="Error creating repository")
-
-        mock_run.side_effect = side_effect
-
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
-
-        result = sync_construct("sequence", workspace, dry_run=False, repo_root=repo_root)
-
-        assert result["success"] is False
-        assert "error" in result
-
-    @patch("subprocess.run")
-    def test_sync_construct_owner_from_gh_api(
-        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """The target owner is derived from gh api user --jq .login."""
-        from scripts.sync_construct_template_repos import sync_construct
-
-        def side_effect(cmd: list[str], **kwargs: Any) -> MagicMock:
-            if "api" in cmd and "user" in cmd:
-                return MagicMock(returncode=0, stdout="custom-owner\n", stderr="")
-            return MagicMock(returncode=0, stdout="", stderr="")
-
-        mock_run.side_effect = side_effect
-
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
-
-        result = sync_construct("sequence", workspace, dry_run=False, repo_root=repo_root)
-
-        assert result["success"] is True
-        assert "custom-owner" in result.get("message", "")
-
-    @patch("subprocess.run")
-    def test_sync_construct_verbose_output(
-        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Verbose mode prints progress information."""
-        from scripts.sync_construct_template_repos import sync_construct
-
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
-
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
-
-        # Should not raise
-        result = sync_construct(
-            "sequence", workspace, dry_run=True, repo_root=repo_root, verbose=True
+        mock_run.return_value = _fail(
+            "ERROR: not authenticated with GitHub. Run 'gh auth login' first."
         )
 
-        assert result["success"] is True
-        assert result.get("dry_run") is True
+        success, error = _sync_via_repoman("sequence", repo_root)
 
-    @patch("subprocess.run")
-    def test_sync_construct_handles_existing_repo(
-        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
+        assert success is False
+        assert error is not None
+        assert "gh auth" in error.lower()
+        commands = [call.args[0] for call in mock_run.call_args_list]
+        assert all("create" not in c for c in commands)
+
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_no_fallback_on_other_failure(
+        self, mock_run: MagicMock, repo_root: Path
     ) -> None:
-        """sync_construct handles the case where the repo already exists."""
-        from scripts.sync_construct_template_repos import sync_construct
+        """An unrelated failure is reported without a create fallback."""
+        from scripts.sync_construct_template_repos import _sync_via_repoman
 
-        def side_effect(cmd: list[str], **kwargs: Any) -> MagicMock:
-            if "api" in cmd and "user" in cmd:
-                return MagicMock(returncode=0, stdout="testuser\n", stderr="")
-            if "view" in cmd:
-                # Repo already exists
-                return MagicMock(returncode=0, stdout="exists", stderr="")
-            return MagicMock(returncode=0, stdout="", stderr="")
+        mock_run.return_value = _fail("Some unexpected validation error")
 
-        mock_run.side_effect = side_effect
+        success, error = _sync_via_repoman("sequence", repo_root)
 
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
+        assert success is False
+        assert error is not None
+        commands = [call.args[0] for call in mock_run.call_args_list]
+        assert all("create" not in c for c in commands)
 
-        result = sync_construct(
-            "sequence",
-            workspace,
-            dry_run=False,
-            repo_root=repo_root,
-        )
-
-        assert result["success"] is True
-        assert "successfully synced" in result.get("message", "").lower()
-
-    @patch("subprocess.run")
-    def test_sync_construct_repo_name_format(
-        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_dry_run_only_attempts_update(
+        self, mock_run: MagicMock, repo_root: Path
     ) -> None:
-        """The repository name is derived from the construct name."""
-        from scripts.sync_construct_template_repos import sync_construct
+        """In dry-run, a missing repo does not trigger create."""
+        from scripts.sync_construct_template_repos import _sync_via_repoman
 
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+        # repoman update --dry-run never contacts GitHub, so a missing-repo
+        # message is treated as non-fatal.
+        mock_run.return_value = _fail("Run the create command first")
 
-        workspace = temp_dir / "sequence"
-        workspace.mkdir(parents=True)
-        (workspace / "student.ipynb").write_text("{}")
+        success, error = _sync_via_repoman("sequence", repo_root, dry_run=True)
 
-        result = sync_construct("sequence", workspace, dry_run=True, repo_root=repo_root)
+        assert success is True
+        assert error is None
+        commands = [call.args[0] for call in mock_run.call_args_list]
+        assert len(commands) == 1
+        assert "update" in commands[0]
+        assert "--dry-run" in commands[0]
 
-        assert result["success"] is True
-        assert result.get("construct") == "sequence"
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_org_forwarded_to_repoman(self, mock_run: MagicMock, repo_root: Path) -> None:
+        """The org argument is forwarded to repoman as --org."""
+        from scripts.sync_construct_template_repos import _sync_via_repoman
+
+        mock_run.return_value = _ok()
+
+        success, _ = _sync_via_repoman("sequence", repo_root, org="myorg")
+
+        assert success is True
+        cmd = mock_run.call_args.args[0]
+        assert "--org" in cmd
+        assert cmd[cmd.index("--org") + 1] == "myorg"
+
+    def test_check_gh_auth_true_when_authenticated(self, repo_root: Path) -> None:
+        """``_check_gh_auth`` returns True when ``gh auth status`` succeeds."""
+        from scripts.sync_construct_template_repos import _check_gh_auth
+
+        with patch(
+            "scripts.sync_construct_template_repos.subprocess.run",
+            return_value=_ok(),
+        ):
+            assert _check_gh_auth() is True
+
+    def test_check_gh_auth_false_when_not_authenticated(self, repo_root: Path) -> None:
+        """``_check_gh_auth`` returns False when ``gh auth status`` fails."""
+        from scripts.sync_construct_template_repos import _check_gh_auth
+
+        with patch(
+            "scripts.sync_construct_template_repos.subprocess.run",
+            return_value=_fail("not authenticated"),
+        ):
+            assert _check_gh_auth() is False
 
 
 # =============================================================================
-# 1.4 TestGenerateDocsPage — 7 tests
+# 1.3 TestGenerateDocsPage — 7 tests
 # =============================================================================
 
 
@@ -425,43 +308,52 @@ class TestGenerateDocsPage:
 
 
 # =============================================================================
-# 1.5 TestMainCLI — 5 tests
+# 1.4 TestMainCLI — 5 tests
 # =============================================================================
+
+
+def _main_side_effect(cmd: list[str], **kwargs: Any) -> MagicMock:
+    """Side effect for ``main`` tests: repoman succeeds, ``gh`` may fail."""
+    if "scripts.template_repo_cli" in cmd:
+        return _ok()
+    if "gh" in cmd:
+        return _fail("Not authenticated")
+    return _ok()
 
 
 class TestMainCLI:
     """Tests for the CLI entry point ``main()``."""
 
-    @patch("subprocess.run")
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
     def test_main_help(self, mock_run: MagicMock) -> None:
         """The CLI accepts --help without error."""
         from scripts.sync_construct_template_repos import main
 
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+        mock_run.return_value = _ok()
 
         # Just check it doesn't raise for help text
         with pytest.raises(SystemExit):
             main(["--help"])
 
-    @patch("subprocess.run")
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
     def test_main_dry_run_flag(self, mock_run: MagicMock, repo_root: Path, temp_dir: Path) -> None:
         """The --dry-run flag prevents actual gh operations."""
         from scripts.sync_construct_template_repos import main
 
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+        mock_run.side_effect = _main_side_effect
 
         exit_code = main(["--dry-run", "--docs-output-path", str(temp_dir / "docs.md")])
 
         assert exit_code == 0
 
-    @patch("subprocess.run")
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
     def test_main_docs_output_path(
         self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
     ) -> None:
         """The --docs-output-path flag controls where the docs page is written."""
         from scripts.sync_construct_template_repos import main
 
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+        mock_run.side_effect = _main_side_effect
 
         docs_path = temp_dir / "custom" / "docs.md"
         exit_code = main(
@@ -475,12 +367,12 @@ class TestMainCLI:
         assert exit_code == 0
         assert docs_path.exists()
 
-    @patch("subprocess.run")
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
     def test_main_verbose_flag(self, mock_run: MagicMock, repo_root: Path, temp_dir: Path) -> None:
         """The --verbose flag is accepted and produces output."""
         from scripts.sync_construct_template_repos import main
 
-        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n", stderr="")
+        mock_run.side_effect = _main_side_effect
 
         exit_code = main(
             [
@@ -493,15 +385,16 @@ class TestMainCLI:
 
         assert exit_code == 0
 
-    @patch("subprocess.run")
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
     def test_main_dry_run_succeeds_even_when_gh_fails(
         self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
     ) -> None:
         """Dry-run mode succeeds even when gh authentication fails."""
         from scripts.sync_construct_template_repos import main
 
-        # Mock gh api user failure
-        mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Not authenticated")
+        # repoman update --dry-run does not contact GitHub, so gh auth
+        # failures are non-fatal.
+        mock_run.side_effect = _main_side_effect
 
         exit_code = main(
             [
@@ -511,6 +404,24 @@ class TestMainCLI:
             ]
         )
 
-        # gh auth failure is non-fatal because dry-run mode skips gh
-        # operations and docs generation falls back gracefully
         assert exit_code == 0
+
+    @patch("scripts.sync_construct_template_repos.subprocess.run")
+    def test_main_aborts_when_not_authenticated(
+        self, mock_run: MagicMock, repo_root: Path, temp_dir: Path
+    ) -> None:
+        """A non-dry-run sync aborts with exit code 1 when not authenticated."""
+        from scripts.sync_construct_template_repos import main
+
+        def side_effect(cmd: list[str], **kwargs: Any) -> MagicMock:
+            if "auth" in cmd and "status" in cmd:
+                return _fail("not authenticated")
+            if "scripts.template_repo_cli" in cmd:
+                return _ok()
+            return _ok()
+
+        mock_run.side_effect = side_effect
+
+        exit_code = main(["--docs-output-path", str(temp_dir / "docs.md")])
+
+        assert exit_code == 1

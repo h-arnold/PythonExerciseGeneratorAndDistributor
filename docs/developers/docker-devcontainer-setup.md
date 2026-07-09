@@ -62,6 +62,12 @@ Location: `/template_repo_files/.devcontainer/devcontainer.json`
 - Runs a conditional `postCreateCommand` that performs `uv sync` when a `pyproject.toml` is present
 - Uses the existing `vscode` user and sets `PYTHONUNBUFFERED=1`
 
+### 4. Jupyter Kernel Watchdog
+
+Location: `scripts/jupyter_watchdog.py`
+
+Both devcontainer configurations launch the Jupyter kernel watchdog as a background process via the `postStartCommand`. Its job is to detect and kill unresponsive Jupyter kernels so VS Code can restart them. See the dedicated [Jupyter Kernel Watchdog](jupyter-watchdog.md) doc for full details on behaviour, configuration, logging, and troubleshooting.
+
 ## Usage
 
 ### Maintainers (this repository)

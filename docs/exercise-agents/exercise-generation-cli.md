@@ -161,7 +161,7 @@ After running `new_exercise.py`, follow these two phases. **Phase 2 must not sta
 |---|---|---|
 | 1 | **Author the notebook**: edit `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`. Add context (goal + 1–2 examples). Keep cells tagged correctly (`exercise1`, `exercise2`, etc.). Replace placeholder `print(...)` with starter code or buggy snippet. Each cell must target one learning objective. | — |
 | 2 | **Verify notebook structure** matches the required layout below. | Must match exactly |
-| 3 | **Run quality gate**: invoke the **Exercise Reviewer** (`.github/agents/exercise_reviewer.md.agent.md`) to check Gates A (type compliance), B (sequencing), C (tags/metadata). | PASS or PASS WITH NITS |
+| 3 | **Run quality gate**: invoke the **Exercise Reviewer** (`.opencode/agents/exercise-reviewer.md`) to check Gates A (type compliance), B (sequencing), C (tags/metadata). | PASS or PASS WITH NITS |
 | 4 | **Teacher handoff**: present notebooks (student + solution) to the teacher for review and approval. Ensure `README.md`, `OVERVIEW.md`, and `OrderOfTeaching.md` are in place. | Teacher approves |
 
 **Required notebook structure:**

@@ -41,10 +41,10 @@ uv run python -V
 - `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
 - `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
 - `AGENTS.md`: Repo-wide Copilot context
-- `.github/agents/exercise_generation.md.agent.md`: Exercise generation custom agent
-- `.github/agents/exercise_reviewer.md.agent.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
-- `.github/agents/exercise_test_creator.md.agent.md`: Creates pytest tests from approved notebooks
-- `.github/agents/exercise_test_reviewer.md.agent.md`: Reviews exercise tests (solution passes, student fails)
+- `.opencode/agents/exercise-generation.md`: Exercise generation custom agent
+- `.opencode/agents/exercise-reviewer.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
+- `.opencode/agents/exercise-test-creator.md`: Creates pytest tests from approved notebooks
+- `.opencode/agents/exercise-test-reviewer.md`: Reviews exercise tests (solution passes, student fails)
 - `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI — invoked via the `repoman` console entry point (alias for `template_repo_cli`).
 
 ### Template Packager README Helpers
@@ -374,7 +374,7 @@ If an exercise needs to be removed:
 
 ### Exercise Generation Agent
 
-`.github/agents/exercise_generation.md.agent.md` is a custom agent for creating exercises.
+`.opencode/agents/exercise-generation.md` is a custom agent for creating exercises.
 
 **Maintenance**:
 
