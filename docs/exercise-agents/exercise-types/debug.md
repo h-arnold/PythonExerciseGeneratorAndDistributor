@@ -1,6 +1,11 @@
 # Debugging Exercise Formats
 
-Students should be presented with a mixture of syntactic and logical errors. Where possible, choose mistakes that novice programmers genuinely make when learning the targeted construct.
+Students should be presented with a mixture of syntactic and logical errors. Where possible, choose mistakes that novice programmers genuinely make when learning the targeted construct. E.g. forgetting to assign the output of a function to a variable, e.g:
+
+``` python
+result = 3.14159 * radius ** 2
+round(result, 2)
+```
 
 **Error count progression**:
 
