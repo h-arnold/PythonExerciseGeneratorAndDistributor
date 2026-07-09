@@ -121,7 +121,7 @@ def test_interactive_output(tag: str, exercise_no: int) -> None:
         ("exercise5", ["0", "1.45"], (
             "Litres of fuel:\n"
             "Price per litre in pounds:\n"
-            "0.0 litres at \u00a31.45 per litre costs \u00a30.00."
+            "0.0 litres at \u00a31.45 per litre costs \u00a30.0."
         )),
         # Exercise 6: 0\u00b0C -> 32.0\u00b0F
         ("exercise6", ["0"], (
@@ -164,9 +164,9 @@ def test_interactive_output(tag: str, exercise_no: int) -> None:
             "Total bill amount in \u00a3:\n"
             "Tip percentage (e.g. 10 for 10%):\n"
             "Number of people sharing:\n"
-            "Total bill: \u00a320.00\n"
-            "Tip (15%): \u00a33.00\n"
-            "Total with tip: \u00a323.00\n"
+            "Total bill: \u00a320.0\n"
+            "Tip (15%): \u00a33.0\n"
+            "Total with tip: \u00a323.0\n"
             "Each of 2 people pays: \u00a311.5"
         )),
         # Exercise 9: \u00a3100, 0%, 1 person
@@ -174,9 +174,9 @@ def test_interactive_output(tag: str, exercise_no: int) -> None:
             "Total bill amount in \u00a3:\n"
             "Tip percentage (e.g. 10 for 10%):\n"
             "Number of people sharing:\n"
-            "Total bill: \u00a3100.00\n"
-            "Tip (0%): \u00a30.00\n"
-            "Total with tip: \u00a3100.00\n"
+            "Total bill: \u00a3100.0\n"
+            "Tip (0%): \u00a30.0\n"
+            "Total with tip: \u00a3100.0\n"
             "Each of 1 people pays: \u00a3100.0"
         )),
         # Exercise 10: 15 students, 2 pencils, 1 eraser

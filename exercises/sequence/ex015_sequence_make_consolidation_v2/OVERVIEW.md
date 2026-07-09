@@ -25,7 +25,7 @@ Recommended prior exercises: ex002–ex014 in order.
 
 3. **Integer vs float division**: Students may use `/` when `//` is needed (e.g., distributing items among people). Prompt them to think: "Should the answer be a whole number or a decimal?"
 
-4. **Rounding confusion**: `round(x, 2)` rounds to 2 decimal places but won't add trailing zeros. If a specific number of decimal places is required, use `:.2f` inside an f-string instead.
+4. **Rounding confusion**: `round(x, 2)` rounds to 2 decimal places but won't add trailing zeros (e.g. `round(72.5, 2)` is `72.5`, not `72.50`). These exercises use `round(value, 2)` for money values, so the expected output shows the natural number of decimal places — students should not add trailing zeros and should not use the `:.2f` format specifier.
 
 5. **Ceiling division pattern**: The formula `(total + pack_size - 1) // pack_size` (used in exercises 2 and 10) is non-intuitive. Model it with small numbers first (e.g., 10 items in packs of 6: `(10 + 6 - 1) // 6 = 15 // 6 = 3`), explaining that it always rounds up.
 
@@ -80,9 +80,9 @@ Problem: Garden side = 5 m, area = 5² = 25 m².
 | 2 | None | Static | Ceiling division, multi-line output |
 | 3 | 1 int | Dynamic | `int(input())`, simple arithmetic |
 | 4 | 2 ints | Dynamic | `//`, `%` with input |
-| 5 | 2 floats | Dynamic | `float(input())`, `:.2f` |
+| 5 | 2 floats | Dynamic | `float(input())`, `round(..., 2)` |
 | 6 | 1 int | Dynamic | Formula with `/`, `round()` |
 | 7 | 2 ints | Dynamic | `//`, `%` with larger numbers |
 | 8 | 1 int | Dynamic | `** 2`, `** 0.5`, `round()` |
-| 9 | 2 floats + 1 int | Dynamic | Multi-step calculation, `:.2f` |
+| 9 | 2 floats + 1 int | Dynamic | Multi-step calculation, `round(..., 2)` |
 | 10 | 3 ints | Dynamic | Multi-step ceiling division |

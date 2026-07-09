@@ -51,7 +51,7 @@ EX015_INPUT_CASES: Final[dict[int, Ex015InputCase]] = {
         "expected_output": (
             "Litres of fuel:\n"
             "Price per litre in pounds:\n"
-            "50.0 litres at \u00a31.45 per litre costs \u00a372.50."
+            "50.0 litres at \u00a31.45 per litre costs \u00a372.5."
         ),
     },
     6: {
@@ -84,9 +84,9 @@ EX015_INPUT_CASES: Final[dict[int, Ex015InputCase]] = {
             "Total bill amount in \u00a3:\n"
             "Tip percentage (e.g. 10 for 10%):\n"
             "Number of people sharing:\n"
-            "Total bill: \u00a350.00\n"
-            "Tip (10%): \u00a35.00\n"
-            "Total with tip: \u00a355.00\n"
+            "Total bill: \u00a350.0\n"
+            "Tip (10%): \u00a35.0\n"
+            "Total with tip: \u00a355.0\n"
             "Each of 4 people pays: \u00a313.75"
         ),
     },
