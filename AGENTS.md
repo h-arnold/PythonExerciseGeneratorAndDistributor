@@ -44,6 +44,7 @@ tests/                 # Shared pytest suites and repository-level integration t
   test_*.py            # Shared/integration tests, not canonical per-exercise authoring surfaces
 scripts/               # Automation utilities
   new_exercise.py      # Exercise scaffolding tool
+  jupyter_watchdog.py  # Kernel health watchdog (bundled in student template repos)
   run_pytest_variant.py# Explicit student/solution variant test runner
   sync_construct_template_repos.py  # Sync construct directories to GitHub template repos
   verify_solutions.sh  # Convenience wrapper for solution-variant validation

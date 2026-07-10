@@ -187,6 +187,7 @@ class TemplatePackager:
         required_paths.extend(
             self.repo_root / required_dir for required_dir in self.REQUIRED_PACKAGE_DIRECTORIES
         )
+        required_paths.append(self.repo_root / "scripts" / "jupyter_watchdog.py")
         return [path for path in required_paths if not path.exists()]
 
     def _raise_for_missing_required_sources(self) -> None:
@@ -223,6 +224,10 @@ class TemplatePackager:
             (
                 self.repo_root / "scripts" / "build_autograde_payload.py",
                 workspace / "scripts" / "build_autograde_payload.py",
+            ),
+            (
+                self.repo_root / "scripts" / "jupyter_watchdog.py",
+                workspace / "scripts" / "jupyter_watchdog.py",
             ),
         ]
 
@@ -385,6 +390,7 @@ class TemplatePackager:
             workspace / "pytest.ini",
             workspace / "README.md",
             workspace / "scripts" / "build_autograde_payload.py",
+            workspace / "scripts" / "jupyter_watchdog.py",
             workspace / ".github" / "workflows" / "classroom.yml",
             workspace / "exercise_metadata" / "__init__.py",
         ]

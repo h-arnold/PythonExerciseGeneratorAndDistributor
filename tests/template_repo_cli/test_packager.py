@@ -44,6 +44,18 @@ def _assert_autograde_script_copy(repo_root: Path, temp_dir: Path) -> None:
         assert not autograde_dest.exists()
 
 
+def _assert_jupyter_watchdog_copy(repo_root: Path, temp_dir: Path) -> None:
+    """Verify copying behaviour for the Jupyter kernel healthcheck watchdog."""
+
+    watchdog_src = repo_root / "scripts" / "jupyter_watchdog.py"
+    watchdog_dest = temp_dir / "scripts" / "jupyter_watchdog.py"
+    if watchdog_src.exists():
+        assert watchdog_dest.exists()
+        assert watchdog_dest.read_text() == watchdog_src.read_text()
+    else:
+        assert not watchdog_dest.exists()
+
+
 def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
     """Verify copying behaviour for the autograde plugin module."""
 
@@ -203,6 +215,7 @@ class TestCopyFiles:
 
         _assert_base_template_files(temp_dir)
         _assert_autograde_script_copy(repo_root, temp_dir)
+        _assert_jupyter_watchdog_copy(repo_root, temp_dir)
         _assert_autograde_plugin_copy(repo_root, temp_dir)
         _assert_required_test_infrastructure_copy(repo_root, temp_dir)
 
@@ -292,6 +305,27 @@ class TestPackageIntegrity:
             pytest.skip("Autograde plugin not available in template copy")
 
         plugin_path.unlink()
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_missing_jupyter_watchdog(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails without Jupyter kernel watchdog script."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        watchdog_path = temp_dir / "scripts" / "jupyter_watchdog.py"
+        if not watchdog_path.exists():
+            pytest.skip("Jupyter watchdog script not available in template copy")
+
+        watchdog_path.unlink()
         assert not template_packager.validate_package(temp_dir)
 
     @pytest.mark.parametrize(
