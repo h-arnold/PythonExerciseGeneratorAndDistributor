@@ -1,7 +1,7 @@
 ---
 description: Finds and removes AI-slop, duplication, and unnecessary complexity
-mode: subagent
-model: nvidia/deepseek-v4-pro
+mode: all
+model: opencode/hy3-free
 permission:
   read: allow
   edit: allow
