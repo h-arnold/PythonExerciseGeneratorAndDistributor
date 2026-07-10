@@ -19,6 +19,9 @@
     "python.testing.pytestArgs": [
         "tests"
     ],
+    "jupyter.debugJustMyCode": true,
+    "jupyter.showVariableViewWhenDebugging": true,
+    "jupyter.stopOnFirstLineWhileDebugging": true,
     "python.formatting.provider": "none",
     "[python]": {
         "editor.formatOnSave": true,

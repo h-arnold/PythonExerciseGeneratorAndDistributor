@@ -73,6 +73,12 @@
         // Jupyter configuration
         "jupyter.notebookFileRoot": "${workspaceFolder}",
         "notebook.output.scrolling": true,
+        // Ensures we don't end up stepping into 3rd party libraries - not relevant for students.
+        "jupyter.debugJustMyCode": true,
+        // The main thing students benefit from is being able to see the contents and state of variables as they step through the code.
+        "jupyter.showVariableViewWhenDebugging": true,
+        // If a student forgets to set a breakpoint, the debugger will still allow them to step-through
+        "jupyter.stopOnFirstLineWhileDebugging": true,
         
         // Workbench configuration - keep environment simple
         "workbench.startupEditor": "none",
