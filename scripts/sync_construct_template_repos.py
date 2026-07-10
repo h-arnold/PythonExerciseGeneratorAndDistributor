@@ -263,8 +263,8 @@ def generate_docs_page(
     Args:
         constructs: List of construct names.
         repo_root: Root directory of the repository (used for exercise counting).
-        github_owner: Explicit GitHub owner (user or org). Falls back to
-            authenticated user if not provided.
+        github_owner: Explicit GitHub owner (user or org). Falls back to --org
+            if not provided.
 
     Returns:
         Markdown content as a string.
@@ -371,7 +371,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         default=None,
         help=(
             "GitHub owner (user or organization) used in docs links. "
-            "Defaults to the authenticated GitHub user."
+            "Defaults to --org if not provided."
         ),
     )
     parser.add_argument(
@@ -403,16 +403,13 @@ def run_sync(
         dry_run: If True, only attempt ``repoman update --dry-run``.
         verbose: If True, print progress information.
         docs_output_path: Path to write the generated docs page.
-        github_owner: GitHub owner used in docs links (defaults to the
-            authenticated user).
+        github_owner: GitHub owner used in docs links (defaults to --org if not
+            provided).
         org: GitHub organization to host the construct template repositories.
 
     Returns:
         Exit code: 0 on success, 1 if any construct failed or auth is missing.
     """
-    if verbose:
-        logging.basicConfig(level=logging.INFO, format="%(message)s")
-
     repo_root = Path(__file__).resolve().parent.parent
     constructs = discover_constructs(repo_root)
 
@@ -476,10 +473,9 @@ def _report_sync_result(
 ) -> None:
     """Print a user-visible summary of the sync run outcome."""
     if errors:
-        if verbose:
-            print("\nErrors encountered:")
-            for error in errors:
-                print(f"  - {error}")
+        print(f"Sync failed with {len(errors)} error(s):", file=sys.stderr)
+        for error in errors:
+            print(f"  - {error}", file=sys.stderr)
         return
 
     prefix = (
@@ -503,6 +499,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         Exit code returned by :func:`run_sync`.
     """
     args = parse_args(argv)
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
     return run_sync(
         dry_run=args.dry_run,
         verbose=args.verbose,

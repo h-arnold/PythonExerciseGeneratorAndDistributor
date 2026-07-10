@@ -210,3 +210,6 @@ __marimo__/
 # Jupyter Watchdog HealthCheck script logs
 .devcontainer/jupyter_watchdog.log
 nohup.out
+
+# Auto-generated construct-repo docs page (regenerated on sync; not hand-edited)
+docs/teachers/custom.md

@@ -212,7 +212,7 @@ repoman sync --docs-output-path docs/teachers/my-construct-repos.md
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--docs-output-path PATH` | `docs/teachers/construct-template-repos.md` | Path to write the generated construct-repos documentation page. |
-| `--github-owner OWNER` | Authenticated user | GitHub owner (user or organisation) used in documentation links. |
+| `--github-owner OWNER` | `--org` (if not provided) | GitHub owner (user or organisation) used in documentation links. |
 | `--org ORG` | Authenticated user | GitHub organisation to host the construct template repositories. Forwarded to `repoman create`/`update` for each construct. |
 
 The generated docs page is written relative to the repository root when given a relative path, or at the absolute path when given one.

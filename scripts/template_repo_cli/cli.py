@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import os
 import shutil
 import subprocess
@@ -705,6 +706,8 @@ def sync_command(args: argparse.Namespace) -> int:
     Returns:
         Exit code returned by :func:`run_sync`.
     """
+    if args.verbose:
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
     return run_sync(
         dry_run=args.dry_run,
         verbose=args.verbose,
@@ -929,7 +932,7 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help=(
             "GitHub owner (user or organization) used in docs links. "
-            "Defaults to the authenticated GitHub user."
+            "Defaults to --org if not provided."
         ),
     )
     add_org_argument(
