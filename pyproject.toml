@@ -37,7 +37,7 @@ template_repo_cli = "scripts.template_repo_cli.cli:main"
 repoman = "scripts.template_repo_cli.cli:main"
 
 [tool.setuptools]
-packages = ["exercise_metadata", "exercise_runtime_support", "exercise_runtime_support.exercise_framework", "exercise_runtime_support.student_checker", "exercise_runtime_support.student_checker.checks", "scripts.template_repo_cli", "scripts.template_repo_cli.core", "scripts.template_repo_cli.utils", "tests"]
+packages = { find = { include = ["exercise_metadata*", "exercise_runtime_support*", "scripts*", "tests*"] } }
 
 [tool.uv]
 package = true

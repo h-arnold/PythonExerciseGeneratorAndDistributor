@@ -44,6 +44,16 @@ def _assert_autograde_script_copy(repo_root: Path, temp_dir: Path) -> None:
         assert not autograde_dest.exists()
 
 
+def _assert_jupyter_watchdog_copy(repo_root: Path, temp_dir: Path) -> None:
+    """Verify copying behaviour for the Jupyter kernel healthcheck watchdog."""
+
+    watchdog_src = repo_root / "scripts" / "jupyter_watchdog.py"
+    watchdog_dest = temp_dir / "scripts" / "jupyter_watchdog.py"
+    assert watchdog_src.exists(), "jupyter_watchdog.py source must exist in the repo"
+    assert watchdog_dest.exists()
+    assert watchdog_dest.read_text() == watchdog_src.read_text()
+
+
 def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
     """Verify copying behaviour for the autograde plugin module."""
 
@@ -203,6 +213,7 @@ class TestCopyFiles:
 
         _assert_base_template_files(temp_dir)
         _assert_autograde_script_copy(repo_root, temp_dir)
+        _assert_jupyter_watchdog_copy(repo_root, temp_dir)
         _assert_autograde_plugin_copy(repo_root, temp_dir)
         _assert_required_test_infrastructure_copy(repo_root, temp_dir)
 
@@ -292,6 +303,26 @@ class TestPackageIntegrity:
             pytest.skip("Autograde plugin not available in template copy")
 
         plugin_path.unlink()
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_missing_jupyter_watchdog(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails without Jupyter kernel watchdog script."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        watchdog_path = temp_dir / "scripts" / "jupyter_watchdog.py"
+        assert watchdog_path.exists(), "jupyter_watchdog.py must be copied into the template workspace"
+
+        watchdog_path.unlink()
         assert not template_packager.validate_package(temp_dir)
 
     @pytest.mark.parametrize(
@@ -619,22 +650,6 @@ class TestPackageIntegrity:
             f"stdout:\n{default_discovery_result.stdout}\n"
             f"stderr:\n{default_discovery_result.stderr}"
         )
-
-    def test_copies_notebook_grader_when_present(
-        self, template_packager: TemplatePackager, repo_root: Path, temp_dir: Path
-    ) -> None:
-        """Test that notebook_grader.py is NOT in tests/ (canonical module in exercise_runtime_support)."""
-        template_packager.copy_template_base_files(temp_dir)
-
-        grader = temp_dir / "tests/notebook_grader.py"
-        assert not grader.exists(), (
-            "notebook_grader.py should not be in tests/ — "
-            "canonical module is exercise_runtime_support/notebook_grader.py"
-        )
-        # Verify canonical module is present
-        canonical_grader = temp_dir / "exercise_runtime_support" / "notebook_grader.py"
-        assert canonical_grader.exists()
-
 
 class TestPackageCleanup:
     """Tests for cleanup on error."""

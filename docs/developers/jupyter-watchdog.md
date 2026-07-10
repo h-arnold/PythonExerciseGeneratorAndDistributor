@@ -47,6 +47,8 @@ The watchdog is launched as a background process from both devcontainer configur
 
 The student variant chains the watchdog with the environment sync command using `&&`; the maintainer variant runs it standalone.
 
+The watchdog script is also automatically copied into exported student Classroom template repos by the packager (`TemplatePackager` in `scripts/template_repo_cli/core/packager/__init__.py`). It lands at `workspace/scripts/jupyter_watchdog.py` in the packaged output. The packager validates it as a required source asset before any packaging run begins, and re-validates it as a required packaged asset in `_has_required_packaged_assets` so `validate_package` fails if it is missing from the export.
+
 > **💡 Tip:** To run the watchdog manually during development: `uv run python scripts/jupyter_watchdog.py`
 
 ## Logging

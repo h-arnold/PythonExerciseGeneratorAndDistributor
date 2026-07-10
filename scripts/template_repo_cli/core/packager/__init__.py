@@ -47,6 +47,10 @@ class TemplatePackager:
     )
 
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
+    REQUIRED_SCRIPTS: tuple[str, ...] = (
+        "build_autograde_payload.py",
+        "jupyter_watchdog.py",
+    )
     _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = (
         "notebooks",
         "tests",
@@ -176,8 +180,10 @@ class TemplatePackager:
             self.template_files_dir / "pytest.ini",
             self.template_files_dir / ".gitignore",
             self.template_files_dir / ".github" / "workflows" / "classroom.yml",
-            self.repo_root / "scripts" / "build_autograde_payload.py",
         ]
+        required_paths.extend(
+            self.repo_root / "scripts" / script for script in self.REQUIRED_SCRIPTS
+        )
         required_paths.extend(
             tests_source_dir / required_file for required_file in self.REQUIRED_TEST_FILES
         )
@@ -197,6 +203,20 @@ class TemplatePackager:
 
         missing_list = "\n".join(f"- {path}" for path in missing_paths)
         raise FileNotFoundError(f"Missing required packaging source assets:\n{missing_list}")
+
+    def _required_script_copy_pairs(self, workspace: Path) -> list[tuple[Path, Path]]:
+        """Return (source, dest) copy pairs for the required bundled scripts.
+
+        Args:
+            workspace: Destination workspace directory.
+
+        Returns:
+            List of source/destination path tuples for ``REQUIRED_SCRIPTS``.
+        """
+        return [
+            (self.repo_root / "scripts" / script, workspace / "scripts" / script)
+            for script in self.REQUIRED_SCRIPTS
+        ]
 
     def copy_template_base_files(
         self,
@@ -220,11 +240,8 @@ class TemplatePackager:
             (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
-            (
-                self.repo_root / "scripts" / "build_autograde_payload.py",
-                workspace / "scripts" / "build_autograde_payload.py",
-            ),
         ]
+        file_pairs.extend(self._required_script_copy_pairs(workspace))
 
         optional_file_pairs = [
             (self.template_files_dir / "INSTRUCTIONS.md", workspace / "INSTRUCTIONS.md"),
@@ -384,10 +401,12 @@ class TemplatePackager:
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
-            workspace / "scripts" / "build_autograde_payload.py",
             workspace / ".github" / "workflows" / "classroom.yml",
             workspace / "exercise_metadata" / "__init__.py",
         ]
+        required_files.extend(
+            workspace / "scripts" / script for script in self.REQUIRED_SCRIPTS
+        )
 
         tests_dir = workspace / "tests"
         required_files.extend(
