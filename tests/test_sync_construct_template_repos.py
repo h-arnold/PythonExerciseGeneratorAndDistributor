@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -432,6 +434,34 @@ class TestMainCLI:
 # =============================================================================
 
 
+@pytest.fixture
+def patched_run_sync() -> Iterator[SimpleNamespace]:
+    """Patch all six ``run_sync`` dependencies, exposing each mock by name.
+
+    The returned namespace exposes: ``mock_disc`` (discover_constructs),
+    ``mock_sync`` (_sync_via_repoman), ``mock_auth`` (_check_gh_auth),
+    ``mock_owner`` (_get_authenticated_owner), ``mock_docs`` (generate_docs_page)
+    and ``mock_write`` (write_docs_page). Tests set ``.return_value`` /
+    ``.side_effect`` and make assertions directly on these mocks.
+    """
+    with (
+        patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
+        patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
+        patch("scripts.sync_construct_template_repos._check_gh_auth") as mock_auth,
+        patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
+        patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
+        patch("scripts.sync_construct_template_repos.write_docs_page") as mock_write,
+    ):
+        yield SimpleNamespace(
+            mock_disc=mock_disc,
+            mock_sync=mock_sync,
+            mock_auth=mock_auth,
+            mock_owner=mock_owner,
+            mock_docs=mock_docs,
+            mock_write=mock_write,
+        )
+
+
 class TestRunSync:
     """Tests for ``run_sync()`` — the public orchestration entry point."""
 
@@ -440,30 +470,30 @@ class TestRunSync:
     # ------------------------------------------------------------------
 
     def test_run_sync_returns_0_on_success_and_emits_sync_message(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
+        patched_run_sync: SimpleNamespace,
     ) -> None:
         """run_sync returns 0 when all constructs sync and prints success."""
         from scripts.sync_construct_template_repos import run_sync
 
-        with (
-            patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
-            patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
-            patch("scripts.sync_construct_template_repos._check_gh_auth") as mock_auth,
-            patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
-            patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
-            patch("scripts.sync_construct_template_repos.write_docs_page") as _,
-        ):
-            mock_disc.return_value = ["sequence", "selection"]
-            mock_sync.return_value = (True, None)
-            mock_auth.return_value = True
-            mock_owner.return_value = "test-owner"
-            mock_docs.return_value = "# mock docs"
+        mock_disc = patched_run_sync.mock_disc
+        mock_sync = patched_run_sync.mock_sync
+        mock_auth = patched_run_sync.mock_auth
+        mock_owner = patched_run_sync.mock_owner
+        mock_docs = patched_run_sync.mock_docs
 
-            exit_code = run_sync(
-                dry_run=False,
-                verbose=False,
-                docs_output_path="/tmp/test-docs.md",
-            )
+        mock_disc.return_value = ["sequence", "selection"]
+        mock_sync.return_value = (True, None)
+        mock_auth.return_value = True
+        mock_owner.return_value = "test-owner"
+        mock_docs.return_value = "# mock docs"
+
+        exit_code = run_sync(
+            dry_run=False,
+            verbose=False,
+            docs_output_path="/tmp/test-docs.md",
+        )
 
         assert exit_code == 0
         assert "Sync complete: 2 construct(s) synced successfully." in capsys.readouterr().out
@@ -473,34 +503,35 @@ class TestRunSync:
     # ------------------------------------------------------------------
 
     def test_run_sync_returns_1_when_construct_fails_and_no_success_message(
-        self, capsys: pytest.CaptureFixture[str]
+        self,
+        capsys: pytest.CaptureFixture[str],
+        patched_run_sync: SimpleNamespace,
     ) -> None:
         """run_sync returns 1 when a construct fails; no success message printed."""
         from scripts.sync_construct_template_repos import run_sync
 
-        with (
-            patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
-            patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
-            patch("scripts.sync_construct_template_repos._check_gh_auth") as mock_auth,
-            patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
-            patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
-            patch("scripts.sync_construct_template_repos.write_docs_page") as mock_write,
-        ):
-            mock_disc.return_value = ["sequence", "selection"]
-            # First construct succeeds, second fails
-            mock_sync.side_effect = [
-                (True, None),
-                (False, "Network error"),
-            ]
-            mock_auth.return_value = True
-            mock_owner.return_value = "test-owner"
-            mock_docs.return_value = "# mock docs"
+        mock_disc = patched_run_sync.mock_disc
+        mock_sync = patched_run_sync.mock_sync
+        mock_auth = patched_run_sync.mock_auth
+        mock_owner = patched_run_sync.mock_owner
+        mock_docs = patched_run_sync.mock_docs
+        mock_write = patched_run_sync.mock_write
 
-            exit_code = run_sync(
-                dry_run=False,
-                verbose=False,
-                docs_output_path="/tmp/test-docs.md",
-            )
+        mock_disc.return_value = ["sequence", "selection"]
+        # First construct succeeds, second fails
+        mock_sync.side_effect = [
+            (True, None),
+            (False, "Network error"),
+        ]
+        mock_auth.return_value = True
+        mock_owner.return_value = "test-owner"
+        mock_docs.return_value = "# mock docs"
+
+        exit_code = run_sync(
+            dry_run=False,
+            verbose=False,
+            docs_output_path="/tmp/test-docs.md",
+        )
 
         assert exit_code == 1
         assert "Sync complete:" not in capsys.readouterr().out
@@ -512,28 +543,28 @@ class TestRunSync:
     # Dry-run skips gh auth
     # ------------------------------------------------------------------
 
-    def test_run_sync_dry_run_skips_gh_auth_check(self) -> None:
+    def test_run_sync_dry_run_skips_gh_auth_check(
+        self, patched_run_sync: SimpleNamespace
+    ) -> None:
         """In dry-run mode, _check_gh_auth is NOT called."""
         from scripts.sync_construct_template_repos import run_sync
 
-        with (
-            patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
-            patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
-            patch("scripts.sync_construct_template_repos._check_gh_auth") as mock_auth,
-            patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
-            patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
-            patch("scripts.sync_construct_template_repos.write_docs_page") as _,
-        ):
-            mock_disc.return_value = ["sequence"]
-            mock_sync.return_value = (True, None)
-            mock_owner.return_value = "test-owner"
-            mock_docs.return_value = "# mock docs"
+        mock_disc = patched_run_sync.mock_disc
+        mock_sync = patched_run_sync.mock_sync
+        mock_auth = patched_run_sync.mock_auth
+        mock_owner = patched_run_sync.mock_owner
+        mock_docs = patched_run_sync.mock_docs
 
-            exit_code = run_sync(
-                dry_run=True,
-                verbose=False,
-                docs_output_path="/tmp/test-docs.md",
-            )
+        mock_disc.return_value = ["sequence"]
+        mock_sync.return_value = (True, None)
+        mock_owner.return_value = "test-owner"
+        mock_docs.return_value = "# mock docs"
+
+        exit_code = run_sync(
+            dry_run=True,
+            verbose=False,
+            docs_output_path="/tmp/test-docs.md",
+        )
 
         assert exit_code == 0
         mock_auth.assert_not_called()
@@ -542,31 +573,31 @@ class TestRunSync:
     # github_owner passthrough
     # ------------------------------------------------------------------
 
-    def test_run_sync_passes_github_owner_to_generate_docs_page(self) -> None:
+    def test_run_sync_passes_github_owner_to_generate_docs_page(
+        self, patched_run_sync: SimpleNamespace
+    ) -> None:
         """The github_owner parameter is forwarded to generate_docs_page."""
         from scripts.sync_construct_template_repos import run_sync
 
-        with (
-            patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
-            patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
-            patch("scripts.sync_construct_template_repos._check_gh_auth") as mock_auth,
-            patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
-            patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
-            patch("scripts.sync_construct_template_repos.write_docs_page") as _,
-        ):
-            mock_disc.return_value = ["sequence"]
-            mock_sync.return_value = (True, None)
-            mock_auth.return_value = True
-            mock_owner.return_value = "custom-owner"
-            mock_docs.return_value = "# mock docs"
+        mock_disc = patched_run_sync.mock_disc
+        mock_sync = patched_run_sync.mock_sync
+        mock_auth = patched_run_sync.mock_auth
+        mock_owner = patched_run_sync.mock_owner
+        mock_docs = patched_run_sync.mock_docs
 
-            exit_code = run_sync(
-                dry_run=True,
-                verbose=False,
-                docs_output_path="/tmp/test-docs.md",
-                github_owner="custom-owner",
-                org=None,
-            )
+        mock_disc.return_value = ["sequence"]
+        mock_sync.return_value = (True, None)
+        mock_auth.return_value = True
+        mock_owner.return_value = "custom-owner"
+        mock_docs.return_value = "# mock docs"
+
+        exit_code = run_sync(
+            dry_run=True,
+            verbose=False,
+            docs_output_path="/tmp/test-docs.md",
+            github_owner="custom-owner",
+            org=None,
+        )
 
         assert exit_code == 0
         # _get_authenticated_owner should be called with owner=custom-owner
@@ -581,31 +612,31 @@ class TestRunSync:
     # org passthrough
     # ------------------------------------------------------------------
 
-    def test_run_sync_passes_org_to_sync_via_repoman(self) -> None:
+    def test_run_sync_passes_org_to_sync_via_repoman(
+        self, patched_run_sync: SimpleNamespace
+    ) -> None:
         """The org parameter is forwarded to _sync_via_repoman."""
         from scripts.sync_construct_template_repos import run_sync
 
-        with (
-            patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
-            patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
-            patch("scripts.sync_construct_template_repos._check_gh_auth") as mock_auth,
-            patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
-            patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
-            patch("scripts.sync_construct_template_repos.write_docs_page") as _,
-        ):
-            mock_disc.return_value = ["sequence", "selection"]
-            mock_sync.return_value = (True, None)
-            mock_auth.return_value = True
-            mock_owner.return_value = "test-owner"
-            mock_docs.return_value = "# mock docs"
+        mock_disc = patched_run_sync.mock_disc
+        mock_sync = patched_run_sync.mock_sync
+        mock_auth = patched_run_sync.mock_auth
+        mock_owner = patched_run_sync.mock_owner
+        mock_docs = patched_run_sync.mock_docs
 
-            exit_code = run_sync(
-                dry_run=True,
-                verbose=False,
-                docs_output_path="/tmp/test-docs.md",
-                github_owner=None,
-                org="myorg",
-            )
+        mock_disc.return_value = ["sequence", "selection"]
+        mock_sync.return_value = (True, None)
+        mock_auth.return_value = True
+        mock_owner.return_value = "test-owner"
+        mock_docs.return_value = "# mock docs"
+
+        exit_code = run_sync(
+            dry_run=True,
+            verbose=False,
+            docs_output_path="/tmp/test-docs.md",
+            github_owner=None,
+            org="myorg",
+        )
 
         assert exit_code == 0
         # Each _sync_via_repoman call should receive org="myorg"
@@ -616,27 +647,26 @@ class TestRunSync:
     # No constructs discovered (edge case)
     # ------------------------------------------------------------------
 
-    def test_run_sync_no_constructs_returns_0(self) -> None:
+    def test_run_sync_no_constructs_returns_0(
+        self, patched_run_sync: SimpleNamespace
+    ) -> None:
         """When no constructs are discovered, run_sync returns 0."""
         from scripts.sync_construct_template_repos import run_sync
 
-        with (
-            patch("scripts.sync_construct_template_repos.discover_constructs") as mock_disc,
-            patch("scripts.sync_construct_template_repos._sync_via_repoman") as mock_sync,
-            patch("scripts.sync_construct_template_repos._check_gh_auth") as _,
-            patch("scripts.sync_construct_template_repos.write_docs_page") as _,
-            patch("scripts.sync_construct_template_repos.generate_docs_page") as mock_docs,
-            patch("scripts.sync_construct_template_repos._get_authenticated_owner") as mock_owner,
-        ):
-            mock_disc.return_value = []
-            mock_owner.return_value = "test-owner"
-            mock_docs.return_value = "# mock docs"
+        mock_disc = patched_run_sync.mock_disc
+        mock_sync = patched_run_sync.mock_sync
+        mock_owner = patched_run_sync.mock_owner
+        mock_docs = patched_run_sync.mock_docs
 
-            exit_code = run_sync(
-                dry_run=False,
-                verbose=False,
-                docs_output_path="/tmp/test-docs.md",
-            )
+        mock_disc.return_value = []
+        mock_owner.return_value = "test-owner"
+        mock_docs.return_value = "# mock docs"
+
+        exit_code = run_sync(
+            dry_run=False,
+            verbose=False,
+            docs_output_path="/tmp/test-docs.md",
+        )
 
         assert exit_code == 0
         # No constructs means no sync calls

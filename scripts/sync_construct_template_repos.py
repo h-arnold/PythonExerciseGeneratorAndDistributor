@@ -477,18 +477,17 @@ def _report_sync_result(
     """Print a user-visible summary of the sync run outcome."""
     if errors:
         if verbose:
-            logger.info("\nErrors encountered:")
+            print("\nErrors encountered:")
             for error in errors:
-                logger.info("  - %s", error)
+                print(f"  - {error}")
         return
 
-    summary = (
-        f"Dry-run sync complete: {len(constructs)} construct(s) processed. "
-        f"Docs page: {docs_path}"
+    prefix = (
+        f"Dry-run sync complete: {len(constructs)} construct(s) processed."
         if dry_run
-        else f"Sync complete: {len(constructs)} construct(s) synced successfully. "
-        f"Docs page: {docs_path}"
+        else f"Sync complete: {len(constructs)} construct(s) synced successfully."
     )
+    summary = f"{prefix} Docs page: {docs_path}"
     print(summary)
 
 

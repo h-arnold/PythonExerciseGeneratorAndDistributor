@@ -35,6 +35,16 @@ def get_repo_root() -> Path:
     return Path.cwd()
 
 
+def add_org_argument(parser: argparse.ArgumentParser, *, help: str) -> None:
+    """Add the shared ``--org`` argument to a subparser.
+
+    Args:
+        parser: The argparse subparser to extend.
+        help: Help text for the argument (kept verbatim per subcommand).
+    """
+    parser.add_argument("--org", type=str, help=help)
+
+
 def _select_by_exercise_keys(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
     """Select exercises by exercise keys or exercise-key patterns.
 
@@ -843,9 +853,7 @@ def main(argv: list[str] | None = None) -> int:
     create_parser.add_argument(
         "--private", action="store_true", help="Create as private repository"
     )
-    create_parser.add_argument(
-        "--org", type=str, help="Create in organization (default: user account)"
-    )
+    add_org_argument(create_parser, help="Create in organization (default: user account)")
     create_parser.add_argument(
         "--no-template",
         action="store_true",
@@ -896,9 +904,7 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="GitHub repository name (slug or owner/repo)",
     )
-    update_parser.add_argument(
-        "--org", type=str, help="Target organization (default: user account)"
-    )
+    add_org_argument(update_parser, help="Target organization (default: user account)")
     update_parser.add_argument(
         "--branch",
         type=str,
@@ -926,10 +932,8 @@ def main(argv: list[str] | None = None) -> int:
             "Defaults to the authenticated GitHub user."
         ),
     )
-    sync_parser.add_argument(
-        "--org",
-        type=str,
-        default=None,
+    add_org_argument(
+        sync_parser,
         help=(
             "GitHub organization to host the construct template repositories. "
             "Forwarded to repoman; defaults to the authenticated user account."
