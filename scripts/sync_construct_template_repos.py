@@ -386,18 +386,31 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
-    """Main entry point for the sync script.
+def run_sync(
+    *,
+    dry_run: bool = False,
+    verbose: bool = False,
+    docs_output_path: str = "docs/teachers/construct-template-repos.md",
+    github_owner: str | None = None,
+    org: str | None = None,
+) -> int:
+    """Sync all construct template repositories.
+
+    This is the public orchestration entry point, reused by both the standalone
+    script (via :func:`main`) and the ``repoman sync`` subcommand.
 
     Args:
-        argv: Command-line arguments (defaults to ``sys.argv[1:]``).
+        dry_run: If True, only attempt ``repoman update --dry-run``.
+        verbose: If True, print progress information.
+        docs_output_path: Path to write the generated docs page.
+        github_owner: GitHub owner used in docs links (defaults to the
+            authenticated user).
+        org: GitHub organization to host the construct template repositories.
 
     Returns:
         Exit code: 0 on success, 1 if any construct failed or auth is missing.
     """
-    args = parse_args(argv)
-
-    if args.verbose:
+    if verbose:
         logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     repo_root = Path(__file__).resolve().parent.parent
@@ -407,14 +420,14 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
         logger.warning("No constructs discovered in %s", repo_root / "exercises")
         return 0
 
-    if args.verbose:
+    if verbose:
         logger.info("Discovered constructs: %s", ", ".join(constructs))
 
-    resolved_owner = _get_authenticated_owner(owner=args.github_owner or args.org)
+    resolved_owner = _get_authenticated_owner(owner=github_owner or org)
 
     # Auth pre-check (skipped in dry-run, which never pushes to or creates
     # repositories on GitHub).
-    if not args.dry_run and not _check_gh_auth():
+    if not dry_run and not _check_gh_auth():
         logger.error(
             "Not authenticated with GitHub. Run `gh auth login` (and "
             "`gh auth refresh -s repo` for the required scopes) first."
@@ -427,27 +440,77 @@ def main(argv: Sequence[str] | None = None) -> int:  # noqa: C901
         _process_single_construct(
             construct,
             repo_root,
-            args.dry_run,
-            args.verbose,
+            dry_run,
+            verbose,
             errors,
-            org=args.org,
+            org=org,
         )
 
     # Generate and write docs page
     docs_content = generate_docs_page(constructs, repo_root, github_owner=resolved_owner)
-    docs_path = Path(args.docs_output_path)
+    docs_path = Path(docs_output_path)
     if not docs_path.is_absolute():
         docs_path = repo_root / docs_path
     write_docs_page(docs_content, docs_path)
 
-    if args.verbose and docs_path.exists():
+    if verbose and docs_path.exists():
         logger.info("Docs page written to: %s", docs_path)
 
-    if errors and args.verbose:
-        logger.info("\nErrors encountered:")
-        for error in errors:
-            logger.info("  - %s", error)
+    _report_sync_result(
+        constructs=constructs,
+        docs_path=docs_path,
+        errors=errors,
+        dry_run=dry_run,
+        verbose=verbose,
+    )
     return 1 if errors else 0
+
+
+def _report_sync_result(
+    *,
+    constructs: list[str],
+    docs_path: Path,
+    errors: list[str],
+    dry_run: bool,
+    verbose: bool,
+) -> None:
+    """Print a user-visible summary of the sync run outcome."""
+    if errors:
+        if verbose:
+            logger.info("\nErrors encountered:")
+            for error in errors:
+                logger.info("  - %s", error)
+        return
+
+    summary = (
+        f"Dry-run sync complete: {len(constructs)} construct(s) processed. "
+        f"Docs page: {docs_path}"
+        if dry_run
+        else f"Sync complete: {len(constructs)} construct(s) synced successfully. "
+        f"Docs page: {docs_path}"
+    )
+    print(summary)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Main entry point for the standalone sync script.
+
+    Parses command-line arguments and delegates to :func:`run_sync`.
+
+    Args:
+        argv: Command-line arguments (defaults to ``sys.argv[1:]``).
+
+    Returns:
+        Exit code returned by :func:`run_sync`.
+    """
+    args = parse_args(argv)
+    return run_sync(
+        dry_run=args.dry_run,
+        verbose=args.verbose,
+        docs_output_path=args.docs_output_path,
+        github_owner=args.github_owner,
+        org=args.org,
+    )
 
 
 def _process_single_construct(  # noqa: PLR0913

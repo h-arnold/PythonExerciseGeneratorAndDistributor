@@ -178,8 +178,9 @@ uv run python scripts/run_pytest_variant.py --variant solution -q
 # Convenience wrapper for broader solution validation
 uv run ./scripts/verify_solutions.sh -q
 
-# Sync construct template repos (dry-run)
+# Sync construct template repos (dry-run) — two equivalent entry points
 uv run python scripts/sync_construct_template_repos.py --dry-run --verbose
+uv run repoman --dry-run sync
 
 # Lint code
 ruff check . --fix

@@ -1,6 +1,6 @@
 # Construct Template Repositories
 
-> Auto-generated on 2026-07-10 09:26:10
+> Auto-generated on 2026-07-10 09:26:02
 
 This page lists the template repositories created for each construct. Each repository contains the exercises for that construct, ready to use in GitHub Classroom.
 
@@ -8,8 +8,8 @@ This page lists the template repositories created for each construct. Each repos
 
 | Construct | Template Repository | Exercises |
 |-----------|-------------------|-----------|
-| [Sequence](https://github.com/h-arnold/python-exercises-sequence) | `h-arnold/python-exercises-sequence` | 14 |
-| [Selection](https://github.com/h-arnold/python-exercises-selection) | `h-arnold/python-exercises-selection` | 2 |
+| [Sequence](https://github.com/my-owner/python-exercises-sequence) | `my-owner/python-exercises-sequence` | 14 |
+| [Selection](https://github.com/my-owner/python-exercises-selection) | `my-owner/python-exercises-selection` | 2 |
 
 ---
 

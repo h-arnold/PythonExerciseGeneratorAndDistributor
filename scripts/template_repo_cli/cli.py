@@ -11,6 +11,7 @@ import sys
 import traceback
 from pathlib import Path
 
+from scripts.sync_construct_template_repos import run_sync
 from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 from scripts.template_repo_cli.core.github import GitHubClient
 from scripts.template_repo_cli.core.packager import TemplatePackager
@@ -680,6 +681,29 @@ def update_command(args: argparse.Namespace) -> int:
     return _execute_template_update(args, workspace, packager, github, files, exercises)
 
 
+def sync_command(args: argparse.Namespace) -> int:
+    """Handle sync command to push all construct template repositories.
+
+    Delegates to :func:`scripts.sync_construct_template_repos.run_sync`, which
+    discovers every construct under ``exercises/`` and runs ``repoman update``
+    (falling back to ``repoman create`` for missing repos) for each one.
+
+    Args:
+        args: Parsed command-line arguments with ``dry_run``, ``verbose``,
+            ``docs_output_path``, ``github_owner`` and ``org`` attributes.
+
+    Returns:
+        Exit code returned by :func:`run_sync`.
+    """
+    return run_sync(
+        dry_run=args.dry_run,
+        verbose=args.verbose,
+        docs_output_path=args.docs_output_path,
+        github_owner=args.github_owner,
+        org=args.org,
+    )
+
+
 def _get_exercises_for_list(args: argparse.Namespace, selector: ExerciseSelector) -> list[str]:
     """Get list of exercises based on filter arguments.
 
@@ -882,6 +906,36 @@ def main(argv: list[str] | None = None) -> int:
         help="Branch to push updates to (default: main)",
     )
 
+    # Sync command
+    sync_parser = subparsers.add_parser(
+        "sync",
+        help="Sync all construct template repositories (update or create each)",
+    )
+    sync_parser.add_argument(
+        "--docs-output-path",
+        type=str,
+        default="docs/teachers/construct-template-repos.md",
+        help="Path to write the generated docs page.",
+    )
+    sync_parser.add_argument(
+        "--github-owner",
+        type=str,
+        default=None,
+        help=(
+            "GitHub owner (user or organization) used in docs links. "
+            "Defaults to the authenticated GitHub user."
+        ),
+    )
+    sync_parser.add_argument(
+        "--org",
+        type=str,
+        default=None,
+        help=(
+            "GitHub organization to host the construct template repositories. "
+            "Forwarded to repoman; defaults to the authenticated user account."
+        ),
+    )
+
     # Parse arguments
     args = parser.parse_args(argv)
 
@@ -890,6 +944,8 @@ def main(argv: list[str] | None = None) -> int:
         return create_command(args)
     elif args.command == "update":
         return update_command(args)
+    elif args.command == "sync":
+        return sync_command(args)
     elif args.command == "list":
         return list_command(args)
     elif args.command == "validate":

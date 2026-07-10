@@ -29,18 +29,21 @@ Alternatively, run the CLI as a module: `uv run python -m scripts.template_repo_
 ### Basic Commands
 
 The CLI is available as both `repoman` and `template_repo_cli` (aliases for the same entry point).
-It provides four main commands:
+It provides five main commands:
 
 1. **`create`** — Create a GitHub template repository
 2. **`update`** — Push a refreshed template into an existing repository
-3. **`list`** — List available exercises
-4. **`validate`** — Validate exercise selection
+3. **`sync`** — Sync all construct template repositories (update or create each)
+4. **`list`** — List available exercises
+5. **`validate`** — Validate exercise selection
 
 ### Global Options
 
 - `--dry-run` — Build and validate without executing `gh` commands (create and update)
 - `--verbose` / `-v` — Show detailed progress information
 - `--output-dir PATH` — Copy the packaged workspace to `PATH` instead of cleaning up the temp directory
+
+> **⚠️ Important:** Global flags (`--dry-run`, `--verbose`, `--output-dir`) must appear **before** the subcommand. For example, `repoman --dry-run sync` is correct, but `repoman sync --dry-run` is not. This is enforced by the argparse parser arrangement — global flags are defined on the parent parser, not on individual subparsers.
 
 ## Examples
 
@@ -183,6 +186,36 @@ repoman --output-dir ./latest-template update \
 ```
 
 The `--name` flag is optional when updating but, if provided, refreshes the README title in the generated workspace before it is pushed.
+
+### Sync All Construct Template Repositories
+
+`sync` discovers every construct directory under `exercises/` and runs `update` (or `create` for missing repos) on each one. It also generates a documentation page (`docs/teachers/construct-template-repos.md` by default) listing all construct repos.
+
+This command is equivalent to running `uv run python scripts/sync_construct_template_repos.py` — both invoke the same orchestration logic.
+
+```bash
+# Preview the sync without pushing anything
+repoman --dry-run sync
+
+# Sync all constructs (real GitHub operations)
+repoman sync
+
+# Sync to an organisation with explicit docs owner
+repoman sync --org my-org --github-owner my-org
+
+# Custom docs output path
+repoman sync --docs-output-path docs/teachers/my-construct-repos.md
+```
+
+#### Sync-specific flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--docs-output-path PATH` | `docs/teachers/construct-template-repos.md` | Path to write the generated construct-repos documentation page. |
+| `--github-owner OWNER` | Authenticated user | GitHub owner (user or organisation) used in documentation links. |
+| `--org ORG` | Authenticated user | GitHub organisation to host the construct template repositories. Forwarded to `repoman create`/`update` for each construct. |
+
+The generated docs page is written relative to the repository root when given a relative path, or at the absolute path when given one.
 
 ## What Gets Included in Templates
 

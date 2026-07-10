@@ -110,6 +110,26 @@ This force-pushes the latest version of the exercises into the existing reposito
 
 ---
 
+## Updating all topic repositories at once
+
+If you have exercises in multiple topics (sequence, selection, iteration, etc.) and want to refresh the template repository for **every** topic in one go, use the `sync` command:
+
+```bash
+repoman sync
+```
+
+This discovers all topic folders under `exercises/` and runs `update` on each one (creating any that are missing). It also generates a documentation page showing all the template repositories.
+
+To preview what would happen without actually pushing anything:
+
+```bash
+repoman --dry-run sync
+```
+
+> **⚠️ Important:** `--dry-run` goes **before** `sync`, not after. So it is `repoman --dry-run sync`, not `repoman sync --dry-run`.
+
+---
+
 ## Checking what exercises are available
 
 To see a list of every exercise in the repository:
