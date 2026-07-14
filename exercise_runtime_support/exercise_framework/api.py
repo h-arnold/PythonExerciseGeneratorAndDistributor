@@ -113,9 +113,7 @@ def _check_notebook_can_execute_first_exercise(exercise_key: str) -> list[str]:
     required = max(input_count, 1)
     while True:
         try:
-            runtime.run_cell_with_input(
-                exercise_key, tag="exercise1", inputs=["2"] * required
-            )
+            runtime.run_cell_with_input(exercise_key, tag="exercise1", inputs=["2"] * required)
             return []
         except RuntimeError as exc:  # input() called more times than provided
             if str(exc) != "Test expected more input values" or required >= _MAX_SMOKE_INPUTS:
