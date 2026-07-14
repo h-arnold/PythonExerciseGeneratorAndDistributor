@@ -5,6 +5,7 @@ This module provides structured, renderer-agnostic access to notebook checks.
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import partial
@@ -18,6 +19,8 @@ from exercise_runtime_support.notebook_grader import NotebookGradingError
 from exercise_runtime_support.support_matrix import SupportRole, has_support_role
 
 from . import runtime
+
+_MAX_SMOKE_INPUTS = 10
 
 
 @dataclass(frozen=True)
@@ -71,9 +74,53 @@ def _check_ex002_summary() -> list[str]:
     return [issue for result in results for issue in result.issues]
 
 
+def _count_direct_input_calls(code: str) -> int:
+    """Return the number of direct ``input()`` calls in *code*."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return 0
+    return sum(
+        1
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and (
+            (isinstance(node.func, ast.Name) and node.func.id == "input")
+            or (
+                isinstance(node.func, ast.Attribute)
+                and node.func.attr == "input"
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "builtins"
+            )
+        )
+    )
+
+
 def _check_notebook_can_execute_first_exercise(exercise_key: str) -> list[str]:
-    runtime.run_cell_and_capture_output(exercise_key, tag="exercise1")
-    return []
+    """Run the first exercise of *exercise_key* and ensure it executes cleanly.
+
+    Some exercises (e.g. user-input modify tasks) call ``input()`` in their
+    first exercise, so we provide mocked input values rather than letting the
+    check fail on a closed stdin under the active variant.
+    """
+    input_count = _count_direct_input_calls(
+        runtime.extract_tagged_code(exercise_key, tag="exercise1")
+    )
+    if input_count == 0:
+        runtime.run_cell_and_capture_output(exercise_key, tag="exercise1")
+        return []
+
+    required = max(input_count, 1)
+    while True:
+        try:
+            runtime.run_cell_with_input(
+                exercise_key, tag="exercise1", inputs=["2"] * required
+            )
+            return []
+        except RuntimeError as exc:  # input() called more times than provided
+            if str(exc) != "Test expected more input values" or required >= _MAX_SMOKE_INPUTS:
+                raise
+            required += 1
 
 
 def _get_supported_check_definitions() -> dict[str, NotebookCheckDefinition]:

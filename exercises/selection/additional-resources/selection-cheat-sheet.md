@@ -30,6 +30,8 @@ These operators are used to build conditions by comparing values:
 | `!=`         | not equal to        | `5 != 3`                 | `5 != 5`                  |
 | `<`          | less than           | `3 < 5`                  | `5 < 3`                   |
 | `>`          | greater than        | `5 > 3`                  | `3 > 5`                   |
+| `<=`         | less than or equal to    | `5 <= 5`                 | `7 <= 5`                  |
+| `>=`         | greater than or equal to | `5 >= 5`                 | `3 >= 5`                  |
 
 **Important:** `==` is used for comparison (is it equal?), while `=` is used for assignment (giving a variable a value).
 
@@ -100,7 +102,80 @@ else:
 3. If the user typed `"duck"`, the condition is **true** and `"Quack! Ducks are the best!"` is printed.
 4. If the user typed anything else, the condition is **false** and `"No one's perfect I guess..."` is printed instead.
 
-### 7. Common Mistakes to Avoid
+### 7. The `if`-`elif`-`else` Statement Structure
+
+Sometimes you need to check more than two possibilities. For example, you might want one message for high scores, a different message for medium scores, and another for low scores. The `elif` keyword (short for "else if") lets you add extra conditions after the first `if`.
+
+```python
+if condition1:
+    # runs if condition1 is True
+    print("First condition met")
+elif condition2:
+    # runs if condition1 was False but condition2 is True
+    print("Second condition met")
+elif condition3:
+    # runs if condition1 and condition2 were False but condition3 is True
+    print("Third condition met")
+else:
+    # runs if none of the above conditions were True
+    print("Nothing matched")
+```
+
+Key rules:
+- `elif` comes after an `if` block (or another `elif`), at the same indentation level as the `if`.
+- You can have as many `elif` blocks as you need, though in practice keep your chains readable.
+- The `else` block is optional but when included, it must always come last.
+- Python checks conditions from top to bottom. The **first** condition that is True runs its block, and the rest are skipped.
+- Only **one** block runs in the entire chain — never more.
+
+> **⚠️ Important:** Order matters! Put the most specific or strictest condition first. For example, when checking grade boundaries, check the A grade threshold first, then B, then C:
+
+```python
+GRADE_A = 80
+GRADE_B = 60
+GRADE_C = 40
+if score >= GRADE_A:
+    print("Grade A")
+elif score >= GRADE_B:
+    print("Grade B")
+elif score >= GRADE_C:
+    print("Grade C")
+else:
+    print("Grade D")
+```
+
+If you reversed the order (checking `GRADE_C` first, then `GRADE_B`, then `GRADE_A`), the first condition (`score >= GRADE_C`) would always be True for scores that should be B or A grades, and the stricter checks would never run.
+
+### 8. Worked Example — `elif`
+
+**Program that categorises a parcel order using constants:**
+
+```python
+items = int(input("Enter number of items: "))
+SMALL_LIMIT = 10
+MEDIUM_LIMIT = 30
+if items <= SMALL_LIMIT:
+    print("Small order")
+elif items <= MEDIUM_LIMIT:
+    print("Medium order")
+else:
+    print("Large order")
+```
+
+**How it works:**
+1. The program asks for the number of items and stores it in `items`.
+2. Constants `SMALL_LIMIT` and `MEDIUM_LIMIT` are set to `10` and `30`.
+3. The `if` checks whether `items <= SMALL_LIMIT`. If True, it prints "Small order" and skips the rest.
+4. If the `if` condition is False (more than `SMALL_LIMIT`), Python moves to the `elif` and checks `items <= MEDIUM_LIMIT`.
+5. If the `elif` is True (between 11 and 30 items), it prints "Medium order" and skips the `else`.
+6. If both conditions are False (more than `MEDIUM_LIMIT`), the `else` block runs and prints "Large order".
+
+**What happens with different inputs:**
+- Input `5` → `items <= SMALL_LIMIT` is True → prints "Small order"
+- Input `20` → `items <= SMALL_LIMIT` is False, then `items <= MEDIUM_LIMIT` is True → prints "Medium order"
+- Input `50` → both conditions are False → prints "Large order"
+
+### 9. Common Mistakes to Avoid
 
 - **Using `=` instead of `==`:** Remember, `=` assigns a value, `==` checks equality.
 - **Forgetting the colon (`:`):** Every `if` statement must end with a colon on the condition line.

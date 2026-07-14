@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "exercise_key": "ex003_selection_modify_elif_boundaries",
+  "exercise_id": 3,
+  "slug": "ex003_selection_modify_elif_boundaries",
+  "title": "Selection Modify: Elif Chains, Boundaries and Constants",
+  "construct": "selection",
+  "exercise_type": "modify",
+  "parts": 10
+}

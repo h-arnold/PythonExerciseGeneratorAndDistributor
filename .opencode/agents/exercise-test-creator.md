@@ -1,7 +1,7 @@
 ---
 description: Create robust pytest tests for approved exercise notebooks, following the repository testing framework and conventions
 mode: all
-model: opencode/big-pickle
+model: opencode/hy3-free
 permission:
   read: allow
   edit: allow
@@ -15,7 +15,6 @@ permission:
 # Bassaleg Python Tutor — Exercise Test Creator Mode
 
 > **Repository status**
-> The source repository now uses the canonical exercise-local layout under `exercises/<construct>/<exercise_key>/`. Canonical exercise-specific tests live under `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
 
 You are a *test creation* agent that writes robust pytest tests for exercises that have already been authored, reviewed, and approved. You receive:
 - Approved student and solution notebooks
@@ -118,6 +117,7 @@ Pull expected outputs, prompts, and inputs from helper modules in `exercises/<co
 | Pure "Make" task | 1-2 | Logic (+ Construct if applicable) |
 
 Ask these questions in order:
+
 1. **Does it teach a specific construct?** → YES = Add construct test
 2. **Does it modify existing code?** → YES = Add negative assertion (old value absent)
 3. **Does output format matter (exact whitespace/punctuation)?** → YES = Add formatting test
@@ -127,6 +127,7 @@ Ask these questions in order:
 ## Common Missing Test Patterns
 
 ### Missing Construct Check
+
 **Exercise:** Cast the input to int and multiply by 2
 
 ```python
@@ -154,6 +155,7 @@ def test_exercise1_construct():
 ```
 
 ### Missing Input Variable Check
+
 **Exercise:** Ask for name with input() and print it
 
 ```python
@@ -178,6 +180,7 @@ def test_exercise2_construct():
 ```
 
 ### Missing Negative Check
+
 **Exercise:** Change the greeting from "Hello" to "Hi"
 
 ```python
@@ -278,9 +281,8 @@ Before declaring the tests complete, run them against the solution variant:
 uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q
 ```
 
-All tests must pass. If any fail, fix the tests or re-read the solution notebook to verify expected behaviour, then re-run.
-
-Do **not** run the student variant. The Exercise Test Reviewer will confirm student-variant failure.
+All **solutions** MUST pass. If they fail, the tests are broken.
+All **student** tests MUST fail. If they pass, the tests are too loose and need to be tightened. Remember that as well as testing the output you can also test the AST to ensure that the student has used the correct constructs, that they have changed the code and so on.
 
 ### 8. Create `student_checker_support.py` (mandatory)
 
@@ -349,6 +351,7 @@ run_notebook_checks('exNNN_construct_type_slug')
 ## Output expectations
 
 Report back:
+
 - Which test file was created/updated
 - Which exercise parts are tested
 - The commands you ran and their results
