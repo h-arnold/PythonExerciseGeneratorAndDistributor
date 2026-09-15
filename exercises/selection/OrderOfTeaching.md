@@ -31,3 +31,12 @@ These exercises are intended to be taught in the following order:
 - Focus: Debugging syntax errors, logic errors, and mixed errors in `if-else` statements. Exercises cover missing colons, wrong operators (`=` vs `==`/`>=`/`>`), missing indentation, unquoted strings, swapped branches, off-by-one comparisons, missing `else` clauses, and wrong variable names.
 - Type: Debug exercise (20 parts) with graduated difficulty: 1 error → 5 errors per exercise.
 - Purpose: Build debugging skills by having students identify and fix common beginner mistakes in selection statements.
+
+4. [**Selection Modify: Logical Operators**](./ex004_selection_modify_logical_operators/)
+
+[Supporting docs](./ex004_selection_modify_logical_operators/)
+[Notebook](./ex004_selection_modify_logical_operators/notebooks/student.ipynb)
+
+- Focus: Combines comparisons with the logical operators `and` (ex1, ex5, ex7–10), `or` (ex2–3, ex6, ex9–10), and `not` (ex4, ex8, ex10), including a bracketed `and`/`or` group (ex9). Exercises 1–4 use no constants so the focus stays on the operator; constants return in exercises 5–10 and stay fixed while students change branch logic and messages. All output uses f-strings; arithmetic (`+`, `*`, `//`, `-`) is used for totals and a tenth-off discount (ex7, ex10).
+- Type: Modification exercises (10 parts) where students extend a simpler single-check starter into a combined check and rewrite both messages.
+- Purpose: Teach pupils to express "both", "either", and "not" conditions in code. Builds directly on `ex001` and `ex003`.

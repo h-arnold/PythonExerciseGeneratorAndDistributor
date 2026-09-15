@@ -1058,7 +1058,10 @@ def _check_expectations_input_consistency(  # noqa: C901
             continue
         if attr_name.endswith("_INPUT_CASES"):
             input_cases = cast(dict[int, object], value)
-        elif attr_name.endswith("_OUTPUTS"):
+        elif attr_name.endswith("_OUTPUTS") and "DERIVED" not in attr_name:
+            # Dicts named EX<N>…DERIVED_OUTPUTS are aliases built from
+            # INPUT_CASES, not separate static-output declarations — skip
+            # them so their keys are not flagged as listed in both dicts.
             static_outputs = cast(dict[int, object], value)
 
     interactive_exercises = _detect_interactive_exercises(nb_solution)
