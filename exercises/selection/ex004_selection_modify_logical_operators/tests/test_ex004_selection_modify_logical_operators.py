@@ -21,6 +21,8 @@ has_floordiv = construct_checks.has_floordiv
 and_groups_or = construct_checks.and_groups_or
 assignment_value = construct_checks.assignment_value
 code_contains = construct_checks.code_contains
+comparison_uses_name = construct_checks.comparison_uses_name
+prints_use_fstrings = construct_checks.prints_use_fstrings
 _MESSAGES = construct_checks.MESSAGES
 _CACHE = RuntimeCache()
 
@@ -60,11 +62,13 @@ def _assert_ex1_construct() -> None:
     assert has_boolop(_ast(1), ast.And), (
         "Must require both checks at once — use and"
     )
+    assert prints_use_fstrings(_ast(1)), "Must print the messages with f-strings"
 
 
 def _assert_ex2_construct() -> None:
     """Exercise 2 must accept either weekend day with ``or``."""
     assert has_boolop(_ast(2), ast.Or), "Must accept either day — use or"
+    assert prints_use_fstrings(_ast(2)), "Must print the messages with f-strings"
 
 
 def _assert_ex3_construct() -> None:
@@ -72,11 +76,13 @@ def _assert_ex3_construct() -> None:
     assert has_boolop(_ast(3), ast.Or), (
         "Only one check needs to pass now — use or"
     )
+    assert prints_use_fstrings(_ast(3)), "Must print the messages with f-strings"
 
 
 def _assert_ex4_construct() -> None:
     """Exercise 4 must reverse the check with ``not``."""
     assert has_unary_not(_ast(4)), "Must reverse the check — use not"
+    assert prints_use_fstrings(_ast(4)), "Must print the messages with f-strings"
 
 
 def _assert_ex5_construct() -> None:
@@ -87,6 +93,9 @@ def _assert_ex5_construct() -> None:
     )
     assert assignment_value(tree, "LOW") == 15, "LOW must stay at 15"
     assert assignment_value(tree, "HIGH") == 25, "HIGH must stay at 25"
+    assert comparison_uses_name(tree, "LOW"), "Must compare against LOW, not type 15"
+    assert comparison_uses_name(tree, "HIGH"), "Must compare against HIGH, not type 25"
+    assert prints_use_fstrings(tree), "Must print the messages with f-strings"
 
 
 def _assert_ex6_construct() -> None:
@@ -95,6 +104,9 @@ def _assert_ex6_construct() -> None:
     assert has_boolop(tree, ast.Or), "Must accept either free group — use or"
     assert assignment_value(tree, "CHILD_MAX") == 5, "CHILD_MAX must stay at 5"
     assert assignment_value(tree, "SENIOR_MIN") == 65, "SENIOR_MIN must stay at 65"
+    assert comparison_uses_name(tree, "CHILD_MAX"), "Must compare against CHILD_MAX, not type 5"
+    assert comparison_uses_name(tree, "SENIOR_MIN"), "Must compare against SENIOR_MIN, not type 65"
+    assert prints_use_fstrings(tree), "Must print the messages with f-strings"
 
 
 def _assert_ex7_construct() -> None:
@@ -105,6 +117,9 @@ def _assert_ex7_construct() -> None:
     )
     assert assignment_value(tree, "LOW_TOTAL") == 60, "LOW_TOTAL must stay at 60"
     assert assignment_value(tree, "HIGH_TOTAL") == 120, "HIGH_TOTAL must stay at 120"
+    assert comparison_uses_name(tree, "LOW_TOTAL"), "Must compare against LOW_TOTAL, not type 60"
+    assert comparison_uses_name(tree, "HIGH_TOTAL"), "Must compare against HIGH_TOTAL, not type 120"
+    assert prints_use_fstrings(tree), "Must print the messages with f-strings"
 
 
 def _assert_ex8_construct() -> None:
@@ -113,6 +128,8 @@ def _assert_ex8_construct() -> None:
     assert has_boolop(tree, ast.And), "Must need two things together — use and"
     assert has_unary_not(tree), "Must flip the scared check — use not"
     assert assignment_value(tree, "AGE_LIMIT") == 10, "AGE_LIMIT must stay at 10"
+    assert comparison_uses_name(tree, "AGE_LIMIT"), "Must compare against AGE_LIMIT, not type 10"
+    assert prints_use_fstrings(tree), "Must print the messages with f-strings"
 
 
 def _assert_ex9_construct() -> None:
@@ -125,6 +142,9 @@ def _assert_ex9_construct() -> None:
     )
     assert assignment_value(tree, "SPEND_LIMIT") == 40, "SPEND_LIMIT must stay at 40"
     assert assignment_value(tree, "SENIOR_AGE") == 60, "SENIOR_AGE must stay at 60"
+    assert comparison_uses_name(tree, "SPEND_LIMIT"), "Must compare against SPEND_LIMIT, not type 40"
+    assert comparison_uses_name(tree, "SENIOR_AGE"), "Must compare against SENIOR_AGE, not type 60"
+    assert prints_use_fstrings(tree), "Must print the messages with f-strings"
 
 
 def _assert_ex10_construct() -> None:
@@ -147,14 +167,18 @@ def _assert_ex10_construct() -> None:
     assert and_groups_or(tree), "The either-or rule must be bracketed inside the and"
     # Silver tier: still uses the not style for the age rule
     assert has_unary_not(tree), "Silver must reverse the age check — use not"
-    # Constants kept exactly
+    # Constants kept exactly and actually used in the tier checks
     for name, expected in (
-        ("BIG_SPEND", 25),
-        ("STANDARD_SPEND", 20),
+        ("BIG_SPEND", 18),
+        ("STANDARD_SPEND", 14),
         ("GOLD_AGE", 12),
         ("GOLD_FILMS", 5),
     ):
         assert assignment_value(tree, name) == expected, f"{name} must stay at {expected}"
+        assert comparison_uses_name(tree, name), (
+            f"Must compare against {name}, not type {expected}"
+        )
+    assert prints_use_fstrings(tree), "Must print the messages with f-strings"
 
 
 # ── Exercise 1: `and` for both ends of the age range ─────────────────────────

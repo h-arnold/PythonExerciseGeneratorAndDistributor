@@ -245,9 +245,12 @@ EX004_EDGE_CASES: Final[dict[int, list[Ex004InputCase]]] = {
         },
     ],
     # Ex 10: points are films × 5 with a tenth taken off (floored).
-    # 6 films → 30 − 3 = 27 gold; 10 films → 50 − 5 = 45 gold;
-    # 5 films → 25 − 2 = 23 silver (age 13) but bronze when under 5;
-    # 4 films → 20 − 2 = 18 bronze; 2 films → 10 − 1 = 9 bronze.
+    # Gold needs £18 plus either extra, so each extra decides a case:
+    # 6 films → 30 − 3 = 27 gold; 5 films → 25 − 2 = 23 gold (age 13
+    # reaches it, and age 4 still reaches it through the films extra);
+    # 4 films → 20 − 2 = 18 gold with age 20 (age extra decides) but
+    # silver with age 10 (neither extra); 3 films → 15 − 1 = 14 silver,
+    # bronze when under 5; 2 films → 10 − 1 = 9 bronze.
     10: [
         {
             "inputs": ["10", "8"],
@@ -255,15 +258,27 @@ EX004_EDGE_CASES: Final[dict[int, list[Ex004InputCase]]] = {
         },
         {
             "inputs": ["5", "13"],
-            "expected_output": "How many films this month? Enter your age: Silver member: £23 for age 13",
+            "expected_output": "How many films this month? Enter your age: Gold member: £23 for age 13",
         },
         {
             "inputs": ["5", "4"],
-            "expected_output": "How many films this month? Enter your age: Bronze member: £23 for age 4",
+            "expected_output": "How many films this month? Enter your age: Gold member: £23 for age 4",
         },
         {
             "inputs": ["4", "20"],
-            "expected_output": "How many films this month? Enter your age: Bronze member: £18 for age 20",
+            "expected_output": "How many films this month? Enter your age: Gold member: £18 for age 20",
+        },
+        {
+            "inputs": ["4", "10"],
+            "expected_output": "How many films this month? Enter your age: Silver member: £18 for age 10",
+        },
+        {
+            "inputs": ["3", "20"],
+            "expected_output": "How many films this month? Enter your age: Silver member: £14 for age 20",
+        },
+        {
+            "inputs": ["3", "4"],
+            "expected_output": "How many films this month? Enter your age: Bronze member: £14 for age 4",
         },
         {
             "inputs": ["2", "3"],

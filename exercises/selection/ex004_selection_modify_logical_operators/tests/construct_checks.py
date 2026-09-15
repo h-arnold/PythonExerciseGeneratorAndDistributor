@@ -48,6 +48,39 @@ def and_groups_or(tree: ast.AST) -> bool:
     return False
 
 
+def comparison_uses_name(tree: ast.AST, name: str) -> bool:
+    """Return True when a comparison compares against the Name *name*.
+
+    This catches hard-coded thresholds: keeping ``LOW = 15`` declared while
+    writing ``temp >= 15`` passes the value check but fails this one.
+    """
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Compare):
+            for comp in node.comparators:
+                if isinstance(comp, ast.Name) and comp.id == name:
+                    return True
+    return False
+
+
+def prints_use_fstrings(tree: ast.AST) -> bool:
+    """Return True when every ``print`` call prints with an f-string.
+
+    A ``.format(...)`` call on a plain string contains the same ``{name}``
+    text but is not an f-string, so substring checks alone cannot enforce
+    the f-string requirement — this AST check closes that gap.
+    """
+    prints = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "print"
+    ]
+    return bool(prints) and all(
+        any(isinstance(arg, ast.JoinedStr) for arg in call.args) for call in prints
+    )
+
+
 def assignment_value(tree: ast.AST, name: str) -> int | None:
     """Return the integer value assigned to *name*, or None if not found."""
     for node in ast.walk(tree):

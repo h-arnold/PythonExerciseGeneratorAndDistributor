@@ -6,7 +6,10 @@ from collections.abc import Callable
 
 from exercise_runtime_support.exercise_framework import extract_tagged_code
 from exercise_runtime_support.exercise_test_support import load_exercise_test_module
-from exercise_runtime_support.notebook_grader import run_cell_with_input
+from exercise_runtime_support.notebook_grader import (
+    NotebookGradingError,
+    run_cell_with_input,
+)
 from exercise_runtime_support.student_checker.checks.base import (
     ExerciseCheckDefinition,
     build_exercise_check,
@@ -22,6 +25,8 @@ has_floordiv = construct_checks.has_floordiv
 and_groups_or = construct_checks.and_groups_or
 assignment_value = construct_checks.assignment_value
 code_contains = construct_checks.code_contains
+comparison_uses_name = construct_checks.comparison_uses_name
+prints_use_fstrings = construct_checks.prints_use_fstrings
 _MESSAGES = construct_checks.MESSAGES
 
 
@@ -29,8 +34,19 @@ _MESSAGES = construct_checks.MESSAGES
 
 
 def _parse(n: int) -> ast.Module:
-    """Parse the tagged cell's source for exercise *n* into an AST."""
-    return ast.parse(extract_tagged_code(_EXERCISE_KEY, tag=exercise_tag(n)))
+    """Parse the tagged cell's source for exercise *n* into an AST.
+
+    A half-edited cell (a missing colon, for example) is a normal student
+    mistake, so a SyntaxError becomes a failed check with feedback rather
+    than a traceback that aborts the whole self-check.
+    """
+    try:
+        return ast.parse(extract_tagged_code(_EXERCISE_KEY, tag=exercise_tag(n)))
+    except SyntaxError as exc:
+        raise NotebookGradingError(
+            f"Exercise {n}: your code could not be read ({exc.msg}). "
+            "Check for a missing colon or bracket, then run the checks again."
+        ) from exc
 
 
 def _source(n: int) -> str:
@@ -92,13 +108,24 @@ def _check_constants(
     n: int,
     constants: list[tuple[str, int]],
 ) -> list[str]:
-    """Check that UP_CASE constants in exercise *n* keep their values."""
+    """Check that UP_CASE constants in exercise *n* keep their values.
+
+    Values alone are not enough: typing the number straight into the check
+    while leaving the constant declared would also pass a value-only check,
+    so each constant must also appear in a comparison.
+    """
     tree = _parse(n)
-    return [
-        f"Keep {name} at {expected} (currently {assignment_value(tree, name)})."
-        for name, expected in constants
-        if assignment_value(tree, name) != expected
-    ]
+    issues: list[str] = []
+    for name, expected in constants:
+        if assignment_value(tree, name) != expected:
+            issues.append(
+                f"Keep {name} at {expected} (currently {assignment_value(tree, name)})."
+            )
+        elif not comparison_uses_name(tree, name):
+            issues.append(
+                f"Use {name} in your check instead of typing {expected}."
+            )
+    return issues
 
 
 def _check_messages(n: int, messages: list[tuple[str, bool]]) -> list[str]:
@@ -131,7 +158,7 @@ def _check_ex10() -> list[str]:
     issues += _check_operator(10, ["and", "or", "grouping", "not"])
     issues += _check_constants(
         10,
-        [("BIG_SPEND", 25), ("STANDARD_SPEND", 20), ("GOLD_AGE", 12), ("GOLD_FILMS", 5)],
+        [("BIG_SPEND", 18), ("STANDARD_SPEND", 14), ("GOLD_AGE", 12), ("GOLD_FILMS", 5)],
     )
     issues += _check_messages(10, _messages_tuples(10))
     return issues
@@ -165,12 +192,19 @@ _CONSTRUCT_CHECKS: dict[int, Callable[[], list[str]]] = {
 }
 
 
+def _check_fstrings(n: int) -> list[str]:
+    """Check that exercise *n* prints its messages with f-strings."""
+    if prints_use_fstrings(_parse(n)):
+        return []
+    return ["Print your messages with f-strings, e.g. print(f\"Age {age}\")."]
+
+
 def _make_construct_check(exercise_no: int) -> Callable[[int], list[str]]:
     """Return a construct-check callable bound to *exercise_no*."""
     check = _CONSTRUCT_CHECKS[exercise_no]
 
     def _run(_n: int) -> list[str]:
-        return check()
+        return check() + _check_fstrings(exercise_no)
 
     return _run
 
