@@ -1,7 +1,7 @@
 ---
 description: Review exercise tests for correctness, coverage, and construct enforcement — verifies tests pass on solution and fail on student notebooks
 mode: subagent
-model: opencode/hy3-free
+model: opencode-go/glm-5.3-flash
 permission:
   read: allow
   edit: allow

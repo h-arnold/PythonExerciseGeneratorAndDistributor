@@ -1,7 +1,7 @@
 ---
 description: Review exercise notebooks for pedagogical soundness, structure, sequencing, and teacher-facing documentation (no test verification)
 mode: subagent
-model: opencode-go/deepseek-v4-pro
+model: opencode-go/glm-5.3-flash
 permission:
   read: allow
   edit: allow
