@@ -519,6 +519,7 @@ class TestGateGInputConsistency:
         *,
         static_outputs: dict[int, str] | None = None,
         input_cases: dict[int, dict[str, object]] | None = None,
+        derived_alias: bool = False,
     ) -> None:
         path = ex_dir / "tests" / "expectations.py"
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -530,6 +531,13 @@ class TestGateGInputConsistency:
         if input_cases is not None:
             lines.append(
                 f"EX004_INPUT_CASES: Final[dict[int, dict[str, object]]] = {input_cases!r}\n"
+            )
+        if derived_alias:
+            lines.append(
+                "EX004_DERIVED_OUTPUTS: Final[dict[int, str]] = {\n"
+                "    exercise_no: case['expected_output']\n"
+                "    for exercise_no, case in EX004_INPUT_CASES.items()\n"
+                "}\n"
             )
         path.write_text("".join(lines), encoding="utf-8")
 
@@ -677,6 +685,39 @@ class TestGateGInputConsistency:
         assert len(errors) == 0, f"Expected no errors, got: {errors}"
         assert any("listed in both" in w.message.lower() for w in warnings), (
             f"Expected both-dicts warning, got: {[w.message for w in warnings]}"
+        )
+
+    def test_derived_outputs_alias_overlapping_input_cases_returns_no_warning(
+        self, tmp_path: Path
+    ) -> None:
+        """A *_DERIVED_OUTPUTS alias built from INPUT_CASES is not a real overlap.
+
+        Regression test for the name filter in the expectations/input
+        consistency check: without it, exercises such as ex004 (whose
+        EX004_DERIVED_OUTPUTS comprehension repeats every INPUT_CASES key)
+        get a spurious "listed in both" warning.
+        """
+        slug = "ex004_sequence_modify_variables"
+        ex_dir = self._make_exercise_dir(tmp_path, slug)
+        self._write_expectations(
+            ex_dir,
+            input_cases={1: {"inputs": ["x"], "expected_output": "hello\n"}},
+            derived_alias=True,
+        )
+        nb_solution = self._make_notebook_with_cells(
+            [("exercise1", 'name = input("Name: ")\nprint("hello")\n')]
+        )
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=cast(verify_exercise_quality.NotebookDocument, nb_solution),
+            parts=1,
+        )
+        warnings = [f for f in findings if f.severity == "WARN"]
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 0, f"Expected no errors, got: {errors}"
+        assert not any("listed in both" in w.message.lower() for w in warnings), (
+            f"Derived alias must not warn, got: {[w.message for w in warnings]}"
         )
 
 
