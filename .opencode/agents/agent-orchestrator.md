@@ -1,7 +1,7 @@
 ---
 description: Coordinates planning, implementation, review, and documentation for PythonExerciseGeneratorAndDistributor changes
 mode: primary
-model: nvidia/minimax-m3
+model: opencode-go/glm-5.3-flash
 permission:
   read: allow
   edit: allow

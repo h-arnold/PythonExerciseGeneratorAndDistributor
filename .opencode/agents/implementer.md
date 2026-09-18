@@ -1,7 +1,7 @@
 ---
 description: Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes
 mode: subagent
-model: opencode/deepseek-v4-flash-free
+model: opencode/muse-spark-1.3-free
 permission:
   read: allow
   edit: allow

@@ -1,7 +1,7 @@
 ---
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
 mode: all
-model: opencode/hy3-free
+model: opencode-go/hy3
 permission:
   read: allow
   edit: allow

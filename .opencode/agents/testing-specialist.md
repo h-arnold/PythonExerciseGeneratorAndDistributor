@@ -1,7 +1,7 @@
 ---
 description: Verifies repository infrastructure tests, exercise-local tests, notebook grading, autograding tooling, scaffolding, and template repo tooling
 mode: subagent
-model: opencode/deepseek-v4-flash-free
+model: opencode/muse-spark-1.3-free
 permission:
   read: allow
   bash: allow
