@@ -242,3 +242,12 @@ Assignment registration, bundle commit into the `classroom50` repository,
 Pages publish, roster, accept, submit, Release inspection, Collect, and CSV
 export are performed by the teacher with the Classroom 50 CLI/web app. They
 are not built, automated, or accepted here.
+
+## Mandatory de-sloppification outcome — complete
+
+- Review found and removed one stale, permanently skipped packager-test row
+  for the Stage 1-deleted `tests/helpers.py`; no production behavior changed.
+- The generic grader, bundle builder, and template exclusions were reviewed as
+  intentional minimal structure. Cleanup review, targeted packager tests, the
+  full pytest suite, and Ruff passed. The branch is ready for documentation
+  synchronization.
