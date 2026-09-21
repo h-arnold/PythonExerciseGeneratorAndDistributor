@@ -251,3 +251,13 @@ are not built, automated, or accepted here.
   intentional minimal structure. Cleanup review, targeted packager tests, the
   full pytest suite, and Ruff passed. The branch is ready for documentation
   synchronization.
+
+## Final documentation synchronization — complete
+
+- Developer and public repository documentation now describes the generic
+  Classroom 50 bundle scripts, their isolation and result behavior, Python
+  3.14 runtime, template exclusions, and local validation commands.
+- Stale GitHub Classroom and nonexistent CI/workflow claims were reconciled;
+  relative links and focused documentation, runtime, grader, and packager
+  checks passed. Teacher-facing platform documentation remains deferred as
+  specified.
