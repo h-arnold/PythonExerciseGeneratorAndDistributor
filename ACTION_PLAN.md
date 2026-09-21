@@ -222,6 +222,20 @@ builder; no Selection-specific grader is built or later generalised.
 - Review point: confirm the empty `.github` outcome (whole tree removed)
   with the teacher before publishing.
 
+### Stage 5 implementation notes — complete
+
+- The generic packager now filters grading and author-only assets from
+  exercise-local tests and construct resources, and excludes `.github` from
+  exported templates. Canonical student notebooks, metadata, visible tests,
+  support files, and resources remain intact.
+- Packager tests prove no `autograder.py` or other forbidden grading surfaces
+  ship beneath exported exercises and that the entire `.github` tree is absent.
+  Packager tests, the solution suite, validation, dry-run sync, Ruff, and
+  packager-surface Pyright checks passed.
+- No bundle re-verification was needed because the grading bundle is
+  independent from template output. Teacher confirmation of the empty
+  `.github` outcome remains the publishing review point.
+
 ## Manual teacher follow-up (out of scope for this round)
 
 Assignment registration, bundle commit into the `classroom50` repository,
