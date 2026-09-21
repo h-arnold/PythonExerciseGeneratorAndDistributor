@@ -1,6 +1,6 @@
 # Template Repository CLI
 
-A command-line tool for creating GitHub template repositories from subsets of Python exercises. This tool helps instructors create customised exercise sets for GitHub Classroom.
+A command-line tool for creating Classroom 50 template repositories from subsets of Python exercises. This tool helps instructors create customised exercise sets distributed via GitHub template repositories.
 
 > Source of truth: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. See [execution-model.md](execution-model.md) for the canonical contract.
 
@@ -239,7 +239,6 @@ Each generated template repository includes:
 ### Development Setup
 
 - `.devcontainer/devcontainer.json` — VS Code dev container configuration with all settings and extensions
-- `.github/workflows/classroom.yml` — GitHub Classroom autograding workflow
 
 ### Testing Framework
 
@@ -247,10 +246,6 @@ Generated templates include the selected exercise tests and the required shared 
 
 - `tests/__init__.py`
 - `tests/notebook_grader.py`
-- `tests/autograde_plugin.py`
-- `tests/helpers.py`
-- `tests/test_autograde_plugin.py`
-- `tests/test_build_autograde_payload.py`
 - `tests/exercise_framework/` (runtime files only)
 - `exercise_runtime_support/` (packaged runtime support package)
 - `exercise_metadata/` (metadata-backed catalogue and resolver package)
@@ -260,7 +255,7 @@ Generated templates include the selected exercise tests and the required shared 
 
 When these shared directories are copied into generated templates, non-runtime artefacts are excluded (`__pycache__`, `*.pyc`, and `test_*.py` / `*_test.py`).
 
-This set is sufficient for exercise test imports, autograde payload/plugin checks, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces import `exercise_metadata` directly and rely on per-exercise metadata discovered via `exercise.json` files under the canonical exercise tree instead of compatibility fallbacks.
+This set is sufficient for exercise test imports, the generic programmatic student-checker API via `from exercise_runtime_support.student_checker import check_exercise`, and notebook self-check usage via `from exercise_runtime_support.student_checker import run_notebook_checks`. Packaged workspaces import `exercise_metadata` directly and rely on per-exercise metadata discovered via `exercise.json` files under the canonical exercise tree instead of compatibility fallbacks.
 
 The export contract rejects authoring-only assets such as `solution.ipynb` and flattened notebook/test mirrors, while keeping student notebooks and canonical exercise-local tests at their canonical exercise-local paths.
 
@@ -284,22 +279,20 @@ The export contract rejects authoring-only assets such as `solution.ipynb` and f
 - `modify` — Change working code
 - `make` — Create from scratch
 
-## GitHub Classroom Integration
+## Distribution Integration
 
-Templates created by this tool are designed to work seamlessly with GitHub Classroom:
+Templates created by this tool are designed to work as Classroom 50 starter-code templates distributed via GitHub template repositories:
 
 1. **Template Repository** — Repositories are marked as templates by default
-2. **Autograding** — GitHub Actions workflow included for automatic testing
-3. **Student-Ready** — Complete setup instructions and VS Code configuration
-4. **Web Compatible** — All dependencies are micropip-compatible for VS Code for the Web
+2. **Student-Ready** — Complete setup instructions and VS Code configuration
+3. **Web Compatible** — All dependencies are micropip-compatible for VS Code for the Web
 
-### Using with GitHub Classroom
+### Using with Classroom 50
 
 1. Create a template repository using this CLI
-2. In GitHub Classroom, create a new assignment
+2. Register the assignment manually in Classroom 50
 3. Select your template repository
 4. Students can accept the assignment and start working
-5. Tests run automatically on push via GitHub Actions
 
 ## Troubleshooting
 

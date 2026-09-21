@@ -42,7 +42,7 @@ Variant selection chooses which notebook surface (`student` or `solution`) is ex
 
 Contract:
 
-- Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py` and `scripts/build_autograde_payload.py`).
+- Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py`).
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `solution` when no variant is provided.
 

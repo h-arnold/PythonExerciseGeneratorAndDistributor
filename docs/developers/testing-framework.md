@@ -68,7 +68,7 @@ Integration tests for the template repository CLI. These tests verify:
 - Filesystem operations (copying files and directories, workspace creation/cleanup).
 - GitHub interactions (via mocked `subprocess.run` or `gh` command outputs).
 - Configuration parsing and selection logic.
-- Packaging behaviour (e.g., that `TemplatePackager` copies the required base files, runtime-only shared `tests/` infrastructure for exercise checks and notebook self-checks, and the `.github` workflow directory).
+- Packaging behaviour (e.g., that `TemplatePackager` copies the required base files and runtime-only shared `tests/` infrastructure for exercise checks and notebook self-checks).
 
 > **ℹ️ Note:** Test-only helpers and fixtures are kept under `tests/` and are not part of the runtime surface. The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths.
 
@@ -116,7 +116,6 @@ The repository uses GitHub Actions to run these tests automatically.
 
 - **`tests.yml`**: Source-repository validation on every push and pull request. It checks pytest collection/discovery in the authoring repository and then runs `scripts/run_pytest_variant.py --variant solution -q`.
 - **`tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional forwarded pytest args for targeted solution checks.
-- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-backed student contract.
 
 ## Adding New Infrastructure Tests
 

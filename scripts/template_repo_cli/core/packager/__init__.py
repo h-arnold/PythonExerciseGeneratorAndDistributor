@@ -1,4 +1,4 @@
-"""Template packager, including Classroom autograding support files."""
+"""Template packager for Classroom 50 starter-code templates."""
 
 from __future__ import annotations
 
@@ -31,13 +31,7 @@ class TemplatePackager:
         "test_repo_*.py",
     )
 
-    REQUIRED_TEST_FILES: tuple[str, ...] = (
-        "__init__.py",
-        "autograde_plugin.py",
-        "helpers.py",
-        "test_autograde_plugin.py",
-        "test_build_autograde_payload.py",
-    )
+    REQUIRED_TEST_FILES: tuple[str, ...] = ("__init__.py",)
 
     REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = ("exercise_framework",)
 
@@ -47,10 +41,7 @@ class TemplatePackager:
     )
 
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
-    REQUIRED_SCRIPTS: tuple[str, ...] = (
-        "build_autograde_payload.py",
-        "jupyter_watchdog.py",
-    )
+    REQUIRED_SCRIPTS: tuple[str, ...] = ("jupyter_watchdog.py",)
     _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = (
         "notebooks",
         "tests",
@@ -179,7 +170,6 @@ class TemplatePackager:
             self.template_files_dir / "pyproject.toml",
             self.template_files_dir / "pytest.ini",
             self.template_files_dir / ".gitignore",
-            self.template_files_dir / ".github" / "workflows" / "classroom.yml",
         ]
         required_paths.extend(
             self.repo_root / "scripts" / script for script in self.REQUIRED_SCRIPTS
@@ -401,12 +391,9 @@ class TemplatePackager:
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
-            workspace / ".github" / "workflows" / "classroom.yml",
             workspace / "exercise_metadata" / "__init__.py",
         ]
-        required_files.extend(
-            workspace / "scripts" / script for script in self.REQUIRED_SCRIPTS
-        )
+        required_files.extend(workspace / "scripts" / script for script in self.REQUIRED_SCRIPTS)
 
         tests_dir = workspace / "tests"
         required_files.extend(

@@ -30,22 +30,6 @@ def test_scaffolder_runtime_import_contract() -> None:
     assert "from tests.notebook_grader import get_explanation_cell" not in new_exe_source
 
 
-def test_workflow_variant_script_contract() -> None:
-    """Workflow files must invoke the explicit variant-aware scripts."""
-    tests_workflow = Path(".github/workflows/tests.yml").read_text(encoding="utf-8")
-    solutions_workflow = Path(".github/workflows/tests-solutions.yml").read_text(encoding="utf-8")
-    classroom_workflow = Path("template_repo_files/.github/workflows/classroom.yml").read_text(
-        encoding="utf-8"
-    )
-
-    assert "scripts/run_pytest_variant.py --variant solution" in tests_workflow
-    assert '"scripts/run_pytest_variant.py"' in solutions_workflow
-    assert '"--variant"' in solutions_workflow
-    assert '"solution"' in solutions_workflow
-    assert "scripts/build_autograde_payload.py" in classroom_workflow
-    assert "--variant student" in classroom_workflow
-
-
 def test_template_cli_consumers_link_to_shared_runtime_support() -> None:
     """Template CLI consumers must use the shared runtime support package."""
     collector_source = Path("scripts/template_repo_cli/core/collector.py").read_text(

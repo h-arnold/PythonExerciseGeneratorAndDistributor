@@ -1,6 +1,6 @@
 # Python Exercise Generator and Distributor (needs a better name)
 
-A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get autograding feedback. Teachers can generate new exercises quickly and bundle selected exercises into GitHub Classroom template repos.
+A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get feedback from notebook self-checks. Teachers can generate new exercises quickly and bundle selected exercises into Classroom 50 template repos.
 
 ## Key Benefits and Features
 
@@ -10,14 +10,13 @@ A teaching platform for secondary-school programming that keeps everything in th
 - 💸 **Free and open source**: Uses entirely free and open technologies owned by you. No disappearing act when a provider decides the education market isn't worth serving ([looking at you, replit](https://www.datawars.io/articles/replit-teams-for-education-deprecation-all-you-need-to-know))
 - ⚡ **Fast and intelligent feedback loop**: Students get immediate feedback from autograding tests right in their notebooks. Most importantly, the tests check that students are using the correct constructs, not just that they get the right output.
 - 📚 **140 exercises and counting**: A growing library of exercises that are ready to use straight away.
-- 📊 **Easy tracking**: A custom GitHub Classroom autograder workflow reports results back to the Classroom interface on every push, so you can track student progress and identify common issues.
 - 🛠️ **Teaches using industry standard tools**: Students learn how to code in an industry standard development environment, learn version control and have access to a proper debugger.
 - 🧠 **Built on sound pedagogical principles**: PRIMM not working for you? Check out my [Modify, Debug, Make](docs/teachers/pedagogy.md) approach.
 - 🤖 **Easily generate new exercises**: Use the built-in Exercise Generation assistant (a custom Copilot Chat mode) to scaffold new exercises in seconds, including student notebooks, solutions, and tests.
 
 ## How it works
 
-1. You distribute exercises to students using GitHub Classroom. You can use the provided template repository, or create your own with the exercise generation agent.
+1. You distribute exercises to students using Classroom 50 template repositories. You can use the provided template repository, or create your own with the exercise generation agent.
 
   <figure>
     <img src="docs/images/select-template-repo-github-classroom.png" alt="The student VSCode instance has been stripped right back to minimise distractions and opportunities for confusion." width="50%">
@@ -44,7 +43,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 </figure>
 
 
-5. When students commit and push their work, an autograding workflow (currently broken 🚧) runs the tests and reports results back to GitHub Classroom, so you can track progress and identify common issues. This also gives them an opportunity to develop good habits and understanding of version control.
+5. When students commit and push their work, they practise good version-control habits while you track progress through notebook self-checks and classroom review.
 
 <figure>
   <img src="docs/images/version-control-example.png" alt="Tests are generated to check that students have got the correct output, used the correct constructs and in debug activities, explained their thinking." width="50%">
@@ -52,7 +51,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 
 Teacher guides:
 
-- **[Getting Started](docs/teachers/getting-started.md)** — quick path: use pre-built template repos with GitHub Classroom.
+- **[Getting Started](docs/teachers/getting-started.md)** — quick path: use pre-built template repos with Classroom 50.
 - **[Creating Custom Exercise Sets](docs/teachers/creating-exercise-sets.md)** — full walkthrough for building your own exercise sets.
 
 
@@ -66,7 +65,7 @@ What works (mostly):
 
 Known gaps / not fully working yet:
 
-⚒️ GitHub Classroom autograding (template repo + autograding)
+⚒️ Classroom 50 autograding (generic autograder + assignment-bundle builder — not built yet)
 ⚒️ Full VS Code for Web support needs a Pyodide‑based Python kernel integration
 🚀 There's work to be done on optimising the student devcontainer - currently students still need to select the Jupyter kernel manually after opening the repo in Codespaces.
 🖼️Tweaks and formatting changes for the layout of the exercise notebooks as they could be clearer.
@@ -84,7 +83,7 @@ See [docs/README.md](docs/README.md) for the complete documentation.
 ## Repository layout (high level)
 
 - [exercises/](exercises/) — canonical authoring tree for exercise-specific assets: `exercises/<construct>/<exercise_key>/`, including exercise-local tests under `exercises/<construct>/<exercise_key>/tests/`
-- exported Classroom templates flatten notebooks and exercise tests at packaging time
+- exported Classroom 50 templates preserve canonical notebook and test paths; flattened notebook/test mirrors are forbidden in packaged outputs
 - [tests/](tests/) — shared pytest discovery, integration tests, and repository-level validation
 - [exercise_runtime_support/](exercise_runtime_support/) — shared runtime helpers used by tests and exported templates
 - [scripts/](scripts/) — exercise generator + template‑repo CLI

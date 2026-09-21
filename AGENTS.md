@@ -7,7 +7,7 @@ You are assisting in a classroom repository of Python exercises for secondary sc
 
 ## Project Overview
 
-This repository provides notebook-based Python exercises with automated grading via pytest, designed for GitHub Classroom integration.
+This repository provides notebook-based Python exercises with automated grading via pytest, distributed as Classroom 50 template repositories hosted on GitHub.
 
 **Core concept**: Students work in Jupyter notebooks, writing code in metadata-tagged cells. The grading system extracts and executes these tagged cells using pytest, enabling automated feedback.
 

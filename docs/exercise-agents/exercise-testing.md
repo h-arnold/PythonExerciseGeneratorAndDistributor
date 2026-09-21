@@ -168,24 +168,24 @@ Examples:
 
 ## Scoring & Test Structure
 
-We group tests using `@pytest.mark.task(taskno=N)` to align with the GitHub Classroom runner.
+We group tests using `@pytest.mark.task(taskno=N)` to align with the classroom grading runner.
 
 ### Task Markers
 
 - Annotate every grading test with `@pytest.mark.task(taskno=<int>)`.
 - The optional `name="Short title"` argument overrides the label surfaced to students.
-- Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
+- Reuse the same `taskno` for related criteria (logic, formatting, construct checks). The grader totals the scores per task number, so consistency across files is important when exercises span multiple modules.
 - If a test omits the `task` marker, the plugin records it with `task=None`. These tests still count for one point but appear in the "Ungrouped" bucket. Use this sparingly (for infrastructure smoke tests, for example).
 
 ### Scoring Model: One Test, One Point
 
-The autograde plugin assigns one point per collected test. Keep each assertion focused on a single learning objective so Classroom feedback remains clear.
+The generic autograder model assigns one point per passing pytest case. Keep each assertion focused on a single learning objective so classroom feedback remains clear.
 
 ### Authoring Guidance
 
 - Prefer many small tests over one large test.
 - Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label.
-- Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
+- Keep failure messages concise and craft assertions with informative `assert ... , "Helpful feedback"` messages.
 
 ### Test Count Guidelines
 
@@ -813,11 +813,10 @@ uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_s
 
 ### CI/CD
 
-Source-repository validation and exported Classroom autograding are different workflows.
+Source-repository validation runs in this repository's GitHub Actions workflows.
 
 - **`.github/workflows/tests.yml`**: Push/PR validation for the authoring repository. It checks pytest collection/discovery and then runs the explicit `scripts/run_pytest_variant.py --variant solution -q` pass.
 - **`.github/workflows/tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional pytest args for targeted solution checks.
-- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-backed student contract.
 
 ---
 

@@ -139,45 +139,6 @@ When modifying grading logic:
 3. **Document behaviour**: Update `docs/developers/testing-framework.md`
 4. **Test edge cases**: Invalid JSON, missing tags, malformed cells
 
-## Autograding Development Workflow
-
-### Run the autograde plugin locally
-
-Always exercise the pytest plugin with an explicit results path so the Classroom payload can be inspected:
-
-```bash
-uv run python scripts/build_autograde_payload.py \
-    --variant solution \
-    --pytest-args=-q \
-    --results-json=tmp/autograde/solutions.json
-
-uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q \
-    --autograde-results-path tmp/autograde/student.json
-```
-
-The first command targets the instructor notebooks; the second intentionally hits the student notebooks to confirm failure messaging. Replace `exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` with focused paths as needed.
-
-### Build Classroom payloads with the CLI
-
-Use `scripts/build_autograde_payload.py` to mirror the GitHub Classroom workflow. Pass `--variant <student|solution>` so the same contract is used locally and in CI:
-
-```bash
-uv run python scripts/build_autograde_payload.py \
-    --variant solution \
-    --pytest-args=-q \
-    --pytest-args=exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py \
-    --results-json=tmp/autograde/results.json
-```
-
-If you omit `--variant`, the script exercises the solution notebooks. The CLI writes both the raw plugin JSON and the Base64 payload expected by `autograding-grading-reporter`. Full reference: [docs/developers/autograding-cli.md](autograding-cli.md).
-
-### Test workflow changes safely
-
-- Use [act](https://github.com/nektos/act) to dry-run workflow edits against the repository configuration before pushing
-- Push experiment branches to a sandbox Classroom template and run the full workflow end-to-end
-- Keep payload fields backward compatible: preserve the plugin option names, JSON structure, and Base64 encoding so existing Classroom assignments keep working
-- Review the GitHub Classroom integration guidance in [docs/developers/github-classroom-autograding-guide.md](github-classroom-autograding-guide.md) when adjusting CI steps
-
 ## Working on the Exercise Generator
 
 ### `new_exercise.py`
@@ -315,7 +276,7 @@ Before submitting an exercise:
 
 ### GitHub Actions Workflows
 
-Repository CI and exported Classroom autograding are separate surfaces.
+Repository CI validates the source-repository authoring contract.
 
 **`tests.yml`**:
 
@@ -328,12 +289,6 @@ Repository CI and exported Classroom autograding are separate surfaces.
 - Manual trigger
 - Maintainer-focused targeted rerun of the explicit `--variant solution` pass
 - Accepts optional pytest args for focused checks
-
-**`template_repo_files/.github/workflows/classroom.yml`**:
-
-- Exported to Classroom/template repositories
-- Runs `scripts/build_autograde_payload.py --variant student`
-- Validates the metadata-backed student contract rather than the source-repository authoring contract
 
 ## Updating Exercises
 
