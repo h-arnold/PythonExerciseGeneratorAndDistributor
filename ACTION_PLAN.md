@@ -70,6 +70,21 @@ builder; no Selection-specific grader is built or later generalised.
   deleted `classroom.yml` and the absent `tests.yml`/`tests-solutions.yml`,
   so no subset can run).
 
+### Stage 1 implementation notes — complete
+
+- Red tests and their review completed clean. Green review required removal of
+  stale legacy references from `.opencode/agents/testing-specialist.md` and
+  formatter/comment cleanup; all findings were resolved.
+- The unused `exercise_runtime_support/helpers.py` and `tests/helpers.py`
+  re-export were deleted after confirming `build_autograde_env` had no
+  consumers. Packager test infrastructure now requires only `__init__.py`.
+- Checks passed: collection, complete solution-variant suite (1266 passed, 1
+  skipped), packager tests (28 passed, 1 skipped), `repoman validate` for
+  sequence and selection, dry-run sync, Ruff, Pyright on changed surfaces, and
+  expected student-variant failure.
+- No deviation affects later stages. The template `.github` directory is now
+  absent because the deleted workflow was its only tracked content.
+
 ## Stage 2 — Move runtimes and devcontainers to Python 3.14
 
 - Objective: align all environments with the Classroom 50 default grading
