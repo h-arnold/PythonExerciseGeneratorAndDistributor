@@ -29,6 +29,18 @@ class TemplatePackager:
         "__pycache__",
         "*.pyc",
         "test_repo_*.py",
+        "autograder.py",
+        "build_classroom50_bundle.py",
+        "build_autograde_payload.py",
+        "classroom.yml",
+        "autograde.yaml",
+        "reporter.py",
+        "plugin.py",
+        "payload.py",
+        "README.md",
+        "OVERVIEW.md",
+        "OrderOfTeaching.md",
+        "workflows",
     )
 
     REQUIRED_TEST_FILES: tuple[str, ...] = ("__init__.py",)
@@ -150,7 +162,11 @@ class TemplatePackager:
                 continue
             src = self.repo_root / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
             dest = workspace / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
-            safe_copy_directory(src, dest)
+            safe_copy_directory(
+                src,
+                dest,
+                ignore_patterns=self.EXERCISE_TEST_COPY_EXCLUDE_PATTERNS,
+            )
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
         """Copy a template directory if it exists.
@@ -161,7 +177,8 @@ class TemplatePackager:
         """
         src = self.template_files_dir / dirname
         if src.exists():
-            safe_copy_directory(src, workspace / dirname)
+            ignore_patterns = ("workflows",) if dirname == ".github" else None
+            safe_copy_directory(src, workspace / dirname, ignore_patterns=ignore_patterns)
 
     def _get_missing_required_sources(self) -> list[Path]:
         """Return missing source paths required for packaging."""

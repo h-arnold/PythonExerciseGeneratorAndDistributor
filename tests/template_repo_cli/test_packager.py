@@ -619,6 +619,86 @@ class TestPackageOptions:
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks/solution.ipynb"
         ).exists()
 
+    def test_selection_export_excludes_grading_and_authoring_surfaces_from_exercises_tree(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        repo_root: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Selection exports retain visible checks but never package grading sources."""
+        selection_keys = [
+            "ex001_selection_modify_basics",
+            "ex002_selection_debug_if_then_else",
+            "ex003_selection_modify_elif_boundaries",
+            "ex004_selection_modify_logical_operators",
+        ]
+        files = build_exercise_file_map(*selection_keys)
+
+        # Exercise-local tests are the generic packager input.  These synthetic
+        # names model forbidden assets if an author accidentally places them
+        # beside the visible self-checks; the packager must not copy them.
+        source_tests = temp_dir / "selection-test-fixture"
+        first_key = selection_keys[0]
+        canonical_test = files[first_key]["test"]
+        shutil.copytree(canonical_test.parent, source_tests)
+        forbidden_names = (
+            "autograder.py",
+            "build_classroom50_bundle.py",
+            "build_autograde_payload.py",
+            "classroom.yml",
+            "autograde.yaml",
+            "reporter.py",
+            "plugin.py",
+            "payload.py",
+            "README.md",
+            "OVERVIEW.md",
+            "OrderOfTeaching.md",
+        )
+        for filename in forbidden_names:
+            (source_tests / filename).write_text("forbidden\n", encoding="utf-8")
+
+        first_files = files[first_key].copy()
+        first_files["test"] = source_tests / canonical_test.name
+        files[first_key] = first_files
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_construct_resources(temp_dir, selection_keys)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Selection", selection_keys)
+
+        exercises_root = temp_dir / "exercises"
+        assert all(path.name != "solution.ipynb" for path in exercises_root.rglob("*"))
+        assert all(path.name not in forbidden_names for path in exercises_root.rglob("*"))
+
+        for exercise_key in selection_keys:
+            exercise_dir = next(
+                path
+                for path in (exercises_root / "selection").iterdir()
+                if path.name == exercise_key
+            )
+            assert (exercise_dir / "exercise.json").is_file()
+            assert (exercise_dir / "notebooks" / "student.ipynb").is_file()
+            assert not (exercise_dir / "notebooks" / "solution.ipynb").exists()
+            assert (exercise_dir / "tests").is_dir()
+            expected_test_names = {
+                path.name
+                for path in (
+                    repo_root / "exercises" / "selection" / exercise_key / "tests"
+                ).iterdir()
+                if path.is_file() and not path.name.startswith("test_repo_")
+            }
+            exported_test_names = {path.name for path in (exercise_dir / "tests").iterdir()}
+            assert exported_test_names == expected_test_names
+
+        assert (exercises_root / "selection" / "additional-resources").is_dir()
+        assert not (temp_dir / ".github").exists()
+        assert not (temp_dir / ".github" / "workflows" / "classroom.yml").exists()
+        assert not (temp_dir / "autograde.yaml").exists()
+        assert not (temp_dir / "scripts" / "build_classroom50_bundle.py").exists()
+        assert not (temp_dir / "scripts" / "build_autograde_payload.py").exists()
+        assert not (temp_dir / "scripts" / "autograder.py").exists()
+
 
 class TestPackageMultipleExercises:
     """Tests for packaging multiple exercises."""
