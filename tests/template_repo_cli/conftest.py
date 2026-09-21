@@ -5,7 +5,7 @@ from __future__ import annotations
 import tempfile
 from collections.abc import Callable, Generator
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -14,8 +14,8 @@ from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollecto
 if TYPE_CHECKING:
     from scripts.template_repo_cli.core.packager import TemplatePackager
 
-ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
-ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
+type ExerciseFileMap = dict[str, ExerciseFiles]
+type ExerciseFileMapBuilder = Callable[..., ExerciseFileMap]
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def repo_root() -> Path:
 
 
 @pytest.fixture
-def temp_dir() -> Generator[Path, None, None]:
+def temp_dir() -> Generator[Path]:
     """Create a temporary directory for testing."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield Path(tmpdir)

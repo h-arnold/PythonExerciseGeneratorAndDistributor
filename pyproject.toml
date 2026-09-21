@@ -3,7 +3,7 @@ name = "python-tutor-exercises"
 version = "0.1.0"
 description = "Notebook-based Python exercises with automated tests (GitHub Classroom friendly)."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 license = { file = "LICENSE" }
 authors = [{ name = "Hamish Arnold" }]
 

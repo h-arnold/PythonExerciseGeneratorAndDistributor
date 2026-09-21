@@ -20,7 +20,7 @@ Alternatively, run the CLI as a module: `uv run python -m scripts.template_repo_
 
 ## Prerequisites
 
-- Python 3.11 or higher
+- Python 3.14 or higher
 - [GitHub CLI (`gh`)](https://cli.github.com/) installed and authenticated (required for creating/updating repositories)
 - `gh auth login` completed (for creating/updating repositories)
 

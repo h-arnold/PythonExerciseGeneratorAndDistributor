@@ -4,7 +4,7 @@ This repository ships with a shared Dockerfile and two devcontainer definitions.
 
 ## Overview
 
-- Python 3.11 base image (`mcr.microsoft.com/devcontainers/python:3.11`) with Debian Bullseye
+- Python 3.14 base image (`mcr.microsoft.com/devcontainers/python:3.14`) with Debian Bullseye
 - Dependencies (pytest, jupyterlab, ruff, ipykernel, template CLI) managed by `uv` using `pyproject.toml` and `uv.lock`
 - GitHub Actions workflow builds a multi-arch image and pushes to GHCR for student use
 - VS Code devcontainer settings tailored separately for maintainers and students
@@ -47,7 +47,7 @@ Two devcontainer configurations target different audiences.
 
 Location: `/.devcontainer/devcontainer.json`
 
-- Uses the published `mcr.microsoft.com/devcontainers/python:3.11` image directly
+- Uses the published `mcr.microsoft.com/devcontainers/python:3.14` image directly
 - Installs VS Code features for GitHub CLI, Git LFS, and `uv`
 - Runs `uv sync && . .venv/bin/activate` as a post-create command to prime the virtual environment
 - Installs the maintainer extension set (Ruff, Python, Pylance, Jupyter family, Markdown linting)

@@ -8,7 +8,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -17,8 +17,8 @@ from scripts.template_repo_cli.core.collector import ExerciseFiles
 if TYPE_CHECKING:
     from scripts.template_repo_cli.core.packager import TemplatePackager
 
-ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
-ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
+type ExerciseFileMap = dict[str, ExerciseFiles]
+type ExerciseFileMapBuilder = Callable[..., ExerciseFileMap]
 
 
 def _assert_base_template_files(temp_dir: Path) -> None:

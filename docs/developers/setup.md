@@ -4,13 +4,13 @@ This guide covers setting up the PythonExerciseGeneratorAndDistributor repositor
 
 ## Recommended environment
 
-For a consistent toolchain, open the repository in GitHub Codespaces or the supplied VS Code Dev Container (`.devcontainer/devcontainer.json`). The container image installs Python 3.11, uv, the GitHub CLI, and Git LFS, then runs `uv sync` and activates the virtual environment automatically. Wait for the post-create tasks to finish before running commands.
+For a consistent toolchain, open the repository in GitHub Codespaces or the supplied VS Code Dev Container (`.devcontainer/devcontainer.json`). The container image installs Python 3.14, uv, the GitHub CLI, and Git LFS, then runs `uv sync` and activates the virtual environment automatically. Wait for the post-create tasks to finish before running commands.
 
 ## Prerequisites
 
 - Git
 - uv (Python package manager)
-- Python 3.11 or later (only required when working outside the dev container)
+- Python 3.14 or later (only required when working outside the dev container)
 - VS Code Dev Containers extension or Docker Desktop (optional, only if you plan to run the dev container locally)
 
 ## Installation

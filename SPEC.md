@@ -51,7 +51,7 @@ Decisions already agreed and built into this spec:
   `classroom-resources/autograding-grading-reporter@v1`.
 - `TemplatePackager` hard-requires that chain (`classroom.yml` checks,
   `REQUIRED_SCRIPTS`, `REQUIRED_TEST_FILES`).
-- Runtimes pin Python 3.11+ with 3.12 devcontainer images.
+- Runtimes pin Python 3.14+ with 3.14 devcontainer images.
 
 ## Scope and non-goals
 
