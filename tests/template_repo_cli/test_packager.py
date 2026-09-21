@@ -52,10 +52,7 @@ def _assert_no_snapshot_artifacts(root: Path, *, label: str) -> None:
 def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -> None:
     """Verify required test infrastructure files, directories, and runtime package are copied."""
 
-    required_files = (
-        "__init__.py",
-        "helpers.py",
-    )
+    required_files = ("__init__.py",)
     required_directories = ("exercise_framework",)
 
     for filename in required_files:
@@ -433,10 +430,7 @@ class TestPackageIntegrity:
 
     @pytest.mark.parametrize(
         "missing_path",
-        [
-            pytest.param("tests/exercise_framework", id="exercise-framework"),
-            pytest.param("tests/helpers.py", id="helpers"),
-        ],
+        [pytest.param("tests/exercise_framework", id="exercise-framework")],
     )
     def test_package_integrity_missing_required_test_infrastructure(
         self,
