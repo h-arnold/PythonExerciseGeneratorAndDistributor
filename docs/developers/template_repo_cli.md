@@ -259,6 +259,16 @@ This set is sufficient for exercise test imports, the generic programmatic stude
 
 The export contract rejects authoring-only assets such as `solution.ipynb` and flattened notebook/test mirrors, while keeping student notebooks and canonical exercise-local tests at their canonical exercise-local paths.
 
+### Grading and Authoring Surfaces Excluded
+
+Generated templates ship starter code only. The packager never copies grading or authoring-only assets into an exported template, including:
+
+- Grading sources: `autograder.py`, `build_classroom50_bundle.py`, the legacy `build_autograde_payload.py`, `classroom.yml`, `autograde.yaml`, and reporter/plugin/payload files.
+- Exercise authoring notes placed under exercise or construct resource paths: `README.md`, `OVERVIEW.md`, and `OrderOfTeaching.md`.
+- The whole `.github/` tree, including any reserved workflow directory.
+
+The teacher-side Classroom 50 grading bundle (generic `autograder.py` plus hidden test copies) is assembled separately by `scripts/build_classroom50_bundle.py` and committed to the `classroom50` repository by the teacher. It is never part of the student checkout or the exported template. See [classroom50-autograder.md](classroom50-autograder.md).
+
 ## Available Constructs
 
 - `sequence` — Basic sequential execution

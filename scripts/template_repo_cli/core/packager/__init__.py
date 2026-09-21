@@ -13,7 +13,7 @@ from . import _helpers, _readme
 
 
 class TemplatePackager:
-    """Package templates for GitHub."""
+    """Package Classroom 50 starter-code templates."""
 
     _CONSTRUCT_DIR_DEPTH = 1
     _EXERCISE_DIR_DEPTH = 2
@@ -145,8 +145,8 @@ class TemplatePackager:
 
         For each unique construct derived from the exercise keys, copies the
         ``additional-resources/`` directory from the source repo into the
-        workspace if it exists. Constructs without this folder are silently
-        skipped.
+        workspace if it exists, filtering out grading and authoring-only files.
+        Constructs without this folder are silently skipped.
 
         Args:
             workspace: Workspace directory.
@@ -169,16 +169,15 @@ class TemplatePackager:
             )
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
-        """Copy a template directory if it exists.
+        """Copy an allowed template directory if it exists.
 
         Args:
             dirname: Name of the directory to copy.
             workspace: Destination workspace directory.
         """
         src = self.template_files_dir / dirname
-        if src.exists():
-            ignore_patterns = ("workflows",) if dirname == ".github" else None
-            safe_copy_directory(src, workspace / dirname, ignore_patterns=ignore_patterns)
+        if src.exists() and dirname != ".github":
+            safe_copy_directory(src, workspace / dirname)
 
     def _get_missing_required_sources(self) -> list[Path]:
         """Return missing source paths required for packaging."""

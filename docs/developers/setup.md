@@ -99,7 +99,7 @@ This opens the Jupyter interface in your browser where you can work on notebooks
 
 If you're a student working on exercises:
 
-1. **Clone the repository** (or accept the GitHub Classroom assignment)
+1. **Clone the repository** (or accept the Classroom 50 assignment created from the template repository)
 2. **Install dependencies** as described above (run `uv sync` to create `.venv` and install dev tools)
 3. **Open a notebook** in Jupyter Lab:
 
@@ -128,7 +128,7 @@ If you're creating or modifying exercises, follow the two-phase workflow:
 2. **Review the documentation**:
    - [Project Structure](project-structure.md)
    - [Testing Framework](testing-framework.md)
-   - [Exercise Generation CLI](exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises
+   - [Exercise Generation CLI](../exercise-agents/exercise-generation-cli.md) — Instructions for using the exercise generation CLI tool to scaffold new Python exercises
 3. **Create exercises** using the scaffolding script:
 
    ```bash
@@ -138,7 +138,7 @@ If you're creating or modifying exercises, follow the two-phase workflow:
       --slug your_slug
    ```
 
-4. **Author the exercise notebooks** following the guidelines in [Exercise Generation CLI](exercise-generation-cli.md)
+4. **Author the exercise notebooks** following the guidelines in [Exercise Generation CLI](../exercise-agents/exercise-generation-cli.md)
 5. **Run the Exercise Reviewer** to check structure and sequencing (Gates A, B, C)
 6. **Hand off to the teacher** for notebook review and approval
 
@@ -275,23 +275,3 @@ Students sometimes forget imports. Remind them that:
 - Each tagged cell is executed in isolation
 - All necessary imports must be in the tagged cell
 - They cannot rely on imports from other cells
-
-## CI/CD Workflows
-
-### `tests.yml`
-
-Runs on every push and pull request for source-repository validation:
-
-- Installs dependencies
-- Validates pytest collection/discovery
-- Runs the explicit solution-variant test pass for the authoring repository
-
-### `tests-solutions.yml`
-
-Manual maintainer workflow (`workflow_dispatch`) for targeted solution reruns:
-
-- Uses explicit `--variant solution` orchestration
-- Accepts optional forwarded pytest args for focused reruns
-- Useful when a maintainer wants to re-check specific exercise tests without re-running the full push/PR workflow
-
-Trigger manually in the GitHub Actions tab.

@@ -27,7 +27,7 @@ uv run python -V
 ### Key Design Decisions
 
 1. **Jupyter notebooks for student work**: Familiar, interactive environment for learners
-2. **pytest for grading**: Industry-standard, automated, works with GitHub Classroom
+2. **pytest for grading**: Industry-standard automated checks supporting Classroom 50 grading
 3. **Tagged cells**: Metadata-based extraction avoids fragile comment parsing
 4. **Parallel notebook sets**: Student and solution notebooks tested by the same code
 5. **Pure stdlib grading**: No nbformat/nbclient dependency reduces installation friction
@@ -37,6 +37,8 @@ uv run python -V
 - `exercises/<construct>/<exercise_key>/`: Canonical authoring home for exercise-specific assets and `exercise.json`
 - `exercise_runtime_support/exercise_framework/`: Core grading framework (runtime execution, assertions, reporting)
 - `exercise_runtime_support/notebook_grader.py`: Low-level notebook parsing and execution helpers used by the framework
+- `scripts/autograder.py`: Generic teacher-side Classroom 50 bundle grader (never shipped in a student template)
+- `scripts/build_classroom50_bundle.py`: Builds a teacher-side Classroom 50 grading bundle from a selected exercise-set input
 - `scripts/new_exercise.py`: Exercise scaffolding tool
 - `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
 - `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
@@ -45,7 +47,7 @@ uv run python -V
 - `.opencode/agents/exercise-reviewer.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
 - `.opencode/agents/exercise-test-creator.md`: Creates pytest tests from approved notebooks
 - `.opencode/agents/exercise-test-reviewer.md`: Reviews exercise tests (solution passes, student fails)
-- `scripts/template_repo_cli/`: Source for the GitHub Classroom template repository CLI — invoked via the `repoman` console entry point (alias for `template_repo_cli`).
+- `scripts/template_repo_cli/`: Source for the Classroom 50 template repository CLI, which prepares templates hosted on GitHub — invoked via the `repoman` console entry point (alias for `template_repo_cli`).
 
 ### Template Packager README Helpers
 
@@ -138,6 +140,27 @@ When modifying grading logic:
 2. **Keep it simple**: Students need to understand error messages
 3. **Document behaviour**: Update `docs/developers/testing-framework.md`
 4. **Test edge cases**: Invalid JSON, missing tags, malformed cells
+
+### Classroom 50 Grader and Bundle Builder
+
+Teacher-side grading uses two generic sources: `scripts/build_classroom50_bundle.py` assembles a bundle of hidden test copies plus the current `exercise_runtime_support/` source, and the bundle-local `autograder.py` grades a student checkout and writes a `classroom50/result/v1` payload. Templates ship starter code only, so grading sources and hidden tests never appear in a student checkout. The full contract and CLI interfaces are in [classroom50-autograder.md](classroom50-autograder.md).
+
+```bash
+# Build a bundle from a JSON exercise set and grade a student checkout
+uv run python scripts/build_classroom50_bundle.py \
+    --source-root . \
+    --exercise-set path/to/exercise-set.json \
+    --runtime-source exercise_runtime_support \
+    --output path/to/grading-bundle
+
+# Local dry run against solution notebooks (graded runs force the student variant)
+uv run python path/to/grading-bundle/autograder.py \
+    --student-root path/to/student-checkout \
+    --result path/to/result.json \
+    --variant solution
+```
+
+Rebuild the bundle whenever `exercise_runtime_support/` changes; the bundle-local runtime copy is regenerated from source on every build.
 
 ## Working on the Exercise Generator
 
@@ -272,23 +295,18 @@ Before submitting an exercise:
 6. **Address feedback**: Make requested changes
 7. **Squash if needed**: Keep history clean
 
-## CI/CD Maintenance
+## Local Validation
 
-### GitHub Actions Workflows
+This repository has no GitHub Actions workflows and no CI runner: there is no `.github/` tree or workflow configuration. Validate changes locally against the authoring contract.
 
-Repository CI validates the source-repository authoring contract.
+The canonical source-repository check is a pytest collection pass plus the explicit solution-variant run:
 
-**`tests.yml`**:
+```bash
+uv run pytest --collect-only -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
+```
 
-- Runs on push/PR
-- Validates pytest collection/discovery in the source repository
-- Runs the explicit `--variant solution` authoring-repo pass
-
-**`tests-solutions.yml`**:
-
-- Manual trigger
-- Maintainer-focused targeted rerun of the explicit `--variant solution` pass
-- Accepts optional pytest args for focused checks
+Run the default solution-variant suite with `uv run pytest -q`, target a single exercise with its canonical exercise-local path, and lint with `uv run ruff check .`. See [testing-framework.md](testing-framework.md) for the full test surface and [classroom50-autograder.md](classroom50-autograder.md) for the teacher-side grading bundle.
 
 ## Updating Exercises
 
@@ -339,11 +357,11 @@ If an exercise needs to be removed:
 
 ## Troubleshooting Development Issues
 
-### Tests Pass Locally But Fail in CI
+### Tests Pass Locally But Fail Under Solution-Variant Validation
 
 Check:
 
-- Python version matches CI (see `.github/workflows/tests.yml`)
+- Python version matches the repository validation environment
 - Dependencies are pinned or have minimum versions
 - No reliance on local files or environment variables
 - Tests are deterministic (no randomness or time-based behaviour)

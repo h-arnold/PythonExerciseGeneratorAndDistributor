@@ -1,14 +1,17 @@
 # Classroom 50 Autograder — Generic Grading Contract (Selection Pilot)
 
-Stage 3 written contract. This document records the generic scoring rules that
-the grader and builder must implement, using the Selection pilot exercise set
-as the first input. No code is built here.
+This document records the generic scoring rules behind the Classroom 50 grading
+system and the command interfaces of its two generic sources: the bundle
+builder (`scripts/build_classroom50_bundle.py`) and the bundle grader
+(`scripts/autograder.py`). The Selection pilot exercise set is the first input
+and the end-to-end validation fixture; it is not a special code path.
 
 Authoritative sources for this contract are `SPEC.md` (scoring rule and
-`classroom50/result/v1` behaviour) and `ACTION_PLAN.md` Stage 3 acceptance,
-reviewed against the Classroom 50 `Advanced-Autograding` result contract. No
-Classroom 50 classroom creation or management functionality is built in this
-round; classroom operation stays a manual teacher follow-up.
+`classroom50/result/v1` behaviour) and `ACTION_PLAN.md`, reviewed against the
+Classroom 50 `Advanced-Autograding` result contract. No Classroom 50 classroom
+creation or management functionality is built here; classroom operation
+(assignment registration, bundle commit, roster, accept, submit, Collect) stays
+a manual teacher follow-up.
 
 There is no OrderOfTeaching.md change in this round.
 
@@ -92,6 +95,57 @@ the Selection pilot only fixes the expected full-pass sum above.
   at every build and must be rebuilt whenever the source package changes.
 - Hidden is tamper-proof, not secret: no solutions or confidential data go
   into the bundle, since the published bundle is fetchable.
+
+## Command interfaces
+
+Both sources are generic: the selected exercise set is builder input, so no
+per-construct or per-exercise grading logic is hardcoded. Neither script is
+packaged into a student template.
+
+Build the teacher-side bundle from a JSON exercise set:
+
+```bash
+uv run python scripts/build_classroom50_bundle.py \
+  --source-root . \
+  --exercise-set path/to/exercise-set.json \
+  --runtime-source exercise_runtime_support \
+  --output path/to/grading-bundle
+```
+
+The exercise set is a JSON list of `{"construct": ..., "exercise_key": ...}`
+records. For each record the builder copies the exercise's hidden `test_*.py`
+modules, `expectations.py`, `student_checker_support.py`, and any further
+support module referenced through `load_exercise_test_module` (resolved
+transitively) into `<bundle>/exercises/<construct>/<exercise_key>/tests/`. It
+regenerates `<bundle>/exercise_runtime_support/` from `--runtime-source` and
+copies `scripts/autograder.py` to the bundle root. Notebooks, solutions,
+`exercise.json`, teacher notes, and unrelated files are never copied. The
+bundle-local runtime copy is regenerated on every build, so a source-package
+change must be followed by a rebuild.
+
+Grade a student checkout with the bundle's own copy of the grader:
+
+```bash
+uv run python path/to/grading-bundle/autograder.py \
+  --student-root path/to/student-checkout \
+  --result path/to/result.json
+```
+
+- `--student-root` is the checkout whose notebooks and `exercise_metadata/` are
+  graded.
+- `--result` is the `classroom50/result/v1` JSON destination.
+- `--variant solution` forces the solution notebook variant for the local dry
+  run only; the default graded run forces the student variant with
+  `PYTUTOR_ACTIVE_VARIANT=student`.
+
+The grader prepends the bundle root to `sys.path` and places the student
+checkout directly behind it, so `exercise_runtime_support` resolves to the
+bundle copy while `exercise_metadata` resolves to the student checkout. It
+verifies those package origins before grading and refuses to run if they do not
+match. A completed pytest run (exit 0 or 1) writes the payload and exits 0 with
+pass/fail carried inside it; any other pytest exit, or an empty discovery set,
+is an infrastructure error that exits non-zero and writes no result. Any
+pre-existing result output is removed before the grading attempt.
 
 ## Out of scope
 

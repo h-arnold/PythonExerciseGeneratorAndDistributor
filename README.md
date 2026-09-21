@@ -1,6 +1,6 @@
 # Python Exercise Generator and Distributor (needs a better name)
 
-A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get feedback from notebook self-checks. Teachers can generate new exercises quickly and bundle selected exercises into Classroom 50 template repos.
+A teaching platform for secondary-school programming that keeps everything in the browser: students complete exercises inside Jupyter notebooks, run code inline, and get feedback from notebook self-checks. Teachers can generate new exercises quickly and bundle selected exercises into Classroom 50 template repositories hosted on GitHub.
 
 ## Key Benefits and Features
 
@@ -16,11 +16,11 @@ A teaching platform for secondary-school programming that keeps everything in th
 
 ## How it works
 
-1. You distribute exercises to students using Classroom 50 template repositories. You can use the provided template repository, or create your own with the exercise generation agent.
+1. You distribute exercises to students using Classroom 50 template repositories hosted on GitHub. You can use the provided template repository, or create your own with the exercise generation agent.
 
   <figure>
     <img src="docs/images/select-template-repo-github-classroom.png" alt="The student VSCode instance has been stripped right back to minimise distractions and opportunities for confusion." width="50%">
-    <figcaption>Choosing the template repository to use in Github Classroom</figcaption>
+   <figcaption>Choosing the template repository to use on GitHub</figcaption>
   </figure>
 
 2. Students click the invite generated in step 1, which opens their repository in GitHub Codespaces with a stripped down VSCode interface and the exercises ready to use.
@@ -43,7 +43,7 @@ A teaching platform for secondary-school programming that keeps everything in th
 </figure>
 
 
-5. When students commit and push their work, they practise good version-control habits while you track progress through notebook self-checks and classroom review.
+5. When students commit and push their work, they practise good version-control habits while you track progress through notebook self-checks and teacher review.
 
 <figure>
   <img src="docs/images/version-control-example.png" alt="Tests are generated to check that students have got the correct output, used the correct constructs and in debug activities, explained their thinking." width="50%">
@@ -62,17 +62,18 @@ What works (mostly):
 ✅ Exercise generation with the Copilot Chat agent.
 ✅ Template repo creation with notebooks, tests, and VS Code settings
 ✅ The student self checker cell at the end of each exercise so students can find out how well they've done
+✅ Generic Classroom 50 grader and assignment-bundle builder (locally verified)
 
 Known gaps / not fully working yet:
 
-⚒️ Classroom 50 autograding (generic autograder + assignment-bundle builder — not built yet)
+⚒️ Classroom 50 live wiring (assignment registration, bundle commit, Collect) is a manual teacher follow-up
 ⚒️ Full VS Code for Web support needs a Pyodide‑based Python kernel integration
 🚀 There's work to be done on optimising the student devcontainer - currently students still need to select the Jupyter kernel manually after opening the repo in Codespaces.
 🖼️Tweaks and formatting changes for the layout of the exercise notebooks as they could be clearer.
 
 Where help is needed:
 
-- Developing student and teacher friendly how-to guides and tutorials. These could be to support the delivery of different programming exercises, guidance on how to set up GitHub Classroom, or how to use the exercise generation assistant.
+- Developing student and teacher friendly how-to guides and tutorials. These could be to support the delivery of different programming exercises, guidance on setting up Classroom 50 templates and GitHub-hosted repositories, or how to use the exercise generation assistant.
 - VS Code for Web: building a Pyodide‑backed kernel that works with the official Jupyter extension
 - Tweaking the student devcontainer config for a smoother and more minimal experience.
 
@@ -86,7 +87,7 @@ See [docs/README.md](docs/README.md) for the complete documentation.
 - exported Classroom 50 templates preserve canonical notebook and test paths; flattened notebook/test mirrors are forbidden in packaged outputs
 - [tests/](tests/) — shared pytest discovery, integration tests, and repository-level validation
 - [exercise_runtime_support/](exercise_runtime_support/) — shared runtime helpers used by tests and exported templates
-- [scripts/](scripts/) — exercise generator + template‑repo CLI
+- [scripts/](scripts/) — exercise generator, template‑repo CLI, and the Classroom 50 grader/bundle builder
 - [docs/](docs/) — documentation
 
 

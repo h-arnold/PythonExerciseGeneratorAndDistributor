@@ -2,11 +2,13 @@
 
 This document describes the testing framework for the **codebase itself**, ensuring the reliability of the tools, scripts, and automation used to generate and manage exercises.
 
-For details on **testing student notebooks**, see [Exercise Testing](exercise-testing.md).
+For details on **testing student notebooks**, see [Exercise Testing](../exercise-agents/exercise-testing.md).
 
 > Source of truth: execution/discovery/runtime contracts are defined in [docs/developers/execution-model.md](execution-model.md).
 
 > Canonical exercise-specific tests belong in `exercises/<construct>/<exercise_key>/tests/`. Exported Classroom repositories preserve exercise-local tests and student notebooks at their canonical paths. Packaged templates ship the metadata-backed runtime surface (`exercise_metadata/`, per-exercise `exercise.json`, canonical student notebooks, and canonical exercise-local tests) with no solution notebooks or flattened mirrors. See [execution-model.md](execution-model.md) for the full contract.
+
+> The generic teacher-side Classroom 50 grader and bundle builder are documented in [classroom50-autograder.md](classroom50-autograder.md).
 
 ## Overview
 
@@ -29,7 +31,7 @@ Run the full suite using `uv`:
 uv run pytest -q
 ```
 
-Because raw `uv run pytest -q` exercises the default solution variant, the CI-equivalent source-repository check is a collection pass plus the explicit solution-variant run:
+Because raw `uv run pytest -q` exercises the default solution variant, the canonical source-repository check is a collection pass plus the explicit solution-variant run:
 
 ```bash
 uv run pytest --collect-only -q
@@ -49,6 +51,12 @@ uv run pytest tests/test_new_exercise.py
 
 # Test the template repo CLI (`repoman`)
 uv run pytest tests/template_repo_cli/
+
+# Test the generic Classroom 50 grader and bundle builder
+uv run pytest tests/test_classroom50_bundle_stage4.py tests/test_classroom50_autograder_docs.py
+
+# Test the Python 3.14 runtime pins
+uv run pytest tests/test_runtime_python_version.py
 ```
 
 ## Key Test Suites
@@ -106,16 +114,24 @@ Resolver identity contract:
 - For shared runtime or grading code that has already resolved a notebook location, keep the value as a `Path` when passing it into framework/grader helpers.
 - Avoid converting a resolved `Path` back into `str(path)` before calling resolver-backed helpers; path-like strings are intentionally distinct from exercise-key strings in the framework contract.
 
-### 4. Exercise Quality (`tests/test_exercise_type_docs.py`)
+### 4. Classroom 50 Grading (`tests/test_classroom50_bundle_stage4.py`, `tests/test_classroom50_autograder_docs.py`, `tests/test_runtime_python_version.py`)
 
-Sanity checks for the documentation and exercise type definition files.
+- `tests/test_classroom50_bundle_stage4.py` drives the generic builder and grader CLI contract against a synthetic fixture exercise, so no Selection-specific branch can satisfy it. It covers bundle contents and path preservation, runtime-copy regeneration on rebuild, generic (non-hardcoded) input, `<exercise_key>::<leaf-nodeid>` result names, one point per passing case, forced student variant with exit 0 on completed failures, `sys.path` isolation from visible checkout tests, tamper resistance, missing/broken hidden tests, and stale-result removal.
+- `tests/test_classroom50_autograder_docs.py` keeps [classroom50-autograder.md](classroom50-autograder.md) aligned with the generic scoring contract and re-derives the Selection pilot counts and titles from canonical collection and `exercise.json`.
+- `tests/test_runtime_python_version.py` asserts every grading-runtime pin (devcontainer images, both `requires-python` floors, in-scope docs, and any workflow `python-version` pins) resolves Python 3.14.
 
-## Continuous Integration
+## Local Validation
 
-The repository uses GitHub Actions to run these tests automatically.
+This repository has no GitHub Actions workflows and no CI runner: there is no `.github/` tree or workflow configuration. Tests are run locally against the authoring contract.
 
-- **`tests.yml`**: Source-repository validation on every push and pull request. It checks pytest collection/discovery in the authoring repository and then runs `scripts/run_pytest_variant.py --variant solution -q`.
-- **`tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional forwarded pytest args for targeted solution checks.
+The canonical source-repository check is:
+
+```bash
+uv run pytest --collect-only -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
+```
+
+`tests/test_runtime_python_version.py` inspects literal workflow `python-version` pins only when a workflow file exists and skips when none is present. With no `.github/workflows/` tree, runtime-pin coverage comes from the devcontainer image pins and both `requires-python` floors.
 
 ## Adding New Infrastructure Tests
 

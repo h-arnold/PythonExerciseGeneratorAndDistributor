@@ -191,6 +191,24 @@ class TestCopyFiles:
         packaged_pytest_ini = (temp_dir / "pytest.ini").read_text(encoding="utf-8")
         assert "tests.autograde_plugin" not in packaged_pytest_ini
 
+    def test_copy_template_files_excludes_entire_github_tree(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Do not export any files from the template source .github tree."""
+        template_files_dir = temp_dir / "template_repo_files"
+        shutil.copytree(template_packager.template_files_dir, template_files_dir)
+        github_dir = template_files_dir / ".github"
+        (github_dir / "workflows").mkdir(parents=True)
+        (github_dir / "settings.yml").write_text("settings\n", encoding="utf-8")
+        (github_dir / "workflows" / "checks.yml").write_text("checks\n", encoding="utf-8")
+        template_packager.template_files_dir = template_files_dir
+
+        template_packager.copy_template_base_files(temp_dir / "workspace")
+
+        assert not (temp_dir / "workspace" / ".github").exists()
+
     def test_required_test_directories_exclude_non_runtime_artefacts(
         self,
         template_packager: TemplatePackager,
