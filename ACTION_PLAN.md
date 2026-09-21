@@ -104,6 +104,19 @@ builder; no Selection-specific grader is built or later generalised.
 - Review point: confirm 3.14 against the Classroom 50 `runtime` default before
   the autograder build starts.
 
+### Stage 2 implementation notes — complete
+
+- Devcontainers, runtime floors, lockfile, and in-scope documentation now use
+  Python 3.14. A fresh 3.14 `uv sync` and the complete solution suite passed
+  (1273 passed, 2 skipped); student selection checks continue to fail as
+  expected.
+- A version-dependent registry-test tie exposed by Python 3.14 was corrected
+  to compare the same `(exercise_id, construct)` metadata ordering as the
+  production registry. This was necessary to meet the stage's suite-pass gate.
+- No CI workflow exists in this repository, so the CI pin audit intentionally
+  skips. `repoman` validation, dry-run sync, runtime-pin tests, Ruff, and
+  Pyright passed.
+
 ## Stage 3 — Record the generic grading contract using the selection pilot
 
 - Objective: record the generic scoring rules that the grader and builder must
