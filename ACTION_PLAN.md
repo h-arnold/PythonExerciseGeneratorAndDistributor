@@ -136,6 +136,18 @@ builder; no Selection-specific grader is built or later generalised.
   `Advanced-Autograding` result contract.
 - Review point: teacher signs off the contract before the build starts.
 
+### Stage 3 implementation notes — complete
+
+- Added `docs/developers/classroom50-autograder.md`, recording the generic
+  Classroom 50 contract and the Selection pilot's metadata titles and collected
+  33/60/60/71 case counts (224 total).
+- Contract tests derive the pilot counts from pytest collection and passed,
+  along with the solution suite, collection, Ruff, and Pyright checks. Both red
+  and green reviews were clean after tightening the documentation assertions.
+- The result contract is stated only to the degree documented by this
+  repository's authoritative specification; no payload schema fields were
+  invented. Teacher sign-off remains the Stage 4 review point.
+
 ## Stage 4 — Build the generic autograder and assignment-bundle builder
 
 - Objective: add one assignment-agnostic grading source plus a builder that
