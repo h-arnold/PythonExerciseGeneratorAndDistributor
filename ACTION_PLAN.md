@@ -186,6 +186,23 @@ builder; no Selection-specific grader is built or later generalised.
   Reviewer confirms construct enforcement and coverage parity with the
   canonical tests.
 
+### Stage 4 implementation notes — complete
+
+- Added generic `scripts/autograder.py` and
+  `scripts/build_classroom50_bundle.py`. The builder takes selected exercises
+  as JSON input and regenerates a narrow hidden bundle; the grader discovers
+  only bundled tests, forces the student variant for grading, and reports one
+  point per collected leaf case.
+- Dedicated tests cover generic selected-input routing, bundle contents and
+  regeneration, metadata/runtime isolation, node IDs and result payloads,
+  tampering, and infrastructure failures. A real Selection bundle produced
+  224/224 for the solution dry run and 0/224 for the student run, both with
+  completed-run exit code 0.
+- Tidy review is clean and the Exercise Test Reviewer confirmed unchanged
+  canonical enforcement/coverage parity, including transitive local supports
+  such as `construct_checks.py`. Infrastructure failures return non-zero and
+  invalidate stale results.
+
 ## Stage 5 — Repackage the selection template without grading surfaces
 
 - Objective: ship starter-code-only templates with a provable exclusion.
