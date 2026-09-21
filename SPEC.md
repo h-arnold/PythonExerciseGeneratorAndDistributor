@@ -2,12 +2,14 @@
 
 ## Goal and intended outcome
 
-Replace the broken GitHub Classroom reporter chain with a single generic
-Classroom 50 grading source, verified locally. A working round means: the
-legacy chain is deleted, selection templates ship starter code only, and a new
-bundle builder produces a teacher-side grading bundle (one `autograder.py` plus
-hidden test copies) that grades the student variant correctly and the solution
-variant to a full pass in a local dry run.
+Replace the broken GitHub Classroom reporter chain with one generic Classroom
+50 grading source and generic bundle builder, verified locally. A working round
+means: the legacy chain is deleted, selection templates ship starter code only,
+and the builder is configured with the selection pilot exercise set to produce
+a teacher-side grading bundle (the generic `autograder.py` plus hidden test
+copies) that grades the student variant correctly and the solution variant to a
+full pass in a local dry run. Selection is the first builder input and
+end-to-end validation fixture, not a Selection-specific grader.
 
 Decisions already agreed and built into this spec:
 
@@ -15,8 +17,9 @@ Decisions already agreed and built into this spec:
 - One point per passing pytest case; exercise size acts as the difficulty proxy.
 - Self-check tests stay visible in the template; grading logic is teacher-side
   and tamper-proof (template edits cannot change the graded outcome).
-- A single generic `autograder.py` serves every construct; no per-construct
-  grading logic.
+- A single generic `autograder.py` and builder serve every assignment; no
+  per-construct or per-exercise grading logic. The selected exercise set is
+  builder input, so the same sources can create a later assignment bundle.
 - Runtimes and devcontainers move to Python 3.14 to match the Classroom 50
   default grading runtime.
 - Legacy removal lands first; no new implementation reuses the reporter chain.
@@ -56,8 +59,9 @@ In scope for this round:
 
 - Delete the legacy autograding chain and its docs references.
 - Move runtimes and devcontainers to Python 3.14 (grading-runtime alignment).
-- Add one generic `autograder.py` source plus a bundle builder that assembles
-  the teacher-side grading bundle for a construct.
+- Add one generic `autograder.py` source plus a generic bundle builder that
+  assembles a teacher-side grading bundle from its selected exercise-set input;
+  Selection supplies the first pilot input only.
 - Repackage selection templates as starter-code only, with a test proving the
   grading source never ships inside them.
 - Local dry-run verification of the bundle against student-variant and
@@ -91,14 +95,16 @@ Explicit non-goals (not in this repo, not in this round):
 - Preserve grading invariants: solution variant passes, student variant fails
   in this repository; each case stays fast, deterministic, and isolated;
   variant selection via `--variant` / `PYTUTOR_ACTIVE_VARIANT`.
-- Single generic grader: the same `autograder.py` source grades every
-  construct. Its discovery root is the bundle's hidden test directories only,
-  never the student checkout's `exercises/.../tests/`, so visible self-check
-  copies are never double-counted. It discovers bundled tests dynamically at
-  grade time; no hardcoded exercise keys, weights, or construct names. The
-  bundle builder supplies per-exercise subdirectories; the script supplies
-  the mechanism. New grading code stays 3.11-compatible so the source-repo
-  dry run works before any floor raise.
+- Single generic grader and builder: the same `autograder.py` source grades
+  every assignment, and the same builder source creates each assignment bundle
+  from a selected exercise-set input. The Selection set is the pilot fixture,
+  not a special code path. The grader's discovery root is the bundle's hidden
+  test directories only, never the student checkout's `exercises/.../tests/`,
+  so visible self-check copies are never double-counted. It discovers bundled
+  tests dynamically at grade time; no hardcoded exercise keys, weights, or
+  construct names. The builder supplies per-exercise subdirectories; the
+  grader supplies the mechanism. New grading code stays 3.11-compatible so the
+  source-repo dry run works before any floor raise.
 - Bundle isolation mechanism: the bundle ships its own copy of
   `exercise_runtime_support/` placed ahead of the student checkout on
   `sys.path`, while `exercise_metadata/` stays the student-checkout copy.
@@ -234,12 +240,13 @@ Explicit non-goals (not in this repo, not in this round):
    raised only if the implementer confirms 3.14 dependency compatibility,
    otherwise only images/pins move. Source suite passes on the solution
    variant with student-variant failure behaviour preserved.
-3. One generic `autograder.py` source exists and contains no per-construct or
-   per-exercise hardcoding; the builder assembles a selection bundle with the
-   script plus per-exercise hidden test copies, support files, and the runtime
-   copies named above. New scripts ship with a dedicated pytest surface
-   (nodeid transform, `result.json` shape, `sys.path` isolation) and pass a
-   Tidy Code Reviewer gate.
+3. One generic `autograder.py` source and one generic builder source exist,
+   with no per-construct or per-exercise hardcoding. The builder accepts its
+   selected exercise set as input; configuring it with the Selection pilot set
+   assembles a Selection bundle with the script plus per-exercise hidden test
+   copies, support files, and the runtime copies named above. New scripts ship
+   with a dedicated pytest surface (nodeid transform, `result.json` shape,
+   `sys.path` isolation) and pass a Tidy Code Reviewer gate.
 4. Local dry run: the bundle run against a packaged student-variant workspace
    fails as expected and against a solution-variant workspace passes. The
    solution-variant workspace is produced by running the hidden bundle copies

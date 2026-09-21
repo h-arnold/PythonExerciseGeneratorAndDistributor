@@ -3,7 +3,9 @@
 Each stage states objective, surfaces, acceptance, checks, and review point.
 Removal comes first. No classroom creation or management functionality is
 built in any stage; classroom operation stays a manual teacher follow-up.
-No implementation code is written in this plan.
+No implementation code is written in this plan. Selection is the first
+exercise-set input and end-to-end validation fixture for the generic grader and
+builder; no Selection-specific grader is built or later generalised.
 
 ## Stage 1 — Remove the legacy autograding chain
 
@@ -87,9 +89,10 @@ No implementation code is written in this plan.
 - Review point: confirm 3.14 against the Classroom 50 `runtime` default before
   the autograder build starts.
 
-## Stage 3 — Fix the selection grading contract
+## Stage 3 — Record the generic grading contract using the selection pilot
 
-- Objective: record the scoring rules the builder must implement.
+- Objective: record the generic scoring rules that the grader and builder must
+  implement, using Selection's selected exercise set as the first pilot input.
 - Files/surfaces: selection `exercise.json` titles (read-only reference;
   recorded into the deliverable, not edited), collected test counts
   (33/60/60/71; 224 total), per-test naming rule, scoring rule, deliverable
@@ -98,22 +101,28 @@ No implementation code is written in this plan.
   per-test names as `<exercise_key>::<leaf-nodeid>` (`test_*.py::test_name`,
   no absolute paths), full-pass total computed as the sum, graded run forcing
   the student variant with the solution variant reserved for the dry run, and
-  slug treated as operator input rather than a stored value.
+  slug treated as operator input rather than a stored value, and Selection
+  identified as a builder configuration and validation fixture rather than a
+  special grader implementation.
 - Checks: counts re-verified; contract reviewed against the
   `Advanced-Autograding` result contract.
 - Review point: teacher signs off the contract before the build starts.
 
-## Stage 4 — Build the single generic autograder and bundle builder
+## Stage 4 — Build the generic autograder and assignment-bundle builder
 
-- Objective: add one construct-agnostic grading source plus a builder that
-  assembles the teacher-side bundle for a construct.
+- Objective: add one assignment-agnostic grading source plus a builder that
+  assembles a teacher-side bundle from its selected exercise-set input. Run the
+  generic system first with the Selection pilot set; do not build or refine a
+  Selection-specific grader.
 - Files/surfaces: new generic `autograder.py` source under `scripts/`, new
-  bundle builder script under `scripts/`, hidden test copies drawn from
-  `exercises/selection/*/tests/` (`test_*.py`, `expectations.py`,
+  generic bundle builder script under `scripts/`, Selection pilot input drawn
+  from `exercises/selection/*/tests/` (`test_*.py`, `expectations.py`,
   `student_checker_support.py`), bundle-local copy of
   `exercise_runtime_support/` plus student-checkout `exercise_metadata/`;
   visible canonical tests and notebook self-checks untouched.
-- Acceptance: source has no per-construct or per-exercise hardcoding;
+- Acceptance: grader and builder sources have no per-construct or
+  per-exercise hardcoding; the builder accepts the selected exercise set as
+  input, with the Selection pilot set proving that the generic mechanism works;
   discovery root is the bundle's hidden test directories only, never the
   student checkout's `exercises/.../tests/`; builder output holds the script
   plus per-exercise hidden copies with support files and the runtime copies
