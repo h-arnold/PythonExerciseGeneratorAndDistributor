@@ -1,20 +1,19 @@
-"""Exercise-local expectations for ex006 sequence modify casting."""
+"""Canonical expectations for ex006 sequence modify casting."""
 
 from __future__ import annotations
 
-from typing import Final, NotRequired, TypedDict
+from typing import Final, TypedDict
 
 
-class Ex006InputExpectation(TypedDict):
-    """Expectations for exercises that prompt for input in ex006."""
+class Ex006InputCase(TypedDict):
+    """One deterministic input/output transcript for an interactive task."""
 
     inputs: list[str]
-    prompt_contains: str
-    output_contains: NotRequired[str]
-    last_line: NotRequired[str]
+    expected_output: str
 
 
-EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
+# Exercises 1-5, 8, and 9 are static-output tasks.
+EX006_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
     1: "15",
     2: "6.0",
     3: "28",
@@ -24,20 +23,46 @@ EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     9: "The Burger costs \u00a35.5",
 }
 
-EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {
-    6: {
-        "inputs": ["6"],
-        "prompt_contains": "Enter number",
-        "last_line": "12",
-    },
-    7: {
-        "inputs": ["1.5"],
-        "prompt_contains": "Enter price",
-        "output_contains": "Two items cost: 3.0",
-    },
-    10: {
-        "inputs": ["10", "20"],
-        "prompt_contains": "Enter item",
-        "output_contains": "Total: 30.0",
+# Exercises 6, 7, and 10 are interactive; each part has two complete cases.
+EX006_INPUT_CASES: Final[dict[int, tuple[Ex006InputCase, ...]]] = {
+    6: (
+        {
+            "inputs": ["6"],
+            "expected_output": "Enter number:\n12",
+        },
+        {
+            "inputs": ["9"],
+            "expected_output": "Enter number:\n18",
+        },
+    ),
+    7: (
+        {
+            "inputs": ["1.5"],
+            "expected_output": "Enter price:\nTwo items cost: 3.0",
+        },
+        {
+            "inputs": ["2.25"],
+            "expected_output": "Enter price:\nTwo items cost: 4.5",
+        },
+    ),
+    10: (
+        {
+            "inputs": ["10", "20"],
+            "expected_output": "Enter item 1:\nEnter item 2:\nTotal: 30.0",
+        },
+        {
+            "inputs": ["2.5", "4.5"],
+            "expected_output": "Enter item 1:\nEnter item 2:\nTotal: 7.0",
+        },
+    ),
+}
+
+# Derived all-part catalog for repository tooling. It is intentionally separate
+# from the static and interactive classifications above and is not consumed by
+# the exercise tests or self-checker.
+EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
+    **EX006_EXPECTED_STATIC_OUTPUTS,
+    **{
+        exercise_no: cases[0]["expected_output"] for exercise_no, cases in EX006_INPUT_CASES.items()
     },
 }

@@ -713,6 +713,7 @@ class TestEndToEndDryRun:
             "\n".join(
                 [
                     "import importlib.util",
+                    "import sys",
                     "from pathlib import Path",
                     "from exercise_runtime_support.exercise_framework import resolve_exercise_notebook_path",
                     "module_path = (",
@@ -734,6 +735,7 @@ class TestEndToEndDryRun:
                     "spec = importlib.util.spec_from_file_location('repo_ex004_test_module', module_path)",
                     "assert spec is not None and spec.loader is not None",
                     "module = importlib.util.module_from_spec(spec)",
+                    "sys.modules[spec.name] = module",
                     "spec.loader.exec_module(module)",
                     "assert resolve_exercise_notebook_path('ex004_sequence_debug_syntax') == expected",
                     "assert module._exercise_ast(1)",
@@ -845,7 +847,7 @@ class TestEndToEndDryRun:
                         "assert source_expectations.exists()",
                         "assert module_path.resolve() != source_expectations",
                         "assert module.EX004_MIN_EXPLANATION_LENGTH == 50",
-                        "assert module.EX004_EXPECTED_SINGLE_LINE[1] == 'Hello World!'",
+                        "assert module.EX004_EXPECTED_OUTPUTS[1] == 'Hello World!'",
                     ]
                 ),
             ]

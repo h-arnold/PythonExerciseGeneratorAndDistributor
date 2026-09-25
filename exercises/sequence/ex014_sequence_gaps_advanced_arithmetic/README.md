@@ -3,7 +3,7 @@
 ## Student prompt
 - Open ``notebooks/student.ipynb`` in this exercise folder.
 - Write your solution in the notebook cell tagged ``exercise1`` (or ``exercise2``, …).
-- From the repository root, run ``uv run pytest -q exercises/sequence/ex014_sequence_gaps_advanced_arithmetic/tests/test_ex014_sequence_gaps_advanced_arithmetic.py`` until all tests pass.
+- From the repository root, run ``uv run python scripts/run_pytest_variant.py --variant student exercises/sequence/ex014_sequence_gaps_advanced_arithmetic/tests/test_ex014_sequence_gaps_advanced_arithmetic.py -q`` until all tests pass.
 - Find the `# YOUR CODE HERE` comment in each tagged cell and write the missing line(s) of code in its place.
 
 ## Teacher notes

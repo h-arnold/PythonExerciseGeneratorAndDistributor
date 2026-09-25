@@ -16,7 +16,7 @@
 
 ## Usage Summary
 
-Students open `notebooks/student.ipynb` in this exercise folder, update the tagged `exerciseN` cells with the required casts, and from the repository root run `uv run pytest -q exercises/sequence/ex006_sequence_modify_casting/tests/test_ex006_sequence_modify_casting.py` until each conversion and output check passes.
+Students open `notebooks/student.ipynb` in this exercise folder, update the tagged `exerciseN` cells with the required casts, and from the repository root run `uv run python scripts/run_pytest_variant.py --variant student exercises/sequence/ex006_sequence_modify_casting/tests/test_ex006_sequence_modify_casting.py -q` until each conversion, data-flow, and output check passes. To validate the instructor notebook explicitly, run `uv run python scripts/run_pytest_variant.py --variant solution exercises/sequence/ex006_sequence_modify_casting/tests/test_ex006_sequence_modify_casting.py -q`.
 
 ## Teaching Notes
 

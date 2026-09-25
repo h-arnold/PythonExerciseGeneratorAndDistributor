@@ -19,4 +19,4 @@
 
 - Created: 2026-02-11
 - Focus: Casting between `str`, `int`, and `float`, and spotting where arithmetic or concatenation breaks.
-- Keep students on simple, step-by-step conversions rather than compact one-liners.
+- Model simple, step-by-step conversions; equivalent compact casts such as `int(input(...))` are also accepted when the casted value feeds the final calculation.

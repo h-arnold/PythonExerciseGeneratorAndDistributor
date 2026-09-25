@@ -4,10 +4,6 @@ import ast
 
 import pytest
 
-from exercise_runtime_support.exercise_framework.expectations_helpers import (
-    is_valid_explanation,
-)
-from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
@@ -15,14 +11,17 @@ from exercise_runtime_support.exercise_framework import (
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+from exercise_runtime_support.exercise_framework.expectations_helpers import (
+    is_valid_explanation,
+)
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 _EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
 construct_checks = load_exercise_test_module(
-    _EX007_EXERCISE_KEY, "construct_checks")
+    _EX007_EXERCISE_KEY,
+    "construct_checks",
+)
 ex007 = load_exercise_test_module(_EX007_EXERCISE_KEY, "expectations")
-has_binop = construct_checks.has_binop
-has_call = construct_checks.has_call
-interactive_construct_issues = construct_checks.interactive_construct_issues
 _CACHE = RuntimeCache()
 
 
@@ -67,13 +66,25 @@ def _exercise_explanation(exercise_no: int) -> str:
     )
 
 
+def _assert_static_constructs(exercise_no: int) -> None:
+    tree = _exercise_ast(exercise_no)
+    rules = ex007.EX007_STATIC_CONSTRUCTS[exercise_no]
+    issues = construct_checks.static_construct_issues(
+        tree,
+        required_calls=rules.get("required_calls", ()),
+        required_ops=rules.get("required_ops", ()),
+        forbidden_ops=rules.get("forbidden_ops", ()),
+        relevant_names=rules.get("relevant_names", ()),
+    )
+    assert not issues, f"Exercise {exercise_no}: {' '.join(issues)}"
+
+
 def _assert_interactive_constructs(exercise_no: int) -> None:
     tree = _exercise_ast(exercise_no)
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
-    issues = interactive_construct_issues(
+    issues = construct_checks.interactive_construct_issues(
         tree,
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
@@ -97,8 +108,7 @@ def test_exercise1_logic() -> None:
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct() -> None:
-    tree = _exercise_ast(1)
-    assert has_call(tree, "str")
+    _assert_static_constructs(1)
 
 
 @pytest.mark.task(taskno=1)
@@ -118,8 +128,7 @@ def test_exercise2_logic() -> None:
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_construct() -> None:
-    tree = _exercise_ast(2)
-    assert has_call(tree, "str")
+    _assert_static_constructs(2)
 
 
 @pytest.mark.task(taskno=2)
@@ -159,9 +168,7 @@ def test_exercise4_logic() -> None:
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_construct() -> None:
-    tree = _exercise_ast(4)
-    assert has_binop(tree, ast.Div)
-    assert not has_binop(tree, ast.FloorDiv)
+    _assert_static_constructs(4)
 
 
 @pytest.mark.task(taskno=4)

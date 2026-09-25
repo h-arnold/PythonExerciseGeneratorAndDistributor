@@ -1,4 +1,9 @@
-"""Exercise-local expectations for ex010 sequence debug f-strings."""
+"""Canonical expectations for ex010 sequence debug f-strings.
+
+Static and interactive outputs are kept in separate maps.  The derived map at
+the end is only a catalogue for tooling; it is not a second declaration of
+interactive outputs.
+"""
 
 from __future__ import annotations
 
@@ -22,6 +27,7 @@ EX010_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
     "...",
 )
 
+# Only non-interactive parts belong in the static output map.
 EX010_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
     1: "Welcome, Sam!",
     2: "My pet is a rabbit!",
@@ -33,13 +39,47 @@ EX010_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {
     10: "Total cost for 6 pencils: £3.0",
 }
 
-EX010_INPUT_CASES: Final[dict[int, Ex010InputCase]] = {
-    5: {
-        "inputs": ["popcorn"],
-        "expected_output": "Type your favourite snack: You chose popcorn for break time.",
-    },
-    6: {
-        "inputs": ["Aisha", "Leeds"],
-        "expected_output": "Enter your first name: Enter your town: Hello Aisha from Leeds.",
+# Each interactive part has two deterministic cases.  The complete transcript
+# includes each prompt and the final response, so a hard-coded first answer
+# cannot satisfy the exercise.
+EX010_INPUT_CASES: Final[dict[int, tuple[Ex010InputCase, ...]]] = {
+    5: (
+        {
+            "inputs": ["popcorn"],
+            "expected_output": (
+                "Type your favourite snack: You chose popcorn for break time."
+            ),
+        },
+        {
+            "inputs": ["carrot"],
+            "expected_output": (
+                "Type your favourite snack: You chose carrot for break time."
+            ),
+        },
+    ),
+    6: (
+        {
+            "inputs": ["Aisha", "Leeds"],
+            "expected_output": (
+                "Enter your first name: Enter your town: Hello Aisha from Leeds."
+            ),
+        },
+        {
+            "inputs": ["Jordan", "Oxford"],
+            "expected_output": (
+                "Enter your first name: Enter your town: Hello Jordan from Oxford."
+            ),
+        },
+    ),
+}
+
+# The quality verifier scans for an output catalogue covering all parts.  Keep
+# it derived from the canonical maps above so interactive cases are not
+# duplicated into (or misclassified as) the static map.
+EX010_DERIVED_OUTPUTS: Final[dict[int, str]] = {
+    **EX010_EXPECTED_STATIC_OUTPUTS,
+    **{
+        exercise_no: cases[0]["expected_output"]
+        for exercise_no, cases in EX010_INPUT_CASES.items()
     },
 }

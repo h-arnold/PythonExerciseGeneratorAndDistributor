@@ -29,8 +29,8 @@ Created a 10-part **modification** exercise set for absolute beginners learning 
 - **Tests in this exercise folder**: [tests/test_ex002_sequence_modify_basics.py](tests/test_ex002_sequence_modify_basics.py)
   - 30 test cases total (3 per exercise)
   - Captures stdout to verify print output
-  - Smoke tests verify all cells execute
-  - Behavioral tests verify correct modifications
+  - Three checks per exercise verify logic, exact formatting, and required constructs
+  - Repository-only reporting and task-marker checks verify test infrastructure
 
 - **Exercise folder**: [exercises/sequence/ex002_sequence_modify_basics/](./)
   - README.md with student/teacher notes
@@ -75,7 +75,7 @@ Students:
 2. Read each exercise description
 3. Modify the code in tagged cells
 4. Run cells to see output
-5. From the repository root, run `uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` to verify
+5. From the repository root, run `PYTUTOR_ACTIVE_VARIANT=student uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` to verify
 
 Teachers:
 
