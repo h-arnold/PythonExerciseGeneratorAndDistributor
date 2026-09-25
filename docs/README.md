@@ -24,8 +24,7 @@ If you are new to this project, start with one of these two guides:
 | [Exercise Generation with Copilot](teachers/exercise-generation.md) | Detailed reference for using the Exercise Generation Copilot agent to create new exercises. |
 | [How to Use the Template Repo CLI](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
 | [Construct Template Repos](teachers/construct-template-repos.md) | Auto-generated index of per-construct template repositories, updated on each push to main. |
-| [Template Repo CLI Reference](../developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
-| [GitHub Classroom Autograding Guide](../developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
+| [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
 
 ---
 
@@ -46,16 +45,15 @@ If you are new to this project, start with one of these two guides:
 
 | Document | What it covers |
 | --- | --- |
-| [Development Guide](developers/development.md) | Contributor guide — architecture, grading internals, autograding dev workflow. |
+| [Development Guide](developers/development.md) | Contributor guide — architecture and grading internals. |
 | [Execution Model](developers/execution-model.md) | **Canonical contract** — test discovery, runtime imports, variant selection, source-to-export mapping. |
 | [Project Structure](developers/project-structure.md) | Directory layout, naming conventions, tagged cell system, parallel notebook sets. |
 | [Testing Framework](developers/testing-framework.md) | Infrastructure testing — testing the codebase itself (scaffolding, grader, CLI). |
+| [Classroom 50 Autograder](developers/classroom50-autograder.md) | Generic teacher-side grader and bundle builder — scoring contract, CLI interfaces, Selection pilot. |
 | [Setup Guide](developers/setup.md) | Environment setup — prerequisites, uv sync, verification. |
 | [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
-| [GitHub Classroom Autograding Guide](developers/github-classroom-autograding-guide.md) | GitHub Classroom autograding integration — workflow setup, Base64 payloads, reporter wiring. |
-| [Docker & Devcontainer Setup](developers/docker-devcontainer-setup.md) | Dockerfile, devcontainer configs, GitHub Actions image build. |
+| [Docker & Devcontainer Setup](developers/docker-devcontainer-setup.md) | Devcontainer configs, upstream base image, and Jupyter kernel watchdog. |
 | [Jupyter Kernel Watchdog](developers/jupyter-watchdog.md) | Kernel health monitor for VS Code devcontainers — detects and kills unresponsive Jupyter kernels so VS Code can restart them. |
-| [Autograding CLI Reference](developers/autograding-cli.md) | Technical reference for `build_autograde_payload.py` — CLI args, outputs, CI usage. |
 
 ---
 

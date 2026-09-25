@@ -34,7 +34,7 @@ Contract:
 - `exercise_runtime_support.notebook_grader` is the lower-level notebook parsing and execution layer.
 - Repository tests and exported template tests must import runtime helpers through this shared package, not via ad hoc relative copies.
 
-Rationale: one import contract keeps local development, CI, and exported classroom repositories behaviourally aligned.
+Rationale: one import contract keeps local development and exported classroom repositories behaviourally aligned.
 
 ## 3) Variant selection contract (`PYTUTOR_ACTIVE_VARIANT` and `--variant`)
 
@@ -42,7 +42,7 @@ Variant selection chooses which notebook surface (`student` or `solution`) is ex
 
 Contract:
 
-- Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py` and `scripts/build_autograde_payload.py`).
+- Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py`).
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `solution` when no variant is provided.
 
@@ -66,10 +66,22 @@ Contract:
 
 The mapping layer must preserve exercise identity by `exercise_key` and must not redefine identity from flattened path names.
 
+## 5) Classroom 50 grading-bundle contract
+
+Teacher-side grading uses a teacher-built bundle, not the exported student template:
+
+- `scripts/build_classroom50_bundle.py` copies hidden exercise tests and a bundle-local `exercise_runtime_support/` copy into `<bundle>/`, plus the generic `autograder.py` at the bundle root.
+- The bundle is the grader's only discovery root: tests are collected solely from `<bundle>/exercises/<construct>/<exercise_key>/tests/`, never from the student checkout's `exercises/.../tests/`.
+- The bundle root is prepended to `sys.path` ahead of the student checkout, so `exercise_runtime_support` resolves to the bundle copy while `exercise_metadata` resolves to the student checkout. The grader verifies these package origins before grading.
+- Graded runs force `PYTUTOR_ACTIVE_VARIANT=student`; the solution variant is reserved for the local dry run.
+
+See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule, CLI interfaces, and result contract.
+
 ## Current status
 
 - **Canonical now**: exercise identity, exercise-local notebooks and tests, metadata-backed runtime catalogue resolution, variant semantics (`--variant`, `PYTUTOR_ACTIVE_VARIANT`), and shared runtime import contract.
 - **Packaged runtime now**: exported repositories include the metadata package, per-exercise `exercise.json`, canonical student notebooks, and canonical exercise-local tests.
+- **Teacher-side grading now**: a separately built bundle (generic `autograder.py` plus hidden test copies and a bundle-local `exercise_runtime_support/` copy) is the graded surface. Exported templates ship starter code only and contain no grading sources or hidden tests.
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 - **Template CLI contract**: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
 

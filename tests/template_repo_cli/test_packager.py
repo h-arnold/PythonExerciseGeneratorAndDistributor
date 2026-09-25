@@ -8,7 +8,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -17,8 +17,8 @@ from scripts.template_repo_cli.core.collector import ExerciseFiles
 if TYPE_CHECKING:
     from scripts.template_repo_cli.core.packager import TemplatePackager
 
-ExerciseFileMap: TypeAlias = dict[str, ExerciseFiles]
-ExerciseFileMapBuilder: TypeAlias = Callable[..., ExerciseFileMap]
+type ExerciseFileMap = dict[str, ExerciseFiles]
+type ExerciseFileMapBuilder = Callable[..., ExerciseFileMap]
 
 
 def _assert_base_template_files(temp_dir: Path) -> None:
@@ -32,18 +32,6 @@ def _assert_base_template_files(temp_dir: Path) -> None:
     assert scripts_dir.is_dir()
 
 
-def _assert_autograde_script_copy(repo_root: Path, temp_dir: Path) -> None:
-    """Verify copying behaviour for the autograde payload builder script."""
-
-    autograde_src = repo_root / "scripts" / "build_autograde_payload.py"
-    autograde_dest = temp_dir / "scripts" / "build_autograde_payload.py"
-    if autograde_src.exists():
-        assert autograde_dest.exists()
-        assert autograde_dest.read_text() == autograde_src.read_text()
-    else:
-        assert not autograde_dest.exists()
-
-
 def _assert_jupyter_watchdog_copy(repo_root: Path, temp_dir: Path) -> None:
     """Verify copying behaviour for the Jupyter kernel healthcheck watchdog."""
 
@@ -52,18 +40,6 @@ def _assert_jupyter_watchdog_copy(repo_root: Path, temp_dir: Path) -> None:
     assert watchdog_src.exists(), "jupyter_watchdog.py source must exist in the repo"
     assert watchdog_dest.exists()
     assert watchdog_dest.read_text() == watchdog_src.read_text()
-
-
-def _assert_autograde_plugin_copy(repo_root: Path, temp_dir: Path) -> None:
-    """Verify copying behaviour for the autograde plugin module."""
-
-    plugin_src = repo_root / "tests" / "autograde_plugin.py"
-    plugin_dest = temp_dir / "tests" / "autograde_plugin.py"
-    if plugin_src.exists():
-        assert plugin_dest.exists()
-        assert plugin_dest.read_text() == plugin_src.read_text()
-    else:
-        assert not plugin_dest.exists()
 
 
 def _assert_no_snapshot_artifacts(root: Path, *, label: str) -> None:
@@ -76,13 +52,7 @@ def _assert_no_snapshot_artifacts(root: Path, *, label: str) -> None:
 def _assert_required_test_infrastructure_copy(repo_root: Path, temp_dir: Path) -> None:
     """Verify required test infrastructure files, directories, and runtime package are copied."""
 
-    required_files = (
-        "__init__.py",
-        "autograde_plugin.py",
-        "helpers.py",
-        "test_autograde_plugin.py",
-        "test_build_autograde_payload.py",
-    )
+    required_files = ("__init__.py",)
     required_directories = ("exercise_framework",)
 
     for filename in required_files:
@@ -212,10 +182,32 @@ class TestCopyFiles:
         template_packager.copy_template_base_files(temp_dir)
 
         _assert_base_template_files(temp_dir)
-        _assert_autograde_script_copy(repo_root, temp_dir)
         _assert_jupyter_watchdog_copy(repo_root, temp_dir)
-        _assert_autograde_plugin_copy(repo_root, temp_dir)
         _assert_required_test_infrastructure_copy(repo_root, temp_dir)
+        # Green contract: packaged templates ship no legacy reporter chain.
+        assert not (temp_dir / "scripts" / "build_autograde_payload.py").exists()
+        assert not (temp_dir / "tests" / "autograde_plugin.py").exists()
+        assert not (temp_dir / ".github" / "workflows" / "classroom.yml").exists()
+        packaged_pytest_ini = (temp_dir / "pytest.ini").read_text(encoding="utf-8")
+        assert "tests.autograde_plugin" not in packaged_pytest_ini
+
+    def test_copy_template_files_excludes_entire_github_tree(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+    ) -> None:
+        """Do not export any files from the template source .github tree."""
+        template_files_dir = temp_dir / "template_repo_files"
+        shutil.copytree(template_packager.template_files_dir, template_files_dir)
+        github_dir = template_files_dir / ".github"
+        (github_dir / "workflows").mkdir(parents=True)
+        (github_dir / "settings.yml").write_text("settings\n", encoding="utf-8")
+        (github_dir / "workflows" / "checks.yml").write_text("checks\n", encoding="utf-8")
+        template_packager.template_files_dir = template_files_dir
+
+        template_packager.copy_template_base_files(temp_dir / "workspace")
+
+        assert not (temp_dir / "workspace" / ".github").exists()
 
     def test_required_test_directories_exclude_non_runtime_artefacts(
         self,
@@ -263,48 +255,6 @@ class TestPackageIntegrity:
         is_valid = template_packager.validate_package(temp_dir)
         assert not is_valid
 
-    def test_package_integrity_missing_autograde_script(
-        self,
-        template_packager: TemplatePackager,
-        temp_dir: Path,
-        build_exercise_file_map: ExerciseFileMapBuilder,
-    ) -> None:
-        """Test validation fails without Classroom autograde script."""
-
-        files = build_exercise_file_map("ex002_sequence_modify_basics")
-
-        template_packager.copy_exercise_files(temp_dir, files)
-        template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
-
-        autograde_path = temp_dir / "scripts" / "build_autograde_payload.py"
-        if not autograde_path.exists():
-            pytest.skip("Autograde script not available in template copy")
-
-        autograde_path.unlink()
-        assert not template_packager.validate_package(temp_dir)
-
-    def test_package_integrity_missing_autograde_plugin(
-        self,
-        template_packager: TemplatePackager,
-        temp_dir: Path,
-        build_exercise_file_map: ExerciseFileMapBuilder,
-    ) -> None:
-        """Test validation fails without Classroom autograde plugin."""
-
-        files = build_exercise_file_map("ex002_sequence_modify_basics")
-
-        template_packager.copy_exercise_files(temp_dir, files)
-        template_packager.copy_template_base_files(temp_dir)
-        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
-
-        plugin_path = temp_dir / "tests" / "autograde_plugin.py"
-        if not plugin_path.exists():
-            pytest.skip("Autograde plugin not available in template copy")
-
-        plugin_path.unlink()
-        assert not template_packager.validate_package(temp_dir)
-
     def test_package_integrity_missing_jupyter_watchdog(
         self,
         template_packager: TemplatePackager,
@@ -320,7 +270,9 @@ class TestPackageIntegrity:
         template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
 
         watchdog_path = temp_dir / "scripts" / "jupyter_watchdog.py"
-        assert watchdog_path.exists(), "jupyter_watchdog.py must be copied into the template workspace"
+        assert watchdog_path.exists(), (
+            "jupyter_watchdog.py must be copied into the template workspace"
+        )
 
         watchdog_path.unlink()
         assert not template_packager.validate_package(temp_dir)
@@ -496,15 +448,7 @@ class TestPackageIntegrity:
 
     @pytest.mark.parametrize(
         "missing_path",
-        [
-            pytest.param("tests/exercise_framework", id="exercise-framework"),
-            pytest.param("tests/helpers.py", id="helpers"),
-            pytest.param("tests/test_autograde_plugin.py", id="autograde-test"),
-            pytest.param(
-                "tests/test_build_autograde_payload.py",
-                id="payload-test",
-            ),
-        ],
+        [pytest.param("tests/exercise_framework", id="exercise-framework")],
     )
     def test_package_integrity_missing_required_test_infrastructure(
         self,
@@ -651,6 +595,7 @@ class TestPackageIntegrity:
             f"stderr:\n{default_discovery_result.stderr}"
         )
 
+
 class TestPackageCleanup:
     """Tests for cleanup on error."""
 
@@ -686,6 +631,86 @@ class TestPackageOptions:
             temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks/solution.ipynb"
         ).exists()
 
+    def test_selection_export_excludes_grading_and_authoring_surfaces_from_exercises_tree(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        repo_root: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Selection exports retain visible checks but never package grading sources."""
+        selection_keys = [
+            "ex001_selection_modify_basics",
+            "ex002_selection_debug_if_then_else",
+            "ex003_selection_modify_elif_boundaries",
+            "ex004_selection_modify_logical_operators",
+        ]
+        files = build_exercise_file_map(*selection_keys)
+
+        # Exercise-local tests are the generic packager input.  These synthetic
+        # names model forbidden assets if an author accidentally places them
+        # beside the visible self-checks; the packager must not copy them.
+        source_tests = temp_dir / "selection-test-fixture"
+        first_key = selection_keys[0]
+        canonical_test = files[first_key]["test"]
+        shutil.copytree(canonical_test.parent, source_tests)
+        forbidden_names = (
+            "autograder.py",
+            "build_classroom50_bundle.py",
+            "build_autograde_payload.py",
+            "classroom.yml",
+            "autograde.yaml",
+            "reporter.py",
+            "plugin.py",
+            "payload.py",
+            "README.md",
+            "OVERVIEW.md",
+            "OrderOfTeaching.md",
+        )
+        for filename in forbidden_names:
+            (source_tests / filename).write_text("forbidden\n", encoding="utf-8")
+
+        first_files = files[first_key].copy()
+        first_files["test"] = source_tests / canonical_test.name
+        files[first_key] = first_files
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_construct_resources(temp_dir, selection_keys)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Selection", selection_keys)
+
+        exercises_root = temp_dir / "exercises"
+        assert all(path.name != "solution.ipynb" for path in exercises_root.rglob("*"))
+        assert all(path.name not in forbidden_names for path in exercises_root.rglob("*"))
+
+        for exercise_key in selection_keys:
+            exercise_dir = next(
+                path
+                for path in (exercises_root / "selection").iterdir()
+                if path.name == exercise_key
+            )
+            assert (exercise_dir / "exercise.json").is_file()
+            assert (exercise_dir / "notebooks" / "student.ipynb").is_file()
+            assert not (exercise_dir / "notebooks" / "solution.ipynb").exists()
+            assert (exercise_dir / "tests").is_dir()
+            expected_test_names = {
+                path.name
+                for path in (
+                    repo_root / "exercises" / "selection" / exercise_key / "tests"
+                ).iterdir()
+                if path.is_file() and not path.name.startswith("test_repo_")
+            }
+            exported_test_names = {path.name for path in (exercise_dir / "tests").iterdir()}
+            assert exported_test_names == expected_test_names
+
+        assert (exercises_root / "selection" / "additional-resources").is_dir()
+        assert not (temp_dir / ".github").exists()
+        assert not (temp_dir / ".github" / "workflows" / "classroom.yml").exists()
+        assert not (temp_dir / "autograde.yaml").exists()
+        assert not (temp_dir / "scripts" / "build_classroom50_bundle.py").exists()
+        assert not (temp_dir / "scripts" / "build_autograde_payload.py").exists()
+        assert not (temp_dir / "scripts" / "autograder.py").exists()
+
 
 class TestPackageMultipleExercises:
     """Tests for packaging multiple exercises."""
@@ -710,3 +735,39 @@ class TestPackageMultipleExercises:
         assert (
             temp_dir / "exercises/sequence/ex003_sequence_modify_variables/notebooks/student.ipynb"
         ).exists()
+
+
+class TestPostRemovalPackagingContract:
+    """Packaged templates neither require nor ship the removed reporter chain."""
+
+    def test_packager_no_longer_requires_legacy_autograde_sources(
+        self, template_packager: TemplatePackager
+    ) -> None:
+        """Packager requirement tuples must drop the legacy reporter chain."""
+        assert "build_autograde_payload.py" not in template_packager.REQUIRED_SCRIPTS
+        assert "autograde_plugin.py" not in template_packager.REQUIRED_TEST_FILES
+        assert "test_autograde_plugin.py" not in template_packager.REQUIRED_TEST_FILES
+        assert "test_build_autograde_payload.py" not in template_packager.REQUIRED_TEST_FILES
+
+    def test_packaged_template_contains_no_legacy_autograde_surfaces_and_validates(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Canonical exercise-local package validates without the legacy chain."""
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        assert not (temp_dir / ".github" / "workflows" / "classroom.yml").exists()
+        assert not (temp_dir / "scripts" / "build_autograde_payload.py").exists()
+        assert not (temp_dir / "tests" / "autograde_plugin.py").exists()
+        packaged_pytest_ini = (temp_dir / "pytest.ini").read_text(encoding="utf-8")
+        assert "tests.autograde_plugin" not in packaged_pytest_ini
+        assert (temp_dir / "exercises/sequence/ex002_sequence_modify_basics/tests").is_dir()
+        assert (
+            temp_dir / "exercises/sequence/ex002_sequence_modify_basics/notebooks/student.ipynb"
+        ).is_file()
+        assert template_packager.validate_package(temp_dir)

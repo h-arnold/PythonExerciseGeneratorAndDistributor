@@ -1,4 +1,4 @@
-"""Template packager, including Classroom autograding support files."""
+"""Template packager for Classroom 50 starter-code templates."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from . import _helpers, _readme
 
 
 class TemplatePackager:
-    """Package templates for GitHub."""
+    """Package Classroom 50 starter-code templates."""
 
     _CONSTRUCT_DIR_DEPTH = 1
     _EXERCISE_DIR_DEPTH = 2
@@ -29,15 +29,21 @@ class TemplatePackager:
         "__pycache__",
         "*.pyc",
         "test_repo_*.py",
+        "autograder.py",
+        "build_classroom50_bundle.py",
+        "build_autograde_payload.py",
+        "classroom.yml",
+        "autograde.yaml",
+        "reporter.py",
+        "plugin.py",
+        "payload.py",
+        "README.md",
+        "OVERVIEW.md",
+        "OrderOfTeaching.md",
+        "workflows",
     )
 
-    REQUIRED_TEST_FILES: tuple[str, ...] = (
-        "__init__.py",
-        "autograde_plugin.py",
-        "helpers.py",
-        "test_autograde_plugin.py",
-        "test_build_autograde_payload.py",
-    )
+    REQUIRED_TEST_FILES: tuple[str, ...] = ("__init__.py",)
 
     REQUIRED_TEST_DIRECTORIES: tuple[str, ...] = ("exercise_framework",)
 
@@ -47,10 +53,7 @@ class TemplatePackager:
     )
 
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
-    REQUIRED_SCRIPTS: tuple[str, ...] = (
-        "build_autograde_payload.py",
-        "jupyter_watchdog.py",
-    )
+    REQUIRED_SCRIPTS: tuple[str, ...] = ("jupyter_watchdog.py",)
     _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = (
         "notebooks",
         "tests",
@@ -142,8 +145,8 @@ class TemplatePackager:
 
         For each unique construct derived from the exercise keys, copies the
         ``additional-resources/`` directory from the source repo into the
-        workspace if it exists. Constructs without this folder are silently
-        skipped.
+        workspace if it exists, filtering out grading and authoring-only files.
+        Constructs without this folder are silently skipped.
 
         Args:
             workspace: Workspace directory.
@@ -159,17 +162,21 @@ class TemplatePackager:
                 continue
             src = self.repo_root / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
             dest = workspace / "exercises" / construct / self._CONSTRUCT_RESOURCE_DIRNAME
-            safe_copy_directory(src, dest)
+            safe_copy_directory(
+                src,
+                dest,
+                ignore_patterns=self.EXERCISE_TEST_COPY_EXCLUDE_PATTERNS,
+            )
 
     def _copy_directory(self, dirname: str, workspace: Path) -> None:
-        """Copy a template directory if it exists.
+        """Copy an allowed template directory if it exists.
 
         Args:
             dirname: Name of the directory to copy.
             workspace: Destination workspace directory.
         """
         src = self.template_files_dir / dirname
-        if src.exists():
+        if src.exists() and dirname != ".github":
             safe_copy_directory(src, workspace / dirname)
 
     def _get_missing_required_sources(self) -> list[Path]:
@@ -179,7 +186,6 @@ class TemplatePackager:
             self.template_files_dir / "pyproject.toml",
             self.template_files_dir / "pytest.ini",
             self.template_files_dir / ".gitignore",
-            self.template_files_dir / ".github" / "workflows" / "classroom.yml",
         ]
         required_paths.extend(
             self.repo_root / "scripts" / script for script in self.REQUIRED_SCRIPTS
@@ -401,12 +407,9 @@ class TemplatePackager:
             workspace / "pyproject.toml",
             workspace / "pytest.ini",
             workspace / "README.md",
-            workspace / ".github" / "workflows" / "classroom.yml",
             workspace / "exercise_metadata" / "__init__.py",
         ]
-        required_files.extend(
-            workspace / "scripts" / script for script in self.REQUIRED_SCRIPTS
-        )
+        required_files.extend(workspace / "scripts" / script for script in self.REQUIRED_SCRIPTS)
 
         tests_dir = workspace / "tests"
         required_files.extend(

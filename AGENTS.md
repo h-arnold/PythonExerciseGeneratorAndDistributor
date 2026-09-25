@@ -7,7 +7,7 @@ You are assisting in a classroom repository of Python exercises for secondary sc
 
 ## Project Overview
 
-This repository provides notebook-based Python exercises with automated grading via pytest, designed for GitHub Classroom integration.
+This repository provides notebook-based Python exercises with automated grading via pytest, distributed as Classroom 50 template repositories hosted on GitHub.
 
 **Core concept**: Students work in Jupyter notebooks, writing code in metadata-tagged cells. The grading system extracts and executes these tagged cells using pytest, enabling automated feedback.
 
@@ -24,6 +24,7 @@ This repository provides notebook-based Python exercises with automated grading 
 - `docs/developers/project-structure.md` — project layout and file conventions
 - `docs/developers/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
 - `docs/developers/testing-framework.md` — how the grading and test system works
+- `docs/developers/classroom50-autograder.md` — generic Classroom 50 grader/builder contract, CLI interfaces, and scoring
 - `docs/exercise-agents/exercise-generation-cli.md` — CLI for scaffolding new exercises
 - `docs/developers/setup.md` — installation and environment setup
 - `docs/developers/development.md` — contributor and development guidelines
@@ -43,6 +44,8 @@ tests/                 # Shared pytest suites and repository-level integration t
   notebook_grader.py   # Core grading framework
   test_*.py            # Shared/integration tests, not canonical per-exercise authoring surfaces
 scripts/               # Automation utilities
+  autograder.py        # Generic Classroom 50 bundle grader (teacher-side; never shipped in templates)
+  build_classroom50_bundle.py  # Builds a teacher-side grading bundle from a selected exercise set
   new_exercise.py      # Exercise scaffolding tool
   jupyter_watchdog.py  # Kernel health watchdog (bundled in student template repos)
   run_pytest_variant.py# Explicit student/solution variant test runner
@@ -223,6 +226,12 @@ Resolver contract note:
 When developing or validating repository-side exercises, run the canonical exercise-local tests directly with `uv run python scripts/run_pytest_variant.py --variant solution exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py -q`, or use `uv run ./scripts/verify_solutions.sh -q` for a broader solution pass.
 
 See Testing Framework: `docs/developers/testing-framework.md` for details.
+
+## Classroom 50 Grading Bundle
+
+Teacher-side grading uses the generic `scripts/build_classroom50_bundle.py` builder to assemble a bundle (hidden test copies plus a bundle-local `exercise_runtime_support/` copy) and the bundle-local `autograder.py` to grade a student checkout and write a `classroom50/result/v1` payload. Templates ship starter code only: grading sources and hidden tests must never appear in a student checkout or exported template. The grader discovers only bundled hidden tests, forces `PYTUTOR_ACTIVE_VARIANT=student`, and names each case `<exercise_key>::<leaf-nodeid>`.
+
+See `docs/developers/classroom50-autograder.md` for the contract, CLI interfaces, and Selection pilot scoring.
 
 ## Calling Sub-Agents
 

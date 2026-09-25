@@ -14,7 +14,7 @@ This document is the canonical reference for testing student notebook exercises.
 | Reviewing existing tests | [Core Testing Rules](#core-testing-rules), [Scoring & Test Structure](#scoring--test-structure), [Patterns & Anti-Patterns](#patterns--anti-patterns) |
 | Adding a self-check cell | [Self-Check Cells](#self-check-cells) entirely |
 | Understanding the framework API | [Technical Reference](#technical-reference-exercise-framework) |
-| Running tests locally or in CI | [Running Tests](#running-tests) |
+| Running tests locally | [Running Tests](#running-tests) |
 
 ### Non-negotiable rules — read these first
 
@@ -168,24 +168,24 @@ Examples:
 
 ## Scoring & Test Structure
 
-We group tests using `@pytest.mark.task(taskno=N)` to align with the GitHub Classroom runner.
+We group tests using `@pytest.mark.task(taskno=N)` to align with the classroom grading runner.
 
 ### Task Markers
 
 - Annotate every grading test with `@pytest.mark.task(taskno=<int>)`.
 - The optional `name="Short title"` argument overrides the label surfaced to students.
-- Reuse the same `taskno` for related criteria (logic, formatting, construct checks). Classroom totals the scores per task number, so consistency across files is important when exercises span multiple modules.
+- Reuse the same `taskno` for related criteria (logic, formatting, construct checks). The grader totals the scores per task number, so consistency across files is important when exercises span multiple modules.
 - If a test omits the `task` marker, the plugin records it with `task=None`. These tests still count for one point but appear in the "Ungrouped" bucket. Use this sparingly (for infrastructure smoke tests, for example).
 
 ### Scoring Model: One Test, One Point
 
-The autograde plugin assigns one point per collected test. Keep each assertion focused on a single learning objective so Classroom feedback remains clear.
+The generic autograder model assigns one point per passing pytest case. Keep each assertion focused on a single learning objective so classroom feedback remains clear.
 
 ### Authoring Guidance
 
 - Prefer many small tests over one large test.
 - Avoid `pytest.skip`, `xfail`, or dynamically generated param ids that obscure the student-facing label.
-- Keep failure messages concise; the plugin truncates long output, so craft assertions with informative `assert ... , "Helpful feedback"` messages.
+- Keep failure messages concise and craft assertions with informative `assert ... , "Helpful feedback"` messages.
 
 ### Test Count Guidelines
 
@@ -659,7 +659,7 @@ Before considering an exercise complete, verify:
 
 ## Technical Reference: Exercise Framework
 
-The testing framework lives under [tests/exercise_framework/](../tests/exercise_framework/).
+The testing framework lives under [tests/exercise_framework/](../../tests/exercise_framework/).
 Use the runtime helpers and keep exercise-specific support modules beside the canonical exercise-local test file when authoring or updating tests.
 
 ### Core Modules and Responsibilities
@@ -671,7 +671,7 @@ Use the runtime helpers and keep exercise-specific support modules beside the ca
 - `reporting.py`: table formatting and error normalisation for student-facing output.
 - `api.py`: stable entry points for scripts and CLI checks.
 
-Exercise-specific expected outputs, prompt text, and input data should live under each exercise's canonical test directory, for example [exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py](../exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py).
+Exercise-specific expected outputs, prompt text, and input data should live under each exercise's canonical test directory, for example [exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py](../../exercises/sequence/ex002_sequence_modify_basics/tests/expectations.py).
 Treat those exercise-local modules as the canonical source of support data for that exercise.
 
 ### Runtime Helpers
@@ -787,7 +787,7 @@ assert ex002.EX002_EXPECTED_SINGLE_LINE
 
 ### Reporting Helpers
 
-Student-facing check tables should be generated via [tests/exercise_framework/reporting.py](../tests/exercise_framework/reporting.py)
+Student-facing check tables should be generated via [exercise_runtime_support/exercise_framework/reporting.py](../../exercise_runtime_support/exercise_framework/reporting.py)
 so formatting and error normalisation stay consistent across exercises.
 
 The per-exercise rows produced for ex002 (columns `Exercise`, `Check`, `Status`, `Error`) are now the same grouped output shown in the final check-your-answers cells for ex003 through ex007. Each self-check cell now imports `exercise_runtime_support.student_checker` and calls `run_notebook_checks('<exercise_key>')`, which runs the specialised printers so every check gets its own row instead of the older single summary entry that appeared for ex003 and later. Treat this grouped layout as the canonical student-facing summary for all multi-part notebooks.
@@ -811,13 +811,16 @@ uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_s
 uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -s
 ```
 
-### CI/CD
+### Local Validation
 
-Source-repository validation and exported Classroom autograding are different workflows.
+This repository has no GitHub Actions workflows and no CI runner; there is no `.github/` tree or workflow configuration. Validate changes locally against the authoring contract:
 
-- **`.github/workflows/tests.yml`**: Push/PR validation for the authoring repository. It checks pytest collection/discovery and then runs the explicit `scripts/run_pytest_variant.py --variant solution -q` pass.
-- **`.github/workflows/tests-solutions.yml`**: Manual maintainer rerun surface. It keeps the explicit `--variant solution` contract and accepts optional pytest args for targeted solution checks.
-- **`template_repo_files/.github/workflows/classroom.yml`**: Exported Classroom workflow. It runs `scripts/build_autograde_payload.py --variant student` against the metadata-backed student contract.
+```bash
+uv run pytest --collect-only -q
+uv run python scripts/run_pytest_variant.py --variant solution -q
+```
+
+`uv run pytest -q` runs the default solution-variant suite. Student-variant runs fail until the exercise is completed, which is expected. See [Infrastructure Testing Framework](../developers/testing-framework.md).
 
 ---
 

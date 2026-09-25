@@ -180,7 +180,7 @@ Pedagogy falls apart if the tool doesn't load. In a classroom, losing 15 minutes
 
 I use GitHub Codespaces to eliminate this friction entirely.
 
-* **Pre-baked Environment:** The repository uses a custom **devcontainer** (built on Python 3.11) with all specific extensions and libraries pre-installed. We skip the lengthy "downloading docker image... running pip install..." phase. Students click a link, and they drop into a fully working environment.  
+* **Pre-baked Environment:** The repository uses a custom **devcontainer** (built on Python 3.14) with all specific extensions and libraries pre-installed. We skip the lengthy "downloading docker image... running pip install..." phase. Students click a link, and they drop into a fully working environment.
 * **Curating the Interface:** VS Code is powerful, but that power creates visual noise. A standard install is cluttered with menus, sidebars, and pop-ups that distract novices. I use the devcontainer to inject strict VS Code settings presets that hide this complexity. By stripping away the UI clutter, we reduce the cognitive load, ensuring students are looking at their code, not getting lost in the IDE's settings menus.
 
 ### **2\. Eliminating Split Attention (Cognitive Load)**

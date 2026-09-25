@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from exercise_metadata.loader import load_exercise_metadata
 from exercise_metadata.registry import (
     build_display_label,
     build_exercise_catalogue,
@@ -21,10 +22,21 @@ CANONICAL_EXERCISE_ID = 4
 
 
 def _expected_all_keys() -> list[str]:
-    """Return all exercise keys from the filesystem, sorted by exercise_id."""
+    """Return all exercise keys from the filesystem, sorted by (exercise_id, construct).
+
+    Mirrors the production catalogue order in ``exercise_metadata.registry``:
+    the key is the canonical directory name and the sort fields come from
+    each exercise's ``exercise.json`` metadata via the production loader —
+    nothing is parsed out of the key string.
+    """
     exercises_root = Path(__file__).resolve().parents[1] / "exercises"
-    keys = [p.parent.name for p in exercises_root.rglob("exercise.json")]
-    return sorted(keys, key=lambda key: int(key.split("_")[0].removeprefix("ex")))
+    entries: list[tuple[int, str, str]] = []
+    for exercise_json_path in sorted(exercises_root.rglob("exercise.json")):
+        exercise_dir = exercise_json_path.parent
+        metadata = load_exercise_metadata(exercise_dir)
+        entries.append((metadata["exercise_id"], metadata["construct"], exercise_dir.name))
+    entries.sort(key=lambda entry: (entry[0], entry[1]))
+    return [exercise_key for _, _, exercise_key in entries]
 
 
 def test_build_exercise_registry_returns_all_exercises() -> None:

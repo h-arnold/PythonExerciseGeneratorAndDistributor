@@ -1,6 +1,6 @@
 ---
 description: Drafts SPEC.md, optional layout/workflow specs, and ACTION_PLAN.md for exercise-authoring, notebook, grading, packaging, and tooling changes
-mode: subagent
+mode: all
 model: nvidia/minimax-m3
 permission:
   read: allow

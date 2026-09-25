@@ -1,7 +1,7 @@
 ---
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
 mode: all
-model: opencode/hy3-free
+model: openai/gpt-5.6-luna
 permission:
   read: allow
   edit: allow
