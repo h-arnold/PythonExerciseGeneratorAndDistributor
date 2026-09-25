@@ -2,19 +2,23 @@ from __future__ import annotations
 
 import ast
 from collections.abc import Callable
+from typing import Final
 
 import pytest
 
-from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from exercise_runtime_support.exercise_framework import (
     RuntimeCache,
     extract_tagged_code,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
+from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 
 _EX003_EXERCISE_KEY = "ex003_sequence_modify_variables"
+_EXERCISE10: Final = 10
 ex003 = load_exercise_test_module(_EX003_EXERCISE_KEY, "expectations")
+_checker = load_exercise_test_module(_EX003_EXERCISE_KEY, "student_checker_support")
+_construct_checks = load_exercise_test_module(_EX003_EXERCISE_KEY, "construct_checks")
 
 
 def _tag(exercise_no: int) -> str:
@@ -22,7 +26,6 @@ def _tag(exercise_no: int) -> str:
 
 
 _CACHE = RuntimeCache()
-_EXPECTED_INPUT_CALLS = 2
 
 
 def _exercise_output(exercise_no: int) -> str:
@@ -94,33 +97,6 @@ def _print_uses_name(tree: ast.AST, name: str) -> bool:
     return False
 
 
-def _input_assigned_names(tree: ast.AST) -> set[str]:
-    names: set[str] = set()
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Assign):
-            continue
-        if not isinstance(node.value, ast.Call):
-            continue
-        if not isinstance(node.value.func, ast.Name) or node.value.func.id != "input":
-            continue
-        for target in node.targets:
-            if isinstance(target, ast.Name):
-                names.add(target.id)
-    return names
-
-
-def _has_input_call(tree: ast.AST) -> bool:
-    """Check if code contains at least one input() call."""
-    for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Name)
-            and node.func.id == "input"
-        ):
-            return True
-    return False
-
-
 def _has_string_concatenation_in_print(tree: ast.AST) -> bool:
     """Check if print() statement uses string concatenation (+)."""
     for node in ast.walk(tree):
@@ -134,18 +110,42 @@ def _has_string_concatenation_in_print(tree: ast.AST) -> bool:
     return False
 
 
+def _assert_interactive_construct(exercise_no: int) -> None:
+    """Require the complete ordered input-to-output data flow."""
+    issues = _checker.check_interactive_construct(exercise_no)
+    assert not issues, (
+        f"Exercise {exercise_no}: " + "; ".join(issues)
+    )
+
+
+def _assert_static_construct(exercise_no: int) -> None:
+    """Require a live top-level assignment-to-print data flow."""
+    issues = _construct_checks.static_construct_issues(
+        _exercise_ast(exercise_no),
+        exercise_no,
+        required_values=ex003.EX003_EXPECTED_ASSIGNMENTS.get(exercise_no),
+        required_fragments=(
+            ex003.EX003_EXERCISE10_REQUIRED_PHRASES if exercise_no == _EXERCISE10 else None
+        ),
+    )
+    assert not issues, (
+        f"Exercise {exercise_no}: " + "; ".join(issues)
+    )
+
+
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
     output = _exercise_output(1)
-    _assert_strict_output(1, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[1])
+    _assert_strict_output(1, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[1])
     assert "Hello from Python" not in output
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct() -> None:
+    _assert_static_construct(1)
     tree = _exercise_ast(1)
     constants = _string_constants(tree)
-    assert ex003.EX003_EXPECTED_STATIC_OUTPUT[1] in constants
+    assert ex003.EX003_EXPECTED_STATIC_OUTPUTS[1] in constants
     assert "Hello from Python!" not in constants, "Old greeting value should be removed"
     assert _assignment_matches(
         tree,
@@ -159,12 +159,13 @@ def test_exercise1_construct() -> None:
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic() -> None:
     output = _exercise_output(2)
-    _assert_strict_output(2, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[2])
+    _assert_strict_output(2, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[2])
     assert "math" not in output.lower()
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_construct() -> None:
+    _assert_static_construct(2)
     tree = _exercise_ast(2)
     constants = _string_constants(tree)
     assert "math" not in constants, "Old subject value should be removed"
@@ -182,12 +183,13 @@ def test_exercise2_construct() -> None:
 @pytest.mark.task(taskno=3)
 def test_exercise3_logic() -> None:
     output = _exercise_output(3)
-    _assert_strict_output(3, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[3])
+    _assert_strict_output(3, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[3])
     assert "pasta" not in output.lower()
 
 
 @pytest.mark.task(taskno=3)
 def test_exercise3_construct() -> None:
+    _assert_static_construct(3)
     tree = _exercise_ast(3)
     constants = _string_constants(tree)
     assert "pasta" not in constants, "Old food value should be removed"
@@ -203,150 +205,93 @@ def test_exercise3_construct() -> None:
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
-    fruit = "dragonfruit"
-    descriptor = "sweet"
-    output = _exercise_output_with_inputs(4, [fruit, descriptor])
-    lines = output.splitlines()
-    assert lines == [
-        ex003.EX003_EXPECTED_PROMPTS[4][0],
-        ex003.EX003_EXPECTED_PROMPTS[4][1],
-        ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(
-            value1=fruit, value2=descriptor),
-    ]
+    case = ex003.EX003_INPUT_EDGE_CASES[4]
+    output = _exercise_output_with_inputs(4, list(case["inputs"]))
+    _assert_strict_output(4, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_formatting() -> None:
-    output = _exercise_output_with_inputs(4, ["mango", "tropical"])
-    expected = (
-        f"{ex003.EX003_EXPECTED_PROMPTS[4][0]}\n"
-        f"{ex003.EX003_EXPECTED_PROMPTS[4][1]}\n"
-        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[4].format(value1='mango', value2='tropical')}"
-    )
-    assert output == expected
+    case = ex003.EX003_INPUT_CASES[4]
+    output = _exercise_output_with_inputs(4, list(case["inputs"]))
+    _assert_strict_output(4, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_construct() -> None:
-    tree = _exercise_ast(4)
-    constants = _string_constants(tree)
-    assert ex003.EX003_EXPECTED_PROMPTS[4][0] in constants
-    assert ex003.EX003_EXPECTED_PROMPTS[4][1] in constants
-    assert ex003.EX003_ORIGINAL_PROMPTS[4] not in constants, "Old prompt should be removed"
+    _assert_interactive_construct(4)
 
-    assert _has_input_call(tree), "Must use input() to capture user input"
-    input_names = _input_assigned_names(tree)
-    assert len(input_names) == _EXPECTED_INPUT_CALLS, (
-        f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
-    )
-    assert all(_print_uses_name(tree, name) for name in input_names), (
-        "Must use input variables in print"
-    )
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+
+@pytest.mark.task(taskno=4)
+def test_exercise4_semantic_sensitivity() -> None:
+    case = ex003.EX003_INPUT_SEMANTIC_CASES[4]
+    output = _exercise_output_with_inputs(4, list(case["inputs"]))
+    _assert_strict_output(4, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_logic() -> None:
-    town = "Newport"
-    country = "Wales"
-    output = _exercise_output_with_inputs(5, [town, country])
-    lines = output.splitlines()
-    assert lines == [
-        ex003.EX003_EXPECTED_PROMPTS[5][0],
-        ex003.EX003_EXPECTED_PROMPTS[5][1],
-        ex003.EX003_EXPECTED_INPUT_MESSAGES[5].format(
-            town=town, country=country),
-    ]
+    case = ex003.EX003_INPUT_EDGE_CASES[5]
+    output = _exercise_output_with_inputs(5, list(case["inputs"]))
+    _assert_strict_output(5, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_formatting() -> None:
-    output = _exercise_output_with_inputs(5, ["Cardiff", "Wales"])
-    expected = (
-        f"{ex003.EX003_EXPECTED_PROMPTS[5][0]}\n"
-        f"{ex003.EX003_EXPECTED_PROMPTS[5][1]}\n"
-        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[5].format(town='Cardiff', country='Wales')}"
-    )
-    assert output == expected
+    case = ex003.EX003_INPUT_CASES[5]
+    output = _exercise_output_with_inputs(5, list(case["inputs"]))
+    _assert_strict_output(5, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=5)
 def test_exercise5_construct() -> None:
-    tree = _exercise_ast(5)
-    constants = _string_constants(tree)
-    assert ex003.EX003_EXPECTED_PROMPTS[5][0] in constants
-    assert ex003.EX003_EXPECTED_PROMPTS[5][1] in constants
-    assert ex003.EX003_ORIGINAL_PROMPTS[5] not in constants, "Old prompt should be removed"
+    _assert_interactive_construct(5)
 
-    assert _has_input_call(tree), "Must use input() to capture user input"
-    input_names = _input_assigned_names(tree)
-    assert len(input_names) == _EXPECTED_INPUT_CALLS, (
-        f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
-    )
-    assert all(_print_uses_name(tree, name) for name in input_names), (
-        "Must use input variables in print"
-    )
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
+
+@pytest.mark.task(taskno=5)
+def test_exercise5_semantic_sensitivity() -> None:
+    case = ex003.EX003_INPUT_SEMANTIC_CASES[5]
+    output = _exercise_output_with_inputs(5, list(case["inputs"]))
+    _assert_strict_output(5, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_logic() -> None:
-    first = "Jess"
-    last = "Jones"
-    output = _exercise_output_with_inputs(6, [first, last])
-    lines = output.splitlines()
-    assert lines == [
-        ex003.EX003_EXPECTED_PROMPTS[6][0],
-        ex003.EX003_EXPECTED_PROMPTS[6][1],
-        ex003.EX003_EXPECTED_INPUT_MESSAGES[6].format(first=first, last=last),
-    ]
+    case = ex003.EX003_INPUT_EDGE_CASES[6]
+    output = _exercise_output_with_inputs(6, list(case["inputs"]))
+    _assert_strict_output(6, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_formatting() -> None:
-    output = _exercise_output_with_inputs(6, ["Alex", "Morgan"])
-    expected = (
-        f"{ex003.EX003_EXPECTED_PROMPTS[6][0]}\n"
-        f"{ex003.EX003_EXPECTED_PROMPTS[6][1]}\n"
-        f"{ex003.EX003_EXPECTED_INPUT_MESSAGES[6].format(first='Alex', last='Morgan')}"
-    )
-    assert output == expected
+    case = ex003.EX003_INPUT_CASES[6]
+    output = _exercise_output_with_inputs(6, list(case["inputs"]))
+    _assert_strict_output(6, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=6)
 def test_exercise6_construct() -> None:
-    tree = _exercise_ast(6)
-    constants = _string_constants(tree)
-    assert ex003.EX003_EXPECTED_PROMPTS[6][0] in constants
-    assert ex003.EX003_EXPECTED_PROMPTS[6][1] in constants
-    assert ex003.EX003_ORIGINAL_PROMPTS[6] not in constants, "Old prompt should be removed"
+    _assert_interactive_construct(6)
 
-    assert _has_input_call(tree), "Must use input() to capture user input"
-    input_names = _input_assigned_names(tree)
-    assert len(input_names) == _EXPECTED_INPUT_CALLS, (
-        f"Must use {_EXPECTED_INPUT_CALLS} input() calls"
-    )
-    assert all(_print_uses_name(tree, name) for name in input_names), (
-        "Must use input variables in print"
-    )
-    assert _has_string_concatenation_in_print(
-        tree), "Must use + to concatenate strings"
-    assert any(
-        "!" in value for value in constants), "Must include exclamation mark"
+
+@pytest.mark.task(taskno=6)
+def test_exercise6_semantic_sensitivity() -> None:
+    case = ex003.EX003_INPUT_SEMANTIC_CASES[6]
+    output = _exercise_output_with_inputs(6, list(case["inputs"]))
+    _assert_strict_output(6, output, case["expected_output"])
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_logic() -> None:
     output = _exercise_output(7)
-    _assert_strict_output(7, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[7])
+    _assert_strict_output(7, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[7])
     assert "Learning" not in output
     assert "Python" not in output
 
 
 @pytest.mark.task(taskno=7)
 def test_exercise7_construct() -> None:
+    _assert_static_construct(7)
     tree = _exercise_ast(7)
     constants = _string_constants(tree)
     assert "Learning" not in constants, "Old first_word value should be removed"
@@ -372,12 +317,13 @@ def test_exercise7_construct() -> None:
 @pytest.mark.task(taskno=8)
 def test_exercise8_logic() -> None:
     output = _exercise_output(8)
-    _assert_strict_output(8, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[8])
+    _assert_strict_output(8, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[8])
     assert "coding" not in output.lower()
 
 
 @pytest.mark.task(taskno=8)
 def test_exercise8_construct() -> None:
+    _assert_static_construct(8)
     tree = _exercise_ast(8)
     constants = _string_constants(tree)
     assert "coding" not in constants, "Old part2 value should be removed"
@@ -400,12 +346,13 @@ def test_exercise8_construct() -> None:
 @pytest.mark.task(taskno=9)
 def test_exercise9_logic() -> None:
     output = _exercise_output(9)
-    _assert_strict_output(9, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[9])
+    _assert_strict_output(9, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[9])
     assert "morning" not in output.lower()
 
 
 @pytest.mark.task(taskno=9)
 def test_exercise9_construct() -> None:
+    _assert_static_construct(9)
     tree = _exercise_ast(9)
     constants = _string_constants(tree)
     assert "morning" not in constants, "Old time_of_day value should be removed"
@@ -438,13 +385,14 @@ def test_exercise9_construct() -> None:
 @pytest.mark.task(taskno=10)
 def test_exercise10_logic() -> None:
     output = _exercise_output(10)
-    _assert_strict_output(10, output, ex003.EX003_EXPECTED_STATIC_OUTPUT[10])
+    _assert_strict_output(10, output, ex003.EX003_EXPECTED_STATIC_OUTPUTS[10])
     assert "Python" not in output
     assert "matter" not in output
 
 
 @pytest.mark.task(taskno=10)
 def test_exercise10_construct() -> None:
+    _assert_static_construct(10)
     tree = _exercise_ast(10)
     constants = _string_constants(tree)
     assert "Python" not in constants, "Old part_one value should be removed"
@@ -472,3 +420,82 @@ def test_exercise10_construct() -> None:
         tree, "part_three"), "Must use part_three variable in print"
     assert _has_string_concatenation_in_print(
         tree), "Must use + to concatenate strings"
+
+
+def _static_issues(code: str, exercise_no: int) -> list[str]:
+    """Return construct issues for a synthetic static example."""
+    return _construct_checks.static_construct_issues(ast.parse(code), exercise_no)
+
+
+def _interactive_issues(code: str, exercise_no: int) -> list[str]:
+    """Return construct issues for a synthetic interactive example."""
+    return _construct_checks.interactive_construct_issues(
+        ast.parse(code),
+        expected_input_count=2,
+        message_template=ex003.EX003_EXPECTED_INPUT_MESSAGES[exercise_no],
+    )
+
+
+@pytest.mark.task(taskno=1)
+def test_static_adversarial_constructs_reject_dead_and_neutral_flows() -> None:
+    """Keep the real cell valid and reject bypasses of its data flow."""
+    _assert_static_construct(1)
+    assert ex003.EX003_EXPECTED_STATIC_OUTPUTS[1] in _string_constants(_exercise_ast(1))
+    assert not _static_issues(
+        'greeting = "Hi there!"\nmessage = greeting\nprint(message)\n',
+        1,
+    )
+    for code in (
+        'print("Hi there!")\ngreeting = "Hi there!"\nif False:\n    print(greeting)\n',
+        'greeting = "Hi there!"\nprint("Hi there!")\nif False:\n    print(greeting)\n',
+        'greeting = "Hi there!"\nprint("Hi there!" * 0)\n',
+        'import builtins\ngreeting = "Hi there!"\nprint(greeting)\n',
+        'for word in ["Hi there!"]:\n    print(word)\n',
+        'while False:\n    print("Hi there!")\n',
+        'def helper():\n    return "Hi there!"\nprint(helper())\n',
+        'greeting = "Hi there!"\ngreeting += " again"\nprint(greeting)\n',
+        'greeting = (value := "Hi there!")\nprint(greeting)\n',
+        'greeting = value.text\nprint(greeting)\n',
+        'print = print\ngreeting = "Hi there!"\nprint(greeting)\n',
+        'input = input\ngreeting = "Hi there!"\nprint(greeting)\n',
+        'greeting = "Hi there!" or "Goodbye"\nprint(greeting)\n',
+        'greeting = "Hi there!" if True else "Goodbye"\nprint(greeting)\n',
+        'greeting = "Hi there!" == "Hi there!"\nprint(greeting)\n',
+    ):
+        assert _static_issues(code, 1), code
+
+
+@pytest.mark.task(taskno=4)
+def test_interactive_adversarial_constructs_reject_lookup_and_accept_aliases() -> None:
+    """Exercise valid aliases/separators and reject fixture-specific lookups."""
+    _assert_interactive_construct(4)
+    assert not _interactive_issues(
+        'print("Type the name of your favourite fruit:")\n'
+        'fruit = input()\n'
+        'print("Type one word to describe it:")\n'
+        'descriptor = input()\n'
+        'message = "I like " + fruit + " because it is " + descriptor\n'
+        'print(message)\n',
+        4,
+    )
+    assert not _interactive_issues(
+        'print("Type the name of your favourite fruit:")\n'
+        'fruit = input()\n'
+        'print("Type one word to describe it:")\n'
+        'descriptor = input()\n'
+        'print("I like ", fruit, " because it is ", descriptor, sep="")\n',
+        4,
+    )
+    for code in (
+        'fruit = input()\ndescriptor = input()\n'
+        'lookup = {("mango", "tropical"): "I like mango because it is tropical"}\n'
+        'print(lookup[(fruit, descriptor)])\n',
+        'fruit = input()\ndescriptor = input()\n'
+        'message = "I like mango because it is tropical" if fruit == "mango" else "wrong"\n'
+        'print(message)\n',
+        'fruit = input()\ndescriptor = input()\n'
+        'print("I like " + (fruit * 0) + " because it is " + descriptor)\n',
+        'fruit = input()\ndescriptor = input()\n'
+        'print("I like mango because it is tropical")\n',
+    ):
+        assert _interactive_issues(code, 4), code

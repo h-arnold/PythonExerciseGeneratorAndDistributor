@@ -10,7 +10,7 @@
 - Open the matching notebook in `notebooks/student.ipynb` inside this exercise folder.
 - Each exercise shows you working code. Your task is to **modify** it to meet the new requirements.
 - Write your solution in the notebook cells tagged `exercise1` through `exercise10`.
-- From the repository root, run `uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` until all tests pass.
+- From the repository root, run `PYTUTOR_ACTIVE_VARIANT=student uv run pytest -q exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py` until all tests pass.
 
 ## Teacher notes
 
@@ -40,4 +40,4 @@ This is designed as the **very first** set of exercises for students who have ne
 
 All exercises are self-contained and require only modification of existing working code, making them less intimidating than writing from scratch.
 
-**Note:** The automated tests enforce exact output formatting (case, spacing, punctuation and final newline). Make this explicit to students when demonstrating expected output.
+**Note:** The automated tests enforce exact output formatting (case, spacing, punctuation, and line breaks). Make this explicit to students when demonstrating expected output.

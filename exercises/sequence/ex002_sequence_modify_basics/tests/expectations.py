@@ -4,28 +4,49 @@ from __future__ import annotations
 
 from typing import Final
 
-EX002_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {
+EX002_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     1: "Hello Python!",
     2: "I go to Bassaleg School",
     3: "15",
     4: "Good Morning Everyone",
     5: "5.0",
+    6: "Learning\nto\ncode rocks",
     7: "The result is 100",
     8: "24",
+    9: "10 minus 3 equals\n7",
     10: "Welcome to Python programming!",
 }
-EX002_EXPECTED_MULTI_LINE: Final[dict[int, list[str]]] = {
-    6: ["Learning", "to", "code rocks"],
-    9: ["10 minus 3 equals", "7"],
-}
-EX002_EXPECTED_NUMERIC: Final[dict[int, int | float]] = {
-    3: int(EX002_EXPECTED_SINGLE_LINE[3]),
-    5: float(EX002_EXPECTED_SINGLE_LINE[5]),
-    8: int(EX002_EXPECTED_SINGLE_LINE[8]),
-    9: int(EX002_EXPECTED_MULTI_LINE[9][1]),
-}
+
 EX002_EXPECTED_PRINT_CALLS: Final[dict[int, int]] = {
+    1: 1,
+    2: 1,
+    3: 1,
     4: 1,
+    5: 1,
     6: 3,
+    7: 1,
+    8: 1,
     9: 2,
+    10: 1,
+}
+
+EX002_EXPECTED_BINARY_OPERANDS: Final[dict[int, tuple[int | float, ...]]] = {
+    3: (5, 3),
+    5: (10, 2),
+    8: (2, 3, 4),
+    9: (10, 3),
+}
+
+EX002_EXPECTED_BINARY_OPERATORS: Final[dict[int, tuple[str, ...]]] = {
+    3: ("*",),
+    5: ("/",),
+    8: ("*", "*"),
+    9: ("-",),
+}
+
+EX002_ORDERED_BINARY_OPERANDS: Final[frozenset[int]] = frozenset({9})
+
+EX002_EXPECTED_STRING_PARTS: Final[dict[int, tuple[str, ...]]] = {
+    7: ("The result is ", "100"),
+    10: ("Welcome", " ", "to", " ", "Python programming!"),
 }

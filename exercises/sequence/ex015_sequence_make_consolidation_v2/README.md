@@ -6,7 +6,7 @@
 - **Title**: Sequence Make Consolidation
 - **Construct**: sequence
 - **Type**: make
-- **Learning objective**: Write Python programs from scratch using all sequence constructs — variables, `input()`, arithmetic (+, -, *, /, //, %, **), `round()`, f-strings, and casting (`int()`, `float()`, `str()`).
+- **Learning objective**: Write Python programs from scratch using all sequence constructs — variables, `input()`, arithmetic (+, -, *, /, //, %, **), `round()`, f-strings, and casting with `int()` and `float()`. `str()` is not required; f-strings format values directly.
 
 ## Files
 
@@ -16,7 +16,7 @@
 
 ## Usage Summary
 
-Students open `notebooks/student.ipynb`, complete the ten tagged `exerciseN` cells (each writing a complete program from scratch), and run `uv run pytest -q exercises/sequence/ex015_sequence_make_consolidation_v2/tests/test_ex015_sequence_make_consolidation_v2.py` from the repository root for feedback.
+Students open `notebooks/student.ipynb`, complete the ten tagged `exerciseN` cells (each writing a complete program from scratch), and run `PYTUTOR_ACTIVE_VARIANT=student uv run pytest -q exercises/sequence/ex015_sequence_make_consolidation_v2/tests/test_ex015_sequence_make_consolidation_v2.py` from the repository root for feedback.
 
 ## Teaching Notes
 

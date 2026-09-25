@@ -11,7 +11,7 @@ Before attempting this exercise, students should be comfortable with:
 - f-strings for formatted output
 - Arithmetic operators: `+`, `-`, `*`, `/`, `//`, `%`, `**`
 - `round()` for rounding numbers
-- Casting with `int()`, `float()`, and `str()`
+- Casting with `int()` and `float()`
 - The ceiling-division pattern `(total + pack_size - 1) // pack_size`
 - Power (`** 2`) and square root (`** 0.5`)
 
@@ -19,7 +19,7 @@ Recommended prior exercises: ex002–ex014 in order.
 
 ## Common Misconceptions
 
-1. **String vs number confusion**: Students may try to concatenate numbers directly into strings without using f-strings, `str()`, or commas. Remind them that f-strings handle this automatically.
+1. **String vs number confusion**: Students may try to concatenate numbers directly into strings without using f-strings. Remind them that f-strings handle this automatically.
 
 2. **Forgetting to cast `input()`**: Since `input()` always returns a string, students must convert with `int()` or `float()` before doing arithmetic. Watch for `TypeError` in exercises 3–10.
 

@@ -13,7 +13,7 @@
 - Forgetting that each graded cell runs on its own, so previous variables are not available.
 - Printing the right words but with missing spaces, punctuation, or line breaks.
 - Trying to do arithmetic with values from `input()` before converting them.
-- Forgetting to convert a number back to text before joining it into a sentence.
+- Forgetting to format a number as text with `str()` or an f-string before joining it into a sentence.
 - Mixing up when to use `int()` and when to use `float()`.
 
 ## Teaching approach and hints
@@ -35,7 +35,7 @@
 ## Expected progression
 
 - Exercise 1: fixed output from variables only.
-- Exercise 2: variables plus arithmetic and `str()`.
+- Exercise 2: variables plus arithmetic and string formatting with `str()` or an f-string.
 - Exercise 3: prompted text input and sentence output.
 - Exercise 4: integer input, multiplication, and formatted final output.
 - Exercise 5: float input, integer input, multiplication, and formatted final output.

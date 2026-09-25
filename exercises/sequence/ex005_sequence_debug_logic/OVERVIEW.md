@@ -12,7 +12,9 @@ Students should already be familiar with:
 - Basic arithmetic operators (+, -, *, /)
 - String concatenation with +
 
-**Constructs NOT yet taught**: selection (if/elif/else), loops, lists, functions, type conversion (int, float, str), etc.
+**Constructs NOT yet taught**: selection (if/elif/else), loops, lists, functions, imports, type conversion (int, float, str), f-strings, etc.
+
+Each tagged solution must stay straight-line: simple assignments followed by one final `print()` payload. Use the scratch cells for experiments; prints from those untagged cells are not graded.
 
 ## Learning Objectives
 
@@ -40,15 +42,25 @@ By completing this exercise, students will:
 - **Reality**: String concatenation is literal - you must explicitly add spaces
 - **Teaching tip**: Show that `first_name + last_name` produces names run together without a space
 
-### Exercise 6, 9: Variable Mix-ups
-- **Misconception**: Python will use the "right" variable based on context
-- **Reality**: Python uses exactly the variable name you write
-- **Teaching tip**: Stress the importance of double-checking variable names, especially after copy-paste
+### Exercise 2: Variable Names
+- **Misconception**: Python will choose the "right" variable based on the expected output
+- **Reality**: Python prints exactly the variable name written in the `print()` call
+- **Teaching tip**: Trace each variable's assigned value before deciding what to print
+
+### Exercise 6: Subtraction Order and Equivalence
+- **Misconception**: The only correct expression is a subtraction written in one particular direction
+- **Reality**: `paid - cost`, `abs(cost - paid)`, and `abs(paid - cost)` are equivalent for the expected value; the printed variable must still be `change`
+- **Teaching tip**: Ask students to compare the value produced with the expected output, then justify whichever equivalent expression they used
+
+### Exercise 9: Perimeter Formula
+- **Misconception**: The perimeter must be written by listing each side separately
+- **Reality**: `length + length + width + width`, `2 * length + 2 * width`, and `2 * (length + width)` are equivalent; count sides, not text occurrences
+- **Teaching tip**: Let students write the formula in their preferred form and substitute the sample values to check it
 
 ### Exercise 7: Formula Complexity
 - **Misconception**: Multiple operator errors can compound and confuse students
 - **Reality**: Each operation must be correct individually
-- **Teaching tip**: Encourage students to test intermediate values (e.g., print `total` before calculating `average`)
+- **Teaching tip**: Use the untagged scratch cell to inspect intermediate values; keep the tagged cell to one final `print()` so the grader sees the required straight-line solution
 
 ## Difficulty Progression
 
@@ -59,12 +71,12 @@ By completing this exercise, students will:
   - Ex4: Missing space in concatenation
   - Ex5: Missing space in name concatenation
 
-- **Exercises 6-10**: Multiple errors, requires careful analysis
-  - Ex6: Wrong subtraction order + wrong print variable (2 bugs)
+- **Exercises 6-9**: Multiple errors, requiring careful analysis
+  - Ex6: Wrong subtraction order + wrong print variable (2 bugs); `abs(cost - paid)` and `abs(paid - cost)` are also valid corrections
   - Ex7: Wrong operators in formula (2 bugs)
   - Ex8: Multiple missing spaces (conceptually 1 bug but 3 fixes)
-  - Ex9: Incomplete formula + wrong print variable (2 bugs)
-  - Ex10: Missing space in message concatenation
+  - Ex9: Incomplete formula + wrong print variable (2 bugs); any algebraically equivalent perimeter expression is valid
+- **Exercise 10**: One missing space in the message concatenation
 
 ## Suggested Teaching Approach
 
@@ -92,30 +104,32 @@ Conclusion: Should use * (multiply) not + (add)
 
 ### Common Sticking Points
 
-**Exercise 5 (input conversion)**
-- Many students struggle to understand why `"7" + "3"` = `"73"`
-- **Demo tip**: Show in interactive Python: `type(input("Enter a number: "))` returns `<class 'str'>`
+**Exercise 5 (name concatenation)**
+- Many students struggle to understand why `first_name + last_name` produces `"AliceSmith"`
+- **Demo tip**: Show in interactive Python: `print("Alice" + " " + "Smith")` and compare it with `print("Alice" + "Smith")`
 
 **Exercise 7 (multiple operator errors)**
 - Students may fix one error and miss the other
 - **Teaching tip**: Encourage testing after each fix - if it's still wrong, there's another bug!
 
-**Exercise 10 (complex formula)**
-- The temperature conversion formula is mathematically complex for some students
-- **Teaching tip**: Provide the correct formula (F = C × 9/5 + 32) and focus debugging on the conversion issue, not deriving the formula
+**Exercise 10 (spacing in a longer message)**
+- A long message can contain several separate places where a space is needed
+- **Teaching tip**: Ask students to read the expected output character by character and locate the boundary between `live in` and the city
 
 ## Extension Activities
 
 For students who finish early:
 1. **Create your own bug**: Write a working program, then introduce a logical error for a classmate to find
-2. **Multiple solutions**: Some exercises can be fixed in different ways (e.g., Exercise 6 could swap the operands OR use absolute value)
+2. **Multiple solutions**: Exercise 6 accepts `paid - cost`, `abs(cost - paid)`, or `abs(paid - cost)`; Exercise 9 accepts equivalent perimeter forms
 3. **Explain to the class**: Have students present one bug they found and how they fixed it
 
 ## Assessment Notes
 
 Tests verify:
-1. **Corrected code** produces the expected output
-2. **Explanation cells** contain meaningful content (more than 10 characters)
+1. **Corrected code** produces the expected output, including multiple input cases for Exercises 5 and 10
+2. **Straight-line live data flow** uses the original scenario values and the taught `+` concatenation rather than a decoy or hard-coded result
+3. **Explanation cells** contain meaningful content of at least 50 characters
+4. Only tagged exercise cells are graded; scratch-cell output is ignored
 
 The explanation cells are crucial for formative assessment - they reveal whether students truly understand the bug or just guessed the fix.
 

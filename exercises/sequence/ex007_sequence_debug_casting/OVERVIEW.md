@@ -15,7 +15,7 @@
 ## Teaching approach and hints
 - Encourage students to read error messages and identify the type mismatch.
 - Ask: "What type is this value right now?" before each calculation.
-- Model step-by-step conversions using intermediate variables.
+- Model step-by-step conversions using intermediate variables, while accepting equivalent compact casts when they are used in the final calculation.
 - Suggest fixing one line at a time and re-running the cell.
 
 ## Suggested worked examples

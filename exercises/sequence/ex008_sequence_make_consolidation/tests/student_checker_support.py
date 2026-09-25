@@ -1,4 +1,4 @@
-"""Exercise-local student checker definitions for ex008 sequence make consolidation."""
+"""Student-checker support for ex008 sequence make consolidation."""
 
 from __future__ import annotations
 
@@ -14,41 +14,56 @@ from exercise_runtime_support.student_checker.checks.base import (
 )
 
 _EXERCISE_KEY = "ex008_sequence_make_consolidation"
-ex008 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+_ex = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+_CHECK_RUNTIME_ERRORS = (
+    ArithmeticError,
+    AttributeError,
+    LookupError,
+    NameError,
+    RuntimeError,
+    TypeError,
+    ValueError,
+)
 
 
 def _check_static_output(exercise_no: int) -> list[str]:
-    errors: list[str] = []
-    output = run_cell_and_capture_output(_EXERCISE_KEY, tag=exercise_tag(exercise_no))
-    expected = ex008.EX008_EXPECTED_STATIC_OUTPUTS[exercise_no]
-    if output != expected:
-        errors.append(f"Exercise {exercise_no}: expected '{expected.strip()}'.")
-    return errors
-
-
-def _check_interactive_output(exercise_no: int) -> list[str]:
-    errors: list[str] = []
-    for case in ex008.EX008_INTERACTIVE_CASES[exercise_no]:
-        output = run_cell_with_input(
+    expected = _ex.EX008_EXPECTED_STATIC_OUTPUTS[exercise_no]
+    try:
+        output = run_cell_and_capture_output(
             _EXERCISE_KEY,
             tag=exercise_tag(exercise_no),
-            inputs=list(case["inputs"]),
         )
-        if output != case["expected_output"]:
-            errors.append(
-                f"Exercise {exercise_no}: expected '{case['expected_output'].strip()}'."
+    except _CHECK_RUNTIME_ERRORS as exc:
+        return [str(exc)]
+    if output != expected:
+        return [f"Expected: {expected!r}\n     Got: {output!r}"]
+    return []
+
+
+def _check_input_output(exercise_no: int) -> list[str]:
+    for case in _ex.EX008_INPUT_CASES[exercise_no]:
+        inputs = list(case["inputs"])
+        expected = case["expected_output"]
+        try:
+            output = run_cell_with_input(
+                _EXERCISE_KEY,
+                tag=exercise_tag(exercise_no),
+                inputs=inputs,
             )
-            break
-    return errors
+        except _CHECK_RUNTIME_ERRORS as exc:
+            return [f"Case {case['id']}: {exc}"]
+        if output != expected:
+            return [f"Case {case['id']}: expected {expected!r}, got {output!r}"]
+    return []
 
 
-def _build_checks() -> list[ExerciseCheckDefinition]:
-    checks: list[ExerciseCheckDefinition] = []
-    for exercise_no in sorted(ex008.EX008_EXPECTED_STATIC_OUTPUTS):
-        checks.append(build_exercise_check(exercise_no, "Static output", _check_static_output))
-    for exercise_no in sorted(ex008.EX008_INTERACTIVE_CASES):
-        checks.append(build_exercise_check(exercise_no, "Prompt flow", _check_interactive_output))
-    return checks
+def _make_output_check(exercise_no: int) -> ExerciseCheckDefinition:
+    if exercise_no in _ex.EX008_EXPECTED_STATIC_OUTPUTS:
+        return build_exercise_check(exercise_no, "Static output", _check_static_output)
+    return build_exercise_check(exercise_no, "Prompt flow", _check_input_output)
 
 
-CHECKS: list[ExerciseCheckDefinition] = _build_checks()
+_EXERCISE_NUMBERS = sorted(set(_ex.EX008_EXPECTED_STATIC_OUTPUTS) | set(_ex.EX008_INPUT_CASES))
+CHECKS: list[ExerciseCheckDefinition] = [
+    _make_output_check(exercise_no) for exercise_no in _EXERCISE_NUMBERS
+]

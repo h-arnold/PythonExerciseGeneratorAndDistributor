@@ -1,8 +1,14 @@
-"""Exercise-local student checker definitions for ex014_sequence_gaps_advanced_arithmetic."""
+"""Student-checker support for ex014 advanced arithmetic."""
+
 from __future__ import annotations
+
+import ast
+from typing import Final
 
 from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from exercise_runtime_support.notebook_grader import (
+    NotebookGradingError,
+    extract_tagged_code,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
@@ -14,66 +20,92 @@ from exercise_runtime_support.student_checker.checks.base import (
 
 _EXERCISE_KEY = "ex014_sequence_gaps_advanced_arithmetic"
 _ex = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+_construct_checks = load_exercise_test_module(_EXERCISE_KEY, "construct_checks")
+_EXERCISE_TITLES: Final[tuple[tuple[int, str], ...]] = (
+    (1, "Square a number"),
+    (2, "Cube a number"),
+    (3, "Square root"),
+    (4, "Power of a number"),
+    (5, "Area of a square"),
+    (6, "Area of a rectangle"),
+    (7, "Volume of a cube"),
+    (8, "Square root with input"),
+    (9, "Area of a circle"),
+    (10, "Power calculator"),
+)
+
+
+def _semantic_issues(exercise_no: int) -> list[str]:
+    """Return conservative grammar and data-flow issues for one exercise cell."""
+    try:
+        source = extract_tagged_code(
+            _EXERCISE_KEY,
+            tag=exercise_tag(exercise_no),
+        )
+        tree = ast.parse(source)
+    except (NotebookGradingError, SyntaxError) as exc:
+        return [str(exc)]
+    return _construct_checks.required_flow_issues(tree, exercise_no)
 
 
 def _check_static_output(exercise_no: int) -> list[str]:
-    """Verify a non-interactive exercise cell produces the correct output."""
+    """Verify a non-interactive cell produces the exact expected output."""
+    issues = _semantic_issues(exercise_no)
+    if issues:
+        return ["Fix the required code flow before checking output: " + " ".join(issues)]
     expected = _ex.EX014_EXPECTED_STATIC_OUTPUTS[exercise_no]
     try:
         output = run_cell_and_capture_output(
             _EXERCISE_KEY,
             tag=exercise_tag(exercise_no),
         )
-    except Exception as exc:
+    except NotebookGradingError as exc:
         return [str(exc)]
-    if output.strip() != expected:
-        return [
-            f"Expected: {expected!r}\n"
-            f"     Got: {output.strip()!r}"
-        ]
+    if output != expected:
+        return [f"Expected: {expected!r}\n     Got: {output!r}"]
     return []
 
 
 def _check_input_output(exercise_no: int) -> list[str]:
-    """Verify an interactive exercise cell produces the correct output."""
-    case = _ex.EX014_INPUT_CASES[exercise_no]
+    """Verify an interactive cell produces the exact primary-case transcript."""
+    issues = _semantic_issues(exercise_no)
+    if issues:
+        return ["Fix the required code flow before checking output: " + " ".join(issues)]
+    case = _ex.EX014_INPUT_CASES[exercise_no][0]
     try:
         output = run_cell_with_input(
             _EXERCISE_KEY,
             tag=exercise_tag(exercise_no),
             inputs=case["inputs"],
         )
-    except Exception as exc:
+    except NotebookGradingError as exc:
         return [str(exc)]
     expected = case["expected_output"]
-    if output.strip() != expected:
-        return [
-            f"Expected: {expected!r}\n"
-            f"     Got: {output.strip()!r}"
-        ]
+    if output != expected:
+        return [f"Expected: {expected!r}\n     Got: {output!r}"]
     return []
 
 
-def _make_output_check(exercise_no: int, title: str) -> ExerciseCheckDefinition:
-    """Build an output-verification check for the given exercise."""
-    if exercise_no >= 3:
-        return build_exercise_check(exercise_no, title, _check_input_output)
-    return build_exercise_check(exercise_no, title, _check_static_output)
+def _check_required_flow(exercise_no: int) -> list[str]:
+    """Verify the conservative straight-line semantic data flow."""
+    return _semantic_issues(exercise_no)
 
 
-# ---------------------------------------------------------------------------
-# Public CHECKS list — consumed by the student self-check cell
-# ---------------------------------------------------------------------------
+def _checks_for(exercise_no: int, title: str) -> tuple[ExerciseCheckDefinition, ...]:
+    """Build interleaved exact-output and semantic checks for one exercise."""
+    output_check = (
+        _check_input_output
+        if exercise_no in _ex.EX014_INPUT_CASES
+        else _check_static_output
+    )
+    return (
+        build_exercise_check(exercise_no, f"{title}: required code flow", _check_required_flow),
+        build_exercise_check(exercise_no, f"{title}: exact output", output_check),
+    )
+
 
 CHECKS: list[ExerciseCheckDefinition] = [
-    _make_output_check(1, "Square a number"),
-    _make_output_check(2, "Cube a number"),
-    _make_output_check(3, "Square root"),
-    _make_output_check(4, "Power of a number"),
-    _make_output_check(5, "Area of a square"),
-    _make_output_check(6, "Area of a rectangle"),
-    _make_output_check(7, "Volume of a cube"),
-    _make_output_check(8, "Square root with input"),
-    _make_output_check(9, "Area of a circle"),
-    _make_output_check(10, "Power calculator"),
+    check
+    for exercise_no, title in _EXERCISE_TITLES
+    for check in _checks_for(exercise_no, title)
 ]
