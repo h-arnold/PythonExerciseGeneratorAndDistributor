@@ -1,7 +1,7 @@
 ---
 description: Coordinates planning, implementation, review, and documentation for PythonExerciseGeneratorAndDistributor changes
 mode: primary
-model: opencode-go/glm-5.3-flash
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

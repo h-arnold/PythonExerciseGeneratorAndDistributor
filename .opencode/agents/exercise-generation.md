@@ -1,7 +1,7 @@
 ---
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
 mode: all
-model: opencode-go/glm-5.3-flash
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

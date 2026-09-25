@@ -1,7 +1,7 @@
 ---
 description: Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes
 mode: subagent
-model: openai/gpt-5.6-luna
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

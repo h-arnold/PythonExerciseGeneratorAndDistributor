@@ -1,7 +1,7 @@
 ---
 description: Finds and removes AI-slop, duplication, and unnecessary complexity
 mode: all
-model: opencode-go/glm-5.3-flash
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

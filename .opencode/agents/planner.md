@@ -1,7 +1,7 @@
 ---
 description: Drafts SPEC.md, optional layout/workflow specs, and ACTION_PLAN.md for exercise-authoring, notebook, grading, packaging, and tooling changes
 mode: all
-model: nvidia/minimax-m3
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

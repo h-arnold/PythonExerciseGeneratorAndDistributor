@@ -1,7 +1,7 @@
 ---
 description: Reviews planner output for missing requirements, architecture mismatches, notebook and workflow ambiguities, and undersized or misordered action plans
 mode: subagent
-model: opencode-go/hy3
+model: opencode/space-bunny-free
 permission:
   read: allow
   bash: allow
