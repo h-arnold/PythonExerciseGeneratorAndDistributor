@@ -1,5 +1,35 @@
 # ACTION_PLAN — Native Classroom 50 Bundle Autograder Integration
 
+## Implementation progress tracker
+
+**Active section:** Stage 2 — Implement native and local autograder modes
+**Current phase:** Green (Implementation)
+
+| Section | Red tests | Red review | Green impl | Green review | Checks | Plan updated | Committed | Pushed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 — Native result and identity | done (29 red / 84 green) | CLEAN | n/a (no production code in Stage 1) | n/a | done | done | pending | pending |
+| 2 — Native and local autograder modes | done (carried from Stage 1) | CLEAN | in progress | pending | pending | pending | pending | pending |
+| 3 — Dependency bootstrap and target contract | pending | pending | pending | pending | pending | pending | pending | pending |
+| 4 — Pytest trust boundary | pending | pending | pending | pending | pending | pending | pending | pending |
+| 5 — Manifest hardening | pending | pending | pending | pending | pending | pending | pending | pending |
+| 6 — Builder filesystem and archive safety | pending | pending | pending | pending | pending | pending | pending | pending |
+| 7 — Pinned native-runner contract | pending | pending | pending | pending | pending | pending | pending | pending |
+| 8 — Integration validation | pending | pending | pending | pending | pending | pending | pending | pending |
+| 9 — Developer/contract documentation | pending | pending | pending | pending | pending | pending | pending | pending |
+| 10 — Generated template documentation | pending | pending | pending | pending | pending | pending | pending | pending |
+| 11 — Teacher documentation | pending | pending | pending | pending | pending | pending | pending | pending |
+| 12 — Agent and layout guidance | pending | pending | pending | pending | pending | pending | pending | pending |
+| De-sloppification | pending | pending | pending | pending | pending | pending | pending | pending |
+| Final documentation pass | pending | pending | pending | pending | pending | pending | pending | pending |
+
+### Stage 1 notes
+
+- No production code changed. New `tests/test_classroom50_native_autograder.py`, new shared `tests/_classroom50_test_helpers.py` and `tests/_classroom50_assignment_contract.py`, and superseded-alias updates in `tests/test_classroom50_bundle_stage4.py`.
+- Red inventory: 29 failing / 84 passing across the two Classroom 50 test modules. Every failure is for the intended missing behaviour (no native mode, superseded `version`/`name` payload fields, discarded teardown report, surviving stale results).
+- `tests/_classroom50_assignment_contract.py` transcribes the documented pinned assignment-manifest rules. It is explicitly **not** a substitute for the pinned upstream schema; Stage 7 must cross-check it against the snapshot.
+- Red-phase review returned 11 findings, all resolved over two rounds plus three direct minor fixes (word-boundary diagnostic needle, no-traceback assertion, positive `false`-flag coverage).
+- No deviation from the Stage 1 acceptance criteria.
+
 ## Read-first context
 
 This plan is derived from the current `SPEC.md` and `WORKFLOW_SPEC.md`. The previous Selection Pilot plan is superseded. The Selection exercises remain a read-only validation fixture.
@@ -416,6 +446,7 @@ Verify the exact upstream child invocation, result location, finalisation, and e
 - Verify child non-zero follows the upstream error-finalisation path and pinned outer exit semantics.
 - Verify the archive top-level `<assignment>/` layout and the absence of a **per-assignment** upload command; the classroom-default `set-default` command is expected to remain.
 - Record the exact upstream source paths, raw-byte SHA-256 hashes, and commit hash in the test/report.
+- Cross-check the transcribed assignment-manifest rules in `tests/_classroom50_assignment_contract.py` against the pinned `schemas/assignments-v1.schema.json` and the upstream `runner.py`; any transcription drift is a Stage 7 defect.
 
 The harness is test-only and must not become runtime or student-template content. It must not access the network.
 

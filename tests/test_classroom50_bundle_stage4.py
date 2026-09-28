@@ -16,14 +16,22 @@ from pathlib import Path
 
 import pytest
 
+from tests._classroom50_test_helpers import (
+    SyntheticExercise,
+    expected_row_name,
+    run_bundle_child,
+    write_synthetic_exercise_json,
+)
+
+RESULT_SCHEMA = "classroom50/result/v1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXERCISE_KEY = "ex900_sequence_make_generic_fixture"
 UNSELECTED_EXERCISE_KEY = "ex901_sequence_make_unselected_fixture"
 CONSTRUCT = "sequence"
 CASE_COUNT = 2
 EXPECTED_TEST_NAMES = [
-    f"{EXERCISE_KEY}::test_fixture.py::test_generic_case[alpha]",
-    f"{EXERCISE_KEY}::test_fixture.py::test_generic_case[beta]",
+    expected_row_name(EXERCISE_KEY, "test_fixture.py::test_generic_case[alpha]"),
+    expected_row_name(EXERCISE_KEY, "test_fixture.py::test_generic_case[beta]"),
 ]
 
 
@@ -31,17 +39,15 @@ def _create_synthetic_exercise(root: Path, exercise_key: str, exercise_id: int) 
     """Create one canonical exercise, including source-only unrelated assets."""
     exercise = root / "exercises" / CONSTRUCT / exercise_key
     exercise.mkdir(parents=True)
-    metadata = {
-        "schema_version": 1,
-        "exercise_key": exercise_key,
-        "exercise_id": exercise_id,
-        "slug": exercise_key,
-        "title": exercise_key,
-        "construct": CONSTRUCT,
-        "exercise_type": "make",
-        "parts": 1,
-    }
-    (exercise / "exercise.json").write_text(json.dumps(metadata), encoding="utf-8")
+    write_synthetic_exercise_json(
+        exercise,
+        SyntheticExercise(
+            exercise_key=exercise_key,
+            exercise_id=exercise_id,
+            construct=CONSTRUCT,
+            title=exercise_key,
+        ),
+    )
     (exercise / "README.md").write_text("source-only teacher notes\n", encoding="utf-8")
     (exercise / "OVERVIEW.md").write_text("source-only overview\n", encoding="utf-8")
     (exercise / "unrelated-source-asset.txt").write_text("must not ship\n", encoding="utf-8")
@@ -150,17 +156,15 @@ def _run_grader(
     # Future CLI: the bundle is the script root, --student-root identifies the
     # checkout whose notebooks/metadata are graded, --result writes the
     # Classroom 50 JSON, and optional --variant solution is local dry-run only.
-    command = [
-        sys.executable,
-        str(fixture["bundle"] / "autograder.py"),
+    args = [
         "--student-root",
         str(fixture["student"]),
         "--result",
         str(result_path),
     ]
     if variant is not None:
-        command.extend(["--variant", variant])
-    return subprocess.run(command, cwd=REPO_ROOT, capture_output=True, text=True, check=False)
+        args.extend(["--variant", variant])
+    return run_bundle_child(fixture["bundle"], args, cwd=REPO_ROOT)
 
 
 def test_builder_copies_only_canonical_hidden_bundle_contents(
@@ -233,18 +237,27 @@ def test_new_scripts_accept_generic_input_without_selection_constants(
 def test_grader_result_uses_leaf_nodeids_and_documented_v1_fields(
     stage4_fixture: dict[str, Path],
 ) -> None:
-    """Scores are one point per case and names omit absolute test paths."""
+    """Scores are one point per case and names omit absolute test paths.
+
+    Stage 1 replacement: the canonical ``classroom50/result/v1`` field names
+    (``schema``, per-test ``test-name`` and ``passed``) supersede the old
+    ``version``/``name`` payload shape, so this assertion is red until Stage 2
+    rebuilds the result document. The superseded aliases are asserted absent.
+    """
     build = _run_builder(stage4_fixture)
     assert build.returncode == 0, build.stderr
     result_path = stage4_fixture["bundle"] / "result.json"
     proc = _run_grader(stage4_fixture, result_path=result_path, variant="solution")
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
-    assert payload["version"] == "classroom50/result/v1"
+    assert payload["schema"] == RESULT_SCHEMA
+    assert "version" not in payload, "The superseded top-level 'version' alias must be gone."
     assert payload["score"] == CASE_COUNT
     assert payload["max-score"] == CASE_COUNT
-    assert [item["name"] for item in payload["tests"]] == EXPECTED_TEST_NAMES
-    assert all("/" not in item["name"] for item in payload["tests"])
+    assert [item["test-name"] for item in payload["tests"]] == EXPECTED_TEST_NAMES
+    assert all("name" not in item for item in payload["tests"]), "The 'name' alias must be gone."
+    assert all(item["passed"] is True for item in payload["tests"])
+    assert all("/" not in item["test-name"] for item in payload["tests"])
     assert all(item["score"] == item["max-score"] == 1 for item in payload["tests"])
 
 
@@ -252,7 +265,11 @@ def test_grader_forces_student_variant_and_uses_exit_zero_for_completed_failures
     stage4_fixture: dict[str, Path],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A completed student run exits zero even when its cases fail."""
+    """A completed student run exits zero even when its cases fail.
+
+    Stage 1 replacement: the row-name assertion uses the canonical
+    ``test-name`` field, which supersedes the old ``name`` alias.
+    """
     build = _run_builder(stage4_fixture)
     assert build.returncode == 0, build.stderr
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
@@ -262,7 +279,8 @@ def test_grader_forces_student_variant_and_uses_exit_zero_for_completed_failures
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert payload["score"] == 0
     assert payload["max-score"] == CASE_COUNT
-    assert [item["name"] for item in payload["tests"]] == EXPECTED_TEST_NAMES
+    assert [item["test-name"] for item in payload["tests"]] == EXPECTED_TEST_NAMES
+    assert [item["passed"] for item in payload["tests"]] == [False, False]
     assert [item["score"] for item in payload["tests"]] == [0, 0]
     assert [item["max-score"] for item in payload["tests"]] == [1, 1]
 
@@ -270,7 +288,11 @@ def test_grader_forces_student_variant_and_uses_exit_zero_for_completed_failures
 def test_hidden_discovery_and_sys_path_isolation_ignore_visible_tests_and_use_student_metadata(
     stage4_fixture: dict[str, Path],
 ) -> None:
-    """Hidden tests resolve from the bundle; notebooks/metadata resolve in checkout."""
+    """Hidden tests resolve from the bundle; notebooks/metadata resolve in checkout.
+
+    Stage 1 replacement: the tamper check reads the canonical ``test-name``
+    field, which supersedes the old ``name`` alias.
+    """
     build = _run_builder(stage4_fixture)
     assert build.returncode == 0, build.stderr
     visible_test = (
@@ -287,7 +309,7 @@ def test_hidden_discovery_and_sys_path_isolation_ignore_visible_tests_and_use_st
     assert proc.returncode == 0, proc.stderr
     payload = json.loads(result_path.read_text(encoding="utf-8"))
     assert payload["max-score"] == CASE_COUNT
-    assert all("tamper_marker" not in item["name"] for item in payload["tests"])
+    assert all("tamper_marker" not in item["test-name"] for item in payload["tests"])
 
 
 def test_template_test_tampering_does_not_change_graded_outcome(
@@ -380,18 +402,35 @@ def test_builder_copies_only_required_supports_and_excludes_unrelated_files(
 def test_grader_removes_stale_result_before_reporting_infrastructure_error(
     stage4_fixture: dict[str, Path],
 ) -> None:
-    """A stale result file cannot survive an infrastructure failure."""
+    """A stale result file cannot survive an infrastructure failure.
+
+    Stage 1 replacement: the seeded stale payload now uses the canonical
+    ``classroom50/result/v1`` field names (``schema``, per-test ``test-name`` and
+    ``passed``) instead of the superseded ``version``/``name`` shape. Only the
+    payload shape changed; the stale-result removal contract is unchanged and
+    this test stays green.
+    """
     build = _run_builder(stage4_fixture)
     assert build.returncode == 0, build.stderr
     result_path = stage4_fixture["bundle"] / "result.json"
     result_path.write_text(
         json.dumps(
             {
-                "version": "classroom50/result/v1",
+                "schema": RESULT_SCHEMA,
+                "classroom": "local",
+                "assignment": "local",
+                "assignment_type": "individual",
+                "owner": "local",
+                "submission": "submit/local",
+                "commit": "local://commit",
+                "release": "local://release",
+                "review": "local://review",
+                "datetime": "1970-01-01T00:00:00Z",
                 "score": CASE_COUNT,
                 "max-score": CASE_COUNT,
                 "tests": [
-                    {"name": name, "score": 1, "max-score": 1} for name in EXPECTED_TEST_NAMES
+                    {"test-name": name, "passed": True, "score": 1, "max-score": 1}
+                    for name in EXPECTED_TEST_NAMES
                 ],
             }
         ),
