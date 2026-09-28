@@ -69,6 +69,8 @@ from typing import Any
 import pytest
 
 from tests._classroom50_bootstrap import (
+    BUNDLE_PYTEST_INI_NAME,
+    BUNDLE_PYTEST_INI_SOURCE,
     BUNDLE_REQUIREMENTS_NAME,
     FAKE_INSTALL_MARKER,
     MISMATCHED_VERSION,
@@ -78,6 +80,7 @@ from tests._classroom50_bootstrap import (
     PYTEST_DISTRIBUTION,
     SEAM_BOOTSTRAP,
     SEAM_IMPORT_PYTEST,
+    SEAM_INSTALLED_VERSION,
     SEAM_NAMES,
     BootstrapHarness,
     bundle_files,
@@ -118,14 +121,17 @@ from tests._classroom50_test_helpers import (
     EXERCISE_KEY,
     HIDDEN_TEST_FILENAME,
     LOCAL_RESULT_NAME,
+    LOCAL_VARIANT,
     PASSING_CASE_COUNT,
     STAGED_INIFILE_PROOF,
     StagedBundle,
     autograder_source,
     expected_row_name,
     expected_row_names,
+    local_arguments,
     passing_hidden_test_source,
     read_result,
+    run_local_child,
     stage_bundle,
     write_stale_result,
 )
@@ -177,10 +183,39 @@ FAILING_ROW_NAMES = [
     for case in ("alpha", "beta")
 ]
 
+# A synthetic hidden module that uses the repository's exercise task marker, so the
+# bundle configuration's ``markers`` entry has a runtime effect to observe.
+TASK_MARKER_HIDDEN_TEST = '''"""Synthetic hidden test module that uses the exercise task marker."""
+
+import pytest
+
+
+@pytest.mark.task(taskno=1)
+def test_task_marker_case():
+    assert True
+'''
+
+# A bundle configuration that declares no marker at all, so the same hidden module
+# produces the unknown-mark warning the committed file exists to prevent.
+MARKERLESS_INI = "[pytest]\n"
+
 
 def _committed_requirements_text() -> str:
     """Return the committed native requirements source as text."""
     return committed_requirements_bytes().decode("utf-8")
+
+
+def _parsed_requirements(tmp_path: Path, text: str) -> list[tuple[str, str]]:
+    """Return the ``(distribution, version)`` pins the bootstrap reads from ``text``.
+
+    The requirement parser has no seam - it is an internal step of the bootstrap -
+    so it is reached through the module object, as ``tests/test_new_exercise.py``
+    reaches the other private script helpers.
+    """
+    requirements = tmp_path / BUNDLE_REQUIREMENTS_NAME
+    requirements.write_text(text, encoding="utf-8")
+    parse = load_autograder_module()._required_packages
+    return [(pin.distribution, pin.version) for pin in parse(requirements)]
 
 
 def _expected_pip_argv(target: Path, requirements: Path) -> list[str]:
@@ -296,6 +331,92 @@ def test_the_lock_closure_covers_every_third_party_runtime_import() -> None:
     assert runtime_imports, "The runtime must import at least pytest; the scan found none."
     missing = sorted(runtime_imports - set(active_platform_pins(_committed_requirements_text())))
     assert not missing, f"The native requirements source must cover {missing}."
+
+
+def test_the_committed_requirements_source_parses_with_the_bootstrap_grammar(
+    tmp_path: Path,
+) -> None:
+    """The bootstrap's own parser agrees with ``packaging`` about the committed source.
+
+    The bootstrap cannot use ``packaging`` before the verified target exists, so it
+    parses the closed grammar itself.  This states that the two readings of the
+    committed file are the same active pin set, which is what makes the bootstrap's
+    own reading trustworthy.  The comparison is order-free because the documented
+    line order is pinned separately.
+    """
+    text = _committed_requirements_text()
+    assert sorted(_parsed_requirements(tmp_path, text)) == sorted(
+        active_platform_pins(text).items()
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("pytest==9.0.2\n", [("pytest", "9.0.2")]),
+        ("# a whole-line comment\n\npytest==9.0.2\n", [("pytest", "9.0.2")]),
+        ('colorama==0.4.6; sys_platform == "{platform}"\n', [("colorama", "0.4.6")]),
+        ("colorama==0.4.6; sys_platform == '{platform}'\n", [("colorama", "0.4.6")]),
+        ('colorama==0.4.6 ; sys_platform == "{platform}"\n', [("colorama", "0.4.6")]),
+        ('colorama==0.4.6; sys_platform == "plan9"\n', []),
+    ],
+    ids=(
+        "plain-pin",
+        "comment-and-blank-line",
+        "matching-marker",
+        "single-quoted-marker",
+        "space-before-separator",
+        "other-platform",
+    ),
+)
+def test_the_requirements_grammar_accepts_exact_pins_and_platform_markers(
+    tmp_path: Path, text: str, expected: list[tuple[str, str]]
+) -> None:
+    """An exact pin is required, and a marker selects one platform or the other.
+
+    The marker is compared against ``sys.platform`` - what ``packaging``'s
+    ``sys_platform`` defaults to - so the expectation states the documented rule on
+    every platform instead of assuming Linux.
+    """
+    assert _parsed_requirements(tmp_path, text.format(platform=sys.platform)) == expected
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "pytest",
+        "pytest >= 9.0.2",
+        "pytest[foo]==9.0.2",
+        "pytest==9.0.2.*",
+        "pytest==9.0.2 --hash=sha256:0",
+        "pytest==9.0.2  # the pinned version",
+        'pytest==9.0.2; python_version < "3.14"',
+        'pytest==9.0.2; extra == "x"',
+        'pytest==9.0.2; sys_platform >= "win32"',
+    ],
+    ids=(
+        "unpinned",
+        "range",
+        "extras",
+        "wildcard",
+        "hash",
+        "inline-comment",
+        "other-marker",
+        "extra-marker",
+        "marker-operator",
+    ),
+)
+def test_the_requirements_grammar_rejects_anything_outside_the_closed_grammar(
+    tmp_path: Path, text: str
+) -> None:
+    """A range, extras, a wildcard, a hash, a comment, or another marker fails loudly.
+
+    The requirements source is a set of exact pins, so anything else is a contract
+    violation that would change what the native target receives; it is rejected
+    rather than passed to pip to interpret.
+    """
+    with pytest.raises(RuntimeError, match="exact 'name==version' pin"):
+        _parsed_requirements(tmp_path, f"{text}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -471,6 +592,27 @@ def test_native_bootstrap_prepends_the_verified_target_ahead_of_the_bundle(
     assert sys.path.count(str(target)) == 1
 
 
+def test_configuring_bundle_paths_keeps_an_already_verified_target_in_front(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The bundle/checkout pair cannot be pushed in front of a verified target.
+
+    The bootstrap owns the first entry of the documented ``sys.path`` order and
+    ``configure_bundle_paths`` owns the next two.  Every later stage edits this file,
+    so re-ordering the pair after a bootstrap has to leave the target ahead of it
+    rather than displacing it.
+    """
+    staged = _stage_bootstrap_bundle(tmp_path)
+    module = load_autograder_module()
+    _, bootstrap, _ = _patched_bootstrap(monkeypatch)
+    target = bootstrap(staged.bundle)
+    module.configure_bundle_paths(staged.bundle, staged.student)
+    assert sys.path[:3] == [str(target), str(staged.bundle), str(staged.student)], (
+        "The verified target must stay ahead of the bundle root and the student checkout."
+    )
+    assert sys.path.count(str(target)) == 1
+
+
 # ---------------------------------------------------------------------------
 # Dependency failures are infrastructure failures.
 # ---------------------------------------------------------------------------
@@ -570,6 +712,34 @@ def test_native_bootstrap_removes_the_fresh_target_when_it_fails(
         monkeypatch, pip_returncode=1, pip_stderr="ERROR: No module named pip"
     )
     with pytest.raises(RuntimeError):
+        bootstrap(staged.bundle)
+    assert harness.target is not None, "The fixed invocation must have named a fresh target."
+    assert not harness.target.exists(), f"{harness.target} must be removed after a failure."
+    leaked = sorted(bundle_files(staged.bundle) - before)
+    assert not leaked, f"A failed bootstrap must not leave installed files behind: {leaked}."
+
+
+def test_native_bootstrap_removes_the_target_when_verification_raises_unexpectedly(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A verification hook raising something undeclared still leaves no target behind.
+
+    ``installed_distribution_version`` and ``installed_module_origin`` read an
+    arbitrary installed tree, so a corrupt ``.dist-info`` can surface as an ``OSError``
+    or a parse ``ValueError`` rather than the declared failure type. ``SPEC.md``
+    requires the target to be "cleaned up on failure" however the failure surfaced,
+    and the exception has to reach the caller unchanged rather than be swallowed.
+    """
+    staged = _stage_bootstrap_bundle(tmp_path)
+    before = bundle_files(staged.bundle)
+    harness, bootstrap, module = _patched_bootstrap(monkeypatch)
+
+    def _corrupt_metadata(distribution: str, *, target: Path) -> str:
+        """Stand in for a version hook that cannot read a corrupt installed tree."""
+        raise ValueError(f"corrupt metadata for {distribution}")
+
+    monkeypatch.setattr(module, SEAM_INSTALLED_VERSION, _corrupt_metadata)
+    with pytest.raises(ValueError, match="corrupt metadata for"):
         bootstrap(staged.bundle)
     assert harness.target is not None, "The fixed invocation must have named a fresh target."
     assert not harness.target.exists(), f"{harness.target} must be removed after a failure."
@@ -690,6 +860,73 @@ def test_a_local_dry_run_never_bootstraps_dependencies(
     payload = read_result(result_path)
     assert payload["score"] == PASSING_CASE_COUNT
     assert payload["owner"] == "local"
+
+
+def test_a_local_child_run_never_creates_the_native_install_target(tmp_path: Path) -> None:
+    """A local dry-run *child* installs nothing either, so no target appears.
+
+    The in-process run above proves the seams are bypassed; this proves the same for
+    the subprocess path, which has no monkeypatch to fall back on.  The bundle carries
+    real lock-derived pins, so a local run that bootstrapped would get past the
+    requirements grammar and reach a real ``pip install`` on any machine whose
+    interpreter has pip.  The absent target is asserted first, because it names the
+    regression even when the ensuing install failure also breaks the exit code.
+    """
+    staged = _stage_bootstrap_bundle(tmp_path)
+    result_path = staged.bundle / LOCAL_RESULT_NAME
+    proc = run_local_child(staged, *local_arguments(staged, result_path, LOCAL_VARIANT))
+    runtime_root = staged.bundle / load_autograder_module().NATIVE_RUNTIME_DIRNAME
+    assert not runtime_root.exists(), (
+        f"a local dry run must never create the native install target {runtime_root}"
+    )
+    assert proc.returncode == 0, f"a local dry run must still grade the checkout.\n{proc.stderr}"
+    assert read_result(result_path)["owner"] == "local"
+
+
+# ---------------------------------------------------------------------------
+# The committed bundle pytest configuration.
+# ---------------------------------------------------------------------------
+
+
+def _stage_bundle_with_inifile(tmp_path: Path, ini_text: str) -> StagedBundle:
+    """Stage a bundle whose pytest configuration is exactly ``ini_text``.
+
+    ``stage_bundle`` ships a placeholder ini, so the committed file's own runtime
+    effect is only observable once that placeholder is replaced.
+    """
+    staged = stage_bundle(tmp_path, hidden_test_source=TASK_MARKER_HIDDEN_TEST)
+    (staged.bundle / BUNDLE_PYTEST_INI_NAME).write_text(ini_text, encoding="utf-8")
+    return staged
+
+
+@pytest.mark.parametrize(
+    ("ini_text", "expects_unknown_mark_warning"),
+    [
+        pytest.param(BUNDLE_PYTEST_INI_SOURCE.read_text(encoding="utf-8"), False, id="committed"),
+        pytest.param(MARKERLESS_INI, True, id="markers-absent"),
+    ],
+)
+def test_the_committed_bundle_configuration_registers_the_task_marker(
+    tmp_path: Path, ini_text: str, expects_unknown_mark_warning: bool
+) -> None:
+    """The committed ini's ``markers`` entry is a runtime effect, not decoration.
+
+    ``scripts/classroom50_pytest.ini`` is the bundle's trusted configuration, and the
+    bundled hidden test modules do use ``pytest.mark.task``.  The byte-for-byte copy
+    test only proves the file was transmitted; this proves it changed the run, by
+    reading the child run's own warnings summary rather than by suppressing the
+    warning anywhere.  The summary lands on the child's stdout, so both streams are
+    read.
+    """
+    staged = _stage_bundle_with_inifile(tmp_path, ini_text)
+    result_path = staged.bundle / LOCAL_RESULT_NAME
+    proc = run_local_child(staged, *local_arguments(staged, result_path, LOCAL_VARIANT))
+    diagnostics = f"{proc.stdout}\n{proc.stderr}"
+    assert proc.returncode == 0, f"the local child must complete.\n{diagnostics}"
+    assert ("PytestUnknownMarkWarning" in diagnostics) is expects_unknown_mark_warning, (
+        "the committed configuration must register the task marker, and a configuration "
+        f"without it must let the warning through.\n{diagnostics}"
+    )
 
 
 # ---------------------------------------------------------------------------

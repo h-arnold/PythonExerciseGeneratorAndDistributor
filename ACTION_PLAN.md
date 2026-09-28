@@ -2,14 +2,14 @@
 
 ## Implementation progress tracker
 
-**Active section:** Stage 3 — Lock-derived native dependency bootstrap and target contract files
+**Active section:** Stage 4 — Establish the pytest trust boundary
 **Current phase:** Red (Testing Specialist)
 
 | Section | Red tests | Red review | Green impl | Green review | Checks | Plan updated | Committed | Pushed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 — Native result and identity | done (29 red / 84 green) | CLEAN | n/a (no production code in Stage 1) | n/a | done | done | done | done |
 | 2 — Native and local autograder modes | done (carried from Stage 1) | CLEAN | done | CLEAN | done | done | done | done |
-| 3 — Dependency bootstrap and target contract | done (60 red: 51 Stage 3, 9 converted Stage 1/2) | CLEAN | pending | pending | pending | pending | pending | pending |
+| 3 — Dependency bootstrap and target contract | done (60 red: 51 Stage 3, 9 converted Stage 1/2) | CLEAN | done | CLEAN | done | done | pending | pending |
 | 4 — Pytest trust boundary | pending | pending | pending | pending | pending | pending | pending | pending |
 | 5 — Manifest hardening | pending | pending | pending | pending | pending | pending | pending | pending |
 | 6 — Builder filesystem and archive safety | pending | pending | pending | pending | pending | pending | pending | pending |
@@ -50,6 +50,29 @@
 - Red-phase review ran three rounds: 16 findings, then 7, then CLEAN with three cosmetic items deferred to green/de-sloppification.
 - The red suite is proven satisfiable: a throwaway conforming implementation turns every Stage 3 case green and leaves only unrelated work outstanding.
 - **Stage 5 carry-forward:** `tests/test_classroom50_bundle_stage4.py` still uses a non-canonical `test_fixture.py` hidden-test filename. Stage 5 must rename it to `test_<exercise_key>.py` and update `EXPECTED_TEST_NAMES` and `test_builder_copies_only_required_supports_and_excludes_unrelated_files`.
+
+### Stage 3 green-phase notes
+
+- New files: `scripts/classroom50_requirements.txt` (the seven `uv.lock` pins), `scripts/classroom50_pytest.ini` (minimal trusted bundle config), `scripts/classroom50_manifest.py` (shared manifest validator, copied into the bundle). `scripts/autograder.py` grew to 814 lines with the four bootstrap seams; `scripts/build_classroom50_bundle.py` emits the four target contract files in one final stage, after every other file, and copies the grader last — so a bundle carrying the grader always carries all four contract files.
+- The requirements file is parsed by a closed grammar evaluated against `sys.platform` rather than by `packaging`, because `SPEC.md` orders version verification *before* the target reaches `sys.path`. `packaging` is never imported on the bootstrap path.
+- Version lookup uses `importlib.metadata.distributions(path=[target])` and origin lookup uses `importlib.machinery.PathFinder.find_spec(name, [target])`, so neither can read the global environment and neither mutates `sys.path`.
+- Native mode order: validate the environment → check package origins → bootstrap → import pytest → grade. Local mode never bootstraps, which is what keeps the Selection validation and the Stage 8 checks offline.
+- Three declared failure types share a `GradingInfrastructureError(RuntimeError)` base, so `main` reports exactly those as a clear exit-2 message while a genuine internal bug still surfaces as a traceback.
+- Green review ran two rounds: 13 findings, all resolved, with each new test verified falsifiable by reverting its fix.
+- The failed-build test aims its negative half at a second, never-populated target, so it verifies the one-stage emission property rather than deletion behaviour.
+
+### Stage 4 obligations carried from Stage 3
+
+- **S4-A.** pytest's default prepend import mode inserts the hidden-test basedir at `sys.path[0]`, ahead of the verified target. The target → bundle → student relative order survives and the inserted directory is builder-controlled, but Stage 4 owns the invocation and must make the import mode an explicit decision rather than inherit it silently.
+- **S4-B.** Do **not** remove `addopts = -q` from `scripts/classroom50_pytest.ini`. Stage 4's required argument vector has no `-q`, so that line becomes the sole source of quiet output.
+- **S4-C.** The autograder is 814 lines with a clear "native dependency bootstrap" section banner. It stays a single file through Stage 5 because `SPEC.md` and `WORKFLOW_SPEC.md` fix the source-to-target mapping and the target directory contents. **Revisit the split in Stage 6**, when the target-contents list is rewritten: amend it to add a bootstrap entry and split along the existing banner.
+
+### Stage 5 obligations carried from Stage 3
+
+- **S5-A (test harness, blocking for Stage 5).** `tests/_classroom50_test_helpers.py` stages an inert `classroom50_manifest.py` placeholder containing only a docstring. The moment the autograder imports the shared validator, every in-process native run fails. Replace the placeholder with a byte-for-byte copy of `scripts/classroom50_manifest.py`, using the same mechanism that already overwrites the staged `requirements.txt` with the lock-derived text.
+- **S5-B (autograder).** Import `classroom50_manifest` from the bundle root, call `validate_manifest` on the parsed `grading_manifest.json` before discovery, and replace the `rglob("tests/test_*.py")` discovery with the manifest-listed paths. Derive the target-contract filenames from the shared module rather than restating them.
+- **S5-C (builder and fixture).** Delete the `len(candidates) == 1` fallback so only `tests/test_<exercise_key>.py` is accepted, and rename the `tests/test_classroom50_bundle_stage4.py` synthetic fixture from `test_fixture.py` to `test_ex900_sequence_make_generic_fixture.py`, updating every reader and writer of that filename.
+- **S5-D (builder, pre-existing defect).** `_collect_required_filenames` requires both documented support modules, so `exercises/sequence/ex011_sequence_gaps_consolidation/tests/` — which has `student_checker_support.py` but no `expectations.py` — cannot be built. Stage 5's optional-support rule must make an absent documented module non-fatal.
 
 ## Read-first context
 

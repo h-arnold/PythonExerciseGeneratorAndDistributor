@@ -54,6 +54,7 @@ import json
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -75,7 +76,7 @@ from tests._classroom50_assignment_contract import (
     username_from_repo,
     with_overrides,
 )
-from tests._classroom50_bootstrap import run_native_in_process
+from tests._classroom50_bootstrap import load_bundle_autograder, run_native_in_process
 from tests._classroom50_test_helpers import (
     AUTOGRADER_SOURCE,
     DEFAULT_CHILD_TIMEOUT_SECONDS,
@@ -108,6 +109,7 @@ from tests._classroom50_test_helpers import (
     base_child_environment,
     completed_local_result,
     expected_row_names,
+    local_arguments,
     native_environment,
     passing_hidden_test_source,
     read_result,
@@ -120,6 +122,10 @@ from tests._classroom50_test_helpers import (
 )
 
 DATETIME_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+# The exit status ``scripts/autograder.py`` returns for every declared
+# infrastructure failure: identity, package origin, or dependency bootstrap.
+INFRASTRUCTURE_EXIT_CODE = 2
 
 # The three grading shapes the pinned schema accepts: explicit auto, an absent
 # grading block, and an object whose mode is omitted.
@@ -149,6 +155,15 @@ def _assert_infrastructure_failure(proc: subprocess.CompletedProcess[str], needl
     assert re.search(rf"\b{re.escape(needle)}\b", diagnostics), (
         f"The failure diagnostics must clearly name {needle!r}.\n{diagnostics}"
     )
+
+
+def _raiser(failure: BaseException) -> Callable[..., Any]:
+    """Return a ``run_bundle`` stand-in that raises ``failure`` when called."""
+
+    def _fail(*args: Any, **kwargs: Any) -> Any:
+        raise failure
+
+    return _fail
 
 
 @pytest.fixture
@@ -385,6 +400,53 @@ def test_in_place_script_execution_is_not_a_supported_local_mode(
     )
     assert proc.returncode != 0, "In-place execution must not grade a checkout."
     assert not result_path.exists()
+    _assert_infrastructure_failure(proc, "exercise_runtime_support")
+
+
+@pytest.mark.parametrize(
+    "error_name",
+    ["GradingConfigurationError", "PackageOriginError", "DependencyBootstrapError"],
+    ids=("configuration", "origin", "dependencies"),
+)
+def test_main_converts_a_declared_infrastructure_failure_into_exit_two(
+    staged_bundle: StagedBundle, monkeypatch: pytest.MonkeyPatch, error_name: str
+) -> None:
+    """A declared failure is reported; it never escapes as an unhandled exception.
+
+    ``main`` narrows its reported failures to ``GradingInfrastructureError`` so an
+    unrelated exception cannot be mislabelled as a deliberate infrastructure failure
+    with no diagnostic. Each declared type must therefore still be converted into a
+    clean exit 2, and the result output must be left absent. The exception classes are
+    read from the bundle-local grader, because that is the module instance whose
+    ``main`` is being driven.
+    """
+    module = load_bundle_autograder(monkeypatch, staged_bundle.bundle)
+    monkeypatch.setattr(module, "run_bundle", _raiser(getattr(module, error_name)(error_name)))
+    result_path = staged_bundle.bundle / LOCAL_RESULT_NAME
+    exit_code = module.main(local_arguments(staged_bundle, result_path, None))
+    assert exit_code == INFRASTRUCTURE_EXIT_CODE, (
+        f"a declared failure must exit {INFRASTRUCTURE_EXIT_CODE}, not {exit_code}"
+    )
+    assert not result_path.exists(), "a declared failure must write no completed result"
+
+
+def test_main_lets_an_undeclared_runtime_failure_propagate(
+    staged_bundle: StagedBundle, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An exception outside the declared types is a bug, so it surfaces as a traceback.
+
+    This is the half of the narrowed catch that keeps real defects visible: pytest
+    internals, the runtime package, or the grader's own code raising a bare
+    ``RuntimeError`` must not be reported as an infrastructure failure with no
+    diagnostic detail. The outer runner still treats the resulting non-zero child exit
+    as an error, so nothing is graded either way.
+    """
+    module = load_bundle_autograder(monkeypatch, staged_bundle.bundle)
+    monkeypatch.setattr(module, "run_bundle", _raiser(RuntimeError("internal bug")))
+    result_path = staged_bundle.bundle / LOCAL_RESULT_NAME
+    with pytest.raises(RuntimeError, match="internal bug"):
+        module.main(local_arguments(staged_bundle, result_path, None))
+    assert not result_path.exists(), "a crashed run must write no completed result"
 
 
 def test_local_result_uses_exact_documented_local_identity_values(
