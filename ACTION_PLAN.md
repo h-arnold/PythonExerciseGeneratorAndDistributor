@@ -2,13 +2,14 @@
 
 ## Implementation progress tracker
 
-**Active section:** Stage 2 — Implement native and local autograder modes
-**Current phase:** Green (Implementation)
+**Active section:** Stage 3 — Lock-derived native dependency bootstrap and target contract files
+**Current phase:** Red (Testing Specialist)
 
 | Section | Red tests | Red review | Green impl | Green review | Checks | Plan updated | Committed | Pushed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 — Native result and identity | done (29 red / 84 green) | CLEAN | n/a (no production code in Stage 1) | n/a | done | done | pending | pending |
-| 2 — Native and local autograder modes | done (carried from Stage 1) | CLEAN | in progress | pending | pending | pending | pending | pending |
+| 1 — Native result and identity | done (29 red / 84 green) | CLEAN | n/a (no production code in Stage 1) | n/a | done | done | done | done |
+| 2 — Native and local autograder modes | done (carried from Stage 1) | CLEAN | done | CLEAN | done | done | pending | pending |
+| 3 — Dependency bootstrap and target contract | pending | pending | pending | pending | pending | pending | pending | pending |
 | 3 — Dependency bootstrap and target contract | pending | pending | pending | pending | pending | pending | pending | pending |
 | 4 — Pytest trust boundary | pending | pending | pending | pending | pending | pending | pending | pending |
 | 5 — Manifest hardening | pending | pending | pending | pending | pending | pending | pending | pending |
@@ -29,6 +30,17 @@
 - `tests/_classroom50_assignment_contract.py` transcribes the documented pinned assignment-manifest rules. It is explicitly **not** a substitute for the pinned upstream schema; Stage 7 must cross-check it against the snapshot.
 - Red-phase review returned 11 findings, all resolved over two rounds plus three direct minor fixes (word-boundary diagnostic needle, no-traceback assertion, positive `false`-flag coverage).
 - No deviation from the Stage 1 acceptance criteria.
+
+### Stage 2 notes
+
+- `scripts/autograder.py` gained native and local modes, the canonical result shape, teardown-aware outcome collection, and native environment validation. No dependency bootstrap, pytest trust boundary, or manifest consumption was added — Stages 3, 4 and 5 own those.
+- Two Stage 1 tests were genuinely defective and were corrected, not weakened:
+  - the missing-variable parametrisation asserted that dropping `OWNER` or `USERNAME` *alone* fails, contradicting "at least one of";
+  - `test_template_test_tampering_does_not_change_graded_outcome` compared two whole payloads, but `datetime` is current UTC time by contract and therefore differs between runs. The tamper property (identical scores, rows, and identity) is still compared exactly.
+- Green review found five issues, all resolved: `--variant` alone could fall through to native mode (now a usage error), `LOCAL_IDENTITY` was handed out as mutable module state (now a read-only mapping), a stale "RED tests" docstring, the unverified in-place-execution criterion (now covered by a test), and the stale tracker row.
+- In-place `scripts/autograder.py` local execution remains unsupported and is now explicitly covered.
+- The structured `sys.path` order for Stage 3 must be: verified fresh target, then bundle root, then student checkout.
+- No deviation from the Stage 2 acceptance criteria.
 
 ## Read-first context
 

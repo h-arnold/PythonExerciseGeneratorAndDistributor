@@ -1,10 +1,10 @@
-"""RED tests for the native Classroom 50 autograder result and identity contract.
+"""Contract tests for the native Classroom 50 autograder result and identity behaviour.
 
-This module covers ``ACTION_PLAN.md`` Stage 1 only: the native result schema, the
-native environment-source matrix, the documented local identity policy, the
-teardown outcome rule, and the pinned native assignment-manifest contract.  No
-production code is touched here; several tests are expected to fail until Stage 2
-implements native and local autograder modes.
+This module covers ``ACTION_PLAN.md`` Stages 1 and 2: the native result schema,
+the native environment-source matrix, the documented local identity policy, the
+teardown outcome rule, and the transcribed native assignment-manifest rules.  It
+was authored as the Stage 1 red suite; Stage 2 implemented the native and local
+autograder modes and every test here is now green.
 
 ## Why the bundle is staged by hand
 
@@ -56,6 +56,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -79,6 +80,7 @@ from tests._classroom50_assignment_contract import (
     with_overrides,
 )
 from tests._classroom50_test_helpers import (
+    DEFAULT_CHILD_TIMEOUT_SECONDS,
     SyntheticExercise,
     expected_row_name,
     run_bundle_child,
@@ -525,12 +527,22 @@ def test_native_owner_identity_falls_back_from_owner_to_username(
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("missing", NATIVE_REQUIRED_ENV + NATIVE_OWNER_ENV)
+@pytest.mark.parametrize("missing", NATIVE_REQUIRED_ENV)
 def test_native_missing_required_variable_fails_and_removes_stale_result(
     staged_bundle: _StagedBundle,
     missing: str,
 ) -> None:
-    """A missing required native variable is non-zero, clear, and clears a stale result."""
+    """A missing required native variable is non-zero, clear, and clears a stale result.
+
+    Only the unconditionally required variables are parametrised here.  The two
+    owner variables are a documented pair, not two required values: SPEC.md
+    requires "at least one of ``OWNER`` and ``USERNAME``" and states that
+    "``OWNER`` ... [is] required if ``USERNAME`` is absent" and vice versa, so
+    dropping exactly one of them is the owner fallback covered by
+    ``test_native_owner_identity_falls_back_from_owner_to_username`` and
+    ``test_native_review_url_falls_back_to_commit_url``.  Dropping both is the
+    separate failure asserted below.
+    """
     _write_stale_result(staged_bundle.result_path)
     proc = _run_native_child(staged_bundle, _native_env(staged_bundle, **{missing: ABSENT}))
     assert proc.returncode != 0, (
@@ -548,7 +560,7 @@ def test_native_missing_both_owner_variables_fails_and_removes_stale_result(
 ) -> None:
     """Dropping both OWNER and USERNAME is a non-zero infrastructure failure."""
     _write_stale_result(staged_bundle.result_path)
-    env = _native_env(staged_bundle, OWNER=ABSENT, USERNAME=ABSENT)
+    env = _native_env(staged_bundle, **{name: ABSENT for name in NATIVE_OWNER_ENV})
     proc = _run_native_child(staged_bundle, env)
     assert proc.returncode != 0, proc.stderr
     assert not staged_bundle.result_path.exists(), (
@@ -612,6 +624,54 @@ def test_local_mode_rejects_a_single_argument_without_writing_a_result(
     assert not result_path.exists()
     assert not (staged_bundle.bundle / NATIVE_RESULT_NAME).exists()
     assert not staged_bundle.result_path.exists()
+
+
+def test_local_only_variant_flag_is_rejected_without_the_local_argument_pair(
+    staged_bundle: _StagedBundle,
+) -> None:
+    """``--variant`` alone cannot select native mode and write a result.
+
+    ``--variant solution`` is documented as local dry-run only.  Accepting it
+    without the argument pair would silently produce a native, upload-shaped
+    grade for the student variant, so it is a usage error instead.
+    """
+    proc = _run_local_child(staged_bundle, "--variant", LOCAL_VARIANT)
+    assert proc.returncode != 0, (
+        "--variant without the local pair must be rejected.\n"
+        f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    )
+    assert not (staged_bundle.bundle / NATIVE_RESULT_NAME).exists()
+    assert not staged_bundle.result_path.exists()
+
+
+def test_in_place_script_execution_is_not_a_supported_local_mode(
+    staged_bundle: _StagedBundle,
+) -> None:
+    """``scripts/autograder.py`` in place cannot grade: the bundle root is its parent.
+
+    Local mode resolves the bundle root from the script parent, so an in-place
+    copy has no ``exercise_runtime_support/`` beside it and the package-origin
+    check refuses the run instead of silently grading the wrong surface.
+    """
+    result_path = staged_bundle.bundle / LOCAL_RESULT_NAME
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(AUTOGRADER_SOURCE),
+            "--student-root",
+            str(staged_bundle.student),
+            "--result",
+            str(result_path),
+        ],
+        cwd=REPO_ROOT,
+        env=_base_env(),
+        capture_output=True,
+        text=True,
+        timeout=DEFAULT_CHILD_TIMEOUT_SECONDS,
+        check=False,
+    )
+    assert proc.returncode != 0, "In-place execution must not grade a checkout."
+    assert not result_path.exists()
 
 
 def test_local_result_uses_exact_documented_local_identity_values(

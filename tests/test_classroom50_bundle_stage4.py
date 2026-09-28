@@ -315,7 +315,15 @@ def test_hidden_discovery_and_sys_path_isolation_ignore_visible_tests_and_use_st
 def test_template_test_tampering_does_not_change_graded_outcome(
     stage4_fixture: dict[str, Path],
 ) -> None:
-    """Editing/deleting visible checkout tests cannot affect the hidden result."""
+    """Editing/deleting visible checkout tests cannot affect the hidden result.
+
+    Stage 2 correction: the canonical payload carries ``datetime`` as the current
+    UTC instant, which SPEC.md records as "current UTC time; overwritten by the
+    runner with the submission instant". Two separate grading runs therefore
+    differ in that one field by construction, so it cannot take part in an
+    equality comparison. Every other field - including the graded rows, the
+    score, and the identity - is still compared exactly.
+    """
     build = _run_builder(stage4_fixture)
     assert build.returncode == 0, build.stderr
     first = stage4_fixture["bundle"] / "first.json"
@@ -324,9 +332,11 @@ def test_template_test_tampering_does_not_change_graded_outcome(
     shutil.rmtree(visible_tests)
     second = stage4_fixture["bundle"] / "second.json"
     assert _run_grader(stage4_fixture, result_path=second, variant="solution").returncode == 0
-    assert json.loads(first.read_text(encoding="utf-8")) == json.loads(
-        second.read_text(encoding="utf-8")
-    )
+    first_payload = json.loads(first.read_text(encoding="utf-8"))
+    second_payload = json.loads(second.read_text(encoding="utf-8"))
+    del first_payload["datetime"]
+    del second_payload["datetime"]
+    assert first_payload == second_payload
 
 
 def test_grader_reports_infrastructure_error_for_broken_hidden_tests(
