@@ -8,9 +8,8 @@
 | Section | Red tests | Red review | Green impl | Green review | Checks | Plan updated | Committed | Pushed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 — Native result and identity | done (29 red / 84 green) | CLEAN | n/a (no production code in Stage 1) | n/a | done | done | done | done |
-| 2 — Native and local autograder modes | done (carried from Stage 1) | CLEAN | done | CLEAN | done | done | pending | pending |
-| 3 — Dependency bootstrap and target contract | pending | pending | pending | pending | pending | pending | pending | pending |
-| 3 — Dependency bootstrap and target contract | pending | pending | pending | pending | pending | pending | pending | pending |
+| 2 — Native and local autograder modes | done (carried from Stage 1) | CLEAN | done | CLEAN | done | done | done | done |
+| 3 — Dependency bootstrap and target contract | done (60 red: 51 Stage 3, 9 converted Stage 1/2) | CLEAN | pending | pending | pending | pending | pending | pending |
 | 4 — Pytest trust boundary | pending | pending | pending | pending | pending | pending | pending | pending |
 | 5 — Manifest hardening | pending | pending | pending | pending | pending | pending | pending | pending |
 | 6 — Builder filesystem and archive safety | pending | pending | pending | pending | pending | pending | pending | pending |
@@ -41,6 +40,16 @@
 - In-place `scripts/autograder.py` local execution remains unsupported and is now explicitly covered.
 - The structured `sys.path` order for Stage 3 must be: verified fresh target, then bundle root, then student checkout.
 - No deviation from the Stage 2 acceptance criteria.
+
+### Stage 3 red-phase notes
+
+- Red inventory: 60 failing / 119 passing across `tests/test_classroom50_native_bootstrap.py` (43), `tests/test_classroom50_native_autograder.py` (9), `tests/test_classroom50_bundle_stage4.py` (8). 51 are new Stage 3 cases; 9 are Stage 1/2 native tests that are now gated on the bootstrap.
+- The seam contract the red tests lock in: `bootstrap_native_dependencies(bundle_root) -> Path`, `import_verified_pytest(bundle_root) -> ModuleType`, `installed_distribution_version(distribution, *, target) -> str`, `installed_module_origin(module_name, *, target) -> Path`. The version and origin hooks take the fresh target as a keyword-only argument because verification happens **before** the target is on `sys.path`; without it an implementation could silently verify the global environment.
+- **Deviation from the plan's expectation, accepted after three review rounds:** the repository `.venv` has no `pip` and the fixed pip argv has no offline switch, so no repository test can cover a *successful* native run through a real child process. The 9 native **success** assertions were therefore converted to in-process `main([])` runs with the pip subprocess, the version hook, and the origin hook faked, as `SPEC.md` mandates. Native **failure** assertions and every local dry run remain real child subprocesses, because they fail before the bootstrap. The `sys.executable` resolution of the child launch is covered structurally at the `subprocess.run` boundary instead. This trade-off is documented in `tests/_classroom50_bootstrap.py` and both native test modules.
+- Local dry runs are proven never to bootstrap and never to launch a subprocess, which keeps the Stage 8 Selection validation offline and is what makes the conversion above safe.
+- Red-phase review ran three rounds: 16 findings, then 7, then CLEAN with three cosmetic items deferred to green/de-sloppification.
+- The red suite is proven satisfiable: a throwaway conforming implementation turns every Stage 3 case green and leaves only unrelated work outstanding.
+- **Stage 5 carry-forward:** `tests/test_classroom50_bundle_stage4.py` still uses a non-canonical `test_fixture.py` hidden-test filename. Stage 5 must rename it to `test_<exercise_key>.py` and update `EXPECTED_TEST_NAMES` and `test_builder_copies_only_required_supports_and_excludes_unrelated_files`.
 
 ## Read-first context
 
@@ -217,6 +226,11 @@ Make hidden grading independent of the student checkout's Python environment and
 - New `scripts/classroom50_requirements.txt`
 - New `scripts/classroom50_pytest.ini`
 - New `scripts/classroom50_manifest.py`
+- New `tests/test_classroom50_native_bootstrap.py` (the Stage 3 red suite, split out of the native module)
+- New `tests/test_classroom50_harness_helpers.py` (contract tests for the test harness itself)
+- New `tests/_classroom50_bootstrap.py` (seam contract, harness, in-process run drivers)
+- New `tests/_classroom50_lock.py` (uv.lock closure and requirements derivation)
+- New `tests/_classroom50_source_scan.py` (AST source analysis)
 - `tests/test_classroom50_native_autograder.py`
 - `tests/test_classroom50_bundle_stage4.py`
 

@@ -4,6 +4,13 @@ These tests intentionally describe the Stage 4 command-line contract before
 the two scripts exist.  They use a small fixture exercise rather than the
 Selection implementation, so the future scripts cannot satisfy the contract
 with Selection-specific branches.
+
+The Stage 3 additions at the end of this module cover the four target contract
+files the builder has to emit atomically once Stage 3 lands: ``requirements.txt``,
+``pytest.ini``, ``classroom50_manifest.py``, and a schema-valid
+``grading_manifest.json``.  The native dependency *bootstrap* itself belongs to
+``tests/test_classroom50_native_bootstrap.py``, which fakes the pip subprocess so
+no test in this repository reaches the network.
 """
 
 from __future__ import annotations
@@ -13,10 +20,26 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
+from tests._classroom50_bootstrap import (
+    BUNDLE_MANIFEST_JSON_NAME,
+    BUNDLE_MANIFEST_NAME,
+    BUNDLE_MANIFEST_SOURCE,
+    BUNDLE_PYTEST_INI_NAME,
+    BUNDLE_PYTEST_INI_SOURCE,
+    BUNDLE_REQUIREMENTS_NAME,
+    is_manifest_records,
+)
+from tests._classroom50_lock import (
+    REPOSITORY_PYTEST_INI,
+    REQUIREMENTS_SOURCE,
+    committed_requirements_bytes,
+)
 from tests._classroom50_test_helpers import (
+    GRADING_MANIFEST_SCHEMA,
     SyntheticExercise,
     expected_row_name,
     run_bundle_child,
@@ -33,6 +56,20 @@ EXPECTED_TEST_NAMES = [
     expected_row_name(EXERCISE_KEY, "test_fixture.py::test_generic_case[alpha]"),
     expected_row_name(EXERCISE_KEY, "test_fixture.py::test_generic_case[beta]"),
 ]
+
+# The four target contract files Stage 3 emits atomically into the bundle root.
+TARGET_CONTRACT_FILES = (
+    BUNDLE_REQUIREMENTS_NAME,
+    BUNDLE_PYTEST_INI_NAME,
+    BUNDLE_MANIFEST_NAME,
+    BUNDLE_MANIFEST_JSON_NAME,
+)
+# The fixed source-to-target mapping for the three copied contract files.
+COPIED_CONTRACT_SOURCES = {
+    BUNDLE_REQUIREMENTS_NAME: REQUIREMENTS_SOURCE,
+    BUNDLE_PYTEST_INI_NAME: BUNDLE_PYTEST_INI_SOURCE,
+    BUNDLE_MANIFEST_NAME: BUNDLE_MANIFEST_SOURCE,
+}
 
 
 def _create_synthetic_exercise(root: Path, exercise_key: str, exercise_id: int) -> None:
@@ -122,13 +159,20 @@ def stage4_fixture(tmp_path: Path) -> dict[str, Path]:
     }
 
 
-def _run_builder(fixture: dict[str, Path]) -> subprocess.CompletedProcess[str]:
-    """Run the future builder's exact generic CLI contract."""
+def _run_builder(
+    fixture: dict[str, Path], *, output: Path | None = None
+) -> subprocess.CompletedProcess[str]:
+    """Run the future builder's exact generic CLI contract.
+
     # Future CLI: --source-root is the selected exercise source tree,
     # --exercise-set is a JSON list of {construct, exercise_key} records, and
     # --runtime-source is the current runtime package source and --output is
     # the teacher-side bundle directory.  No classroom/network operation is
     # implied or permitted by this local build command.
+
+    ``output`` overrides ``--output`` so a rejected build can be aimed at a
+    second, never-populated target.
+    """
     return subprocess.run(
         [
             sys.executable,
@@ -140,7 +184,7 @@ def _run_builder(fixture: dict[str, Path]) -> subprocess.CompletedProcess[str]:
             "--runtime-source",
             str(fixture["runtime_source"]),
             "--output",
-            str(fixture["bundle"]),
+            str(output or fixture["bundle"]),
         ],
         cwd=REPO_ROOT,
         capture_output=True,
@@ -170,7 +214,13 @@ def _run_grader(
 def test_builder_copies_only_canonical_hidden_bundle_contents(
     stage4_fixture: dict[str, Path],
 ) -> None:
-    """The builder preserves canonical paths and never copies solutions."""
+    """The builder preserves canonical paths and never copies solutions.
+
+    Stage 3 addition: a successful build also emits the four target contract
+    files at the bundle root, so the exact file set below is the Stage 2 set plus
+    ``requirements.txt``, ``pytest.ini``, ``classroom50_manifest.py``, and
+    ``grading_manifest.json``.
+    """
     proc = _run_builder(stage4_fixture)
     assert proc.returncode == 0, proc.stderr
     bundle = stage4_fixture["bundle"]
@@ -185,6 +235,7 @@ def test_builder_copies_only_canonical_hidden_bundle_contents(
     assert not list(bundle.rglob("student.ipynb"))
     expected_files = {
         Path("autograder.py"),
+        *(Path(name) for name in TARGET_CONTRACT_FILES),
         Path("exercises") / CONSTRUCT / EXERCISE_KEY / "tests" / "test_fixture.py",
         Path("exercises") / CONSTRUCT / EXERCISE_KEY / "tests" / "expectations.py",
         Path("exercises") / CONSTRUCT / EXERCISE_KEY / "tests" / "student_checker_support.py",
@@ -458,3 +509,142 @@ def test_grader_removes_stale_result_before_reporting_infrastructure_error(
     proc = _run_grader(stage4_fixture, result_path=result_path, variant="solution")
     assert proc.returncode != 0
     assert not result_path.exists()
+
+
+# ---------------------------------------------------------------------------
+# Stage 3: the four target contract files emitted atomically by the builder.
+# ---------------------------------------------------------------------------
+
+
+def _read_manifest(bundle: Path) -> dict[str, Any]:
+    """Return the parsed bundle grading manifest, failing with the raw text if invalid."""
+    path = bundle / BUNDLE_MANIFEST_JSON_NAME
+    assert path.is_file(), f"The builder must emit {BUNDLE_MANIFEST_JSON_NAME}; {path} is missing."
+    parsed: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    return parsed
+
+
+def test_one_build_emits_the_whole_target_contract_and_a_failed_build_emits_none(
+    stage4_fixture: dict[str, Path],
+) -> None:
+    """The four contract files are emitted together, or not at all.
+
+    A successful build publishes the requirements, the trusted pytest
+    configuration, the shared validator, and the manifest, because the autograder
+    may not depend on a bundle file that a build can leave behind half-written.  The
+    negative half runs against a second, never-populated target so it stays true
+    whether or not a later stage also makes a failed build preserve the previous
+    target's contents.
+    """
+    build = _run_builder(stage4_fixture)
+    assert build.returncode == 0, build.stderr
+    bundle = stage4_fixture["bundle"]
+    missing = [name for name in TARGET_CONTRACT_FILES if not (bundle / name).is_file()]
+    assert not missing, f"The builder must emit every target contract file; missing {missing}."
+
+    rejected = stage4_fixture["bundle"].with_name("rejected-bundle")
+    stage4_fixture["exercise_set"].write_text(
+        json.dumps([{"construct": CONSTRUCT, "exercise_key": "ex999_sequence_missing_tests"}]),
+        encoding="utf-8",
+    )
+    failed = _run_builder(stage4_fixture, output=rejected)
+    assert failed.returncode != 0, "A record without canonical tests must fail the build."
+    leaked = [name for name in TARGET_CONTRACT_FILES if (rejected / name).exists()]
+    assert not leaked, f"A failed build must not emit target contract files; found {leaked}."
+
+
+@pytest.mark.parametrize(
+    ("name", "source"),
+    sorted(COPIED_CONTRACT_SOURCES.items()),
+    ids=[name for name, _ in sorted(COPIED_CONTRACT_SOURCES.items())],
+)
+def test_builder_copies_each_contract_file_verbatim_from_its_committed_source(
+    stage4_fixture: dict[str, Path],
+    name: str,
+    source: Path,
+) -> None:
+    """``requirements.txt``, ``pytest.ini``, and the validator are copied byte for byte.
+
+    The autograder bootstraps from the emitted requirements file, so the bundle
+    copy has to be the committed lock-derived source rather than a rewrite.
+    """
+    assert source.is_file(), f"{source} is not committed yet."
+    build = _run_builder(stage4_fixture)
+    assert build.returncode == 0, build.stderr
+    emitted = stage4_fixture["bundle"] / name
+    assert emitted.read_bytes() == source.read_bytes(), (
+        f"<target>/{name} must be a byte-for-byte copy of {source.name}."
+    )
+
+
+def test_the_committed_requirements_source_is_the_only_requirements_file(
+    stage4_fixture: dict[str, Path],
+) -> None:
+    """The bundle ships one requirements file, and it is the committed source."""
+    build = _run_builder(stage4_fixture)
+    assert build.returncode == 0, build.stderr
+    bundle = stage4_fixture["bundle"]
+    emitted = bundle / BUNDLE_REQUIREMENTS_NAME
+    assert emitted.is_file(), f"The builder must emit {BUNDLE_REQUIREMENTS_NAME}; it is missing."
+    assert emitted.read_bytes() == committed_requirements_bytes()
+    assert [path.relative_to(bundle) for path in bundle.rglob("*requirements*.txt")] == [
+        Path(BUNDLE_REQUIREMENTS_NAME)
+    ], "The bundle must ship exactly one requirements source."
+
+
+def test_the_emitted_pytest_configuration_is_not_the_repository_root_configuration(
+    stage4_fixture: dict[str, Path],
+) -> None:
+    """The bundle gets its own minimal pytest configuration, not the root file.
+
+    ``SPEC.md`` requires "a minimal pytest configuration separate from the
+    repository's broad root ``pytest.ini``", whose ``testpaths`` would otherwise
+    apply to a bundle run.
+    """
+    build = _run_builder(stage4_fixture)
+    assert build.returncode == 0, build.stderr
+    emitted = stage4_fixture["bundle"] / BUNDLE_PYTEST_INI_NAME
+    assert emitted.read_bytes() != REPOSITORY_PYTEST_INI.read_bytes(), (
+        "The bundle must not reuse the repository's broad root pytest.ini."
+    )
+
+
+def test_builder_emits_a_schema_valid_grading_manifest_for_the_selected_records(
+    stage4_fixture: dict[str, Path],
+) -> None:
+    """``grading_manifest.json`` is the closed wire shape for the selected records.
+
+    Stage 3 emits the minimum closed manifest the real-builder test needs: the
+    exact top-level keys, one record per selected exercise with exactly the three
+    documented fields, canonical POSIX-relative paths that resolve inside the
+    bundle, and records sorted by ``(construct, exercise_key)``.  Stage 5 tightens
+    the canonical ``test_<exercise_key>.py`` filename rule; the fixture's
+    ``test_fixture.py`` is what this stage still accepts.
+    """
+    build = _run_builder(stage4_fixture)
+    assert build.returncode == 0, build.stderr
+    bundle = stage4_fixture["bundle"]
+    manifest = _read_manifest(bundle)
+    assert set(manifest) == {"schema", "exercises"}, (
+        f"The grading manifest has exactly two top-level keys; got {sorted(manifest)}."
+    )
+    assert manifest["schema"] == GRADING_MANIFEST_SCHEMA
+    records = manifest["exercises"]
+    assert is_manifest_records(records) and records, (
+        "The manifest must list the selected records as JSON objects."
+    )
+    assert records == [
+        {
+            "construct": CONSTRUCT,
+            "exercise_key": EXERCISE_KEY,
+            "test_path": f"exercises/{CONSTRUCT}/{EXERCISE_KEY}/tests/test_fixture.py",
+        }
+    ], "One selected record must produce exactly one canonical manifest entry."
+    test_path = str(records[0]["test_path"])
+    assert "\\" not in test_path and ".." not in Path(test_path).parts, (
+        f"{test_path!r} must be a canonical POSIX bundle-relative path."
+    )
+    assert (bundle / test_path).is_file(), f"{test_path!r} must resolve inside the bundle."
+    assert not (bundle / "exercises" / CONSTRUCT / UNSELECTED_EXERCISE_KEY).exists(), (
+        "An unselected exercise must not reach the manifest or the bundle."
+    )
