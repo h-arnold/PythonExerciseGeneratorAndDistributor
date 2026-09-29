@@ -217,8 +217,8 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-All sections complete. Current phase: de-sloppification reviewed; cleanup
-commit/push in progress before final documentation sync.
+All sections complete. Current phase: de-sloppification completed; final
+documentation sync pending.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -289,4 +289,8 @@ Tidy Code Reviewer re-reviewed the cleanup clean. Targeted docs/grader suites
 (36/44), full suite (1355 passed, 1 skipped), collection, and Ruff pass.
 Larger fixture extraction and cosmetic guide rewording were deferred because
 they would expand this minimal cleanup without changing the contract. The
-branch is ready for documentation sync once this cleanup is pushed.
+cleanup changed no grading contract.
+Cleanup commit: `6ff2778907a6931c793af3a516b633f4a55da613`
+(`Remove stale Classroom 50 test and plan scaffolding`), pushed to
+`origin/fix/classroom50Autograder` (`69459f1..6ff2778`). The branch is ready
+for final documentation sync.
