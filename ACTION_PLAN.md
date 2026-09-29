@@ -217,12 +217,12 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-Current section: Stage 1. Current phase: section exit evidence recorded; Stage 2 not started.
+Current section: Stage 2. Current phase: checks and commit/push in progress.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), 55f243b (plan) | pushed |
-| 2 | pending | pending | pending | pending | pending | pending | pending | pending |
+| 2 | done (22 expected failures) | clean after field, totals and pair-phrase corrections | done (36 doc checks passing) | clean | docs suite, grader suite, link/stale sweeps, Ruff passed | done | c360b48 (docs and tests), plan pending | pending |
 | 3 | pending | pending | pending | pending | pending | pending | pending | pending |
 
 Implementation notes and commit/push evidence will be recorded at each section exit.
@@ -244,6 +244,18 @@ follow-up. Code commit: `edf2cda0c74782b49d3802b63c92c49922af14af`
 `fix/classroom50Autograder`. Plan commit: `55f243bc7b376b62c451e471c0fe040ad98590c1`
 (`Track Stage 1 Classroom 50 delivery`). `git push origin
 fix/classroom50Autograder` succeeded, advancing `46e8966..55f243b`.
+
+Stage 2 red review tightened canonical key wording, row-sum coverage, and
+single-option error phrasing; re-review was clean (22 expected failures, 14
+passing guards). A redundant context query is an optional green tidy-up.
+Stage 2 documentation review is clean; the guide, execution model and
+development notes now match the two invocation modes and manual deployment.
+No product-contract deviation; a lone `--variant solution` without local pair
+is accepted but ignored in Classroom 50 mode as the guide states. No exercise
+or teaching-order files changed. The devcontainer JSON gate remains for Stage 3.
+Stage 2 code/docs commit `c360b48a0eb5f4c975b28b89a6085f0ed9be5b56`
+(`Document Classroom 50 bundle invocation and deployment`) on branch
+`fix/classroom50Autograder`.
 
 ## Implementation handoff
 
