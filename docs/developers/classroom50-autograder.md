@@ -80,8 +80,9 @@ The identity fields of the result are read from the runner environment:
 | `review` | `REVIEW_URL`, falling back to `COMMIT_URL` when `REVIEW_URL` is unset |
 
 `CLASSROOM`, `ASSIGNMENT`, `ASSIGNMENT_TYPE`, `SUBMISSION_TAG`, `COMMIT_URL`, and
-`RELEASE_URL` are required, and `ASSIGNMENT_TYPE` must be `individual`, `group`,
-or `team`. Unrelated runner variables are ignored.
+`RELEASE_URL` are required, an owner identity must come from either `OWNER` or
+`USERNAME`, and `ASSIGNMENT_TYPE` must be `individual`, `group`, or `team`.
+Unrelated runner variables are ignored.
 
 Classroom 50 mode installs the grading dependencies into the grading interpreter
 with `sys.executable -m pip install pytest tabulate`, because that interpreter
@@ -151,7 +152,8 @@ this repository.
 
 ## `classroom50/result/v1` result behaviour
 
-The run writes `result.json` satisfying the `classroom50/result/v1` contract
+The run writes its result document — `./result.json` in Classroom 50 mode, the
+`--result` path in local mode — satisfying the `classroom50/result/v1` contract
 cited by `Advanced-Autograding`. The envelope carries the identity fields of
 the mode, plus:
 

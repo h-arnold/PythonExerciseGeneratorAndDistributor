@@ -126,7 +126,7 @@ def parse_args(argv: Sequence[str] | None = None) -> Namespace:
 
 
 def _resolve_invocation(args: Namespace) -> _Invocation:
-    """Return the roots, result path, and variant implied by the arguments."""
+    """Return the roots, result path, variant, and mode implied by the arguments."""
     if args.student_root is None:
         checkout = Path.cwd()
         return _Invocation(

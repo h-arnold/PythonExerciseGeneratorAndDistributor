@@ -217,8 +217,8 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-All sections complete. Current phase: de-sloppification completed; final
-documentation sync pending.
+All sections complete. Current phase: final documentation sync completed;
+handoff to the teacher pending.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -292,5 +292,20 @@ they would expand this minimal cleanup without changing the contract. The
 cleanup changed no grading contract.
 Cleanup commit: `6ff2778907a6931c793af3a516b633f4a55da613`
 (`Remove stale Classroom 50 test and plan scaffolding`), pushed to
-`origin/fix/classroom50Autograder` (`69459f1..6ff2778`). The branch is ready
-for final documentation sync.
+`origin/fix/classroom50Autograder` (`69459f1..6ff2778`). Final documentation
+sync followed this cleanup.
+
+The final documentation sync was an accuracy pass over the whole diff, not
+feature work. It confirmed that the contract guide, execution model,
+development notes, and `AGENTS.md` agree with `SPEC.md` and `WORKFLOW_SPEC.md`,
+that no withdrawn requirement survives in any directly affected document, and
+that every relative documentation link resolves. It corrected three confirmed
+drift points: the Classroom 50 test-surface description in
+`docs/developers/testing-framework.md`, which no longer matched the expanded
+Stage 1 and Stage 2 suites; the Classroom 50 mode owner requirement in
+`docs/developers/classroom50-autograder.md`, which the guide omitted beside the
+six required runner variables even though losing both `OWNER` and `USERNAME`
+fails the run; and that section's result destination, now stated per mode. A
+matching docstring correction in `scripts/autograder.py` names the mode in
+`_resolve_invocation`'s return. No production, test, exercise, or teaching-order
+behaviour changed, and no grading contract moved.
