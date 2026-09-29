@@ -215,6 +215,34 @@ deployment step and the next implementation owner.
 2. Stage 2 — directly affected documentation.
 3. Stage 3 — final review and handoff.
 
+## Delivery tracker
+
+Current section: Stage 1. Current phase: checks and commit/push in progress.
+
+| Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), plan commit pending | pending |
+| 2 | pending | pending | pending | pending | pending | pending | pending | pending |
+| 3 | pending | pending | pending | pending | pending | pending | pending | pending |
+
+Implementation notes and commit/push evidence will be recorded at each section exit.
+
+Stage 1 red review found a contradictory OWNER-missing case despite USERNAME being
+available; the test now requires both to be missing, and the re-review is clean.
+The first broad solution check exposes a pre-existing devcontainer JSON parse
+failure in `tests/test_runtime_python_version.py` (committed invalid JSON in
+`template_repo_files/.devcontainer/devcontainer.json`); triage is deferred to
+the Stage 3 repository-wide gate. Green review found a time-dependent equality
+assertion in the tampering test once results acquired a datetime; comparing
+grade-bearing fields removed the flake and re-review was clean. The real
+`ex002_sequence_modify_basics` build and local solution/student dry runs pass
+with matching 34 case names/maxima; student scores 4/34 as expected.
+Stage 1 implementation complete without deviation to the product contract;
+the unrelated pre-existing devcontainer parse error remains a Stage 3 gate
+follow-up. Code commit: `edf2cda0c74782b49d3802b63c92c49922af14af`
+(`Add Classroom 50 invocation mode and canonical grading result`), branch
+`fix/classroom50Autograder`.
+
 ## Implementation handoff
 
 The next implementation owner is the Implementer agent. Its first prompt must
