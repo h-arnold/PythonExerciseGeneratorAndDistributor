@@ -529,7 +529,7 @@ def test_result_document_documents_the_totals_as_sums_over_the_case_rows() -> No
         assert _documents_result_field(doc, field), (
             f"Guide must document `{field}` as a key of the result document"
         )
-    totals_contexts = _contexts_of(doc, "`max-score`") + _contexts_of(doc, "max-score")
+    totals_contexts = _contexts_of(doc, "max-score")
     assert any(_mentions(context, *_DERIVATION_PHRASES) for context in totals_contexts), (
         "Guide must state that the result totals are sums, totals, or aggregates of the rows"
     )

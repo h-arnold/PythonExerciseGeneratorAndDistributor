@@ -395,11 +395,6 @@ def _build_bundle(
     *, source_root: Path, exercise_set: Path, runtime_source: Path, output: Path
 ) -> subprocess.CompletedProcess[str]:
     """Run the builder's exact generic CLI contract."""
-    # Future CLI: --source-root is the selected exercise source tree,
-    # --exercise-set is a JSON list of {construct, exercise_key} records, and
-    # --runtime-source is the current runtime package source and --output is
-    # the teacher-side bundle directory.  No classroom/network operation is
-    # implied or permitted by this local build command.
     return subprocess.run(
         [
             sys.executable,
@@ -454,12 +449,8 @@ def _run_grader(
     result_path: Path,
     variant: str | None = None,
     env: dict[str, str] | None = None,
-    cwd: Path = REPO_ROOT,
 ) -> subprocess.CompletedProcess[str]:
     """Run the bundle grader's exact local dry-run CLI contract."""
-    # Future CLI: the bundle is the script root, --student-root identifies the
-    # checkout whose notebooks/metadata are graded, --result writes the
-    # Classroom 50 JSON, and optional --variant solution is local dry-run only.
     arguments = [
         "--student-root",
         str(fixture["student"]),
@@ -468,7 +459,7 @@ def _run_grader(
     ]
     if variant is not None:
         arguments.extend(["--variant", variant])
-    return _run_grader_argv(fixture["bundle"], arguments, cwd=cwd, env=env)
+    return _run_grader_argv(fixture["bundle"], arguments, cwd=REPO_ROOT, env=env)
 
 
 def _run_classroom50_grader(

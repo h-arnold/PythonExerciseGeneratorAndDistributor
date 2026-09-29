@@ -217,15 +217,14 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-Current section: Stage 3. Current phase: section exit evidence recorded; cleanup not started.
+All sections complete. Current phase: de-sloppification reviewed; cleanup
+commit/push in progress before final documentation sync.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), 55f243b (plan) | pushed |
 | 2 | done (22 expected failures) | clean after field, totals and pair-phrase corrections | done (36 doc checks passing) | clean | docs suite, grader suite, link/stale sweeps, Ruff passed | done | c360b48 (docs and tests), 4e314ba (plan) | pushed |
 | 3 | existing failing devcontainer JSON test confirmed | clean; no new tests needed | done (one-line JSON fix) | clean | 1355 passed, 1 skipped; solution green, student expected failures; both repoman validates and Ruff green | done | db84c56 (gate fix), 689060b (plan) | pushed |
-
-Implementation notes and commit/push evidence will be recorded at each section exit.
 
 Stage 1 red review found a contradictory OWNER-missing case despite USERNAME being
 available; the test now requires both to be missing, and the re-review is clean.
@@ -256,9 +255,6 @@ or teaching-order files changed. The devcontainer JSON gate remains for Stage 3.
 Stage 2 code/docs commit `c360b48a0eb5f4c975b28b89a6085f0ed9be5b56`
 (`Document Classroom 50 bundle invocation and deployment`) on branch
 `fix/classroom50Autograder`.
-Plan commit `689060b1137de7865c9b611f7d4a97ab22814752`
-(`Track Stage 3 final gate and handoff`); `git push origin
-fix/classroom50Autograder` succeeded, advancing `8a85054..689060b`.
 Plan commit `4e314ba2966b9999f4c4026c6b0f95a571d6877f`
 (`Track Stage 2 documentation delivery`); `git push origin
 fix/classroom50Autograder` succeeded, advancing `5b75815..4e314ba`.
@@ -282,9 +278,15 @@ the first live upstream contract recheck belong to the teacher, not this plan.
 Stage 3 gate-fix commit: `db84c5665c5d4e0d304b8ea82f69e52fa878b12f`
 (`Repair student devcontainer JSONC for final validation`) on branch
 `fix/classroom50Autograder`.
+Plan commit `689060b1137de7865c9b611f7d4a97ab22814752`
+(`Track Stage 3 final gate and handoff`); `git push origin
+fix/classroom50Autograder` succeeded, advancing `8a85054..689060b`.
 
-## Implementation handoff
-
-The next implementation owner is the Implementer agent. Its first prompt must
-require it to read `SPEC.md`, this plan, the read-first context above, and the
-withdrawn-scope list, then implement Stage 1 test-first.
+Post-section de-sloppification found a redundant doc-test context lookup,
+stale "Future CLI" test comments, an unused test-helper parameter, and two
+outdated plan statements. The Implementer removed those confirmed items;
+Tidy Code Reviewer re-reviewed the cleanup clean. Targeted docs/grader suites
+(36/44), full suite (1355 passed, 1 skipped), collection, and Ruff pass.
+Larger fixture extraction and cosmetic guide rewording were deferred because
+they would expand this minimal cleanup without changing the contract. The
+branch is ready for documentation sync once this cleanup is pushed.
