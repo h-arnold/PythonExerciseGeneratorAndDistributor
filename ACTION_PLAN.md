@@ -217,12 +217,12 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-Current section: Stage 2. Current phase: checks and commit/push in progress.
+Current section: Stage 2. Current phase: section exit evidence recorded; Stage 3 not started.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), 55f243b (plan) | pushed |
-| 2 | done (22 expected failures) | clean after field, totals and pair-phrase corrections | done (36 doc checks passing) | clean | docs suite, grader suite, link/stale sweeps, Ruff passed | done | c360b48 (docs and tests), plan pending | pending |
+| 2 | done (22 expected failures) | clean after field, totals and pair-phrase corrections | done (36 doc checks passing) | clean | docs suite, grader suite, link/stale sweeps, Ruff passed | done | c360b48 (docs and tests), 4e314ba (plan) | pushed |
 | 3 | pending | pending | pending | pending | pending | pending | pending | pending |
 
 Implementation notes and commit/push evidence will be recorded at each section exit.
@@ -256,6 +256,9 @@ or teaching-order files changed. The devcontainer JSON gate remains for Stage 3.
 Stage 2 code/docs commit `c360b48a0eb5f4c975b28b89a6085f0ed9be5b56`
 (`Document Classroom 50 bundle invocation and deployment`) on branch
 `fix/classroom50Autograder`.
+Plan commit `4e314ba2966b9999f4c4026c6b0f95a571d6877f`
+(`Track Stage 2 documentation delivery`); `git push origin
+fix/classroom50Autograder` succeeded, advancing `5b75815..4e314ba`.
 
 ## Implementation handoff
 
