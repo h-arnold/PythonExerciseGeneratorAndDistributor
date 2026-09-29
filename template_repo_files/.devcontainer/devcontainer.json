@@ -68,7 +68,7 @@
           ".gitignore": true,
           "pytest.ini": true,
           "uv.lock": true,
-          ".classroom50.yaml"
+          ".classroom50.yaml": true
         },
         
         // Jupyter configuration
