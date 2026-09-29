@@ -217,11 +217,11 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-Current section: Stage 1. Current phase: checks and commit/push in progress.
+Current section: Stage 1. Current phase: section exit evidence recorded; Stage 2 not started.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), plan commit pending | pending |
+| 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), 55f243b (plan) | pushed |
 | 2 | pending | pending | pending | pending | pending | pending | pending | pending |
 | 3 | pending | pending | pending | pending | pending | pending | pending | pending |
 
@@ -241,7 +241,9 @@ Stage 1 implementation complete without deviation to the product contract;
 the unrelated pre-existing devcontainer parse error remains a Stage 3 gate
 follow-up. Code commit: `edf2cda0c74782b49d3802b63c92c49922af14af`
 (`Add Classroom 50 invocation mode and canonical grading result`), branch
-`fix/classroom50Autograder`.
+`fix/classroom50Autograder`. Plan commit: `55f243bc7b376b62c451e471c0fe040ad98590c1`
+(`Track Stage 1 Classroom 50 delivery`). `git push origin
+fix/classroom50Autograder` succeeded, advancing `46e8966..55f243b`.
 
 ## Implementation handoff
 
