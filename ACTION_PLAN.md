@@ -217,13 +217,13 @@ deployment step and the next implementation owner.
 
 ## Delivery tracker
 
-Current section: Stage 2. Current phase: section exit evidence recorded; Stage 3 not started.
+Current section: Stage 3. Current phase: checks and commit/push in progress.
 
 | Stage | Red tests added | Red review clean | Green implementation complete | Green review clean | Checks passed | Action plan updated | Commit created | Push completed |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | done (34 expected failures) | clean after OWNER/USERNAME test correction | done (44 targeted tests passing) | clean after datetime-flake fix | targeted, real set, Ruff passed; broad gate deferred to Stage 3 | done | edf2cda (code), 55f243b (plan) | pushed |
 | 2 | done (22 expected failures) | clean after field, totals and pair-phrase corrections | done (36 doc checks passing) | clean | docs suite, grader suite, link/stale sweeps, Ruff passed | done | c360b48 (docs and tests), 4e314ba (plan) | pushed |
-| 3 | pending | pending | pending | pending | pending | pending | pending | pending |
+| 3 | existing failing devcontainer JSON test confirmed | clean; no new tests needed | done (one-line JSON fix) | clean | 1355 passed, 1 skipped; solution green, student expected failures; both repoman validates and Ruff green | done | db84c56 (gate fix), plan pending | pending |
 
 Implementation notes and commit/push evidence will be recorded at each section exit.
 
@@ -259,6 +259,26 @@ Stage 2 code/docs commit `c360b48a0eb5f4c975b28b89a6085f0ed9be5b56`
 Plan commit `4e314ba2966b9999f4c4026c6b0f95a571d6877f`
 (`Track Stage 2 documentation delivery`); `git push origin
 fix/classroom50Autograder` succeeded, advancing `5b75815..4e314ba`.
+
+Stage 3 red: the existing runtime Python-version test exposes a pre-existing
+invalid JSONC entry (`".classroom50.yaml"` missing `: true`) in the student
+devcontainer, committed in `46e8966`. The red review confirmed existing tests
+cover the defect; a comma-less one-line repair is needed to clear the planned
+repository-wide gate without weakening any test. This is an explicit,
+gate-blocking packaging deviation, not a new grader feature.
+Stage 3 Tidy Code Reviewer confirmed clean final diff: no withdrawn features,
+tracked bundles or grading sources in the template, and no exercise or
+teaching-order edits. The single template devcontainer JSONC syntax repair was
+the only plan deviation; it cleared the pre-existing gate failure. Manual
+deployment remains with the teacher: build the selected bundle, confirm a
+full-pass local solution dry run, place it at
+`<classroom>/autograders/<assignment>/` in the Classroom 50 repository and
+commit there, leaving `autograder: "default"`. The next implementation owner
+for any future grader changes is the Implementer agent; live deployment and
+the first live upstream contract recheck belong to the teacher, not this plan.
+Stage 3 gate-fix commit: `db84c5665c5d4e0d304b8ea82f69e52fa878b12f`
+(`Repair student devcontainer JSONC for final validation`) on branch
+`fix/classroom50Autograder`.
 
 ## Implementation handoff
 
