@@ -2694,38 +2694,36 @@ class TestUnsafeInputWithoutInputsIsStillAnError:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Outstanding repository work — ex011 expectations.py
+# Desired contract — ex011 expectations.py
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
-class TestOutstandingEx011ExpectationsModule:
-    """``ex011_sequence_gaps_consolidation`` still ships no expectations.py.
+class TestEx011ExpectationsModule:
+    """``ex011_sequence_gaps_consolidation`` must ship a complete expectations.py.
 
-    This is the one baseline Gate G error that is a genuine authoring gap rather
-    than a false positive: the exercise has no ``tests/expectations.py`` at all,
-    so the runtime self-check and pytest suite have no expected-output data. The
-    pin keeps that visible and countable for the batch that adds the module, at
-    which point this test should be replaced by a coverage assertion.
+    ex011 keeps its expected-output tables private inside
+    ``tests/student_checker_support.py`` and repeats them again in the canonical
+    test file, so the exercise has no exercise-local expectations module: Gate G
+    reports ``Missing expectations.py``, the one ERROR in the ``--all`` sweep.
+
+    The desired state is the ordinary one — a ``tests/expectations.py`` that
+    declares every part, so Gate G reports nothing and no expectation data lives
+    in a private checker dict.
     """
 
-    def test_ex011_expectations_module_is_still_reported_missing(
-        self,
-        repo_root: Path,
-    ) -> None:
-        """Gate G reports the missing exercise-local expectations module for ex011."""
+    def test_ex011_ships_a_complete_expectations_module(self, repo_root: Path) -> None:
+        """Gate G reports no finding for ex011: the module exists and covers 1..parts."""
         ex_dir = repo_root / "exercises" / "sequence" / _EX011_SEQUENCE_SLUG
         metadata = json.loads((ex_dir / "exercise.json").read_text(encoding="utf-8"))
-
-        assert not (ex_dir / "tests" / "expectations.py").exists(), (
-            "ex011 gained an expectations.py; replace this pin with a coverage assertion"
-        )
+        parts = int(metadata["parts"])
 
         findings = verify_exercise_quality._check_expectations_module(
             ex_dir,
-            parts=int(metadata["parts"]),
+            parts=parts,
         )
 
-        assert len(findings) == 1, f"expected exactly one finding, got: {findings}"
-        assert findings[0].severity == "ERROR"
-        assert findings[0].message == "Missing expectations.py"
-        assert findings[0].path == ex_dir / "tests" / "expectations.py"
+        assert findings == [], (
+            f"{_EX011_SEQUENCE_SLUG} must ship tests/expectations.py declaring every "
+            f"part 1..{parts}; Gate G findings: "
+            + "; ".join(f"{f.severity}: {f.message}" for f in findings)
+        )

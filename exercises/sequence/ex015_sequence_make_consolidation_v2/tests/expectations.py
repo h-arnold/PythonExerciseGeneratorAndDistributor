@@ -19,14 +19,6 @@ EX015_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
         "Wall area: 15 square metres\n"
         "You need 2 cans; 9 square metres of paint will be unused."
     ),
-    3: "",
-    4: "",
-    5: "",
-    6: "",
-    7: "",
-    8: "",
-    9: "",
-    10: "",
 }
 
 EX015_INPUT_CASES: Final[dict[int, Ex015InputCase]] = {

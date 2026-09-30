@@ -12,17 +12,10 @@ class Ex001InputExpectation(TypedDict):
     output_contains: str
 
 
+# Exercise 1 prints fixed text; exercises 2-10 all call input() and are
+# declared only in EX001_INPUT_CASES.
 EX001_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     1: "No it isn't.",
-    2: "What is the temperature in Celsius? It's hot today!",
-    3: "Enter a number: That's not ten!",
-    4: "Enter your age: You are a child",
-    5: "What is 3 + 5? Wrong answer!",
-    6: "Enter your test score: Distinction!",
-    7: "Enter your name: Hello Bob!",
-    8: "Enter your height in cm: You are tall enough to ride!",
-    9: "What would you like to drink? Here is your coffee!",
-    10: "Enter the password: Wrong password!",
 }
 
 EX001_INPUT_CASES: Final[dict[int, Ex001InputExpectation]] = {
