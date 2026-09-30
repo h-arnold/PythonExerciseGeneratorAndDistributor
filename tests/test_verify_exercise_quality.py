@@ -2027,3 +2027,705 @@ class TestSection3AllExercisesSweep:
         assert exit_code != 0
         assert "Missing canonical file: README.md" in captured.out
         assert checked == [clean, broken]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 4 — Gate G expectation conventions in real use
+#
+# Every fixture below mirrors the shape of a shipped exercise's
+# ``exercises/<construct>/<exercise_key>/tests/expectations.py``. The baseline
+# ``verify_exercise_quality.py --all`` sweep reports 26 errors across 18
+# exercises, 25 of which are Gate G findings that contradict exercises whose
+# solution-variant pytest suite passes, because Gate G insists on one
+# ``EX<N>_EXPECTED_OUTPUTS``-style dict keyed by every part. Real exercises
+# split coverage across static, interactive, and shape-specific dicts instead.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_EX002_SLUG = "ex002_sequence_modify_basics"
+_EX003_SEQUENCE_SLUG = "ex003_sequence_modify_variables"
+_EX004_SEQUENCE_SLUG = "ex004_sequence_debug_syntax"
+_EX005_SEQUENCE_SLUG = "ex005_sequence_debug_logic"
+_EX006_SEQUENCE_SLUG = "ex006_sequence_modify_casting"
+_EX008_SEQUENCE_SLUG = "ex008_sequence_make_consolidation"
+_EX014_SLUG = "ex014_sequence_gaps_advanced_arithmetic"
+_SELECTION_EX003_SLUG = "ex003_selection_modify_elif_boundaries"
+_EX011_SEQUENCE_SLUG = "ex011_sequence_gaps_consolidation"
+
+
+def _convention_exercise_dir(tmp_path: Path, slug: str, *, parts: int) -> Path:
+    """Create an exercise directory with no ``expectations.py`` yet.
+
+    Returns:
+        The exercise directory, with valid metadata, notebooks, teaching order,
+        and a ``student_checker_support.py`` so only the expectations gates vary.
+    """
+    return _write_canonical_exercise(
+        tmp_path,
+        slug,
+        metadata={
+            **_exercise_metadata(slug),  # type: ignore[arg-type]
+            "exercise_type": "modify",
+            "parts": parts,
+        },
+        include_explanation=False,
+        missing_paths={"tests/expectations.py"},
+    )
+
+
+def _write_expectations_source(ex_dir: Path, source: str) -> Path:
+    """Write an exercise-local ``expectations.py`` from raw module source.
+
+    Raw source (rather than a repr'd dict) keeps the fixture faithful to the
+    shipped files, which use ``Final[...]`` annotations, ``TypedDict`` cases,
+    and dict comprehensions.
+
+    Returns:
+        The written ``expectations.py`` path.
+    """
+    path = ex_dir / "tests" / "expectations.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(source, encoding="utf-8")
+    return path
+
+
+def _tagged_notebook(*cells: tuple[str, str]) -> verify_exercise_quality.NotebookDocument:
+    """Build a solution notebook document from ``(tag, source)`` code cells."""
+    return cast(
+        verify_exercise_quality.NotebookDocument,
+        {
+            "cells": [
+                {
+                    "cell_type": "code",
+                    "metadata": {"language": "python", "tags": [tag]},
+                    "source": [source],
+                }
+                for tag, source in cells
+            ]
+        },
+    )
+
+
+_STATIC_CELL = 'print("static")\n'
+_INPUT_CELL = 'name = input("Name: ")\nprint(f"Hello {name}")\n'
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — split static/interactive coverage is acknowledged
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGSplitExpectationCoverage:
+    """Gate G must accept exercised static, interactive, and split conventions.
+
+    The baseline sweep rejects ``ex002``/``ex003``/``ex004``/``ex005`` with
+    "expectations.py must define an EX<N>_EXPECTED_OUTPUTS or
+    EX<N>_EXPECTED_STATIC_OUTPUTS dict" even though their solution-variant tests
+    pass, and rejects ``ex006``/``ex007``/``ex008``/``ex009``/``ex010``/``ex013``/
+    ``ex014`` with "missing keys for parts" even though their interactive parts
+    are fully covered by a separate input-case dict.
+    """
+
+    @pytest.mark.parametrize(
+        ("slug", "parts", "source"),
+        [
+            pytest.param(
+                _EX002_SLUG,
+                4,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX002_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {\n"
+                '    1: "Hi there!",\n'
+                '    2: "Bye",\n'
+                "}\n"
+                "EX002_EXPECTED_MULTI_LINE: Final[dict[int, list[str]]] = {\n"
+                "    3: ['Total cost: 8', 'Thanks'],\n"
+                "}\n"
+                "EX002_EXPECTED_NUMERIC: Final[dict[int, int | float]] = {4: 7}\n"
+                "EX002_EXPECTED_PRINT_CALLS: Final[dict[int, int]] = {1: 1, 2: 1, 3: 2, 4: 1}\n",
+                id="ex002-split-by-output-shape",
+            ),
+            pytest.param(
+                _EX003_SEQUENCE_SLUG,
+                3,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX003_EXPECTED_STATIC_OUTPUT: Final[dict[int, str]] = {\n"
+                '    1: "Hi there!",\n'
+                '    2: "I enjoy coding lessons.",\n'
+                "}\n"
+                "EX003_EXPECTED_PROMPTS: Final[dict[int, list[str]]] = {\n"
+                '    3: ["Type the name of your favourite fruit:", "Type one word:"],\n'
+                "}\n"
+                'EX003_EXPECTED_INPUT_MESSAGES: Final[dict[int, str]] = {3: "I like {value1}"}\n',
+                id="ex003-singular-static-output-plus-prompts",
+            ),
+            pytest.param(
+                _EX004_SEQUENCE_SLUG,
+                2,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX004_MIN_EXPLANATION_LENGTH: Final[int] = 50\n"
+                "EX004_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello World!'}\n"
+                "EX004_PROMPT_STRINGS: Final[dict[int, str]] = {2: 'How many apples?'}\n"
+                'EX004_FORMAT_VALIDATION: Final[dict[int, str]] = {2: "You have 5 apples"}\n',
+                id="ex004-single-line-plus-prompt-and-format",
+            ),
+            pytest.param(
+                _EX005_SEQUENCE_SLUG,
+                2,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX005_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: '50'}\n"
+                "EX005_EXERCISE_INPUTS: Final[dict[int, list[str]]] = {2: ['Maria', 'Jones']}\n"
+                "EX005_INPUT_PROMPTS: Final[dict[int, tuple[str, str]]] = {\n"
+                "    2: ('Enter first name: ', 'Enter last name: '),\n"
+                "}\n",
+                id="ex005-single-line-plus-inputs-and-prompts",
+            ),
+            pytest.param(
+                _EX006_SEQUENCE_SLUG,
+                4,
+                "from __future__ import annotations\n"
+                "from typing import Final, NotRequired, TypedDict\n"
+                "class Ex006InputExpectation(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    prompt_contains: str\n"
+                "    output_contains: NotRequired[str]\n"
+                "EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: '15', 2: '6.0'}\n"
+                "EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {\n"
+                '    3: {"inputs": ["6"], "prompt_contains": "Enter number"},\n'
+                '    4: {"inputs": ["1.5"], "prompt_contains": "Enter price"},\n'
+                "}\n",
+                id="ex006-static-plus-input-expectations",
+            ),
+            pytest.param(
+                _EX008_SEQUENCE_SLUG,
+                5,
+                "from __future__ import annotations\n"
+                "from typing import Final, TypedDict\n"
+                "class Ex008InteractiveCase(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    expected_output: str\n"
+                'EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: "Welcome!", 2: "Snack box"}\n'
+                "EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {\n"
+                '    3: [{"inputs": ["Aisha", "drawing"], "expected_output": "Hello Aisha!"}],\n'
+                '    4: [{"inputs": ["6", "3"], "expected_output": "Books read: 18"}],\n'
+                '    5: [{"inputs": ["2.5", "3"], "expected_output": "Total distance: 7.5 km"}],\n'
+                "}\n",
+                id="ex008-static-plus-interactive-cases",
+            ),
+        ],
+    )
+    def test_exercised_expectation_conventions_cover_every_part(
+        self,
+        tmp_path: Path,
+        slug: str,
+        parts: int,
+        source: str,
+    ) -> None:
+        """Static, interactive, and split dicts that jointly cover 1..parts pass."""
+        ex_dir = _convention_exercise_dir(tmp_path, slug, parts=parts)
+        _write_expectations_source(ex_dir, source)
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
+
+        assert findings == [], (
+            f"{slug} expectations follow a shipped convention and cover 1..{parts}; "
+            f"got: {[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+    def test_part_covered_by_no_expectation_dict_still_errors(self, tmp_path: Path) -> None:
+        """Widening coverage must not accept an undeclared part.
+
+        Guards the ex008 convention: parts 1-2 and 3 are declared but part 4 is
+        absent from both dicts, so Gate G must still report the gap.
+        """
+        ex_dir = _convention_exercise_dir(tmp_path, _EX008_SEQUENCE_SLUG, parts=4)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: 'Welcome!', 2: 'Snack box'}\n"
+            "EX008_INTERACTIVE_CASES: Final[dict[int, list[dict[str, object]]]] = {\n"
+            '    3: [{"inputs": ["Aisha"], "expected_output": "Hello Aisha!"}],\n'
+            "}\n",
+        )
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=4)
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert errors, f"expected an ERROR for the undeclared part, got: {findings}"
+        assert "4" in errors[0].message, (
+            f"the ERROR must name the undeclared part 4, got: {errors[0].message}"
+        )
+
+    def test_module_without_any_expectation_dict_still_errors(self, tmp_path: Path) -> None:
+        """An expectations.py with no output/case dicts is still an error.
+
+        Widening coverage must not accept placeholder-only modules.
+        """
+        ex_dir = _convention_exercise_dir(tmp_path, _EX003_SEQUENCE_SLUG, parts=3)
+        expectations_path = _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX003_MIN_EXPLANATION_LENGTH: Final[int] = 50\n",
+        )
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=3)
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert errors[0].path == expectations_path
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — alternate input-case conventions are recognised
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGAlternateInputCaseConventions:
+    """The input-consistency cross-check must accept every shipped convention.
+
+    ``_check_expectations_input_consistency`` only recognises
+    ``EX<N>_INPUT_CASES``, so the baseline sweep reports 14 false "uses input()
+    ... missing from EX<N>_INPUT_CASES" errors for sequence ``ex003``/``ex004``/
+    ``ex005``/``ex006``/``ex008``, whose interactive parts are fully declared
+    under ``EX<N>_EXPECTED_PROMPTS``, ``EX<N>_PROMPT_STRINGS``,
+    ``EX<N>_EXERCISE_INPUTS``, ``EX<N>_INPUT_EXPECTATIONS``, and
+    ``EX<N>_INTERACTIVE_CASES`` respectively.
+    """
+
+    @pytest.mark.parametrize(
+        ("slug", "source"),
+        [
+            pytest.param(
+                _EX003_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                'EX003_EXPECTED_STATIC_OUTPUT: Final[dict[int, str]] = {1: "Hi there!"}\n'
+                "EX003_EXPECTED_PROMPTS: Final[dict[int, list[str]]] = {\n"
+                '    2: ["Which town do you like the most?", "Which country is it in?"],\n'
+                "}\n"
+                'EX003_EXPECTED_INPUT_MESSAGES: Final[dict[int, str]] = {2: "I would visit {town}"}\n',
+                id="ex003-expected-prompts-and-input-messages",
+            ),
+            pytest.param(
+                _EX004_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX004_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello World!'}\n"
+                "EX004_PROMPT_STRINGS: Final[dict[int, str]] = {2: 'Enter your name:'}\n"
+                'EX004_FORMAT_VALIDATION: Final[dict[int, str]] = {2: "My name is Alice"}\n',
+                id="ex004-prompt-strings-and-format-validation",
+            ),
+            pytest.param(
+                _EX005_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX005_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: '50'}\n"
+                "EX005_EXERCISE_INPUTS: Final[dict[int, list[str]]] = {2: ['16', 'Birmingham']}\n"
+                "EX005_INPUT_PROMPTS: Final[dict[int, tuple[str, str]]] = {\n"
+                "    2: ('Enter your age: ', 'Enter your city: '),\n"
+                "}\n",
+                id="ex005-exercise-inputs-and-input-prompts",
+            ),
+            pytest.param(
+                _EX006_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final, NotRequired, TypedDict\n"
+                "class Ex006InputExpectation(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    prompt_contains: str\n"
+                "    output_contains: NotRequired[str]\n"
+                'EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: "15"}\n'
+                "EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {\n"
+                '    2: {"inputs": ["6"], "prompt_contains": "Enter number"},\n'
+                "}\n",
+                id="ex006-input-expectations",
+            ),
+            pytest.param(
+                _EX008_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final, TypedDict\n"
+                "class Ex008InteractiveCase(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    expected_output: str\n"
+                'EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: "Welcome!"}\n'
+                "EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {\n"
+                '    2: [{"inputs": ["Aisha", "drawing"], "expected_output": "Hello Aisha!"}],\n'
+                "}\n",
+                id="ex008-interactive-cases",
+            ),
+        ],
+    )
+    def test_interactive_part_declared_under_alternate_convention_returns_no_finding(
+        self,
+        tmp_path: Path,
+        slug: str,
+        source: str,
+    ) -> None:
+        """An input()-using part declared under a shipped convention is accepted."""
+        ex_dir = _convention_exercise_dir(tmp_path, slug, parts=2)
+        _write_expectations_source(ex_dir, source)
+        nb_solution = _tagged_notebook(("exercise1", _STATIC_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        assert findings == [], (
+            f"{slug} declares exercise 2 interactively under a shipped convention; "
+            f"got: {[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+    def test_static_part_declared_interactively_still_errors(self, tmp_path: Path) -> None:
+        """Recognising more conventions must not excuse a genuine misclassification."""
+        ex_dir = _convention_exercise_dir(tmp_path, _EX008_SEQUENCE_SLUG, parts=2)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex008InteractiveCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            'EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: "Welcome!"}\n'
+            "EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {\n"
+            '    2: [{"inputs": ["Aisha"], "expected_output": "Hello Aisha!"}],\n'
+            "}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _STATIC_CELL), ("exercise2", _STATIC_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert "Exercise 2" in errors[0].message
+        assert "does not use input()" in errors[0].message
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — derived / reference output aliases are not double declarations
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGReferenceOutputAliases:
+    """A reference alias over INPUT_CASES is not a second static declaration.
+
+    ``ex003_selection_modify_elif_boundaries`` builds
+    ``EX003_EXPECTED_OUTPUTS`` as a comprehension over ``EX003_INPUT_CASES`` and
+    documents it as "a quick reference ... used by the quality verifier (Gate G)".
+    Every exercise in it is interactive, so the baseline sweep emits 10 spurious
+    "is listed in both EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES" warnings.
+    """
+
+    @staticmethod
+    def _write_all_interactive(ex_dir: Path) -> None:
+        """Write the two-part all-interactive shape used by selection ex003."""
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
+            "    exercise_no: case['expected_output']\n"
+            "    for exercise_no, case in EX003_INPUT_CASES.items()\n"
+            "}\n"
+            "EX003_EDGE_CASES: Final[dict[int, list[Ex003InputCase]]] = {1: [], 2: []}\n",
+        )
+
+    def test_reference_alias_over_input_cases_is_not_flagged_as_double_declared(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """The selection ex003 shape must not warn "listed in both"."""
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=2)
+        self._write_all_interactive(ex_dir)
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        assert findings == [], (
+            "every exercise is interactive and EX003_EXPECTED_OUTPUTS only mirrors "
+            "EX003_INPUT_CASES; got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+    def test_genuine_double_declaration_still_warns(self, tmp_path: Path) -> None:
+        """A static dict that contradicts the input case is still a double declaration."""
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=1)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: 'Something else entirely'}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=1,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        warnings = [f for f in findings if f.severity == "WARN"]
+        assert not errors, f"expected no ERROR, got: {errors}"
+        assert len(warnings) == 1, f"expected exactly one WARN, got: {findings}"
+        assert "listed in both" in warnings[0].message
+
+    @pytest.mark.parametrize(
+        "derived_value",
+        [
+            pytest.param(
+                '"Different: " + case["expected_output"]',
+                id="prefixed-expected-output",
+            ),
+            pytest.param(
+                'case["inputs"][0]',
+                id="different-case-field",
+            ),
+        ],
+    )
+    def test_comprehension_deriving_new_values_is_still_a_double_declaration(
+        self,
+        tmp_path: Path,
+        derived_value: str,
+    ) -> None:
+        """Only a value-for-value mirror of the input cases is a reference alias.
+
+        Both shapes key their entries from ``EX003_INPUT_CASES`` but derive
+        something other than each case's ``expected_output``, so the dict is a
+        second, independent static declaration and the overlap must still be
+        reported. Guards the alias predicate against treating any mention of an
+        input-case dict as a mirror.
+        """
+        parts = 2
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
+            f"    exercise_no: {derived_value}\n"
+            "    for exercise_no, case in EX003_INPUT_CASES.items()\n"
+            "}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=parts,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        warnings = [f for f in findings if f.severity == "WARN"]
+        assert not errors, f"expected no ERROR, got: {errors}"
+        assert len(warnings) == parts, (
+            f"expected one overlap WARN per part, got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+        assert all("listed in both" in w.message for w in warnings)
+
+    def test_edge_case_dict_alone_does_not_count_as_interactive_coverage(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """An edge-case dict must not stand in for the primary input-case dict.
+
+        ``ex014_sequence_gaps_advanced_arithmetic`` pairs
+        ``EX014_EDGE_CASES`` with ``EX014_INPUT_CASES``; a part declared only in
+        the edge-case dict still has no runnable input case, so the unsafe-input
+        error must stand.
+        """
+        ex_dir = _convention_exercise_dir(tmp_path, _EX014_SLUG, parts=2)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex014InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX014_INPUT_CASES: Final[dict[int, Ex014InputCase]] = {\n"
+            '    1: {"inputs": ["1", "2"], "expected_output": "Sum: 3"},\n'
+            "}\n"
+            "EX014_EDGE_CASES: Final[dict[int, list[Ex014InputCase]]] = {\n"
+            '    2: [{"inputs": ["0", "0"], "expected_output": "Sum: 0"}],\n'
+            "}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert "Exercise 2" in errors[0].message
+        assert "input()" in errors[0].message
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Retained contract — genuine unsafe input() with no inputs still errors
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestUnsafeInputWithoutInputsIsStillAnError:
+    """Widening recognition must not defuse the hang guard.
+
+    The Gate I skip exists because ``run_cell_and_capture_output`` supplies no
+    stdin, so an ``input()``-using cell classified as static blocks forever.
+    An exercise with no runnable input case at all must keep reporting that
+    error and keep Gate I skipped, under both the ``_OUTPUTS`` and the
+    shape-specific static conventions.
+    """
+
+    def test_no_input_case_dict_reports_unsafe_input(self, tmp_path: Path) -> None:
+        """A static-only module with an input()-using cell is still an ERROR."""
+        ex_dir = _convention_exercise_dir(tmp_path, _EX004_SEQUENCE_SLUG, parts=1)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX004_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello Alice'}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=1,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert "Exercise 1" in errors[0].message
+        assert "input()" in errors[0].message
+
+    def test_main_still_errors_and_skips_gate_i_under_split_convention(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """End to end: the error, the Gate I skip, and no Gate I run all remain."""
+        slug = "ex014_sequence_gaps_regtest2"
+        repo_root = tmp_path / "repo"
+        ex_dir = repo_root / "exercises" / "sequence" / slug
+        make_exercise_json(
+            ex_dir,
+            {
+                "schema_version": 1,
+                "exercise_key": slug,
+                "exercise_id": 14,
+                "slug": slug,
+                "title": "Unsafe Input Regression",
+                "construct": "sequence",
+                "exercise_type": "gaps",
+                "parts": 1,
+            },
+        )
+        (ex_dir / "README.md").write_text("# README\n", encoding="utf-8")
+        _write_order_of_teaching(repo_root, slug)
+        for variant in ("student", "solution"):
+            _write_notebook(
+                ex_dir / "notebooks" / f"{variant}.ipynb",
+                include_explanation=False,
+                source=_INPUT_CELL,
+                variant=variant,
+            )
+        test_path = ex_dir / "tests" / f"test_{slug}.py"
+        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_path.write_text("def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
+        (ex_dir / "tests" / "student_checker_support.py").write_text(
+            "from __future__ import annotations\n"
+            "from typing import Any\n"
+            'CHECKS: list[Any] = [{"fake": "check"}]\n',
+            encoding="utf-8",
+        )
+        # Split static convention with no runnable input case for the input() cell.
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX014_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello Alice'}\n",
+        )
+
+        exit_code = verify_exercise_quality.main([slug, "--repo-root", str(repo_root)])
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+
+        assert exit_code != 0
+        assert "Exercise 1 uses input()" in combined
+        assert "Skipping runtime self-check (Gate I)" in combined
+        assert "Self-check failed" not in combined
+        assert "Runtime self-check raised" not in combined
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Outstanding repository work — ex011 expectations.py
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestOutstandingEx011ExpectationsModule:
+    """``ex011_sequence_gaps_consolidation`` still ships no expectations.py.
+
+    This is the one baseline Gate G error that is a genuine authoring gap rather
+    than a false positive: the exercise has no ``tests/expectations.py`` at all,
+    so the runtime self-check and pytest suite have no expected-output data. The
+    pin keeps that visible and countable for the batch that adds the module, at
+    which point this test should be replaced by a coverage assertion.
+    """
+
+    def test_ex011_expectations_module_is_still_reported_missing(
+        self,
+        repo_root: Path,
+    ) -> None:
+        """Gate G reports the missing exercise-local expectations module for ex011."""
+        ex_dir = repo_root / "exercises" / "sequence" / _EX011_SEQUENCE_SLUG
+        metadata = json.loads((ex_dir / "exercise.json").read_text(encoding="utf-8"))
+
+        assert not (ex_dir / "tests" / "expectations.py").exists(), (
+            "ex011 gained an expectations.py; replace this pin with a coverage assertion"
+        )
+
+        findings = verify_exercise_quality._check_expectations_module(
+            ex_dir,
+            parts=int(metadata["parts"]),
+        )
+
+        assert len(findings) == 1, f"expected exactly one finding, got: {findings}"
+        assert findings[0].severity == "ERROR"
+        assert findings[0].message == "Missing expectations.py"
+        assert findings[0].path == ex_dir / "tests" / "expectations.py"

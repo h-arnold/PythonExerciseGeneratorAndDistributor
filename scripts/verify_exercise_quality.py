@@ -24,6 +24,7 @@ is not a replacement for reading the exercise prompts.
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 import re
@@ -205,6 +206,47 @@ _INPUT_CALL_RE = re.compile(r"\binput\s*\(")
 # sibling directories that are not exercises (e.g. additional-resources) are
 # left alone.
 _EXERCISE_DIR_RE = re.compile(r"^ex\d+_\w+$")
+# Module-level expectation dicts are named EX<N>_<CONVENTION>, where the
+# convention says what the dict declares for each exercise number.
+_EXPECTATION_NAME_RE = re.compile(r"^EX\d+_(?P<convention>[A-Z0-9_]+)$")
+# The expectation-dict conventions the shipped exercises use.  An exercise may
+# split its expectations across several dicts — static, interactive, or one per
+# output shape — so coverage is the union of the part keys of every recognised
+# dict rather than the keys of a single ``EX<N>_EXPECTED_OUTPUTS`` dict.
+#
+# ``_STATIC_EXPECTATION_CONVENTIONS`` declare what a part prints without reading
+# input.  ``_INTERACTIVE_EXPECTATION_CONVENTIONS`` declare a runnable input case,
+# or the prompts/inputs/post-input message such a case is driven with, for a
+# part whose code calls ``input()``.  Dicts in neither set — supplementary
+# ``EX<N>_EDGE_CASES`` or ``EX<N>_ORIGINAL_PROMPTS`` data, and reference aliases
+# computed from an input-case dict — count as neither coverage nor a runnable
+# input case.
+_STATIC_EXPECTATION_CONVENTIONS = frozenset(
+    {
+        "EXPECTED_OUTPUTS",
+        "EXPECTED_STATIC_OUTPUT",
+        "EXPECTED_STATIC_OUTPUTS",
+        "EXPECTED_SINGLE_LINE",
+        "EXPECTED_MULTI_LINE",
+        "EXPECTED_NUMERIC",
+        "EXPECTED_PRINT_CALLS",
+    }
+)
+_INTERACTIVE_EXPECTATION_CONVENTIONS = frozenset(
+    {
+        "INPUT_CASES",
+        "INPUT_EXPECTATIONS",
+        "INTERACTIVE_CASES",
+        "EXPECTED_PROMPTS",
+        "PROMPT_STRINGS",
+        "INPUT_PROMPTS",
+        "EXERCISE_INPUTS",
+        "FORMAT_VALIDATION",
+    }
+)
+# The one field a quick-reference dict may copy out of an input case to count as a
+# mirror of it.  See _mirrors_input_cases.
+_EXPECTED_OUTPUT_KEY = "expected_output"
 
 
 def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
@@ -960,8 +1002,155 @@ def _check_student_checker_support(
     return findings
 
 
+@dataclass(frozen=True)
+class _ExpectationDicts:
+    """The recognised expectation dicts of one ``expectations.py`` module.
+
+    Attributes:
+        static: Dicts declaring what a part prints without reading input.
+        interactive: Dicts declaring a runnable input case, or the
+            prompts/inputs/post-input message it is driven with, for a part
+            whose code calls ``input()``.
+    """
+
+    static: dict[str, dict[int, object]]
+    interactive: dict[str, dict[int, object]]
+
+
+def _expectation_convention(name: str) -> str | None:
+    """Return the convention suffix of an ``EX<N>_<CONVENTION>`` name, else ``None``."""
+    match = _EXPECTATION_NAME_RE.match(name)
+    if match is None:
+        return None
+    return match.group("convention")
+
+
+def _collect_expectation_dicts(module: object) -> _ExpectationDicts:
+    """Split the module's recognised expectation dicts into static and interactive."""
+    static: dict[str, dict[int, object]] = {}
+    interactive: dict[str, dict[int, object]] = {}
+
+    for name in dir(module):
+        value = getattr(module, name)
+        if not isinstance(value, dict):
+            continue
+        convention = _expectation_convention(name)
+        if convention is None:
+            continue
+        typed = cast(dict[int, object], value)
+        if convention in _INTERACTIVE_EXPECTATION_CONVENTIONS:
+            interactive[name] = typed
+        elif convention in _STATIC_EXPECTATION_CONVENTIONS:
+            static[name] = typed
+
+    return _ExpectationDicts(static=static, interactive=interactive)
+
+
+def _declared_parts(dicts: dict[str, dict[int, object]]) -> set[int]:
+    """Return the union of the exercise numbers declared by ``dicts``."""
+    parts: set[int] = set()
+    for declared in dicts.values():
+        parts.update(declared)
+    return parts
+
+
+def _module_level_assignment(node: ast.stmt) -> tuple[str, ast.expr] | None:
+    """Return ``(name, value)`` for a simple module-level assignment, else ``None``."""
+    if isinstance(node, ast.AnnAssign):
+        if isinstance(node.target, ast.Name) and node.value is not None:
+            return node.target.id, node.value
+        return None
+    if isinstance(node, ast.Assign) and len(node.targets) == 1:
+        target = node.targets[0]
+        if isinstance(target, ast.Name):
+            return target.id, node.value
+    return None
+
+
+def _mirrored_case_name(node: ast.expr) -> str | None:
+    """Return the name whose ``expected_output`` ``node`` reads, if that is all it reads.
+
+    ``case["expected_output"]`` and ``case.expected_output`` are the two audited ways
+    a shipped mirror reads an input case. Any other expression — a concatenation,
+    an f-string, or a different case field — derives new values instead of
+    mirroring them.
+    """
+    base: ast.expr
+    if isinstance(node, ast.Attribute):
+        base = node.value
+        reads_expected_output = node.attr == _EXPECTED_OUTPUT_KEY
+    elif isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant):
+        base = node.value
+        reads_expected_output = node.slice.value == _EXPECTED_OUTPUT_KEY
+    else:
+        return None
+    if not reads_expected_output or not isinstance(base, ast.Name):
+        return None
+    return base.id
+
+
+def _target_names(target: ast.expr) -> set[str]:
+    """Return the names a comprehension or ``for`` target binds."""
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, (ast.Tuple, ast.List)):
+        names: set[str] = set()
+        for element in target.elts:
+            names |= _target_names(element)
+        return names
+    return set()
+
+
+def _mirrors_input_cases(comp: ast.DictComp, source_names: set[str]) -> bool:
+    """Return True when ``comp`` copies each input case's ``expected_output`` value.
+
+    Keying a dict from the input cases is not enough to make it a mirror: the
+    values must be the cases' ``expected_output`` unchanged. A comprehension that
+    derives anything else from the cases is a second, independent declaration.
+    """
+    if len(comp.generators) != 1:
+        return False
+    generator = comp.generators[0]
+    iterates_input_cases = any(
+        isinstance(node, ast.Name) and node.id in source_names for node in ast.walk(generator.iter)
+    )
+    if not iterates_input_cases:
+        return False
+    case_name = _mirrored_case_name(comp.value)
+    return case_name is not None and case_name in _target_names(generator.target)
+
+
+def _reference_alias_names(expectations_path: Path, source_names: set[str]) -> set[str]:
+    """Return the dict names that mirror ``source_names`` value for value.
+
+    An entirely interactive exercise may publish a quick-reference
+    ``EX<N>_EXPECTED_OUTPUTS`` computed from ``EX<N>_INPUT_CASES``. Such a dict is
+    a reference alias rather than a second, static declaration, so it must not be
+    reported as an exercise being listed in both families. A hand-written literal
+    dict, and a comprehension that derives new values from the input cases, are
+    independent declarations and are still reported.
+    """
+    tree = ast.parse(expectations_path.read_text(encoding="utf-8"))
+
+    aliases: set[str] = set()
+    for node in tree.body:
+        assignment = _module_level_assignment(node)
+        if assignment is None:
+            continue
+        name, value = assignment
+        if isinstance(value, ast.DictComp) and _mirrors_input_cases(value, source_names):
+            aliases.add(name)
+    return aliases
+
+
 def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
-    """Gate G: Verify expectations.py exists with non-empty expected-outputs."""
+    """Gate G: Verify expectations.py covers every part with a runnable expectation.
+
+    Coverage is the union of the part keys of every recognised expectation dict,
+    so an exercise may split its expectations across static, interactive, and
+    shape-specific dicts as long as every part 1..parts is declared by one of
+    them.
+    """
     findings: list[Finding] = []
     expectations_path = ex_dir / "tests" / "expectations.py"
 
@@ -986,44 +1175,37 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
         )
         return findings
 
-    # Find the exercise-ID-prefixed expected outputs dict (matches both
-    # EX<N>_EXPECTED_OUTPUTS and EX<N>_EXPECTED_STATIC_OUTPUTS conventions).
-    expected_outputs = None
-    for attr_name in dir(module):
-        if attr_name.endswith("_OUTPUTS") and isinstance(getattr(module, attr_name), dict):
-            expected_outputs = getattr(module, attr_name)
-            break
-
-    if expected_outputs is None:
+    expectations = _collect_expectation_dicts(module)
+    if not expectations.static and not expectations.interactive:
         findings.append(
             Finding(
                 "ERROR",
-                "expectations.py must define an EX<N>_EXPECTED_OUTPUTS or "
-                "EX<N>_EXPECTED_STATIC_OUTPUTS dict",
+                "expectations.py must define at least one recognised expectation dict "
+                "(for example EX<N>_EXPECTED_OUTPUTS, EX<N>_EXPECTED_STATIC_OUTPUTS, "
+                "or EX<N>_INPUT_CASES)",
                 path=expectations_path,
             )
         )
         return findings
 
-    if len(expected_outputs) == 0:
+    covered_parts = _declared_parts(expectations.static) | _declared_parts(expectations.interactive)
+    if not covered_parts:
         findings.append(
             Finding(
                 "ERROR",
-                "EX<N>_EXPECTED_OUTPUTS dict is empty; expected outputs for 1..{parts}",
+                f"expectation dicts are all empty; expected coverage for 1..{parts}",
                 path=expectations_path,
             )
         )
         return findings
 
-    # Check that all required part keys are present
-    expected_keys = set(range(1, parts + 1))
-    actual_keys = set(expected_outputs.keys())
-    missing_keys = expected_keys - actual_keys
+    missing_keys = set(range(1, parts + 1)) - covered_parts
     if missing_keys:
         findings.append(
             Finding(
                 "ERROR",
-                f"EX<N>_EXPECTED_OUTPUTS missing keys for parts {sorted(missing_keys)}; expected 1..{parts}",
+                f"expectation dicts are missing keys for parts {sorted(missing_keys)}; "
+                f"expected 1..{parts}",
                 path=expectations_path,
             )
         )
@@ -1060,18 +1242,62 @@ def _detect_interactive_exercises(nb: NotebookDocument) -> set[int]:  # noqa: C9
     return interactive
 
 
-def _check_expectations_input_consistency(  # noqa: C901
+def _classify_declaration(
+    *,
+    ex_no: int,
+    uses_input: bool,
+    in_static: bool,
+    in_interactive: bool,
+) -> tuple[str, str] | None:
+    """Return the ``(severity, message)`` for one part's misclassification.
+
+    Returns:
+        ``None`` when the part's static/interactive declaration agrees with the
+        notebook.
+    """
+    if uses_input and not in_interactive:
+        if in_static:
+            return (
+                "ERROR",
+                f"Exercise {ex_no} uses input() in the notebook but is declared only "
+                f"in static expectation dicts — this will cause the runtime self-check "
+                f"to hang.  Declare exercise {ex_no} in EX<N>_INPUT_CASES (or the "
+                f"interactive expectation dict this exercise uses) instead.",
+            )
+        return (
+            "ERROR",
+            f"Exercise {ex_no} uses input() in the notebook but is not declared in any "
+            f"interactive expectation dict, for example EX<N>_INPUT_CASES, in "
+            f"expectations.py.",
+        )
+    if uses_input and in_static:
+        return (
+            "WARN",
+            f"Exercise {ex_no} is listed in both a static expectation dict and an "
+            f"interactive input-case dict in expectations.py — it should only appear "
+            f"in one.",
+        )
+    if not uses_input and in_interactive:
+        return (
+            "ERROR",
+            f"Exercise {ex_no} does not use input() in the notebook but is declared in "
+            f"an interactive expectation dict, for example EX<N>_INPUT_CASES, in "
+            f"expectations.py.",
+        )
+    return None
+
+
+def _check_expectations_input_consistency(
     *,
     ex_dir: Path,
     nb_solution: NotebookDocument,
     parts: int,
 ) -> list[Finding]:
-    """Cross-check expectations.py classification against notebook ``input()`` usage.
+    """Cross-check the expectations.py static/interactive split against ``input()`` usage.
 
-    Any exercise whose code cell uses ``input()`` must appear in the
-    ``EX<N>_INPUT_CASES`` dict (not only in ``EX<N>_EXPECTED_OUTPUTS`` /
-    ``EX<N>_EXPECTED_STATIC_OUTPUTS``).  Conversely, exercises that do **not**
-    use ``input()`` should not be listed as interactive.
+    Any exercise whose code cell uses ``input()`` must be declared by an
+    interactive expectation dict, not only by a static one.  Conversely, exercises
+    that do **not** use ``input()`` must not be declared interactive.
 
     Without this check the runtime self-check (Gate I) will hang because
     ``run_cell_and_capture_output`` provides no stdin and the cell blocks
@@ -1084,70 +1310,27 @@ def _check_expectations_input_consistency(  # noqa: C901
     if module is None:
         return findings  # Gate G already reports the import error
 
-    # Locate the static-outputs and input-cases dicts
-    static_outputs: dict[int, object] | None = None
-    input_cases: dict[int, object] | None = None
-    for attr_name in dir(module):
-        value = getattr(module, attr_name)
-        if not isinstance(value, dict):
-            continue
-        if attr_name.endswith("_INPUT_CASES"):
-            input_cases = cast(dict[int, object], value)
-        elif attr_name.endswith("_OUTPUTS") and "DERIVED" not in attr_name:
-            # Dicts named EX<N>…DERIVED_OUTPUTS are aliases built from
-            # INPUT_CASES, not separate static-output declarations — skip
-            # them so their keys are not flagged as listed in both dicts.
-            static_outputs = cast(dict[int, object], value)
+    expectations = _collect_expectation_dicts(module)
+    # A quick-reference dict computed from the input cases mirrors them rather than
+    # declaring a second, static expectation, so it is not a static declaration.
+    alias_names = _reference_alias_names(expectations_path, set(expectations.interactive))
+    static_parts = _declared_parts(
+        {name: value for name, value in expectations.static.items() if name not in alias_names}
+    )
+    interactive_parts = _declared_parts(expectations.interactive)
 
     interactive_exercises = _detect_interactive_exercises(nb_solution)
 
     for ex_no in range(1, parts + 1):
-        uses_input = ex_no in interactive_exercises
-        in_input_cases = input_cases is not None and ex_no in input_cases
-        in_static = static_outputs is not None and ex_no in static_outputs
-
-        if uses_input and not in_input_cases:
-            if in_static:
-                findings.append(
-                    Finding(
-                        "ERROR",
-                        f"Exercise {ex_no} uses input() in the notebook but is "
-                        f"declared as a static-output exercise in "
-                        f"expectations.py — this will cause the runtime "
-                        f"self-check to hang.  Move exercise {ex_no} from "
-                        f"EX<N>_EXPECTED_OUTPUTS to EX<N>_INPUT_CASES.",
-                        path=expectations_path,
-                    )
-                )
-            else:
-                findings.append(
-                    Finding(
-                        "ERROR",
-                        f"Exercise {ex_no} uses input() in the notebook but is "
-                        f"missing from EX<N>_INPUT_CASES in expectations.py.",
-                        path=expectations_path,
-                    )
-                )
-        elif uses_input and in_static and in_input_cases:
-            findings.append(
-                Finding(
-                    "WARN",
-                    f"Exercise {ex_no} is listed in both "
-                    f"EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES — "
-                    f"it should only appear in one.",
-                    path=expectations_path,
-                )
-            )
-        elif not uses_input and in_input_cases:
-            findings.append(
-                Finding(
-                    "ERROR",
-                    f"Exercise {ex_no} does not use input() in the notebook "
-                    f"but is declared as an interactive exercise in "
-                    f"EX<N>_INPUT_CASES.",
-                    path=expectations_path,
-                )
-            )
+        classification = _classify_declaration(
+            ex_no=ex_no,
+            uses_input=ex_no in interactive_exercises,
+            in_static=ex_no in static_parts,
+            in_interactive=ex_no in interactive_parts,
+        )
+        if classification is not None:
+            severity, message = classification
+            findings.append(Finding(severity, message, path=expectations_path))
 
     return findings
 
