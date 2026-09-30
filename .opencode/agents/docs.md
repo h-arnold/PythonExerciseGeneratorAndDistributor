@@ -1,7 +1,7 @@
 ---
 description: Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy
 mode: all
-model: opencode-go/deepseek-v4.1-flash
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

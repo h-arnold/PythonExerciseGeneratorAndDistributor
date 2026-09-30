@@ -1,7 +1,7 @@
 ---
 description: Create robust pytest tests for approved exercise notebooks, following the repository testing framework and conventions
 mode: all
-model: opencode-go/glm-5.3-flash
+model: opencode/space-bunny-free
 permission:
   read: allow
   edit: allow

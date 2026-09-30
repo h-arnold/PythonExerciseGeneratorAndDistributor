@@ -1,7 +1,7 @@
 ---
 description: Drafts SPEC.md, optional layout/workflow specs, and ACTION_PLAN.md for exercise-authoring, notebook, grading, packaging, and tooling changes
 mode: all
-model: nvidia/minimax-m3
+model: openai/gpt-6-sol
 permission:
   read: allow
   edit: allow

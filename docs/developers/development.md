@@ -146,14 +146,14 @@ When modifying grading logic:
 Teacher-side grading uses two generic sources: `scripts/build_classroom50_bundle.py` assembles a bundle of hidden test copies plus the current `exercise_runtime_support/` source, and the bundle-local `autograder.py` grades a student checkout and writes a `classroom50/result/v1` payload. Templates ship starter code only, so grading sources and hidden tests never appear in a student checkout. The full contract and CLI interfaces are in [classroom50-autograder.md](classroom50-autograder.md).
 
 ```bash
-# Build a bundle from a JSON exercise set and grade a student checkout
+# Build a bundle from a JSON exercise set
 uv run python scripts/build_classroom50_bundle.py \
     --source-root . \
     --exercise-set path/to/exercise-set.json \
     --runtime-source exercise_runtime_support \
     --output path/to/grading-bundle
 
-# Local dry run against solution notebooks (graded runs force the student variant)
+# Local dry run against solution notebooks; the pair is required together
 uv run python path/to/grading-bundle/autograder.py \
     --student-root path/to/student-checkout \
     --result path/to/result.json \
@@ -161,6 +161,8 @@ uv run python path/to/grading-bundle/autograder.py \
 ```
 
 Rebuild the bundle whenever `exercise_runtime_support/` changes; the bundle-local runtime copy is regenerated from source on every build.
+
+Classroom 50 itself runs the bundle copy with no arguments, from the student checkout, and reads `./result.json` written there; that mode forces the student variant and installs its grading dependencies. Deployment remains a manual teacher step: place the built directory at `<classroom>/autograders/<assignment>/` in the Classroom 50 repository and commit it, leaving the assignment itself on `autograder: "default"`.
 
 ## Working on the Exercise Generator
 

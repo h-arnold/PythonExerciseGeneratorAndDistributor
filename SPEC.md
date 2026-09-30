@@ -1,274 +1,282 @@
-# SPEC — Classroom 50 Autograder (Selection Pilot, Implementation Round)
+# SPEC — Reusable Classroom 50 Grading Bundle
 
-## Goal and intended outcome
+## Status
 
-Replace the broken GitHub Classroom reporter chain with one generic Classroom
-50 grading source and generic bundle builder, verified locally. A working round
-means: the legacy chain is deleted, selection templates ship starter code only,
-and the builder is configured with the selection pilot exercise set to produce
-a teacher-side grading bundle (the generic `autograder.py` plus hidden test
-copies) that grades the student variant correctly and the solution variant to a
-full pass in a local dry run. Selection is the first builder input and
-end-to-end validation fixture, not a Selection-specific grader.
+- Draft v3, 29 September 2026.
+- This specification replaces the "Native Classroom 50 Bundle Autograder
+  Integration" draft and the work already implemented against it. The grading
+  manifest, fresh-target dependency bootstrap, pytest trust boundary, pinned
+  upstream snapshot, and assignment-schema test matrix from that draft are
+  withdrawn and their code reverted.
+- The plan concerns the generic teacher-side bundle only. It does not change
+  exercises, notebooks, tests, or teaching order.
 
-Decisions already agreed and built into this spec:
+## Purpose
 
-- One Classroom 50 assignment per construct; pilot construct is `selection`.
-- One point per passing pytest case; exercise size acts as the difficulty proxy.
-- Self-check tests stay visible in the template; grading logic is teacher-side
-  and tamper-proof (template edits cannot change the graded outcome).
-- A single generic `autograder.py` and builder serve every assignment; no
-  per-construct or per-exercise grading logic. The selected exercise set is
-  builder input, so the same sources can create a later assignment bundle.
-- Runtimes and devcontainers move to Python 3.14 to match the Classroom 50
-  default grading runtime.
-- Legacy removal lands first; no new implementation reuses the reporter chain.
+Provide one reusable, assignment-independent pytest grading bundle that a
+teacher can hand to Classroom 50, plus a local dry run that confirms a full
+pass before the bundle is ever deployed.
+
+The workflow must:
+
+- build a bundle from a selected exercise set;
+- grade a student checkout using the bundle's own hidden test copies;
+- run unchanged inside Classroom 50, which invokes `autograder.py` with no
+  arguments from the student checkout and reads `./result.json`;
+- write a `classroom50/result/v1` document Classroom 50 accepts;
+- support an explicit local dry run of the solution variant.
+
+The workflow is not intended to:
+
+- modify the upstream `foundation50/classroom50` repository;
+- administer classrooms, rosters, assignments, or score collection;
+- add a GUI or a `gh teacher` upload command;
+- perform a live Classroom 50 pilot;
+- change exercise content, notebook tagging, or pedagogical sequencing.
 
 ## Current state
 
-- Source exercises use the canonical layout
-  `exercises/<construct>/<exercise_key>/` with `notebooks/student.ipynb`,
-  `notebooks/solution.ipynb`, `tests/test_<exercise_key>.py` plus support
-  modules (`expectations.py`, `student_checker_support.py`), and
-  `exercise.json`. Selection holds four exercises:
-  `ex001_selection_modify_basics` (33 tests),
-  `ex002_selection_debug_if_then_else` (60 tests),
-  `ex003_selection_modify_elif_boundaries` (60 tests),
-  `ex004_selection_modify_logical_operators` (71 tests); 224 cases in total.
-- Selection tests share one shape: import from `exercise_runtime_support`,
-  declare `_EXERCISE_KEY`, load `expectations` via
-  `load_exercise_test_module`, and drive tagged notebook cells through
-  `RuntimeCache` with the `exercise_key` resolver.
-- Notebook resolution (`exercise_metadata/resolver.py`) and test-module
-  resolution (`exercise_runtime_support/exercise_test_support.py`) both anchor
-  on the location of the imported package, not on the working directory.
-- Exported templates preserve canonical paths plus `exercise_metadata/` and
-  `exercise_runtime_support/`; flattened mirrors are forbidden.
-- The template still ships the legacy chain, confirmed broken:
-  `template_repo_files/.github/workflows/classroom.yml` invoking
-  `scripts/build_autograde_payload.py --variant student` with
-  `-p tests.autograde_plugin`, forwarded to
-  `classroom-resources/autograding-grading-reporter@v1`.
-- `TemplatePackager` hard-requires that chain (`classroom.yml` checks,
-  `REQUIRED_SCRIPTS`, `REQUIRED_TEST_FILES`).
-- Runtimes pin Python 3.14+ with 3.14 devcontainer images.
+The bundle builder and grader already implement the core of this specification
+and are unchanged by it:
 
-## Scope and non-goals
+- `scripts/build_classroom50_bundle.py` takes `--source-root`,
+  `--exercise-set`, `--runtime-source`, and `--output`. For each selected
+  exercise it copies the hidden test modules and exercise-local support files
+  into `<output>/exercises/<construct>/<exercise_key>/tests/`, regenerates
+  `exercise_runtime_support/`, and copies `autograder.py` to the bundle root.
+  Notebooks, solutions, metadata, and teacher notes are never copied.
+- `scripts/autograder.py` requires `--student-root` and `--result`, forces the
+  `PYTUTOR_ACTIVE_VARIANT` value, collects the bundle's hidden tests only, and
+  writes a result document with one point per passing case.
 
-In scope for this round:
+Three gaps keep the bundle from running as-is in Classroom 50:
 
-- Delete the legacy autograding chain and its docs references.
-- Move runtimes and devcontainers to Python 3.14 (grading-runtime alignment).
-- Add one generic `autograder.py` source plus a generic bundle builder that
-  assembles a teacher-side grading bundle from its selected exercise-set input;
-  Selection supplies the first pilot input only.
-- Repackage selection templates as starter-code only, with a test proving the
-  grading source never ships inside them.
-- Local dry-run verification of the bundle against student-variant and
-  solution-variant workspaces.
+1. **Invocation.** Classroom 50 runs the child with no arguments and reads
+   `./result.json` from the student checkout. The current grader requires two
+   command-line options and lets the caller choose the result path.
+2. **Dependencies.** Classroom 50's grading interpreter does not ship this
+   runtime's test dependencies. The grader must install what it needs before
+   importing pytest, in the same way Classroom 50's own documented pytest
+   template does with `pip install`.
+3. **Result shape.** The result document uses the superseded `version` and
+   per-test `name` field names, which the current `classroom50/result/v1`
+   schema does not accept.
 
-Explicit non-goals (not in this repo, not in this round):
+## Agreed decisions
 
-- No functionality for creating or managing Classroom 50 classrooms: no
-  classroom scaffolding, roster management, assignment registration,
-  `assignments.json` writing, score collection, submission download, token
-  handling, or web/CLI classroom automation of any kind. The teacher performs
-  all classroom operation manually in the `classroom50` repository and
-  organisation; this repo only produces clean templates and the grading
-  bundle source.
-- No live pilot operation (no test-student accept, submit, Release inspection,
-  or Collect runs) as implementation acceptance; those are manual teacher
-  follow-ups outside this repo.
-- No new exercises, notebook content changes, tagged-cell changes,
-  pedagogical changes, `OrderOfTeaching.md` changes, or exercise-type
-  metadata changes.
-- No sequence rollout, no per-exercise assignments, no declarative-tests
-  route, no weighting beyond one point per case.
-- No implementation code or tests are written in this plan document.
+1. The bundle is a per-assignment `autograder.py` override, so the assignment
+   keeps `autograder: "default"` and carries no declarative `tests` block.
+2. The builder stays assignment-agnostic. Classroom and assignment slugs are
+   not builder inputs; the teacher places the built directory at
+   `<classroom>/autograders/<assignment>/` in the Classroom 50 repository.
+3. The grader has two invocation modes: no arguments (Classroom 50 mode) and
+   the explicit `--student-root`/`--result` pair (local dry run). The pair is
+   required as a pair; supplying one alone is a usage error.
+4. Classroom 50 mode reads its identity from the documented environment
+   variables and writes `./result.json` in the current working directory.
+5. Local mode keeps explicit roots and result paths and emits clearly
+   non-uploadable local identity values.
+6. The result document uses the canonical `classroom50/result/v1` field names.
+7. Classroom 50 mode installs the grading dependencies with `pip` before
+   importing pytest, and installs nothing in local mode.
+8. Test discovery stays rooted in the built bundle. That is the functional
+   boundary between grading tests and the student-visible self-check copies.
+9. One point per passing pytest case, with each case named
+   `<exercise_key>::<leaf-nodeid>`.
+10. A completed run exits zero whether cases pass or fail; a run that cannot
+    grade exits non-zero and writes no result.
+11. Deployment remains a manual commit into the Classroom 50 repository.
+
+## Invocation and result contract
+
+### Classroom 50 mode
+
+Classroom 50 starts the child from the student checkout, so:
+
+- the current working directory is the student root;
+- the bundle root is the grader script's own parent directory, which is where
+  Classroom 50 extracts the assignment bundle and where its sibling files
+  live;
+- the result is `./result.json`;
+- the active notebook variant is forced to `student`.
+
+The grader reads `CLASSROOM`, `ASSIGNMENT`, `ASSIGNMENT_TYPE`,
+`SUBMISSION_TAG`, `COMMIT_URL`, `RELEASE_URL`, and `OWNER` (falling back to
+`USERNAME`). `REVIEW_URL` is optional and falls back to `COMMIT_URL`. It
+ignores unrelated runner variables. A missing required value or unsupported
+assignment type is a grading failure that writes no result rather than a
+vacuous pass.
+
+### Local mode
+
+With `--student-root` and `--result`, the grader grades that checkout and
+writes to that path. `--variant solution` forces the solution notebook variant
+for a dry run; the default forces `student`.
+
+The local result uses these exact non-uploadable identity values:
+
+- `classroom = "local"`;
+- `assignment = "local"`;
+- `assignment_type = "individual"`;
+- `owner = "local"`;
+- `submission = "submit/local"`;
+- `commit`, `release`, and `review` are `local://` values.
+
+A local result is a dry-run artefact. It is never evidence of Classroom 50
+identity or collected scores.
+
+### Result document
+
+```json
+{
+  "schema": "classroom50/result/v1",
+  "classroom": "...",
+  "assignment": "...",
+  "assignment_type": "individual",
+  "owner": "...",
+  "submission": "submit/...",
+  "commit": "...",
+  "release": "...",
+  "review": "...",
+  "datetime": "YYYY-MM-DDTHH:MM:SSZ",
+  "score": 1,
+  "max-score": 1,
+  "tests": [
+    {
+      "test-name": "exercise_key::test_file.py::test_case",
+      "passed": true,
+      "score": 1,
+      "max-score": 1
+    }
+  ]
+}
+```
+
+`score` and `max-score` are the sums over the case rows. A case whose call
+phase passes but whose teardown fails is recorded as failed, because a teardown
+failure is a real failure of that case.
+
+Classroom 50's runner re-stamps `owner`, `assignment_type`, `datetime`,
+`graded_at`, and `submitted_by` with its own authoritative values before
+validating the document, so the grader only needs to fill them in well enough
+to validate.
+
+## Dependency handling
+
+Classroom 50 mode installs the grading dependencies with
+`sys.executable -m pip install` before importing pytest, following the pattern
+in Classroom 50's own documented pytest autograder template. Local mode installs
+nothing and uses the developer's environment.
+
+The runtime's test dependencies are pytest and `tabulate`, which
+`exercise_runtime_support/exercise_framework/reporting.py` imports directly.
+The exact package set is an implementation decision recorded in
+`ACTION_PLAN.md`, not a contract this specification pins.
+
+## Builder contract
+
+The builder takes the existing inputs: `--source-root`, `--exercise-set`,
+`--runtime-source`, and `--output`, where `--output` is a bundle directory.
+It writes:
+
+```text
+<output>/
+├── autograder.py
+├── exercise_runtime_support/
+└── exercises/<construct>/<exercise_key>/tests/
+```
+
+For each selected exercise it copies the canonical hidden test module and the
+exercise-local Python support files that module needs. Notebooks, solutions,
+`exercise.json`, teacher notes, caches, and unrelated files are never copied.
+
+The teacher then places this directory at
+`<classroom>/autograders/<assignment>/` in the Classroom 50 repository and
+commits it. Classroom 50's publish workflow materialises the per-assignment
+archive from there; the builder neither creates nor commits an archive.
+
+Classroom 50 caps a fetched bundle at 10 MiB and its grade job at 15 minutes.
+These are operational limits to keep in mind when selecting exercises for one
+assignment, not checks this builder performs.
 
 ## Constraints and invariants
 
-- Preserve the canonical exercise-local contract: `exercise.json` holds type;
-  no `<type>` path segment; no flattened mirrors; no solution notebooks in
-  templates; notebook identity by `exercise_key` string; resolved `Path`
-  values stay as `Path`.
-- Preserve grading invariants: solution variant passes, student variant fails
-  in this repository; each case stays fast, deterministic, and isolated;
-  variant selection via `--variant` / `PYTUTOR_ACTIVE_VARIANT`.
-- Single generic grader and builder: the same `autograder.py` source grades
-  every assignment, and the same builder source creates each assignment bundle
-  from a selected exercise-set input. The Selection set is the pilot fixture,
-  not a special code path. The grader's discovery root is the bundle's hidden
-  test directories only, never the student checkout's `exercises/.../tests/`,
-  so visible self-check copies are never double-counted. It discovers bundled
-  tests dynamically at grade time; no hardcoded exercise keys, weights, or
-  construct names. The builder supplies per-exercise subdirectories; the
-  grader supplies the mechanism. New grading code stays 3.11-compatible so the
-  source-repo dry run works before any floor raise.
-- Bundle isolation mechanism: the bundle ships its own copy of
-  `exercise_runtime_support/` placed ahead of the student checkout on
-  `sys.path`, while `exercise_metadata/` stays the student-checkout copy.
-  `load_exercise_test_module` then resolves `expectations.py` and support
-  modules into the bundle's hidden `exercises/<construct>/<exercise_key>/tests/`
-  copies, and the metadata resolver still resolves notebooks to the student
-  checkout. The bundle copy of `exercise_runtime_support/` is produced from
-  source at build time and must be rebuilt whenever the source package
-  changes. The graded run forces the student variant
-  (`PYTUTOR_ACTIVE_VARIANT=student`); the solution dry run forces the solution
-  variant.
-- Bundle isolation rule: notebook resolution must point at the student
-  checkout (student work), while test-module resolution
-  (`expectations.py`, support modules, test logic) must point at the fresh
-  bundle copies. Template edits must not change the graded outcome. The
-  Classroom 50 template rules still apply downstream: the template never
-  ships `.github/workflows/autograde.yaml` or `autograding.json`.
-- Scoring rule: one point per passing pytest case; per-test name format
-  `<exercise_key>::<pytest-nodeid>`, where `<pytest-nodeid>` is the leaf
-  `test_*.py::test_name` portion of the pytest node id (no absolute paths);
-  `max-score` is the sum (224 on a selection full pass, computed not hardcoded).
-- Bundle contents: `autograder.py`, per-exercise hidden copies
-  (`test_*.py`, `expectations.py`, `student_checker_support.py`) under
-  `<bundle>/exercises/<construct>/<exercise_key>/tests/`, and runtime
-  copies of `exercise_runtime_support/` at `<bundle>/exercise_runtime_support/`
-  (bundle-local) with `exercise_metadata/` resolved from the student checkout.
-- `result.json` satisfies the `classroom50/result/v1` contract; identity
-  fields are stamped authoritatively by the runner downstream. Exit 0 means
-  the run completed (pass/fail is in the payload); non-zero is reserved for
-  infrastructure error.
-- Hidden is tamper-proof, not secret: no solutions or confidential data go
-  into the bundle, since the published bundle is fetchable.
-- Assignment slug remains an operator input at bundle use time, not a value
-  stored in this repository.
+- Preserve the canonical exercise-local layout under
+  `exercises/<construct>/<exercise_key>/`.
+- Preserve canonical exported notebook and test paths; flattened mirrors remain
+  forbidden.
+- Preserve one point per passing case and the `<exercise_key>::<leaf-nodeid>`
+  naming rule.
+- Preserve the student/solution variant contract.
+- Preserve bundle-first runtime imports and student-checkout metadata
+  resolution.
+- Keep both scripts generic: no construct- or exercise-specific grading branch.
+- Templates ship starter code only. Grading sources and hidden tests must
+  never enter a student checkout or an exported template.
+- Repository tests stay deterministic, fast, and offline.
 
-## Relevant docs and file evidence
+## Non-goals
 
-- `AGENTS.md` — canonical layout, variant contract, pytest invocation.
-- `docs/developers/project-structure.md` — authoring tree, packaged runtime
-  contract, legacy workflow location.
-- `docs/developers/execution-model.md` — discovery roots, runtime imports,
-  variant selection, source-to-export mapping.
-- `docs/developers/testing-framework.md` — solution/student invocation,
-  packaging expectations.
-- `docs/developers/development.md` — contributor workflow.
-- `docs/teachers/exercise-generation.md`, `docs/exercise-agents/exercise-generation-cli.md`,
-  `docs/teachers/pedagogy.md` — no pedagogical change in this round; note that
-  `exercise-generation.md` still carries the old distribution-platform label
-  and is covered by the teacher-docs deferral below.
-  (`docs/exercise-agents/exercise-testing.md` is not unchanged: Stage 1 removes
-  its `classroom.yml` CI bullet, reconciles the stale `tests.yml` /
-  `tests-solutions.yml` CI bullets, replaces the "autograde plugin assigns one
-  point per collected test" note with the new model, and rewords the GitHub
-  Classroom runner framing.)
-- Platform label: GitHub Classroom is no longer the distribution platform
-  label; templates are Classroom 50 templates distributed via GitHub template
-  repositories. GitHub remains the hosting platform only. Teacher-facing
-  distribution docs (`docs/teachers/creating-exercise-sets.md`,
-  `docs/teachers/construct-template-repos.md`, `docs/teachers/in-the-classroom.md`,
-  `docs/teachers/classroom-practices.md`, `docs/teachers/it-network-requirements.md`,
-  `docs/teachers/understanding-the-tools.md`, `docs/teachers/getting-started.md`,
-  `docs/teachers/exercise-generation.md`, `docs/README.md` teacher rows) are
-  deferred to a separate Classroom 50 docs pass, as is the identical
-  flattening falsehood in `.opencode/agents/planner.md`.
-- Classroom 50 wiki: `Autograding-Basics` (pipeline, Releases, collection),
-  `Autograder-Recipes` (Python recipe), `Advanced-Autograding`
-  (`autograder.py` contract, precedence, `result.json`, `runtime` block),
-  `Assignment-Templates` (reserved workflow, re-fetch behaviour).
-- Files in scope include:
-  `template_repo_files/.github/workflows/classroom.yml`,
-  `template_repo_files/pytest.ini`, `template_repo_files/pyproject.toml`,
-  `template_repo_files/.devcontainer/devcontainer.json`,
-  `.devcontainer/devcontainer.json`, `pyproject.toml`,
-  `scripts/build_autograde_payload.py`, `tests/autograde_plugin.py`,
-  `tests/test_autograde_plugin.py`, `tests/test_build_autograde_payload.py`,
-  `tests/test_integration_autograding.py`,
-  `exercises/sequence/ex002_sequence_modify_basics/tests/test_repo_autograde_parity.py`,
-  `scripts/template_repo_cli/core/packager/__init__.py`,
-  `tests/template_repo_cli/test_packager.py` (autograde helpers and cases),
-  `tests/exercise_runtime_support/test_runtime_contract.py` (delete
-  `test_workflow_variant_script_contract` entirely),
-  `tests/exercise_runtime_support/test_build_autograde_env.py` (delete:
-  legacy-only),
-  `exercises/selection/ex001_selection_modify_basics/tests/test_ex001_selection_modify_basics.py`,
-  `exercise_runtime_support/exercise_test_support.py` (read-only reference for
-  the `sys.path` design, not an edit target),
-  `exercise_metadata/resolver.py` (read-only reference, not an edit target),
-  `docs/developers/github-classroom-autograding-guide.md` (delete: legacy-only),
-  `docs/developers/autograding-cli.md` (delete: legacy-only),
-  `docs/developers/template_repo_cli.md` (remove tree entries, bullets, and
-  the GitHub Classroom Integration sections),
-  `docs/developers/execution-model.md`, `README.md` (repo root: remove legacy
-  autograder sentence), `docs/README.md` (remove legacy link rows),
-  `docs/exercise-agents/exercise-testing.md`,
-  `.opencode/agents/testing-specialist.md` (drop `autograding-cli.md` and
-  legacy-script references; correct the flattening claim to the
-  forbidden-mirrors contract), `AGENTS.md` (reconcile the L3 platform label).
+This work explicitly does not add:
 
-## Exercise work
+- a grading manifest or any second wire format for the selected tests;
+- a fresh-install target with package-origin or version verification;
+- hostile-environment, plugin-autoload, or student-tampering defences;
+- a vendored, checksum-pinned snapshot of upstream Classroom 50 sources;
+- a Classroom 50 assignment-manifest schema test matrix;
+- an archive simulation or builder filesystem threat model;
+- a repository-wide documentation campaign.
 
-- Construct and keys: `selection` —
-  `ex001_selection_modify_basics`, `ex002_selection_debug_if_then_else`,
-  `ex003_selection_modify_elif_boundaries`,
-  `ex004_selection_modify_logical_operators`.
-- Intended notebook behaviour: unchanged. Students edit tagged cells
-  (`exercise1`, …, plus `explanationN` where the type uses them); self-check
-  cells keep calling `run_notebook_checks('<exercise_key>')`.
-- Tagged cell expectations: unchanged; no retagging.
-- Notebook and test locations: canonical source paths stay; packaged
-  templates keep `notebooks/student.ipynb` and visible `tests/` self-checks
-  at canonical paths with no flattened mirrors.
-- Packaging/export implications: templates stop shipping the legacy reporter
-  chain; the new grading bundle (script plus hidden test copies) is produced
-  by the builder as a directory for the teacher to commit into the
-  `classroom50` repository. It is never a second editable copy in the
-  student checkout.
+## Evidence
+
+- `scripts/autograder.py` — mandatory `--student-root`/`--result`, module-scope
+  `import pytest`, teardown reports discarded, `version`/`name` payload, caller
+  selected result path.
+- `scripts/build_classroom50_bundle.py` — current inputs, hidden-test copying,
+  and bundle output layout.
+- `exercise_runtime_support/exercise_framework/reporting.py:9` — `tabulate` is
+  imported directly by the runtime package.
+- `tests/test_classroom50_bundle_stage4.py` — current builder and grader
+  contract tests.
+- `docs/developers/classroom50-autograder.md` — current generic grading
+  contract and CLI interfaces.
+- Classroom 50 wiki, *Advanced Autograding*, and commit
+  `43ec1444f87674cd3276e66eadb6439dc0c97668`: no-argument child invocation, the
+  student checkout as working directory, `./result.json` as the result, the
+  supplied environment variables, the `classroom50/result/v1` field set, and
+  the pip-based pytest autograder template.
 
 ## Acceptance criteria
 
-1. Legacy chain is gone: no `classroom.yml`, reporter reference, payload CLI,
-   or plugin wiring in packaged templates; packager no longer requires them;
-   docs no longer present them as the grading route (including root
-   `README.md`, `docs/README.md` link rows, `docs/developers/execution-model.md`
-   example, and all cross-references); the two legacy-only docs
-   (`github-classroom-autograding-guide.md`, `autograding-cli.md`) are deleted;
-   `project-structure.md` loses its tree entries and description bullets for the
-   deleted files; `template_repo_cli.md` and `setup.md` lose their GitHub
-   Classroom Integration sections; `testing-framework.md` loses its
-   `classroom.yml` bullet; `development.md` loses §Autograding Development
-   Workflow and its `classroom.yml` CI bullet; source suite still collects
-   and runs.
-2. Runtimes and devcontainers resolve Python 3.14; `requires-python` floor is
-   raised only if the implementer confirms 3.14 dependency compatibility,
-   otherwise only images/pins move. Source suite passes on the solution
-   variant with student-variant failure behaviour preserved.
-3. One generic `autograder.py` source and one generic builder source exist,
-   with no per-construct or per-exercise hardcoding. The builder accepts its
-   selected exercise set as input; configuring it with the Selection pilot set
-   assembles a Selection bundle with the script plus per-exercise hidden test
-   copies, support files, and the runtime copies named above. New scripts ship
-   with a dedicated pytest surface (nodeid transform, `result.json` shape,
-   `sys.path` isolation) and pass a Tidy Code Reviewer gate.
-4. Local dry run: the bundle run against a packaged student-variant workspace
-   fails as expected and against a solution-variant workspace passes. The
-   solution-variant workspace is produced by running the hidden bundle copies
-   directly in the source repo with the solution variant forced (canonical
-   tests equal bundle copies for the pilot; pilot shortcut that does not
-   exercise packaged `sys.path` isolation, acknowledged). `result.json`
-   validates against the `classroom50/result/v1` shape with
-   `<exercise_key>::<nodeid>` leaf names and one point per case.
-5. Tamper check: editing or deleting template-side test copies does not
-   change the dry-run graded outcome.
-6. Repackaged selection template validates (`repoman validate`, dry-run sync)
-   with no reserved workflow, no authoring-only assets, and provably no
-   grading source inside the exported `exercises/` tree.
+1. A no-argument run in a student checkout writes a `classroom50/result/v1`
+   document to `./result.json` and exits zero when cases pass and when cases
+   fail.
+2. Missing required environment or an unsupported assignment type fails
+   clearly, writes no result, and exits non-zero.
+3. The local dry run still accepts `--student-root`/`--result` as a pair,
+   still supports `--variant solution`, and emits the documented local identity
+   values.
+4. Result rows use `test-name` and `passed`; no `version` or `name` fields
+   remain.
+5. A teardown failure cannot receive a passing score.
+6. Grading collects only the bundle's hidden test copies, and runtime imports
+   resolve to the bundle copy while `exercise_metadata` resolves to the student
+   checkout.
+7. The grader installs its test dependencies in Classroom 50 mode and installs
+   nothing in local mode.
+8. The builder emits only the documented bundle contents for the selected
+   exercises.
+9. A build-then-local-dry-run cycle passes for a real exercise set without any
+   network access in the repository test suite.
+10. Directly affected developer documentation matches this specification.
 
 ## Open questions and risks
 
-- None blocking implementation. Slug, assignment naming, roster, collection,
-  and live verification are manual teacher operations outside this repo.
-- Risk: the two resolutions anchoring on package location (notebooks vs test
-  modules) is the subtle point of the build; the dry-run tamper check in
-  criterion 5 exists to catch it.
-- Risk: Pages CDN lag and the 15-minute grade-job limit affect live rollout
-  only, not this round's acceptance.
-- Existing old-system student repositories need fresh acceptance at rollout;
-  communicate separately.
+- Installing dependencies on the grading interpreter costs startup time on
+  every submission. Pinning exact versions is a reasonable later refinement if
+  unpinned resolution proves unreliable.
+- Classroom 50's contract may advance beyond commit `43ec1444`; recheck before
+  the first live deployment.
+- Committing the bundle into the Classroom 50 repository remains a manual step.
+- No live pilot is included, so the local dry run is the only pre-deployment
+  check available here.

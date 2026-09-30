@@ -44,7 +44,7 @@ Contract:
 
 - Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py`).
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
-- Default variant is `solution` when no variant is provided.
+- Default variant is `solution` when no variant is provided to a repository orchestration script. The Classroom 50 bundle grader is the exception: it defaults to `student` in both of its modes, as §5 records.
 
 Deprecated note:
 
@@ -73,7 +73,8 @@ Teacher-side grading uses a teacher-built bundle, not the exported student templ
 - `scripts/build_classroom50_bundle.py` copies hidden exercise tests and a bundle-local `exercise_runtime_support/` copy into `<bundle>/`, plus the generic `autograder.py` at the bundle root.
 - The bundle is the grader's only discovery root: tests are collected solely from `<bundle>/exercises/<construct>/<exercise_key>/tests/`, never from the student checkout's `exercises/.../tests/`.
 - The bundle root is prepended to `sys.path` ahead of the student checkout, so `exercise_runtime_support` resolves to the bundle copy while `exercise_metadata` resolves to the student checkout. The grader verifies these package origins before grading.
-- Graded runs force `PYTUTOR_ACTIVE_VARIANT=student`; the solution variant is reserved for the local dry run.
+- The grader has two invocation modes. Classroom 50 mode takes no arguments: the current working directory is the student root, the bundle root is the grader script's own parent directory, the result is `./result.json` in the working directory, and the identity fields come from the runner environment. The local dry run requires `--student-root` and `--result` as a pair.
+- Both modes force `PYTUTOR_ACTIVE_VARIANT=student` by default; the solution variant is reserved for the local dry run.
 
 See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule, CLI interfaces, and result contract.
 

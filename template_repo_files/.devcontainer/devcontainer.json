@@ -67,7 +67,8 @@
           "pyproject.toml": true,
           ".gitignore": true,
           "pytest.ini": true,
-          "uv.lock": true
+          "uv.lock": true,
+          ".classroom50.yaml": true
         },
         
         // Jupyter configuration
