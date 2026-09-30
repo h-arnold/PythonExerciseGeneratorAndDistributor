@@ -18,7 +18,6 @@ from exercise_runtime_support.student_checker.checks.base import (
 )
 
 _EXERCISE_KEY = "ex011_sequence_gaps_consolidation"
-_STUDENT_VARIANT = "student"
 
 _FSTRING_CHECK_EXERCISE_NO = 7
 
@@ -51,7 +50,6 @@ def _exercise_ast(exercise_no: int) -> ast.Module:
     code = extract_tagged_code(
         _EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
-        variant=_STUDENT_VARIANT,
     )
     try:
         return ast.parse(code)
@@ -66,7 +64,6 @@ def _check_static_output(exercise_no: int) -> list[str]:
     output = run_cell_and_capture_output(
         _EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
-        variant=_STUDENT_VARIANT,
     )
     if output != expected:
         return [f"Exercise {exercise_no}: output does not match expected text."]
@@ -79,7 +76,6 @@ def _check_prompt_flow(exercise_no: int) -> list[str]:
         _EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
         inputs=case["inputs"],
-        variant=_STUDENT_VARIANT,
     )
     if output != case["expected_output"]:
         return [
