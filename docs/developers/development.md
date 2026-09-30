@@ -41,7 +41,7 @@ uv run python -V
 - `scripts/build_classroom50_bundle.py`: Builds a teacher-side Classroom 50 grading bundle from a selected exercise-set input
 - `scripts/new_exercise.py`: Exercise scaffolding tool
 - `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
-- `scripts/verify_exercise_quality.py`: Static checks for newly scaffolded exercises
+- `scripts/verify_exercise_quality.py`: Structural and runtime self-checks for one `exercise_key`, or every discovered exercise with `--all`
 - `AGENTS.md`: Repo-wide Copilot context
 - `.opencode/agents/exercise-generation.md`: Exercise generation custom agent
 - `.opencode/agents/exercise-reviewer.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
