@@ -227,7 +227,15 @@ uv run python scripts/run_pytest_variant.py --variant solution \
 
 # Structural checks (add --skip-empty-checks during Phase 1 when student_checker_support.py is not yet populated)
 uv run python scripts/verify_exercise_quality.py <exercise_key>
+
+# Same gates for every exercise under exercises/<construct>/, one labelled section per exercise_key.
+# Exits non-zero when any exercise reports an ERROR; warnings alone still exit zero.
+uv run python scripts/verify_exercise_quality.py --all
 ```
+
+The sweep may report existing exercise-content errors even when the solution
+pytest suite passes. Review the labelled findings rather than treating a
+non-zero exit as a failure of the sweep itself.
 
 ## Files
 - Notebook: `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`

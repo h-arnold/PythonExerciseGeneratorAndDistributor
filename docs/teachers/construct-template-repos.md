@@ -1,6 +1,6 @@
 # Construct Template Repositories
 
-> Auto-generated on 2026-09-15 12:22:47
+> Auto-generated on 2026-09-30 07:03:03
 
 This page lists the template repositories created for each construct. Each repository contains the exercises for that construct, ready to use in GitHub Classroom.
 

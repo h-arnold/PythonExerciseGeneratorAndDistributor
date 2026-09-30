@@ -309,3 +309,61 @@ fails the run; and that section's result destination, now stated per mode. A
 matching docstring correction in `scripts/autograder.py` names the mode in
 `_resolve_invocation`'s return. No production, test, exercise, or teaching-order
 behaviour changed, and no grading contract moved.
+
+## Addendum — verifier `--all` (new item 1; historical tracker above unchanged)
+
+1. **RED and existing-work review.** Surfaces: existing changes to
+   `tests/test_verify_exercise_quality.py` and
+   `scripts/verify_exercise_quality.py`. Inspect the worktree without resetting
+   it; run `uv run pytest tests/test_verify_exercise_quality.py -q` and record
+   the expected failures, notably the current caller/`options` mismatch.
+   Review point: confirm the tests describe only the scoped sweep and existing
+   single-key contract before editing production code.
+2. **GREEN: finish the narrow verifier change.** Surface:
+   `scripts/verify_exercise_quality.py`. Reuse the same per-exercise gates for
+   single-key and `--all`, report each discovered canonical exercise separately,
+   continue after malformed notebooks, aggregate ERROR status, and leave
+   single-key semantics intact. Check: rerun the targeted pytest file; verify
+   clean, warning-only, malformed, metadata-defective, and single-key cases.
+   Review point: Tidy Code Reviewer checks discovery, error boundaries and
+   minimality; address findings without unrelated refactors.
+3. **Docs sync and final checks.** Surfaces: only directly affected CLI
+   guidance in `docs/developers/development.md` and/or
+   `docs/exercise-agents/exercise-generation-cli.md`, plus this addendum if
+   outcomes differ. Check `uv run ruff check scripts/verify_exercise_quality.py
+   tests/test_verify_exercise_quality.py`, `uv run pytest
+    tests/test_verify_exercise_quality.py -q`, and an actual `uv run python
+    scripts/verify_exercise_quality.py --all` run. The existing baseline is 26
+    errors and 103 warnings across 18 exercises, including ex011's missing
+    `expectations.py`; do not fix exercise content. Review point: confirm docs
+    match CLI, inspect `git status`/`git diff`, and preserve the historical
+    plan/tracker and other branch work. No commit or push.
+
+Progress: RED tests and red review clean after missing-metadata and
+`--skip-empty-checks` coverage was added. GREEN implementation complete;
+54 targeted tests, full pytest and solution variant passed. Initial green
+review flagged a single-key malformed-notebook behaviour change; a regression
+test was added and recovery was restricted to `--all`. An empty-tree regression
+test prevents a vacuous successful sweep. Final green review was clean after
+these fixes. De-sloppification removed duplicated test helpers and a repeated
+ordering case; docs sync confirmed CLI guidance. Ruff, Pyright,
+`ruff format --check`, `git diff --check`, the full pytest suite, and the full
+solution-variant suite pass. Runtime Gate I is deliberately skipped for
+exercises with pre-existing input classification errors to prevent a hang. No
+exercise content was modified.
+
+| Verifier `--all` checklist | Status |
+| --- | --- |
+| Red tests added | done |
+| Red review clean | done |
+| Green implementation complete | done |
+| Green review clean | done |
+| Checks passed | done (real sweep exits 1 on existing exercise findings) |
+| Action plan updated | done |
+| Commit created | pending (not requested) |
+| Push completed | pending (not requested) |
+
+Completion status: code, tests, cleanup, and documentation complete; delivery
+remains uncommitted and unpushed. No deviation from the `--all` CLI contract.
+Follow-up: address existing catalogue findings separately before using an
+all-exercise zero exit as a release gate.

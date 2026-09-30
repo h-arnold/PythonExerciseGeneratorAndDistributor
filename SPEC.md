@@ -280,3 +280,42 @@ This work explicitly does not add:
 - Committing the bundle into the Classroom 50 repository remains a manual step.
 - No live pilot is included, so the local dry run is the only pre-deployment
   check available here.
+
+## Addendum — exercise quality verifier `--all` (implementation item 1 only)
+
+This addendum is independent of the completed Classroom 50 specification above;
+its historical scope and decisions remain unchanged.
+
+- **Goal/current state:** Add an `--all` sweep to
+  `scripts/verify_exercise_quality.py` while retaining the existing single-key
+  CLI and its structural, tagging, progression and Gates F–I checks.
+- **Scope:** Discover exercise-key directories directly under
+  `exercises/<construct>/` (not resource folders or legacy/flattened paths),
+  including directories with missing or invalid metadata. Run the existing
+  gates per exercise in deterministic key order, label each exercise's findings,
+  continue past malformed/missing notebook errors, and exit non-zero if any
+  exercise has an ERROR; warnings alone do not fail. Retain
+  `--skip-empty-checks` semantics. Keep single-exercise CLI behaviour unchanged.
+- **Non-goals/invariants:** No new gates, exercise/notebook/test content edits,
+  packaging changes, legacy compatibility paths, branch reset, commits or
+  pushes. Exercise-specific assets stay at
+  `exercises/<construct>/<exercise_key>/`.
+- **Evidence:** `AGENTS.md`, `docs/developers/execution-model.md`,
+  `docs/developers/testing-framework.md`,
+  `docs/exercise-agents/exercise-testing.md`,
+  `scripts/verify_exercise_quality.py`, and
+  `tests/test_verify_exercise_quality.py`. The interrupted implementation
+  initially passed obsolete keywords to `_verify_exercise`; its call sites
+  now pass `_VerifyOptions`.
+- **Acceptance:** Existing and new targeted tests pass; a synthetic sweep
+  reports failures under their own keys and continues after invalid notebook
+  JSON; single-key tests remain green. A real `--all` run reports the existing
+  Gate G failure for missing `expectations.py` in ex011 as a baseline content
+  issue, not a reason to repair exercise content in this item. Focused CLI
+  guidance is synchronised with the final behaviour. A sweep that discovers no
+  exercises reports an ERROR rather than succeeding without checking anything.
+- **Risk/open question:** The real 18-exercise sweep reports 26 existing errors
+  and 103 warnings, not only ex011's missing `expectations.py`. Some runtime
+  self-checks are skipped by the existing input-consistency gate to prevent
+  hanging. Do not weaken gates or change exercise content to make the catalogue
+  exit zero as part of this item.

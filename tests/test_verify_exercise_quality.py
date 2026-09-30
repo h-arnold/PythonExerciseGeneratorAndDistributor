@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, cast
 
 import pytest
@@ -17,6 +18,7 @@ def _write_notebook(
     *,
     include_explanation: bool = True,
     variant: str | None = "student",
+    source: str = "print('Hello')\n",
 ) -> None:
     cells: list[dict[str, object]] = []
     if include_explanation:
@@ -38,7 +40,7 @@ def _write_notebook(
                 "language": "python",
                 "tags": ["exercise1"],
             },
-            "source": ["print('Hello')\n"],
+            "source": [source],
         },
     )
 
@@ -1474,3 +1476,554 @@ class TestSection2SkipEmptyChecks:
         assert "CHECKS list in student_checker_support.py is empty" not in captured.out
         # File exists so missing-file error is absent (already tested by unit test)
         assert "Missing student_checker_support.py" not in captured.out
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 3 — `--all` whole-catalogue sweep
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_DEFECTIVE_SLUG = "ex010_sequence_debug_alpha"
+_HEALTHY_SLUG = "ex020_sequence_debug_beta"
+
+
+def _sweep_metadata(slug: str, *, exercise_id: int) -> dict[str, int | str]:
+    """Return exercise metadata with an explicit ``exercise_id``.
+
+    Sweep fixtures need distinct ids so an ``exercise_id`` clash is never the
+    reason a candidate discovery strategy is rejected.
+    """
+    return {**_exercise_metadata(slug), "exercise_id": exercise_id}
+
+
+def _write_teaching_order(repo_root: Path, slugs: list[str]) -> None:
+    """Write one construct teaching-order file listing every sweep exercise.
+
+    ``_write_canonical_exercise`` rewrites this file per call, so multi-exercise
+    sweeps must restate the full list once the fixtures exist.
+    """
+    order_path = repo_root / "exercises" / "sequence" / "OrderOfTeaching.md"
+    order_path.parent.mkdir(parents=True, exist_ok=True)
+    order_path.write_text("\n".join(slugs) + "\n", encoding="utf-8")
+
+
+def _record_gate_i_calls(monkeypatch: pytest.MonkeyPatch) -> list[str]:
+    """Stub Gate I so sweeps stay hermetic, and record the keys it self-checks.
+
+    Gate I resolves exercise keys against the real repository, so an unmocked
+    sweep would both leak real repository state into the fixtures and report
+    "Unknown exercise key" for every synthetic exercise.  The recorded keys are
+    the observable evidence that Gates F-I ran for each discovered exercise.
+    """
+    checked: list[str] = []
+    passing = SimpleNamespace(passed=True, exercise_no=1, title="stub", issues=[])
+
+    def _record(key: str) -> list[Any]:
+        checked.append(key)
+        return [passing]
+
+    monkeypatch.setattr(
+        "exercise_runtime_support.student_checker.checks.run_exercise_checks",
+        _record,
+    )
+    return checked
+
+
+def _heading_order(output: str, keys: list[str]) -> list[str]:
+    """Return ``keys`` ordered by the position of their ``=== key ===`` heading.
+
+    Raises:
+        AssertionError: if a key has no explicit heading in ``output``.
+    """
+    positions: list[tuple[int, str]] = []
+    for key in keys:
+        heading = f"=== {key} ==="
+        if heading not in output:
+            raise AssertionError(f"missing heading {heading!r} in verifier output:\n{output}")
+        positions.append((output.index(heading), key))
+    return [key for _, key in sorted(positions)]
+
+
+def _owning_exercise_key(output: str, marker: str, keys: list[str]) -> str:
+    """Return the exercise key named most recently before ``marker`` in ``output``.
+
+    Raises:
+        AssertionError: if ``marker`` never appears, so a renamed or absent
+            finding message fails with a readable diagnostic.
+    """
+    if marker not in output:
+        raise AssertionError(f"marker {marker!r} not found in verifier output:\n{output}")
+    position = output.index(marker)
+    return max((output.rfind(key, 0, position), key) for key in keys)[1]
+
+
+class TestSection3AllExercisesSweep:
+    """``--all`` runs every gate for every exercise under ``exercises/<construct>/``."""
+
+    def _run_sweep_with_metadata_defect(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        metadata: dict[str, int | str],
+    ) -> tuple[int, str, list[str]]:
+        """Sweep a repo holding one metadata-defective and one healthy exercise.
+
+        Returns:
+            The sweep exit code, its stdout, and the Gate I exercise keys.
+        """
+        checked = _record_gate_i_calls(monkeypatch)
+        _write_canonical_exercise(tmp_path, _DEFECTIVE_SLUG, metadata=metadata)
+        _write_canonical_exercise(
+            tmp_path,
+            _HEALTHY_SLUG,
+            metadata=_sweep_metadata(_HEALTHY_SLUG, exercise_id=20),
+        )
+        _write_teaching_order(tmp_path, [_DEFECTIVE_SLUG, _HEALTHY_SLUG])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        return exit_code, capsys.readouterr().out, checked
+
+    def test_all_flag_runs_every_gate_for_every_discovered_exercise(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A structure failure in one exercise and a Gate F failure in another
+        must both be reported, and Gate I must run for both — the sweep must
+        not stop at the first exercise or run the gates for only one."""
+        checked = _record_gate_i_calls(monkeypatch)
+        missing_readme = "ex010_sequence_modify_alpha"
+        empty_checks = "ex020_sequence_modify_beta"
+        _write_canonical_exercise(
+            tmp_path,
+            missing_readme,
+            metadata={**_sweep_metadata(missing_readme, exercise_id=10), "exercise_type": "modify"},
+            missing_paths={"README.md"},
+        )
+        empty_dir = _write_canonical_exercise(
+            tmp_path,
+            empty_checks,
+            metadata={**_sweep_metadata(empty_checks, exercise_id=20), "exercise_type": "modify"},
+        )
+        checker_path = empty_dir / "tests" / "student_checker_support.py"
+        checker_path.write_text("CHECKS: list[object] = []\n", encoding="utf-8")
+        _write_teaching_order(tmp_path, [missing_readme, empty_checks])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        keys = [missing_readme, empty_checks]
+        assert exit_code != 0
+        assert "Missing canonical file: README.md" in captured.out
+        assert "CHECKS list in student_checker_support.py is empty" in captured.out
+        assert _heading_order(captured.out, keys) == sorted(keys)
+        assert sorted(checked) == sorted(keys)
+
+    def test_all_exits_zero_when_every_exercise_is_clean(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A clean catalogue must sweep to exit 0 and still verify both exercises."""
+        checked = _record_gate_i_calls(monkeypatch)
+        first = "ex001_sequence_debug_alpha"
+        second = "ex002_sequence_debug_beta"
+        for slug, exercise_id in ((first, 1), (second, 2)):
+            _write_canonical_exercise(
+                tmp_path,
+                slug,
+                metadata=_sweep_metadata(slug, exercise_id=exercise_id),
+            )
+        _write_teaching_order(tmp_path, [first, second])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        assert exit_code == 0
+        assert "Missing canonical file" not in captured.out
+        assert sorted(checked) == sorted([first, second])
+
+    def test_all_exits_zero_when_only_warnings_are_reported(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Warnings alone must not fail the sweep."""
+        checked = _record_gate_i_calls(monkeypatch)
+        exercise_dir = _write_canonical_exercise(
+            tmp_path,
+            _DEFECTIVE_SLUG,
+            metadata=_sweep_metadata(_DEFECTIVE_SLUG, exercise_id=10),
+        )
+        # A student notebook without the variant override triggers a Gate H WARN only.
+        _write_notebook(exercise_dir / "notebooks" / "student.ipynb", variant=None)
+        _write_teaching_order(tmp_path, [_DEFECTIVE_SLUG])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        assert "WARN:" in captured.out
+        assert "ERROR:" not in captured.out
+        assert exit_code == 0
+        assert checked == [_DEFECTIVE_SLUG]
+
+    def test_all_labels_each_exercise_findings_with_its_exercise_key(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Each finding must be attributable to the exercise that produced it."""
+        _record_gate_i_calls(monkeypatch)
+        missing_readme = "ex010_sequence_modify_alpha"
+        missing_expectations = "ex020_sequence_modify_beta"
+        _write_canonical_exercise(
+            tmp_path,
+            missing_readme,
+            metadata={
+                **_sweep_metadata(missing_readme, exercise_id=10),
+                "exercise_type": "modify",
+            },
+            missing_paths={"README.md"},
+        )
+        expectations_dir = _write_canonical_exercise(
+            tmp_path,
+            missing_expectations,
+            metadata={
+                **_sweep_metadata(missing_expectations, exercise_id=20),
+                "exercise_type": "modify",
+            },
+        )
+        (expectations_dir / "tests" / "expectations.py").unlink()
+        _write_teaching_order(tmp_path, [missing_readme, missing_expectations])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        keys = [missing_readme, missing_expectations]
+        assert exit_code != 0
+        assert (
+            _owning_exercise_key(captured.out, "Missing canonical file: README.md", keys)
+            == missing_readme
+        )
+        assert (
+            _owning_exercise_key(captured.out, "Missing expectations.py", keys)
+            == missing_expectations
+        )
+
+    def test_all_orders_exercises_deterministically(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Exercises are reported in a stable, exercise_key-sorted order that
+        does not depend on on-disk creation order."""
+        _record_gate_i_calls(monkeypatch)
+        exercises = {
+            "ex010_sequence_debug_alpha": 10,
+            "ex020_sequence_debug_gamma": 20,
+            "ex030_sequence_debug_beta": 30,
+        }
+        for slug in sorted(exercises, reverse=True):
+            _write_canonical_exercise(
+                tmp_path,
+                slug,
+                metadata=_sweep_metadata(slug, exercise_id=exercises[slug]),
+            )
+        _write_teaching_order(tmp_path, list(exercises))
+
+        keys = list(exercises)
+        verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        first_run = _heading_order(capsys.readouterr().out, keys)
+        verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        second_run = _heading_order(capsys.readouterr().out, keys)
+
+        assert first_run == sorted(keys)
+        assert second_run == first_run
+
+    def test_all_reports_progression_violations_for_every_exercise(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Progression scanning must run per exercise, not once for the sweep."""
+        checked = _record_gate_i_calls(monkeypatch)
+        first = "ex010_sequence_modify_alpha"
+        second = "ex020_sequence_modify_beta"
+        for slug, exercise_id in ((first, 10), (second, 20)):
+            exercise_dir = _write_canonical_exercise(
+                tmp_path,
+                slug,
+                metadata={
+                    **_sweep_metadata(slug, exercise_id=exercise_id),
+                    "exercise_type": "modify",
+                },
+            )
+            for variant in ("student", "solution"):
+                _write_notebook(
+                    exercise_dir / "notebooks" / f"{variant}.ipynb",
+                    source="for index in range(3):\n    print(index)\n",
+                    variant=variant,
+                )
+        _write_teaching_order(tmp_path, [first, second])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        # Two warnings per exercise: student and solution notebooks.
+        keys = [first, second]
+        assert captured.out.count("Possible progression violation") == 2 * len(keys)
+        assert sorted(checked) == sorted(keys)
+        assert exit_code == 0
+
+    def test_all_reports_invalid_metadata_without_dropping_other_exercises(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """An invalid exercise_type is reported for its own exercise and the
+        healthy exercise is still verified in the same sweep."""
+        exit_code, output, checked = self._run_sweep_with_metadata_defect(
+            tmp_path,
+            capsys,
+            monkeypatch,
+            {**_sweep_metadata(_DEFECTIVE_SLUG, exercise_id=10), "exercise_type": "invalid_type"},
+        )
+
+        assert exit_code != 0
+        assert "must define a valid exercise_type" in output
+        assert _DEFECTIVE_SLUG in output
+        assert _HEALTHY_SLUG in output
+        assert checked == [_HEALTHY_SLUG]
+
+    def test_all_reports_missing_metadata_field_without_dropping_other_exercises(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A missing required metadata field is reported, not skipped silently.
+
+        Metadata-driven catalogue discovery would raise on this fixture, so the
+        sweep must load metadata per discovered directory and convert the
+        failure into a finding.
+        """
+        metadata = _sweep_metadata(_DEFECTIVE_SLUG, exercise_id=10)
+        del metadata["construct"]
+        exit_code, output, checked = self._run_sweep_with_metadata_defect(
+            tmp_path,
+            capsys,
+            monkeypatch,
+            metadata,
+        )
+
+        assert exit_code != 0
+        assert "is missing required fields" in output
+        assert _DEFECTIVE_SLUG in output
+        assert _HEALTHY_SLUG in output
+        assert checked == [_HEALTHY_SLUG]
+
+    def test_all_reports_missing_metadata_file_without_dropping_other_exercises(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """An exercise with no exercise.json at all is still discovered.
+
+        Discovery is directory-based, so the sweep must report the missing
+        metadata against that exercise instead of skipping the directory; the
+        healthy sibling is still verified in the same sweep.
+        """
+        checked = _record_gate_i_calls(monkeypatch)
+        _write_canonical_exercise(
+            tmp_path,
+            _DEFECTIVE_SLUG,
+            include_metadata=False,
+        )
+        _write_canonical_exercise(
+            tmp_path,
+            _HEALTHY_SLUG,
+            metadata=_sweep_metadata(_HEALTHY_SLUG, exercise_id=20),
+        )
+        _write_teaching_order(tmp_path, [_DEFECTIVE_SLUG, _HEALTHY_SLUG])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        keys = [_DEFECTIVE_SLUG, _HEALTHY_SLUG]
+        assert exit_code != 0
+        assert "exercise.json not found" in captured.out
+        assert _owning_exercise_key(captured.out, "exercise.json not found", keys) == (
+            _DEFECTIVE_SLUG
+        )
+        assert _heading_order(captured.out, keys) == sorted(keys)
+        assert _HEALTHY_SLUG in checked
+
+    def test_all_skip_empty_checks_suppresses_only_the_empty_checks_error(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """``--skip-empty-checks`` suppresses the empty-CHECKS error only.
+
+        The same sweep still reports a genuine warning-only finding, and the
+        aggregate exit code reflects the remaining (warning-only) result.
+        """
+        checked = _record_gate_i_calls(monkeypatch)
+        empty_checks = "ex010_sequence_modify_alpha"
+        healthy = "ex020_sequence_debug_beta"
+        checker_dir = _write_canonical_exercise(
+            tmp_path,
+            empty_checks,
+            metadata={
+                **_sweep_metadata(empty_checks, exercise_id=10),
+                "exercise_type": "modify",
+            },
+        )
+        (checker_dir / "tests" / "student_checker_support.py").write_text(
+            "CHECKS: list[object] = []\n",
+            encoding="utf-8",
+        )
+        # A student notebook without the variant override is a genuine Gate H warning.
+        _write_notebook(checker_dir / "notebooks" / "student.ipynb", variant=None)
+        _write_canonical_exercise(
+            tmp_path,
+            healthy,
+            metadata=_sweep_metadata(healthy, exercise_id=20),
+        )
+        _write_teaching_order(tmp_path, [empty_checks, healthy])
+
+        keys = [empty_checks, healthy]
+        unsuppressed = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        unsuppressed_out = capsys.readouterr().out
+
+        assert unsuppressed != 0
+        assert "CHECKS list in student_checker_support.py is empty" in unsuppressed_out
+        assert sorted(checked) == sorted(keys)
+
+        suppressed = verify_exercise_quality.main(
+            ["--all", "--repo-root", str(tmp_path), "--skip-empty-checks"]
+        )
+        suppressed_out = capsys.readouterr().out
+
+        assert "CHECKS list in student_checker_support.py is empty" not in suppressed_out
+        assert "ERROR:" not in suppressed_out
+        assert "does not set PYTUTOR_ACTIVE_VARIANT" in suppressed_out
+        assert (
+            _owning_exercise_key(
+                suppressed_out,
+                "does not set PYTUTOR_ACTIVE_VARIANT",
+                keys,
+            )
+            == empty_checks
+        )
+        assert suppressed == 0
+        # The second sweep still ran Gates F-I for both exercises.
+        assert sorted(checked[len(keys) :]) == sorted(keys)
+
+    def test_all_continues_after_a_malformed_notebook(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """One exercise with invalid notebook JSON must not abort the sweep."""
+        checked = _record_gate_i_calls(monkeypatch)
+        before = "ex010_sequence_debug_alpha"
+        broken = "ex020_sequence_debug_broken"
+        after = "ex030_sequence_debug_gamma"
+        for slug, exercise_id in ((before, 10), (broken, 20), (after, 30)):
+            _write_canonical_exercise(
+                tmp_path,
+                slug,
+                metadata=_sweep_metadata(slug, exercise_id=exercise_id),
+            )
+        broken_notebook = (
+            tmp_path / "exercises" / "sequence" / broken / "notebooks" / "student.ipynb"
+        )
+        broken_notebook.write_text("{ not json", encoding="utf-8")
+        _write_teaching_order(tmp_path, [before, broken, after])
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        assert exit_code != 0
+        assert broken in captured.out
+        assert "Invalid JSON in notebook" in captured.out or broken_notebook.name in captured.out
+        # The sweep continued past the broken exercise and verified the next one.
+        assert after in captured.out
+        assert after in checked
+
+    def test_all_reports_an_empty_exercises_tree(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """An empty tree must not produce a vacuous passing sweep."""
+        (tmp_path / "exercises").mkdir()
+
+        exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
+
+        assert exit_code != 0
+        assert "ERROR:" in capsys.readouterr().out
+
+    def test_single_exercise_malformed_notebook_still_raises(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Single-key mode retains its existing malformed-JSON failure contract."""
+        slug = "ex010_sequence_debug_alpha"
+        exercise_dir = _write_canonical_exercise(
+            tmp_path,
+            slug,
+            metadata=_sweep_metadata(slug, exercise_id=10),
+        )
+        (exercise_dir / "notebooks" / "student.ipynb").write_text("{ not json", encoding="utf-8")
+
+        with pytest.raises(SystemExit, match="Invalid JSON in notebook"):
+            verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
+
+    def test_single_exercise_mode_still_verifies_only_the_named_exercise(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Adding ``--all`` must leave the single-exercise CLI untouched."""
+        checked = _record_gate_i_calls(monkeypatch)
+        clean = "ex010_sequence_debug_alpha"
+        broken = "ex020_sequence_debug_broken"
+        _write_canonical_exercise(
+            tmp_path,
+            clean,
+            metadata=_sweep_metadata(clean, exercise_id=10),
+        )
+        _write_canonical_exercise(
+            tmp_path,
+            broken,
+            metadata=_sweep_metadata(broken, exercise_id=20),
+            missing_paths={"README.md"},
+        )
+        _write_teaching_order(tmp_path, [clean, broken])
+
+        exit_code = verify_exercise_quality.main([clean, "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        assert exit_code == 0
+        assert "Missing canonical file" not in captured.out
+        assert checked == [clean]
+
+        exit_code = verify_exercise_quality.main([broken, "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+
+        assert exit_code != 0
+        assert "Missing canonical file: README.md" in captured.out
+        assert checked == [clean, broken]

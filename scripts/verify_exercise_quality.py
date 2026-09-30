@@ -16,8 +16,9 @@ The ``--skip-empty-checks`` flag suppresses the Gate F error when the
 verifier to be used during Phase 1 (notebook authoring) before checker
 definitions are written.
 
-The public CLI accepts the canonical ``exercise_key`` only. It is not a
-replacement for reading the exercise prompts.
+The public CLI accepts the canonical ``exercise_key`` only, or ``--all`` to run
+the same gate set across every discovered exercise and aggregate the result. It
+is not a replacement for reading the exercise prompts.
 """
 
 from __future__ import annotations
@@ -60,6 +61,23 @@ class _ExerciseMetadataError(ValueError):
     def __init__(self, path: Path, message: str) -> None:
         super().__init__(message)
         self.path = path
+
+
+@dataclass(frozen=True)
+class _VerifyOptions:
+    """Per-invocation verifier flags that are not derived from exercise metadata.
+
+    Attributes:
+        construct: Overrides the construct inferred from ``exercise.json``;
+            ``None`` keeps the inferred value.
+        exercise_type: Overrides the exercise type inferred from
+            ``exercise.json``; ``None`` keeps the inferred value.
+        skip_empty_checks: Gate F flag that suppresses the empty-CHECKS error.
+    """
+
+    construct: str | None = None
+    exercise_type: str | None = None
+    skip_empty_checks: bool = False
 
 
 NotebookCellSource = str | list[str]
@@ -181,6 +199,12 @@ _EXPLANATION_TAG_RE = re.compile(r"^explanation(?P<n>\d+)$")
 # classification (static vs interactive).  May produce false positives for
 # input in comments/strings, which is acceptable for a lint-style verifier.
 _INPUT_CALL_RE = re.compile(r"\binput\s*\(")
+# Canonical exercise directory names, e.g. ex004_sequence_debug_syntax.  Sweep
+# discovery matches on this shape rather than on the presence of exercise.json
+# so that an exercise with missing or invalid metadata is still verified, while
+# sibling directories that are not exercises (e.g. additional-resources) are
+# left alone.
+_EXERCISE_DIR_RE = re.compile(r"^ex\d+_\w+$")
 
 
 def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
@@ -699,7 +723,16 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "exercise_key",
-        help="Canonical exercise identifier, for example ex004_sequence_debug_syntax.",
+        nargs="?",
+        help="Canonical exercise identifier, for example ex004_sequence_debug_syntax. "
+        "Required unless --all is given.",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        default=False,
+        help="Verify every exercise under <repo-root>/exercises/<construct>/ and report "
+        "one labelled section per exercise_key",
     )
     parser.add_argument(
         "--repo-root",
@@ -711,13 +744,15 @@ def _build_parser() -> argparse.ArgumentParser:
         "--construct",
         choices=CONSTRUCT_ORDER,
         default=None,
-        help="Construct to validate progression against (default: inferred from canonical metadata)",
+        help="Construct to validate progression against (default: inferred from canonical "
+        "metadata). Single-exercise mode only; rejected with --all.",
     )
     parser.add_argument(
         "--type",
         choices=["debug", "modify", "make", "gaps"],
         default=None,
-        help="Exercise type (default: inferred from canonical metadata)",
+        help="Exercise type (default: inferred from canonical metadata). "
+        "Single-exercise mode only; rejected with --all.",
     )
     parser.add_argument(
         "--skip-empty-checks",
@@ -1254,9 +1289,8 @@ def _check_runtime_self_check(
     return findings
 
 
-def _report_findings(findings: list[Finding]) -> int:
-    _print_findings(findings)
-
+def _summarise(findings: list[Finding]) -> int:
+    """Print the aggregate OK/FAIL line for ``findings`` and return the exit code."""
     error_count = sum(1 for f in findings if f.severity == "ERROR")
     warn_count = sum(1 for f in findings if f.severity == "WARN")
 
@@ -1268,25 +1302,38 @@ def _report_findings(findings: list[Finding]) -> int:
     return 0
 
 
-def main(argv: list[str] | None = None) -> int:  # noqa: C901
-    parser = _build_parser()
-    args = parser.parse_args(argv)
+def _report_findings(findings: list[Finding]) -> int:
+    _print_findings(findings)
+    return _summarise(findings)
 
-    repo_root = args.repo_root
-    slug = args.exercise_key
 
-    ex_dir, inferred_construct, inferred_type, metadata_error, findings = _resolve_exercise_context(
-        repo_root=repo_root,
-        slug=slug,
+def _run_exercise_gates(  # noqa: C901
+    *,
+    findings: list[Finding],
+    repo_root: Path,
+    slug: str,
+    options: _VerifyOptions,
+) -> None:
+    """Append every gate finding for one exercise to ``findings``.
+
+    ``findings`` is supplied by the caller so that findings already collected
+    survive a later abort (see :func:`_verify_exercise`).
+    """
+    ex_dir, inferred_construct, inferred_type, metadata_error, resolution_findings = (
+        _resolve_exercise_context(
+            repo_root=repo_root,
+            slug=slug,
+        )
     )
+    findings.extend(resolution_findings)
     # _resolve_exercise_context() records the user-facing error in findings and
     # returns None here when the canonical exercise directory cannot be resolved.
     if ex_dir is None:
-        return _report_findings(findings)
+        return
 
     nb_path = ex_dir / "notebooks" / "student.ipynb"
-    construct = args.construct or inferred_construct
-    ex_type = args.type or inferred_type
+    construct = options.construct or inferred_construct
+    ex_type = options.exercise_type or inferred_type
 
     findings.extend(
         _collect_teacher_findings(
@@ -1348,7 +1395,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
         findings.extend(
             _check_student_checker_support(
                 ex_dir,
-                skip_empty_checks=args.skip_empty_checks,
+                skip_empty_checks=options.skip_empty_checks,
             ),
         )
         findings.extend(_check_expectations_module(ex_dir, parts))
@@ -1392,7 +1439,124 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901
                     )
                 )
 
-    return _report_findings(findings)
+
+def _verify_exercise(
+    *,
+    repo_root: Path,
+    slug: str,
+    options: _VerifyOptions,
+    recover_notebook_errors: bool = False,
+) -> list[Finding]:
+    """Run the full gate set for one exercise and return its findings.
+
+    During a sweep, convert notebook-load failures to findings so another
+    exercise can still be verified. Single-key mode retains its original error.
+    """
+    findings: list[Finding] = []
+    try:
+        _run_exercise_gates(
+            findings=findings,
+            repo_root=repo_root,
+            slug=slug,
+            options=options,
+        )
+    except SystemExit as exc:
+        if not recover_notebook_errors:
+            raise
+        findings.append(Finding("ERROR", str(exc)))
+    return findings
+
+
+def _discover_exercise_dirs(exercises_root: Path) -> list[Path]:
+    """Return the canonical exercise directories under ``exercises_root``.
+
+    Discovery is directory-based rather than metadata-based: every directory
+    named like a canonical ``exercise_key`` directly beneath a construct
+    directory is returned, so an exercise with missing or invalid
+    ``exercise.json`` is still swept and reported. Directories that are not
+    exercises (``additional-resources`` and friends) are left out. The result is
+    sorted by ``exercise_key`` so a sweep reports the same order every run.
+
+    Raises:
+        FileNotFoundError: If ``exercises_root`` does not exist.
+    """
+    return sorted(
+        (
+            candidate
+            for construct_dir in exercises_root.iterdir()
+            if construct_dir.is_dir()
+            for candidate in construct_dir.iterdir()
+            if candidate.is_dir() and _EXERCISE_DIR_RE.match(candidate.name)
+        ),
+        key=lambda ex_dir: ex_dir.name,
+    )
+
+
+def _sweep_all_exercises(
+    *,
+    repo_root: Path,
+    skip_empty_checks: bool,
+) -> int:
+    """Verify every discovered exercise and return one aggregate exit code.
+
+    Each exercise is labelled before its own findings so a reported finding is
+    always attributable to an exercise_key. The exit code is non-zero only when
+    at least one exercise produced an ERROR.
+    """
+    exercises_root = repo_root / "exercises"
+    exercise_dirs = _discover_exercise_dirs(exercises_root)
+    print(f"Sweeping {len(exercise_dirs)} exercise(s) under {exercises_root}")
+    if not exercise_dirs:
+        return _report_findings([Finding("ERROR", "No exercises discovered", path=exercises_root)])
+
+    findings: list[Finding] = []
+    for ex_dir in exercise_dirs:
+        slug = ex_dir.name
+        print(f"\n=== {slug} ===")
+        exercise_findings = _verify_exercise(
+            repo_root=repo_root,
+            slug=slug,
+            options=_VerifyOptions(skip_empty_checks=skip_empty_checks),
+            recover_notebook_errors=True,
+        )
+        _print_findings(exercise_findings)
+        findings.extend(exercise_findings)
+
+    return _summarise(findings)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Verify one exercise or sweep all canonical exercises via ``--all``."""
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    if args.all:
+        if args.exercise_key is not None:
+            parser.error("--all cannot be combined with an exercise_key; pass one or the other")
+        if args.construct is not None or args.type is not None:
+            parser.error(
+                "--all cannot be combined with --construct or --type; those overrides "
+                "apply to a single exercise_key and would misreport the other exercises"
+            )
+        return _sweep_all_exercises(
+            repo_root=args.repo_root,
+            skip_empty_checks=args.skip_empty_checks,
+        )
+
+    if args.exercise_key is None:
+        parser.error("provide an exercise_key, or --all to verify the whole catalogue")
+
+    return _report_findings(
+        _verify_exercise(
+            repo_root=args.repo_root,
+            slug=args.exercise_key,
+            options=_VerifyOptions(
+                construct=args.construct,
+                exercise_type=args.type,
+                skip_empty_checks=args.skip_empty_checks,
+            ),
+        )
+    )
 
 
 if __name__ == "__main__":

@@ -24,6 +24,7 @@ If you are new to this project, start with one of these two guides:
 | [Exercise Generation with Copilot](teachers/exercise-generation.md) | Detailed reference for using the Exercise Generation Copilot agent to create new exercises. |
 | [How to Use the Template Repo CLI](teachers/how-to-use-the-template-repo-cli.md) | Creating template repos for GitHub Classroom — step-by-step teacher guide. |
 | [Construct Template Repos](teachers/construct-template-repos.md) | Auto-generated index of per-construct template repositories, updated on each push to main. |
+| [Classroom 50 Sequence Deployment Record](teachers/classroom50-sequence-first-three-deployment-2026-09-30.md) | Detailed 30 September 2026 record: build, local solution run, assignment registration, bundle publication, blockers, and live-test gap. |
 | [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
 
 ---
