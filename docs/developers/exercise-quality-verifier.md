@@ -92,8 +92,27 @@ in a tagged `exerciseN` code cell of the student or solution notebook.
   runtime pins Python 3.14.
 - **Invalid debug cells are scanned, never skipped**: a tokenizer failure keeps
   the tokens read before the failure instead of discarding the cell, so a real
-  later construct in intentionally broken debug code still warns. Text after the
-  failure point is matched as code, which can add a warning but never hides one.
+  later construct in intentionally broken debug code still warns. A string
+  literal the tokenizer cannot close is the one failure that leaves prose in the
+  cell: the text after the last emitted token is then the literal's unfinished
+  body, so it is masked to the end of the cell rather than matched as code. That
+  covers an ordinary, byte, or triple-quoted literal, which emits no token at all,
+  and an f-string or t-string, which since PEP 701 emits its opening token and
+  literal chunks and so leaves only the rest of its text masked. A leading prefix
+  is read as one only when it is the letters Python accepts (`r`, `u`, `b`, `f`,
+  `t`, in either case, and at most the two a valid prefix has), so a mistyped
+  prefix such as `s"` is a name and leaves the text after it scannable. Every
+  other failure — an indentation error, an unclosed bracket, a stop while a
+  replacement field's `{` is still open — leaves real code unread rather than
+  prose, so that text stays matched and can add a warning but cannot hide one.
+  Unread text that opens a literal of its own is the exception, and is masked like
+  any other unfinished literal: a nested literal inside a replacement field, or a
+  broken line that starts a literal the tokenizer never closes.
+- **Masking an unfinished literal is a deliberate trade**: it reaches the end of
+  the cell, so a construct written after an unfinished literal in the same broken
+  cell is not reported. It is still reported from the solution notebook, whose
+  cells must parse, and an unfinished literal is only ever authored deliberately
+  in a debug exercise.
 - **Token kinds are an allowlist**: only `NAME`, `NUMBER`, `OP`, `NEWLINE`, `NL`,
   `INDENT`, `DEDENT` and `ENDMARKER` count as executable. Every other kind is
   treated as prose, so a token kind added by a future Python release cannot
@@ -129,6 +148,7 @@ strict as before.
 
 Reference tests: `tests/test_verify_exercise_quality.py::TestProgressionScanExecutableConstructs`,
 `::TestProgressionScanIgnoresNonExecutableTokenText`,
+`::TestProgressionScanUnterminatedStringLiterals`,
 `::TestProgressionScanTokenizerLineOffsets`,
 `::TestProgressionCastingPrerequisitePolicy`.
 
@@ -146,8 +166,8 @@ cases for 3, 8, 9, 10, loaded by both its checker and its tests.
 
 Expectation dicts are module-level names matching `EX<N>_<CONVENTION>`, where `N`
 is the exercise number (`ex011` → `EX011_…`). Coverage is the **union** of the
-part keys of every recognised dict, so an exercise may split its expectations
-across several shape-specific dicts.
+part keys of every recognised dict, ignoring reference aliases (see below), so an
+exercise may split its expectations across several shape-specific dicts.
 
 | Family | Recognised suffixes | Declares |
 | --- | --- | --- |
@@ -178,11 +198,15 @@ solution notebook:
 An entirely interactive exercise may publish a quick-reference static dict
 computed from one of its interactive dicts. Such a dict is a
 **reference alias**, not a second static declaration, so it is not reported as
-the exercise being listed in both families. The alias predicate is deliberately
-narrow: the dict must be a module-level comprehension keyed over an interactive
-dict whose values are each case's `expected_output` unchanged. A hand-written
-literal dict, or a comprehension that derives anything else (a concatenation, a
-different case field), is an independent declaration and is still reported.
+the exercise being listed in both families, and it declares no part of its own:
+it republishes what its input cases already declare, so Gate G counts those parts
+once, through the input-case dict it mirrors. Because it contributes no coverage,
+transforming its keys (`case_no + 1`) cannot invent a part that has no input case;
+the missing part is still reported. The alias predicate is deliberately narrow:
+the dict must be a module-level comprehension keyed over an interactive dict
+whose values are each case's `expected_output` unchanged. A hand-written literal
+dict, or a comprehension that derives anything else (a concatenation, a different
+case field), is an independent declaration and is still reported.
 
 Shipped examples: `EX002_EXPECTED_OUTPUTS` in
 `exercises/selection/ex002_selection_debug_if_then_else/tests/expectations.py` is

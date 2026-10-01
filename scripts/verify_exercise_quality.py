@@ -73,6 +73,32 @@ _EXECUTABLE_TOKEN_TYPES = frozenset(
     }
 )
 
+# A string literal the tokenizer cannot close is the one failure that leaves prose
+# in the source: it stops inside the literal, so the rest of that literal emits no
+# token to blank and runs on to the end of the cell. An ordinary, byte, or
+# triple-quoted string emits no token at all before failing, so the unread text
+# itself opens the literal; the optional prefix and the three quote styles cover
+# every such literal the tokenizer can stop on. The prefix is only the letters a
+# string prefix is made of (`r`, `u`, `b`, `f`, `t`, in either case) and at most
+# the two letters the longest valid prefix has, so an unrelated run of letters —
+# a mistyped `s"` — reads as a name and cannot mask the code after it.
+_STRING_OPENING_RE = re.compile(r"[ \t]*[rRuUbBfFtT]{0,2}(?:\"\"\"|'''|\"|')")
+
+# Since PEP 701 (Python 3.12) an f-string or t-string arrives as several tokens:
+# the opening token, then its literal text and replacement fields in turn, then
+# the closing token. An unfinished one therefore leaves its opening token behind,
+# which is what tells the tokenizer stopped in literal text. The repository
+# runtime pins Python 3.14, so a constant this runtime does not have fails at
+# import. They are read out of the module namespace rather than as attributes
+# because typeshed only declares them from Python 3.12 while this repository
+# type-checks against 3.11.
+_LITERAL_OPEN_TOKEN_TYPES = frozenset(
+    vars(tokenize)[name] for name in ("FSTRING_START", "TSTRING_START")
+)
+_LITERAL_CLOSE_TOKEN_TYPES = frozenset(
+    vars(tokenize)[name] for name in ("FSTRING_END", "TSTRING_END")
+)
+
 # int()/float()/str() casting is a documented prerequisite for the first two
 # constructs rather than a progression violation:
 #
@@ -682,6 +708,62 @@ def _line_start_offsets(text: str) -> list[int]:
     return offsets
 
 
+def _token_offset(line_offsets: list[int], position: tuple[int, int]) -> int:
+    """Return the absolute offset of a tokenizer ``(row, column)`` position."""
+    row, column = position
+    return line_offsets[row - 1] + column
+
+
+def _leaves_literal_open(tokens: list[tokenize.TokenInfo]) -> bool:
+    """Return True when ``tokens`` end inside a string literal that never closed.
+
+    An f-string missing its closing quote leaves its opening token behind and the
+    tokenizer stops before emitting the rest of its literal text, so the unread
+    text that follows is prose. Braces are counted as well: a replacement field's
+    ``{`` is still open when the tokenizer stops inside the field's expression,
+    and that unread text is real code, so an open brace must not be read as
+    literal text.
+    """
+    literal_depth = 0
+    brace_depth = 0
+    for token in tokens:
+        if token.type in _LITERAL_OPEN_TOKEN_TYPES:
+            literal_depth += 1
+        elif token.type in _LITERAL_CLOSE_TOKEN_TYPES:
+            literal_depth -= 1
+        elif token.type == tokenize.OP:
+            if token.string == "{":
+                brace_depth += 1
+            elif token.string == "}":
+                brace_depth -= 1
+    return literal_depth > 0 and brace_depth == 0
+
+
+def _unfinished_literal_offset(
+    line_offsets: list[int],
+    text: str,
+    tokens: list[tokenize.TokenInfo],
+) -> int | None:
+    """Return the offset an unfinished string literal's unread text starts at.
+
+    Returns ``None`` when the tokenizer's failure left real code unread, so that
+    text stays scannable and can only add a warning, never hide one. That is the
+    case for an ``IndentationError``, which stops at the line whose indentation
+    does not match the block above it, and for an unclosed bracket, which stops
+    at the end of the input with the rest of the statement still unread.
+
+    The unread text starts where the last emitted token ended, or at the start of
+    the cell when the very first token already failed. It is the body of an
+    unfinished literal when the unread text opens a literal itself, so the
+    tokenizer failed on a literal it never emitted a token for, or when the
+    emitted tokens leave an f-string open.
+    """
+    offset = _token_offset(line_offsets, tokens[-1].end) if tokens else 0
+    if _STRING_OPENING_RE.match(text, offset) is not None or _leaves_literal_open(tokens):
+        return offset
+    return None
+
+
 def _blank_span(chars: list[str], start: int, end: int) -> None:
     """Overwrite ``chars[start:end]`` with spaces, keeping any line breaks."""
     for index in range(start, end):
@@ -701,20 +783,24 @@ def _executable_source(text: str) -> str:
 
     Debug exercises ship intentionally invalid tagged cells, so a tokenizer
     failure keeps the tokens read before the failure instead of skipping the
-    cell. Real constructs are therefore still scanned; only text after the
-    failure point is matched as code, which can add a warning but never hide
-    one.
+    cell. A literal the tokenizer could not close is the one case that yields no
+    token to blank, so its unread text is blanked to the end of the cell; the
+    tokens emitted before the failure are real code and are still scanned.
     """
     chars = list(text)
     line_offsets = _line_start_offsets(text)
-    for token in _tokenize_leniently(text):
+    tokens = _tokenize_leniently(text)
+    for token in tokens:
         if token.type in _EXECUTABLE_TOKEN_TYPES:
             continue
         _blank_span(
             chars,
-            line_offsets[token.start[0] - 1] + token.start[1],
-            line_offsets[token.end[0] - 1] + token.end[1],
+            _token_offset(line_offsets, token.start),
+            _token_offset(line_offsets, token.end),
         )
+    unfinished_literal = _unfinished_literal_offset(line_offsets, text, tokens)
+    if unfinished_literal is not None:
+        _blank_span(chars, unfinished_literal, len(chars))
     return "".join(chars)
 
 
@@ -1295,10 +1381,12 @@ def _declared_family_parts(
 def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
     """Gate G: Verify expectations.py covers every part with a runnable expectation.
 
-    Coverage is the union of the part keys of every recognised expectation dict,
-    so an exercise may split its expectations across static, interactive, and
-    shape-specific dicts as long as every part 1..parts is declared by one of
-    them.
+    Coverage is the union of the part keys the static and interactive families
+    declare, so an exercise may split its expectations across static, interactive,
+    and shape-specific dicts as long as every part 1..parts is declared by one of
+    them. A reference alias declares no part of its own: it only republishes the
+    input cases it is derived from, which are counted once, through that input
+    case dict.
     """
     findings: list[Finding] = []
     expectations_path = ex_dir / "tests" / "expectations.py"
@@ -1337,7 +1425,8 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
         )
         return findings
 
-    covered_parts = _declared_parts(expectations.static) | _declared_parts(expectations.interactive)
+    declared = _declared_family_parts(expectations_path, expectations)
+    covered_parts = declared.static | declared.interactive
     if not covered_parts:
         findings.append(
             Finding(

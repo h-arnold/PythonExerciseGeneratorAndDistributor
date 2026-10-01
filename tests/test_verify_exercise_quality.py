@@ -2692,6 +2692,74 @@ class TestGateGReferenceOutputAliases:
         assert "Exercise 2" in errors[0].message
         assert "input()" in errors[0].message
 
+    @staticmethod
+    def _write_input_cases_with_derived_alias(ex_dir: Path, *, alias_key: str) -> None:
+        """Write two input cases plus a dict derived from them, keyed ``alias_key``.
+
+        ``alias_key`` is the derived dict's key expression: ``case_no`` mirrors
+        the input-case keys, the shape selection ex003/ex004 ship, while
+        ``case_no + 1`` shifts them and so names a part that has no input case.
+        """
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
+            f'    {alias_key}: case["expected_output"]\n'
+            "    for case_no, case in EX003_INPUT_CASES.items()\n"
+            "}\n",
+        )
+
+    def test_derived_alias_with_transformed_keys_does_not_cover_a_missing_part(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A derived dict must not declare a part its source input cases omit.
+
+        The values still mirror each case's ``expected_output``, but the shifted
+        key points at another part's transcript, so part 3 has no runnable input
+        case and Gate G must report it missing instead of accepting the invented
+        key as coverage.
+        """
+        parts = 3
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
+        self._write_input_cases_with_derived_alias(ex_dir, alias_key="case_no + 1")
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, (
+            "only part 3 lacks an input case; expected exactly one ERROR, got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+        assert "[3]" in errors[0].message, (
+            f"the ERROR must name the missing part 3, got: {errors[0].message}"
+        )
+
+    def test_mirrored_key_alias_still_passes_gate_g(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """The shipped mirrored-key alias shape keeps Gate G green."""
+        parts = 2
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
+        self._write_input_cases_with_derived_alias(ex_dir, alias_key="case_no")
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
+
+        assert findings == [], (
+            "EX003_INPUT_CASES declares 1..2 and EX003_EXPECTED_OUTPUTS only mirrors "
+            "their keys and values; got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # Retained contract — genuine unsafe input() with no inputs still errors
@@ -2824,7 +2892,10 @@ class TestEx011ExpectationsModule:
 #    cells are committed in this repository, for example ``print("Hello World!"``
 #    in sequence ex004 — so the scan must not assume a tagged cell parses, and it
 #    must not skip a whole cell that fails to parse either: real later-construct
-#    use in broken debug code must still warn.
+#    use in broken debug code must still warn.  An *unterminated* string literal
+#    is the one case that leaves text no token covers, so that text is prose to
+#    the end of the cell; the tokens the tokenizer did emit before the failure
+#    are real code and are still scanned.
 # 3. Casting is a documented prerequisite rather than a progression violation:
 #    ``int()``, ``float()``, and ``str()`` calls are permitted in the
 #    ``sequence`` and ``selection`` constructs, because ``input()`` always
@@ -3090,6 +3161,224 @@ class TestProgressionScanIgnoresNonExecutableTokenText:
             "the compliant cell must add no finding beyond the offending cell's, "
             f"counted once per notebook surface; got {len(findings)}: "
             f"{_finding_report(findings)}"
+        )
+
+
+class TestProgressionScanUnterminatedStringLiterals:
+    """Prose in an unfinished string literal is not executable construct usage.
+
+    ``_tokenize_leniently`` keeps the tokens read before a tokenizer failure, but
+    a string literal that is never closed leaves text no token covers, so that text
+    is still in the scanned source when the patterns run.  A debug cell that breaks
+    inside its message text therefore warned about a later construct the student
+    only wrote prose for, while the real code the tokenizer did emit before the
+    failure must keep warning.
+    """
+
+    @pytest.mark.parametrize(
+        ("construct", "source", "origin"),
+        [
+            pytest.param(
+                "sequence",
+                'total = 3\nprint("Use this for each item while checking)\n',
+                "an unfinished ordinary string literal",
+                id="sequence-unfinished-literal",
+            ),
+            pytest.param(
+                "selection",
+                'n = 1\nprint("Print this for each item while checking)\n',
+                "an unfinished ordinary string literal",
+                id="selection-unfinished-literal",
+            ),
+            pytest.param(
+                "sequence",
+                'total = 3\nprint(f"Use this for each item while checking)\n',
+                "an unfinished f-string literal",
+                id="sequence-unfinished-f-string",
+            ),
+            pytest.param(
+                "sequence",
+                'total = 3\nprint(f"""Use this for each item while checking)\n',
+                "an unfinished triple-quoted f-string literal",
+                id="sequence-unfinished-triple-quoted-f-string",
+            ),
+            pytest.param(
+                "sequence",
+                'total = 3\nprint(f"Use this {total} for each item while checking)\n',
+                "an f-string literal unfinished after a replacement field",
+                id="sequence-unfinished-f-string-after-replacement-field",
+            ),
+        ],
+    )
+    def test_unfinished_literal_prose_does_not_warn(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+        origin: str,
+    ) -> None:
+        """A cell that breaks inside a string literal is prose up to that point.
+
+        Every fixture leaves a literal open, so the tokenizer stops inside it and
+        the literal's remaining text yields no token to blank.  An f-string is the
+        harder half: since PEP 701 the tokenizer *does* emit its opening token and
+        literal chunks, so only the text after the last emitted token is
+        uncovered prose.  The ``SyntaxError`` guard below keeps each test from
+        passing by accident on a terminated literal.
+        """
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            f"{construct!r} cell with {origin} mentioning 'for' and 'while' must "
+            f"not warn; got {_finding_report(findings)}"
+        )
+
+    @pytest.mark.parametrize(
+        ("source", "expected_marker"),
+        [
+            pytest.param(
+                'for hour in range(3):\n    print(hour)\nmessage = "Add the total: 5\n',
+                "found iteration pattern",
+                id="iteration-loop-before-the-failure",
+            ),
+            pytest.param(
+                'for hour in range(3):\n    print(hour)\nmessage = f"Add {5} for the total\n',
+                "found iteration pattern",
+                id="iteration-loop-before-an-unfinished-f-string",
+            ),
+            pytest.param(
+                "total = 3\ntry:\n    print(total)\nexcept ValueError:\n    print(0)\n"
+                'message = "Add this for each item while checking)\n',
+                "found exceptions pattern",
+                id="exception-handling-before-the-failure",
+            ),
+        ],
+    )
+    def test_construct_tokens_emitted_before_the_failure_still_warn(
+        self,
+        tmp_path: Path,
+        source: str,
+        expected_marker: str,
+    ) -> None:
+        """Masking the unfinished literal must not hide the real code before it.
+
+        The construct tokenised before the failure is genuine student code, and
+        each fixture's unfinished literal deliberately carries no token for that
+        same construct, so the warning cannot come from the prose.
+        """
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any(expected_marker in f.message for f in findings), (
+            "a construct tokenised before the tokenizer failure must still warn; got "
+            f"{_finding_report(findings)}"
+        )
+
+    @pytest.mark.parametrize(
+        ("source", "unread_loop"),
+        [
+            pytest.param(
+                'message = f"{total:>{"width": 8}\nfor hour in range(3):\n',
+                "for hour in range(3):",
+                id="failure-with-a-brace-left-open-in-the-replacement-field",
+            ),
+            pytest.param(
+                'message = f"{total:>{"width": 8}\nwhile total < 3:\n',
+                "while total < 3:",
+                id="failure-with-a-brace-left-open-before-a-while-loop",
+            ),
+        ],
+    )
+    def test_code_unread_because_a_replacement_field_brace_is_open_still_warns(
+        self,
+        tmp_path: Path,
+        source: str,
+        unread_loop: str,
+    ) -> None:
+        """An f-string left open is not enough on its own to mask unread code.
+
+        Masking the unfinished literal relies on the literal still being open when
+        the tokenizer stops.  Both fixtures drop a ``}`` in a format-spec
+        replacement field, so a brace is open too, and the tokenizer stops on the
+        first line: the loop below it has no token yet, and masking it would hide
+        a genuine progression violation.
+        """
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        assert unread_loop in source, "the fixture must place the loop after the failure"
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any("found iteration pattern" in f.message for f in findings), (
+            f"a loop the tokenizer never reached must still warn; got {_finding_report(findings)}"
+        )
+
+    def test_replacement_field_code_in_an_unfinished_f_string_still_warns(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Masking an unfinished f-string must spare the code in its fields.
+
+        Masking starts where the last emitted token ended, so the expression the
+        tokenizer did read inside a replacement field keeps warning even though
+        the literal it belongs to was never closed.
+        """
+        source = 'total = 3\nmessage = f"Items: {len([1, 2])} for each\n'
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any("found lists pattern" in f.message for f in findings), (
+            "`len(` inside a replacement field of an unfinished f-string must still "
+            f"warn; got {_finding_report(findings)}"
+        )
+
+    def test_code_after_a_mistyped_string_prefix_still_warns(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A name before a quote is not a literal opening, so it must not mask.
+
+        The tokenizer stops on line 3, whose indentation does not match the block
+        above it, so the loop on line 4 is real unread code.  ``s`` is not a string
+        prefix, so line 3 is a mistyped literal rather than an unfinished one, and
+        must not be blanked to the end of the cell.
+        """
+        source = 'def f():\n    x = 1\n  s"oops\nfor hour in range(3):\n'
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any("found iteration pattern" in f.message for f in findings), (
+            f"a loop after a mistyped string prefix must still warn; got {_finding_report(findings)}"
         )
 
 
