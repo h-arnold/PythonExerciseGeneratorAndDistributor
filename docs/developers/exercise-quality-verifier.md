@@ -101,7 +101,10 @@ in a tagged `exerciseN` code cell of the student or solution notebook.
   literal chunks and so leaves only the rest of its text masked. A leading prefix
   is read as one only when it is the letters Python accepts (`r`, `u`, `b`, `f`,
   `t`, in either case, and at most the two a valid prefix has), so a mistyped
-  prefix such as `s"` is a name and leaves the text after it scannable. Every
+  prefix such as `s"` is a name: it opens no literal, and it never widens the
+  masked span backwards over the name or over the code before it. When the
+  tokenizer does reach the quote, that quote is the literal opening and its
+  unfinished body is masked to the end of the cell like any other. Every
   other failure — an indentation error, an unclosed bracket, a stop while a
   replacement field's `{` is still open — leaves real code unread rather than
   prose, so that text stays matched and can add a warning but cannot hide one.

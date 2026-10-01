@@ -2522,8 +2522,19 @@ class TestGateGReferenceOutputAliases:
     """
 
     @staticmethod
-    def _write_all_interactive(ex_dir: Path) -> None:
-        """Write the two-part all-interactive shape used by selection ex003."""
+    def _write_all_interactive(
+        ex_dir: Path,
+        *,
+        alias_key: str = "case_no",
+        extra_source: str = "",
+    ) -> None:
+        """Write the two-part all-interactive shape used by selection ex003.
+
+        ``alias_key`` is the derived dict's key expression: the default
+        ``case_no`` mirrors the input-case keys, the shape ex003/ex004 ship,
+        while ``case_no + 1`` shifts them and so names a part that has no input
+        case. ``extra_source`` appends further module-level declarations.
+        """
         _write_expectations_source(
             ex_dir,
             "from __future__ import annotations\n"
@@ -2536,10 +2547,10 @@ class TestGateGReferenceOutputAliases:
             '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
             "}\n"
             "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
-            "    exercise_no: case['expected_output']\n"
-            "    for exercise_no, case in EX003_INPUT_CASES.items()\n"
+            f'    {alias_key}: case["expected_output"]\n'
+            "    for case_no, case in EX003_INPUT_CASES.items()\n"
             "}\n"
-            "EX003_EDGE_CASES: Final[dict[int, list[Ex003InputCase]]] = {1: [], 2: []}\n",
+            f"{extra_source}",
         )
 
     def test_reference_alias_over_input_cases_is_not_flagged_as_double_declared(
@@ -2548,7 +2559,12 @@ class TestGateGReferenceOutputAliases:
     ) -> None:
         """The selection ex003 shape must not warn "listed in both"."""
         ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=2)
-        self._write_all_interactive(ex_dir)
+        self._write_all_interactive(
+            ex_dir,
+            extra_source=(
+                "EX003_EDGE_CASES: Final[dict[int, list[Ex003InputCase]]] = {1: [], 2: []}\n"
+            ),
+        )
         nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
 
         findings = verify_exercise_quality._check_expectations_input_consistency(
@@ -2692,31 +2708,6 @@ class TestGateGReferenceOutputAliases:
         assert "Exercise 2" in errors[0].message
         assert "input()" in errors[0].message
 
-    @staticmethod
-    def _write_input_cases_with_derived_alias(ex_dir: Path, *, alias_key: str) -> None:
-        """Write two input cases plus a dict derived from them, keyed ``alias_key``.
-
-        ``alias_key`` is the derived dict's key expression: ``case_no`` mirrors
-        the input-case keys, the shape selection ex003/ex004 ship, while
-        ``case_no + 1`` shifts them and so names a part that has no input case.
-        """
-        _write_expectations_source(
-            ex_dir,
-            "from __future__ import annotations\n"
-            "from typing import Final, TypedDict\n"
-            "class Ex003InputCase(TypedDict):\n"
-            "    inputs: list[str]\n"
-            "    expected_output: str\n"
-            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
-            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
-            '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
-            "}\n"
-            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
-            f'    {alias_key}: case["expected_output"]\n'
-            "    for case_no, case in EX003_INPUT_CASES.items()\n"
-            "}\n",
-        )
-
     def test_derived_alias_with_transformed_keys_does_not_cover_a_missing_part(
         self,
         tmp_path: Path,
@@ -2730,7 +2721,7 @@ class TestGateGReferenceOutputAliases:
         """
         parts = 3
         ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
-        self._write_input_cases_with_derived_alias(ex_dir, alias_key="case_no + 1")
+        self._write_all_interactive(ex_dir, alias_key="case_no + 1")
 
         findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
 
@@ -2750,7 +2741,7 @@ class TestGateGReferenceOutputAliases:
         """The shipped mirrored-key alias shape keeps Gate G green."""
         parts = 2
         ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
-        self._write_input_cases_with_derived_alias(ex_dir, alias_key="case_no")
+        self._write_all_interactive(ex_dir)
 
         findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
 
@@ -3288,16 +3279,14 @@ class TestProgressionScanUnterminatedStringLiterals:
         )
 
     @pytest.mark.parametrize(
-        ("source", "unread_loop"),
+        "source",
         [
             pytest.param(
                 'message = f"{total:>{"width": 8}\nfor hour in range(3):\n',
-                "for hour in range(3):",
                 id="failure-with-a-brace-left-open-in-the-replacement-field",
             ),
             pytest.param(
                 'message = f"{total:>{"width": 8}\nwhile total < 3:\n',
-                "while total < 3:",
                 id="failure-with-a-brace-left-open-before-a-while-loop",
             ),
         ],
@@ -3306,7 +3295,6 @@ class TestProgressionScanUnterminatedStringLiterals:
         self,
         tmp_path: Path,
         source: str,
-        unread_loop: str,
     ) -> None:
         """An f-string left open is not enough on its own to mask unread code.
 
@@ -3318,8 +3306,6 @@ class TestProgressionScanUnterminatedStringLiterals:
         """
         with pytest.raises(SyntaxError):
             ast.parse(source)
-
-        assert unread_loop in source, "the fixture must place the loop after the failure"
 
         findings = _scan_both_variants(
             tmp_path,

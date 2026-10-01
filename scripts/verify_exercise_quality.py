@@ -81,7 +81,10 @@ _EXECUTABLE_TOKEN_TYPES = frozenset(
 # every such literal the tokenizer can stop on. The prefix is only the letters a
 # string prefix is made of (`r`, `u`, `b`, `f`, `t`, in either case) and at most
 # the two letters the longest valid prefix has, so an unrelated run of letters —
-# a mistyped `s"` — reads as a name and cannot mask the code after it.
+# a mistyped `s"` — reads as a name: it opens no literal, and the masked span
+# never starts before the quote, so the name and the code before it stay
+# scannable. The quote the tokenizer does reach then opens an unfinished literal
+# like any other, and its body is masked to the end of the cell.
 _STRING_OPENING_RE = re.compile(r"[ \t]*[rRuUbBfFtT]{0,2}(?:\"\"\"|'''|\"|')")
 
 # Since PEP 701 (Python 3.12) an f-string or t-string arrives as several tokens:
