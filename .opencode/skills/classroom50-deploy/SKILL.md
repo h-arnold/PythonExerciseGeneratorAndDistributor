@@ -64,7 +64,7 @@ Write `$EXERCISE_SET` as a JSON array of the chosen canonical keys, for example:
 ]
 ```
 
-This is **illustrative**, not the default selection. Confirm each selected exercise has canonical tests and the support files required by the current builder. At the time of writing it requires both `expectations.py` and `student_checker_support.py` for every selected exercise. The recorded all-Sequence attempt failed because ex011 lacks `expectations.py`; its exploratory builder change was reverted. Treat a missing file or failed build as a separate development issue, not a reason to change the builder while publishing an assignment.
+This is **illustrative**, not the default selection. Confirm each selected exercise has canonical tests and the support files required by the current builder. It requires both `expectations.py` and `student_checker_support.py` for every selected exercise. A recorded all-Sequence attempt failed when ex011 lacked `expectations.py`; ex011 now has that file, but the historical failure does not establish that a current all-Sequence bundle passes. Run the build for the approved selection. Treat a missing file or failed build as a separate development issue, not a reason to change the builder while publishing an assignment.
 
 **Gate:** The teacher has approved the exact graded set and understands any template/assignment scope difference.
 
