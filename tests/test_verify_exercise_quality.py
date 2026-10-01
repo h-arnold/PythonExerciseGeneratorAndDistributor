@@ -14,12 +14,16 @@ from tests.exercise_metadata_helpers import make_exercise_json
 # pyright: reportPrivateUsage=false
 
 
+#: Source of the single tagged ``exercise1`` cell the notebook helpers write.
+_DEFAULT_CELL_SOURCE = "print('Hello')\n"
+
+
 def _write_notebook(
     path: Path,
     *,
     include_explanation: bool = True,
     variant: str | None = "student",
-    source: str = "print('Hello')\n",
+    source: str = _DEFAULT_CELL_SOURCE,
 ) -> None:
     cells: list[dict[str, object]] = []
     if include_explanation:
@@ -102,6 +106,7 @@ def _write_canonical_exercise(  # noqa: PLR0913
     metadata: dict[str, int | str] | None = None,
     include_explanation: bool = True,
     missing_paths: set[str] | None = None,
+    cell_source: str = _DEFAULT_CELL_SOURCE,
 ) -> Path:
     exercise_dir = repo_root / "exercises" / "sequence" / slug
     exercise_dir.mkdir(parents=True, exist_ok=True)
@@ -116,12 +121,14 @@ def _write_canonical_exercise(  # noqa: PLR0913
             exercise_dir / "notebooks" / "student.ipynb",
             include_explanation=include_explanation,
             variant="student",
+            source=cell_source,
         )
     if "notebooks/solution.ipynb" not in missing_paths:
         _write_notebook(
             exercise_dir / "notebooks" / "solution.ipynb",
             include_explanation=include_explanation,
             variant="solution",
+            source=cell_source,
         )
     if "tests/test_file" not in missing_paths:
         test_path = exercise_dir / "tests" / f"test_{slug}.py"
@@ -2122,12 +2129,12 @@ class TestSection3AllExercisesSweep:
 # Section 4 — Gate G expectation conventions in real use
 #
 # Every fixture below mirrors the shape of a shipped exercise's
-# ``exercises/<construct>/<exercise_key>/tests/expectations.py``. The baseline
-# ``verify_exercise_quality.py --all`` sweep reports 26 errors across 18
-# exercises, 25 of which are Gate G findings that contradict exercises whose
-# solution-variant pytest suite passes, because Gate G insists on one
-# ``EX<N>_EXPECTED_OUTPUTS``-style dict keyed by every part. Real exercises
-# split coverage across static, interactive, and shape-specific dicts instead.
+# ``exercises/<construct>/<exercise_key>/tests/expectations.py``. Gate G used to
+# insist on one ``EX<N>_EXPECTED_OUTPUTS``-style dict keyed by every part, so the
+# baseline ``--all`` sweep reported 26 errors across 18 exercises, 25 of them
+# Gate G findings that contradicted exercises whose solution-variant pytest suite
+# passes. Gate G now counts the union of the part keys declared across static,
+# interactive, and shape-specific dicts, and these tests hold it to that.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _EX002_SLUG = "ex002_sequence_modify_basics"
@@ -2206,12 +2213,11 @@ _INPUT_CELL = 'name = input("Name: ")\nprint(f"Hello {name}")\n'
 class TestGateGSplitExpectationCoverage:
     """Gate G must accept exercised static, interactive, and split conventions.
 
-    The baseline sweep rejects ``ex002``/``ex003``/``ex004``/``ex005`` with
-    "expectations.py must define an EX<N>_EXPECTED_OUTPUTS or
-    EX<N>_EXPECTED_STATIC_OUTPUTS dict" even though their solution-variant tests
-    pass, and rejects ``ex006``/``ex007``/``ex008``/``ex009``/``ex010``/``ex013``/
-    ``ex014`` with "missing keys for parts" even though their interactive parts
-    are fully covered by a separate input-case dict.
+    Gate G used to reject ``ex002``/``ex003``/``ex004``/``ex005`` for having no
+    single ``EX<N>_EXPECTED_OUTPUTS``-style dict and ``ex006``/``ex007``/``ex008``/
+    ``ex009``/``ex010``/``ex013``/``ex014`` with "missing keys for parts", even
+    though each exercise declares its parts across static, interactive, and
+    shape-specific dicts and passes its solution-variant tests.
     """
 
     @pytest.mark.parametrize(
@@ -2376,11 +2382,11 @@ class TestGateGSplitExpectationCoverage:
 class TestGateGAlternateInputCaseConventions:
     """The input-consistency cross-check must accept every shipped convention.
 
-    ``_check_expectations_input_consistency`` only recognises
-    ``EX<N>_INPUT_CASES``, so the baseline sweep reports 14 false "uses input()
-    ... missing from EX<N>_INPUT_CASES" errors for sequence ``ex003``/``ex004``/
-    ``ex005``/``ex006``/``ex008``, whose interactive parts are fully declared
-    under ``EX<N>_EXPECTED_PROMPTS``, ``EX<N>_PROMPT_STRINGS``,
+    ``_check_expectations_input_consistency`` used to recognise only
+    ``EX<N>_INPUT_CASES``, so it reported 14 false "uses input() ... missing from
+    EX<N>_INPUT_CASES" errors for sequence ``ex003``/``ex004``/``ex005``/
+    ``ex006``/``ex008``, whose interactive parts are fully declared under
+    ``EX<N>_EXPECTED_PROMPTS``, ``EX<N>_PROMPT_STRINGS``,
     ``EX<N>_EXERCISE_INPUTS``, ``EX<N>_INPUT_EXPECTATIONS``, and
     ``EX<N>_INTERACTIVE_CASES`` respectively.
     """
@@ -2510,8 +2516,9 @@ class TestGateGReferenceOutputAliases:
     ``ex003_selection_modify_elif_boundaries`` builds
     ``EX003_EXPECTED_OUTPUTS`` as a comprehension over ``EX003_INPUT_CASES`` and
     documents it as "a quick reference ... used by the quality verifier (Gate G)".
-    Every exercise in it is interactive, so the baseline sweep emits 10 spurious
-    "is listed in both EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES" warnings.
+    All of its exercises are interactive, so before reference aliases were
+    recognised the sweep emitted 10 spurious "is listed in both
+    EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES" warnings.
     """
 
     @staticmethod
@@ -2730,38 +2737,17 @@ class TestUnsafeInputWithoutInputsIsStillAnError:
     ) -> None:
         """End to end: the error, the Gate I skip, and no Gate I run all remain."""
         slug = "ex014_sequence_gaps_regtest2"
-        repo_root = tmp_path / "repo"
-        ex_dir = repo_root / "exercises" / "sequence" / slug
-        make_exercise_json(
-            ex_dir,
-            {
-                "schema_version": 1,
-                "exercise_key": slug,
-                "exercise_id": 14,
-                "slug": slug,
-                "title": "Unsafe Input Regression",
-                "construct": "sequence",
+        ex_dir = _write_canonical_exercise(
+            tmp_path,
+            slug,
+            metadata={
+                **_exercise_metadata(slug),
                 "exercise_type": "gaps",
                 "parts": 1,
             },
-        )
-        (ex_dir / "README.md").write_text("# README\n", encoding="utf-8")
-        _write_order_of_teaching(repo_root, slug)
-        for variant in ("student", "solution"):
-            _write_notebook(
-                ex_dir / "notebooks" / f"{variant}.ipynb",
-                include_explanation=False,
-                source=_INPUT_CELL,
-                variant=variant,
-            )
-        test_path = ex_dir / "tests" / f"test_{slug}.py"
-        test_path.parent.mkdir(parents=True, exist_ok=True)
-        test_path.write_text("def test_placeholder() -> None:\n    assert True\n", encoding="utf-8")
-        (ex_dir / "tests" / "student_checker_support.py").write_text(
-            "from __future__ import annotations\n"
-            "from typing import Any\n"
-            'CHECKS: list[Any] = [{"fake": "check"}]\n',
-            encoding="utf-8",
+            include_explanation=False,
+            missing_paths={"tests/expectations.py"},
+            cell_source=_INPUT_CELL,
         )
         # Split static convention with no runnable input case for the input() cell.
         _write_expectations_source(
@@ -2771,7 +2757,7 @@ class TestUnsafeInputWithoutInputsIsStillAnError:
             "EX014_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello Alice'}\n",
         )
 
-        exit_code = verify_exercise_quality.main([slug, "--repo-root", str(repo_root)])
+        exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
         captured = capsys.readouterr()
         combined = captured.out + captured.err
 
@@ -2790,14 +2776,13 @@ class TestUnsafeInputWithoutInputsIsStillAnError:
 class TestEx011ExpectationsModule:
     """``ex011_sequence_gaps_consolidation`` must ship a complete expectations.py.
 
-    ex011 keeps its expected-output tables private inside
-    ``tests/student_checker_support.py`` and repeats them again in the canonical
-    test file, so the exercise has no exercise-local expectations module: Gate G
-    reports ``Missing expectations.py``, the one ERROR in the ``--all`` sweep.
-
-    The desired state is the ordinary one — a ``tests/expectations.py`` that
-    declares every part, so Gate G reports nothing and no expectation data lives
-    in a private checker dict.
+    ex011 used to keep its expected-output tables private inside
+    ``tests/student_checker_support.py`` and repeat them in the canonical test
+    file, so it had no exercise-local expectations module and Gate G reported
+    ``Missing expectations.py``, the one ERROR in the ``--all`` sweep. It now
+    ships a ``tests/expectations.py`` that declares every part and that the
+    checker and the exercise tests both load, so Gate G reports nothing and no
+    expectation data lives in a private checker dict.
     """
 
     def test_ex011_ships_a_complete_expectations_module(self, repo_root: Path) -> None:
@@ -2822,8 +2807,8 @@ class TestEx011ExpectationsModule:
 # Section 4 — Progression scan: executable constructs, not printed token text
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Batch 3 policy (REMAINING_WORK.md, "Batch 3"), stated here as the desired
-# contract so the green phase has one authoritative statement to implement.
+# Batch 3 policy (REMAINING_WORK.md, "Batch 3"), restated here as the contract the
+# scanner implements and the tests below hold it to.
 #
 # 1. The scan reports a later construct only where it is *executable* in a
 #    tagged ``exerciseN`` code cell.  Token text inside comments, ordinary
@@ -2836,10 +2821,10 @@ class TestEx011ExpectationsModule:
 #    expression in ``print(f"{len([1, 2])} items")`` is executable and must
 #    still warn, so the literal text and the expression cannot be treated alike.
 # 2. A tagged debug cell may intentionally contain invalid syntax — 16 such
-#    cells exist today, for example ``print("Hello World!"`` in sequence ex004 —
-#    so the scan must not assume a tagged cell parses, and it must not skip a
-#    whole cell that fails to parse either: real later-construct use in broken
-#    debug code must still warn.
+#    cells are committed in this repository, for example ``print("Hello World!"``
+#    in sequence ex004 — so the scan must not assume a tagged cell parses, and it
+#    must not skip a whole cell that fails to parse either: real later-construct
+#    use in broken debug code must still warn.
 # 3. Casting is a documented prerequisite rather than a progression violation:
 #    ``int()``, ``float()``, and ``str()`` calls are permitted in the
 #    ``sequence`` and ``selection`` constructs, because ``input()`` always
@@ -2983,8 +2968,9 @@ class TestProgressionScanExecutableConstructs:
 class TestProgressionScanIgnoresNonExecutableTokenText:
     """Later-construct tokens in comments and string literals must not warn.
 
-    The scanner currently regex-matches the concatenated tagged cell source as
-    plain text, so every case below is a false positive today.
+    The scanner used to regex-match the concatenated tagged cell source as plain
+    text, so every case below was a false positive before comment and string text
+    was blanked out.
     """
 
     @pytest.mark.parametrize(

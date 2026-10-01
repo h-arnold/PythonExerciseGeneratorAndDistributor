@@ -28,8 +28,6 @@ from scripts import verify_exercise_quality
 
 # pyright: reportPrivateUsage=false
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-
 EXERCISES_WITH_EXPECTATIONS: list[str] = [
     entry.exercise_key
     for entry in get_exercise_catalogue()
@@ -37,41 +35,16 @@ EXERCISES_WITH_EXPECTATIONS: list[str] = [
 ]
 
 
-def _load_expectations(exercise_key: str) -> object:
-    """Import an exercise's expectations module by exercise key."""
-    module = verify_exercise_quality._load_exercise_local_module(
-        REPO_ROOT / "exercises" / _construct_of(exercise_key) / exercise_key,
-        "expectations",
-    )
-    assert module is not None, f"{exercise_key}: expectations.py could not be imported"
+def _exercise_dir(exercise_key: str) -> Path:
+    """Return the canonical exercise directory for an exercise key."""
+    return resolve_exercise_tests_dir(exercise_key).parent
+
+
+def _load_expectations(exercise_dir: Path) -> object:
+    """Import the expectations module of an exercise directory."""
+    module = verify_exercise_quality._load_exercise_local_module(exercise_dir, "expectations")
+    assert module is not None, f"{exercise_dir.name}: expectations.py could not be imported"
     return module
-
-
-def _construct_of(exercise_key: str) -> str:
-    """Return the construct directory name for an exercise key."""
-    return next(
-        entry.construct for entry in get_exercise_catalogue() if entry.exercise_key == exercise_key
-    )
-
-
-def _declared_families(exercise_key: str) -> tuple[set[int], set[int]]:
-    """Return the (static, interactive) part numbers declared by an exercise.
-
-    Static declarations exclude a quick-reference dict that mirrors the input
-    cases, so an accepted derived alias does not count as a second declaration.
-    """
-    ex_dir = REPO_ROOT / "exercises" / _construct_of(exercise_key) / exercise_key
-    expectations = verify_exercise_quality._collect_expectation_dicts(
-        _load_expectations(exercise_key)
-    )
-    alias_names = verify_exercise_quality._reference_alias_names(
-        ex_dir / "tests" / "expectations.py",
-        set(expectations.interactive),
-    )
-    static_parts = verify_exercise_quality._declared_parts(
-        {name: value for name, value in expectations.static.items() if name not in alias_names}
-    )
-    return static_parts, verify_exercise_quality._declared_parts(expectations.interactive)
 
 
 def test_catalogue_exercises_expose_expectations_modules() -> None:
@@ -87,8 +60,12 @@ def test_no_part_is_declared_in_both_expectation_families(exercise_key: str) -> 
     so the part silently acquires two different truths. Only a dict computed
     from the input cases is safe to keep alongside them.
     """
-    static_parts, interactive_parts = _declared_families(exercise_key)
-    duplicated = sorted(static_parts & interactive_parts)
+    exercise_dir = _exercise_dir(exercise_key)
+    declared = verify_exercise_quality._declared_family_parts(
+        exercise_dir / "tests" / "expectations.py",
+        verify_exercise_quality._collect_expectation_dicts(_load_expectations(exercise_dir)),
+    )
+    duplicated = sorted(declared.static & declared.interactive)
 
     assert not duplicated, (
         f"{exercise_key}: parts {duplicated} are declared in both a static and an "
@@ -105,8 +82,9 @@ def test_no_static_expectation_is_an_empty_placeholder(exercise_key: str) -> Non
     intended expectation for these exercises and silently contradicts the
     transcript the input case declares for the same part.
     """
-    module = _load_expectations(exercise_key)
-    expectations = verify_exercise_quality._collect_expectation_dicts(module)
+    expectations = verify_exercise_quality._collect_expectation_dicts(
+        _load_expectations(_exercise_dir(exercise_key))
+    )
     placeholders: dict[str, list[int]] = {}
     for name, declared in expectations.static.items():
         empty_parts = sorted(

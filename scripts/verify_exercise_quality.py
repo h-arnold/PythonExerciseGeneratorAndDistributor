@@ -1260,6 +1260,38 @@ def _reference_alias_names(expectations_path: Path, source_names: set[str]) -> s
     return aliases
 
 
+@dataclass(frozen=True)
+class _DeclaredFamilyParts:
+    """The exercise numbers one ``expectations.py`` declares per family.
+
+    Attributes:
+        static: Parts declared by a static dict, excluding reference aliases.
+        interactive: Parts declared by an interactive input-case dict.
+    """
+
+    static: set[int]
+    interactive: set[int]
+
+
+def _declared_family_parts(
+    expectations_path: Path,
+    expectations: _ExpectationDicts,
+) -> _DeclaredFamilyParts:
+    """Return the parts each expectation family declares, reference aliases excluded.
+
+    This is the single definition of the static/interactive split, so callers
+    that classify an exercise's declarations share the verifier's own answer.
+    """
+    alias_names = _reference_alias_names(expectations_path, set(expectations.interactive))
+    static = _declared_parts(
+        {name: value for name, value in expectations.static.items() if name not in alias_names}
+    )
+    return _DeclaredFamilyParts(
+        static=static,
+        interactive=_declared_parts(expectations.interactive),
+    )
+
+
 def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
     """Gate G: Verify expectations.py covers every part with a runnable expectation.
 
@@ -1428,13 +1460,7 @@ def _check_expectations_input_consistency(
         return findings  # Gate G already reports the import error
 
     expectations = _collect_expectation_dicts(module)
-    # A quick-reference dict computed from the input cases mirrors them rather than
-    # declaring a second, static expectation, so it is not a static declaration.
-    alias_names = _reference_alias_names(expectations_path, set(expectations.interactive))
-    static_parts = _declared_parts(
-        {name: value for name, value in expectations.static.items() if name not in alias_names}
-    )
-    interactive_parts = _declared_parts(expectations.interactive)
+    declared = _declared_family_parts(expectations_path, expectations)
 
     interactive_exercises = _detect_interactive_exercises(nb_solution)
 
@@ -1442,8 +1468,8 @@ def _check_expectations_input_consistency(
         classification = _classify_declaration(
             ex_no=ex_no,
             uses_input=ex_no in interactive_exercises,
-            in_static=ex_no in static_parts,
-            in_interactive=ex_no in interactive_parts,
+            in_static=ex_no in declared.static,
+            in_interactive=ex_no in declared.interactive,
         )
         if classification is not None:
             severity, message = classification

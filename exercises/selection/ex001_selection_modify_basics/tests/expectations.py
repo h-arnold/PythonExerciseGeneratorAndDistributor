@@ -1,7 +1,7 @@
 """Exercise-local expectations for ex001_selection_modify_basics."""
 from __future__ import annotations
 
-from typing import Final, NotRequired, TypedDict
+from typing import Final, TypedDict
 
 
 class Ex001InputExpectation(TypedDict):
