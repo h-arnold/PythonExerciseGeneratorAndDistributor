@@ -198,7 +198,7 @@ ruff check . --fix
 
 - A construct-progression warning is a prompt for review, not an instruction to edit a notebook. The scan only reports **executable** tagged code: comment, string-literal and f-string literal text is ignored, and an f-string replacement expression is still scanned.
 - `int()`, `float()` and `str()` casting is a documented prerequisite for the `sequence` and `selection` strands (taught in sequence ex006/ex007, required by the selection strand's `input()` comparisons). Never remove legitimate casts to silence a warning; every other later construct stays flagged.
-- Gate G expects one declaration per part in `exercises/<construct>/<exercise_key>/tests/expectations.py`. Do not keep overlapping hand-maintained static and interactive tables; derive a quick-reference dict from the input cases instead.
+- Gate G expects one declaration per part in `exercises/<construct>/<exercise_key>/tests/expectations.py`. Do not keep overlapping hand-maintained static and interactive tables; derive a quick-reference dict from the input cases instead. That derived dict is a reference alias: it covers no part on its own, so it cannot close a missing-part report.
 
 Full gate contract: `docs/developers/exercise-quality-verifier.md`.
 

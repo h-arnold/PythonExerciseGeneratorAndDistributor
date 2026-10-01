@@ -818,8 +818,9 @@ assert ex002.EX002_EXPECTED_SINGLE_LINE
 
 Expectation dicts are module-level names matching `EX<N>_<CONVENTION>`, where `N`
 is the exercise number (`ex011` → `EX011_…`). Gate G counts the **union** of the
-part keys of every recognised dict, so an exercise may split its expectations
-across several shape-specific dicts as long as parts `1..parts` are covered.
+part keys of every recognised dict, ignoring reference aliases (see below), so an
+exercise may split its expectations across several shape-specific dicts as long as
+parts `1..parts` are covered.
 
 | Family | Recognised suffixes |
 |---|---|
@@ -827,9 +828,9 @@ across several shape-specific dicts as long as parts `1..parts` are covered.
 | Interactive — a runnable input case, or the prompts/inputs/post-input message it is driven with, for a part whose code calls `input()` | `INPUT_CASES`, `INPUT_EXPECTATIONS`, `INTERACTIVE_CASES`, `EXPECTED_PROMPTS`, `PROMPT_STRINGS`, `INPUT_PROMPTS`, `EXERCISE_INPUTS`, `FORMAT_VALIDATION` |
 
 Dicts in neither family — supplementary `EX<N>_EDGE_CASES` or
-`EX<N>_ORIGINAL_PROMPTS` data — provide neither coverage nor a runnable input
-case, and **must not** be used as the only declaration for a part whose code
-calls `input()`.
+`EX<N>_ORIGINAL_PROMPTS` data, and reference aliases — provide neither coverage
+nor a runnable input case, and **must not** be used as the only declaration for a
+part whose code calls `input()`.
 
 > **📋 Classification contract:** a part whose notebook code calls `input()`
 > **must** be declared by an interactive dict; a part that does not call
@@ -853,10 +854,15 @@ EX002_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
 ```
 
 A dict built this way is a **reference alias**, not a second static declaration,
-and is accepted. Only a value-for-value mirror qualifies: a hand-written literal
-dict, or a comprehension that derives anything else (a concatenation, a
-different case field), is an independent declaration and is still reported.
-Shipped examples: `exercises/selection/ex002_selection_debug_if_then_else/tests/expectations.py`
+and is accepted. It also declares no part of its own: it republishes the input
+cases it is derived from, so Gate G counts those parts once, through the input-case
+dict. Because an alias contributes no coverage, it cannot close a missing-part
+report — deriving one with transformed keys (`case_no + 1`) still leaves the part
+without an input case reported. Only a value-for-value mirror qualifies: a
+hand-written literal dict, or a comprehension that derives anything else (a
+concatenation, a different case field), is an independent declaration and is still
+reported. Shipped examples:
+`exercises/selection/ex002_selection_debug_if_then_else/tests/expectations.py`
 and `exercises/selection/ex004_selection_modify_logical_operators/tests/expectations.py`.
 
 The verifier gate set for these rules is documented in
