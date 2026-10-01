@@ -5,7 +5,9 @@ This script supports the Exercise Reviewer agent by performing fast,
 objective checks against ``exercises/<construct>/<exercise_key>/``:
 - Notebook structure: metadata.language, code-vs-tag consistency
 - Presence of expected tags (exerciseN, explanationN)
-- Basic concept progression scanning (heuristic keyword checks)
+- Basic concept progression scanning (heuristic keyword checks over executable
+  code only; comment and string literal text is prose, and casting is a
+  documented prerequisite of the first two constructs)
 - Presence of required canonical exercise files under exercises/
 - Construct teaching order updated (exercises/<construct>/OrderOfTeaching.md)
 - Student checker support module, expectations module, variant overrides,
@@ -25,9 +27,11 @@ from __future__ import annotations
 
 import argparse
 import ast
+import io
 import json
 import os
 import re
+import tokenize
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
@@ -49,6 +53,38 @@ CONSTRUCT_ORDER: list[str] = [
 ]
 
 EXERCISE_TYPES = frozenset({"debug", "modify", "make", "gaps"})
+
+# Token kinds that carry executable code. Every other kind is prose and is blanked
+# out before the progression patterns run: comments, string literals, and the
+# literal chunks of an f-string or t-string. The layout kinds (NEWLINE, NL,
+# INDENT, DEDENT, ENDMARKER) are kept because the patterns match across lines.
+# Anything this set does not name is treated as prose, so a token kind introduced
+# by a future Python release cannot invent new warnings.
+_EXECUTABLE_TOKEN_TYPES = frozenset(
+    {
+        tokenize.NAME,
+        tokenize.NUMBER,
+        tokenize.OP,
+        tokenize.NEWLINE,
+        tokenize.NL,
+        tokenize.INDENT,
+        tokenize.DEDENT,
+        tokenize.ENDMARKER,
+    }
+)
+
+# int()/float()/str() casting is a documented prerequisite for the first two
+# constructs rather than a progression violation:
+#
+# - exercises/sequence/OrderOfTeaching.md teaches casting in ex006
+#   (`ex006_sequence_modify_casting`) and ex007 (`ex007_sequence_debug_casting`),
+#   part-way through the sequence strand.
+# - The selection strand starts at `ex001_selection_modify_basics`, which
+#   compares values read from `input()`, so it needs those casts already taught.
+#
+# Every other later construct (iteration, exceptions, and the rest) is still
+# detected for these constructs.
+_CASTING_PREREQUISITE_CONSTRUCTS = frozenset({"sequence", "selection"})
 
 
 @dataclass(frozen=True)
@@ -614,6 +650,74 @@ def _index_of_construct(construct: str) -> int:
         return -1
 
 
+def _tokenize_leniently(text: str) -> list[tokenize.TokenInfo]:
+    """Tokenize ``text``, keeping the tokens emitted before any tokenizer failure.
+
+    Debug exercises ship intentionally invalid tagged cells, so a tokenizer
+    failure must not discard the tokens that were read successfully.
+    ``IndentationError`` and ``TabError`` need no arm of their own: both are
+    ``SyntaxError`` subclasses.
+    """
+    tokens: list[tokenize.TokenInfo] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(text).readline):
+            tokens.append(token)
+    except (tokenize.TokenError, SyntaxError):
+        pass
+    return tokens
+
+
+def _line_start_offsets(text: str) -> list[int]:
+    """Return the absolute offset at which each line of ``text`` starts.
+
+    The lines come from ``io.StringIO`` rather than ``str.splitlines`` because
+    ``tokenize`` reads its source with ``readline``, which ends a line only at a
+    newline. ``splitlines`` also breaks on ``\\r``, form feed, NEL, and the Unicode
+    line and paragraph separators, so its offsets would drift away from the
+    tokenizer's row numbers and blank the wrong characters.
+    """
+    offsets = [0]
+    for line in io.StringIO(text):
+        offsets.append(offsets[-1] + len(line))
+    return offsets
+
+
+def _blank_span(chars: list[str], start: int, end: int) -> None:
+    """Overwrite ``chars[start:end]`` with spaces, keeping any line breaks."""
+    for index in range(start, end):
+        if chars[index] != "\n":
+            chars[index] = " "
+
+
+def _executable_source(text: str) -> str:
+    """Return ``text`` with comment and string/f-string literal text blanked out.
+
+    Offsets and line breaks are preserved so the progression patterns keep
+    matching the original source layout. Executable code inside an f-string
+    replacement field survives, because since Python 3.12 (PEP 701) ``tokenize``
+    emits a replacement field as ordinary tokens while only the literal chunks
+    become f-string tokens. Before 3.12 the whole f-string arrives as one string
+    token, so its replacement fields are blanked with it.
+
+    Debug exercises ship intentionally invalid tagged cells, so a tokenizer
+    failure keeps the tokens read before the failure instead of skipping the
+    cell. Real constructs are therefore still scanned; only text after the
+    failure point is matched as code, which can add a warning but never hide
+    one.
+    """
+    chars = list(text)
+    line_offsets = _line_start_offsets(text)
+    for token in _tokenize_leniently(text):
+        if token.type in _EXECUTABLE_TOKEN_TYPES:
+            continue
+        _blank_span(
+            chars,
+            line_offsets[token.start[0] - 1] + token.start[1],
+            line_offsets[token.end[0] - 1] + token.end[1],
+        )
+    return "".join(chars)
+
+
 def _scan_for_progression_violations(  # noqa: C901
     *,
     text: str,
@@ -633,14 +737,21 @@ def _scan_for_progression_violations(  # noqa: C901
             )
         ]
 
+    # Comments and printed string text are prose, so only executable source counts.
+    executable_text = _executable_source(text)
+
     # If we're in construct K, then constructs strictly after K are disallowed.
     disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
 
     for construct in disallowed:
+        if construct == "data_types" and allowed_construct in _CASTING_PREREQUISITE_CONSTRUCTS:
+            continue
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(
+                    re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", executable_text, re.M)
+                )
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -661,16 +772,22 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
+                        e = (
+                            func_defs[idx + 1].start()
+                            if idx + 1 < len(func_defs)
+                            else len(executable_text)
+                        )
                         regions.append((s, e))
-                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [
+                        m.start() for m in re.finditer(r"\breturn\b", executable_text)
+                    ]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
                         continue
                 # otherwise fallthrough to regular warning
 
-            if pat.search(text):
+            if pat.search(executable_text):
                 findings.append(
                     Finding(
                         "WARN",

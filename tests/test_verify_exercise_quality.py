@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -2726,4 +2727,415 @@ class TestEx011ExpectationsModule:
             f"{_EX011_SEQUENCE_SLUG} must ship tests/expectations.py declaring every "
             f"part 1..{parts}; Gate G findings: "
             + "; ".join(f"{f.severity}: {f.message}" for f in findings)
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 4 — Progression scan: executable constructs, not printed token text
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Batch 3 policy (REMAINING_WORK.md, "Batch 3"), stated here as the desired
+# contract so the green phase has one authoritative statement to implement.
+#
+# 1. The scan reports a later construct only where it is *executable* in a
+#    tagged ``exerciseN`` code cell.  Token text inside comments, ordinary
+#    string literals, and the literal parts of f-strings is printed prose
+#    rather than student code, so it must not warn.  Real occurrences in this
+#    repository include ``# Use // for full hours and % for leftover minutes``
+#    (sequence ex012, ex015), ``print("Good try")`` (selection ex002), and
+#    ``print(f"Standard delivery for £{total} order")`` (selection ex003).
+#    The complementary boundary is an f-string *replacement field*: the
+#    expression in ``print(f"{len([1, 2])} items")`` is executable and must
+#    still warn, so the literal text and the expression cannot be treated alike.
+# 2. A tagged debug cell may intentionally contain invalid syntax — 16 such
+#    cells exist today, for example ``print("Hello World!"`` in sequence ex004 —
+#    so the scan must not assume a tagged cell parses, and it must not skip a
+#    whole cell that fails to parse either: real later-construct use in broken
+#    debug code must still warn.
+# 3. Casting is a documented prerequisite rather than a progression violation:
+#    ``int()``, ``float()``, and ``str()`` calls are permitted in the
+#    ``sequence`` and ``selection`` constructs, because ``input()`` always
+#    returns ``str``.  This is a narrow waiver: iteration and real exception
+#    handling stay forbidden in those constructs, and every other later
+#    construct (lists, dictionaries, functions, file handling, libraries, oop)
+#    stays exactly as strict as before.
+#
+# Every test below is written against that contract.  Both the student and the
+# solution notebook surface are scanned, so a finding on either side fails.
+
+#: ``_scan_both_variants`` scans a student and a solution notebook, so a single
+#: offending cell is counted once per surface and this is the total to expect.
+#: A cell that violates two distinct later constructs yields twice this.
+_FINDINGS_BOTH_VARIANTS = 2
+
+
+def _tagged_code_cell(tag: str, source: str) -> dict[str, Any]:
+    """Build one ``exerciseN``-tagged code cell."""
+    return {
+        "cell_type": "code",
+        "metadata": {"language": "python", "tags": [tag]},
+        "source": [source],
+    }
+
+
+def _scan_both_variants(
+    tmp_path: Path,
+    *,
+    construct: str,
+    cells: list[dict[str, Any]],
+) -> list[verify_exercise_quality.Finding]:
+    """Scan ``cells`` through both the student and the solution notebook surface.
+
+    Both variants receive identical tagged cells, so an unwanted warning on
+    either surface fails the caller's assertion, and a wanted warning is
+    reported once per notebook.
+    """
+    student_path = tmp_path / "student.ipynb"
+    solution_path = tmp_path / "solution.ipynb"
+    _write_notebook_cells(student_path, cells)
+    _write_notebook_cells(solution_path, cells)
+    return verify_exercise_quality._collect_progression_findings(
+        construct=construct,
+        nb_path=student_path,
+        nb_solution=verify_exercise_quality._load_notebook(solution_path),
+        nb_solution_path=solution_path,
+        nb_student=verify_exercise_quality._load_notebook(student_path),
+    )
+
+
+def _finding_report(findings: list[verify_exercise_quality.Finding]) -> str:
+    """Render findings for an assertion message."""
+    return "; ".join(f"{f.severity}: {f.message}" for f in findings)
+
+
+class TestProgressionScanExecutableConstructs:
+    """Executable later constructs must still warn — over-filtering guard.
+
+    These tests pass before and after the Batch 3 change; they exist so a
+    fix that silences the false positives cannot also silence the real signal.
+    """
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", "for hour in range(3):\n    print(hour)\n"),
+            ("sequence", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("sequence", "for hour in range(3):\n    break\n"),
+            ("sequence", "for hour in range(3):\n    continue\n"),
+            ("selection", "for hour in range(3):\n    print(hour)\n"),
+            ("selection", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("sequence", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("sequence", 'raise ValueError("bad")\n'),
+            ("selection", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("sequence", "print(len([1, 2]))\n"),
+            ("sequence", "import os\n"),
+            ("sequence", 'items = {"a": 1}\nprint(items.get("a"))\n'),
+            # A construct inside an f-string replacement field is executable, so
+            # it must warn even though the surrounding literal text must not.
+            ("sequence", 'print(f"{len([1, 2])} items")\n'),
+            ("sequence", "flag = True\nprint(f\"{'yes' if flag else 'no'}\")\n"),
+        ],
+    )
+    def test_executable_later_construct_still_warns(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """One later construct in executable source warns once per notebook."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            f"{construct!r} cell must warn once on each notebook surface; got "
+            f"{len(findings)}: {_finding_report(findings)}"
+        )
+        assert all("progression violation" in f.message for f in findings)
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", "for hour in range(3)\n    print(hour)\n"),
+            ("sequence", "count = 0\nwhile count < 3\n    count = count + 1\n"),
+            ("selection", "for hour in range(3)\n    print(hour)\n"),
+            ("selection", "count = 0\nwhile count < 3\n    count = count + 1\n"),
+            ("sequence", "try\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+        ],
+    )
+    def test_unparsable_debug_cell_with_executable_later_construct_still_warns(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """A cell that does not parse must be scanned, not skipped whole.
+
+        Debug exercises ship intentionally broken tagged cells, so ignoring a
+        cell because it fails to parse would drop genuine later-construct use.
+        """
+        # Fixture guard: confirm the cell really is invalid syntax.
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            f"{construct!r} debug cell must warn despite invalid syntax; got "
+            f"{len(findings)}: {_finding_report(findings)}"
+        )
+
+
+class TestProgressionScanIgnoresNonExecutableTokenText:
+    """Later-construct tokens in comments and string literals must not warn.
+
+    The scanner currently regex-matches the concatenated tagged cell source as
+    plain text, so every case below is a false positive today.
+    """
+
+    @pytest.mark.parametrize(
+        ("construct", "source", "origin"),
+        [
+            (
+                "sequence",
+                "# Use // for full hours and % for leftover minutes\nhours = 7\nprint(hours)\n",
+                "iteration 'for' inside a comment",
+            ),
+            (
+                "sequence",
+                "# Ask for input, convert, calculate, and print.\nn = 1\nprint(n)\n",
+                "iteration 'for' inside a comment",
+            ),
+            (
+                "selection",
+                "# Try the elif branch for free delivery.\nfree = True\nprint(free)\n",
+                "iteration 'for' and exceptions 'try' inside a comment",
+            ),
+            (
+                "sequence",
+                'print("Tip percentage (e.g. 10 for 10%):")\n',
+                "iteration 'for' inside an ordinary string literal",
+            ),
+            (
+                "sequence",
+                'total = 1\nprint(f"Standard delivery for £{total} order")\n',
+                "iteration 'for' inside an f-string literal",
+            ),
+            (
+                "selection",
+                'n = 1\nprint(f"Small van for {n} passengers")\n',
+                "iteration 'for' inside an f-string literal",
+            ),
+            (
+                "sequence",
+                'print("Good try")\n',
+                "exceptions 'try' inside an ordinary string literal",
+            ),
+            (
+                "selection",
+                'score = 1\nprint(f"Good try, {score}")\n',
+                "exceptions 'try' inside an f-string literal",
+            ),
+        ],
+    )
+    def test_non_executable_token_text_does_not_warn(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+        origin: str,
+    ) -> None:
+        """Comments and printed string text are prose, not student code."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            f"{construct!r} cell with {origin} must not warn; got {_finding_report(findings)}"
+        )
+
+    def test_invalid_debug_cell_with_tokens_only_in_text_does_not_warn(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A deliberately broken debug cell must not warn on prose tokens.
+
+        Debug exercises ship intentionally invalid tagged cells, so a scanner
+        that assumes every tagged cell parses cannot be the basis of the fix.
+        """
+        source = (
+            '# Reminder: a for loop and try/except come later in the course.\nprint("Good try"\n'
+        )
+        # Fixture guard: confirm the cell really is invalid syntax, so this
+        # test cannot pass merely because the source happens to parse.
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            "an invalid debug cell whose later-construct tokens appear only in a "
+            f"comment and a string literal must not warn; got {_finding_report(findings)}"
+        )
+
+    def test_compliant_cell_next_to_offending_cell_does_not_add_a_finding(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A compliant cell beside an offending one adds no extra finding.
+
+        This counts findings; it does **not** attribute them to a cell, because
+        ``Finding`` carries only severity, message, and notebook path with no
+        cell tag.  It therefore shows that the compliant cell contributes
+        nothing beyond the single warning the offending cell already raises on
+        each notebook surface, and nothing more than that.
+        """
+        cells = [
+            _tagged_code_cell("exercise1", "for hour in range(3):\n    print(hour)\n"),
+            _tagged_code_cell(
+                "exercise2",
+                "# Ask for input, convert, calculate, and print.\nn = 1\nprint(n)\n",
+            ),
+        ]
+
+        findings = _scan_both_variants(tmp_path, construct="sequence", cells=cells)
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            "the compliant cell must add no finding beyond the offending cell's, "
+            f"counted once per notebook surface; got {len(findings)}: "
+            f"{_finding_report(findings)}"
+        )
+
+
+# A run of Unicode line separators long enough that an offset table built with
+# ``str.splitlines`` (which also breaks on U+2028) misses the row after it
+# entirely, instead of drifting by a character or two.
+_UNICODE_SEPARATOR_ROW = "\u2028" * 40 + "\n"
+
+
+class TestProgressionScanTokenizerLineOffsets:
+    """Comment masking must follow the tokenizer's line boundaries.
+
+    ``tokenize`` reads source with ``readline``, which ends a line only at a
+    newline, so the mask offsets have to be built the same way.
+    """
+
+    def test_unicode_separator_row_does_not_shift_comment_masking(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A comment after a Unicode separator row is prose and must not warn."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[
+                _tagged_code_cell(
+                    "exercise1",
+                    f"n = 1\n{_UNICODE_SEPARATOR_ROW}# Reminder: a for loop comes later\n",
+                )
+            ],
+        )
+
+        assert findings == [], (
+            "a comment after a Unicode line-separator row must still be blanked out; got "
+            f"{_finding_report(findings)}"
+        )
+
+    def test_unicode_separator_row_keeps_executable_constructs(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A real later construct after a Unicode separator row must still warn."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[
+                _tagged_code_cell(
+                    "exercise1",
+                    f"n = 1\n{_UNICODE_SEPARATOR_ROW}for hour in range(3):\n    print(hour)\n",
+                )
+            ],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            "an executable loop after a Unicode line-separator row must warn once per "
+            f"notebook surface; got {len(findings)}: {_finding_report(findings)}"
+        )
+
+
+class TestProgressionCastingPrerequisitePolicy:
+    """``int``/``float``/``str`` casts are a permitted sequence/selection prerequisite."""
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", 'n = int(input("Enter a number: "))\nprint(n)\n'),
+            ("sequence", 'n = float(input("Enter a number: "))\nprint(n)\n'),
+            ("sequence", "n = 1\nprint(str(n))\n"),
+            ("selection", 'n = int(input("Enter a number: "))\nif n > 10:\n    print("big")\n'),
+            (
+                "selection",
+                'n = float(input("Enter a number: "))\nif n > 1.5:\n    print("big")\n',
+            ),
+            ("selection", "n = 1\nif n > 0:\n    print(str(n))\n"),
+            ("sequence", 'n = "7"\nprint(f"{int(n)} plus one")\n'),
+        ],
+    )
+    def test_documented_casting_prerequisite_does_not_warn(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """Casting taught before selection must not be reported as progression."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            f"{construct!r} cell may cast with int()/float()/str(); got {_finding_report(findings)}"
+        )
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", "for hour in range(3):\n    print(hour)\n"),
+            ("selection", "for hour in range(3):\n    print(hour)\n"),
+            ("sequence", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("selection", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("sequence", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("selection", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("sequence", 'raise ValueError("bad")\n'),
+        ],
+    )
+    def test_prerequisite_waiver_excludes_iteration_and_exceptions(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """The casting waiver is narrow: iteration and real handling still warn."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            f"{construct!r} cell must still warn for iteration or exceptions, once per "
+            f"notebook surface; got {len(findings)}: {_finding_report(findings)}"
         )
