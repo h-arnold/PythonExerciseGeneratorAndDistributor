@@ -940,7 +940,14 @@ class TestMainHangRegression:
 
 
 class TestGateHNotebookVariantOverrides:
-    """Gate H: Verify variant overrides in student and solution notebooks."""
+    """Gate H: Verify variant overrides in student and solution notebooks.
+
+    Policy: the student self-checker cell may omit the ``PYTUTOR_ACTIVE_VARIANT``
+    assignment because the checker runtime already defaults to the student
+    variant when the variable is unset.  An explicitly wrong student assignment
+    stays a WARN, and a missing or wrong solution assignment stays an ERROR
+    because that cell would otherwise read ``student.ipynb``.
+    """
 
     def _make_notebook(self, source_lines: list[str]) -> dict[str, Any]:
         return {
@@ -967,12 +974,27 @@ class TestGateHNotebookVariantOverrides:
         )
         return exercise_dir
 
-    def test_student_missing_variant_returns_warning(self, tmp_path: Path) -> None:
+    def test_student_missing_override_is_valid_when_solution_overrides(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """An omitted student override is valid, matching the runtime default."""
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
-        (exercise_dir / "notebooks" / "student.ipynb").write_text(json.dumps(nb), encoding="utf-8")
-        (exercise_dir / "notebooks" / "solution.ipynb").write_text(json.dumps(nb), encoding="utf-8")
+        student_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        solution_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8"
+        )
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8"
+        )
         nb_solution = verify_exercise_quality._load_notebook(
             exercise_dir / "notebooks" / "solution.ipynb"
         )
@@ -985,8 +1007,74 @@ class TestGateHNotebookVariantOverrides:
             student_nb=nb_student,
             solution_nb=nb_solution,
         )
-        assert len(findings) > 0
-        assert any("PYTUTOR_ACTIVE_VARIANT" in f.message for f in findings)
+        assert findings == []
+
+    def test_missing_student_override_does_not_mask_the_solution_error(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A missing solution override is the only finding in the pair."""
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        bare_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(bare_nb), encoding="utf-8"
+        )
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(bare_nb), encoding="utf-8"
+        )
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
+        )
+        assert [f.severity for f in findings] == ["ERROR"]
+
+    def test_student_wrong_variant_returns_warning(self, tmp_path: Path) -> None:
+        """An explicitly wrong student override is never a silent pass."""
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        student_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        solution_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8"
+        )
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8"
+        )
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
+        )
+        assert [f.severity for f in findings] == ["WARN"]
+        assert "instead of 'student'" in findings[0].message
 
     def test_solution_missing_variant_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
@@ -1659,8 +1747,8 @@ class TestSection3AllExercisesSweep:
             _DEFECTIVE_SLUG,
             metadata=_sweep_metadata(_DEFECTIVE_SLUG, exercise_id=10),
         )
-        # A student notebook without the variant override triggers a Gate H WARN only.
-        _write_notebook(exercise_dir / "notebooks" / "student.ipynb", variant=None)
+        # An explicitly wrong student override triggers a Gate H WARN only.
+        _write_notebook(exercise_dir / "notebooks" / "student.ipynb", variant="solution")
         _write_teaching_order(tmp_path, [_DEFECTIVE_SLUG])
 
         exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
@@ -1893,8 +1981,8 @@ class TestSection3AllExercisesSweep:
             "CHECKS: list[object] = []\n",
             encoding="utf-8",
         )
-        # A student notebook without the variant override is a genuine Gate H warning.
-        _write_notebook(checker_dir / "notebooks" / "student.ipynb", variant=None)
+        # An explicitly wrong student override is a genuine Gate H warning.
+        _write_notebook(checker_dir / "notebooks" / "student.ipynb", variant="solution")
         _write_canonical_exercise(
             tmp_path,
             healthy,
@@ -1917,11 +2005,11 @@ class TestSection3AllExercisesSweep:
 
         assert "CHECKS list in student_checker_support.py is empty" not in suppressed_out
         assert "ERROR:" not in suppressed_out
-        assert "does not set PYTUTOR_ACTIVE_VARIANT" in suppressed_out
+        assert "instead of 'student'" in suppressed_out
         assert (
             _owning_exercise_key(
                 suppressed_out,
-                "does not set PYTUTOR_ACTIVE_VARIANT",
+                "instead of 'student'",
                 keys,
             )
             == empty_checks

@@ -1458,24 +1458,24 @@ def _check_notebook_variant_overrides(
     student_nb: NotebookDocument,
     solution_nb: NotebookDocument,
 ) -> list[Finding]:
-    """Gate H: Verify variant overrides in student and solution notebooks."""
+    """Gate H: Verify variant overrides in student and solution notebooks.
+
+    Policy: a student self-checker cell may omit the ``PYTUTOR_ACTIVE_VARIANT``
+    assignment because the checker runtime already defaults to the student
+    variant when the variable is unset, which is what the scaffolder emits. An
+    explicitly wrong student assignment stays a WARN, and a missing or wrong
+    solution assignment stays an ERROR because that cell would otherwise read
+    ``student.ipynb`` instead of ``solution.ipynb``.
+    """
     findings: list[Finding] = []
 
     student_nb_path = ex_dir / "notebooks" / "student.ipynb"
     solution_nb_path = ex_dir / "notebooks" / "solution.ipynb"
 
-    # Check student notebook
+    # Check student notebook: only an explicit wrong variant is a finding, since
+    # an absent assignment resolves to 'student' through the runtime default.
     student_variant = _find_variant_in_notebook(student_nb)
-    if student_variant is None:
-        findings.append(
-            Finding(
-                "WARN",
-                "Student notebook self-checker cell does not set "
-                "PYTUTOR_ACTIVE_VARIANT (default is 'student', but explicit is safer)",
-                path=student_nb_path,
-            )
-        )
-    elif student_variant != "student":
+    if student_variant is not None and student_variant != "student":
         findings.append(
             Finding(
                 "WARN",
