@@ -41,7 +41,7 @@ uv run python -V
 - `scripts/build_classroom50_bundle.py`: Builds a teacher-side Classroom 50 grading bundle from a selected exercise-set input
 - `scripts/new_exercise.py`: Exercise scaffolding tool
 - `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
-- `scripts/verify_exercise_quality.py`: Structural and runtime self-checks for one `exercise_key`, or every discovered exercise with `--all`
+- `scripts/verify_exercise_quality.py`: Structural and runtime self-checks for one `exercise_key`, or every discovered exercise with `--all`. Gate contract in [exercise-quality-verifier.md](exercise-quality-verifier.md).
 - `AGENTS.md`: Repo-wide Copilot context
 - `.opencode/agents/exercise-generation.md`: Exercise generation custom agent
 - `.opencode/agents/exercise-reviewer.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
@@ -195,6 +195,14 @@ uv run scripts/verify_exercise_quality.py ex999_sequence_modify_test_exercise --
 # Remove the scaffolding when done experimenting
 rm -rf exercises/sequence/ex999_sequence_modify_test_exercise
 ```
+
+`new_exercise.py` writes `exercises/<construct>/<exercise_key>/tests/expectations.py`
+with an empty `EX{NNN}_EXPECTED_OUTPUTS` template, and a `student_checker_support.py`
+that already loads it. Fill that module in rather than adding a second table: the
+recognised naming conventions, the static/interactive split, and the rules for
+derived reference outputs are in
+[exercise-quality-verifier.md](exercise-quality-verifier.md). An empty expected-output
+value is a data error, not a placeholder.
 
 ### Extending the Generator
 

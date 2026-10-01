@@ -45,6 +45,7 @@ Contract:
 - Preferred interface: explicit `--variant <student|solution>` on repository scripts that invoke pytest orchestration (for example `scripts/run_pytest_variant.py`).
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `solution` when no variant is provided to a repository orchestration script. The Classroom 50 bundle grader is the exception: it defaults to `student` in both of its modes, as §5 records.
+- The runtime helper `exercise_runtime_support.execution_variant::get_active_variant` defaults to `solution`, and `run_exercise_checks` (behind `run_notebook_checks`) deliberately overrides that default to `student` when the variable is unset. That override is why a student notebook self-check cell needs no explicit assignment, while a solution self-check cell must set `'solution'`. See [exercise-quality-verifier.md](exercise-quality-verifier.md) for the Gate H severities.
 
 Deprecated note:
 
@@ -60,7 +61,7 @@ Contract:
 - Packaged runtime contract: exported Classroom repositories include `exercise_metadata/`, `exercises/<construct>/<exercise_key>/exercise.json`, `exercises/<construct>/<exercise_key>/notebooks/student.ipynb`, and `exercises/<construct>/<exercise_key>/tests/`.
 - Mapping from canonical source to export must be deterministic and reproducible, so the same exercise key resolves to the same exported metadata, notebook, and test paths.
 - Flattened notebook/test mirrors are forbidden in packaged outputs.
-- Resolution and packaging failures must remain fail-fast and preserve the SPEC §2.2 message fragments:
+- Resolution and packaging failures must remain fail-fast and preserve these message fragments (asserted by `tests/test_exercise_metadata.py`):
   - missing or invalid `exercise.json` -> `exercise.json is missing or invalid`
   - missing canonical notebook -> `expected notebook is missing`
 
@@ -76,7 +77,7 @@ Teacher-side grading uses a teacher-built bundle, not the exported student templ
 - The grader has two invocation modes. Classroom 50 mode takes no arguments: the current working directory is the student root, the bundle root is the grader script's own parent directory, the result is `./result.json` in the working directory, and the identity fields come from the runner environment. The local dry run requires `--student-root` and `--result` as a pair.
 - Both modes force `PYTUTOR_ACTIVE_VARIANT=student` by default; the solution variant is reserved for the local dry run.
 
-See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule, CLI interfaces, and result contract.
+See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule, CLI interfaces, and result contract, and [exercise-quality-verifier.md](exercise-quality-verifier.md) for the authoring-time quality gate set that enforces these contracts.
 
 ## Current status
 

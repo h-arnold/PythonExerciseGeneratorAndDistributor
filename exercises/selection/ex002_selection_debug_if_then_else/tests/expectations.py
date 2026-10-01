@@ -25,33 +25,12 @@ EX002_PLACEHOLDER_PHRASES: Final[tuple[str, ...]] = (
 )
 
 
-# Expected output for every exercise (including prompt text from input()).
-# All 20 exercises use input(), so expected_output includes the prompt
-# followed immediately by the program's printed message.
-EX002_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
-    1: "Enter a number: Odd number!",
-    2: "Enter the radius: Area exceeds 100!",
-    3: "Enter a number: Divisible by 3!",
-    4: "Enter a number: Square is greater than 1000!",
-    5: "What is your favourite colour? Nice choice!",
-    6: "Enter your PIN: Wrong PIN!",
-    7: "What is 3 + 5? Correct answer!",
-    8: "Enter your height in cm: You can ride!",
-    9: "Enter your score: You passed!",
-    10: "Enter your name: Hello Bob!",
-    11: "Enter your score: Distinction",
-    12: "Enter your age: Child",
-    13: "Enter a number: Positive",
-    14: "Enter the password: Correct password!",
-    15: "Enter the temperature: It's hot!",
-    16: "Enter a number: Odd number",
-    17: "Enter your age: Invalid age",
-    18: "Enter your score: Excellent score",
-    19: "Enter a number: Number is 10 or greater",
-    20: "Enter your score: You passed!",
-}
+# ---------------------------------------------------------------------------
+# Input cases for every exercise. All 20 exercises use input(), so each
+# expected_output is the prompt text followed immediately by the program's
+# printed message.
+# ---------------------------------------------------------------------------
 
-# Input cases for every exercise (all exercises use input()).
 EX002_INPUT_CASES: Final[dict[int, Ex002InputCase]] = {
     1: {
         "inputs": ["7"],
@@ -133,4 +112,17 @@ EX002_INPUT_CASES: Final[dict[int, Ex002InputCase]] = {
         "inputs": ["75"],
         "expected_output": "Enter your score: You passed!",
     },
+}
+
+
+# ---------------------------------------------------------------------------
+# Primary expected outputs — keyed by exercise number, used by the quality
+# verifier (Gate G) and as a quick reference. Every exercise in ex002 is
+# interactive, so this is derived from EX002_INPUT_CASES rather than written
+# out a second time.
+# ---------------------------------------------------------------------------
+
+EX002_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
+    exercise_no: case["expected_output"]
+    for exercise_no, case in EX002_INPUT_CASES.items()
 }

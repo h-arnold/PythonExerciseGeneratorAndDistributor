@@ -253,9 +253,6 @@ def test_find_noncanonical_exercise_test_sources_ignores_renamed_blocker_tests()
                 "exercises/sequence/ex007_sequence_debug_casting/tests/"
                 "test_repo_construct_checks.py"
             ),
-            Path(
-                "exercises/sequence/ex002_sequence_modify_basics/tests/test_repo_task_metadata.py"
-            ),
         ]
     )
 

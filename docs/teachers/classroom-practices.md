@@ -127,6 +127,7 @@ Most issues are quick to fix. Here are the common ones:
 | **"Kernel not found" or "No kernel"** | The Python kernel hasn't started yet. | Click the **Select Kernel** button (top-right of the notebook) and pick the recommended option (usually "Python 3.11" or "Python Environments"). If there's only one option, select it. |
 | **Code runs but output looks wrong** | A logic error in the student's code. | Read the instruction again. Check variable names and values. Run the self-checker for specific feedback. |
 | **Self-checker shows "Not run" for a completed exercise** | The cell tag might be missing or the code wasn't saved. | Make sure the cell actually contains code. Run it once, then re-run the checker. |
+| **Self-checker says everything is OK but the student has not done the work** | The kernel still remembers `PYTUTOR_ACTIVE_VARIANT=solution` from a solution notebook that ran in it earlier, so the checker read the answers instead of the student's code. | Use the **Kernel** menu at the top of the notebook and choose **Restart Kernel…**, then run the self-checker cell again. Nothing in the notebook needs changing. |
 | **Can't push — "permission denied"** | The Codespace token expired or isn't authorised. | Close and reopen the Codespace. If it persists, have the student check they're the owner of the repo. |
 
 **If you're stuck:**

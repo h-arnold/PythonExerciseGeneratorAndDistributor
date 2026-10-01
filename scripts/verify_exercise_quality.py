@@ -5,7 +5,9 @@ This script supports the Exercise Reviewer agent by performing fast,
 objective checks against ``exercises/<construct>/<exercise_key>/``:
 - Notebook structure: metadata.language, code-vs-tag consistency
 - Presence of expected tags (exerciseN, explanationN)
-- Basic concept progression scanning (heuristic keyword checks)
+- Basic concept progression scanning (heuristic keyword checks over executable
+  code only; comment and string literal text is prose, and casting is a
+  documented prerequisite of the first two constructs)
 - Presence of required canonical exercise files under exercises/
 - Construct teaching order updated (exercises/<construct>/OrderOfTeaching.md)
 - Student checker support module, expectations module, variant overrides,
@@ -24,9 +26,12 @@ is not a replacement for reading the exercise prompts.
 from __future__ import annotations
 
 import argparse
+import ast
+import io
 import json
 import os
 import re
+import tokenize
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
@@ -48,6 +53,67 @@ CONSTRUCT_ORDER: list[str] = [
 ]
 
 EXERCISE_TYPES = frozenset({"debug", "modify", "make", "gaps"})
+
+# Token kinds that carry executable code. Every other kind is prose and is blanked
+# out before the progression patterns run: comments, string literals, and the
+# literal chunks of an f-string or t-string. The layout kinds (NEWLINE, NL,
+# INDENT, DEDENT, ENDMARKER) are kept because the patterns match across lines.
+# Anything this set does not name is treated as prose, so a token kind introduced
+# by a future Python release cannot invent new warnings.
+_EXECUTABLE_TOKEN_TYPES = frozenset(
+    {
+        tokenize.NAME,
+        tokenize.NUMBER,
+        tokenize.OP,
+        tokenize.NEWLINE,
+        tokenize.NL,
+        tokenize.INDENT,
+        tokenize.DEDENT,
+        tokenize.ENDMARKER,
+    }
+)
+
+# A string literal the tokenizer cannot close is the one failure that leaves prose
+# in the source: it stops inside the literal, so the rest of that literal emits no
+# token to blank and runs on to the end of the cell. An ordinary, byte, or
+# triple-quoted string emits no token at all before failing, so the unread text
+# itself opens the literal; the optional prefix and the three quote styles cover
+# every such literal the tokenizer can stop on. The prefix is only the letters a
+# string prefix is made of (`r`, `u`, `b`, `f`, `t`, in either case) and at most
+# the two letters the longest valid prefix has, so an unrelated run of letters —
+# a mistyped `s"` — reads as a name: it opens no literal, and the masked span
+# never starts before the quote, so the name and the code before it stay
+# scannable. The quote the tokenizer does reach then opens an unfinished literal
+# like any other, and its body is masked to the end of the cell.
+_STRING_OPENING_RE = re.compile(r"[ \t]*[rRuUbBfFtT]{0,2}(?:\"\"\"|'''|\"|')")
+
+# Since PEP 701 (Python 3.12) an f-string or t-string arrives as several tokens:
+# the opening token, then its literal text and replacement fields in turn, then
+# the closing token. An unfinished one therefore leaves its opening token behind,
+# which is what tells the tokenizer stopped in literal text. The repository
+# runtime pins Python 3.14, so a constant this runtime does not have fails at
+# import. They are read out of the module namespace rather than as attributes
+# because typeshed only declares them from Python 3.12 while this repository
+# type-checks against 3.11.
+_LITERAL_OPEN_TOKEN_TYPES = frozenset(
+    vars(tokenize)[name] for name in ("FSTRING_START", "TSTRING_START")
+)
+_LITERAL_CLOSE_TOKEN_TYPES = frozenset(
+    vars(tokenize)[name] for name in ("FSTRING_END", "TSTRING_END")
+)
+
+# int()/float()/str() casting is a documented prerequisite for the first two
+# constructs rather than a progression violation:
+#
+# - exercises/sequence/OrderOfTeaching.md teaches casting in ex006
+#   (`ex006_sequence_modify_casting`) and ex007 (`ex007_sequence_debug_casting`),
+#   part-way through the sequence strand.
+# - The selection strand starts at `ex001_selection_modify_basics`, which
+#   compares values read from `input()`, so it needs those casts already taught.
+#
+# Every other later construct (iteration, exceptions, and the rest) is still
+# detected for these constructs.
+_CASTING_PREREQUISITE_CONSTRUCTS = frozenset({"sequence", "selection"})
 
 
 @dataclass(frozen=True)
@@ -205,6 +271,47 @@ _INPUT_CALL_RE = re.compile(r"\binput\s*\(")
 # sibling directories that are not exercises (e.g. additional-resources) are
 # left alone.
 _EXERCISE_DIR_RE = re.compile(r"^ex\d+_\w+$")
+# Module-level expectation dicts are named EX<N>_<CONVENTION>, where the
+# convention says what the dict declares for each exercise number.
+_EXPECTATION_NAME_RE = re.compile(r"^EX\d+_(?P<convention>[A-Z0-9_]+)$")
+# The expectation-dict conventions the shipped exercises use.  An exercise may
+# split its expectations across several dicts — static, interactive, or one per
+# output shape — so coverage is the union of the part keys of every recognised
+# dict rather than the keys of a single ``EX<N>_EXPECTED_OUTPUTS`` dict.
+#
+# ``_STATIC_EXPECTATION_CONVENTIONS`` declare what a part prints without reading
+# input.  ``_INTERACTIVE_EXPECTATION_CONVENTIONS`` declare a runnable input case,
+# or the prompts/inputs/post-input message such a case is driven with, for a
+# part whose code calls ``input()``.  Dicts in neither set — supplementary
+# ``EX<N>_EDGE_CASES`` or ``EX<N>_ORIGINAL_PROMPTS`` data, and reference aliases
+# computed from an input-case dict — count as neither coverage nor a runnable
+# input case.
+_STATIC_EXPECTATION_CONVENTIONS = frozenset(
+    {
+        "EXPECTED_OUTPUTS",
+        "EXPECTED_STATIC_OUTPUT",
+        "EXPECTED_STATIC_OUTPUTS",
+        "EXPECTED_SINGLE_LINE",
+        "EXPECTED_MULTI_LINE",
+        "EXPECTED_NUMERIC",
+        "EXPECTED_PRINT_CALLS",
+    }
+)
+_INTERACTIVE_EXPECTATION_CONVENTIONS = frozenset(
+    {
+        "INPUT_CASES",
+        "INPUT_EXPECTATIONS",
+        "INTERACTIVE_CASES",
+        "EXPECTED_PROMPTS",
+        "PROMPT_STRINGS",
+        "INPUT_PROMPTS",
+        "EXERCISE_INPUTS",
+        "FORMAT_VALIDATION",
+    }
+)
+# The one field a quick-reference dict may copy out of an input case to count as a
+# mirror of it.  See _mirrors_input_cases.
+_EXPECTED_OUTPUT_KEY = "expected_output"
 
 
 def _load_canonical_metadata(ex_dir: Path) -> dict[str, Any]:
@@ -572,6 +679,134 @@ def _index_of_construct(construct: str) -> int:
         return -1
 
 
+def _tokenize_leniently(text: str) -> list[tokenize.TokenInfo]:
+    """Tokenize ``text``, keeping the tokens emitted before any tokenizer failure.
+
+    Debug exercises ship intentionally invalid tagged cells, so a tokenizer
+    failure must not discard the tokens that were read successfully.
+    ``IndentationError`` and ``TabError`` need no arm of their own: both are
+    ``SyntaxError`` subclasses.
+    """
+    tokens: list[tokenize.TokenInfo] = []
+    try:
+        for token in tokenize.generate_tokens(io.StringIO(text).readline):
+            tokens.append(token)
+    except (tokenize.TokenError, SyntaxError):
+        pass
+    return tokens
+
+
+def _line_start_offsets(text: str) -> list[int]:
+    """Return the absolute offset at which each line of ``text`` starts.
+
+    The lines come from ``io.StringIO`` rather than ``str.splitlines`` because
+    ``tokenize`` reads its source with ``readline``, which ends a line only at a
+    newline. ``splitlines`` also breaks on ``\\r``, form feed, NEL, and the Unicode
+    line and paragraph separators, so its offsets would drift away from the
+    tokenizer's row numbers and blank the wrong characters.
+    """
+    offsets = [0]
+    for line in io.StringIO(text):
+        offsets.append(offsets[-1] + len(line))
+    return offsets
+
+
+def _token_offset(line_offsets: list[int], position: tuple[int, int]) -> int:
+    """Return the absolute offset of a tokenizer ``(row, column)`` position."""
+    row, column = position
+    return line_offsets[row - 1] + column
+
+
+def _leaves_literal_open(tokens: list[tokenize.TokenInfo]) -> bool:
+    """Return True when ``tokens`` end inside a string literal that never closed.
+
+    An f-string missing its closing quote leaves its opening token behind and the
+    tokenizer stops before emitting the rest of its literal text, so the unread
+    text that follows is prose. Braces are counted as well: a replacement field's
+    ``{`` is still open when the tokenizer stops inside the field's expression,
+    and that unread text is real code, so an open brace must not be read as
+    literal text.
+    """
+    literal_depth = 0
+    brace_depth = 0
+    for token in tokens:
+        if token.type in _LITERAL_OPEN_TOKEN_TYPES:
+            literal_depth += 1
+        elif token.type in _LITERAL_CLOSE_TOKEN_TYPES:
+            literal_depth -= 1
+        elif token.type == tokenize.OP:
+            if token.string == "{":
+                brace_depth += 1
+            elif token.string == "}":
+                brace_depth -= 1
+    return literal_depth > 0 and brace_depth == 0
+
+
+def _unfinished_literal_offset(
+    line_offsets: list[int],
+    text: str,
+    tokens: list[tokenize.TokenInfo],
+) -> int | None:
+    """Return the offset an unfinished string literal's unread text starts at.
+
+    Returns ``None`` when the tokenizer's failure left real code unread, so that
+    text stays scannable and can only add a warning, never hide one. That is the
+    case for an ``IndentationError``, which stops at the line whose indentation
+    does not match the block above it, and for an unclosed bracket, which stops
+    at the end of the input with the rest of the statement still unread.
+
+    The unread text starts where the last emitted token ended, or at the start of
+    the cell when the very first token already failed. It is the body of an
+    unfinished literal when the unread text opens a literal itself, so the
+    tokenizer failed on a literal it never emitted a token for, or when the
+    emitted tokens leave an f-string open.
+    """
+    offset = _token_offset(line_offsets, tokens[-1].end) if tokens else 0
+    if _STRING_OPENING_RE.match(text, offset) is not None or _leaves_literal_open(tokens):
+        return offset
+    return None
+
+
+def _blank_span(chars: list[str], start: int, end: int) -> None:
+    """Overwrite ``chars[start:end]`` with spaces, keeping any line breaks."""
+    for index in range(start, end):
+        if chars[index] != "\n":
+            chars[index] = " "
+
+
+def _executable_source(text: str) -> str:
+    """Return ``text`` with comment and string/f-string literal text blanked out.
+
+    Offsets and line breaks are preserved so the progression patterns keep
+    matching the original source layout. Executable code inside an f-string
+    replacement field survives, because since Python 3.12 (PEP 701) ``tokenize``
+    emits a replacement field as ordinary tokens while only the literal chunks
+    become f-string tokens. Before 3.12 the whole f-string arrives as one string
+    token, so its replacement fields are blanked with it.
+
+    Debug exercises ship intentionally invalid tagged cells, so a tokenizer
+    failure keeps the tokens read before the failure instead of skipping the
+    cell. A literal the tokenizer could not close is the one case that yields no
+    token to blank, so its unread text is blanked to the end of the cell; the
+    tokens emitted before the failure are real code and are still scanned.
+    """
+    chars = list(text)
+    line_offsets = _line_start_offsets(text)
+    tokens = _tokenize_leniently(text)
+    for token in tokens:
+        if token.type in _EXECUTABLE_TOKEN_TYPES:
+            continue
+        _blank_span(
+            chars,
+            _token_offset(line_offsets, token.start),
+            _token_offset(line_offsets, token.end),
+        )
+    unfinished_literal = _unfinished_literal_offset(line_offsets, text, tokens)
+    if unfinished_literal is not None:
+        _blank_span(chars, unfinished_literal, len(chars))
+    return "".join(chars)
+
+
 def _scan_for_progression_violations(  # noqa: C901
     *,
     text: str,
@@ -591,14 +826,21 @@ def _scan_for_progression_violations(  # noqa: C901
             )
         ]
 
+    # Comments and printed string text are prose, so only executable source counts.
+    executable_text = _executable_source(text)
+
     # If we're in construct K, then constructs strictly after K are disallowed.
     disallowed = CONSTRUCT_ORDER[allowed_idx + 1 :]
 
     for construct in disallowed:
+        if construct == "data_types" and allowed_construct in _CASTING_PREREQUISITE_CONSTRUCTS:
+            continue
         for pat in rules.get(construct, []):
             # Special-case: allow a single top-level `def solve()` wrapper (and returns inside it)
             if construct == "functions":
-                func_defs = list(re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", text, re.M))
+                func_defs = list(
+                    re.finditer(r"^\s*def\s+([A-Za-z_]\w*)\s*\(", executable_text, re.M)
+                )
                 # If there are any named functions other than `solve`, report as before
                 other_funcs = [m for m in func_defs if m.group(1) != "solve"]
                 if other_funcs:
@@ -619,16 +861,22 @@ def _scan_for_progression_violations(  # noqa: C901
                     regions: list[tuple[int, int]] = []
                     for idx, m in enumerate(func_defs):
                         s = m.start()
-                        e = func_defs[idx + 1].start() if idx + 1 < len(func_defs) else len(text)
+                        e = (
+                            func_defs[idx + 1].start()
+                            if idx + 1 < len(func_defs)
+                            else len(executable_text)
+                        )
                         regions.append((s, e))
-                    return_positions = [m.start() for m in re.finditer(r"\breturn\b", text)]
+                    return_positions = [
+                        m.start() for m in re.finditer(r"\breturn\b", executable_text)
+                    ]
                     if return_positions and all(
                         any(s <= pos < e for s, e in regions) for pos in return_positions
                     ):
                         continue
                 # otherwise fallthrough to regular warning
 
-            if pat.search(text):
+            if pat.search(executable_text):
                 findings.append(
                     Finding(
                         "WARN",
@@ -960,8 +1208,189 @@ def _check_student_checker_support(
     return findings
 
 
+@dataclass(frozen=True)
+class _ExpectationDicts:
+    """The recognised expectation dicts of one ``expectations.py`` module.
+
+    Attributes:
+        static: Dicts declaring what a part prints without reading input.
+        interactive: Dicts declaring a runnable input case, or the
+            prompts/inputs/post-input message it is driven with, for a part
+            whose code calls ``input()``.
+    """
+
+    static: dict[str, dict[int, object]]
+    interactive: dict[str, dict[int, object]]
+
+
+def _expectation_convention(name: str) -> str | None:
+    """Return the convention suffix of an ``EX<N>_<CONVENTION>`` name, else ``None``."""
+    match = _EXPECTATION_NAME_RE.match(name)
+    if match is None:
+        return None
+    return match.group("convention")
+
+
+def _collect_expectation_dicts(module: object) -> _ExpectationDicts:
+    """Split the module's recognised expectation dicts into static and interactive."""
+    static: dict[str, dict[int, object]] = {}
+    interactive: dict[str, dict[int, object]] = {}
+
+    for name in dir(module):
+        value = getattr(module, name)
+        if not isinstance(value, dict):
+            continue
+        convention = _expectation_convention(name)
+        if convention is None:
+            continue
+        typed = cast(dict[int, object], value)
+        if convention in _INTERACTIVE_EXPECTATION_CONVENTIONS:
+            interactive[name] = typed
+        elif convention in _STATIC_EXPECTATION_CONVENTIONS:
+            static[name] = typed
+
+    return _ExpectationDicts(static=static, interactive=interactive)
+
+
+def _declared_parts(dicts: dict[str, dict[int, object]]) -> set[int]:
+    """Return the union of the exercise numbers declared by ``dicts``."""
+    parts: set[int] = set()
+    for declared in dicts.values():
+        parts.update(declared)
+    return parts
+
+
+def _module_level_assignment(node: ast.stmt) -> tuple[str, ast.expr] | None:
+    """Return ``(name, value)`` for a simple module-level assignment, else ``None``."""
+    if isinstance(node, ast.AnnAssign):
+        if isinstance(node.target, ast.Name) and node.value is not None:
+            return node.target.id, node.value
+        return None
+    if isinstance(node, ast.Assign) and len(node.targets) == 1:
+        target = node.targets[0]
+        if isinstance(target, ast.Name):
+            return target.id, node.value
+    return None
+
+
+def _mirrored_case_name(node: ast.expr) -> str | None:
+    """Return the name whose ``expected_output`` ``node`` reads, if that is all it reads.
+
+    ``case["expected_output"]`` and ``case.expected_output`` are the two audited ways
+    a shipped mirror reads an input case. Any other expression — a concatenation,
+    an f-string, or a different case field — derives new values instead of
+    mirroring them.
+    """
+    base: ast.expr
+    if isinstance(node, ast.Attribute):
+        base = node.value
+        reads_expected_output = node.attr == _EXPECTED_OUTPUT_KEY
+    elif isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant):
+        base = node.value
+        reads_expected_output = node.slice.value == _EXPECTED_OUTPUT_KEY
+    else:
+        return None
+    if not reads_expected_output or not isinstance(base, ast.Name):
+        return None
+    return base.id
+
+
+def _target_names(target: ast.expr) -> set[str]:
+    """Return the names a comprehension or ``for`` target binds."""
+    if isinstance(target, ast.Name):
+        return {target.id}
+    if isinstance(target, (ast.Tuple, ast.List)):
+        names: set[str] = set()
+        for element in target.elts:
+            names |= _target_names(element)
+        return names
+    return set()
+
+
+def _mirrors_input_cases(comp: ast.DictComp, source_names: set[str]) -> bool:
+    """Return True when ``comp`` copies each input case's ``expected_output`` value.
+
+    Keying a dict from the input cases is not enough to make it a mirror: the
+    values must be the cases' ``expected_output`` unchanged. A comprehension that
+    derives anything else from the cases is a second, independent declaration.
+    """
+    if len(comp.generators) != 1:
+        return False
+    generator = comp.generators[0]
+    iterates_input_cases = any(
+        isinstance(node, ast.Name) and node.id in source_names for node in ast.walk(generator.iter)
+    )
+    if not iterates_input_cases:
+        return False
+    case_name = _mirrored_case_name(comp.value)
+    return case_name is not None and case_name in _target_names(generator.target)
+
+
+def _reference_alias_names(expectations_path: Path, source_names: set[str]) -> set[str]:
+    """Return the dict names that mirror ``source_names`` value for value.
+
+    An entirely interactive exercise may publish a quick-reference
+    ``EX<N>_EXPECTED_OUTPUTS`` computed from ``EX<N>_INPUT_CASES``. Such a dict is
+    a reference alias rather than a second, static declaration, so it must not be
+    reported as an exercise being listed in both families. A hand-written literal
+    dict, and a comprehension that derives new values from the input cases, are
+    independent declarations and are still reported.
+    """
+    tree = ast.parse(expectations_path.read_text(encoding="utf-8"))
+
+    aliases: set[str] = set()
+    for node in tree.body:
+        assignment = _module_level_assignment(node)
+        if assignment is None:
+            continue
+        name, value = assignment
+        if isinstance(value, ast.DictComp) and _mirrors_input_cases(value, source_names):
+            aliases.add(name)
+    return aliases
+
+
+@dataclass(frozen=True)
+class _DeclaredFamilyParts:
+    """The exercise numbers one ``expectations.py`` declares per family.
+
+    Attributes:
+        static: Parts declared by a static dict, excluding reference aliases.
+        interactive: Parts declared by an interactive input-case dict.
+    """
+
+    static: set[int]
+    interactive: set[int]
+
+
+def _declared_family_parts(
+    expectations_path: Path,
+    expectations: _ExpectationDicts,
+) -> _DeclaredFamilyParts:
+    """Return the parts each expectation family declares, reference aliases excluded.
+
+    This is the single definition of the static/interactive split, so callers
+    that classify an exercise's declarations share the verifier's own answer.
+    """
+    alias_names = _reference_alias_names(expectations_path, set(expectations.interactive))
+    static = _declared_parts(
+        {name: value for name, value in expectations.static.items() if name not in alias_names}
+    )
+    return _DeclaredFamilyParts(
+        static=static,
+        interactive=_declared_parts(expectations.interactive),
+    )
+
+
 def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
-    """Gate G: Verify expectations.py exists with non-empty expected-outputs."""
+    """Gate G: Verify expectations.py covers every part with a runnable expectation.
+
+    Coverage is the union of the part keys the static and interactive families
+    declare, so an exercise may split its expectations across static, interactive,
+    and shape-specific dicts as long as every part 1..parts is declared by one of
+    them. A reference alias declares no part of its own: it only republishes the
+    input cases it is derived from, which are counted once, through that input
+    case dict.
+    """
     findings: list[Finding] = []
     expectations_path = ex_dir / "tests" / "expectations.py"
 
@@ -986,44 +1415,38 @@ def _check_expectations_module(ex_dir: Path, parts: int) -> list[Finding]:
         )
         return findings
 
-    # Find the exercise-ID-prefixed expected outputs dict (matches both
-    # EX<N>_EXPECTED_OUTPUTS and EX<N>_EXPECTED_STATIC_OUTPUTS conventions).
-    expected_outputs = None
-    for attr_name in dir(module):
-        if attr_name.endswith("_OUTPUTS") and isinstance(getattr(module, attr_name), dict):
-            expected_outputs = getattr(module, attr_name)
-            break
-
-    if expected_outputs is None:
+    expectations = _collect_expectation_dicts(module)
+    if not expectations.static and not expectations.interactive:
         findings.append(
             Finding(
                 "ERROR",
-                "expectations.py must define an EX<N>_EXPECTED_OUTPUTS or "
-                "EX<N>_EXPECTED_STATIC_OUTPUTS dict",
+                "expectations.py must define at least one recognised expectation dict "
+                "(for example EX<N>_EXPECTED_OUTPUTS, EX<N>_EXPECTED_STATIC_OUTPUTS, "
+                "or EX<N>_INPUT_CASES)",
                 path=expectations_path,
             )
         )
         return findings
 
-    if len(expected_outputs) == 0:
+    declared = _declared_family_parts(expectations_path, expectations)
+    covered_parts = declared.static | declared.interactive
+    if not covered_parts:
         findings.append(
             Finding(
                 "ERROR",
-                "EX<N>_EXPECTED_OUTPUTS dict is empty; expected outputs for 1..{parts}",
+                f"expectation dicts are all empty; expected coverage for 1..{parts}",
                 path=expectations_path,
             )
         )
         return findings
 
-    # Check that all required part keys are present
-    expected_keys = set(range(1, parts + 1))
-    actual_keys = set(expected_outputs.keys())
-    missing_keys = expected_keys - actual_keys
+    missing_keys = set(range(1, parts + 1)) - covered_parts
     if missing_keys:
         findings.append(
             Finding(
                 "ERROR",
-                f"EX<N>_EXPECTED_OUTPUTS missing keys for parts {sorted(missing_keys)}; expected 1..{parts}",
+                f"expectation dicts are missing keys for parts {sorted(missing_keys)}; "
+                f"expected 1..{parts}",
                 path=expectations_path,
             )
         )
@@ -1060,18 +1483,62 @@ def _detect_interactive_exercises(nb: NotebookDocument) -> set[int]:  # noqa: C9
     return interactive
 
 
-def _check_expectations_input_consistency(  # noqa: C901
+def _classify_declaration(
+    *,
+    ex_no: int,
+    uses_input: bool,
+    in_static: bool,
+    in_interactive: bool,
+) -> tuple[str, str] | None:
+    """Return the ``(severity, message)`` for one part's misclassification.
+
+    Returns:
+        ``None`` when the part's static/interactive declaration agrees with the
+        notebook.
+    """
+    if uses_input and not in_interactive:
+        if in_static:
+            return (
+                "ERROR",
+                f"Exercise {ex_no} uses input() in the notebook but is declared only "
+                f"in static expectation dicts — this will cause the runtime self-check "
+                f"to hang.  Declare exercise {ex_no} in EX<N>_INPUT_CASES (or the "
+                f"interactive expectation dict this exercise uses) instead.",
+            )
+        return (
+            "ERROR",
+            f"Exercise {ex_no} uses input() in the notebook but is not declared in any "
+            f"interactive expectation dict, for example EX<N>_INPUT_CASES, in "
+            f"expectations.py.",
+        )
+    if uses_input and in_static:
+        return (
+            "WARN",
+            f"Exercise {ex_no} is listed in both a static expectation dict and an "
+            f"interactive input-case dict in expectations.py — it should only appear "
+            f"in one.",
+        )
+    if not uses_input and in_interactive:
+        return (
+            "ERROR",
+            f"Exercise {ex_no} does not use input() in the notebook but is declared in "
+            f"an interactive expectation dict, for example EX<N>_INPUT_CASES, in "
+            f"expectations.py.",
+        )
+    return None
+
+
+def _check_expectations_input_consistency(
     *,
     ex_dir: Path,
     nb_solution: NotebookDocument,
     parts: int,
 ) -> list[Finding]:
-    """Cross-check expectations.py classification against notebook ``input()`` usage.
+    """Cross-check the expectations.py static/interactive split against ``input()`` usage.
 
-    Any exercise whose code cell uses ``input()`` must appear in the
-    ``EX<N>_INPUT_CASES`` dict (not only in ``EX<N>_EXPECTED_OUTPUTS`` /
-    ``EX<N>_EXPECTED_STATIC_OUTPUTS``).  Conversely, exercises that do **not**
-    use ``input()`` should not be listed as interactive.
+    Any exercise whose code cell uses ``input()`` must be declared by an
+    interactive expectation dict, not only by a static one.  Conversely, exercises
+    that do **not** use ``input()`` must not be declared interactive.
 
     Without this check the runtime self-check (Gate I) will hang because
     ``run_cell_and_capture_output`` provides no stdin and the cell blocks
@@ -1084,70 +1551,21 @@ def _check_expectations_input_consistency(  # noqa: C901
     if module is None:
         return findings  # Gate G already reports the import error
 
-    # Locate the static-outputs and input-cases dicts
-    static_outputs: dict[int, object] | None = None
-    input_cases: dict[int, object] | None = None
-    for attr_name in dir(module):
-        value = getattr(module, attr_name)
-        if not isinstance(value, dict):
-            continue
-        if attr_name.endswith("_INPUT_CASES"):
-            input_cases = cast(dict[int, object], value)
-        elif attr_name.endswith("_OUTPUTS") and "DERIVED" not in attr_name:
-            # Dicts named EX<N>…DERIVED_OUTPUTS are aliases built from
-            # INPUT_CASES, not separate static-output declarations — skip
-            # them so their keys are not flagged as listed in both dicts.
-            static_outputs = cast(dict[int, object], value)
+    expectations = _collect_expectation_dicts(module)
+    declared = _declared_family_parts(expectations_path, expectations)
 
     interactive_exercises = _detect_interactive_exercises(nb_solution)
 
     for ex_no in range(1, parts + 1):
-        uses_input = ex_no in interactive_exercises
-        in_input_cases = input_cases is not None and ex_no in input_cases
-        in_static = static_outputs is not None and ex_no in static_outputs
-
-        if uses_input and not in_input_cases:
-            if in_static:
-                findings.append(
-                    Finding(
-                        "ERROR",
-                        f"Exercise {ex_no} uses input() in the notebook but is "
-                        f"declared as a static-output exercise in "
-                        f"expectations.py — this will cause the runtime "
-                        f"self-check to hang.  Move exercise {ex_no} from "
-                        f"EX<N>_EXPECTED_OUTPUTS to EX<N>_INPUT_CASES.",
-                        path=expectations_path,
-                    )
-                )
-            else:
-                findings.append(
-                    Finding(
-                        "ERROR",
-                        f"Exercise {ex_no} uses input() in the notebook but is "
-                        f"missing from EX<N>_INPUT_CASES in expectations.py.",
-                        path=expectations_path,
-                    )
-                )
-        elif uses_input and in_static and in_input_cases:
-            findings.append(
-                Finding(
-                    "WARN",
-                    f"Exercise {ex_no} is listed in both "
-                    f"EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES — "
-                    f"it should only appear in one.",
-                    path=expectations_path,
-                )
-            )
-        elif not uses_input and in_input_cases:
-            findings.append(
-                Finding(
-                    "ERROR",
-                    f"Exercise {ex_no} does not use input() in the notebook "
-                    f"but is declared as an interactive exercise in "
-                    f"EX<N>_INPUT_CASES.",
-                    path=expectations_path,
-                )
-            )
+        classification = _classify_declaration(
+            ex_no=ex_no,
+            uses_input=ex_no in interactive_exercises,
+            in_static=ex_no in declared.static,
+            in_interactive=ex_no in declared.interactive,
+        )
+        if classification is not None:
+            severity, message = classification
+            findings.append(Finding(severity, message, path=expectations_path))
 
     return findings
 
@@ -1158,24 +1576,24 @@ def _check_notebook_variant_overrides(
     student_nb: NotebookDocument,
     solution_nb: NotebookDocument,
 ) -> list[Finding]:
-    """Gate H: Verify variant overrides in student and solution notebooks."""
+    """Gate H: Verify variant overrides in student and solution notebooks.
+
+    Policy: a student self-checker cell may omit the ``PYTUTOR_ACTIVE_VARIANT``
+    assignment because the checker runtime already defaults to the student
+    variant when the variable is unset, which is what the scaffolder emits. An
+    explicitly wrong student assignment stays a WARN, and a missing or wrong
+    solution assignment stays an ERROR because that cell would otherwise read
+    ``student.ipynb`` instead of ``solution.ipynb``.
+    """
     findings: list[Finding] = []
 
     student_nb_path = ex_dir / "notebooks" / "student.ipynb"
     solution_nb_path = ex_dir / "notebooks" / "solution.ipynb"
 
-    # Check student notebook
+    # Check student notebook: only an explicit wrong variant is a finding, since
+    # an absent assignment resolves to 'student' through the runtime default.
     student_variant = _find_variant_in_notebook(student_nb)
-    if student_variant is None:
-        findings.append(
-            Finding(
-                "WARN",
-                "Student notebook self-checker cell does not set "
-                "PYTUTOR_ACTIVE_VARIANT (default is 'student', but explicit is safer)",
-                path=student_nb_path,
-            )
-        )
-    elif student_variant != "student":
+    if student_variant is not None and student_variant != "student":
         findings.append(
             Finding(
                 "WARN",

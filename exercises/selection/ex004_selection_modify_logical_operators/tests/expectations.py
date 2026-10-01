@@ -86,9 +86,10 @@ EX004_INPUT_CASES: Final[dict[int, Ex004InputCase]] = {
 # EX004_INPUT_CASES above; every exercise in ex004 is interactive.
 #
 # Named EX004_DERIVED_OUTPUTS rather than EX004_EXPECTED_OUTPUTS because it is
-# derived directly from EX004_INPUT_CASES (nothing is listed twice): the
-# Gate G scan still accepts any EX<N>…_OUTPUTS dict, and the gate that checks
-# static/interactive classification skips dicts whose names contain DERIVED.
+# derived directly from EX004_INPUT_CASES (nothing is listed twice). The
+# static/interactive classification recognises that value-for-value mirror by
+# reading the comprehension, so the name states the derivation rather than
+# working around how the dict is classified.
 # ---------------------------------------------------------------------------
 
 EX004_DERIVED_OUTPUTS: Final[dict[int, str]] = {

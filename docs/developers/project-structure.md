@@ -70,7 +70,7 @@ Each exercise folder contains:
 - `README.md`: Teacher-facing exercise notes
 - `OVERVIEW.md`: Pedagogical notes for teachers
 - `exercise.json`: Minimal exercise metadata used by the canonical resolver
-- `tests/`: Canonical repository-side home for exercise-specific pytest files (for example, `test_<exercise_key>.py`)
+- `tests/`: Canonical repository-side home for exercise-specific pytest files (for example, `test_<exercise_key>.py`) and the exercise-local support modules they share: `expectations.py` (the single source of expected outputs, prompts and input data) and `student_checker_support.py` (the notebook self-check definitions)
 
 Exported Classroom repositories are derived packaging outputs and are not part of the source-repository authoring contract.
 
@@ -110,7 +110,7 @@ Automation tools that help maintain the repository and publish exercises:
 - `build_classroom50_bundle.py`: Generic builder that assembles a teacher-side grading bundle from a JSON exercise-set input plus the current `exercise_runtime_support/` source. See [classroom50-autograder.md](classroom50-autograder.md).
 - `jupyter_watchdog.py`: Kernel health watchdog for VS Code devcontainers — pings Jupyter kernels via ZeroMQ heartbeat and kills unresponsive ones so VS Code can restart them (runs as a background `nohup` process from both devcontainer `postStartCommand` entries). This script is bundled into student Classroom 50 template repositories by the packager (copied to `workspace/scripts/jupyter_watchdog.py`). See [jupyter-watchdog.md](jupyter-watchdog.md) for details.
 - `new_exercise.py`: Scaffolds new exercises (notebooks, tests, and metadata)
-- `verify_exercise_quality.py`: Runs linting, checks, and structural validation used in local development
+- `verify_exercise_quality.py`: Runs linting, checks, and structural validation used in local development. See [exercise-quality-verifier.md](exercise-quality-verifier.md) for the gate contract (progression scanning, expectations conventions, variant overrides).
 - `verify_solutions.sh`: Convenience wrapper that executes tests against solution notebooks
 - `template_repo_cli/`: CLI and utilities for packaging and publishing template repositories (invoked via `repoman`). The supporting modules expose a `run_subprocess()` wrapper that standardises subprocess handling for `git`/`gh` commands and simplifies testing by offering `capture`, `stream`, and `silent` output modes.
 

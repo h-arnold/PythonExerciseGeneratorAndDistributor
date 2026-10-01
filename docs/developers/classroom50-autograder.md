@@ -6,13 +6,11 @@ builder (`scripts/build_classroom50_bundle.py`) and the bundle grader
 (`scripts/autograder.py`). The Selection pilot exercise set is the first input
 and the end-to-end validation fixture; it is not a special code path.
 
-Authoritative sources for this contract are [SPEC.md](../../SPEC.md) (scoring
-rule and `classroom50/result/v1` behaviour) and
-[WORKFLOW_SPEC.md](../../WORKFLOW_SPEC.md) (deployment steps), reviewed against
-the Classroom 50 `Advanced-Autograding` result contract. The repository-side
-execution and variant contract lives in
-[execution-model.md](execution-model.md), and the test surface is in
-[testing-framework.md](testing-framework.md). No Classroom 50 classroom creation
+Authoritative sources for this contract are the developer documentation itself:
+the execution and variant contract in [execution-model.md](execution-model.md) and
+the deployment workflow below, reviewed against the Classroom 50
+`Advanced-Autograding` result contract. The test surface that keeps this document
+aligned is in [testing-framework.md](testing-framework.md). No Classroom 50 classroom creation
 or management functionality is built here; classroom operation (assignment
 registration, the bundle commit, roster, accept, submit, Collect) stays a manual
 teacher follow-up.

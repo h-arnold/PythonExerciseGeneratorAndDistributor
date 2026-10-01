@@ -24,6 +24,7 @@ This repository provides notebook-based Python exercises with automated grading 
 - `docs/developers/project-structure.md` — project layout and file conventions
 - `docs/developers/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
 - `docs/developers/testing-framework.md` — how the grading and test system works
+- `docs/developers/exercise-quality-verifier.md` — gate contract for `scripts/verify_exercise_quality.py` (progression scanning, expectations conventions, variant overrides)
 - `docs/developers/classroom50-autograder.md` — generic Classroom 50 grader/builder contract, CLI interfaces, and scoring
 - `docs/exercise-agents/exercise-generation-cli.md` — CLI for scaffolding new exercises
 - `docs/developers/setup.md` — installation and environment setup
@@ -165,6 +166,7 @@ def is_notebook_cell(obj: object) -> TypeGuard[NotebookCell]:
 - **Tags**: Exact match required (e.g., `exercise1`, not `Exercise1` or `exercise_1`)
 - **Tagged cells**: Use `exercise1`, `exercise2`, ... tags and align tests with the actual cell behaviour; there is no repository-wide `solve()` contract.
 - **Checker cells**: Self-check notebook cells must call `run_notebook_checks('<exercise_key>')` with the canonical exercise key string. Do not pass notebook path strings such as `notebooks/foo.ipynb` or `str(path)` into that helper.
+- **Variant overrides**: The student self-check cell may omit `PYTUTOR_ACTIVE_VARIANT` (the checker defaults it to `student`); the solution self-check cell must set it to `solution`.
 
 ## Common Commands
 
@@ -189,6 +191,16 @@ uv run repoman --dry-run sync
 ruff check . --fix
 
 ```
+
+## Exercise Quality Verifier
+
+`uv run python scripts/verify_exercise_quality.py <exercise_key>` runs the authoring gates; `--all` sweeps the catalogue. Non-obvious rules when acting on its findings:
+
+- A construct-progression warning is a prompt for review, not an instruction to edit a notebook. The scan only reports **executable** tagged code: comment, string-literal and f-string literal text is ignored, and an f-string replacement expression is still scanned.
+- `int()`, `float()` and `str()` casting is a documented prerequisite for the `sequence` and `selection` strands (taught in sequence ex006/ex007, required by the selection strand's `input()` comparisons). Never remove legitimate casts to silence a warning; every other later construct stays flagged.
+- Gate G expects one declaration per part in `exercises/<construct>/<exercise_key>/tests/expectations.py`. Do not keep overlapping hand-maintained static and interactive tables; derive a quick-reference dict from the input cases instead. That derived dict is a reference alias: it covers no part on its own, so it cannot close a missing-part report.
+
+Full gate contract: `docs/developers/exercise-quality-verifier.md`.
 
 ## When Asked to Create Exercises
 

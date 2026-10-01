@@ -191,6 +191,34 @@ class TestCopyFiles:
         packaged_pytest_ini = (temp_dir / "pytest.ini").read_text(encoding="utf-8")
         assert "tests.autograde_plugin" not in packaged_pytest_ini
 
+    def test_copy_template_files_uses_template_pyproject_and_devcontainer(
+        self,
+        template_packager: TemplatePackager,
+        repo_root: Path,
+        temp_dir: Path,
+    ) -> None:
+        """Test the packaged pyproject and devcontainer come from template sources."""
+
+        template_packager.copy_template_base_files(temp_dir)
+
+        packaged_pyproject = temp_dir / "pyproject.toml"
+        template_pyproject = repo_root / "template_repo_files" / "pyproject.toml"
+        packaged_text = packaged_pyproject.read_text(encoding="utf-8")
+        assert packaged_text == template_pyproject.read_text(encoding="utf-8")
+        # The root pyproject carries maintainer-only tooling (e.g. a different
+        # project name); the student template must never receive that file.
+        root_pyproject = repo_root / "pyproject.toml"
+        assert packaged_text != root_pyproject.read_text(encoding="utf-8")
+
+        packaged_devcontainer = temp_dir / ".devcontainer" / "devcontainer.json"
+        template_devcontainer = (
+            repo_root / "template_repo_files" / ".devcontainer" / "devcontainer.json"
+        )
+        assert packaged_devcontainer.is_file()
+        assert packaged_devcontainer.read_text(encoding="utf-8") == template_devcontainer.read_text(
+            encoding="utf-8"
+        )
+
     def test_copy_template_files_excludes_entire_github_tree(
         self,
         template_packager: TemplatePackager,

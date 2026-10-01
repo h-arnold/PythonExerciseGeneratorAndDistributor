@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,12 +14,16 @@ from tests.exercise_metadata_helpers import make_exercise_json
 # pyright: reportPrivateUsage=false
 
 
+#: Source of the single tagged ``exercise1`` cell the notebook helpers write.
+_DEFAULT_CELL_SOURCE = "print('Hello')\n"
+
+
 def _write_notebook(
     path: Path,
     *,
     include_explanation: bool = True,
     variant: str | None = "student",
-    source: str = "print('Hello')\n",
+    source: str = _DEFAULT_CELL_SOURCE,
 ) -> None:
     cells: list[dict[str, object]] = []
     if include_explanation:
@@ -101,6 +106,7 @@ def _write_canonical_exercise(  # noqa: PLR0913
     metadata: dict[str, int | str] | None = None,
     include_explanation: bool = True,
     missing_paths: set[str] | None = None,
+    cell_source: str = _DEFAULT_CELL_SOURCE,
 ) -> Path:
     exercise_dir = repo_root / "exercises" / "sequence" / slug
     exercise_dir.mkdir(parents=True, exist_ok=True)
@@ -115,12 +121,14 @@ def _write_canonical_exercise(  # noqa: PLR0913
             exercise_dir / "notebooks" / "student.ipynb",
             include_explanation=include_explanation,
             variant="student",
+            source=cell_source,
         )
     if "notebooks/solution.ipynb" not in missing_paths:
         _write_notebook(
             exercise_dir / "notebooks" / "solution.ipynb",
             include_explanation=include_explanation,
             variant="solution",
+            source=cell_source,
         )
     if "tests/test_file" not in missing_paths:
         test_path = exercise_dir / "tests" / f"test_{slug}.py"
@@ -939,7 +947,14 @@ class TestMainHangRegression:
 
 
 class TestGateHNotebookVariantOverrides:
-    """Gate H: Verify variant overrides in student and solution notebooks."""
+    """Gate H: Verify variant overrides in student and solution notebooks.
+
+    Policy: the student self-checker cell may omit the ``PYTUTOR_ACTIVE_VARIANT``
+    assignment because the checker runtime already defaults to the student
+    variant when the variable is unset.  An explicitly wrong student assignment
+    stays a WARN, and a missing or wrong solution assignment stays an ERROR
+    because that cell would otherwise read ``student.ipynb``.
+    """
 
     def _make_notebook(self, source_lines: list[str]) -> dict[str, Any]:
         return {
@@ -966,12 +981,27 @@ class TestGateHNotebookVariantOverrides:
         )
         return exercise_dir
 
-    def test_student_missing_variant_returns_warning(self, tmp_path: Path) -> None:
+    def test_student_missing_override_is_valid_when_solution_overrides(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """An omitted student override is valid, matching the runtime default."""
         slug = "ex004_sequence_modify_vars"
         exercise_dir = self._make_exercise_dir(tmp_path, slug)
-        nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
-        (exercise_dir / "notebooks" / "student.ipynb").write_text(json.dumps(nb), encoding="utf-8")
-        (exercise_dir / "notebooks" / "solution.ipynb").write_text(json.dumps(nb), encoding="utf-8")
+        student_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        solution_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8"
+        )
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8"
+        )
         nb_solution = verify_exercise_quality._load_notebook(
             exercise_dir / "notebooks" / "solution.ipynb"
         )
@@ -984,8 +1014,74 @@ class TestGateHNotebookVariantOverrides:
             student_nb=nb_student,
             solution_nb=nb_solution,
         )
-        assert len(findings) > 0
-        assert any("PYTUTOR_ACTIVE_VARIANT" in f.message for f in findings)
+        assert findings == []
+
+    def test_missing_student_override_does_not_mask_the_solution_error(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A missing solution override is the only finding in the pair."""
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        bare_nb = self._make_notebook(["run_notebook_checks('ex004_sequence_modify_vars')\n"])
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(bare_nb), encoding="utf-8"
+        )
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(bare_nb), encoding="utf-8"
+        )
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
+        )
+        assert [f.severity for f in findings] == ["ERROR"]
+
+    def test_student_wrong_variant_returns_warning(self, tmp_path: Path) -> None:
+        """An explicitly wrong student override is never a silent pass."""
+        slug = "ex004_sequence_modify_vars"
+        exercise_dir = self._make_exercise_dir(tmp_path, slug)
+        student_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        solution_nb = self._make_notebook(
+            [
+                "import os\n",
+                "os.environ['PYTUTOR_ACTIVE_VARIANT'] = 'solution'\n",
+                "run_notebook_checks('ex004_sequence_modify_vars')\n",
+            ]
+        )
+        (exercise_dir / "notebooks" / "student.ipynb").write_text(
+            json.dumps(student_nb), encoding="utf-8"
+        )
+        (exercise_dir / "notebooks" / "solution.ipynb").write_text(
+            json.dumps(solution_nb), encoding="utf-8"
+        )
+        nb_solution = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "solution.ipynb"
+        )
+        nb_student = verify_exercise_quality._load_notebook(
+            exercise_dir / "notebooks" / "student.ipynb"
+        )
+
+        findings = verify_exercise_quality._check_notebook_variant_overrides(
+            ex_dir=exercise_dir,
+            student_nb=nb_student,
+            solution_nb=nb_solution,
+        )
+        assert [f.severity for f in findings] == ["WARN"]
+        assert "instead of 'student'" in findings[0].message
 
     def test_solution_missing_variant_returns_error(self, tmp_path: Path) -> None:
         slug = "ex004_sequence_modify_vars"
@@ -1658,8 +1754,8 @@ class TestSection3AllExercisesSweep:
             _DEFECTIVE_SLUG,
             metadata=_sweep_metadata(_DEFECTIVE_SLUG, exercise_id=10),
         )
-        # A student notebook without the variant override triggers a Gate H WARN only.
-        _write_notebook(exercise_dir / "notebooks" / "student.ipynb", variant=None)
+        # An explicitly wrong student override triggers a Gate H WARN only.
+        _write_notebook(exercise_dir / "notebooks" / "student.ipynb", variant="solution")
         _write_teaching_order(tmp_path, [_DEFECTIVE_SLUG])
 
         exit_code = verify_exercise_quality.main(["--all", "--repo-root", str(tmp_path)])
@@ -1892,8 +1988,8 @@ class TestSection3AllExercisesSweep:
             "CHECKS: list[object] = []\n",
             encoding="utf-8",
         )
-        # A student notebook without the variant override is a genuine Gate H warning.
-        _write_notebook(checker_dir / "notebooks" / "student.ipynb", variant=None)
+        # An explicitly wrong student override is a genuine Gate H warning.
+        _write_notebook(checker_dir / "notebooks" / "student.ipynb", variant="solution")
         _write_canonical_exercise(
             tmp_path,
             healthy,
@@ -1916,11 +2012,11 @@ class TestSection3AllExercisesSweep:
 
         assert "CHECKS list in student_checker_support.py is empty" not in suppressed_out
         assert "ERROR:" not in suppressed_out
-        assert "does not set PYTUTOR_ACTIVE_VARIANT" in suppressed_out
+        assert "instead of 'student'" in suppressed_out
         assert (
             _owning_exercise_key(
                 suppressed_out,
-                "does not set PYTUTOR_ACTIVE_VARIANT",
+                "instead of 'student'",
                 keys,
             )
             == empty_checks
@@ -2027,3 +2123,1368 @@ class TestSection3AllExercisesSweep:
         assert exit_code != 0
         assert "Missing canonical file: README.md" in captured.out
         assert checked == [clean, broken]
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 4 — Gate G expectation conventions in real use
+#
+# Every fixture below mirrors the shape of a shipped exercise's
+# ``exercises/<construct>/<exercise_key>/tests/expectations.py``. Gate G used to
+# insist on one ``EX<N>_EXPECTED_OUTPUTS``-style dict keyed by every part, so the
+# baseline ``--all`` sweep reported 26 errors across 18 exercises, 25 of them
+# Gate G findings that contradicted exercises whose solution-variant pytest suite
+# passes. Gate G now counts the union of the part keys declared across static,
+# interactive, and shape-specific dicts, and these tests hold it to that.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+_EX002_SLUG = "ex002_sequence_modify_basics"
+_EX003_SEQUENCE_SLUG = "ex003_sequence_modify_variables"
+_EX004_SEQUENCE_SLUG = "ex004_sequence_debug_syntax"
+_EX005_SEQUENCE_SLUG = "ex005_sequence_debug_logic"
+_EX006_SEQUENCE_SLUG = "ex006_sequence_modify_casting"
+_EX008_SEQUENCE_SLUG = "ex008_sequence_make_consolidation"
+_EX014_SLUG = "ex014_sequence_gaps_advanced_arithmetic"
+_SELECTION_EX003_SLUG = "ex003_selection_modify_elif_boundaries"
+_EX011_SEQUENCE_SLUG = "ex011_sequence_gaps_consolidation"
+
+
+def _convention_exercise_dir(tmp_path: Path, slug: str, *, parts: int) -> Path:
+    """Create an exercise directory with no ``expectations.py`` yet.
+
+    Returns:
+        The exercise directory, with valid metadata, notebooks, teaching order,
+        and a ``student_checker_support.py`` so only the expectations gates vary.
+    """
+    return _write_canonical_exercise(
+        tmp_path,
+        slug,
+        metadata={
+            **_exercise_metadata(slug),  # type: ignore[arg-type]
+            "exercise_type": "modify",
+            "parts": parts,
+        },
+        include_explanation=False,
+        missing_paths={"tests/expectations.py"},
+    )
+
+
+def _write_expectations_source(ex_dir: Path, source: str) -> Path:
+    """Write an exercise-local ``expectations.py`` from raw module source.
+
+    Raw source (rather than a repr'd dict) keeps the fixture faithful to the
+    shipped files, which use ``Final[...]`` annotations, ``TypedDict`` cases,
+    and dict comprehensions.
+
+    Returns:
+        The written ``expectations.py`` path.
+    """
+    path = ex_dir / "tests" / "expectations.py"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(source, encoding="utf-8")
+    return path
+
+
+def _tagged_notebook(*cells: tuple[str, str]) -> verify_exercise_quality.NotebookDocument:
+    """Build a solution notebook document from ``(tag, source)`` code cells."""
+    return cast(
+        verify_exercise_quality.NotebookDocument,
+        {
+            "cells": [
+                {
+                    "cell_type": "code",
+                    "metadata": {"language": "python", "tags": [tag]},
+                    "source": [source],
+                }
+                for tag, source in cells
+            ]
+        },
+    )
+
+
+_STATIC_CELL = 'print("static")\n'
+_INPUT_CELL = 'name = input("Name: ")\nprint(f"Hello {name}")\n'
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — split static/interactive coverage is acknowledged
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGSplitExpectationCoverage:
+    """Gate G must accept exercised static, interactive, and split conventions.
+
+    Gate G used to reject ``ex002``/``ex003``/``ex004``/``ex005`` for having no
+    single ``EX<N>_EXPECTED_OUTPUTS``-style dict and ``ex006``/``ex007``/``ex008``/
+    ``ex009``/``ex010``/``ex013``/``ex014`` with "missing keys for parts", even
+    though each exercise declares its parts across static, interactive, and
+    shape-specific dicts and passes its solution-variant tests.
+    """
+
+    @pytest.mark.parametrize(
+        ("slug", "parts", "source"),
+        [
+            pytest.param(
+                _EX002_SLUG,
+                4,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX002_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {\n"
+                '    1: "Hi there!",\n'
+                '    2: "Bye",\n'
+                "}\n"
+                "EX002_EXPECTED_MULTI_LINE: Final[dict[int, list[str]]] = {\n"
+                "    3: ['Total cost: 8', 'Thanks'],\n"
+                "}\n"
+                "EX002_EXPECTED_NUMERIC: Final[dict[int, int | float]] = {4: 7}\n"
+                "EX002_EXPECTED_PRINT_CALLS: Final[dict[int, int]] = {1: 1, 2: 1, 3: 2, 4: 1}\n",
+                id="ex002-split-by-output-shape",
+            ),
+            pytest.param(
+                _EX003_SEQUENCE_SLUG,
+                3,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX003_EXPECTED_STATIC_OUTPUT: Final[dict[int, str]] = {\n"
+                '    1: "Hi there!",\n'
+                '    2: "I enjoy coding lessons.",\n'
+                "}\n"
+                "EX003_EXPECTED_PROMPTS: Final[dict[int, list[str]]] = {\n"
+                '    3: ["Type the name of your favourite fruit:", "Type one word:"],\n'
+                "}\n"
+                'EX003_EXPECTED_INPUT_MESSAGES: Final[dict[int, str]] = {3: "I like {value1}"}\n',
+                id="ex003-singular-static-output-plus-prompts",
+            ),
+            pytest.param(
+                _EX004_SEQUENCE_SLUG,
+                2,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX004_MIN_EXPLANATION_LENGTH: Final[int] = 50\n"
+                "EX004_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello World!'}\n"
+                "EX004_PROMPT_STRINGS: Final[dict[int, str]] = {2: 'How many apples?'}\n"
+                'EX004_FORMAT_VALIDATION: Final[dict[int, str]] = {2: "You have 5 apples"}\n',
+                id="ex004-single-line-plus-prompt-and-format",
+            ),
+            pytest.param(
+                _EX005_SEQUENCE_SLUG,
+                2,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX005_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: '50'}\n"
+                "EX005_EXERCISE_INPUTS: Final[dict[int, list[str]]] = {2: ['Maria', 'Jones']}\n"
+                "EX005_INPUT_PROMPTS: Final[dict[int, tuple[str, str]]] = {\n"
+                "    2: ('Enter first name: ', 'Enter last name: '),\n"
+                "}\n",
+                id="ex005-single-line-plus-inputs-and-prompts",
+            ),
+            pytest.param(
+                _EX006_SEQUENCE_SLUG,
+                4,
+                "from __future__ import annotations\n"
+                "from typing import Final, NotRequired, TypedDict\n"
+                "class Ex006InputExpectation(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    prompt_contains: str\n"
+                "    output_contains: NotRequired[str]\n"
+                "EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: '15', 2: '6.0'}\n"
+                "EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {\n"
+                '    3: {"inputs": ["6"], "prompt_contains": "Enter number"},\n'
+                '    4: {"inputs": ["1.5"], "prompt_contains": "Enter price"},\n'
+                "}\n",
+                id="ex006-static-plus-input-expectations",
+            ),
+            pytest.param(
+                _EX008_SEQUENCE_SLUG,
+                5,
+                "from __future__ import annotations\n"
+                "from typing import Final, TypedDict\n"
+                "class Ex008InteractiveCase(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    expected_output: str\n"
+                'EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: "Welcome!", 2: "Snack box"}\n'
+                "EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {\n"
+                '    3: [{"inputs": ["Aisha", "drawing"], "expected_output": "Hello Aisha!"}],\n'
+                '    4: [{"inputs": ["6", "3"], "expected_output": "Books read: 18"}],\n'
+                '    5: [{"inputs": ["2.5", "3"], "expected_output": "Total distance: 7.5 km"}],\n'
+                "}\n",
+                id="ex008-static-plus-interactive-cases",
+            ),
+        ],
+    )
+    def test_exercised_expectation_conventions_cover_every_part(
+        self,
+        tmp_path: Path,
+        slug: str,
+        parts: int,
+        source: str,
+    ) -> None:
+        """Static, interactive, and split dicts that jointly cover 1..parts pass."""
+        ex_dir = _convention_exercise_dir(tmp_path, slug, parts=parts)
+        _write_expectations_source(ex_dir, source)
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
+
+        assert findings == [], (
+            f"{slug} expectations follow a shipped convention and cover 1..{parts}; "
+            f"got: {[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+    def test_part_covered_by_no_expectation_dict_still_errors(self, tmp_path: Path) -> None:
+        """Widening coverage must not accept an undeclared part.
+
+        Guards the ex008 convention: parts 1-2 and 3 are declared but part 4 is
+        absent from both dicts, so Gate G must still report the gap.
+        """
+        ex_dir = _convention_exercise_dir(tmp_path, _EX008_SEQUENCE_SLUG, parts=4)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: 'Welcome!', 2: 'Snack box'}\n"
+            "EX008_INTERACTIVE_CASES: Final[dict[int, list[dict[str, object]]]] = {\n"
+            '    3: [{"inputs": ["Aisha"], "expected_output": "Hello Aisha!"}],\n'
+            "}\n",
+        )
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=4)
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert errors, f"expected an ERROR for the undeclared part, got: {findings}"
+        assert "4" in errors[0].message, (
+            f"the ERROR must name the undeclared part 4, got: {errors[0].message}"
+        )
+
+    def test_module_without_any_expectation_dict_still_errors(self, tmp_path: Path) -> None:
+        """An expectations.py with no output/case dicts is still an error.
+
+        Widening coverage must not accept placeholder-only modules.
+        """
+        ex_dir = _convention_exercise_dir(tmp_path, _EX003_SEQUENCE_SLUG, parts=3)
+        expectations_path = _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX003_MIN_EXPLANATION_LENGTH: Final[int] = 50\n",
+        )
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=3)
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert errors[0].path == expectations_path
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — alternate input-case conventions are recognised
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGAlternateInputCaseConventions:
+    """The input-consistency cross-check must accept every shipped convention.
+
+    ``_check_expectations_input_consistency`` used to recognise only
+    ``EX<N>_INPUT_CASES``, so it reported 14 false "uses input() ... missing from
+    EX<N>_INPUT_CASES" errors for sequence ``ex003``/``ex004``/``ex005``/
+    ``ex006``/``ex008``, whose interactive parts are fully declared under
+    ``EX<N>_EXPECTED_PROMPTS``, ``EX<N>_PROMPT_STRINGS``,
+    ``EX<N>_EXERCISE_INPUTS``, ``EX<N>_INPUT_EXPECTATIONS``, and
+    ``EX<N>_INTERACTIVE_CASES`` respectively.
+    """
+
+    @pytest.mark.parametrize(
+        ("slug", "source"),
+        [
+            pytest.param(
+                _EX003_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                'EX003_EXPECTED_STATIC_OUTPUT: Final[dict[int, str]] = {1: "Hi there!"}\n'
+                "EX003_EXPECTED_PROMPTS: Final[dict[int, list[str]]] = {\n"
+                '    2: ["Which town do you like the most?", "Which country is it in?"],\n'
+                "}\n"
+                'EX003_EXPECTED_INPUT_MESSAGES: Final[dict[int, str]] = {2: "I would visit {town}"}\n',
+                id="ex003-expected-prompts-and-input-messages",
+            ),
+            pytest.param(
+                _EX004_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX004_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello World!'}\n"
+                "EX004_PROMPT_STRINGS: Final[dict[int, str]] = {2: 'Enter your name:'}\n"
+                'EX004_FORMAT_VALIDATION: Final[dict[int, str]] = {2: "My name is Alice"}\n',
+                id="ex004-prompt-strings-and-format-validation",
+            ),
+            pytest.param(
+                _EX005_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final\n"
+                "EX005_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: '50'}\n"
+                "EX005_EXERCISE_INPUTS: Final[dict[int, list[str]]] = {2: ['16', 'Birmingham']}\n"
+                "EX005_INPUT_PROMPTS: Final[dict[int, tuple[str, str]]] = {\n"
+                "    2: ('Enter your age: ', 'Enter your city: '),\n"
+                "}\n",
+                id="ex005-exercise-inputs-and-input-prompts",
+            ),
+            pytest.param(
+                _EX006_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final, NotRequired, TypedDict\n"
+                "class Ex006InputExpectation(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    prompt_contains: str\n"
+                "    output_contains: NotRequired[str]\n"
+                'EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: "15"}\n'
+                "EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {\n"
+                '    2: {"inputs": ["6"], "prompt_contains": "Enter number"},\n'
+                "}\n",
+                id="ex006-input-expectations",
+            ),
+            pytest.param(
+                _EX008_SEQUENCE_SLUG,
+                "from __future__ import annotations\n"
+                "from typing import Final, TypedDict\n"
+                "class Ex008InteractiveCase(TypedDict):\n"
+                "    inputs: list[str]\n"
+                "    expected_output: str\n"
+                'EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: "Welcome!"}\n'
+                "EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {\n"
+                '    2: [{"inputs": ["Aisha", "drawing"], "expected_output": "Hello Aisha!"}],\n'
+                "}\n",
+                id="ex008-interactive-cases",
+            ),
+        ],
+    )
+    def test_interactive_part_declared_under_alternate_convention_returns_no_finding(
+        self,
+        tmp_path: Path,
+        slug: str,
+        source: str,
+    ) -> None:
+        """An input()-using part declared under a shipped convention is accepted."""
+        ex_dir = _convention_exercise_dir(tmp_path, slug, parts=2)
+        _write_expectations_source(ex_dir, source)
+        nb_solution = _tagged_notebook(("exercise1", _STATIC_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        assert findings == [], (
+            f"{slug} declares exercise 2 interactively under a shipped convention; "
+            f"got: {[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+    def test_static_part_declared_interactively_still_errors(self, tmp_path: Path) -> None:
+        """Recognising more conventions must not excuse a genuine misclassification."""
+        ex_dir = _convention_exercise_dir(tmp_path, _EX008_SEQUENCE_SLUG, parts=2)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex008InteractiveCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            'EX008_EXPECTED_STATIC_OUTPUTS: Final[dict[int, str]] = {1: "Welcome!"}\n'
+            "EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {\n"
+            '    2: [{"inputs": ["Aisha"], "expected_output": "Hello Aisha!"}],\n'
+            "}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _STATIC_CELL), ("exercise2", _STATIC_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert "Exercise 2" in errors[0].message
+        assert "does not use input()" in errors[0].message
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Gate G — derived / reference output aliases are not double declarations
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestGateGReferenceOutputAliases:
+    """A reference alias over INPUT_CASES is not a second static declaration.
+
+    ``ex003_selection_modify_elif_boundaries`` builds
+    ``EX003_EXPECTED_OUTPUTS`` as a comprehension over ``EX003_INPUT_CASES`` and
+    documents it as "a quick reference ... used by the quality verifier (Gate G)".
+    All of its exercises are interactive, so before reference aliases were
+    recognised the sweep emitted 10 spurious "is listed in both
+    EX<N>_EXPECTED_OUTPUTS and EX<N>_INPUT_CASES" warnings.
+    """
+
+    @staticmethod
+    def _write_all_interactive(
+        ex_dir: Path,
+        *,
+        alias_key: str = "case_no",
+        extra_source: str = "",
+    ) -> None:
+        """Write the two-part all-interactive shape used by selection ex003.
+
+        ``alias_key`` is the derived dict's key expression: the default
+        ``case_no`` mirrors the input-case keys, the shape ex003/ex004 ship,
+        while ``case_no + 1`` shifts them and so names a part that has no input
+        case. ``extra_source`` appends further module-level declarations.
+        """
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
+            f'    {alias_key}: case["expected_output"]\n'
+            "    for case_no, case in EX003_INPUT_CASES.items()\n"
+            "}\n"
+            f"{extra_source}",
+        )
+
+    def test_reference_alias_over_input_cases_is_not_flagged_as_double_declared(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """The selection ex003 shape must not warn "listed in both"."""
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=2)
+        self._write_all_interactive(
+            ex_dir,
+            extra_source=(
+                "EX003_EDGE_CASES: Final[dict[int, list[Ex003InputCase]]] = {1: [], 2: []}\n"
+            ),
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        assert findings == [], (
+            "every exercise is interactive and EX003_EXPECTED_OUTPUTS only mirrors "
+            "EX003_INPUT_CASES; got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+    def test_genuine_double_declaration_still_warns(self, tmp_path: Path) -> None:
+        """A static dict that contradicts the input case is still a double declaration."""
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=1)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {1: 'Something else entirely'}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=1,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        warnings = [f for f in findings if f.severity == "WARN"]
+        assert not errors, f"expected no ERROR, got: {errors}"
+        assert len(warnings) == 1, f"expected exactly one WARN, got: {findings}"
+        assert "listed in both" in warnings[0].message
+
+    @pytest.mark.parametrize(
+        "derived_value",
+        [
+            pytest.param(
+                '"Different: " + case["expected_output"]',
+                id="prefixed-expected-output",
+            ),
+            pytest.param(
+                'case["inputs"][0]',
+                id="different-case-field",
+            ),
+        ],
+    )
+    def test_comprehension_deriving_new_values_is_still_a_double_declaration(
+        self,
+        tmp_path: Path,
+        derived_value: str,
+    ) -> None:
+        """Only a value-for-value mirror of the input cases is a reference alias.
+
+        Both shapes key their entries from ``EX003_INPUT_CASES`` but derive
+        something other than each case's ``expected_output``, so the dict is a
+        second, independent static declaration and the overlap must still be
+        reported. Guards the alias predicate against treating any mention of an
+        input-case dict as a mirror.
+        """
+        parts = 2
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex003InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX003_INPUT_CASES: Final[dict[int, Ex003InputCase]] = {\n"
+            '    1: {"inputs": ["25"], "expected_output": "Enter your total spend: Standard"},\n'
+            '    2: {"inputs": ["1"], "expected_output": "Small van for 1 passengers"},\n'
+            "}\n"
+            "EX003_EXPECTED_OUTPUTS: Final[dict[int, str]] = {\n"
+            f"    exercise_no: {derived_value}\n"
+            "    for exercise_no, case in EX003_INPUT_CASES.items()\n"
+            "}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=parts,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        warnings = [f for f in findings if f.severity == "WARN"]
+        assert not errors, f"expected no ERROR, got: {errors}"
+        assert len(warnings) == parts, (
+            f"expected one overlap WARN per part, got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+        assert all("listed in both" in w.message for w in warnings)
+
+    def test_edge_case_dict_alone_does_not_count_as_interactive_coverage(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """An edge-case dict must not stand in for the primary input-case dict.
+
+        ``ex014_sequence_gaps_advanced_arithmetic`` pairs
+        ``EX014_EDGE_CASES`` with ``EX014_INPUT_CASES``; a part declared only in
+        the edge-case dict still has no runnable input case, so the unsafe-input
+        error must stand.
+        """
+        ex_dir = _convention_exercise_dir(tmp_path, _EX014_SLUG, parts=2)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final, TypedDict\n"
+            "class Ex014InputCase(TypedDict):\n"
+            "    inputs: list[str]\n"
+            "    expected_output: str\n"
+            "EX014_INPUT_CASES: Final[dict[int, Ex014InputCase]] = {\n"
+            '    1: {"inputs": ["1", "2"], "expected_output": "Sum: 3"},\n'
+            "}\n"
+            "EX014_EDGE_CASES: Final[dict[int, list[Ex014InputCase]]] = {\n"
+            '    2: [{"inputs": ["0", "0"], "expected_output": "Sum: 0"}],\n'
+            "}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL), ("exercise2", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=2,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert "Exercise 2" in errors[0].message
+        assert "input()" in errors[0].message
+
+    def test_derived_alias_with_transformed_keys_does_not_cover_a_missing_part(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A derived dict must not declare a part its source input cases omit.
+
+        The values still mirror each case's ``expected_output``, but the shifted
+        key points at another part's transcript, so part 3 has no runnable input
+        case and Gate G must report it missing instead of accepting the invented
+        key as coverage.
+        """
+        parts = 3
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
+        self._write_all_interactive(ex_dir, alias_key="case_no + 1")
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, (
+            "only part 3 lacks an input case; expected exactly one ERROR, got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+        assert "[3]" in errors[0].message, (
+            f"the ERROR must name the missing part 3, got: {errors[0].message}"
+        )
+
+    def test_mirrored_key_alias_still_passes_gate_g(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """The shipped mirrored-key alias shape keeps Gate G green."""
+        parts = 2
+        ex_dir = _convention_exercise_dir(tmp_path, _SELECTION_EX003_SLUG, parts=parts)
+        self._write_all_interactive(ex_dir)
+
+        findings = verify_exercise_quality._check_expectations_module(ex_dir, parts=parts)
+
+        assert findings == [], (
+            "EX003_INPUT_CASES declares 1..2 and EX003_EXPECTED_OUTPUTS only mirrors "
+            "their keys and values; got: "
+            f"{[f'{f.severity}: {f.message}' for f in findings]}"
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Retained contract — genuine unsafe input() with no inputs still errors
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestUnsafeInputWithoutInputsIsStillAnError:
+    """Widening recognition must not defuse the hang guard.
+
+    The Gate I skip exists because ``run_cell_and_capture_output`` supplies no
+    stdin, so an ``input()``-using cell classified as static blocks forever.
+    An exercise with no runnable input case at all must keep reporting that
+    error and keep Gate I skipped, under both the ``_OUTPUTS`` and the
+    shape-specific static conventions.
+    """
+
+    def test_no_input_case_dict_reports_unsafe_input(self, tmp_path: Path) -> None:
+        """A static-only module with an input()-using cell is still an ERROR."""
+        ex_dir = _convention_exercise_dir(tmp_path, _EX004_SEQUENCE_SLUG, parts=1)
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX004_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello Alice'}\n",
+        )
+        nb_solution = _tagged_notebook(("exercise1", _INPUT_CELL))
+
+        findings = verify_exercise_quality._check_expectations_input_consistency(
+            ex_dir=ex_dir,
+            nb_solution=nb_solution,
+            parts=1,
+        )
+
+        errors = [f for f in findings if f.severity == "ERROR"]
+        assert len(errors) == 1, f"expected exactly one ERROR, got: {findings}"
+        assert "Exercise 1" in errors[0].message
+        assert "input()" in errors[0].message
+
+    def test_main_still_errors_and_skips_gate_i_under_split_convention(
+        self,
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """End to end: the error, the Gate I skip, and no Gate I run all remain."""
+        slug = "ex014_sequence_gaps_regtest2"
+        ex_dir = _write_canonical_exercise(
+            tmp_path,
+            slug,
+            metadata={
+                **_exercise_metadata(slug),
+                "exercise_type": "gaps",
+                "parts": 1,
+            },
+            include_explanation=False,
+            missing_paths={"tests/expectations.py"},
+            cell_source=_INPUT_CELL,
+        )
+        # Split static convention with no runnable input case for the input() cell.
+        _write_expectations_source(
+            ex_dir,
+            "from __future__ import annotations\n"
+            "from typing import Final\n"
+            "EX014_EXPECTED_SINGLE_LINE: Final[dict[int, str]] = {1: 'Hello Alice'}\n",
+        )
+
+        exit_code = verify_exercise_quality.main([slug, "--repo-root", str(tmp_path)])
+        captured = capsys.readouterr()
+        combined = captured.out + captured.err
+
+        assert exit_code != 0
+        assert "Exercise 1 uses input()" in combined
+        assert "Skipping runtime self-check (Gate I)" in combined
+        assert "Self-check failed" not in combined
+        assert "Runtime self-check raised" not in combined
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Desired contract — ex011 expectations.py
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+class TestEx011ExpectationsModule:
+    """``ex011_sequence_gaps_consolidation`` must ship a complete expectations.py.
+
+    ex011 used to keep its expected-output tables private inside
+    ``tests/student_checker_support.py`` and repeat them in the canonical test
+    file, so it had no exercise-local expectations module and Gate G reported
+    ``Missing expectations.py``, the one ERROR in the ``--all`` sweep. It now
+    ships a ``tests/expectations.py`` that declares every part and that the
+    checker and the exercise tests both load, so Gate G reports nothing and no
+    expectation data lives in a private checker dict.
+    """
+
+    def test_ex011_ships_a_complete_expectations_module(self, repo_root: Path) -> None:
+        """Gate G reports no finding for ex011: the module exists and covers 1..parts."""
+        ex_dir = repo_root / "exercises" / "sequence" / _EX011_SEQUENCE_SLUG
+        metadata = json.loads((ex_dir / "exercise.json").read_text(encoding="utf-8"))
+        parts = int(metadata["parts"])
+
+        findings = verify_exercise_quality._check_expectations_module(
+            ex_dir,
+            parts=parts,
+        )
+
+        assert findings == [], (
+            f"{_EX011_SEQUENCE_SLUG} must ship tests/expectations.py declaring every "
+            f"part 1..{parts}; Gate G findings: "
+            + "; ".join(f"{f.severity}: {f.message}" for f in findings)
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Section 4 — Progression scan: executable constructs, not printed token text
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Batch 3 policy (REMAINING_WORK.md, "Batch 3"), restated here as the contract the
+# scanner implements and the tests below hold it to.
+#
+# 1. The scan reports a later construct only where it is *executable* in a
+#    tagged ``exerciseN`` code cell.  Token text inside comments, ordinary
+#    string literals, and the literal parts of f-strings is printed prose
+#    rather than student code, so it must not warn.  Real occurrences in this
+#    repository include ``# Use // for full hours and % for leftover minutes``
+#    (sequence ex012, ex015), ``print("Good try")`` (selection ex002), and
+#    ``print(f"Standard delivery for £{total} order")`` (selection ex003).
+#    The complementary boundary is an f-string *replacement field*: the
+#    expression in ``print(f"{len([1, 2])} items")`` is executable and must
+#    still warn, so the literal text and the expression cannot be treated alike.
+# 2. A tagged debug cell may intentionally contain invalid syntax — 16 such
+#    cells are committed in this repository, for example ``print("Hello World!"``
+#    in sequence ex004 — so the scan must not assume a tagged cell parses, and it
+#    must not skip a whole cell that fails to parse either: real later-construct
+#    use in broken debug code must still warn.  An *unterminated* string literal
+#    is the one case that leaves text no token covers, so that text is prose to
+#    the end of the cell; the tokens the tokenizer did emit before the failure
+#    are real code and are still scanned.
+# 3. Casting is a documented prerequisite rather than a progression violation:
+#    ``int()``, ``float()``, and ``str()`` calls are permitted in the
+#    ``sequence`` and ``selection`` constructs, because ``input()`` always
+#    returns ``str``.  This is a narrow waiver: iteration and real exception
+#    handling stay forbidden in those constructs, and every other later
+#    construct (lists, dictionaries, functions, file handling, libraries, oop)
+#    stays exactly as strict as before.
+#
+# Every test below is written against that contract.  Both the student and the
+# solution notebook surface are scanned, so a finding on either side fails.
+
+#: ``_scan_both_variants`` scans a student and a solution notebook, so a single
+#: offending cell is counted once per surface and this is the total to expect.
+#: A cell that violates two distinct later constructs yields twice this.
+_FINDINGS_BOTH_VARIANTS = 2
+
+
+def _tagged_code_cell(tag: str, source: str) -> dict[str, Any]:
+    """Build one ``exerciseN``-tagged code cell."""
+    return {
+        "cell_type": "code",
+        "metadata": {"language": "python", "tags": [tag]},
+        "source": [source],
+    }
+
+
+def _scan_both_variants(
+    tmp_path: Path,
+    *,
+    construct: str,
+    cells: list[dict[str, Any]],
+) -> list[verify_exercise_quality.Finding]:
+    """Scan ``cells`` through both the student and the solution notebook surface.
+
+    Both variants receive identical tagged cells, so an unwanted warning on
+    either surface fails the caller's assertion, and a wanted warning is
+    reported once per notebook.
+    """
+    student_path = tmp_path / "student.ipynb"
+    solution_path = tmp_path / "solution.ipynb"
+    _write_notebook_cells(student_path, cells)
+    _write_notebook_cells(solution_path, cells)
+    return verify_exercise_quality._collect_progression_findings(
+        construct=construct,
+        nb_path=student_path,
+        nb_solution=verify_exercise_quality._load_notebook(solution_path),
+        nb_solution_path=solution_path,
+        nb_student=verify_exercise_quality._load_notebook(student_path),
+    )
+
+
+def _finding_report(findings: list[verify_exercise_quality.Finding]) -> str:
+    """Render findings for an assertion message."""
+    return "; ".join(f"{f.severity}: {f.message}" for f in findings)
+
+
+class TestProgressionScanExecutableConstructs:
+    """Executable later constructs must still warn — over-filtering guard.
+
+    These tests pass before and after the Batch 3 change; they exist so a
+    fix that silences the false positives cannot also silence the real signal.
+    """
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", "for hour in range(3):\n    print(hour)\n"),
+            ("sequence", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("sequence", "for hour in range(3):\n    break\n"),
+            ("sequence", "for hour in range(3):\n    continue\n"),
+            ("selection", "for hour in range(3):\n    print(hour)\n"),
+            ("selection", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("sequence", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("sequence", 'raise ValueError("bad")\n'),
+            ("selection", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("sequence", "print(len([1, 2]))\n"),
+            ("sequence", "import os\n"),
+            ("sequence", 'items = {"a": 1}\nprint(items.get("a"))\n'),
+            # A construct inside an f-string replacement field is executable, so
+            # it must warn even though the surrounding literal text must not.
+            ("sequence", 'print(f"{len([1, 2])} items")\n'),
+            ("sequence", "flag = True\nprint(f\"{'yes' if flag else 'no'}\")\n"),
+        ],
+    )
+    def test_executable_later_construct_still_warns(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """One later construct in executable source warns once per notebook."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            f"{construct!r} cell must warn once on each notebook surface; got "
+            f"{len(findings)}: {_finding_report(findings)}"
+        )
+        assert all("progression violation" in f.message for f in findings)
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", "for hour in range(3)\n    print(hour)\n"),
+            ("sequence", "count = 0\nwhile count < 3\n    count = count + 1\n"),
+            ("selection", "for hour in range(3)\n    print(hour)\n"),
+            ("selection", "count = 0\nwhile count < 3\n    count = count + 1\n"),
+            ("sequence", "try\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+        ],
+    )
+    def test_unparsable_debug_cell_with_executable_later_construct_still_warns(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """A cell that does not parse must be scanned, not skipped whole.
+
+        Debug exercises ship intentionally broken tagged cells, so ignoring a
+        cell because it fails to parse would drop genuine later-construct use.
+        """
+        # Fixture guard: confirm the cell really is invalid syntax.
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            f"{construct!r} debug cell must warn despite invalid syntax; got "
+            f"{len(findings)}: {_finding_report(findings)}"
+        )
+
+
+class TestProgressionScanIgnoresNonExecutableTokenText:
+    """Later-construct tokens in comments and string literals must not warn.
+
+    The scanner used to regex-match the concatenated tagged cell source as plain
+    text, so every case below was a false positive before comment and string text
+    was blanked out.
+    """
+
+    @pytest.mark.parametrize(
+        ("construct", "source", "origin"),
+        [
+            (
+                "sequence",
+                "# Use // for full hours and % for leftover minutes\nhours = 7\nprint(hours)\n",
+                "iteration 'for' inside a comment",
+            ),
+            (
+                "sequence",
+                "# Ask for input, convert, calculate, and print.\nn = 1\nprint(n)\n",
+                "iteration 'for' inside a comment",
+            ),
+            (
+                "selection",
+                "# Try the elif branch for free delivery.\nfree = True\nprint(free)\n",
+                "iteration 'for' and exceptions 'try' inside a comment",
+            ),
+            (
+                "sequence",
+                'print("Tip percentage (e.g. 10 for 10%):")\n',
+                "iteration 'for' inside an ordinary string literal",
+            ),
+            (
+                "sequence",
+                'total = 1\nprint(f"Standard delivery for £{total} order")\n',
+                "iteration 'for' inside an f-string literal",
+            ),
+            (
+                "selection",
+                'n = 1\nprint(f"Small van for {n} passengers")\n',
+                "iteration 'for' inside an f-string literal",
+            ),
+            (
+                "sequence",
+                'print("Good try")\n',
+                "exceptions 'try' inside an ordinary string literal",
+            ),
+            (
+                "selection",
+                'score = 1\nprint(f"Good try, {score}")\n',
+                "exceptions 'try' inside an f-string literal",
+            ),
+        ],
+    )
+    def test_non_executable_token_text_does_not_warn(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+        origin: str,
+    ) -> None:
+        """Comments and printed string text are prose, not student code."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            f"{construct!r} cell with {origin} must not warn; got {_finding_report(findings)}"
+        )
+
+    def test_invalid_debug_cell_with_tokens_only_in_text_does_not_warn(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A deliberately broken debug cell must not warn on prose tokens.
+
+        Debug exercises ship intentionally invalid tagged cells, so a scanner
+        that assumes every tagged cell parses cannot be the basis of the fix.
+        """
+        source = (
+            '# Reminder: a for loop and try/except come later in the course.\nprint("Good try"\n'
+        )
+        # Fixture guard: confirm the cell really is invalid syntax, so this
+        # test cannot pass merely because the source happens to parse.
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            "an invalid debug cell whose later-construct tokens appear only in a "
+            f"comment and a string literal must not warn; got {_finding_report(findings)}"
+        )
+
+    def test_compliant_cell_next_to_offending_cell_does_not_add_a_finding(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A compliant cell beside an offending one adds no extra finding.
+
+        This counts findings; it does **not** attribute them to a cell, because
+        ``Finding`` carries only severity, message, and notebook path with no
+        cell tag.  It therefore shows that the compliant cell contributes
+        nothing beyond the single warning the offending cell already raises on
+        each notebook surface, and nothing more than that.
+        """
+        cells = [
+            _tagged_code_cell("exercise1", "for hour in range(3):\n    print(hour)\n"),
+            _tagged_code_cell(
+                "exercise2",
+                "# Ask for input, convert, calculate, and print.\nn = 1\nprint(n)\n",
+            ),
+        ]
+
+        findings = _scan_both_variants(tmp_path, construct="sequence", cells=cells)
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            "the compliant cell must add no finding beyond the offending cell's, "
+            f"counted once per notebook surface; got {len(findings)}: "
+            f"{_finding_report(findings)}"
+        )
+
+
+class TestProgressionScanUnterminatedStringLiterals:
+    """Prose in an unfinished string literal is not executable construct usage.
+
+    ``_tokenize_leniently`` keeps the tokens read before a tokenizer failure, but
+    a string literal that is never closed leaves text no token covers, so that text
+    is still in the scanned source when the patterns run.  A debug cell that breaks
+    inside its message text therefore warned about a later construct the student
+    only wrote prose for, while the real code the tokenizer did emit before the
+    failure must keep warning.
+    """
+
+    @pytest.mark.parametrize(
+        ("construct", "source", "origin"),
+        [
+            pytest.param(
+                "sequence",
+                'total = 3\nprint("Use this for each item while checking)\n',
+                "an unfinished ordinary string literal",
+                id="sequence-unfinished-literal",
+            ),
+            pytest.param(
+                "selection",
+                'n = 1\nprint("Print this for each item while checking)\n',
+                "an unfinished ordinary string literal",
+                id="selection-unfinished-literal",
+            ),
+            pytest.param(
+                "sequence",
+                'total = 3\nprint(f"Use this for each item while checking)\n',
+                "an unfinished f-string literal",
+                id="sequence-unfinished-f-string",
+            ),
+            pytest.param(
+                "sequence",
+                'total = 3\nprint(f"""Use this for each item while checking)\n',
+                "an unfinished triple-quoted f-string literal",
+                id="sequence-unfinished-triple-quoted-f-string",
+            ),
+            pytest.param(
+                "sequence",
+                'total = 3\nprint(f"Use this {total} for each item while checking)\n',
+                "an f-string literal unfinished after a replacement field",
+                id="sequence-unfinished-f-string-after-replacement-field",
+            ),
+        ],
+    )
+    def test_unfinished_literal_prose_does_not_warn(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+        origin: str,
+    ) -> None:
+        """A cell that breaks inside a string literal is prose up to that point.
+
+        Every fixture leaves a literal open, so the tokenizer stops inside it and
+        the literal's remaining text yields no token to blank.  An f-string is the
+        harder half: since PEP 701 the tokenizer *does* emit its opening token and
+        literal chunks, so only the text after the last emitted token is
+        uncovered prose.  The ``SyntaxError`` guard below keeps each test from
+        passing by accident on a terminated literal.
+        """
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            f"{construct!r} cell with {origin} mentioning 'for' and 'while' must "
+            f"not warn; got {_finding_report(findings)}"
+        )
+
+    @pytest.mark.parametrize(
+        ("source", "expected_marker"),
+        [
+            pytest.param(
+                'for hour in range(3):\n    print(hour)\nmessage = "Add the total: 5\n',
+                "found iteration pattern",
+                id="iteration-loop-before-the-failure",
+            ),
+            pytest.param(
+                'for hour in range(3):\n    print(hour)\nmessage = f"Add {5} for the total\n',
+                "found iteration pattern",
+                id="iteration-loop-before-an-unfinished-f-string",
+            ),
+            pytest.param(
+                "total = 3\ntry:\n    print(total)\nexcept ValueError:\n    print(0)\n"
+                'message = "Add this for each item while checking)\n',
+                "found exceptions pattern",
+                id="exception-handling-before-the-failure",
+            ),
+        ],
+    )
+    def test_construct_tokens_emitted_before_the_failure_still_warn(
+        self,
+        tmp_path: Path,
+        source: str,
+        expected_marker: str,
+    ) -> None:
+        """Masking the unfinished literal must not hide the real code before it.
+
+        The construct tokenised before the failure is genuine student code, and
+        each fixture's unfinished literal deliberately carries no token for that
+        same construct, so the warning cannot come from the prose.
+        """
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any(expected_marker in f.message for f in findings), (
+            "a construct tokenised before the tokenizer failure must still warn; got "
+            f"{_finding_report(findings)}"
+        )
+
+    @pytest.mark.parametrize(
+        "source",
+        [
+            pytest.param(
+                'message = f"{total:>{"width": 8}\nfor hour in range(3):\n',
+                id="failure-with-a-brace-left-open-in-the-replacement-field",
+            ),
+            pytest.param(
+                'message = f"{total:>{"width": 8}\nwhile total < 3:\n',
+                id="failure-with-a-brace-left-open-before-a-while-loop",
+            ),
+        ],
+    )
+    def test_code_unread_because_a_replacement_field_brace_is_open_still_warns(
+        self,
+        tmp_path: Path,
+        source: str,
+    ) -> None:
+        """An f-string left open is not enough on its own to mask unread code.
+
+        Masking the unfinished literal relies on the literal still being open when
+        the tokenizer stops.  Both fixtures drop a ``}`` in a format-spec
+        replacement field, so a brace is open too, and the tokenizer stops on the
+        first line: the loop below it has no token yet, and masking it would hide
+        a genuine progression violation.
+        """
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any("found iteration pattern" in f.message for f in findings), (
+            f"a loop the tokenizer never reached must still warn; got {_finding_report(findings)}"
+        )
+
+    def test_replacement_field_code_in_an_unfinished_f_string_still_warns(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Masking an unfinished f-string must spare the code in its fields.
+
+        Masking starts where the last emitted token ended, so the expression the
+        tokenizer did read inside a replacement field keeps warning even though
+        the literal it belongs to was never closed.
+        """
+        source = 'total = 3\nmessage = f"Items: {len([1, 2])} for each\n'
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any("found lists pattern" in f.message for f in findings), (
+            "`len(` inside a replacement field of an unfinished f-string must still "
+            f"warn; got {_finding_report(findings)}"
+        )
+
+    def test_code_after_a_mistyped_string_prefix_still_warns(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A name before a quote is not a literal opening, so it must not mask.
+
+        The tokenizer stops on line 3, whose indentation does not match the block
+        above it, so the loop on line 4 is real unread code.  ``s`` is not a string
+        prefix, so line 3 is a mistyped literal rather than an unfinished one, and
+        must not be blanked to the end of the cell.
+        """
+        source = 'def f():\n    x = 1\n  s"oops\nfor hour in range(3):\n'
+        with pytest.raises(SyntaxError):
+            ast.parse(source)
+
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert any("found iteration pattern" in f.message for f in findings), (
+            f"a loop after a mistyped string prefix must still warn; got {_finding_report(findings)}"
+        )
+
+
+# A run of Unicode line separators long enough that an offset table built with
+# ``str.splitlines`` (which also breaks on U+2028) misses the row after it
+# entirely, instead of drifting by a character or two.
+_UNICODE_SEPARATOR_ROW = "\u2028" * 40 + "\n"
+
+
+class TestProgressionScanTokenizerLineOffsets:
+    """Comment masking must follow the tokenizer's line boundaries.
+
+    ``tokenize`` reads source with ``readline``, which ends a line only at a
+    newline, so the mask offsets have to be built the same way.
+    """
+
+    def test_unicode_separator_row_does_not_shift_comment_masking(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A comment after a Unicode separator row is prose and must not warn."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[
+                _tagged_code_cell(
+                    "exercise1",
+                    f"n = 1\n{_UNICODE_SEPARATOR_ROW}# Reminder: a for loop comes later\n",
+                )
+            ],
+        )
+
+        assert findings == [], (
+            "a comment after a Unicode line-separator row must still be blanked out; got "
+            f"{_finding_report(findings)}"
+        )
+
+    def test_unicode_separator_row_keeps_executable_constructs(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """A real later construct after a Unicode separator row must still warn."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct="sequence",
+            cells=[
+                _tagged_code_cell(
+                    "exercise1",
+                    f"n = 1\n{_UNICODE_SEPARATOR_ROW}for hour in range(3):\n    print(hour)\n",
+                )
+            ],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            "an executable loop after a Unicode line-separator row must warn once per "
+            f"notebook surface; got {len(findings)}: {_finding_report(findings)}"
+        )
+
+
+class TestProgressionCastingPrerequisitePolicy:
+    """``int``/``float``/``str`` casts are a permitted sequence/selection prerequisite."""
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", 'n = int(input("Enter a number: "))\nprint(n)\n'),
+            ("sequence", 'n = float(input("Enter a number: "))\nprint(n)\n'),
+            ("sequence", "n = 1\nprint(str(n))\n"),
+            ("selection", 'n = int(input("Enter a number: "))\nif n > 10:\n    print("big")\n'),
+            (
+                "selection",
+                'n = float(input("Enter a number: "))\nif n > 1.5:\n    print("big")\n',
+            ),
+            ("selection", "n = 1\nif n > 0:\n    print(str(n))\n"),
+            ("sequence", 'n = "7"\nprint(f"{int(n)} plus one")\n'),
+        ],
+    )
+    def test_documented_casting_prerequisite_does_not_warn(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """Casting taught before selection must not be reported as progression."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert findings == [], (
+            f"{construct!r} cell may cast with int()/float()/str(); got {_finding_report(findings)}"
+        )
+
+    @pytest.mark.parametrize(
+        ("construct", "source"),
+        [
+            ("sequence", "for hour in range(3):\n    print(hour)\n"),
+            ("selection", "for hour in range(3):\n    print(hour)\n"),
+            ("sequence", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("selection", "count = 0\nwhile count < 3:\n    count = count + 1\n"),
+            ("sequence", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("selection", "try:\n    print(1)\nexcept ValueError:\n    print(2)\n"),
+            ("sequence", 'raise ValueError("bad")\n'),
+        ],
+    )
+    def test_prerequisite_waiver_excludes_iteration_and_exceptions(
+        self,
+        tmp_path: Path,
+        construct: str,
+        source: str,
+    ) -> None:
+        """The casting waiver is narrow: iteration and real handling still warn."""
+        findings = _scan_both_variants(
+            tmp_path,
+            construct=construct,
+            cells=[_tagged_code_cell("exercise1", source)],
+        )
+
+        assert len(findings) == _FINDINGS_BOTH_VARIANTS, (
+            f"{construct!r} cell must still warn for iteration or exceptions, once per "
+            f"notebook surface; got {len(findings)}: {_finding_report(findings)}"
+        )
