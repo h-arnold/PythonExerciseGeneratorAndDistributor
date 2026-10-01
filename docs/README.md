@@ -50,6 +50,7 @@ If you are new to this project, start with one of these two guides:
 | [Execution Model](developers/execution-model.md) | **Canonical contract** — test discovery, runtime imports, variant selection, source-to-export mapping. |
 | [Project Structure](developers/project-structure.md) | Directory layout, naming conventions, tagged cell system, parallel notebook sets. |
 | [Testing Framework](developers/testing-framework.md) | Infrastructure testing — testing the codebase itself (scaffolding, grader, CLI). |
+| [Exercise Quality Verifier](developers/exercise-quality-verifier.md) | **Authoring gate contract** for `scripts/verify_exercise_quality.py` — progression scanning, expectations conventions, variant overrides, exit codes. |
 | [Classroom 50 Autograder](developers/classroom50-autograder.md) | Generic teacher-side grader and bundle builder — scoring contract, CLI interfaces, Selection pilot. |
 | [Setup Guide](developers/setup.md) | Environment setup — prerequisites, uv sync, verification. |
 | [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |

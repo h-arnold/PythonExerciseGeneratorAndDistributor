@@ -137,6 +137,10 @@ uv run python scripts/verify_exercise_quality.py ex004_sequence_debug_syntax
 
 This checks notebook structure, tags, and other non-test quality criteria.
 
+> **ℹ️ Note:** warnings are prompts for review, not instructions to change the exercise. It flags later Python features only where they are actually **used** in code — a `for` inside a comment or a message a student prints is ignored. Casting with `int()`, `float()` or `str()` is expected in the sequence and selection exercises, so leave it alone.
+
+> **⚠️ Important:** if a student notebook's self-checker suddenly reports ✅ for unfinished work, the kernel probably still remembers a solution notebook you ran in it earlier. Use the **Kernel** menu → **Restart Kernel…**, then run the self-checker cell again. You do not need to edit the notebook.
+
 ---
 
 ## Committing and Pushing

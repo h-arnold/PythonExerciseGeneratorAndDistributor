@@ -13,6 +13,7 @@ This document is the canonical reference for testing student notebook exercises.
 | Creating new tests | [Scoring & Test Structure](#scoring--test-structure), [Patterns & Anti-Patterns](#patterns--anti-patterns), [Self-Check Cells](#self-check-cells), [Technical Reference](#technical-reference-exercise-framework) |
 | Reviewing existing tests | [Core Testing Rules](#core-testing-rules), [Scoring & Test Structure](#scoring--test-structure), [Patterns & Anti-Patterns](#patterns--anti-patterns) |
 | Adding a self-check cell | [Self-Check Cells](#self-check-cells) entirely |
+| Adding or renaming an expectations dict | [Expectations Modules](#expectations-modules), [Variant Policy for Self-Check Cells](#variant-policy-for-self-check-cells) |
 | Understanding the framework API | [Technical Reference](#technical-reference-exercise-framework) |
 | Running tests locally | [Running Tests](#running-tests) |
 
@@ -23,6 +24,7 @@ These rules apply to **every** exercise test and must not be skipped:
 - **[Initial-Failure Rule](#3-the-initial-failure-rule)**: All tests must fail before the student writes any code. If a test passes on the untouched notebook, tighten it or remove it.
 - **[Construct testing](#5-mandatory-testing-rules)**: If the lesson teaches a specific Python feature (loop, cast, conditional, etc.), you **must** include a test that verifies the construct is present.
 - **[`student_checker_support.py` requirement](#required-pattern-student_checker_supportpy)**: Every exercise with expected outputs must provide a self-check module with output-verification checks. The generic fallback (execution-only) is **not sufficient** for debug, modify, gap-fill, or make exercises.
+- **[Single expectations module](#expectations-modules)**: Expected outputs, prompts, and input data live once in `exercises/<construct>/<exercise_key>/tests/expectations.py`. The test file and the checker both load it; **neither** may re-declare its literals.
 - **[`@pytest.mark.task` annotation](#task-markers)**: Every grading test must be annotated with `@pytest.mark.task(taskno=N)`.
 
 ---
@@ -642,6 +644,22 @@ Always use `load_exercise_test_module(exercise_key, "expectations")` to load the
 
 The `run_exercise_checks` context manager already sets the active variant. Let it propagate — do not pass `variant="student"` explicitly to `run_cell_and_capture_output` or `run_cell_with_input`. Explicit variants override the context manager and cause the solution notebook's self-check to test the student notebook instead.
 
+### Variant Policy for Self-Check Cells
+
+The self-check cell selects which notebook surface the checker reads through `PYTUTOR_ACTIVE_VARIANT`:
+
+| Notebook | Cell content | Verifier (Gate H) |
+|---|---|---|
+| `notebooks/student.ipynb` | `run_notebook_checks('<exercise_key>')` with **no** assignment | no finding |
+| `notebooks/student.ipynb` | assigns `'student'` | no finding |
+| `notebooks/student.ipynb` | assigns anything else | `WARN` |
+| `notebooks/solution.ipynb` | no assignment | `ERROR` |
+| `notebooks/solution.ipynb` | assigns anything other than `'solution'` | `ERROR` |
+
+> **📋 Contract:** the student cell **may** omit the assignment, because `run_exercise_checks` resolves an unset `PYTUTOR_ACTIVE_VARIANT` to `student`. The solution cell **must** assign `'solution'`, or it reads `student.ipynb`. `scripts/exercise_scaffolder/base.py` emits exactly this shape; do not add a redundant student assignment.
+
+> **⚠️ Important:** the student default only holds when the variable is unset **in that kernel**. After the solution self-checker has run in a kernel, that kernel keeps `PYTUTOR_ACTIVE_VARIANT=solution`, so re-running the student self-checker in it reads `solution.ipynb` and reports 🟢 OK for unfinished work. Remedy: restart the kernel (or give the solution notebook its own kernel session) and re-run. Never edit the notebook to work around this.
+
 #### Verification Checklist for `student_checker_support.py`
 
 Before considering an exercise complete, verify:
@@ -773,8 +791,19 @@ The runtime helpers call `resolve_notebook_path` internally, so you usually don'
 
 ### Expectations Modules
 
-Exercise expectations should live beside the canonical exercise-local test file under `exercises/<construct>/<exercise_key>/tests/`.
-Tests should load that exercise-local support data instead of hard-coding outputs or prompts.
+Exercise expectations live in the exercise-local module
+`exercises/<construct>/<exercise_key>/tests/expectations.py`. It is the **single
+source** of expected outputs, prompt text and input data for that exercise.
+
+1. The canonical test file **must** load it with `load_exercise_test_module(exercise_key, "expectations")`.
+2. `tests/student_checker_support.py` **must** load the same module and **must not** re-declare its literals in a private dict.
+3. **Do not** maintain two hand-written declarations of the same expected output. Two tables for one part drift apart and the part silently acquires two different truths.
+
+Reference shape:
+`exercises/sequence/ex011_sequence_gaps_consolidation/tests/expectations.py` declares
+static expectations for parts 1, 2, 4, 5, 6, 7 and input cases for 3, 8, 9, 10;
+both its checker and its test file read it.
+
 Example for ex002:
 
 ```python
@@ -784,6 +813,54 @@ ex002 = load_exercise_test_module("ex002_sequence_modify_basics", "expectations"
 
 assert ex002.EX002_EXPECTED_SINGLE_LINE
 ```
+
+#### Naming conventions the quality verifier recognises
+
+Expectation dicts are module-level names matching `EX<N>_<CONVENTION>`, where `N`
+is the exercise number (`ex011` → `EX011_…`). Gate G counts the **union** of the
+part keys of every recognised dict, so an exercise may split its expectations
+across several shape-specific dicts as long as parts `1..parts` are covered.
+
+| Family | Recognised suffixes |
+|---|---|
+| Static — what a part prints without reading input | `EXPECTED_OUTPUTS`, `EXPECTED_STATIC_OUTPUT`, `EXPECTED_STATIC_OUTPUTS`, `EXPECTED_SINGLE_LINE`, `EXPECTED_MULTI_LINE`, `EXPECTED_NUMERIC`, `EXPECTED_PRINT_CALLS` |
+| Interactive — a runnable input case, or the prompts/inputs/post-input message it is driven with, for a part whose code calls `input()` | `INPUT_CASES`, `INPUT_EXPECTATIONS`, `INTERACTIVE_CASES`, `EXPECTED_PROMPTS`, `PROMPT_STRINGS`, `INPUT_PROMPTS`, `EXERCISE_INPUTS`, `FORMAT_VALIDATION` |
+
+Dicts in neither family — supplementary `EX<N>_EDGE_CASES` or
+`EX<N>_ORIGINAL_PROMPTS` data — provide neither coverage nor a runnable input
+case, and **must not** be used as the only declaration for a part whose code
+calls `input()`.
+
+> **📋 Classification contract:** a part whose notebook code calls `input()`
+> **must** be declared by an interactive dict; a part that does not call
+> `input()` **must not** be declared interactive. Declaring a part in both
+> families is reported, and a static value is never allowed to be an empty
+> placeholder. Both rules are enforced for every exercise by
+> `tests/test_exercise_expectation_data.py`.
+
+#### Derived reference outputs
+
+An entirely interactive exercise **may** publish a quick-reference
+`EX<N>_EXPECTED_OUTPUTS` as a single expected-output lookup for its tests and for
+the quality verifier. Derive it from the input cases instead of writing it out
+again:
+
+```python
+EX002_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
+    exercise_no: case["expected_output"]
+    for exercise_no, case in EX002_INPUT_CASES.items()
+}
+```
+
+A dict built this way is a **reference alias**, not a second static declaration,
+and is accepted. Only a value-for-value mirror qualifies: a hand-written literal
+dict, or a comprehension that derives anything else (a concatenation, a
+different case field), is an independent declaration and is still reported.
+Shipped examples: `exercises/selection/ex002_selection_debug_if_then_else/tests/expectations.py`
+and `exercises/selection/ex004_selection_modify_logical_operators/tests/expectations.py`.
+
+The verifier gate set for these rules is documented in
+[../developers/exercise-quality-verifier.md](../developers/exercise-quality-verifier.md).
 
 ### Reporting Helpers
 

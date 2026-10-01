@@ -126,7 +126,9 @@ If you find a progression violation:
 **Automation helper:** run the repo script to catch common progression slips:
 `uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <debug|modify|make|gaps> --skip-empty-checks`
 
-Treat warnings as prompts for closer manual review (it's heuristic).
+The scanner reports a later construct only where it is **executable** in a tagged `exerciseN` code cell, on either the student or the solution notebook. Comment text, ordinary string literals and f-string literal text are ignored (an f-string replacement expression is still scanned), and a tagged debug cell that does not parse is still scanned rather than skipped. `int(`, `float(` and `str(` casting is a documented prerequisite for the `sequence` and `selection` constructs — it is taught in sequence ex006/ex007 and the selection strand compares values read from `input()` — so it is never a violation there; every other later construct stays flagged.
+
+A verifier warning is a prompt for closer manual review, not an instruction to edit the notebook. Do not remove legitimate teaching code to silence one. The gate contract is documented in `docs/developers/exercise-quality-verifier.md`.
 
 ## Gate C — Notebook structure and tags
 For both student + solution notebooks:
