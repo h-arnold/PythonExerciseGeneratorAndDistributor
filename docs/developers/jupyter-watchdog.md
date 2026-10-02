@@ -2,7 +2,7 @@
 
 Location: `scripts/jupyter_watchdog.py`
 
-A userspace kernel health monitor for VS Code devcontainers that use Jupyter's raw kernel mode. It runs as a background `nohup` process launched by both devcontainer `postStartCommand` entries in this repository.
+A userspace kernel health monitor for VS Code devcontainers that use Jupyter's raw kernel mode. The student template launches it from `.devcontainer/post_start.sh` (see [Invocation](#invocation)); the maintainer devcontainer still launches it inline from `postStartCommand`.
 
 > **⚠️ Important:** The watchdog kills unresponsive kernels. It does **not** restart them. VS Code's built-in kernel recovery detects the death and either prompts the user or auto-restarts depending on user settings.
 
@@ -31,29 +31,39 @@ All tunables are module-level constants at the top of the script:
 
 ## Invocation
 
-The watchdog is launched as a background process from both devcontainer configurations:
+### Student template devcontainer
 
-**Maintainer devcontainer** (`/.devcontainer/devcontainer.json`):
+`/template_repo_files/.devcontainer/devcontainer.json` delegates startup to a script:
+
+```json
+"postStartCommand": "bash .devcontainer/post_start.sh"
+```
+
+The script is invoked through `bash` so a packaged template checkout never depends on an executable bit surviving Git. It is copied into exported student Classroom 50 template repos by the packager (`TemplatePackager` in `scripts/template_repo_cli/core/packager/__init__.py`) and lands at `workspace/.devcontainer/post_start.sh`. The packager requires it as a packaged asset (`REQUIRED_DEVCONTAINER_FILES`), so `validate_package` fails if it is missing from the export. The watchdog itself lands at `workspace/scripts/jupyter_watchdog.py`, validated the same way through `REQUIRED_SCRIPTS`.
+
+`post_start.sh` behaves as follows:
+
+1. Resolves the workspace as the script's parent directory, so it does not depend on the caller's working directory.
+2. Runs `uv sync`. A failed sync is warned about and startup **continues** — a lesson is never blocked by a dependency problem. A missing `pyproject.toml` is warned about and the script returns early.
+3. Launches `uv run --no-sync scripts/jupyter_watchdog.py` through `setsid`, giving the watchdog its own session so it survives the `postStartCommand` shell exiting. `--no-sync` keeps the launch from repeating the sync that just ran.
+4. Waits for the watchdog's start banner (`START_BANNER`) in the watchdog log before reporting success. A backgrounded launch reports success the instant the shell forks, so this is what makes a launch that died immediately visible instead of silently "successful". Only the bytes written by this launch are inspected, so a stale banner from an earlier container start cannot confirm a failed launch.
+5. Always exits 0.
+
+### Maintainer devcontainer
+
+`/.devcontainer/devcontainer.json` still launches the watchdog inline:
 
 ```json
 "postStartCommand": "nohup uv run scripts/jupyter_watchdog.py > /dev/null 2>&1 &"
 ```
-
-**Student template devcontainer** (`/template_repo_files/.devcontainer/devcontainer.json`):
-
-```json
-"postStartCommand": "nohup uv run scripts/jupyter_watchdog.py > /dev/null 2>&1 &"
-```
-
-The student variant chains the watchdog with the environment sync command using `&&`; the maintainer variant runs it standalone.
-
-The watchdog script is also automatically copied into exported student Classroom template repos by the packager (`TemplatePackager` in `scripts/template_repo_cli/core/packager/__init__.py`). It lands at `workspace/scripts/jupyter_watchdog.py` in the packaged output. The packager validates it as a required source asset before any packaging run begins, and re-validates it as a required packaged asset in `_has_required_packaged_assets` so `validate_package` fails if it is missing from the export.
 
 > **💡 Tip:** To run the watchdog manually during development: `uv run python scripts/jupyter_watchdog.py`
 
 ## Logging
 
-Logs are written to `.devcontainer/jupyter_watchdog.log` (relative to the repository root). Each line is timestamped and includes the iteration number where relevant.
+Logs are written to `$XDG_STATE_HOME/python-tutor/jupyter_watchdog.log`, defaulting to `~/.local/state/python-tutor/jupyter_watchdog.log`. Both variants of the script share the watchdog, so both log to the same place: outside the repository, so the log never appears in a student workspace (or under `.devcontainer/`). Each line is timestamped and includes the iteration number where relevant.
+
+The student template's startup script writes `$XDG_STATE_HOME/python-tutor/post_start.log`, which holds its own warnings plus the full `uv sync` output.
 
 Example log output:
 
@@ -63,7 +73,7 @@ Example log output:
 [2026-07-09 10:15:00]   Interval:        30s
 [2026-07-09 10:15:00]   Runtime dir:     /home/vscode/.local/share/jupyter/runtime
 [2026-07-09 10:15:00]   Heartbeat time:  5000ms
-[2026-07-09 10:15:00]   Log file:        /workspaces/PythonExerciseGeneratorAndDistributor/.devcontainer/jupyter_watchdog.log
+[2026-07-09 10:15:00]   Log file:        /home/vscode/.local/state/python-tutor/jupyter_watchdog.log
 [2026-07-09 10:15:00] ============================================================
 [2026-07-09 10:15:30] [iter 1] No active kernels found (open a notebook in VS Code to start one)
 [2026-07-09 10:16:00] [iter 2] Found 1 active kernel(s)
@@ -88,7 +98,7 @@ The watchdog registers handlers for `SIGTERM` and `SIGINT`. On receipt it sets a
 
 ## Dependencies
 
-- **pyzmq** (`zmq`): ZeroMQ bindings for heartbeat communication. Declared in `pyproject.toml` and installed via `uv sync`. The script imports it at the top level, so a missing `zmq` will fail immediately on import — this is intentional (fail-fast).
+- **pyzmq** (`zmq`): ZeroMQ bindings for heartbeat communication. Installed by `uv sync` as a transitive dependency of `ipykernel` in both `pyproject.toml` files; it is not a direct dependency. The script imports it at the top level, so a missing `zmq` fails immediately on import — this is intentional (fail-fast), and the failure is captured in the watchdog log.
 
 ## Troubleshooting
 
@@ -100,11 +110,21 @@ Check for the process:
 ps aux | grep jupyter_watchdog
 ```
 
-If missing, start it manually: `uv run python scripts/jupyter_watchdog.py` and check the log.
+If missing, check the student template's startup log first — it records every warning from container startup, including a watchdog launch that failed:
+
+```bash
+cat "${XDG_STATE_HOME:-$HOME/.local/state}/python-tutor/post_start.log"
+```
+
+Then start the watchdog manually: `uv run python scripts/jupyter_watchdog.py` and check its log.
 
 ### Log file growing large
 
-The watchdog appends one line per kernel per 30s interval plus discovery rounds. With 1–3 active kernels, expect roughly 2 lines per minute. If log size is a concern, add log rotation or truncate it: `> .devcontainer/jupyter_watchdog.log`.
+The watchdog appends one line per kernel per 30s interval plus discovery rounds. With 1–3 active kernels, expect roughly 2 lines per minute. If log size is a concern, add log rotation or truncate it:
+
+```bash
+> "${XDG_STATE_HOME:-$HOME/.local/state}/python-tutor/jupyter_watchdog.log"
+```
 
 ### "No active kernels found" on every iteration
 
