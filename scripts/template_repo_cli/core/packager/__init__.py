@@ -54,6 +54,7 @@ class TemplatePackager:
 
     FORBIDDEN_AUTHORING_FILENAMES: tuple[str, ...] = ("solution.ipynb",)
     REQUIRED_SCRIPTS: tuple[str, ...] = ("jupyter_watchdog.py",)
+    REQUIRED_DEVCONTAINER_FILES: tuple[str, ...] = ("post_start.sh",)
     _ALLOWED_EXERCISE_SUBDIRECTORIES: tuple[str, ...] = (
         "notebooks",
         "tests",
@@ -410,6 +411,9 @@ class TemplatePackager:
             workspace / "exercise_metadata" / "__init__.py",
         ]
         required_files.extend(workspace / "scripts" / script for script in self.REQUIRED_SCRIPTS)
+        required_files.extend(
+            workspace / ".devcontainer" / filename for filename in self.REQUIRED_DEVCONTAINER_FILES
+        )
 
         tests_dir = workspace / "tests"
         required_files.extend(

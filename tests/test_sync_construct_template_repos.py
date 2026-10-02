@@ -142,9 +142,7 @@ class TestSyncViaRepoman:
         assert any("create" in c for c in commands)
 
     @patch("scripts.sync_construct_template_repos.subprocess.run")
-    def test_no_create_fallback_on_auth_error(
-        self, mock_run: MagicMock, repo_root: Path
-    ) -> None:
+    def test_no_create_fallback_on_auth_error(self, mock_run: MagicMock, repo_root: Path) -> None:
         """An auth error bubbles up without attempting create."""
         from scripts.sync_construct_template_repos import _sync_via_repoman
 
@@ -161,9 +159,7 @@ class TestSyncViaRepoman:
         assert all("create" not in c for c in commands)
 
     @patch("scripts.sync_construct_template_repos.subprocess.run")
-    def test_no_fallback_on_other_failure(
-        self, mock_run: MagicMock, repo_root: Path
-    ) -> None:
+    def test_no_fallback_on_other_failure(self, mock_run: MagicMock, repo_root: Path) -> None:
         """An unrelated failure is reported without a create fallback."""
         from scripts.sync_construct_template_repos import _sync_via_repoman
 
@@ -177,9 +173,7 @@ class TestSyncViaRepoman:
         assert all("create" not in c for c in commands)
 
     @patch("scripts.sync_construct_template_repos.subprocess.run")
-    def test_dry_run_only_attempts_update(
-        self, mock_run: MagicMock, repo_root: Path
-    ) -> None:
+    def test_dry_run_only_attempts_update(self, mock_run: MagicMock, repo_root: Path) -> None:
         """In dry-run, a missing repo does not trigger create."""
         from scripts.sync_construct_template_repos import _sync_via_repoman
 
@@ -543,9 +537,7 @@ class TestRunSync:
     # Dry-run skips gh auth
     # ------------------------------------------------------------------
 
-    def test_run_sync_dry_run_skips_gh_auth_check(
-        self, patched_run_sync: SimpleNamespace
-    ) -> None:
+    def test_run_sync_dry_run_skips_gh_auth_check(self, patched_run_sync: SimpleNamespace) -> None:
         """In dry-run mode, _check_gh_auth is NOT called."""
         from scripts.sync_construct_template_repos import run_sync
 
@@ -647,9 +639,7 @@ class TestRunSync:
     # No constructs discovered (edge case)
     # ------------------------------------------------------------------
 
-    def test_run_sync_no_constructs_returns_0(
-        self, patched_run_sync: SimpleNamespace
-    ) -> None:
+    def test_run_sync_no_constructs_returns_0(self, patched_run_sync: SimpleNamespace) -> None:
         """When no constructs are discovered, run_sync returns 0."""
         from scripts.sync_construct_template_repos import run_sync
 

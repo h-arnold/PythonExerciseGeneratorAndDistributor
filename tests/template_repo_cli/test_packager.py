@@ -42,6 +42,16 @@ def _assert_jupyter_watchdog_copy(repo_root: Path, temp_dir: Path) -> None:
     assert watchdog_dest.read_text() == watchdog_src.read_text()
 
 
+def _assert_post_start_script_copy(repo_root: Path, temp_dir: Path) -> None:
+    """Verify copying behaviour for the devcontainer startup script."""
+
+    script_src = repo_root / "template_repo_files" / ".devcontainer" / "post_start.sh"
+    script_dest = temp_dir / ".devcontainer" / "post_start.sh"
+    assert script_src.exists(), "post_start.sh source must exist in the student template"
+    assert script_dest.exists()
+    assert script_dest.read_text() == script_src.read_text()
+
+
 def _assert_no_snapshot_artifacts(root: Path, *, label: str) -> None:
     """Assert that a workspace subtree does not contain snapshot artifacts."""
 
@@ -183,6 +193,7 @@ class TestCopyFiles:
 
         _assert_base_template_files(temp_dir)
         _assert_jupyter_watchdog_copy(repo_root, temp_dir)
+        _assert_post_start_script_copy(repo_root, temp_dir)
         _assert_required_test_infrastructure_copy(repo_root, temp_dir)
         # Green contract: packaged templates ship no legacy reporter chain.
         assert not (temp_dir / "scripts" / "build_autograde_payload.py").exists()
@@ -303,6 +314,26 @@ class TestPackageIntegrity:
         )
 
         watchdog_path.unlink()
+        assert not template_packager.validate_package(temp_dir)
+
+    def test_package_integrity_missing_post_start_script(
+        self,
+        template_packager: TemplatePackager,
+        temp_dir: Path,
+        build_exercise_file_map: ExerciseFileMapBuilder,
+    ) -> None:
+        """Test validation fails without the devcontainer startup script."""
+
+        files = build_exercise_file_map("ex002_sequence_modify_basics")
+
+        template_packager.copy_exercise_files(temp_dir, files)
+        template_packager.copy_template_base_files(temp_dir)
+        template_packager.generate_readme(temp_dir, "Test", ["ex002_sequence_modify_basics"])
+
+        startup_path = temp_dir / ".devcontainer" / "post_start.sh"
+        assert startup_path.exists(), "post_start.sh must be copied into the template workspace"
+
+        startup_path.unlink()
         assert not template_packager.validate_package(temp_dir)
 
     @pytest.mark.parametrize(

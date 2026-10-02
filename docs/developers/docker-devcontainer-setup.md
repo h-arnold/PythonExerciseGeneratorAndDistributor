@@ -33,14 +33,14 @@ Location: `/template_repo_files/.devcontainer/devcontainer.json`
 - Keeps the extension list to Python, Pylance, Jupyter, and the default Python kernel for a focused student experience
 - Applies opinionated VS Code settings (formatter, testing config, file exclusions, startup UX)
 - Runs a conditional `postCreateCommand` that installs `uv` when absent and runs `uv sync`
-- Runs a conditional `postStartCommand` that runs `uv sync` when a `pyproject.toml` is present and starts the watchdog
+- Runs `bash .devcontainer/post_start.sh` as its `postStartCommand`, which runs `uv sync` when a `pyproject.toml` is present and launches the watchdog detached with `setsid`
 - Uses the existing `vscode` user and sets `PYTHONUNBUFFERED=1`
 
 ### 2. Jupyter Kernel Watchdog
 
 Location: `scripts/jupyter_watchdog.py`
 
-Both devcontainer configurations launch the Jupyter kernel watchdog as a background process via the `postStartCommand`. Its job is to detect and kill unresponsive Jupyter kernels so VS Code can restart them. See the dedicated [Jupyter Kernel Watchdog](jupyter-watchdog.md) doc for full details on behaviour, configuration, logging, and troubleshooting.
+Both devcontainer configurations launch the Jupyter kernel watchdog as a background process. The student template does so from `.devcontainer/post_start.sh` (warns without failing on a failed `uv sync`, launches detached with `setsid`, and confirms the watchdog started); the maintainer devcontainer launches it inline from its `postStartCommand`. Its job is to detect and kill unresponsive Jupyter kernels so VS Code can restart them. Logs are written to `$XDG_STATE_HOME/python-tutor/` so they stay out of the repository. See the dedicated [Jupyter Kernel Watchdog](jupyter-watchdog.md) doc for full details on behaviour, configuration, logging, and troubleshooting.
 
 ## Usage
 
@@ -95,7 +95,7 @@ Both devcontainer definitions pin the upstream image tag directly, so there is n
 
 - Delete any existing `.venv` folder and let `uv sync` recreate it on the next container start
 - Confirm the Dev Containers extension is up to date and Docker is running locally
-- For template repositories, ensure `pyproject.toml` exists so the conditional `postStartCommand` installs dependencies
+- For template repositories, ensure `pyproject.toml` exists so `post_start.sh` installs dependencies, and check `${XDG_STATE_HOME:-$HOME/.local/state}/python-tutor/post_start.log` for what startup reported
 
 ## Architecture Decisions
 
