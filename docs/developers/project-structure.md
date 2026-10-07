@@ -108,7 +108,7 @@ Automation tools that help maintain the repository and publish exercises:
 
 - `autograder.py`: Generic teacher-side Classroom 50 grader that runs a bundle's hidden test copies against a student checkout and writes a `classroom50/result/v1` payload. It is copied to the bundle root by the builder and is never shipped inside a student template. See [classroom50-autograder.md](classroom50-autograder.md).
 - `build_classroom50_bundle.py`: Generic builder that assembles a teacher-side grading bundle from a JSON exercise-set input plus the current `exercise_runtime_support/` source. See [classroom50-autograder.md](classroom50-autograder.md).
-- `jupyter_watchdog.py`: Kernel health watchdog for VS Code devcontainers — pings Jupyter kernels via ZeroMQ heartbeat and kills unresponsive ones so VS Code can restart them (runs as a background `nohup` process from both devcontainer `postStartCommand` entries). This script is bundled into student Classroom 50 template repositories by the packager (copied to `workspace/scripts/jupyter_watchdog.py`). See [jupyter-watchdog.md](jupyter-watchdog.md) for details.
+- `jupyter_watchdog.py`: Kernel health watchdog for VS Code devcontainers — pings Jupyter kernels via ZeroMQ heartbeat and kills unresponsive ones so VS Code can restart them (the student template launches it from `.devcontainer/post_start.sh`; the maintainer devcontainer launches it inline from `postStartCommand`). This script is bundled into student Classroom 50 template repositories by the packager (copied to `workspace/scripts/jupyter_watchdog.py`). See [jupyter-watchdog.md](jupyter-watchdog.md) for details.
 - `new_exercise.py`: Scaffolds new exercises (notebooks, tests, and metadata)
 - `verify_exercise_quality.py`: Runs linting, checks, and structural validation used in local development. See [exercise-quality-verifier.md](exercise-quality-verifier.md) for the gate contract (progression scanning, expectations conventions, variant overrides).
 - `verify_solutions.sh`: Convenience wrapper that executes tests against solution notebooks
@@ -117,6 +117,8 @@ Automation tools that help maintain the repository and publish exercises:
 ### `template_repo_files/`
 
 Holds the canonical files used when generating Classroom 50 template repositories. These assets are packaged and deployed via the template repo CLI.
+
+- `.devcontainer/post_start.sh`: Student container startup, run via `bash .devcontainer/post_start.sh` from `devcontainer.json`. Runs `uv sync` (warning without failing when it fails) and launches the Jupyter kernel watchdog detached with `setsid`, confirming from the watchdog log that it actually started. Never blocks a lesson; logs to `$XDG_STATE_HOME/python-tutor/`. See [jupyter-watchdog.md](jupyter-watchdog.md).
 
 ### `.opencode/`
 
