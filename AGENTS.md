@@ -1,4 +1,4 @@
-# Copilot Custom Instructions — PythonExerciseGeneratorAndDistributor
+# PythonExerciseGeneratorAndDistributor
 
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
@@ -94,7 +94,7 @@ docs/                  # Project documentation
 
 ### Concise Standards
 
-- Python 3.11+; use modern type hints (e.g., `list[str]`).
+- Python 3.14+; use modern type hints (e.g., `list[str]`).
 - Fail Fast: **No defensive guards unless explicitly requested**. Better to find out something is broken than silently swallow errors!
 - Docstrings required for public functions.
 - Keep logic simple (KISS): low complexity, shallow nesting, short functions.
@@ -113,7 +113,7 @@ Student variant tests **must always** fail in this repo. Soltution variant noteb
 
 ### Python Style (for infrastructure code, not student exercises)
 
-- **Language**: Python 3.11+
+- **Language**: Python 3.14+
 - **Linting**: Ruff (configured in `pyproject.toml`)
 - **Type hints**: Use modern syntax (e.g., `list[str]` not `List[str]`)
 - **Docstrings**: Required for public functions

@@ -3,6 +3,8 @@
 Implement the requirements in `SPEC.md` locally and sequentially. This handoff
 contains no runtime implementation or test code. No separate layout/workflow
 specification is required: notebook structure and authoring workflow stay unchanged.
+Treat exercise structure as a scaffolding/authoring guarantee. This feature adds no
+task-count or tag-topology validation, structural FAIL rows or malformed-exercise tests.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
@@ -20,7 +22,10 @@ the grading extractor.
 
 **Checks:** fast source-selection/coordinate tests, subprocess contract tests and
 positive/negative real-Ruff cases for every selected rule. Confirm empty starters,
-repeated/multiple tags, syntax errors, exits 0/1/2 and invalid JSON behaviour.
+non-task tags alongside a single task tag, correctly scaffolded exercises with
+fewer/more than ten tasks, syntax errors, exits 0/1/2 and invalid Ruff JSON behaviour.
+Discover task cells without a fixed count or comparison with metadata `parts`;
+do not add tests for malformed task-tag arrangements or missing task cells.
 Verify all 17 selections are active, including preview rules; exit-0 warnings that
 rules have no effect are configuration failures, not clean student feedback.
 
@@ -50,15 +55,20 @@ switch or special filtering is required.
 
 **Checks:** targeted dispatch, reporting and variant tests; representative real
 sequence/selection checker calls in student/solution variants; saved-edit reruns;
-import/functional-only calls in an environment without Ruff. Preserve existing
-unfinished-student assertions and solution correctness checks.
+ordinary import/functional-only calls do not invoke Ruff. Use the normal pinned
+environment, with subprocess test doubles for tooling errors; no Ruff-free test
+environment or runtime availability guards. Preserve existing unfinished-student
+assertions and solution correctness checks.
 Test all four functional/readability PASS/FAIL combinations, syntax FAIL and tool
 ERROR cases; only the all-pass combination may display overall success. Confirm
-the grader's functional-only path does not launch Ruff or acquire new scored cases.
+tooling ERROR output is explicitly distinguishable from student readability FAIL.
+Confirm the grader's functional-only path does not launch Ruff or acquire new
+scored cases.
 Existing solution readability failures remain FAIL in the combined self-check,
 but are allowed as feature-migration backlog; do not require clean reference
 notebooks or correct them during this stage. Check guide
-reference strings here; actual file/anchor resolution is verified in Stages 3–4.
+reference strings here without guide-file existence checks; review the actual
+Markdown links/anchors as documentation in Stages 3–4.
 
 **Review point:** Tidy Code Reviewer checks integration and absence of duplicate
 analysis/grading coupling. Do not edit individual notebooks or support definitions.
@@ -98,15 +108,17 @@ guide before final packaging. This is documentation review, not a new-exercise g
 `template_repo_files/README.md.template`; `tests/template_repo_cli/`.
 
 **Acceptance:** one canonical guide source exports to root `RUFF_GUIDE.md`; its
-README/checker references resolve; missing guide source fails packaging clearly.
+README/checker references use the documented mapping. Copy it using the existing
+base-asset mechanism, without bespoke guide-file guards or existence tests.
 Exported runtime and exact Ruff pin match source. Canonical metadata, notebook and
 test paths remain unchanged; no new hidden grading sources, solutions, flattened
 mirrors or maintainer fixtures are shipped.
 
-**Checks:** packager asset/missing-source tests; README link tests; offline exported
+**Checks:** manual documentation review of guide/README links; offline exported
 self-check with real Ruff, student default and retained functional failures. Update
 synthetic packaging fixtures directly rather than adding compatibility fallbacks.
 Confirm combined functional/readability results and overall PASS/FAIL in the export.
+Do not add Python tests for the presence or absence of the Markdown guide.
 Reuse the test runner's pinned Ruff environment for the offline exported check;
 do not install a new environment inside the fixture.
 
@@ -126,8 +138,9 @@ saved-file behaviour, guide mapping and required-self-check/teacher-grading boun
 Record why deferred teacher inclusion is lower effort: the grader already uses a
 separate functional pytest path, whereas inclusion adds Ruff installation, hidden
 test adaptation and score-total validation. Do not add a disable-readability flag.
-Quality gates and teacher grading remain functional-only and do not require Ruff
-at import time.
+Quality gates and teacher grading remain functional-only. Assume Ruff is installed
+in the managed notebook environment; introduce no availability probes or optional
+runtime paths.
 No updates to exercise-local tests, teaching order or notebook layout are needed.
 Developer guidance explicitly records that existing solution notebooks may fail
 readability checks and that corrections are deferred to a future pass. Those
