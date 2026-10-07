@@ -48,6 +48,9 @@ case "$1" in
         printf 'pid=%s sid=%s\\n' "$$" "$(ps -o sid= -p "$$" | tr -d ' ')" \
             >"${STUB_UV_PROCESS_FILE}"
         printf '%s\\n' "${STUB_UV_BANNER}" >>"${STUB_UV_WATCHDOG_LOG_FILE}"
+        if [ "${STUB_UV_EXIT_AFTER_BANNER:-0}" -eq 1 ]; then
+            exit 1
+        fi
         exec 3<"${STUB_UV_KEEPALIVE_FIFO}"
         read -r _ <&3
         exit 0
@@ -280,6 +283,16 @@ class TestPostStartScriptBehaviour:
         assert result.returncode == 0
         assert "could not confirm the Jupyter watchdog started" in result.stdout
         assert startup.run_error in startup.watchdog_log.read_text(encoding="utf-8")
+
+    def test_watchdog_exits_after_banner_is_not_confirmed(self, startup: StartupHarness) -> None:
+        """A launcher that prints the banner and immediately exits is not healthy."""
+        startup.env["STUB_UV_EXIT_AFTER_BANNER"] = "1"
+
+        result = startup.run()
+
+        assert result.returncode == 0
+        assert startup.banner in startup.watchdog_log.read_text(encoding="utf-8")
+        assert "could not confirm the Jupyter watchdog started" in result.stdout
 
     def test_watchdog_launch_is_detached_and_outlives_the_script(
         self, startup: StartupHarness

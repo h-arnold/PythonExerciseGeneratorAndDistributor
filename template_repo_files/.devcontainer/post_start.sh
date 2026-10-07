@@ -78,12 +78,16 @@ watchdog_pid=$!
 # A backgrounded launch looks successful the instant the shell forks, which is
 # how a watchdog that dies immediately used to be indistinguishable from a
 # healthy one. Wait for the watchdog's own start banner instead, giving up as
-# soon as the launched process is gone.
+# soon as the launched process is gone. Give it one polling interval after the
+# banner to catch a launcher that prints the banner and immediately exits.
 watchdog_confirmed=0
 for ((attempt = 1; attempt <= watchdog_confirm_attempts; attempt++)); do
     if tail -c "+$((watchdog_log_offset + 1))" -- "${watchdog_log}" 2>/dev/null \
         | grep -qF "${watchdog_banner}"; then
-        watchdog_confirmed=1
+        sleep "${watchdog_confirm_interval}"
+        if kill -0 "${watchdog_pid}" 2>/dev/null; then
+            watchdog_confirmed=1
+        fi
         break
     fi
     if ! kill -0 "${watchdog_pid}" 2>/dev/null; then
