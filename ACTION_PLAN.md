@@ -19,7 +19,7 @@ from feature commits.
 | 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 3 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 4 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 5 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| 5 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 
 Stage 1 red evidence: expected collection ImportError for the absent analyser;
 test lint/format pass; real Ruff 0.14.13 validates all 17 non-example/corrected pairs.
@@ -112,6 +112,11 @@ The explicit student validation example now correctly uses the student runner.
 No runtime/grading/catalogue change. Ready for commit/push, then mandatory cleanup
 and a separate final documentation sync. Human teacher review and future solution
 readability corrections remain follow-ups; no assignment/template deployment.
+
+Stage 5 complete. Pushed `51d8d5d30ae194cc0d73f13183e7699424ccc6a5` —
+`Document required readability and functional grading boundary` to
+`feat/AddLinterRulesToSelfChecker` successfully. All numbered sections are delivered.
+Mandatory de-sloppification is now in progress; final documentation sync is pending.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
