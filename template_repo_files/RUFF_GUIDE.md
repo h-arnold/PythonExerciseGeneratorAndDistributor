@@ -36,8 +36,7 @@ or that comments are useful. Teacher-side marks are unchanged by these checks.
 
 The examples are small demonstrations, not answers to your exercise. In the
 whitespace examples, `<TAB>` stands for one actual tab character and `<SPACE>`
-stands for one actual space; the checker-test reader replaces these markers
-with those characters. The markers themselves are not Python syntax.
+stands for one actual space. The markers themselves are not Python syntax.
 
 <a id="e101"></a>
 ### E101 — Do not mix tabs and spaces in indentation

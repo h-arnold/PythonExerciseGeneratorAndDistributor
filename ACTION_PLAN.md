@@ -118,6 +118,26 @@ Stage 5 complete. Pushed `51d8d5d30ae194cc0d73f13183e7699424ccc6a5` —
 `feat/AddLinterRulesToSelfChecker` successfully. All numbered sections are delivered.
 Mandatory de-sloppification is now in progress; final documentation sync is pending.
 
+Cleanup review found no behavioural defect, but confirmed duplicate variant
+restoration, a pass-through analyser wrapper, dead test-helper branches and
+redundant test-only self-checks, plus student-guide wording exposing test internals.
+Minimal behaviour-preserving fixes are in progress; no catalogue or grading-policy
+changes are authorised. Large test-module splitting and broader tag-parser
+reorganisation are explicitly not required. Cleanup will be re-reviewed and fully
+validated before final documentation sync.
+
+Cleanup complete and Tidy GREEN review clean: shared variant restoration retains
+student-default self-checks and solution-default repository orchestration;
+the analyser wrapper, dead test branches and redundant pre-dispatch/helper tests
+were removed. Existing real-output assertions remain. Guide test-internals prose
+was removed and task labels reuse the existing compiled pattern. The public
+analyser docstring and test formatting were corrected during re-review.
+No functional/grading semantics changed. Final snapshot: 363 support/CLI tests
+pass; 1,601 tests collect; full solution validation gives 1,600 passed and one
+skipped. Lint, scoped format/Pyright and lock checks pass; eight baseline test
+private-usage diagnostics remain. Expected student sequence/selection failures
+remain 30/33. Ready for cleanup commit/push, then final documentation sync.
+
 ## Stage 1 — Establish the policy and source-preserving analyser
 
 **Objective:** deliver a small, independently testable static-analysis slice.

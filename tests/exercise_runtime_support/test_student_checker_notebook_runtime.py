@@ -485,28 +485,6 @@ def test_readability_row_is_emitted_once_when_task_has_multiple_functional_check
     assert "1 cells analysed" in output
 
 
-def test_summary_counts_cannot_be_borrowed_from_the_other_category() -> None:
-    swapped_summary = (
-        "Functional summary: 2 passed, 0 failed\n"
-        "Readability summary: 0 passed, 2 failed; 2 cells analysed\n"
-        "Overall self-check: FAIL"
-    )
-
-    with pytest.raises(AssertionError):
-        _assert_readability_summary(swapped_summary, passed=True)
-
-
-def test_run_notebook_checks_rejects_invalid_variant_without_leaking_environment(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "invalid")
-
-    with pytest.raises(RuntimeError):
-        notebook_runtime.run_notebook_checks("ex002_sequence_modify_basics")
-
-    assert os.environ["PYTUTOR_ACTIVE_VARIANT"] == "invalid"
-
-
 @pytest.mark.parametrize("local_support", [False, True])
 def test_readability_tool_error_is_distinct_and_follows_functional_rows(
     local_support: bool,
@@ -789,7 +767,7 @@ def test_saved_notebook_edits_are_reanalysed_and_guide_paths_are_root_anchored(
 def _set_fallback_dispatch(
     monkeypatch: pytest.MonkeyPatch,
     *,
-    analysis: readability.NotebookAnalysis | Callable[[Path], readability.NotebookAnalysis],
+    analysis: readability.NotebookAnalysis,
 ) -> None:
     notebook_path = Path("exercise.ipynb")
 
@@ -797,9 +775,7 @@ def _set_fallback_dispatch(
         assert variant == os.environ.get("PYTUTOR_ACTIVE_VARIANT", "student")
         return notebook_path
 
-    def analyze(path: Path) -> readability.NotebookAnalysis:
-        if callable(analysis):
-            return analysis(path)
+    def analyze(_path: Path) -> readability.NotebookAnalysis:
         return analysis
 
     monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(False))

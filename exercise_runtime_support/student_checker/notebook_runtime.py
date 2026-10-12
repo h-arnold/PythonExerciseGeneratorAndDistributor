@@ -4,16 +4,13 @@ from __future__ import annotations
 
 import ast
 import json
-import os
 import re
-from collections.abc import Iterator
-from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
 
 from exercise_runtime_support.execution_variant import (
-    ACTIVE_VARIANT_ENV_VAR,
     Variant,
+    active_variant_context,
     get_active_variant,
 )
 from exercise_runtime_support.exercise_framework.paths import resolve_notebook_path
@@ -35,7 +32,7 @@ from .readability import (
     analyze_notebook,
 )
 
-_EXERCISE_TAG_PATTERN = re.compile(r"exercise\d+")
+_EXERCISE_TAG_PATTERN = re.compile(r"exercise(\d+)")
 _DEFAULT_INPUT_VALUE = "2"
 _MISSING_INPUT_ERROR_MESSAGE = "Test expected more input values"
 _MAX_AUTOMATED_INPUTS = 10
@@ -120,7 +117,7 @@ def _is_string_list(value: object) -> TypeGuard[list[str]]:
 
 def run_notebook_checks(exercise_key: str) -> None:
     """Run notebook-facing student checks for the given canonical exercise key."""
-    with _active_variant_context() as variant:
+    with active_variant_context() as variant:
         resolved_path = resolve_notebook_path(exercise_key, variant=variant)
         if has_exercise_checks(exercise_key):
             functional_results = run_exercise_checks(exercise_key)
@@ -139,20 +136,6 @@ def run_notebook_checks(exercise_key: str) -> None:
             print(f"\nReadability tool ERROR: {exc}")
             raise
         _print_integrated_results(exercise_key, variant, functional_results, analysis)
-
-
-@contextmanager
-def _active_variant_context() -> Iterator[Variant]:
-    variant = get_active_variant(default="student")
-    original_variant = os.environ.get(ACTIVE_VARIANT_ENV_VAR)
-    os.environ[ACTIVE_VARIANT_ENV_VAR] = variant
-    try:
-        yield variant
-    finally:
-        if original_variant is None:
-            os.environ.pop(ACTIVE_VARIANT_ENV_VAR, None)
-        else:
-            os.environ[ACTIVE_VARIANT_ENV_VAR] = original_variant
 
 
 def _load_notebook_json(path: Path) -> NotebookJson:
@@ -280,7 +263,7 @@ def _is_input_call(node: ast.AST) -> bool:
 
 
 def _format_tag_label(tag: str) -> str:
-    match = re.match(r"exercise(\d+)", tag)
+    match = _EXERCISE_TAG_PATTERN.match(tag)
     return f"Exercise {match.group(1)}" if match else tag
 
 
@@ -346,8 +329,7 @@ def _print_integrated_results(
 
 
 def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool, str]:
-    task_number = int(cell.task_tag.removeprefix("exercise"))
-    exercise_label = f"Exercise {task_number}"
+    exercise_label = _format_tag_label(cell.task_tag)
     message = _cell_findings(cell)
     return (
         exercise_label,

@@ -2,15 +2,11 @@
 
 from __future__ import annotations
 
-import os
-from collections.abc import Iterator, Sequence
-from contextlib import contextmanager
+from collections.abc import Sequence
 from typing import Any
 
 from exercise_runtime_support.execution_variant import (
-    ACTIVE_VARIANT_ENV_VAR,
-    Variant,
-    get_active_variant,
+    active_variant_context,
 )
 from exercise_runtime_support.exercise_test_support import (
     load_exercise_test_module,
@@ -78,23 +74,6 @@ def _summary(results: Sequence[ExerciseCheckResult]) -> list[str]:
     return [issue for result in results for issue in result.issues]
 
 
-@contextmanager
-def _exercise_check_variant_context(
-    *,
-    default_variant: Variant = "student",
-) -> Iterator[None]:
-    selected_variant = get_active_variant(default=default_variant)
-    original_variant = os.environ.get(ACTIVE_VARIANT_ENV_VAR)
-    os.environ[ACTIVE_VARIANT_ENV_VAR] = selected_variant
-    try:
-        yield
-    finally:
-        if original_variant is None:
-            os.environ.pop(ACTIVE_VARIANT_ENV_VAR, None)
-        else:
-            os.environ[ACTIVE_VARIANT_ENV_VAR] = original_variant
-
-
 def check_exercise_summary(exercise_key: str) -> list[str]:
     """Run summary checks for a single exercise key."""
 
@@ -104,5 +83,5 @@ def check_exercise_summary(exercise_key: str) -> list[str]:
 def run_exercise_checks(exercise_key: str) -> list[ExerciseCheckResult]:
     """Run detailed student-checker checks for a single exercise key."""
 
-    with _exercise_check_variant_context():
+    with active_variant_context():
         return _run_checks(_get_check_list(exercise_key))

@@ -91,7 +91,8 @@ def _is_source(value: object) -> TypeGuard[str | list[str]]:
     return all(isinstance(part, str) for part in value)
 
 
-def _analyse(source: str, *, cell_index: int, task_tag: str) -> CellAnalysis:
+def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalysis:
+    """Analyse one task's source without executing or rewriting it."""
     command = [
         sys.executable,
         "-m",
@@ -161,11 +162,6 @@ def _analyse(source: str, *, cell_index: int, task_tag: str) -> CellAnalysis:
     )
 
 
-def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalysis:
-    """Analyse one task's source without executing or rewriting it."""
-    return _analyse(source, cell_index=cell_index, task_tag=task_tag)
-
-
 def analyze_notebook(path: Path) -> NotebookAnalysis:
     """Analyse every code cell tagged with an exact ``exerciseN`` task tag."""
     notebook = json.loads(path.read_text(encoding="utf-8"))
@@ -184,5 +180,5 @@ def analyze_notebook(path: Path) -> NotebookAnalysis:
             raise TypeError("Notebook cell source must be a string or list of strings")
         if isinstance(source, list):
             source = "".join(source)
-        cells.append(_analyse(source, cell_index=cell_index, task_tag=task_tags[0]))
+        cells.append(analyze_source(source, cell_index=cell_index, task_tag=task_tags[0]))
     return NotebookAnalysis(cells=tuple(cells))

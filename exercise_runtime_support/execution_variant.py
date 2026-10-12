@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import os
-from collections.abc import MutableMapping
+from collections.abc import Iterator, MutableMapping
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Literal
 
@@ -30,6 +31,21 @@ def get_active_variant(*, default: Variant = "solution") -> Variant:
     if stripped_variant == "":
         return default
     return validate_variant(stripped_variant)
+
+
+@contextmanager
+def active_variant_context(*, default: Variant = "student") -> Iterator[Variant]:
+    """Temporarily set the environment to the selected notebook variant."""
+    variant = get_active_variant(default=default)
+    original_variant = os.environ.get(ACTIVE_VARIANT_ENV_VAR)
+    os.environ[ACTIVE_VARIANT_ENV_VAR] = variant
+    try:
+        yield variant
+    finally:
+        if original_variant is None:
+            os.environ.pop(ACTIVE_VARIANT_ENV_VAR, None)
+        else:
+            os.environ[ACTIVE_VARIANT_ENV_VAR] = original_variant
 
 
 def configure_variant_environment(
