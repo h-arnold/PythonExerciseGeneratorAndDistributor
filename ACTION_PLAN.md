@@ -19,7 +19,7 @@ from feature commits.
 | 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 3 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 4 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 5 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
+| 5 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
 
 Stage 1 red evidence: expected collection ImportError for the absent analyser;
 test lint/format pass; real Ruff 0.14.13 validates all 17 non-example/corrected pairs.
@@ -94,6 +94,24 @@ No synthetic fixture edits were necessary, because these tests use real assets.
 No template publication/deployment performed. Stage 4 complete. Pushed
 `607dee9e17aa03733f5d5b6b63da523a785e1afe` — `Package Ruff guide and verify offline student self-checks`
 to `feat/AddLinterRulesToSelfChecker` successfully. Stage 5 validation is next.
+
+Stage 5 test/validation evidence: all required commands succeed: 361 support/CLI
+tests pass; 1,599 tests collect; full solution validation gives 1,598 passed and one
+skipped; repository Ruff passes. Explicit student ex002 sequence and ex001 selection
+runs retain 30 and 33 expected unfinished-task failures. Existing real Classroom 50
+bundle tests confirm full-pass solution grading and unchanged case names/maxima.
+Review gate clean; eight baseline private-usage diagnostics are unchanged.
+As this is the final validation/docs-only section, no artificial new RED tests are
+added after the earlier feature TDD phases. Targeted contract guidance is next;
+the separate final documentation sync remains after mandatory de-sloppification.
+
+Stage 5 green evidence: targeted execution/testing/development contracts updated;
+Docs and Tidy reviews clean. Post-doc support/packaging tests remain 361 passed,
+36 autograder-documentation tests pass, repository Ruff and diff checks pass.
+The explicit student validation example now correctly uses the student runner.
+No runtime/grading/catalogue change. Ready for commit/push, then mandatory cleanup
+and a separate final documentation sync. Human teacher review and future solution
+readability corrections remain follow-ups; no assignment/template deployment.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
