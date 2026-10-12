@@ -15,8 +15,8 @@ from feature commits.
 
 | Stage | Red tests | Red review | Green implementation | Green review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
-| 2 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
+| 2 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
 | 3 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | 4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
@@ -32,7 +32,9 @@ Stage 1 green evidence: 43 analyser tests and 46 nearby checker tests pass; scop
 Ruff lint/format, Pyright (implementation and tests), and `uv lock --check` pass.
 Green review caught malformed diagnostic-record handling and typing errors; typed
 boundary guards and six regression cases resolved both, with a clean re-review.
-No grading/extractor changes. Ready for commit/push before Stage 2.
+No grading/extractor changes. Stage 1 complete; no deviation. Pushed
+`6788089407bf4de843c5b5629960092b6a9a557d` — `Add source-preserving Ruff readability analyser`
+to `feat/AddLinterRulesToSelfChecker` successfully. Stage 2 red tests are next.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
