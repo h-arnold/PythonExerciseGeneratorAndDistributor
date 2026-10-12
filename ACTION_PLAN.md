@@ -18,7 +18,7 @@ from feature commits.
 | 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 3 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 4 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
+| 4 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 Stage 1 red evidence: expected collection ImportError for the absent analyser;
@@ -75,6 +75,23 @@ gate, not authorisation to publish. Stage 3 complete. Pushed
 `0a2fa81896d3436b11bd27d386e8b9bf9c9b1751` — `Add student Ruff readability guide and example checks`
 to `feat/AddLinterRulesToSelfChecker` successfully. Stage 4 offline packaging tests
 are next; no templates will be published.
+
+Stage 4 test-phase evidence: three offline exported-runtime tests pass under both
+normal and solution runners; lint/format/Pyright pass. They verify exported module
+origins, exact Ruff pin and analyser parity, real saved-edit readability FAIL-to-PASS
+while functional failures remain, combined PASS and canonical missing-solution errors.
+Review corrected summary association, import isolation, error specificity and typing.
+Approved TDD deviation: these regression tests are already green because Stage 2
+runtime copying already supplies the behaviour; no artificial failing assertion or
+forbidden Markdown-presence test was introduced for the remaining base-asset/docs
+delta. Review clean; explicit guide copying and README linkage now in progress.
+
+Stage 4 green evidence: 361 support/packaging tests pass under normal and solution
+runners; six focused real-export/canonical-exclusion checks pass in both variants.
+Scoped lint/format/Pyright pass. Tidy review clean, including manual guide/README
+link review and ordinary required-base-asset copy flow; no bespoke guide guards.
+No synthetic fixture edits were necessary, because these tests use real assets.
+No template publication/deployment performed. Ready for commit/push.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
