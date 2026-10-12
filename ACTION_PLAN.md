@@ -8,6 +8,30 @@ task-count or tag-topology validation, structural FAIL rows or malformed-exercis
 
 ## Delivery tracker
 
+### Compact-output follow-up (user-approved direct execution)
+
+Short plan: update output regression tests; remove the footer and present
+syntax-blocked readability as neutral NOT CHECKED with
+`Not checked - make sure your code runs first`; run checks, self-review/cleanup,
+sync the guide/developer contracts and deliver. Valid syntax is assessed even
+when functional checks fail. Analysis, functional results and grading stay unchanged.
+This follow-up supersedes the historical summary/syntax-FAIL presentation below.
+The user requested execution without a planner/sub-agent cycle.
+
+RED evidence: 24 expected output/status failures, 33 passes. Self-review corrected
+test row selection so table headers are not counted as functional results.
+GREEN complete and self-review clean: only rendering/status handling changed;
+Ruff analysis and functional execution remain untouched. 57 focused tests and
+374 support/reporting/CLI tests pass; full solution validation is 1,603 passed,
+one skipped. Ruff lint/format, scoped Pyright and diff checks pass. Lint findings
+in test parametrisation/counts were corrected without suppressions.
+Current phase: section commit/push, then self-cleanup and final documentation sync.
+Preserve the two existing user-owned changes.
+
+| Red tests | Red self-review | Green | Green self-review | Checks | Plan updated | Commit | Push |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+
 The user explicitly authorised per-stage commits and pushes. This supersedes the
 original local-only delivery note; template publication and assignment deployment
 remain out of scope. The user's reviewer-model configuration change is excluded

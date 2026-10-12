@@ -1,5 +1,18 @@
 # Per-task Ruff readability feedback
 
+## Approved compact-output follow-up
+
+The user approved a presentation-only revision which supersedes this original
+specification's footer and syntax-FAIL requirements. The checker prints the header
+and task-grouped table only: no functional/readability summaries, combined result,
+save/guide reminder or teacher-marks footer. Syntax-blocked cells retain a neutral
+`⚪ NOT CHECKED` readability row with `Not checked - make sure your code runs first`,
+without displaying Ruff's syntax diagnostics. Ruff still analyses the saved source;
+valid-syntax readability results remain independent of functional success. Tool
+errors still follow available functional rows and propagate. Teacher grading, guide
+packaging and all source/execution invariants are unchanged. Historical references
+to printed overall results or checker guide-path lookup below no longer apply.
+
 ## Goal and intended outcome
 
 Extend the notebook self-checker with required Ruff PASS/FAIL checks for each

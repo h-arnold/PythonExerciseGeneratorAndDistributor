@@ -23,6 +23,15 @@ def test_strip_exercise_prefix_removes_leading_label() -> None:
     assert strip_exercise_prefix(message) == "colour mismatch in the greeting."
 
 
+def test_not_checked_status_is_neutral_in_grouped_table() -> None:
+    assert format_status(None) == "⚪ NOT CHECKED"
+    table = render_grouped_table_with_errors(
+        [("Exercise 1", "Readability", None, "Not checked - make sure your code runs first")]
+    )
+    assert "⚪ NOT CHECKED" in table
+    assert "🟢 OK" not in table and "🔴 NO" not in table
+
+
 def test_strip_exercise_prefix_leaves_unmatched_text() -> None:
     message = "The greeting had the wrong colour."
     assert strip_exercise_prefix(message) == message

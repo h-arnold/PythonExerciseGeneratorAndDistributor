@@ -267,7 +267,7 @@ def test_run_notebook_checks_passes_path_object_to_tagged_runner(
 
 
 _OUTCOME_CASES = [
-    (local, functional, readable, functional and readable)
+    (local, functional, readable)
     for local in (False, True)
     for functional in (False, True)
     for readable in (False, True)
@@ -373,16 +373,7 @@ def _assert_task_rows(
         assert "No selected readability issues found" in cell_eight_row
 
 
-def _assert_readability_summary(output: str, *, passed: bool) -> None:
-    summary_start = output.index("Readability summary")
-    summary_end = output.index("Overall self-check", summary_start)
-    summary = output[summary_start:summary_end]
-    assert f"{_TASK_CELL_COUNT} cells analysed" in summary
-    if passed:
-        assert "2 passed" in summary and "0 failed" in summary
-    else:
-        assert "1 passed" in summary and "1 failed" in summary
-        assert "0 syntax-blocked" in summary
+def _assert_readability_diagnostics(output: str, *, passed: bool) -> None:
     if not passed:
         assert "line 2" in output and "column 6" in output and "column 10" in output
         assert "E225" in output and "Missing whitespace around operator" in output
@@ -390,27 +381,27 @@ def _assert_readability_summary(output: str, *, passed: bool) -> None:
         assert output.index("E225") < output.index("W291") < output.index("cell 8")
 
 
-def _assert_functional_summary(output: str, *, passed: bool, overall: bool) -> None:
-    summary_start = output.index("Functional summary")
-    summary_end = output.index("Readability summary", summary_start)
-    summary = output[summary_start:summary_end]
-    if passed:
-        assert "2 passed" in summary and "0 failed" in summary
-    else:
-        assert "0 passed" in summary and "2 failed" in summary
-    assert ("Overall self-check: PASS" in output) is overall
-    assert ("Overall self-check: FAIL" in output) is (not overall)
+def _assert_no_footer(output: str) -> None:
+    for text in (
+        "Functional summary:",
+        "Readability summary:",
+        "Overall self-check:",
+        "Save your notebook",
+        "RUFF_GUIDE.md",
+        "teacher-side marks",
+    ):
+        assert text not in output
     assert "Great work! All exercise cells ran without errors." not in output
     assert "Great work! Everything that can be checked here looks good." not in output
 
 
 @pytest.mark.parametrize("case", _OUTCOME_CASES)
 def test_both_dispatch_paths_render_required_combined_task_rows(
-    case: tuple[bool, bool, bool, bool],
+    case: tuple[bool, bool, bool],
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    local_support, functional_passed, readability_passed, overall_passed = case
+    local_support, functional_passed, readability_passed = case
     monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
     monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(local_support))
     notebook_path = Path("exercise.ipynb")
@@ -449,12 +440,11 @@ def test_both_dispatch_paths_render_required_combined_task_rows(
         functional_passed=functional_passed,
         readability_passed=readability_passed,
     )
-    _assert_readability_summary(output, passed=readability_passed)
-    _assert_functional_summary(output, passed=functional_passed, overall=overall_passed)
+    _assert_readability_diagnostics(output, passed=readability_passed)
+    _assert_no_footer(output)
+    assert output.rstrip().splitlines()[-1].startswith("+")
     assert "Readability" in output
     assert "ex003_sequence_modify_variables" in output and "student" in output
-    assert "Save" in output and "template_repo_files/RUFF_GUIDE.md" in output
-    assert "RUFF_GUIDE.md" in output
     if functional_passed:
         assert "task one failed" not in output
         assert "task two failed" not in output
@@ -482,7 +472,7 @@ def test_readability_row_is_emitted_once_when_task_has_multiple_functional_check
     assert output.count("Readability — cell 6") == 1
     for title in ("First functional check", "Second functional check", "Third functional check"):
         assert output.count(title) == 1
-    assert "1 cells analysed" in output
+    _assert_no_footer(output)
 
 
 @pytest.mark.parametrize("local_support", [False, True])
@@ -507,6 +497,7 @@ def test_readability_tool_error_is_distinct_and_follows_functional_rows(
     output = capsys.readouterr().out
     assert output.index("🟢 OK") < output.index("ERROR")
     assert "Readability tool error" in output or "Ruff" in output
+    _assert_no_footer(output)
     assert "Overall self-check: PASS" not in output
     assert "Readability: FAIL" not in output
     assert "Great work! Everything that can be checked here looks good." not in output
@@ -649,7 +640,9 @@ def test_functional_only_run_exercise_checks_does_not_launch_ruff(
     assert calls == []
 
 
-def test_syntax_blocked_cell_is_a_readability_failure_with_accurate_counts(
+@pytest.mark.parametrize("local_support", [False, True])
+def test_syntax_blocked_cell_is_not_checked_without_cascading_diagnostics(
+    local_support: bool,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -657,10 +650,13 @@ def test_syntax_blocked_cell_is_a_readability_failure_with_accurate_counts(
     syntax_analysis = readability.NotebookAnalysis(
         cells=(
             readability.CellAnalysis(
-                source="if True\n",
+                source="if True \n",
                 cell_index=3,
                 task_tag="exercise1",
-                findings=(readability.Finding("invalid-syntax", 1, 8, "Expected ':'"),),
+                findings=(
+                    readability.Finding("invalid-syntax", 1, 8, "Expected ':'"),
+                    readability.Finding("W291", 1, 8, "Trailing whitespace in blocked cell"),
+                ),
                 syntax_blocked=True,
             ),
             readability.CellAnalysis(
@@ -673,33 +669,31 @@ def test_syntax_blocked_cell_is_a_readability_failure_with_accurate_counts(
         )
     )
     _set_fallback_dispatch(monkeypatch, analysis=syntax_analysis)
+    monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(local_support))
+    monkeypatch.setattr(notebook_runtime, "run_exercise_checks", _local_results(False))
+    monkeypatch.setattr(notebook_runtime, "_run_notebook_checks", _fallback_results(False))
 
     notebook_runtime.run_notebook_checks("ex003_sequence_modify_variables")
 
     output = capsys.readouterr().out
     assert "cell 4" in output and "cell 7" in output
-    assert "invalid-syntax" in output and "E225" in output
-    assert "1 syntax-blocked" in output
-    assert "0 passed" in output and "2 failed" in output
-    assert "2 cells analysed" in output
-    assert "Overall self-check: FAIL" in output
+    blocked_row = next(line for line in output.splitlines() if "cell 4" in line)
+    assert "⚪ NOT CHECKED" in blocked_row
+    assert "Not checked - make sure your code runs first" in blocked_row
+    assert "🟢 OK" not in blocked_row and "🔴 NO" not in blocked_row
+    assert "invalid-syntax" not in output and "Expected ':'" not in output
+    assert "W291" not in output and "Trailing whitespace in blocked cell" not in output
+    assert "E225" in output
+    assert "task one failed" in output and "task two failed" in output
+    _assert_no_footer(output)
 
 
-@pytest.mark.parametrize("packaged", [False, True])
-def test_saved_notebook_edits_are_reanalysed_and_guide_paths_are_root_anchored(
+def test_saved_notebook_edits_are_reanalysed_without_footer(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
     tmp_path: Path,
-    packaged: bool,
 ) -> None:
     monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
-    runtime_root = tmp_path / ("export" if packaged else "source")
-    runtime_file = runtime_root / "exercise_runtime_support/student_checker/notebook_runtime.py"
-    runtime_file.parent.mkdir(parents=True)
-    if not packaged:
-        (runtime_root / "template_repo_files").mkdir()
-    monkeypatch.setattr(notebook_runtime, "__file__", str(runtime_file))
-
     notebook_path = tmp_path / "exercises/sequence/ex003/notebooks/student.ipynb"
     notebook_path.parent.mkdir(parents=True)
     notebook_path.write_text(
@@ -756,12 +750,11 @@ def test_saved_notebook_edits_are_reanalysed_and_guide_paths_are_root_anchored(
     assert first_result is None and second_result is None
     assert resolved_paths == [notebook_path, notebook_path]
     assert analyzed_paths == [notebook_path, notebook_path]
-    assert "E225" in first_output and "Overall self-check: FAIL" in first_output
-    assert "E225" not in second_output and "Overall self-check: PASS" in second_output
-    guide_path = runtime_root / "RUFF_GUIDE.md"
-    if not packaged:
-        guide_path = runtime_root / "template_repo_files/RUFF_GUIDE.md"
-    assert str(guide_path) in first_output and str(guide_path) in second_output
+    assert "E225" in first_output and "🔴 NO" in first_output
+    assert "E225" not in second_output and "🔴 NO" not in second_output
+    assert "No selected readability issues found" in second_output
+    _assert_no_footer(first_output)
+    _assert_no_footer(second_output)
 
 
 def _set_fallback_dispatch(
@@ -828,23 +821,23 @@ def test_real_canonical_sequence_and_selection_self_checks_keep_functional_outco
     assert exercise_key in output
     assert variant in output
     assert "Readability" in output
-    assert "Functional summary" in output
-    assert "Readability summary" in output
-    if variant == "student":
-        assert "🔴 NO" in output
-        assert "Overall self-check: FAIL" in output
-    else:
-        assert "🟢 OK" in output
-        assert "Overall self-check: PASS" in output
-    functional_start = output.index("Functional summary")
-    readability_start = output.index("Readability summary", functional_start)
-    functional_summary = output[functional_start:readability_start]
-    assert f"{sum(result.passed for result in functional_results)} passed" in functional_summary
-    assert f"{sum(not result.passed for result in functional_results)} failed" in functional_summary
+    functional_rows = [
+        line
+        for line in output.splitlines()
+        if line.startswith("| Exercise")
+        and line.split("|")[1].strip() != "Exercise"
+        and "Readability" not in line
+    ]
+    assert len(functional_rows) == expected_check_count
+    assert all("🟢 OK" in line for line in functional_rows) is (variant == "solution")
+    assert sum("🟢 OK" in line for line in functional_rows) == sum(
+        result.passed for result in functional_results
+    )
+    _assert_no_footer(output)
     assert construct in exercise_key
 
 
-def test_real_solution_readability_backlog_is_reported_as_combined_failure(
+def test_real_solution_readability_backlog_keeps_failed_readability_rows(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
@@ -860,15 +853,19 @@ def test_real_solution_readability_backlog_is_reported_as_combined_failure(
     assert "Readability" in output
     assert "🔴 NO" in output
     assert "E501" in output
-    functional_start = output.index("Functional summary")
-    readability_start = output.index("Readability summary", functional_start)
-    overall_start = output.index("Overall self-check", readability_start)
-    functional_summary = output[functional_start:readability_start]
-    readability_summary = output[readability_start:overall_start]
-    assert "10 passed" in functional_summary and "0 failed" in functional_summary
-    assert "10 cells analysed" in readability_summary
-    assert "9 passed" in readability_summary and "1 failed" in readability_summary
-    assert "Overall self-check: FAIL" in output
+    readability_rows = [line for line in output.splitlines() if "Readability — cell" in line]
+    assert len(readability_rows) == _SOLUTION_BACKLOG_FUNCTIONAL_COUNT
+    assert sum("🔴 NO" in line for line in readability_rows) == 1
+    functional_rows = [
+        line
+        for line in output.splitlines()
+        if line.startswith("| Exercise")
+        and line.split("|")[1].strip() != "Exercise"
+        and "Readability" not in line
+    ]
+    assert len(functional_rows) == _SOLUTION_BACKLOG_FUNCTIONAL_COUNT
+    assert all("🟢 OK" in line for line in functional_rows)
+    _assert_no_footer(output)
 
 
 def test_run_notebook_checks_reports_failures_for_unsolved_ex002(

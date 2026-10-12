@@ -123,7 +123,7 @@ def run_notebook_checks(exercise_key: str) -> None:
             student or solution notebook.
 
     Returns:
-        ``None``. Results and the combined self-check outcome are printed.
+        ``None``. Results are printed in a task-grouped table without a footer.
 
     Raises:
         ReadabilityToolError: Ruff cannot provide readability results. Available
@@ -287,8 +287,6 @@ def _print_functional_only_results(
 ) -> None:
     rows = _functional_rows(results)
     print(render_grouped_table_with_errors(rows, error_width=120))
-    passed = sum(result.passed for result in results)
-    print(f"\nFunctional summary: {passed} passed, {len(results) - passed} failed")
 
 
 def _print_integrated_results(
@@ -300,7 +298,7 @@ def _print_integrated_results(
     cells_by_task: dict[str, list[CellAnalysis]] = {}
     for cell in analysis.cells:
         cells_by_task.setdefault(cell.task_tag, []).append(cell)
-    rows: list[tuple[str, str, bool, str]] = []
+    rows: list[tuple[str, str, bool | None, str]] = []
     shown_cells: set[int] = set()
     for functional_row, result in zip(
         _functional_rows(functional_results), functional_results, strict=True
@@ -322,33 +320,17 @@ def _print_integrated_results(
 
     print(f"Self-check: {exercise_key} ({variant})")
     print(render_grouped_table_with_errors(rows, error_width=120))
-    functional_passed = sum(result.passed for result in functional_results)
-    print(
-        f"\nFunctional summary: {functional_passed} passed, "
-        f"{len(functional_results) - functional_passed} failed"
-    )
-    readability_passed = sum(not cell.findings for cell in analysis.cells)
-    syntax_blocked = sum(cell.syntax_blocked for cell in analysis.cells)
-    print(
-        f"Readability summary: {readability_passed} passed, "
-        f"{len(analysis.cells) - readability_passed} failed; "
-        f"{len(analysis.cells)} cells analysed; {syntax_blocked} syntax-blocked"
-    )
-    overall_passed = functional_passed == len(functional_results) and readability_passed == len(
-        analysis.cells
-    )
-    print(f"Overall self-check: {'PASS' if overall_passed else 'FAIL'}")
-    guide = _guide_reference()
-    print(f"\nSave your notebook before checking. Read the student guide: {guide}")
-    print("Readability is required for this self-check; it does not yet change teacher-side marks.")
 
 
-def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool, str]:
+def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool | None, str]:
     exercise_label = _format_tag_label(cell.task_tag)
+    title = f"Readability — cell {cell.cell_index + 1}"
+    if cell.syntax_blocked:
+        return exercise_label, title, None, "Not checked - make sure your code runs first"
     message = _cell_findings(cell)
     return (
         exercise_label,
-        f"Readability — cell {cell.cell_index + 1}",
+        title,
         not cell.findings,
         message or "No selected readability issues found",
     )
@@ -376,10 +358,3 @@ def _cell_findings(cell: CellAnalysis) -> str:
         f"{finding.code} line {finding.line} column {finding.column}: {finding.message}"
         for finding in cell.findings
     )
-
-
-def _guide_reference() -> str:
-    runtime_root = Path(__file__).resolve().parents[2]
-    if (runtime_root / "template_repo_files").is_dir():
-        return str(runtime_root / "template_repo_files" / "RUFF_GUIDE.md")
-    return str(runtime_root / "RUFF_GUIDE.md")

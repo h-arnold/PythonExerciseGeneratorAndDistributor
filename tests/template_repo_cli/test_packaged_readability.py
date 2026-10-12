@@ -10,9 +10,14 @@ import tomllib
 from pathlib import Path
 from typing import Any, cast
 
+import pytest
+
 from scripts.template_repo_cli.core.packager import TemplatePackager
 
 _EXERCISE_KEY = "ex002_sequence_modify_basics"
+_EXPORTED_FUNCTIONAL_PASSES = 14
+_EXPORTED_FUNCTIONAL_FAILURES = 16
+_EXPORTED_TASK_CELLS = 10
 
 
 def _export_exercise(repo_root: Path, output: Path) -> tuple[TemplatePackager, Path]:
@@ -65,6 +70,16 @@ def _run_exported_self_check(output: Path, exercise_key: str = _EXERCISE_KEY) ->
     assert output_lines[0].startswith("MODULE_ORIGINS=")
     origins = cast(dict[str, str], json.loads(output_lines[0].removeprefix("MODULE_ORIGINS=")))
     assert all(Path(origin).is_relative_to(output) for origin in origins.values())
+    for text in (
+        "Functional summary:",
+        "Readability summary:",
+        "Overall self-check:",
+        "Save your notebook",
+        "RUFF_GUIDE.md",
+        "teacher-side marks",
+    ):
+        assert text not in result.stdout
+    assert output_lines[-1].startswith("+")
     return result.stdout
 
 
@@ -90,32 +105,58 @@ def test_exported_default_student_self_check_shows_functional_and_readability_fa
     failing_text = _run_exported_self_check(output)
 
     assert "N816" in failing_text
-    assert "Functional summary: 14 passed, 16 failed" in failing_text
-    assert "Readability summary: 9 passed, 1 failed; 10 cells analysed; 0 syntax-blocked" in (
-        failing_text
-    )
-    assert "Overall self-check: FAIL" in failing_text
+    _assert_exported_rows(failing_text, readability_failures=1)
 
     _write_cell(notebook, "exercise1", 'print("Hello World!")\n')
     corrected_text = _run_exported_self_check(output)
 
     assert "N816" not in corrected_text
-    assert "Functional summary: 14 passed, 16 failed" in corrected_text
-    assert "Readability summary: 10 passed, 0 failed; 10 cells analysed; 0 syntax-blocked" in (
-        corrected_text
-    )
-    assert "Overall self-check: FAIL" in corrected_text
+    _assert_exported_rows(corrected_text, readability_failures=0)
     assert packager.validate_package(output)
     assert not (output / "exercises/sequence" / _EXERCISE_KEY / "notebooks/solution.ipynb").exists()
     assert notebook.is_file()
 
 
-def test_synthetic_export_reports_combined_pass_without_shipping_fixture_tests(
-    repo_root: Path, tmp_path: Path
+def _assert_exported_rows(text: str, *, readability_failures: int) -> None:
+    functional_rows = [
+        line
+        for line in text.splitlines()
+        if line.startswith("| Exercise")
+        and line.split("|")[1].strip() != "Exercise"
+        and "Readability" not in line
+    ]
+    readability_rows = [line for line in text.splitlines() if "Readability — cell" in line]
+    assert sum("🟢 OK" in line for line in functional_rows) == _EXPORTED_FUNCTIONAL_PASSES
+    assert sum("🔴 NO" in line for line in functional_rows) == _EXPORTED_FUNCTIONAL_FAILURES
+    assert len(readability_rows) == _EXPORTED_TASK_CELLS
+    assert sum("🔴 NO" in line for line in readability_rows) == readability_failures
+    assert sum("🟢 OK" in line for line in readability_rows) == (
+        _EXPORTED_TASK_CELLS - readability_failures
+    )
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        ('print("Ready")\n', "🟢 OK", "🟢 OK", "No selected readability issues found"),
+        (
+            "if True\n    print('Ready')\n",
+            "🔴 NO",
+            "⚪ NOT CHECKED",
+            "Not checked - make sure your code runs first",
+        ),
+        ("print(undefined_name)\n", "🔴 NO", "🟢 OK", "No selected readability issues found"),
+    ],
+)
+def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
+    repo_root: Path,
+    tmp_path: Path,
+    case: tuple[str, str, str, str],
 ) -> None:
-    """A minimal synthetic starter can pass both checks without fixture leakage."""
+    """Exports distinguish blocked syntax from valid code with runtime errors."""
     from scripts.template_repo_cli.core.collector import ExerciseFiles
 
+    source, functional_status, readability_status, message = case
     key = "ex999_sequence_make_packaged_selfcheck"
     source_exercise = tmp_path / "source" / "exercises" / "sequence" / key
     (source_exercise / "notebooks").mkdir(parents=True)
@@ -141,7 +182,7 @@ def test_synthetic_export_reports_combined_pass_without_shipping_fixture_tests(
             {
                 "cell_type": "code",
                 "metadata": {"language": "python", "tags": ["exercise1"]},
-                "source": ['print("Ready")\n'],
+                "source": [source],
             },
             {
                 "cell_type": "code",
@@ -185,9 +226,12 @@ def test_synthetic_export_reports_combined_pass_without_shipping_fixture_tests(
 
     text = _run_exported_self_check(output, key)
 
-    assert "Functional summary: 1 passed, 0 failed" in text
-    assert "Readability summary: 1 passed, 0 failed" in text
-    assert "Overall self-check: PASS" in text
+    functional_row = next(line for line in text.splitlines() if "| exercise1 " in line)
+    readability_row = next(line for line in text.splitlines() if "Readability — cell" in line)
+    assert functional_status in functional_row
+    assert readability_status in readability_row
+    assert message in readability_row
+    assert "invalid-syntax" not in text
     exercise_dir = output / "exercises/sequence" / key
     assert (exercise_dir / "notebooks/student.ipynb").is_file()
     assert not (exercise_dir / "notebooks/solution.ipynb").exists()

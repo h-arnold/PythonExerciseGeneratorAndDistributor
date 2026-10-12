@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from collections.abc import Iterable
 from typing import Final
 
 from tabulate import tabulate
@@ -15,8 +16,10 @@ FAIL_STATUS_TAG: Final[str] = "NO"
 ERROR_COLUMN_WIDTH: Final[int] = 40
 
 
-def format_status(passed: bool) -> str:
-    """Format a status marker using emoji and a short tag."""
+def format_status(passed: bool | None) -> str:
+    """Format a pass/fail marker, or a neutral marker for an unchecked result."""
+    if passed is None:
+        return "⚪ NOT CHECKED"
     emoji = PASS_STATUS_EMOJI if passed else FAIL_STATUS_EMOJI
     tag = PASS_STATUS_TAG if passed else FAIL_STATUS_TAG
     return f"{emoji} {tag}"
@@ -79,7 +82,7 @@ def render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
 
 
 def render_grouped_table_with_errors(
-    rows: list[tuple[str, str, bool, str]],
+    rows: Iterable[tuple[str, str, bool | None, str]],
     error_width: int = ERROR_COLUMN_WIDTH,
 ) -> str:
     """Render a 4-column table with exercise, check, status, and error."""
