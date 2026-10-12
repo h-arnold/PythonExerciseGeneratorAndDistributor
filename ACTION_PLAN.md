@@ -6,6 +6,34 @@ specification is required: notebook structure and authoring workflow stay unchan
 Treat exercise structure as a scaffolding/authoring guarantee. This feature adds no
 task-count or tag-topology validation, structural FAIL rows or malformed-exercise tests.
 
+## Delivery tracker
+
+The user explicitly authorised per-stage commits and pushes. This supersedes the
+original local-only delivery note; template publication and assignment deployment
+remain out of scope. The user's reviewer-model configuration change is excluded
+from feature commits.
+
+| Stage | Red tests | Red review | Green implementation | Green review | Checks | Plan updated | Commit | Push |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| 2 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 3 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+
+Stage 1 red evidence: expected collection ImportError for the absent analyser;
+test lint/format pass; real Ruff 0.14.13 validates all 17 non-example/corrected pairs.
+Review corrections resolved valid task co-tag selection, parseable E101, realistic
+diagnostic fixtures, complete subprocess/pin assertions, import/static side-effect
+checks, exact string/list stdin and byte preservation, and placeholder invocations.
+The third red review was clean. No scope deviation.
+
+Stage 1 green evidence: 43 analyser tests and 46 nearby checker tests pass; scoped
+Ruff lint/format, Pyright (implementation and tests), and `uv lock --check` pass.
+Green review caught malformed diagnostic-record handling and typing errors; typed
+boundary guards and six regression cases resolved both, with a clean re-review.
+No grading/extractor changes. Ready for commit/push before Stage 2.
+
 ## Stage 1 — Establish the policy and source-preserving analyser
 
 **Objective:** deliver a small, independently testable static-analysis slice.
