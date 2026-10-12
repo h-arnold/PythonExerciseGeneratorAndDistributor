@@ -17,8 +17,8 @@ from feature commits.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 3 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
-| 4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 3 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
+| 4 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 Stage 1 red evidence: expected collection ImportError for the absent analyser;
@@ -71,7 +71,10 @@ parse-blocking example, separately verified by Ruff, distinct from parseable E10
 Manual review covers age-appropriate prose, later-topic labels, visible whitespace,
 required self-check/teacher-mark separation, limitations and solution backlog.
 No content scope deviation. Human teacher review is an outstanding publication
-gate, not authorisation to publish. Ready for commit/push.
+gate, not authorisation to publish. Stage 3 complete. Pushed
+`0a2fa81896d3436b11bd27d386e8b9bf9c9b1751` — `Add student Ruff readability guide and example checks`
+to `feat/AddLinterRulesToSelfChecker` successfully. Stage 4 offline packaging tests
+are next; no templates will be published.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
