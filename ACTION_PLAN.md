@@ -151,7 +151,9 @@ review before publication. Review corrected the notebook orchestrator's resoluti
 versus fallback-loading exception descriptions. No runtime behaviour changed.
 All final checks remain green: 363 support/CLI passes, 1,601 collected, 1,600
 solution passes and one skip, Ruff/lock checks pass; 30/33 expected student failures.
-Final docs commit/push is next. No deployment or catalogue correction performed.
+Final docs commit/push completed successfully: `5b874fec6a9e2fd23c0ac291ba00b38790c22397`
+— `Sync final readability API and execution documentation` on
+`feat/AddLinterRulesToSelfChecker`. No deployment or catalogue correction performed.
 
 ### Delivery artefacts
 
@@ -171,6 +173,15 @@ Separate progress commits preserve the requested per-stage delivery evidence.
 | 5 | `51d8d5d30ae194cc0d73f13183e7699424ccc6a5` | Document required readability and functional grading boundary |
 | 5 notes | `1ae0311c5b05fc5c652603f748df081de7114a22` | Record Stage 5 validation and contract delivery |
 | Cleanup | `b79044705e3063e44d94c2fcba74f6cb6c1e8dac` | Simplify readability helpers and shared variant restoration |
+| Final docs | `5b874fec6a9e2fd23c0ac291ba00b38790c22397` | Sync final readability API and execution documentation |
+
+**Final status:** all five stages, mandatory cleanup and final documentation sync
+are complete, reviewed clean, committed and pushed. This final ledger update is
+delivery bookkeeping only. Outstanding follow-ups: human teacher guide review
+before publication, the documented future solution-readability correction pass,
+and eight pre-existing private-usage typing diagnostics in the runtime test file.
+Local reviewer configuration and the selection ex002 saved notebook outputs remain
+untouched and uncommitted; no templates or assignments were published/deployed.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
