@@ -16,7 +16,7 @@ from feature commits.
 | Stage | Red tests | Red review | Green implementation | Green review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 2 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
+| 2 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
 | 3 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | 4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
@@ -35,6 +35,24 @@ boundary guards and six regression cases resolved both, with a clean re-review.
 No grading/extractor changes. Stage 1 complete; no deviation. Pushed
 `6788089407bf4de843c5b5629960092b6a9a557d` — `Add source-preserving Ruff readability analyser`
 to `feat/AddLinterRulesToSelfChecker` successfully. Stage 2 red tests are next.
+
+Stage 2 red evidence: normal and explicit-solution scoped runs report 25 expected
+failures and 19 passes; test lint/format pass. Review-driven corrections expanded
+both dispatch paths, all four outcome combinations, tooling ERROR sequencing,
+variant/path propagation, category-scoped summaries, saved-file reruns, source/export
+references and real functional/readability backlog separation. Contradictory fixture
+messages/counts, summary row selection and uncreated-path doubles were corrected.
+Final red review clean; eight pre-existing private-usage typing diagnostics remain
+unchanged. No scope deviation. Green implementation now in progress.
+
+Stage 2 green evidence: 136 runtime-support tests pass under normal pytest and the
+explicit solution runner; scoped lint/format pass and implementation Pyright is
+clean. Review found duplicate readability rows on multi-check tasks and inherited
+variant assumptions in six helper tests; a red-before-fix regression and explicit
+test environment isolation resolved both. Real ex002 shows 30 functional checks
+and exactly ten readability rows. Backlog ex015 retains ten functional passes and
+one E501 readability FAIL/overall FAIL. Final green review clean. No grading changes
+or notebook edits; ready for commit/push.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 

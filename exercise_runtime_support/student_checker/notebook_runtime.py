@@ -4,10 +4,18 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 import re
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
 
+from exercise_runtime_support.execution_variant import (
+    ACTIVE_VARIANT_ENV_VAR,
+    Variant,
+    get_active_variant,
+)
 from exercise_runtime_support.exercise_framework.paths import resolve_notebook_path
 from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
 from exercise_runtime_support.notebook_grader import (
@@ -19,8 +27,13 @@ from exercise_runtime_support.notebook_grader import (
 )
 
 from .checks import has_exercise_checks, run_exercise_checks
-from .models import NotebookTagCheckResult
-from .reporting import print_exercise_results
+from .models import ExerciseCheckResult, NotebookTagCheckResult
+from .readability import (
+    CellAnalysis,
+    NotebookAnalysis,
+    ReadabilityToolError,
+    analyze_notebook,
+)
 
 _EXERCISE_TAG_PATTERN = re.compile(r"exercise\d+")
 _DEFAULT_INPUT_VALUE = "2"
@@ -107,18 +120,39 @@ def _is_string_list(value: object) -> TypeGuard[list[str]]:
 
 def run_notebook_checks(exercise_key: str) -> None:
     """Run notebook-facing student checks for the given canonical exercise key."""
-    if has_exercise_checks(exercise_key):
-        print_exercise_results(run_exercise_checks(exercise_key))
-        return
+    with _active_variant_context() as variant:
+        resolved_path = resolve_notebook_path(exercise_key, variant=variant)
+        if has_exercise_checks(exercise_key):
+            functional_results = run_exercise_checks(exercise_key)
+        else:
+            tags = _collect_exercise_tags(resolved_path)
+            if not tags:
+                print(f"No exercise tags found in {resolved_path}.")
+                return
+            functional_results = _run_notebook_checks(resolved_path, tags)
 
-    resolved_path = resolve_notebook_path(exercise_key, variant="student")
-    tags = _collect_exercise_tags(resolved_path)
-    if not tags:
-        print(f"No exercise tags found in {resolved_path}.")
-        return
+        try:
+            analysis = analyze_notebook(resolved_path)
+        except ReadabilityToolError as exc:
+            print(f"Self-check: {exercise_key} ({variant})")
+            _print_functional_only_results(functional_results)
+            print(f"\nReadability tool ERROR: {exc}")
+            raise
+        _print_integrated_results(exercise_key, variant, functional_results, analysis)
 
-    results = _run_notebook_checks(resolved_path, tags)
-    _print_notebook_check_results(results)
+
+@contextmanager
+def _active_variant_context() -> Iterator[Variant]:
+    variant = get_active_variant(default="student")
+    original_variant = os.environ.get(ACTIVE_VARIANT_ENV_VAR)
+    os.environ[ACTIVE_VARIANT_ENV_VAR] = variant
+    try:
+        yield variant
+    finally:
+        if original_variant is None:
+            os.environ.pop(ACTIVE_VARIANT_ENV_VAR, None)
+        else:
+            os.environ[ACTIVE_VARIANT_ENV_VAR] = original_variant
 
 
 def _load_notebook_json(path: Path) -> NotebookJson:
@@ -179,7 +213,9 @@ def _run_notebook_checks(path: Path, tags: list[str]) -> list[NotebookTagCheckRe
 def _run_tagged_cell(notebook_path: str | Path, tag: str) -> None:
     input_calls = _count_input_calls(notebook_path, tag=tag)
     if input_calls == 0:
-        run_cell_and_capture_output(notebook_path, tag=tag, variant="student")
+        run_cell_and_capture_output(
+            notebook_path, tag=tag, variant=get_active_variant(default="student")
+        )
         return
     _run_interactive_cell_with_backfill(notebook_path, tag=tag, input_calls=input_calls)
 
@@ -198,7 +234,7 @@ def _run_interactive_cell_with_backfill(
                 notebook_path,
                 tag=tag,
                 inputs=inputs,
-                variant="student",
+                variant=get_active_variant(default="student"),
             )
             return
         except NotebookGradingError as exc:
@@ -218,7 +254,9 @@ def _is_missing_input_error(exc: NotebookGradingError) -> bool:
 
 def _count_input_calls(notebook_path: str | Path, *, tag: str) -> int:
     """Count direct `input()` calls in a tagged code cell."""
-    code = extract_tagged_code(notebook_path, tag=tag, variant="student")
+    code = extract_tagged_code(
+        notebook_path, tag=tag, variant=get_active_variant(default="student")
+    )
     try:
         tree = ast.parse(code)
     except SyntaxError:
@@ -241,20 +279,110 @@ def _is_input_call(node: ast.AST) -> bool:
     return False
 
 
-def _print_notebook_check_results(results: list[NotebookTagCheckResult]) -> None:
-    rows = [
-        (_format_tag_label(result.tag), result.tag, result.passed, result.message)
-        for result in results
-    ]
-    print(render_grouped_table_with_errors(rows))
-
-    failures = [result for result in results if not result.passed]
-    if failures:
-        print("\nFix the failing cells above, then re-run this cell.")
-    else:
-        print("\nGreat work! All exercise cells ran without errors.")
-
-
 def _format_tag_label(tag: str) -> str:
     match = re.match(r"exercise(\d+)", tag)
     return f"Exercise {match.group(1)}" if match else tag
+
+
+def _print_functional_only_results(
+    results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
+) -> None:
+    rows = _functional_rows(results)
+    print(render_grouped_table_with_errors(rows, error_width=120))
+    passed = sum(result.passed for result in results)
+    print(f"\nFunctional summary: {passed} passed, {len(results) - passed} failed")
+
+
+def _print_integrated_results(
+    exercise_key: str,
+    variant: Variant,
+    functional_results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
+    analysis: NotebookAnalysis,
+) -> None:
+    cells_by_task: dict[str, list[CellAnalysis]] = {}
+    for cell in analysis.cells:
+        cells_by_task.setdefault(cell.task_tag, []).append(cell)
+    rows: list[tuple[str, str, bool, str]] = []
+    shown_cells: set[int] = set()
+    for functional_row, result in zip(
+        _functional_rows(functional_results), functional_results, strict=True
+    ):
+        rows.append(functional_row)
+        task_tag = (
+            f"exercise{result.exercise_no}"
+            if isinstance(result, ExerciseCheckResult)
+            else result.tag
+        )
+        for cell in cells_by_task.get(task_tag, []):
+            if cell.cell_index in shown_cells:
+                continue
+            rows.append(_readability_row(cell))
+            shown_cells.add(cell.cell_index)
+    for cell in analysis.cells:
+        if cell.cell_index not in shown_cells:
+            rows.append(_readability_row(cell))
+
+    print(f"Self-check: {exercise_key} ({variant})")
+    print(render_grouped_table_with_errors(rows, error_width=120))
+    functional_passed = sum(result.passed for result in functional_results)
+    print(
+        f"\nFunctional summary: {functional_passed} passed, "
+        f"{len(functional_results) - functional_passed} failed"
+    )
+    readability_passed = sum(not cell.findings for cell in analysis.cells)
+    syntax_blocked = sum(cell.syntax_blocked for cell in analysis.cells)
+    print(
+        f"Readability summary: {readability_passed} passed, "
+        f"{len(analysis.cells) - readability_passed} failed; "
+        f"{len(analysis.cells)} cells analysed; {syntax_blocked} syntax-blocked"
+    )
+    overall_passed = functional_passed == len(functional_results) and readability_passed == len(
+        analysis.cells
+    )
+    print(f"Overall self-check: {'PASS' if overall_passed else 'FAIL'}")
+    guide = _guide_reference()
+    print(f"\nSave your notebook before checking. Read the student guide: {guide}")
+    print("Readability is required for this self-check; it does not yet change teacher-side marks.")
+
+
+def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool, str]:
+    task_number = int(cell.task_tag.removeprefix("exercise"))
+    exercise_label = f"Exercise {task_number}"
+    message = _cell_findings(cell)
+    return (
+        exercise_label,
+        f"Readability — cell {cell.cell_index + 1}",
+        not cell.findings,
+        message or "No selected readability issues found",
+    )
+
+
+def _functional_rows(
+    results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
+) -> list[tuple[str, str, bool, str]]:
+    rows: list[tuple[str, str, bool, str]] = []
+    for result in results:
+        if isinstance(result, ExerciseCheckResult):
+            label = f"Exercise {result.exercise_no}"
+            title = result.title
+            message = "; ".join(result.issues)
+        else:
+            label = _format_tag_label(result.tag)
+            title = result.tag
+            message = result.message
+        rows.append((label, title, result.passed, message))
+    return rows
+
+
+def _cell_findings(cell: CellAnalysis) -> str:
+    return "; ".join(
+        f"{finding.code} line {finding.line} column {finding.column}: {finding.message}"
+        for finding in cell.findings
+    )
+
+
+def _guide_reference() -> str:
+    runtime_root = Path(__file__).resolve().parents[2]
+    if (runtime_root / "template_repo_files").is_dir():
+        return str(runtime_root / "template_repo_files" / "RUFF_GUIDE.md")
+    return str(runtime_root / "RUFF_GUIDE.md")
