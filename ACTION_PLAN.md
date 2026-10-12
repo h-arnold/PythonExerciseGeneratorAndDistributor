@@ -18,8 +18,8 @@ from feature commits.
 | 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 3 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 4 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
-| 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 4 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
+| 5 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
 
 Stage 1 red evidence: expected collection ImportError for the absent analyser;
 test lint/format pass; real Ruff 0.14.13 validates all 17 non-example/corrected pairs.
@@ -91,7 +91,9 @@ runners; six focused real-export/canonical-exclusion checks pass in both variant
 Scoped lint/format/Pyright pass. Tidy review clean, including manual guide/README
 link review and ordinary required-base-asset copy flow; no bespoke guide guards.
 No synthetic fixture edits were necessary, because these tests use real assets.
-No template publication/deployment performed. Ready for commit/push.
+No template publication/deployment performed. Stage 4 complete. Pushed
+`607dee9e17aa03733f5d5b6b63da523a785e1afe` — `Package Ruff guide and verify offline student self-checks`
+to `feat/AddLinterRulesToSelfChecker` successfully. Stage 5 validation is next.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
