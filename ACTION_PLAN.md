@@ -17,7 +17,7 @@ from feature commits.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 3 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
+| 3 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
 | 4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
@@ -55,6 +55,23 @@ one E501 readability FAIL/overall FAIL. Final green review clean. No grading cha
 or notebook edits. Stage 2 complete; no scope deviation. Pushed
 `6afd5ec5a80f997b0b3d73e544d216817a2be776` — `Require per-task readability in notebook self-checks`
 to `feat/AddLinterRulesToSelfChecker` successfully. Stage 3 red tests are next.
+
+Stage 3 red evidence: 18 expected ordinary missing-guide read failures and one
+fence-whitespace regression pass; lint/format/Pyright pass. Red review clean after
+strict lowercase anchor/index parity and source-preserving fence extraction fixes.
+Prose semantics deliberately remain manual Docs review, as specified by the plan;
+regex vocabulary checks were removed rather than claiming semantic guarantees.
+Guide authoring is now in progress; teacher review remains required before any
+actual template publication (none is requested).
+
+Stage 3 green evidence: all 19 guide tests pass, including real-Ruff validation of
+17 paired examples and anchor/index parity; 155 support tests pass under solution.
+Docs and Tidy reviews are clean. Docs' syntax-help finding was fixed with an actual
+parse-blocking example, separately verified by Ruff, distinct from parseable E101.
+Manual review covers age-appropriate prose, later-topic labels, visible whitespace,
+required self-check/teacher-mark separation, limitations and solution backlog.
+No content scope deviation. Human teacher review is an outstanding publication
+gate, not authorisation to publish. Ready for commit/push.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
