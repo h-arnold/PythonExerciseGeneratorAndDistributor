@@ -16,8 +16,8 @@ from feature commits.
 | Stage | Red tests | Red review | Green implementation | Green review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
-| 2 | Complete | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
-| 3 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| 2 | Complete | Clean | Complete | Clean | Passed | Complete | Created | Complete |
+| 3 | In progress | Pending | Pending | Pending | Pending | In progress | Pending | Pending |
 | 4 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | 5 | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
@@ -52,7 +52,9 @@ variant assumptions in six helper tests; a red-before-fix regression and explici
 test environment isolation resolved both. Real ex002 shows 30 functional checks
 and exactly ten readability rows. Backlog ex015 retains ten functional passes and
 one E501 readability FAIL/overall FAIL. Final green review clean. No grading changes
-or notebook edits; ready for commit/push.
+or notebook edits. Stage 2 complete; no scope deviation. Pushed
+`6afd5ec5a80f997b0b3d73e544d216817a2be776` — `Require per-task readability in notebook self-checks`
+to `feat/AddLinterRulesToSelfChecker` successfully. Stage 3 red tests are next.
 
 ## Stage 1 — Establish the policy and source-preserving analyser
 
