@@ -138,6 +138,40 @@ skipped. Lint, scoped format/Pyright and lock checks pass; eight baseline test
 private-usage diagnostics remain. Expected student sequence/selection failures
 remain 30/33. Ready for cleanup commit/push, then final documentation sync.
 
+Cleanup pushed successfully: `b79044705e3063e44d94c2fcba74f6cb6c1e8dac` —
+`Simplify readability helpers and shared variant restoration` on
+`feat/AddLinterRulesToSelfChecker`. Branch feature state is ready for final Docs
+sync. Local user reviewer configuration and saved notebook outputs are excluded.
+Final documentation sync is now in progress.
+
+Final documentation sync complete and Tidy review clean. Public API docstrings now
+describe index coordinates, defaults, restoration, return values and actual error
+boundaries; final guidance also records tooling ERROR behaviour and human teacher
+review before publication. Review corrected the notebook orchestrator's resolution
+versus fallback-loading exception descriptions. No runtime behaviour changed.
+All final checks remain green: 363 support/CLI passes, 1,601 collected, 1,600
+solution passes and one skip, Ruff/lock checks pass; 30/33 expected student failures.
+Final docs commit/push is next. No deployment or catalogue correction performed.
+
+### Delivery artefacts
+
+All listed commits were pushed successfully to `feat/AddLinterRulesToSelfChecker`.
+Separate progress commits preserve the requested per-stage delivery evidence.
+
+| Stage | Commit | Exact message |
+| --- | --- | --- |
+| 1 | `6788089407bf4de843c5b5629960092b6a9a557d` | Add source-preserving Ruff readability analyser |
+| 1 notes | `8cdee9e603c9d79875f4e0d779295400804b3c3b` | Record Stage 1 readability delivery |
+| 2 | `6afd5ec5a80f997b0b3d73e544d216817a2be776` | Require per-task readability in notebook self-checks |
+| 2 notes | `f06ada11f9e0bcd78c0c9ee355679d9b19186560` | Record Stage 2 combined self-check delivery |
+| 3 | `0a2fa81896d3436b11bd27d386e8b9bf9c9b1751` | Add student Ruff readability guide and example checks |
+| 3 notes | `01d2138672f52a9e64ab97becac03de3661b901a` | Record Stage 3 guide review and delivery |
+| 4 | `607dee9e17aa03733f5d5b6b63da523a785e1afe` | Package Ruff guide and verify offline student self-checks |
+| 4 notes | `80fc1cd32d9b5a066ba40c02437f07093fc0e4d6` | Record Stage 4 offline packaging delivery |
+| 5 | `51d8d5d30ae194cc0d73f13183e7699424ccc6a5` | Document required readability and functional grading boundary |
+| 5 notes | `1ae0311c5b05fc5c652603f748df081de7114a22` | Record Stage 5 validation and contract delivery |
+| Cleanup | `b79044705e3063e44d94c2fcba74f6cb6c1e8dac` | Simplify readability helpers and shared variant restoration |
+
 ## Stage 1 — Establish the policy and source-preserving analyser
 
 **Objective:** deliver a small, independently testable static-analysis slice.

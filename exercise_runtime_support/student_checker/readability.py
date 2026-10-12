@@ -92,7 +92,21 @@ def _is_source(value: object) -> TypeGuard[str | list[str]]:
 
 
 def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalysis:
-    """Analyse one task's source without executing or rewriting it."""
+    """Analyse one task cell's source without executing or rewriting it.
+
+    Args:
+        source: Exact source text submitted to Ruff through standard input.
+        cell_index: Zero-based physical notebook cell index. Reporting converts
+            it to a one-based cell number for students.
+        task_tag: The task tag identifying this cell, such as ``"exercise1"``.
+
+    Returns:
+        The source, cell identity, Ruff findings and syntax-blocked status.
+
+    Raises:
+        ReadabilityToolError: Ruff cannot run or does not return valid
+            diagnostics.
+    """
     command = [
         sys.executable,
         "-m",
@@ -163,7 +177,21 @@ def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalys
 
 
 def analyze_notebook(path: Path) -> NotebookAnalysis:
-    """Analyse every code cell tagged with an exact ``exerciseN`` task tag."""
+    """Analyse each code cell tagged with an ``exerciseN`` task tag in a notebook.
+
+    Args:
+        path: Path to the saved notebook whose tagged code cells are analysed.
+
+    Returns:
+        Results in physical notebook-cell order, preserving each selected cell's
+        source and zero-based physical cell index.
+
+    Raises:
+        ReadabilityToolError: Ruff cannot run or does not return valid
+            diagnostics for a selected cell.
+        TypeError: A selected cell's source is neither a string nor a list of
+            strings.
+    """
     notebook = json.loads(path.read_text(encoding="utf-8"))
     cells: list[CellAnalysis] = []
     for cell_index, cell in enumerate(notebook["cells"]):

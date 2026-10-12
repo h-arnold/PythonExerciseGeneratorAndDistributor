@@ -35,7 +35,19 @@ def get_active_variant(*, default: Variant = "solution") -> Variant:
 
 @contextmanager
 def active_variant_context(*, default: Variant = "student") -> Iterator[Variant]:
-    """Temporarily set the environment to the selected notebook variant."""
+    """Temporarily set the environment to the selected notebook variant.
+
+    Args:
+        default: Variant to use when ``PYTUTOR_ACTIVE_VARIANT`` is unset or
+            empty. This context defaults to ``"student"``; the standalone
+            :func:`get_active_variant` helper defaults to ``"solution"``.
+
+    Yields:
+        The selected notebook variant while it is set in the environment.
+
+    The previous environment value is restored when the context exits, including
+    when code inside the context raises an exception.
+    """
     variant = get_active_variant(default=default)
     original_variant = os.environ.get(ACTIVE_VARIANT_ENV_VAR)
     os.environ[ACTIVE_VARIANT_ENV_VAR] = variant

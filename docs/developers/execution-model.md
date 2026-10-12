@@ -46,6 +46,7 @@ Contract:
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `solution` when no variant is provided to a repository orchestration script. The Classroom 50 bundle grader is the exception: it defaults to `student` in both of its modes, as §5 records.
 - The runtime helper `exercise_runtime_support.execution_variant::get_active_variant` defaults to `solution`, and `run_exercise_checks` (behind `run_notebook_checks`) deliberately overrides that default to `student` when the variable is unset. That override is why a student notebook self-check cell needs no explicit assignment, while a solution self-check cell must set `'solution'`. See [exercise-quality-verifier.md](exercise-quality-verifier.md) for the Gate H severities.
+- `active_variant_context()` defaults to `student`, unlike the standalone `get_active_variant()` helper. It temporarily sets the selected value and restores the prior environment value when the context exits.
 
 ### Notebook self-check readability
 

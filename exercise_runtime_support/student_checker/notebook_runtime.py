@@ -116,7 +116,22 @@ def _is_string_list(value: object) -> TypeGuard[list[str]]:
 
 
 def run_notebook_checks(exercise_key: str) -> None:
-    """Run notebook-facing student checks for the given canonical exercise key."""
+    """Print functional and required readability results for an exercise.
+
+    Args:
+        exercise_key: Canonical exercise identity used to resolve the active
+            student or solution notebook.
+
+    Returns:
+        ``None``. Results and the combined self-check outcome are printed.
+
+    Raises:
+        ReadabilityToolError: Ruff cannot provide readability results. Available
+            functional results are printed before the tooling error is re-raised.
+        LookupError: The canonical exercise metadata or selected notebook cannot
+            be resolved.
+        NotebookGradingError: Fallback notebook loading or tag discovery fails.
+    """
     with active_variant_context() as variant:
         resolved_path = resolve_notebook_path(exercise_key, variant=variant)
         if has_exercise_checks(exercise_key):

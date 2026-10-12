@@ -151,6 +151,9 @@ The implementation source preserves each cell's source and passes it to Ruff
 through stdin without executing, rewriting, formatting or caching it. Full cell
 selection, subprocess and reporting invariants are maintained in
 [execution-model.md](execution-model.md) and the implementation tests.
+The analyser records physical cell indices as zero-based; the student-facing
+cell number is one-based. Ruff's line and column locations are already cell-local
+and one-based.
 
 The student policy uses Ruff **0.14.13** with four-space indentation, a
 100-character line limit, preview mode and an explicit selection of exactly
@@ -164,9 +167,10 @@ Every analysed cell has a required PASS/FAIL readability row. Ruff syntax
 diagnostics are a student readability FAIL and mark that cell syntax-blocked;
 other cells are still analysed. A missing/broken tool or invalid Ruff output is
 an explicit tooling ERROR: functional output is shown first, then the specific
-error is re-raised. It is not a student FAIL or a pass. The combined self-check
-passes only when all functional and readability rows pass. The notebook API
-does not raise a grading assertion merely for student failures.
+error is re-raised; no combined self-check result is printed for that failed
+analysis. It is not a student FAIL or a pass. The combined self-check passes only
+when all functional and readability rows pass. The notebook API does not raise a
+grading assertion merely for student failures.
 
 Ruff runs in the native managed Python environment used by Jupyter,
 Codespaces and the supplied devcontainer. The checker assumes the pinned tool is
@@ -194,6 +198,9 @@ self-check FAIL. That known backlog does not invalidate their functional
 solutions or block feature acceptance; ordinary functional solution
 validation and full-pass teacher grading remain unchanged. Correcting those
 notebooks is a separate future pass.
+
+The guide still requires human teacher review before student-template publication;
+this documentation and validation work does not itself publish templates.
 
 ## Local Validation
 
