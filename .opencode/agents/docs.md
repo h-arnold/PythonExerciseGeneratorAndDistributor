@@ -1,7 +1,7 @@
 ---
 description: Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy
 mode: all
-model: opencode/space-bunny-free
+model: openai/gpt-6-luna
 permission:
   read: allow
   edit: allow
