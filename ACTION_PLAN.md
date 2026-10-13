@@ -46,7 +46,7 @@ For **each** batch, fill these eight statuses separately after work:
 | Batch | Red tests/baseline | Red review | Green implementation | Green review | Checks | Plan/ledger updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Created | Complete |
-| B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Pending | Pending |
+| B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Created | Complete |
 | C | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
@@ -197,6 +197,11 @@ corrections; those are recorded here and in the ledger, and documentation re-rev
 remains pending. No commit or push was made.
 
 ### Batch C — export fixture and documentation truth (Y9–Y11, N10–N17)
+
+Batch B delivered on `feat/AddLinterRulesToSelfChecker`:
+`6449c6508635810064389cc14dafe0b69445df9f` —
+`Simplify self-check orchestration and public behavior tests`.
+`git push` succeeded (`3b434c5..6449c65`); user-owned config remained unstaged.
 
 **Objective:** prove hidden synthetic fixture exclusion and align live guidance
 and historical claims with the delivered feature.
