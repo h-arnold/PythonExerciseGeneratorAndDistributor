@@ -13,13 +13,14 @@ PASS_STATUS_EMOJI: Final[str] = "🟢"
 FAIL_STATUS_EMOJI: Final[str] = "🔴"
 PASS_STATUS_TAG: Final[str] = "OK"
 FAIL_STATUS_TAG: Final[str] = "NO"
+NOT_CHECKED_STATUS: Final[str] = "⚪ NOT CHECKED"
 ERROR_COLUMN_WIDTH: Final[int] = 40
 
 
 def format_status(passed: bool | None) -> str:
     """Format a pass/fail marker, or a neutral marker for an unchecked result."""
     if passed is None:
-        return "⚪ NOT CHECKED"
+        return NOT_CHECKED_STATUS
     emoji = PASS_STATUS_EMOJI if passed else FAIL_STATUS_EMOJI
     tag = PASS_STATUS_TAG if passed else FAIL_STATUS_TAG
     return f"{emoji} {tag}"
@@ -85,9 +86,11 @@ def render_grouped_table_with_errors(
     rows: Iterable[tuple[str, str, bool | None, str]],
     error_width: int = ERROR_COLUMN_WIDTH,
 ) -> str:
-    """Render a table with capitalised feedback initials; ``None`` means not checked.
+    """Render the Exercise, Check, Status and Error columns.
 
-    Remove exercise prefixes and preserve the rest of each message's casing.
+    Feedback initials are capitalised after removing exercise prefixes; the rest
+    of each message's casing is preserved. ``None`` means not checked. ``rows``
+    may be any iterable, including a generator.
     """
     data: list[list[str]] = []
     for exercise_label, title, passed, error in rows:

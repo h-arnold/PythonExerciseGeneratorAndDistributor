@@ -4,8 +4,10 @@ This section supersedes conflicting requirements in the **historical feature
 specification below**, which is retained as delivery evidence, not a new backlog.
 At branch `feat/AddLinterRulesToSelfChecker` HEAD `bef9667` (compared with
 `main` `63293d7`), the feature has already shipped on this branch. The current
-request tracks final code-review/de-sloppification findings. Batch A implementation
-is complete and awaits clean review and delivery; B and C remain pending. The
+request tracks final code-review/de-sloppification findings. Batch A is delivered.
+Batch B implementation and test/production GREEN review are clean; the reviewer
+requested documentation re-review before authorised delivery. Batch C is not
+started. The
 authoritative per-item inventory, evidence, batch assignment and resolution
 criteria are in `REVIEW_FINDINGS.md`.
 

@@ -10,10 +10,11 @@ from typing import Any, TypedDict, TypeGuard, cast
 from exercise_runtime_support.execution_variant import (
     Variant,
     active_variant_context,
-    get_active_variant,
 )
 from exercise_runtime_support.exercise_framework.paths import resolve_notebook_path
-from exercise_runtime_support.exercise_framework.reporting import render_grouped_table_with_errors
+from exercise_runtime_support.exercise_framework.reporting import (
+    render_grouped_table_with_errors,
+)
 from exercise_runtime_support.notebook_grader import (
     NotebookCell,
     NotebookGradingError,
@@ -133,13 +134,17 @@ def run_notebook_checks(exercise_key: str) -> None:
             if not tags:
                 print(f"No exercise tags found in {resolved_path}.")
                 return
-            functional_results = _run_notebook_checks(resolved_path, tags)
+            functional_results = _run_notebook_checks(resolved_path, tags, variant=variant)
 
         try:
             analysis = analyze_notebook(resolved_path)
         except ReadabilityToolError as exc:
-            print(f"Self-check: {exercise_key} ({variant})")
-            _print_functional_only_results(functional_results)
+            _print_header(exercise_key, variant)
+            print(
+                render_grouped_table_with_errors(
+                    [row for _, row in _functional_rows(functional_results)]
+                )
+            )
             print(f"\nReadability tool ERROR: {exc}")
             raise
         _print_integrated_results(exercise_key, variant, functional_results, analysis)
@@ -188,25 +193,27 @@ def _collect_exercise_tags(path: Path) -> list[str]:
     return tags
 
 
-def _run_notebook_checks(path: Path, tags: list[str]) -> list[NotebookTagCheckResult]:
+def _run_notebook_checks(
+    path: Path, tags: list[str], *, variant: Variant
+) -> list[NotebookTagCheckResult]:
     results: list[NotebookTagCheckResult] = []
     for tag in tags:
         try:
-            _run_tagged_cell(path, tag)
+            _run_tagged_cell(path, tag, variant)
             results.append(NotebookTagCheckResult(tag=tag, passed=True, message=""))
         except NotebookGradingError as exc:
             results.append(NotebookTagCheckResult(tag=tag, passed=False, message=str(exc)))
     return results
 
 
-def _run_tagged_cell(notebook_path: str | Path, tag: str) -> None:
-    input_calls = _count_input_calls(notebook_path, tag=tag)
+def _run_tagged_cell(notebook_path: str | Path, tag: str, variant: Variant) -> None:
+    input_calls = _count_input_calls(notebook_path, tag=tag, variant=variant)
     if input_calls == 0:
-        run_cell_and_capture_output(
-            notebook_path, tag=tag, variant=get_active_variant(default="student")
-        )
+        run_cell_and_capture_output(notebook_path, tag=tag, variant=variant)
         return
-    _run_interactive_cell_with_backfill(notebook_path, tag=tag, input_calls=input_calls)
+    _run_interactive_cell_with_backfill(
+        notebook_path, tag=tag, input_calls=input_calls, variant=variant
+    )
 
 
 def _run_interactive_cell_with_backfill(
@@ -214,6 +221,7 @@ def _run_interactive_cell_with_backfill(
     *,
     tag: str,
     input_calls: int,
+    variant: Variant,
 ) -> None:
     required_inputs = max(input_calls, 1)
     while True:
@@ -223,7 +231,7 @@ def _run_interactive_cell_with_backfill(
                 notebook_path,
                 tag=tag,
                 inputs=inputs,
-                variant=get_active_variant(default="student"),
+                variant=variant,
             )
             return
         except NotebookGradingError as exc:
@@ -241,11 +249,9 @@ def _is_missing_input_error(exc: NotebookGradingError) -> bool:
     return False
 
 
-def _count_input_calls(notebook_path: str | Path, *, tag: str) -> int:
+def _count_input_calls(notebook_path: str | Path, *, tag: str, variant: Variant) -> int:
     """Count direct `input()` calls in a tagged code cell."""
-    code = extract_tagged_code(
-        notebook_path, tag=tag, variant=get_active_variant(default="student")
-    )
+    code = extract_tagged_code(notebook_path, tag=tag, variant=variant)
     try:
         tree = ast.parse(code)
     except SyntaxError:
@@ -273,33 +279,21 @@ def _format_tag_label(tag: str) -> str:
     return f"Exercise {match.group(1)}" if match else tag
 
 
-def _print_functional_only_results(
-    results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
-) -> None:
-    rows = _functional_rows(results)
-    print(render_grouped_table_with_errors(rows))
-
-
 def _print_integrated_results(
     exercise_key: str,
     variant: Variant,
     functional_results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
     analysis: NotebookAnalysis,
 ) -> None:
+    # Notebook output intentionally interleaves readability rows; functional-only
+    # reporting keeps its separate repeated-label grouping and success message.
     cells_by_task: dict[str, list[CellAnalysis]] = {}
     for cell in analysis.cells:
         cells_by_task.setdefault(cell.task_tag, []).append(cell)
     rows: list[tuple[str, str, bool | None, str]] = []
     shown_cells: set[int] = set()
-    for functional_row, result in zip(
-        _functional_rows(functional_results), functional_results, strict=True
-    ):
+    for task_tag, functional_row in _functional_rows(functional_results):
         rows.append(functional_row)
-        task_tag = (
-            f"exercise{result.exercise_no}"
-            if isinstance(result, ExerciseCheckResult)
-            else result.tag
-        )
         for cell in cells_by_task.get(task_tag, []):
             if cell.cell_index in shown_cells:
                 continue
@@ -309,8 +303,13 @@ def _print_integrated_results(
         if cell.cell_index not in shown_cells:
             rows.append(_readability_row(cell))
 
-    print(f"Self-check: {exercise_key} ({variant})")
+    _print_header(exercise_key, variant)
     print(render_grouped_table_with_errors(rows))
+
+
+def _print_header(exercise_key: str, variant: Variant) -> None:
+    """Print the single header shared by normal and tool-error output."""
+    print(f"Self-check: {exercise_key} ({variant})")
 
 
 def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool | None, str]:
@@ -329,18 +328,20 @@ def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool | None, str]:
 
 def _functional_rows(
     results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
-) -> list[tuple[str, str, bool, str]]:
-    rows: list[tuple[str, str, bool, str]] = []
+) -> list[tuple[str, tuple[str, str, bool, str]]]:
+    rows: list[tuple[str, tuple[str, str, bool, str]]] = []
     for result in results:
         if isinstance(result, ExerciseCheckResult):
             label = f"Exercise {result.exercise_no}"
+            task_tag = f"exercise{result.exercise_no}"
             title = result.title
             message = "; ".join(result.issues)
         else:
             label = _format_tag_label(result.tag)
+            task_tag = result.tag
             title = result.tag
             message = result.message
-        rows.append((label, title, result.passed, message))
+        rows.append((task_tag, (label, title, result.passed, message)))
     return rows
 
 

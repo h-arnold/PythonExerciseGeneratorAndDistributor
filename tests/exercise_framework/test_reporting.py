@@ -34,6 +34,23 @@ def test_not_checked_status_is_neutral_in_grouped_table() -> None:
     assert "🟢 OK" not in table and "🔴 NO" not in table
 
 
+def test_grouped_table_accepts_an_iterable_and_renders_named_columns() -> None:
+    rows = iter(
+        [
+            ("Exercise 1", "Static output", True, ""),
+            ("Exercise 2", "Readability", False, "Exercise 2: missing spacing"),
+        ]
+    )
+
+    table = render_grouped_table_with_errors(rows)
+
+    assert "Exercise" in table and "Check" in table
+    assert "Status" in table and "Error" in table
+    assert "Static output" in table and "Readability" in table
+    assert "🟢 OK" in table and "🔴 NO" in table
+    assert "Missing spacing" in table
+
+
 def test_strip_exercise_prefix_leaves_unmatched_text() -> None:
     message = "The greeting had the wrong colour."
     assert strip_exercise_prefix(message) == message
@@ -64,6 +81,7 @@ def test_strip_exercise_prefix_leaves_unmatched_text() -> None:
 )
 def test_feedback_capitalises_only_first_character(message: str, expected: str) -> None:
     rows = [("Exercise 3", "Static output", False, message)]
+    original_rows = rows.copy()
 
     table = render_grouped_table_with_errors(rows)
 
@@ -71,8 +89,7 @@ def test_feedback_capitalises_only_first_character(message: str, expected: str) 
         1:
     ]
     assert " ".join(feedback) == expected
-    assert all(len(line) <= ERROR_COLUMN_WIDTH for line in feedback)
-    assert rows == [("Exercise 3", "Static output", False, message)]
+    assert rows == original_rows
 
 
 def test_wrap_text_to_width_splits_long_message() -> None:

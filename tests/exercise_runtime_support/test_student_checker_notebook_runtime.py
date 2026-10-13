@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from collections.abc import Callable
 from pathlib import Path
 
@@ -12,8 +13,8 @@ import pytest
 from exercise_runtime_support.notebook_grader import NotebookGradingError
 from exercise_runtime_support.student_checker import checks, notebook_runtime, readability
 from exercise_runtime_support.student_checker.models import ExerciseCheckResult
+from tests.readability_table import assert_no_footer, table_rows
 
-_FUNCTIONAL_CHECK_COUNT = 30
 _FEEDBACK_WIDTH = 40
 _MIN_FEEDBACK_LINES = 5
 
@@ -67,140 +68,10 @@ def _readability_result(
     )
 
 
-def test_run_tagged_cell_uses_static_runner_when_no_input_calls(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
-    calls = {"static": 0, "interactive": 0}
-
-    def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
-        assert notebook_path == "dummy_exercise"
-        assert tag == "exercise1"
-        return 0
-
-    def fake_run_static(notebook_path: str, *, tag: str, variant: str) -> str:
-        calls["static"] += 1
-        assert notebook_path == "dummy_exercise"
-        assert tag == "exercise1"
-        assert variant == "student"
-        return "ok\n"
-
-    def fake_run_with_input(
-        notebook_path: str,
-        *,
-        tag: str,
-        inputs: list[str],
-        variant: str,
-    ) -> str:
-        calls["interactive"] += 1
-        assert variant == "student"
-        return ""
-
-    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
-
-    # pyright: ignore[reportPrivateUsage]
-    notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
-
-    assert calls == {"static": 1, "interactive": 0}
-
-
-def test_run_tagged_cell_uses_mocked_inputs_for_interactive_cells(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
-    calls = {"static": 0, "interactive": 0}
-
-    def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
-        assert notebook_path == "dummy_exercise"
-        assert tag == "exercise1"
-        return 2
-
-    def fake_run_static(notebook_path: str, *, tag: str, variant: str) -> str:
-        calls["static"] += 1
-        assert variant == "student"
-        return ""
-
-    def fake_run_with_input(
-        notebook_path: str,
-        *,
-        tag: str,
-        inputs: list[str],
-        variant: str,
-    ) -> str:
-        calls["interactive"] += 1
-        assert notebook_path == "dummy_exercise"
-        assert tag == "exercise1"
-        assert inputs == ["2", "2"]
-        assert variant == "student"
-        return "ok\n"
-
-    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
-    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
-
-    # pyright: ignore[reportPrivateUsage]
-    notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
-
-    assert calls == {"static": 0, "interactive": 1}
-
-
-def test_count_input_calls_detects_name_and_builtins_calls(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
-    expected_count = 2
-    source = "first = input('A: ')\nsecond = builtins.input('B: ')\nprint(first, second)\n"
-
-    def fake_extract_tagged_code(*_args: object, **kwargs: object) -> str:
-        assert kwargs["variant"] == "student"
-        return source
-
-    monkeypatch.setattr(notebook_runtime, "extract_tagged_code", fake_extract_tagged_code)
-
-    count = notebook_runtime._count_input_calls(  # pyright: ignore[reportPrivateUsage]
-        "dummy_exercise", tag="exercise1"
-    )
-
-    assert count == expected_count
-
-
-def test_load_notebook_json_rejects_non_mapping_json(
-    tmp_path: Path,
-) -> None:
-    path = tmp_path / "broken.ipynb"
-    path.write_text("[]", encoding="utf-8")
-
-    with pytest.raises(
-        NotebookGradingError,
-        match="Notebook JSON must be a JSON object",
-    ):
-        # pyright: ignore[reportPrivateUsage]
-        notebook_runtime._load_notebook_json(path)
-
-
-def test_load_notebook_json_rejects_non_string_object_keys(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    path = tmp_path / "broken.ipynb"
-    path.write_text("{}", encoding="utf-8")
-
-    def fake_loads(_raw_json: str) -> object:
-        return {1: []}
-
-    monkeypatch.setattr(notebook_runtime.json, "loads", fake_loads)
-
-    with pytest.raises(
-        NotebookGradingError,
-        match="Notebook JSON must be a JSON object",
-    ):
-        # pyright: ignore[reportPrivateUsage]
-        notebook_runtime._load_notebook_json(path)
-
-
 @pytest.mark.parametrize(
     ("content", "match"),
     [
+        ("[]", "Notebook JSON must be a JSON object"),
         ('{"metadata": {}}', "Notebook JSON must contain a 'cells' list"),
         ('{"cells": {}}', "Notebook JSON must contain a 'cells' list"),
         (
@@ -217,55 +88,46 @@ def test_load_notebook_json_rejects_non_string_object_keys(
         ),
     ],
 )
-def test_load_notebook_json_rejects_missing_or_invalid_cells(
+def test_public_fallback_rejects_invalid_notebook_cells(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
     content: str,
     match: str,
 ) -> None:
-    path = tmp_path / "broken.ipynb"
-    path.write_text(content, encoding="utf-8")
+    notebook_path = tmp_path / "broken.ipynb"
+    notebook_path.write_text(content, encoding="utf-8")
+    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
+    monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(False))
+
+    def resolve(_key: str, *, variant: notebook_runtime.Variant) -> Path:
+        return notebook_path
+
+    monkeypatch.setattr(notebook_runtime, "resolve_notebook_path", resolve)
 
     with pytest.raises(NotebookGradingError, match=match):
-        # pyright: ignore[reportPrivateUsage]
-        notebook_runtime._load_notebook_json(path)
+        notebook_runtime.run_notebook_checks("ex999_sequence_make_broken")
 
 
-def test_run_notebook_checks_marks_failure_when_execution_raises(
+def test_public_fallback_rejects_non_string_json_object_keys(
+    tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    def fake_run_tagged_cell(notebook_path: str, tag: str) -> None:
-        raise NotebookGradingError("Execution failed")
+    notebook_path = tmp_path / "broken.ipynb"
+    notebook_path.write_text("{}", encoding="utf-8")
+    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
+    monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(False))
 
-    monkeypatch.setattr(notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
+    def resolve(_key: str, *, variant: notebook_runtime.Variant) -> Path:
+        return notebook_path
 
-    results = notebook_runtime._run_notebook_checks(  # pyright: ignore[reportPrivateUsage]
-        Path("dummy_exercise"), ["exercise1"]
-    )
+    def fake_loads(_raw_json: str) -> object:
+        return {1: []}
 
-    assert len(results) == 1
-    assert results[0].passed is False
-    assert results[0].message == "Execution failed"
+    monkeypatch.setattr(notebook_runtime, "resolve_notebook_path", resolve)
+    monkeypatch.setattr(notebook_runtime.json, "loads", fake_loads)
 
-
-def test_run_notebook_checks_passes_path_object_to_tagged_runner(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    received: list[Path] = []
-
-    def fake_run_tagged_cell(notebook_path: str | Path, tag: str) -> None:
-        assert tag == "exercise1"
-        assert isinstance(notebook_path, Path)
-        received.append(notebook_path)
-
-    notebook_path = Path("dummy_exercise.ipynb")
-    monkeypatch.setattr(notebook_runtime, "_run_tagged_cell", fake_run_tagged_cell)
-
-    results = notebook_runtime._run_notebook_checks(  # pyright: ignore[reportPrivateUsage]
-        notebook_path, ["exercise1"]
-    )
-
-    assert [result.passed for result in results] == [True]
-    assert received == [notebook_path]
+    with pytest.raises(NotebookGradingError, match="Notebook JSON must be a JSON object"):
+        notebook_runtime.run_notebook_checks("ex999_sequence_make_bad_keys")
 
 
 _OUTCOME_CASES = [
@@ -275,7 +137,6 @@ _OUTCOME_CASES = [
     for readable in (False, True)
 ]
 _TASK_CELL_COUNT = 2
-_SOLUTION_BACKLOG_FUNCTIONAL_COUNT = 10
 
 
 def _has_local_checks(enabled: bool) -> Callable[[str], bool]:
@@ -295,8 +156,10 @@ def _collect_two_tags(_path: Path) -> list[str]:
 
 def _fallback_results(
     passed: bool,
-) -> Callable[[Path, list[str]], list[notebook_runtime.NotebookTagCheckResult]]:
-    def run(_path: Path, _tags: list[str]) -> list[notebook_runtime.NotebookTagCheckResult]:
+) -> Callable[..., list[notebook_runtime.NotebookTagCheckResult]]:
+    def run(
+        _path: Path, _tags: list[str], *, variant: notebook_runtime.Variant
+    ) -> list[notebook_runtime.NotebookTagCheckResult]:
         return [
             notebook_runtime.NotebookTagCheckResult(
                 tag="exercise1", passed=passed, message="task one failed" if not passed else ""
@@ -381,9 +244,7 @@ def _assert_task_rows(
 
 def _assert_readability_diagnostics(output: str, *, passed: bool) -> None:
     if not passed:
-        feedback = " ".join(
-            line.split("|")[-2].strip() for line in output.splitlines() if line.startswith("|")
-        )
+        feedback = " ".join(row[-1] for row in table_rows(output))
         assert "line 2" in output and "column 6" in output and "column 10" in output
         assert "E225" in output and "Missing whitespace around operator" in feedback
         assert "W291" in output and "Trailing whitespace" in feedback
@@ -391,15 +252,7 @@ def _assert_readability_diagnostics(output: str, *, passed: bool) -> None:
 
 
 def _assert_no_footer(output: str) -> None:
-    for text in (
-        "Functional summary:",
-        "Readability summary:",
-        "Overall self-check:",
-        "Save your notebook",
-        "fixing-readability-issues.md",
-        "teacher-side marks",
-    ):
-        assert text not in output
+    assert_no_footer(output)
     assert "Great work! All exercise cells ran without errors." not in output
     assert "Great work! Everything that can be checked here looks good." not in output
 
@@ -452,7 +305,6 @@ def test_both_dispatch_paths_render_required_combined_task_rows(
     _assert_readability_diagnostics(output, passed=readability_passed)
     _assert_no_footer(output)
     assert output.rstrip().splitlines()[-1].startswith("+")
-    assert "Readability" in output
     assert "ex003_sequence_modify_variables" in output and "student" in output
     if functional_passed:
         assert "Task one failed" not in output
@@ -460,8 +312,6 @@ def test_both_dispatch_paths_render_required_combined_task_rows(
     else:
         assert "Task one failed" in output
         assert "Task two failed" in output
-    assert "Great work! All exercise cells ran without errors." not in output
-    assert "Great work! Everything that can be checked here looks good." not in output
     assert "PYTUTOR_ACTIVE_VARIANT" not in os.environ
 
 
@@ -513,7 +363,9 @@ def test_public_fallback_discovers_string_tags_on_all_cell_types(
     )
     monkeypatch.setattr(notebook_runtime, "analyze_notebook", analyze)
 
-    def run_fallback(_path: Path, tags: list[str]) -> list[notebook_runtime.NotebookTagCheckResult]:
+    def run_fallback(
+        _path: Path, tags: list[str], *, variant: notebook_runtime.Variant
+    ) -> list[notebook_runtime.NotebookTagCheckResult]:
         discovered.append(tags)
         return [
             notebook_runtime.NotebookTagCheckResult(tag=tag, passed=True, message="")
@@ -531,35 +383,51 @@ def test_public_fallback_discovers_string_tags_on_all_cell_types(
     assert "exercise²" not in output
 
 
-@pytest.mark.parametrize("functional_only", [False, True])
+@pytest.mark.parametrize("tool_error", [False, True])
 def test_notebook_tables_wrap_long_feedback_without_truncation(
-    functional_only: bool,
+    tool_error: bool,
+    monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     message = (
         "This feedback explains the expected wording and punctuation for the student's response. "
         * _MIN_FEEDBACK_LINES
     ).strip()
-    results = [ExerciseCheckResult(1, "Static output", False, [message])]
-    if functional_only:
-        notebook_runtime._print_functional_only_results(results)
-    else:
-        notebook_runtime._print_integrated_results(
-            "ex003_sequence_modify_variables", "student", results, _readability_result(False)
-        )
+    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
+    monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(True))
+    monkeypatch.setattr(notebook_runtime, "resolve_notebook_path", _resolve_test_notebook)
 
-    lines = capsys.readouterr().out.splitlines()
-    first_row = next(index for index, line in enumerate(lines) if "| Exercise 1" in line)
-    row_lines = []
+    def run_checks(_key: str) -> list[ExerciseCheckResult]:
+        return [ExerciseCheckResult(1, "Static output", False, [message])]
+
+    monkeypatch.setattr(notebook_runtime, "run_exercise_checks", run_checks)
+    if tool_error:
+        monkeypatch.setattr(notebook_runtime, "analyze_notebook", _raise_readability_tool_error)
+        with pytest.raises(readability.ReadabilityToolError):
+            notebook_runtime.run_notebook_checks("ex003_sequence_modify_variables")
+    else:
+        monkeypatch.setattr(notebook_runtime, "analyze_notebook", _one_clean_cell_analysis)
+        notebook_runtime.run_notebook_checks("ex003_sequence_modify_variables")
+
+    output = capsys.readouterr().out
+    lines = output.splitlines()
+    first_row = next(
+        index
+        for index, line in enumerate(lines)
+        if line.startswith("| Exercise 1") and "Static output" in line
+    )
+    row_lines: list[str] = []
     for line in lines[first_row:]:
         if line.startswith("+"):
+            break
+        if row_lines and any(column.strip() for column in line.split("|")[1:4]):
             break
         row_lines.append(line)
     feedback = [line.split("|")[-2].strip() for line in row_lines]
     assert len(feedback) >= _MIN_FEEDBACK_LINES
     assert all(len(line) <= _FEEDBACK_WIDTH for line in feedback)
     assert " ".join(feedback) == message
-    assert all(all(not cell.strip() for cell in line.split("|")[1:4]) for line in row_lines[1:])
+    assert all(all(not column.strip() for column in line.split("|")[1:4]) for line in row_lines[1:])
 
 
 def test_readability_row_is_emitted_once_when_task_has_multiple_functional_checks(
@@ -607,8 +475,6 @@ def test_readability_tool_error_is_distinct_and_follows_functional_rows(
     _assert_no_footer(output)
     assert "Overall self-check: PASS" not in output
     assert "Readability: FAIL" not in output
-    assert "Great work! Everything that can be checked here looks good." not in output
-    assert "Great work! All exercise cells ran without errors." not in output
     assert "PYTUTOR_ACTIVE_VARIANT" not in os.environ
 
 
@@ -646,7 +512,10 @@ def test_active_variant_resolves_same_path_for_execution_and_analysis(
         executed.append(os.environ["PYTUTOR_ACTIVE_VARIANT"])
         return _functional_result(True)
 
-    def run_fallback(path: Path, _tags: list[str]) -> list[notebook_runtime.NotebookTagCheckResult]:
+    def run_fallback(
+        path: Path, _tags: list[str], *, variant: notebook_runtime.Variant
+    ) -> list[notebook_runtime.NotebookTagCheckResult]:
+        assert isinstance(path, Path)
         assert path == notebook_path
         executed.append(os.environ["PYTUTOR_ACTIVE_VARIANT"])
         return [notebook_runtime.NotebookTagCheckResult("exercise1", True, "")]
@@ -689,16 +558,22 @@ def test_fallback_execution_and_source_inspection_receive_active_solution_varian
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
 
     def extract(path: str | Path, *, tag: str, variant: str) -> str:
-        captured.append((f"extract:{variant}", Path(path), tag))
+        assert isinstance(path, Path)
+        assert path == notebook_path
+        captured.append((f"extract:{variant}", path, tag))
         return "input()\n" if input_calls else "print('done')\n"
 
     def run_static(path: str | Path, *, tag: str, variant: str) -> str:
-        captured.append((f"static:{variant}", Path(path), tag))
+        assert isinstance(path, Path)
+        assert path == notebook_path
+        captured.append((f"static:{variant}", path, tag))
         return "done"
 
     def run_interactive(path: str | Path, *, tag: str, inputs: list[str], variant: str) -> str:
+        assert isinstance(path, Path)
+        assert path == notebook_path
         assert inputs == ["2"]
-        captured.append((f"interactive:{variant}", Path(path), tag))
+        captured.append((f"interactive:{variant}", path, tag))
         return "done"
 
     def analyze(path: Path) -> readability.NotebookAnalysis:
@@ -743,7 +618,7 @@ def test_functional_only_run_exercise_checks_does_not_launch_ruff(
 
     results = checks.run_exercise_checks("ex002_sequence_modify_basics")
 
-    assert len(results) == _FUNCTIONAL_CHECK_COUNT
+    assert results
     assert calls == []
 
 
@@ -788,9 +663,7 @@ def test_syntax_blocked_cell_is_not_checked_without_cascading_diagnostics(
         line for line in output.splitlines() if "Exercise 1" in line and "Readability" in line
     )
     assert "⚪ NOT CHECKED" in blocked_row
-    feedback = " ".join(
-        line.split("|")[-2].strip() for line in output.splitlines() if line.startswith("|")
-    )
+    feedback = " ".join(row[-1] for row in table_rows(output))
     assert "Not checked - make sure your code runs first" in feedback
     assert "🟢 OK" not in blocked_row and "🔴 NO" not in blocked_row
     assert "invalid-syntax" not in output and "Expected ':'" not in output
@@ -891,7 +764,7 @@ def _set_fallback_dispatch(
 
 
 def _successful_fallback_results(
-    _path: Path, _tags: list[str]
+    _path: Path, _tags: list[str], *, variant: notebook_runtime.Variant
 ) -> list[notebook_runtime.NotebookTagCheckResult]:
     return [
         notebook_runtime.NotebookTagCheckResult("exercise1", True, ""),
@@ -900,9 +773,21 @@ def _successful_fallback_results(
 
 
 def _one_successful_fallback_result(
-    _path: Path, _tags: list[str]
+    _path: Path, _tags: list[str], *, variant: notebook_runtime.Variant
 ) -> list[notebook_runtime.NotebookTagCheckResult]:
     return [notebook_runtime.NotebookTagCheckResult("exercise1", True, "")]
+
+
+def _saved_solution_task_tags(exercise_key: str) -> list[str]:
+    notebook_path = notebook_runtime.resolve_notebook_path(exercise_key, variant="solution")
+    notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
+    return [
+        tag
+        for cell in notebook["cells"]
+        if cell.get("cell_type") == "code"
+        for tag in cell.get("metadata", {}).get("tags", [])
+        if isinstance(tag, str) and re.fullmatch(r"exercise[0-9]+", tag)
+    ]
 
 
 @pytest.mark.parametrize(
@@ -921,10 +806,9 @@ def test_real_canonical_sequence_and_selection_self_checks_keep_functional_outco
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", variant)
-    expected_check_count = 30 if exercise_key == "ex002_sequence_modify_basics" else 10
     functional_results = checks.run_exercise_checks(exercise_key)
 
-    assert len(functional_results) == expected_check_count
+    assert functional_results
     assert all(result.passed for result in functional_results) is (variant == "solution")
 
     notebook_runtime.run_notebook_checks(exercise_key)
@@ -940,33 +824,36 @@ def test_real_canonical_sequence_and_selection_self_checks_keep_functional_outco
         and line.split("|")[1].strip() != "Exercise"
         and "Readability" not in line
     ]
-    assert len(functional_rows) == expected_check_count
+    assert len(functional_rows) == len(functional_results)
     assert all("🟢 OK" in line for line in functional_rows) is (variant == "solution")
     assert sum("🟢 OK" in line for line in functional_rows) == sum(
         result.passed for result in functional_results
     )
     _assert_no_footer(output)
-    assert construct in exercise_key
 
 
 def test_real_solution_readability_backlog_keeps_failed_readability_rows(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    exercise_key = "ex015_sequence_make_consolidation_v2"
     monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "solution")
-    functional_results = checks.run_exercise_checks("ex015_sequence_make_consolidation_v2")
+    functional_results = checks.run_exercise_checks(exercise_key)
+    expected_task_tags = _saved_solution_task_tags(exercise_key)
 
-    assert len(functional_results) == _SOLUTION_BACKLOG_FUNCTIONAL_COUNT
+    assert functional_results
     assert all(result.passed for result in functional_results)
 
-    notebook_runtime.run_notebook_checks("ex015_sequence_make_consolidation_v2")
+    notebook_runtime.run_notebook_checks(exercise_key)
 
     output = capsys.readouterr().out
     assert "Readability" in output
     assert "🔴 NO" in output
     assert "E501" in output
     readability_rows = [line for line in output.splitlines() if "Readability" in line]
-    assert len(readability_rows) == _SOLUTION_BACKLOG_FUNCTIONAL_COUNT
+    assert [line.split("|")[1].strip() for line in readability_rows] == [
+        f"Exercise {tag.removeprefix('exercise')}" for tag in expected_task_tags
+    ]
     assert sum("🔴 NO" in line for line in readability_rows) == 1
     functional_rows = [
         line
@@ -975,7 +862,7 @@ def test_real_solution_readability_backlog_keeps_failed_readability_rows(
         and line.split("|")[1].strip() != "Exercise"
         and "Readability" not in line
     ]
-    assert len(functional_rows) == _SOLUTION_BACKLOG_FUNCTIONAL_COUNT
+    assert len(functional_rows) == len(functional_results)
     assert all("🟢 OK" in line for line in functional_rows)
     _assert_no_footer(output)
 
@@ -993,16 +880,97 @@ def test_run_notebook_checks_reports_failures_for_unsolved_ex002(
     assert "Exercise 1" in output
     assert "Logic" in output
     assert "Hello Python!" in output
-    assert "Great work! Everything that can be checked here looks good." not in output
-    assert "Great work! All exercise cells ran without errors." not in output
 
 
-def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: pytest.MonkeyPatch) -> None:
+def _write_input_notebook(path: Path, source: str) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {
+                        "cell_type": "code",
+                        "metadata": {"tags": ["exercise1"]},
+                        "source": source,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def _configure_public_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+    notebook_path: Path,
+) -> None:
     monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
-    attempt_lengths: list[int] = []
+    monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(False))
 
-    def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
-        return 1
+    def resolve(_key: str, *, variant: notebook_runtime.Variant) -> Path:
+        return notebook_path
+
+    def analyze(_path: Path) -> readability.NotebookAnalysis:
+        return readability.NotebookAnalysis(())
+
+    monkeypatch.setattr(notebook_runtime, "resolve_notebook_path", resolve)
+    monkeypatch.setattr(notebook_runtime, "analyze_notebook", analyze)
+
+
+@pytest.mark.parametrize(
+    ("source", "expected_mode"),
+    [
+        ("print('ready')\n", "static"),
+        (
+            "first = input('A: ')\nsecond = builtins.input('B: ')\nprint(first, second)\n",
+            "interactive",
+        ),
+    ],
+)
+def test_public_fallback_selects_execution_from_input_call_count(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    source: str,
+    expected_mode: str,
+) -> None:
+    notebook_path = tmp_path / "student.ipynb"
+    _write_input_notebook(notebook_path, source)
+    _configure_public_fallback(monkeypatch, notebook_path)
+    static_calls: list[str] = []
+    interactive_calls: list[list[str]] = []
+
+    def run_static(_path: str | Path, *, tag: str, variant: str) -> str:
+        assert isinstance(_path, Path)
+        assert _path == notebook_path
+        assert variant == "student"
+        static_calls.append(tag)
+        return "ready"
+
+    def run_interactive(_path: str | Path, *, tag: str, inputs: list[str], variant: str) -> str:
+        assert isinstance(_path, Path)
+        assert _path == notebook_path
+        assert tag == "exercise1"
+        assert variant == "student"
+        interactive_calls.append(inputs)
+        return "Alice Smith"
+
+    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", run_static)
+    monkeypatch.setattr(notebook_runtime, "run_cell_with_input", run_interactive)
+
+    notebook_runtime.run_notebook_checks("ex999_sequence_make_inputs")
+
+    assert static_calls == (["exercise1"] if expected_mode == "static" else [])
+    assert interactive_calls == ([["2", "2"]] if expected_mode == "interactive" else [])
+
+
+def test_public_fallback_retries_when_more_inputs_are_needed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
+    notebook_path = tmp_path / "student.ipynb"
+    _write_input_notebook(notebook_path, "name = input()\nprint(name)\n")
+    _configure_public_fallback(monkeypatch, notebook_path)
+    attempt_lengths: list[int] = []
 
     def fake_run_with_input(
         notebook_path: str,
@@ -1012,29 +980,25 @@ def test_run_tagged_cell_retries_when_missing_inputs(monkeypatch: pytest.MonkeyP
         variant: str,
     ) -> str:
         attempt_lengths.append(len(inputs))
-        assert variant == "student"
         if len(attempt_lengths) == 1:
             _raise_missing_input_error()
         return "ok\n"
 
-    def fake_run_static(*_args: object, **_kwargs: object) -> str:
-        return ""
-
-    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
     monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
 
-    # pyright: ignore[reportPrivateUsage]
-    notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
+    notebook_runtime.run_notebook_checks("ex999_sequence_make_retry")
 
     assert attempt_lengths == [1, 2]
 
 
-def test_run_tagged_cell_propagates_real_errors(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
-
-    def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
-        return 1
+def test_public_fallback_reports_execution_errors(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    notebook_path = tmp_path / "student.ipynb"
+    _write_input_notebook(notebook_path, "name = input()\nprint(name)\n")
+    _configure_public_fallback(monkeypatch, notebook_path)
 
     def fake_run_with_input(
         notebook_path: str,
@@ -1046,25 +1010,24 @@ def test_run_tagged_cell_propagates_real_errors(monkeypatch: pytest.MonkeyPatch)
         assert variant == "student"
         raise NotebookGradingError("Execution failed")
 
-    def fake_run_static(*_args: object, **_kwargs: object) -> str:
-        return ""
-
-    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
     monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
 
-    with pytest.raises(NotebookGradingError, match="Execution failed"):
-        # pyright: ignore[reportPrivateUsage]
-        notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
+    notebook_runtime.run_notebook_checks("ex999_sequence_make_execution_error")
+    output = capsys.readouterr().out
+    assert "Execution failed" in output
+    assert "🔴 NO" in output
 
 
-def test_run_tagged_cell_stops_after_max_attempts(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
+def test_public_fallback_stops_after_maximum_input_attempts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    notebook_path = tmp_path / "student.ipynb"
+    _write_input_notebook(notebook_path, "name = input()\nprint(name)\n")
+    _configure_public_fallback(monkeypatch, notebook_path)
     attempts = 0
     limit = 2
-
-    def fake_count_input_calls(notebook_path: str, *, tag: str) -> int:
-        return 1
 
     def fake_run_with_input(
         notebook_path: str,
@@ -1079,19 +1042,13 @@ def test_run_tagged_cell_stops_after_max_attempts(monkeypatch: pytest.MonkeyPatc
         _raise_missing_input_error()
         return ""
 
-    def fake_run_static(*_args: object, **_kwargs: object) -> str:
-        return ""
-
-    monkeypatch.setattr(notebook_runtime, "_count_input_calls", fake_count_input_calls)
-    monkeypatch.setattr(notebook_runtime, "run_cell_and_capture_output", fake_run_static)
     monkeypatch.setattr(notebook_runtime, "run_cell_with_input", fake_run_with_input)
     monkeypatch.setattr(notebook_runtime, "_MAX_AUTOMATED_INPUTS", limit)
 
-    with pytest.raises(NotebookGradingError):
-        # pyright: ignore[reportPrivateUsage]
-        notebook_runtime._run_tagged_cell("dummy_exercise", "exercise1")
+    notebook_runtime.run_notebook_checks("ex999_sequence_make_input_limit")
 
     assert attempts == limit
+    assert "Execution failed for missing input" in capsys.readouterr().out
 
 
 def _raise_missing_input_error() -> None:

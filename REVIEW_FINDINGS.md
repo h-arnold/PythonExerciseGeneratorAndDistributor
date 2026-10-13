@@ -1,7 +1,8 @@
 # Final review findings: disposition ledger
 
-Batch A implementation and the reported GREEN-review follow-ups are complete;
-batches B and C remain open. Line references describe the original review baseline,
+Batch A is delivered. Batch B implementation and production/test GREEN review are
+complete; documentation re-review and delivery remain open; Batch C has not started.
+Line references describe the original review baseline,
 not immutable positions. Each Batch A disposition below records implementation
 evidence. No commit was authorised or made.
 
@@ -99,6 +100,64 @@ diagnostic regions.
 | N7 | Neutral `⚪ NOT CHECKED` is inline at `exercise_framework/reporting.py:22` (`format_status`) versus sibling status constants at `:12–15` of the same module; `notebook_runtime.py:329` holds the unrelated syntax-blocked message string. | Reuse existing status rendering owner where it fits; do not create a constant solely for a single occurrence; confirm emitted status unchanged. |
 | N8 | `exercise_framework/reporting.py:84–91` (`render_grouped_table_with_errors`) docstring omits the four rendered column headers; `Iterable` annotation at `:85` has no known generator caller; the earlier transcription cited `student_checker/reporting.py:87–91`, the thin `print_exercise_results` wrapper. | Clarify docstring/column semantics; inspect callers before narrowing `Iterable`, preserve it if a deliberate small API that accepts generators; record evidence. |
 | N9 | `tests/exercise_framework/test_reporting.py:70–75` casing test re-asserts the column-width wrap (`:74`) and input-row non-mutation (`:75`), duplicating the dedicated wrap tests; the earlier transcription cited `test_student_checker_reporting.py:70–75`, an unrelated success-message test. | Remove only proven duplicate checks, retaining one test per behaviour and public API contract. |
+
+### Batch B dispositions and local evidence
+
+- **R3 — resolved locally:** removed all direct private runtime calls and
+  `reportPrivateUsage` ignores from the scoped runtime test module. Public
+  `run_notebook_checks()` cases retain static and input-driven execution, retries,
+  max-input handling and execution errors. Scoped Pyright now reports zero errors
+  across changed source and tests; no suppression was added.
+- **R4 — resolved locally:** output parsing no longer uses an untyped accumulator;
+  the tests use explicit types and the small `tests/readability_table.py` helper
+  for shared footer assertions. Scoped Pyright is zero.
+- **Y1 — resolved locally:** each functional row carries its task tag at creation;
+  orchestration no longer zips rows to results or reconstructs task identity via
+  `isinstance`. Existing output ordering tests remain.
+- **Y2 — resolved locally:** normal and tool-error paths use one header printer;
+  error path still prints header, completed functional rows, then ERROR/re-raises.
+- **Y3 — retained with reviewer approval:** functional-only `student_checker.reporting`
+  collapses repeated exercise labels and retains congratulations; notebook
+  reporting deliberately interleaves per-task functional and readability rows
+  and owns its header/table. A concise comment now records the distinct grouping
+  policies. The differing contracts make a shared row converter inappropriate;
+  no output behaviour was merged.
+- **Y4 — resolved locally:** selected `Variant` from the active context is passed
+  explicitly into fallback tag execution, `input()` source extraction, static
+  execution and interactive execution/retries. No helper rereads the environment.
+  Public-path tests verify student/solution selection and exact `Path` boundaries.
+- **Y6 — resolved in tests:** preserved nonempty functional backlog assertions and
+  output/order checks while redundant no-footer and already-tautological checks
+  were removed in the delivered test slice.
+- **Y7 — resolved locally:** `tests/readability_table.py` provides typed grid-row
+  parsing and a shared no-footer assertion used by runtime and packaged tests.
+  It replaces repeated feedback-column parsing in those surfaces and remains under
+  `tests/`, not copied into templates; substantive table/status assertions remain
+  at each owning test.
+- **Y8 — resolved in delivered tests:** exported functional statuses are obtained
+  from `run_exercise_checks()` for the actual source exercise, and the backlog
+  collection is asserted nonempty before requiring the expected outcome. No
+  notebook or fixed pass/fail counts were changed.
+- **N7 — resolved locally:** `NOT_CHECKED_STATUS` is a module-level `Final` adjacent
+  to the sibling status constants and is returned by the existing renderer;
+  neutral visible text remains unchanged.
+- **N8 — resolved locally:** the public renderer docstring names Exercise, Check,
+  Status and Error, and explains `None`, feedback casing and generator support.
+  `Iterable` is retained as the useful public input contract; a one-shot iterator
+  test confirms iterable support.
+- **N9 — resolved in delivered tests:** caller-owned mutable rows are still
+  snapshotted/asserted unchanged. The duplicated wrap assertion was removed from
+  casing coverage; dedicated wrap tests continue to own width behavior.
+
+Validation with pytest's configured `addopts` disabled for visible summaries:
+`uv run pytest tests/exercise_runtime_support/ tests/exercise_framework/test_reporting.py tests/template_repo_cli/test_packaged_readability.py tests/test_readability_table.py -q -o addopts=''` reports 186 passed;
+`uv run python scripts/run_pytest_variant.py --variant solution -q -o addopts=''`
+reports 1,618 passed and 1 skipped; `uv run pytest --collect-only -q -o addopts=''`
+reports 1,619 collected. The complete support/framework/template-CLI suite passed;
+scoped Pyright reports zero errors on touched production and tests; repository
+Ruff, scoped format, `uv lock --check` and `git diff --check` pass. Independent
+GREEN review and documentation re-review are clean for every Batch B ID.
+Commit and push are the next delivery gate.
 
 ## Batch C — exported fixture and documentation consistency
 

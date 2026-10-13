@@ -12,11 +12,11 @@ from typing import Any, cast
 
 import pytest
 
+from exercise_runtime_support.student_checker.checks import run_exercise_checks
 from scripts.template_repo_cli.core.packager import TemplatePackager
+from tests.readability_table import assert_no_footer, table_rows
 
 _EXERCISE_KEY = "ex002_sequence_modify_basics"
-_EXPORTED_FUNCTIONAL_PASSES = 14
-_EXPORTED_FUNCTIONAL_FAILURES = 16
 _EXPORTED_TASK_CELLS = 10
 _FEEDBACK_WIDTH = 40
 
@@ -71,15 +71,7 @@ def _run_exported_self_check(output: Path, exercise_key: str = _EXERCISE_KEY) ->
     assert output_lines[0].startswith("MODULE_ORIGINS=")
     origins = cast(dict[str, str], json.loads(output_lines[0].removeprefix("MODULE_ORIGINS=")))
     assert all(Path(origin).is_relative_to(output) for origin in origins.values())
-    for text in (
-        "Functional summary:",
-        "Readability summary:",
-        "Overall self-check:",
-        "Save your notebook",
-        "fixing-readability-issues.md",
-        "teacher-side marks",
-    ):
-        assert text not in result.stdout
+    assert_no_footer(result.stdout)
     assert output_lines[-1].startswith("+")
     return result.stdout
 
@@ -95,30 +87,48 @@ def _write_cell(notebook_path: Path, tag: str, source: str) -> None:
 
 
 def test_exported_default_student_self_check_shows_functional_and_readability_failures(
-    repo_root: Path, tmp_path: Path
+    repo_root: Path,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Export keeps the starter's functional failure and adds readability rows."""
     output = tmp_path / "student-template"
     output.mkdir()
     packager, notebook = _export_exercise(repo_root, output)
+    monkeypatch.setenv("PYTUTOR_ACTIVE_VARIANT", "student")
+    source_functional_results = run_exercise_checks(_EXERCISE_KEY)
+    expected_functional_statuses = [result.passed for result in source_functional_results]
     _write_cell(notebook, "exercise1", 'greetingMessage = "Hello World!"\nprint(greetingMessage)\n')
 
     failing_text = _run_exported_self_check(output)
 
     assert "N816" in failing_text
-    _assert_exported_rows(failing_text, readability_failures=1)
+    _assert_exported_rows(
+        failing_text,
+        readability_failures=1,
+        functional_statuses=expected_functional_statuses,
+    )
 
     _write_cell(notebook, "exercise1", 'print("Hello World!")\n')
     corrected_text = _run_exported_self_check(output)
 
     assert "N816" not in corrected_text
-    _assert_exported_rows(corrected_text, readability_failures=0)
+    _assert_exported_rows(
+        corrected_text,
+        readability_failures=0,
+        functional_statuses=expected_functional_statuses,
+    )
     assert packager.validate_package(output)
     assert not (output / "exercises/sequence" / _EXERCISE_KEY / "notebooks/solution.ipynb").exists()
     assert notebook.is_file()
 
 
-def _assert_exported_rows(text: str, *, readability_failures: int) -> None:
+def _assert_exported_rows(
+    text: str,
+    *,
+    readability_failures: int,
+    functional_statuses: list[bool],
+) -> None:
     functional_rows = [
         line
         for line in text.splitlines()
@@ -128,13 +138,17 @@ def _assert_exported_rows(text: str, *, readability_failures: int) -> None:
     ]
     readability_rows = [line for line in text.splitlines() if "Readability" in line]
     assert all(line.split("|")[2].strip() == "Readability" for line in readability_rows)
-    feedback = [line.split("|")[-2].strip() for line in text.splitlines() if line.startswith("|")]
+    feedback = [row[-1] for row in table_rows(text)]
     assert all(len(line) <= _FEEDBACK_WIDTH for line in feedback)
-    assert sum("🟢 OK" in line for line in functional_rows) == _EXPORTED_FUNCTIONAL_PASSES
-    assert sum("🔴 NO" in line for line in functional_rows) == _EXPORTED_FUNCTIONAL_FAILURES
+    assert len(functional_rows) == len(functional_statuses)
+    assert [line.split("|")[3].strip() for line in functional_rows] == [
+        "🟢 OK" if passed else "🔴 NO" for passed in functional_statuses
+    ]
     assert len(readability_rows) == _EXPORTED_TASK_CELLS
+    readability_statuses = [line.split("|")[3].strip() for line in readability_rows]
+    assert all(status in {"🟢 OK", "🔴 NO"} for status in readability_statuses)
     assert sum("🔴 NO" in line for line in readability_rows) == readability_failures
-    assert sum("🟢 OK" in line for line in readability_rows) == (
+    assert sum(status == "🟢 OK" for status in readability_statuses) == (
         _EXPORTED_TASK_CELLS - readability_failures
     )
 
@@ -233,9 +247,9 @@ def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
     functional_row = next(line for line in text.splitlines() if "| exercise1 " in line)
     readability_row = next(line for line in text.splitlines() if "Readability" in line)
     assert readability_row.split("|")[2].strip() == "Readability"
-    assert functional_status in functional_row
-    assert readability_status in readability_row
-    feedback = [line.split("|")[-2].strip() for line in text.splitlines() if line.startswith("|")]
+    assert functional_row.split("|")[3].strip() == functional_status
+    assert readability_row.split("|")[3].strip() == readability_status
+    feedback = [row[-1] for row in table_rows(text)]
     assert all(len(line) <= _FEEDBACK_WIDTH for line in feedback)
     assert message in " ".join(feedback)
     assert "invalid-syntax" not in text

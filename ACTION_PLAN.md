@@ -4,8 +4,9 @@ The delivery tracker and numbered feature stages below are **historical
 evidence**, not the status or requirements of this clean-up. In particular their
 old `RUFF_GUIDE.md`, summaries, footer, syntax-FAIL and stage-5 no-commit
 instructions are superseded by the current `SPEC.md` section and the delivered
-`fixing-readability-issues.md`/table-only behaviour. Batch A is implemented and
-validated locally; B and C have not started.
+`fixing-readability-issues.md`/table-only behaviour. Batch A is delivered. Batch B's
+production and test GREEN review is clean; documentation re-review and delivery
+gates remain open. Batch C has not started.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each of the three batches
@@ -45,7 +46,7 @@ For **each** batch, fill these eight statuses separately after work:
 | Batch | Red tests/baseline | Red review | Green implementation | Green review | Checks | Plan/ledger updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Created | Complete |
-| B | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Pending | Pending |
 | C | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
 ### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
@@ -136,6 +137,64 @@ functional-only reporting remains distinct where necessary. **Checks:** support
 suite, offline export fixture, real solution/student exemplars, full validation
 ladder. **Review point:** Tidy RED and GREEN review confirms no tautological
 assertions, weakened evidence or unintended table changes.
+
+Batch B baseline evidence: the scoped baseline
+reported 23 Pyright errors in
+`tests/exercise_runtime_support/test_student_checker_notebook_runtime.py` (eight
+existing and 15 newly introduced diagnostics). All direct runtime-helper calls and
+`reportPrivateUsage` ignores were removed from that test file; public
+`run_notebook_checks()` regressions retain static-vs-input execution, input-call
+detection, retry/backfill and limit/error behaviour, plus malformed notebook loading
+and reporting checks. Existing public behavior was green at baseline, so no
+artificial failing test was introduced. The tests-only slice now passes 183 tests
+across `tests/exercise_runtime_support/`, framework reporting and packaged
+readability; scoped Pyright reports zero errors on the four touched Python tests,
+and scoped Ruff lint/format plus `git diff --check` pass. The exported functional
+row expectations derive from the source exercise's functional results rather than
+frozen 14/16 counts. Existing public behaviour was already green, so no artificial
+RED was introduced; the scoped Pyright debt was the measurable failing baseline.
+
+Reviewer follow-up corrections (tests only): long feedback now reconstructs exactly
+for both ordinary and tooling-error output, stopping at the next non-continuation
+table row; exported status checks compare the Status column exactly to `🟢 OK` or
+`🔴 NO`; the ex015 solution test derives task-row labels from the saved solution's
+tagged code cells and still requires exactly one E501-failing readability row; the
+renderer casing test snapshots and checks the caller's mutable row list; and variant
+fallback asserts the resolved value is a `Path`. Restored the missing-cell-type
+malformed-notebook fixture and removed duplicate no-footer assertions. The focused
+suite passes 183 tests, scoped Pyright is at zero, repository Ruff, scoped format
+and `git diff --check` pass. No production finding is resolved by this test-only
+follow-up.
+
+Additional reviewer correction: the ex015 backlog test now asserts the functional
+result collection is non-empty before requiring all checks to pass. The fallback
+execution-selection and explicit-solution tests now assert `Path` type and exact
+path equality inside the static, interactive, and source-extraction doubles before
+recording arguments; no `Path(value)` normalization can mask a string argument.
+The full scoped test slice remains 183 passed, scoped Pyright remains zero, and
+repository Ruff, scoped formatting and diff checks pass. This strengthens test
+evidence before Batch B production implementation.
+
+Batch B implementation evidence: functional task identity is carried beside its
+row rather than recovered by zipping rows/results; the active variant is threaded
+through fallback counting, source extraction, static execution and interactive
+retries. A shared header printer preserves header/table/error ordering. Functional-
+only reporting intentionally remains separate because its grouped labels and
+success message differ from notebook interleaving. The neutral status is owned with
+sibling status constants, the framework table docstring names all four columns,
+and its generator-friendly `Iterable` API is retained. A small test-only output
+helper shares footer assertions; the mutable caller-row-list assertion remains,
+and exported functional statuses derive from actual exercise results.
+
+Validation with pytest's repository `addopts` disabled to expose summaries:
+`uv run pytest tests/exercise_runtime_support/ tests/exercise_framework/test_reporting.py tests/template_repo_cli/test_packaged_readability.py tests/test_readability_table.py -q -o addopts=''` reports 186 passed;
+`uv run python scripts/run_pytest_variant.py --variant solution -q -o addopts=''`
+reports 1,618 passed and 1 skipped; `uv run pytest --collect-only -q -o addopts=''`
+reports 1,619 collected. Scoped Pyright is zero; repository Ruff, scoped format,
+`uv lock --check` and `git diff --check` pass. Independent GREEN review is clean
+for production/tests. The reviewer requested documentation wording/count
+corrections; those are recorded here and in the ledger, and documentation re-review
+remains pending. No commit or push was made.
 
 ### Batch C — export fixture and documentation truth (Y9–Y11, N10–N17)
 
