@@ -10,10 +10,11 @@ implementation, checks, plan/ledger updates, commit and push are complete.
 Final independent de-sloppification identified nine follow-up cleanups, tracked
 as Batch D below. Batch D implementation, validation and independent GREEN
 re-review are complete and clean; commit and push succeeded. Final cleanup
-confirmation is in progress before documentation sync.
+confirmation is clean with no actionable slop remaining. Documentation sync is
+in progress.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
-## Shared sequence and gates for each of the three batches
+## Shared sequence and gates for each batch
 
 1. Testing Specialist captures existing behaviour and scoped pyright baseline;
    writes/adjusts meaningful public-behaviour regressions where possible. For
@@ -266,6 +267,12 @@ performed.
 
 ## Final independent review and handoff
 
+Final independent de-sloppification is clean: F1–F9 were resolved in `37fc764`,
+and F10's count-independent plan wording passed both Tidy review and a fresh
+de-sloppification confirmation. No source/test changes followed that confirmation.
+The branch is ready for final documentation sync; the user-owned config remains
+untouched and unstaged.
+
 ### Batch D — final audit follow-ups (F1–F9)
 
 Objective: resolve all nine final audit findings in `REVIEW_FINDINGS.md`, without
@@ -314,7 +321,7 @@ Batch C delivered on `feat/AddLinterRulesToSelfChecker`:
 `Align readability documentation and exported fixture coverage`.
 `git push` succeeded (`d0c621c..f73f957`); user-owned config remained unstaged.
 
-After all three batches are genuinely clean and pushed, call De-Sloppification
+After all batches are genuinely clean and pushed, call De-Sloppification
 **read-only** on the complete resulting diff. If it finds actionable issues,
 route focused fixes through Testing Specialist/baseline → Tidy RED → Implementer
 → Tidy GREEN repeat → checks → ledger/plan → authorised commit/push as an

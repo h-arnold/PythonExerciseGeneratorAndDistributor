@@ -3,7 +3,9 @@
 All three original batches are reviewed clean, committed and pushed. Final
 independent de-sloppification identified nine follow-up cleanups (Batch D), now
 independently reviewed clean, committed and pushed. Fresh cleanup confirmation
-is in progress before documentation sync.
+is clean with no actionable slop remaining; documentation sync is in progress.
+A final bookkeeping correction is
+recorded as F10, with its independent review clean.
 The user approved retaining the committed model changes (N15).
 Line references describe the original review baseline,
 not immutable positions. Each Batch A disposition below records implementation
@@ -197,6 +199,7 @@ the delivery evidence.
 | F7 | Quality-verifier test comment references deleted `REMAINING_WORK.md`. | Remove stale reference without changing the stated policy or exercise behavior. |
 | F8 | Functional-only Ruff-forbidden test records calls then immediately raises; its empty-list assertion is redundant. | Retain fail-on-launch behavior and remove unused bookkeeping. |
 | F9 | Long-feedback repetition count shares the minimum wrapped-line threshold constant. | Give message construction an independent clear repetition count while preserving exact reconstruction and wrapping checks. |
+| F10 | `ACTION_PLAN.md` says the shared gates apply to three batches and the final de-sloppification step follows all three, although its batch table records A–D. | Remove both fixed batch counts so the plan remains accurate as batches are added; retain Batch D's completed delivery status. |
 
 Batch D implementation, validation and independent GREEN re-review are complete
 and clean. Commit `37fc764` was pushed successfully.
@@ -230,6 +233,10 @@ and clean. Commit `37fc764` was pushed successfully.
 - **F9 — implemented in the existing tests-only baseline:** message construction
   uses an independent repetition count from the minimum wrapped-line threshold;
   the exact reconstruction and width checks remain.
+- **F10 — corrected:** the two live plan clauses now say “each batch” and “all
+  batches”, consistent with the A–D table and without a fixed count. Batch D's
+  delivery remains complete; independent review of this bookkeeping correction is
+  clean.
 
 Baseline evidence: the four focused test files were already green, so no artificial
 RED was introduced. The six new F4 cases provide direct rejection coverage. Final
