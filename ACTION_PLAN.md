@@ -8,6 +8,29 @@ task-count or tag-topology validation, structural FAIL rows or malformed-exercis
 
 ## Delivery tracker
 
+### Feedback capitalisation follow-up (direct execution)
+
+User-approved scope: capitalise only the first character of rendered feedback,
+after removing any exercise prefix and before wrapping. Preserve the remaining
+text, including quoted answers, identifiers and rule codes. Leave source results,
+functional outcomes, 40-character wrapping and readability eligibility unchanged.
+Untouched-starter detection is explicitly deferred at the user's request.
+Plan: RED casing/preservation tests, minimal GREEN rendering change and self-review,
+checks/cleanup, documentation sync and commit/push. Preserve existing config and
+both saved student notebook edits. RED complete: 13 expected casing failures and
+61 passes. Red self-review clean: prefix handling, wrapped sentences, empty feedback,
+quoted mixed-case text, identifiers and already-capitalised diagnostics are covered.
+GREEN complete and self-reviewed clean: one rendering line changed, with no
+source/checker edits. 385 support/reporting/CLI tests pass; full solution validation
+is 1,614 passed and one skipped. Ruff lint/format, scoped Pyright and diff checks
+pass. Actual sequence ex005 feedback starts `Expected`, `Explanation` and `Output`;
+`Alice` is preserved and readability remains nine OK rows and one NO row.
+Current phase: section commit/push, then cleanup and final documentation sync.
+
+| Red tests | Red self-review | Green | Green self-review | Checks | Plan updated | Commit | Push |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+
 ### Narrow-table follow-up (direct execution)
 
 Scope: label readability rows `Readability`, without physical cell numbers, and

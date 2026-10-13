@@ -90,6 +90,7 @@ def render_grouped_table_with_errors(
     for exercise_label, title, passed, error in rows:
         status = format_status(passed)
         trimmed_error = strip_exercise_prefix(error)
+        trimmed_error = trimmed_error[:1].upper() + trimmed_error[1:]
 
         if trimmed_error and len(trimmed_error) > error_width:
             wrapped_lines = _wrap_error_text(trimmed_error, error_width)

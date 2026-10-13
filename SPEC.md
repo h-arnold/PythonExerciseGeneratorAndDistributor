@@ -20,6 +20,11 @@ functional tables use the shared reporting default of 40 characters for feedback
 wrapping without a line-count limit or truncation. This is not a fixed total table
 width or automatic viewport adaptation; other columns size to their contents.
 
+The capitalisation-only follow-up uppercases the first character of rendered
+feedback after exercise-prefix removal, before wrapping. Remaining text and source
+results stay unchanged. Detecting untouched starters or changing readability
+eligibility is explicitly deferred by the user.
+
 ## Goal and intended outcome
 
 Extend the notebook self-checker with required Ruff PASS/FAIL checks for each

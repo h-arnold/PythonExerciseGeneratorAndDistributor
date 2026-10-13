@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import textwrap
 
+import pytest
+
 from exercise_runtime_support.exercise_framework.reporting import (
     ERROR_COLUMN_WIDTH,
     format_status,
@@ -35,6 +37,42 @@ def test_not_checked_status_is_neutral_in_grouped_table() -> None:
 def test_strip_exercise_prefix_leaves_unmatched_text() -> None:
     message = "The greeting had the wrong colour."
     assert strip_exercise_prefix(message) == message
+
+
+@pytest.mark.parametrize(
+    ("message", "expected"),
+    [
+        ("expected 'Alice'.", "Expected 'Alice'."),
+        ("explanation needs more detail.", "Explanation needs more detail."),
+        (
+            "output does not match the expected prompt flow.",
+            "Output does not match the expected prompt flow.",
+        ),
+        ("Exercise 3: expected 'Hello World'.", "Expected 'Hello World'."),
+        (
+            "use greetingMessage, not GREETING_MESSAGE.",
+            "Use greetingMessage, not GREETING_MESSAGE.",
+        ),
+        ("E226 line 3 column 22: Missing whitespace", "E226 line 3 column 22: Missing whitespace"),
+        (
+            "Not checked - make sure your code runs first",
+            "Not checked - make sure your code runs first",
+        ),
+        ("'greetingMessage' is an identifier.", "'greetingMessage' is an identifier."),
+        ("", ""),
+    ],
+)
+def test_feedback_capitalises_only_first_character(message: str, expected: str) -> None:
+    rows = [("Exercise 3", "Static output", False, message)]
+
+    table = render_grouped_table_with_errors(rows)
+
+    feedback = [line.split("|")[-2].strip() for line in table.splitlines() if line.startswith("|")][
+        1:
+    ]
+    assert " ".join(feedback) == expected
+    assert all(len(line) <= ERROR_COLUMN_WIDTH for line in feedback)
+    assert rows == [("Exercise 3", "Static output", False, message)]
 
 
 def test_wrap_text_to_width_splits_long_message() -> None:
@@ -110,7 +148,7 @@ def test_render_grouped_table_with_errors_wraps_long_words() -> None:
     assert expected_lines
 
     assert long_word not in table
-    first_chunk = "a" * ERROR_COLUMN_WIDTH
+    first_chunk = "A" + "a" * (ERROR_COLUMN_WIDTH - 1)
     assert first_chunk in table
 
 

@@ -455,11 +455,11 @@ def test_both_dispatch_paths_render_required_combined_task_rows(
     assert "Readability" in output
     assert "ex003_sequence_modify_variables" in output and "student" in output
     if functional_passed:
-        assert "task one failed" not in output
-        assert "task two failed" not in output
+        assert "Task one failed" not in output
+        assert "Task two failed" not in output
     else:
-        assert "task one failed" in output
-        assert "task two failed" in output
+        assert "Task one failed" in output
+        assert "Task two failed" in output
     assert "Great work! All exercise cells ran without errors." not in output
     assert "Great work! Everything that can be checked here looks good." not in output
     assert "PYTUTOR_ACTIVE_VARIANT" not in os.environ
@@ -730,7 +730,7 @@ def test_syntax_blocked_cell_is_not_checked_without_cascading_diagnostics(
     assert "invalid-syntax" not in output and "Expected ':'" not in output
     assert "W291" not in output and "Trailing whitespace in blocked cell" not in output
     assert "E225" in output
-    assert "task one failed" in output and "task two failed" in output
+    assert "Task one failed" in output and "Task two failed" in output
     _assert_no_footer(output)
 
 
