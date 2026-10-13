@@ -1,7 +1,9 @@
 # Final review findings: disposition ledger
 
 All three original batches are reviewed clean, committed and pushed. Final
-independent de-sloppification identified nine follow-up cleanups (Batch D).
+independent de-sloppification identified nine follow-up cleanups (Batch D), now
+independently reviewed clean, committed and pushed. Fresh cleanup confirmation
+is in progress before documentation sync.
 The user approved retaining the committed model changes (N15).
 Line references describe the original review baseline,
 not immutable positions. Each Batch A disposition below records implementation
@@ -196,13 +198,13 @@ the delivery evidence.
 | F8 | Functional-only Ruff-forbidden test records calls then immediately raises; its empty-list assertion is redundant. | Retain fail-on-launch behavior and remove unused bookkeeping. |
 | F9 | Long-feedback repetition count shares the minimum wrapped-line threshold constant. | Give message construction an independent clear repetition count while preserving exact reconstruction and wrapping checks. |
 
-Batch D implementation and validation are complete; independent GREEN review is
-pending. The dispositions below remain provisional until that gate is clean.
+Batch D implementation, validation and independent GREEN re-review are complete
+and clean. Commit `37fc764` was pushed successfully.
 
-### Batch D implementation dispositions (GREEN review pending)
+### Batch D implementation dispositions (independent GREEN review clean)
 
 - **F1 — implemented:** current SPEC/ACTION_PLAN status now describes Batch D as
-  implementation- and validation-complete with GREEN review pending. Historical
+  implementation- and validation-complete with independent GREEN approval. Historical
   Batch A/C checkpoints are explicitly framed as historical snapshots; subsequent
   Batch B resolution of its 23 diagnostic baseline is recorded instead of implying
   that debt remains.
@@ -235,9 +237,9 @@ validation passed: focused changed-file suite 239 passed; wider support/reportin
 export/quality slice 329 passed; separate support suite 159 passed and quality suite
 137 passed. Scoped Pyright is zero; repository Ruff, scoped format, lock and diff
 checks pass. Collection is 1,625; full solution is 1,624 passed and 1 skipped.
-Student sequence/selection runs retain 30/33 expected failures. The Tidy GREEN
-review remains pending because the environment rejected the reviewer-agent request
-at its subagent depth limit.
+Student sequence/selection runs retain 30/33 expected failures. The initial nested
+reviewer request hit the subagent depth limit; subsequent independent GREEN review
+and re-review are clean.
 
 ### Batch C dispositions (implementation/checks complete; independent re-review clean)
 

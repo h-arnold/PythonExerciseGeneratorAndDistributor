@@ -9,8 +9,8 @@ clean, committed and pushed. Batch C RED and GREEN reviews are clean;
 implementation, checks, plan/ledger updates, commit and push are complete.
 Final independent de-sloppification identified nine follow-up cleanups, tracked
 as Batch D below. Batch D implementation, validation and independent GREEN
-re-review are complete and clean; delivery is in progress before final cleanup
-confirmation and documentation sync.
+re-review are complete and clean; commit and push succeeded. Final cleanup
+confirmation is in progress before documentation sync.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each of the three batches
@@ -50,7 +50,7 @@ For **each** batch, fill these eight statuses separately after work:
 | A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Created | Complete |
 | C | Complete (already-green packaged baseline; no artificial RED) | Clean | Complete (documentation and dispositions updated) | Clean | Passed: packaged 208; guide/package focused 24; solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/Pyright/format/lock/diff | Complete | Created | Complete |
-| D | Complete (green baseline; no artificial RED) | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| D | Complete (green baseline; no artificial RED) | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 
 ### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
 
@@ -281,17 +281,16 @@ notebook edits or grading changes.
 Sequence: Testing Specialist added footer-rejection coverage and recorded the
 already-green source/diagnostic baselines; Tidy reviewed RED/baseline; the
 Implementer addressed F1–F9. Independent GREEN review and validation were pending
-when this sequence was drafted. Validation is now complete; only independent GREEN
-review remains before a fresh independent cleanup review and final Docs sync. No
-commit or push is requested.
+when this sequence was drafted; both are now complete and clean. Delivery succeeded
+before a fresh independent cleanup review and final Docs sync.
 
 Batch D baseline and implementation handoff: four focused test files were already
 green, so no artificial RED was introduced. The six footer-rejection cases are
 meaningful independent coverage. The source guard module now exposes only its
 two-consumer `is_source` TypeGuard; regex tag matching and source joining are
 consumer-local. Ruff diagnostics are validated and converted to findings in one
-ordered pass. The F1–F9 implementation dispositions await independent GREEN
-review; validation is complete as recorded below. The dirty reviewer-model file and
+ordered pass. The F1–F9 implementation dispositions have independent GREEN
+approval; validation is complete as recorded below. The dirty reviewer-model file and
 committed model changes remain untouched.
 
 Batch D validation: the focused changed-file suite reports 239 passed; the wider
@@ -302,8 +301,13 @@ the wider overlapping slice). Scoped Pyright reports zero errors; repository Ruf
 scoped format, `uv lock --check` and `git diff --check` pass. Collection reports
 1,625 tests; the full explicit solution run reports 1,624 passed and 1 skipped.
 Explicit student sequence and selection runs retain their expected 30 and 33
-failures. Independent GREEN review is the remaining gate; the review-agent request
-could not start because the environment's subagent depth limit was reached.
+failures. The initial nested reviewer request hit the subagent depth limit;
+the orchestrator's subsequent independent review and re-review are clean.
+
+Batch D delivered on `feat/AddLinterRulesToSelfChecker`:
+`37fc76444100702d11aae98a7f4f00db75acc50b` —
+`Resolve final readability cleanup audit findings`.
+`git push` succeeded (`dd24a5d..37fc764`); user-owned config remained unstaged.
 
 Batch C delivered on `feat/AddLinterRulesToSelfChecker`:
 `f73f95746f01c8672fc6e6af2efb3080f5cc2ec0` —
