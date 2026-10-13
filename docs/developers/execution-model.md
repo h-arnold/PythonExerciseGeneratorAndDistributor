@@ -50,14 +50,10 @@ Contract:
 
 ### Notebook self-check readability
 
-`run_notebook_checks('<exercise_key>')` retains its `None` return and combines
-functional results with required per-task readability results. Its self-check
-variant defaults to `student` when `PYTUTOR_ACTIVE_VARIANT` is unset; explicit
-`student` and `solution` values select the same notebook for functional execution
-and readability analysis. The previous environment value is restored after the
-call. The full Ruff policy is documented in
-[testing-framework.md](testing-framework.md); this is a notebook self-check
-contract, not a change to functional-only grading APIs.
+`run_notebook_checks('<exercise_key>')` combines functional and required
+readability results without changing functional-only grading APIs. Its variant,
+saved-notebook selection, visible statuses and output contract are described in
+[testing-framework.md](testing-framework.md).
 
 Deprecated note:
 
@@ -99,20 +95,12 @@ See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule,
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 - **Template CLI contract**: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
 - **Notebook readability self-check**: Ruff checks saved task-cell source in the
-  native managed Python/Jupyter environment. The canonical policy, feedback
-  states and teacher-grading boundary are specified in
-  [testing-framework.md](testing-framework.md). The student guide source is
+  native managed Python/Jupyter environment. See
+  [testing-framework.md](testing-framework.md) for the self-check policy and
+  output contract. The student guide source is
   `template_repo_files/fixing-readability-issues.md`; packaging maps it to
-  root-level `fixing-readability-issues.md` in exported repositories and the
-  generated README links to it.
-  Normal checker output is the header and task-grouped table only, without a
-  footer or guide lookup. Readability labels omit physical cell numbers; the
-  Exercise column identifies the task. Feedback wraps at the shared reporting
-  default of 40 characters without truncation or a line-count limit; other columns
-  remain content-sized, rather than adapting to the viewport.
-  Syntax-blocked readability rows show neutral
-  `⚪ NOT CHECKED` with `Not checked - make sure your code runs first`; valid-syntax
-  cells are assessed independently of functional outcomes.
+  root-level `fixing-readability-issues.md` in exported repositories, linked
+  from the generated README.
 
 **Construct-level resources**: When packaging, the CLI preserves construct-level `additional-resources/` directories (e.g. `exercises/sequence/additional-resources/`) in the exported output. These are optional reference materials for students and are not part of the grading contract.
 

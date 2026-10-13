@@ -13,6 +13,7 @@ from typing import Any, cast
 import pytest
 
 from exercise_runtime_support.student_checker.checks import run_exercise_checks
+from scripts.template_repo_cli.core.collector import ExerciseFiles, FileCollector
 from scripts.template_repo_cli.core.packager import TemplatePackager
 from tests.readability_table import assert_no_footer, table_rows
 
@@ -23,8 +24,6 @@ _FEEDBACK_WIDTH = 40
 
 def _export_exercise(repo_root: Path, output: Path) -> tuple[TemplatePackager, Path]:
     """Export one canonical exercise and return its packager and notebook path."""
-    from scripts.template_repo_cli.core.collector import FileCollector
-
     packager = TemplatePackager(repo_root)
     files = FileCollector(repo_root).collect_multiple([_EXERCISE_KEY])
     packager.copy_exercise_files(output, files)
@@ -172,8 +171,6 @@ def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
     case: tuple[str, str, str, str],
 ) -> None:
     """Exports distinguish blocked syntax from valid code with runtime errors."""
-    from scripts.template_repo_cli.core.collector import ExerciseFiles
-
     source, functional_status, readability_status, message = case
     key = "ex999_sequence_make_packaged_selfcheck"
     source_exercise = tmp_path / "source" / "exercises" / "sequence" / key
@@ -217,7 +214,12 @@ def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
     }
     notebook = source_exercise / "notebooks" / "student.ipynb"
     notebook.write_text(json.dumps(notebook_source), encoding="utf-8")
-    test_file = source_exercise / "tests" / f"test_{key}.py"
+    test_file = source_exercise / "tests" / "test_repo_hidden_fixture.py"
+    test_file.write_text(
+        "def test_hidden_grading_fixture() -> None:\n    assert False\n",
+        encoding="utf-8",
+    )
+    assert test_file.is_file()
     exercise_files: ExerciseFiles = {
         "exercise_json": metadata,
         "exercise_json_export": Path("exercises/sequence") / key / "exercise.json",
@@ -256,6 +258,7 @@ def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
     exercise_dir = output / "exercises/sequence" / key
     assert (exercise_dir / "notebooks/student.ipynb").is_file()
     assert not (exercise_dir / "notebooks/solution.ipynb").exists()
+    assert not (exercise_dir / "tests" / test_file.name).exists()
     assert not list((exercise_dir / "tests").iterdir())
     assert packager.validate_package(output)
 

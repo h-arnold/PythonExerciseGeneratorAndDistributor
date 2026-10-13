@@ -12,8 +12,9 @@ For details on **testing student notebooks**, see [Exercise Testing](../exercise
 
 > Notebook readability self-checks are part of the student-facing notebook
 > orchestrator, not functional pytest grading or the exercise quality gates.
-> [execution-model.md](execution-model.md) is the canonical execution and
-> source/export contract; the policy and grading boundary are summarised below.
+> [execution-model.md](execution-model.md) is the canonical execution, variant
+> and source/export contract; detailed readability policy and grading boundary
+> are documented below.
 
 ## Overview
 
@@ -193,9 +194,11 @@ The guide source is `template_repo_files/fixing-readability-issues.md` and packa
 copies it to the exported repository root as `fixing-readability-issues.md`;
 generated README links use that root-relative location. The self-check no longer
 prints a guide path or looks up the guide at runtime. Offline exported-runtime tests
-reuse the test runner's pinned Ruff environment and need no fixture
-installation. Do not add tests whose assertion is merely that the guide exists
-or that Markdown contains particular strings.
+reuse the test runner's pinned Ruff environment and need no fixture installation.
+Do not treat guide-file presence or isolated prose/vocabulary checks as proof of
+behaviour. Substantive guide checks are appropriate: real-Ruff example tests verify
+each example pair, and the guide test verifies that code-index links and rule
+anchors match.
 
 This feedback changes the notebook self-check, not teacher marks: functional
 `run_exercise_checks()`, exercise-local `CHECKS`, quality Gate I, and the

@@ -24,6 +24,9 @@ This repository provides notebook-based Python exercises with automated grading 
 - `docs/developers/project-structure.md` — project layout and file conventions
 - `docs/developers/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
 - `docs/developers/testing-framework.md` — how the grading and test system works
+- `template_repo_files/fixing-readability-issues.md` — student guide to required
+  notebook self-check readability feedback; detailed developer policy is in
+  `docs/developers/testing-framework.md`
 - `docs/developers/exercise-quality-verifier.md` — gate contract for `scripts/verify_exercise_quality.py` (progression scanning, expectations conventions, variant overrides)
 - `docs/developers/classroom50-autograder.md` — generic Classroom 50 grader/builder contract, CLI interfaces, and scoring
 - `docs/exercise-agents/exercise-generation-cli.md` — CLI for scaffolding new exercises

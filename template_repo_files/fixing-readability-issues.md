@@ -6,7 +6,7 @@ its readability check pass. Readability failures are required fixes, not optiona
 tips. Work through the individual results in the table; there is no overall summary.
 
 Save your notebook before checking. The **Exercise** number identifies the task;
-its **Readability** row refers to that task's code cell. Findings include a rule
+its **Readability** row refers to that task's code. Findings include a rule
 code such as `E225` and the **line** and **column** within that cell (both start at
 1). Long messages continue on extra table lines; they are not shortened or cut off.
 Edit the saved cell, save again, and run the self-check again. Fix each reported
@@ -330,7 +330,7 @@ starts with four actual spaces.
 ### W291 — Remove spaces at the end of a line
 
 Trailing whitespace means spaces or tabs after the last visible character.
-Here `<SPACE>` represents one actual space after the closing quote.
+Here `<SPACE>` represents one actual space after the closing parenthesis.
 
 **Non-example**
 ```python
@@ -341,7 +341,7 @@ print("hello")<SPACE>
 ```python
 print("hello")
 ```
-The corrected line ends immediately after the closing bracket.
+The corrected line ends immediately after the closing parenthesis.
 
 <a id="w293"></a>
 ### W293 — Keep blank lines empty

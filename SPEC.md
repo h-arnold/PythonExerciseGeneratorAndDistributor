@@ -2,13 +2,12 @@
 
 This section supersedes conflicting requirements in the **historical feature
 specification below**, which is retained as delivery evidence, not a new backlog.
-At branch `feat/AddLinterRulesToSelfChecker` HEAD `bef9667` (compared with
-`main` `63293d7`), the feature has already shipped on this branch. The current
-request tracks final code-review/de-sloppification findings. Batch A is delivered.
-Batch B implementation and test/production GREEN review are clean; the reviewer
-requested documentation re-review before authorised delivery. Batch C is not
-started. The
-authoritative per-item inventory, evidence, batch assignment and resolution
+At branch `feat/AddLinterRulesToSelfChecker`, the feature is already delivered.
+The current request tracks final review findings. Batches A and B are reviewed
+clean and delivered. Batch C's implementation, checks and independent GREEN
+re-review are clean and complete. Commit and
+push remain pending the established delivery workflow. The authoritative per-item
+inventory, evidence, batch assignment and resolution
 criteria are in `REVIEW_FINDINGS.md`.
 
 ## Current goal, scope and non-goals
@@ -53,18 +52,19 @@ One local user-owned dirty config file
 `.opencode/agents/tidy-code-reviewer.md` changes only its model and must not be
 modified or staged. A prior **committed** model-only edit (`16a2184`) to four
 `.opencode/agents/` files appears in the branch diff against `main`, so the old
-claim that user configuration was excluded is not wholly true. If N15 cannot
-be resolved safely without overwriting the dirty edit or rewriting history,
-pause for a user decision; no unilateral config edit or false clean claim.
+claim that user configuration was excluded is not wholly true. The user explicitly
+requested retaining the committed model changes. They are intentional branch scope;
+the separate dirty reviewer setting remains untouched and unstaged. No `.opencode`
+files are to be edited, and no configuration or history rewrite is needed.
 Accurate Python 3.14 runtime guidance must not be reverted merely because it
 differs from older `main` wording. Other findings can be worked locally up to
-this gate. Hypothesis: the remaining issues can be eliminated by modest
-source/test consolidation without changing outcomes. Cheap disconfirmation:
-compare current public-path output tests and scoped pyright before any refactor;
-if they disagree with the documented table/variant contract, investigate before
-planning a purely cosmetic change.
+this gate. Initial planning hypothesis: the then-open findings could be resolved
+without changing outcomes. Its baseline disconfirmation check compared public-path
+output tests and scoped pyright before any refactor; those checks supported the
+planned focused changes. Batch C is documentation/status work, not a source/test
+consolidation.
 
-## Historical feature specification (archival)
+## Historical feature specification (archival; superseded by current contract)
 
 ## Guide filename follow-up
 

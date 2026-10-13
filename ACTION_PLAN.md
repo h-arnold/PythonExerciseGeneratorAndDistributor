@@ -4,9 +4,10 @@ The delivery tracker and numbered feature stages below are **historical
 evidence**, not the status or requirements of this clean-up. In particular their
 old `RUFF_GUIDE.md`, summaries, footer, syntax-FAIL and stage-5 no-commit
 instructions are superseded by the current `SPEC.md` section and the delivered
-`fixing-readability-issues.md`/table-only behaviour. Batch A is delivered. Batch B's
-production and test GREEN review is clean; documentation re-review and delivery
-gates remain open. Batch C has not started.
+`fixing-readability-issues.md`/table-only behaviour. Batches A and B are reviewed
+clean, committed and pushed. Batch C RED and GREEN reviews are clean;
+implementation, checks and plan/ledger updates are complete. Commit/push remain
+pending the established delivery workflow.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each of the three batches
@@ -29,12 +30,10 @@ gates remain open. Batch C has not started.
    boundary. Expected student failures must not be repaired. Preserve fixture
    isolation and no template publication.
 4. Mark each ledger ID with outcome/evidence; update this plan and verify staged
-   diff excludes the user-owned dirty config. Commit `16a2184` changed the same
-   `.opencode/agents/tidy-code-reviewer.md` the user owns dirty, so an explicit
-   user decision must precede any revert or staging that would remove the entire
-   committed config diff; make no all-resolved claim while that gate is open. If
-   N15 requires any actual `.opencode/` edit, load the `customize-opencode` skill
-   first; never change the dirty reviewer config or history to bypass the gate.
+   diff excludes the user-owned dirty config. N15's decision gate is resolved:
+   the user explicitly requested keeping the committed model changes. Retain them
+   as intentional branch scope, with no `.opencode/` edits or history rewriting.
+   The separate uncommitted reviewer setting remains untouched and unstaged.
    Before commit inspect `git status`, `git diff`, `git log --oneline -10`; stage
    only intended files. Per-batch commit and push follow the developer-orchestrated
    batch workflow and the prior per-stage authorisation recorded in the delivery
@@ -47,7 +46,7 @@ For **each** batch, fill these eight statuses separately after work:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Created | Complete |
 | B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Created | Complete |
-| C | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| C | Complete (already-green packaged baseline; no artificial RED) | Clean | Complete (documentation and dispositions updated) | Clean | Passed: packaged 208; guide/package focused 24; solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/Pyright/format/lock/diff | Complete | Pending | Pending |
 
 ### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
 
@@ -191,10 +190,10 @@ Validation with pytest's repository `addopts` disabled to expose summaries:
 `uv run python scripts/run_pytest_variant.py --variant solution -q -o addopts=''`
 reports 1,618 passed and 1 skipped; `uv run pytest --collect-only -q -o addopts=''`
 reports 1,619 collected. Scoped Pyright is zero; repository Ruff, scoped format,
-`uv lock --check` and `git diff --check` pass. Independent GREEN review is clean
-for production/tests. The reviewer requested documentation wording/count
-corrections; those are recorded here and in the ledger, and documentation re-review
-remains pending. No commit or push was made.
+`uv lock --check` and `git diff --check` pass. At this Batch B validation handoff,
+the reviewer requested documentation wording/count corrections. Those were
+completed and reviewed before the Batch C handoff; the current Batch B status above
+is clean. No commit or push was made at this historical checkpoint.
 
 ### Batch C — export fixture and documentation truth (Y9–Y11, N10–N17)
 
@@ -203,22 +202,56 @@ Batch B delivered on `feat/AddLinterRulesToSelfChecker`:
 `Simplify self-check orchestration and public behavior tests`.
 `git push` succeeded (`3b434c5..6449c65`); user-owned config remained unstaged.
 
-**Objective:** prove hidden synthetic fixture exclusion and align live guidance
-and historical claims with the delivered feature.
+**Objective:** prove omission of the repository-only classified hidden fixture
+from the packaged synthetic export, and align live guidance and historical claims
+with delivered behaviour. Canonical exercise-local `test_<exercise_key>.py` files
+remain intentionally visible in exports; this is not a general hidden-test
+exclusion contract.
 **Surfaces:** `tests/template_repo_cli/test_packaged_readability.py`,
 `docs/developers/{execution-model,testing-framework}.md`,
 `template_repo_files/{fixing-readability-issues.md,README.md.template}`,
-`AGENTS.md`, root `SPEC.md`, `ACTION_PLAN.md`, `REVIEW_FINDINGS.md`; inspect
-committed `.opencode/agents/` delta without touching user dirty file.
-**Acceptance:** a real test-only hidden fixture remains absent in export;
-anchor/example tests remain legitimate; README/guide avoid fictional overall
-footer and inaccurate code-cell/quote claims. Documentation keeps one canonical
-execution contract and focused testing details. N15 needs safe isolation of
-unrelated committed config delta or explicit pause/clarification; no claim of a
-fully clean branch until resolved. Accurate 3.14 guidance retained. **Checks:**
+`AGENTS.md`, root `SPEC.md`, `ACTION_PLAN.md`, `REVIEW_FINDINGS.md`.
+**Acceptance:** a real repository-only `test_repo_hidden_fixture.py` remains absent
+in export, while canonical exercise-local tests are preserved by the packaging
+contract; guide example and anchor parity checks remain substantive. README/guide
+avoid a fictional overall footer, inaccurate one-cell-per-task claims and incorrect
+trailing-whitespace locations. Execution/export/variant behavior has one owner and
+the testing guide owns focused readability details. N15 is resolved by the user's
+decision to retain the already committed four-file model changes; do not edit any
+`.opencode` file and leave the dirty reviewer-model change unstaged. Accurate 3.14
+guidance retained. **Checks:**
 offline export test and guide real-Ruff examples, doc/link review, full shared
 ladder and branch-vs-main diff audit. **Review point:** Tidy RED/GREEN, then
 reviewer sign-off on each adjudication, especially config preservation.
+
+Batch C RED/baseline evidence: the packaged readability test was already green
+(5 passed), so no artificial RED was introduced. Its synthetic exercise fixture
+contains a real, minimal repository-only test source named
+`test_repo_hidden_fixture.py`; the packaged test asserts that exact source file is
+absent while canonical metadata/student notebook paths and isolated exported
+checker invocation remain covered. This does not claim arbitrary exercise tests
+are hidden: canonical exercise-local `test_<exercise_key>.py` files are visible in
+the student export by design. Collector imports are module-scoped. N10 and Y9 are
+verified complete; the baseline test did not modify production packaging or
+scoring.
+
+Batch C implementation evidence (substantive GREEN review clean; status-only
+re-review pending): the execution model now links to
+the testing framework for self-check presentation detail; the testing framework
+owns the detailed readability policy and explicitly permits substantive Ruff
+example and anchor/index parity checks while rejecting presence-only/vocabulary
+claims. The student guide describes rows as task-labelled, corrects trailing
+whitespace to occur after the closing parenthesis, and the README no longer claims
+an unprinted overall result. `AGENTS.md` links the renamed guide. N15 retains the
+user-approved committed model deltas without touching `.opencode/`; N16 keeps
+Python 3.14 based on manifest/runtime-pin evidence; N17 adds one concise pointer.
+N11–N14 are implemented; the real-Ruff example and anchor/index-parity suite
+passes. The template CLI suite, full solution variant, collection, Ruff, scoped
+Pyright, formatting, lock and diff checks pass. Independent review found the source,
+tests and documentation substantively clean; only the stale status record was
+actionable and has been corrected. The final independent re-review is limited to
+these status updates. Commit and push remain pending the established delivery
+workflow; no publication or deployment was performed.
 
 ## Final independent review and handoff
 
@@ -234,13 +267,17 @@ student failures; report any N15 user-decision blocker honestly. Do not deploy,
 publish templates, change scoring or author exercises. No separate layout/workflow
 spec is necessary: notebook layout and export mapping remain canonical.
 
-## Historical feature delivery tracker (archival)
+## Historical feature delivery tracker (archival; superseded by current contract)
 
 Implement the requirements in `SPEC.md` locally and sequentially. This handoff
 contains no runtime implementation or test code. No separate layout/workflow
 specification is required: notebook structure and authoring workflow stay unchanged.
 Treat exercise structure as a scaffolding/authoring guarantee. This feature adds no
 task-count or tag-topology validation, structural FAIL rows or malformed-exercise tests.
+The stage counts and validation totals below are contemporaneous snapshots from
+their respective delivery points, not current post-clean-up results. Current
+requirements and status are only those stated above and in the current section of
+`SPEC.md`.
 
 ## Delivery tracker
 

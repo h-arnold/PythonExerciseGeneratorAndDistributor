@@ -1,10 +1,13 @@
 # Final review findings: disposition ledger
 
-Batch A is delivered. Batch B implementation and production/test GREEN review are
-complete; documentation re-review and delivery remain open; Batch C has not started.
+Batches A and B are reviewed clean, committed and pushed. Batch C baseline,
+implementation and checks are complete; substantive GREEN review is clean and
+independent re-review is pending only to confirm corrected status records. Commit
+and push remain pending the established delivery workflow. The user approved
+retaining the committed model changes (N15).
 Line references describe the original review baseline,
 not immutable positions. Each Batch A disposition below records implementation
-evidence. No commit was authorised or made.
+evidence; delivery details are recorded in `ACTION_PLAN.md`.
 
 ## Batch A — analyser and shared task discovery
 
@@ -157,13 +160,14 @@ reports 1,619 collected. The complete support/framework/template-CLI suite passe
 scoped Pyright reports zero errors on touched production and tests; repository
 Ruff, scoped format, `uv lock --check` and `git diff --check` pass. Independent
 GREEN review and documentation re-review are clean for every Batch B ID.
-Commit and push are the next delivery gate.
+Batch B was committed as `6449c65` and pushed successfully; `d0c621c` records
+the delivery evidence.
 
 ## Batch C — exported fixture and documentation consistency
 
 | ID | Finding / baseline evidence | Resolution criterion |
 | --- | --- | --- |
-| Y9 | `test_packaged_readability.py:206–214` names a non-existent synthetic hidden test file, while `:245` asserts empty exported tests. | Create a minimal **test-only** synthetic hidden file in the source fixture; verify it is omitted from exported template (no hidden tests shipped) while canonical metadata/student path still works; do not change production packaging/scoring. |
+| Y9 | `test_packaged_readability.py:206–214` names a non-existent synthetic repository-only fixture file, while `:245` asserts empty exported tests. | Create a minimal test source classified by the existing `test_repo_*.py` exclusion and verify that exact file is omitted from export while canonical metadata/student paths remain covered. Do not generalise this to canonical exercise-local tests or change production packaging/scoring. |
 | Y10 | `docs/developers/execution-model.md:101–115` and `docs/developers/testing-framework.md:141–198` repeat presentation/readability policy. | Keep execution/variant/export mapping in canonical execution-model doc and one focused detailed policy in testing-framework, cross-link instead of maintaining duplicate wording; verify statuses and table-only output accurately documented. |
 | Y11 | `docs/developers/testing-framework.md:197–198` bans Markdown-string assertions despite real `test_ruff_guide.py:77–100` checking code-index anchor/link parity. | Limit prohibition to mere file-presence/vocabulary-as-semantic-proof tests; explicitly allow substantive anchor/link parity and real Ruff examples. |
 | N10 | `test_packaged_readability.py:26,161` has local collector imports. | Move to module imports if dependency order permits; keep offline test isolation. |
@@ -171,13 +175,57 @@ Commit and push are the next delivery gate.
 | N12 | Same guide `:8–9` implies one code cell per task. | Describe task-labelled readability rows without asserting a one-cell-per-task structural invariant; keep line/column explanation. |
 | N13 | `template_repo_files/README.md.template:5–9` wraps `reported issues; save` awkwardly and claims an overall pass not printed in the table-only checker. | Reflow and describe per-task results without a fictional printed overall result; maintain root guide link. |
 | N14 | `SPEC.md:279–325` and `ACTION_PLAN.md:392,422` retain superseded `RUFF_GUIDE.md` and past footer/summary requirements despite the delivered `fixing-readability-issues.md`. | Mark historical sections explicitly archival, add current authoritative clean-up contract; correct live guidance rather than silently rewriting historical delivery ledger. |
-| N15 | `16a2184` changed four committed `.opencode/agents/{docs,implementer,testing-specialist,tidy-code-reviewer}.md` models, conflicting with historical config-exclusion claim; current dirty reviewer model is user-owned. | Review branch-vs-main diff; if safely possible isolate/remove unrelated committed model-only PR changes without touching/staging the dirty reviewer file or rewriting history. If it cannot be done without overwriting user edits, stop and ask for a precise user decision; never claim complete exclusion by merely ignoring the diff. |
+| N15 | `16a2184` changed four committed `.opencode/agents/{docs,implementer,testing-specialist,tidy-code-reviewer}.md` models, conflicting with historical config-exclusion claim; current dirty reviewer model is user-owned. | User explicitly approved retaining the already committed four-file model changes. Treat them as intentional branch scope; do not edit any `.opencode` files, touch the dirty reviewer setting, or rewrite history. Correct historical exclusion claims and report the preserved dirty state accurately. |
 | N16 | `AGENTS.md:1,97,116` title/version edits versus `main` might look like drive-by changes, but repository runtime pins target Python 3.14. | Compare with runtime pins/tests and current contributor guidance before deciding; retain accurate 3.14 guidance, avoid reverting to an incorrect 3.11 claim; correct title only if evidence warrants. |
 | N17 | `AGENTS.md` lacks concise discoverability for the readability self-check and renamed guide. | Add brief accurate pointers without duplicating the 17-rule policy or changing notebook guidance. |
 
 ## Execution evidence and constraints
 
+### Batch C dispositions (implementation/checks complete; independent re-review clean)
+
+- **Y9 — verified complete:** the synthetic fixture contains the real
+  `tests/.../test_repo_hidden_fixture.py` source and asserts that exact file is
+  omitted in export. This is the explicit repository-only hidden-fixture
+  classification already enforced by the existing `test_repo_*.py` exclusion;
+  it does not imply arbitrary exercise-local tests are hidden. Canonical
+  `test_<exercise_key>.py` tests remain intentionally included in packaged output.
+- **Y10 — resolved:** execution-model owns execution, variants and mapping;
+  testing-framework owns detailed readability output/policy, linked from the
+  execution contract. The links and rendered wording were reviewed.
+- **Y11 — resolved:** documentation forbids presence-only and isolated
+  vocabulary/prose checks as behaviour proof, while explicitly allowing the
+  substantive real-Ruff example and guide anchor/index-parity tests. Those tests
+  pass.
+- **N10 — verified complete:** `ExerciseFiles` and `FileCollector` imports are
+  already at module scope; no test code change was needed for this finding.
+- **N11 — resolved:** both guide descriptions correctly place trailing whitespace
+  after the closing parenthesis; the real-Ruff guide tests pass.
+- **N12 — resolved:** guide task wording refers to task-labelled rows and task
+  code without asserting one physical cell per task; line/column scope is retained.
+- **N13 — resolved:** README prose is reflowed, keeps its root-relative guide
+  link, and no longer claims a printed overall result.
+- **N14 — resolved:** current SPEC/ACTION_PLAN sections are authoritative;
+  historical feature specification and delivery tracker are explicitly archival.
+  Historical counts and stage details are preserved as past evidence, not current
+  status or policy.
+- **N15 — resolved by user decision:** retain the four already-committed model
+  changes. No `.opencode` files were edited; the dirty reviewer model remains
+  user-owned and unstaged. Branch is not described as wholly excluding config.
+- **N16 — retained with evidence:** Python 3.14 is required by both manifests,
+  devcontainer pins and `tests/test_runtime_python_version.py`; no version text was
+  reverted. The root title remains the project name.
+- **N17 — resolved:** `AGENTS.md` now points to the renamed student guide and
+  the detailed testing-framework policy without duplicating the rule list.
+
+- **GREEN review:** source, tests and documentation are substantively clean. The
+  only reported issue was stale progress/status bookkeeping; ACTION_PLAN, SPEC and
+  this ledger now agree, and the status-only independent re-review is clean.
+
+- **Baseline/fixture note:** Y9 and N10 were already present in the supplied
+  working tree and tested by the baseline; no new test, dependency, production
+  packaging behavior, scoring behavior, or `.opencode` edit was introduced here.
+
 - Batch A/B/C mapping above covers R1–R4, Y1–Y11 and each N1–N17. Any finding found invalid needs an evidence-backed, individually reviewed disposition here, not deletion from this inventory.
 - Do not change notebook/exercise catalogue, teacher-side scoring or deployment; do not add dependencies, compatibility wrappers or suppressions. Preserve exact Ruff selection, source-preserving saved-cell analysis, table-only output, syntax `NOT CHECKED`, functional-only grading and canonical-only export.
 - Scoped pyright must be clean on touched implementation and tests, **including** old private-access errors; `uv run ruff check .`, appropriate `uv run ruff format --check <touched Python files>`, targeted pytest, collect-only and full solution runner form the validation ladder. Student exercise failures are expected and must not be silenced.
-- Working-tree `.opencode/agents/tidy-code-reviewer.md` is user-owned and must remain untouched/un-staged; no config/history rewrite, deploy or PR as a workaround. Clarification gate for N15 is real, not permission to discard the change.
+- Working-tree `.opencode/agents/tidy-code-reviewer.md` is user-owned and must remain untouched/un-staged. The user approved keeping the separate committed model changes (N15); no config/history rewrite, deploy or PR is needed.

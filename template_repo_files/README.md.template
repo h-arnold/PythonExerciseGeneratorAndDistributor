@@ -2,11 +2,10 @@
 
 Python exercises for learning programming concepts.
 
-Notebook self-checks require both functional and readability checks to pass. Read
-the [Python readability guide](/fixing-readability-issues.md) for how to fix
-reported issues;
-save your notebook before running a self-check. The overall self-check passes only
-when every task passes both checks. These checks do not change teacher-side marks.
+Notebook self-checks show functional and required readability results for each
+task. Read the [Python readability guide](/fixing-readability-issues.md) for how
+to fix reported issues, and save your notebook before checking. These checks do
+not change teacher-side marks.
 
 ## Exercises Included
 
