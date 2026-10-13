@@ -30,11 +30,20 @@ contents are byte-identical; required base source/copy destination, README link,
 test references and live developer contracts use the new name. 367 support/CLI
 tests pass under both ordinary pytest and the explicit solution runner. Scoped
 Ruff lint/format and diff checks pass. No deviations or new follow-ups.
-Current phase: section commit/push, then cleanup and final documentation review.
+Section committed and pushed successfully: `3d395972005286f0f81a376b593924eac1bde710`
+— `Rename packaged readability guide` on `feat/AddLinterRulesToSelfChecker`.
+Mandatory cleanup review passed with no required fixes; repeated filename literals
+retain the surrounding base-asset pattern. README source reflow is cosmetic only.
+Cleanup independently reproduced 367 ordinary/solution passes and repository Ruff.
+Branch ready for final documentation review; no cleanup implementation needed.
+Final Docs review clean: all live mapping/link contracts already updated in the
+section commit; no further documentation edits needed. Guide contents unchanged,
+user config/notebooks excluded, and no templates published. Single section complete;
+final delivery-note commit/push evidence is recorded in the session tracker.
 
 | Red tests | Red review | Green | Green review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| Added | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 
 ### Feedback capitalisation follow-up (direct execution)
 
