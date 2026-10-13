@@ -1,5 +1,12 @@
 # Per-task Ruff readability feedback
 
+## Guide filename follow-up
+
+The canonical guide is renamed to `template_repo_files/fixing-readability-issues.md`
+and packaged at root `fixing-readability-issues.md`, superseding the historical
+filename below. Update packaging requirements/copying and live links/test references.
+Guide contents and runtime/grading behaviour are unchanged; no old-name alias.
+
 ## Approved compact-output follow-up
 
 The user approved a presentation-only revision which supersedes this original

@@ -10,7 +10,9 @@ import pytest
 
 from exercise_runtime_support.student_checker.readability import analyze_source
 
-_GUIDE_PATH = Path(__file__).resolve().parents[2] / "template_repo_files" / "RUFF_GUIDE.md"
+_GUIDE_PATH = (
+    Path(__file__).resolve().parents[2] / "template_repo_files" / "fixing-readability-issues.md"
+)
 _POLICY_CODES = {
     "E101",
     "E111",

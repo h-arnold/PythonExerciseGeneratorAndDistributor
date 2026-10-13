@@ -189,11 +189,11 @@ Codespaces and the supplied devcontainer. The checker assumes the pinned tool is
 installed; it has no availability probe, auto-install, optional fallback or
 disable flag. Browser-only Pyodide is not supported for this check.
 
-The guide source is `template_repo_files/RUFF_GUIDE.md` and packaging copies it
-to the exported repository root as `RUFF_GUIDE.md`; generated README links use
-that root-relative location. The self-check no longer prints a guide path or looks
-up the guide at runtime. Offline exported-runtime tests reuse the test runner's
-pinned Ruff environment and need no fixture
+The guide source is `template_repo_files/fixing-readability-issues.md` and packaging
+copies it to the exported repository root as `fixing-readability-issues.md`;
+generated README links use that root-relative location. The self-check no longer
+prints a guide path or looks up the guide at runtime. Offline exported-runtime tests
+reuse the test runner's pinned Ruff environment and need no fixture
 installation. Do not add tests whose assertion is merely that the guide exists
 or that Markdown contains particular strings.
 

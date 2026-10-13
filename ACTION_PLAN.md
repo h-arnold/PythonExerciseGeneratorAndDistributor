@@ -8,6 +8,34 @@ task-count or tag-topology validation, structural FAIL rows or malformed-exercis
 
 ## Delivery tracker
 
+### Guide filename rename — single-section follow-up
+
+User requested brief direct planning, then normal delegation; no planner cycle.
+Rename the canonical source to `template_repo_files/fixing-readability-issues.md`
+and export it as root `fixing-readability-issues.md`. Update required base assets,
+copy mapping, README link, existing test references and live developer contracts.
+Keep guide contents, runtime policy, grading and notebook assets unchanged; no
+old-name alias, new dependencies, bespoke guards or Markdown-presence tests.
+Historical delivery records retain their original filenames.
+
+Sequence: Testing Specialist updates existing guide content/example tests and
+captures expected missing-new-path failures; Tidy reviews RED; Implementer renames
+and updates packaging/references; Tidy reviews GREEN. Run support/packaging tests,
+Ruff and diff checks, then section commit/push, cleanup review and final Docs sync.
+Preserve user-owned dirty config and both student notebooks. No template publication.
+RED complete: 18 expected missing-new-path failures and one pass. Review found
+only path-expression formatting; Testing Specialist fixed it and re-review is
+clean. Scoped Ruff lint/format pass. GREEN complete and reviewed clean: guide
+contents are byte-identical; required base source/copy destination, README link,
+test references and live developer contracts use the new name. 367 support/CLI
+tests pass under both ordinary pytest and the explicit solution runner. Scoped
+Ruff lint/format and diff checks pass. No deviations or new follow-ups.
+Current phase: section commit/push, then cleanup and final documentation review.
+
+| Red tests | Red review | Green | Green review | Checks | Plan updated | Commit | Push |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+
 ### Feedback capitalisation follow-up (direct execution)
 
 User-approved scope: capitalise only the first character of rendered feedback,

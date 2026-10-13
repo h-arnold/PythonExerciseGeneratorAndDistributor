@@ -76,7 +76,7 @@ def _run_exported_self_check(output: Path, exercise_key: str = _EXERCISE_KEY) ->
         "Readability summary:",
         "Overall self-check:",
         "Save your notebook",
-        "RUFF_GUIDE.md",
+        "fixing-readability-issues.md",
         "teacher-side marks",
     ):
         assert text not in result.stdout

@@ -396,7 +396,7 @@ def _assert_no_footer(output: str) -> None:
         "Readability summary:",
         "Overall self-check:",
         "Save your notebook",
-        "RUFF_GUIDE.md",
+        "fixing-readability-issues.md",
         "teacher-side marks",
     ):
         assert text not in output

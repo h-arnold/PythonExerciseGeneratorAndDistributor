@@ -102,8 +102,9 @@ See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule,
   native managed Python/Jupyter environment. The canonical policy, feedback
   states and teacher-grading boundary are specified in
   [testing-framework.md](testing-framework.md). The student guide source is
-  `template_repo_files/RUFF_GUIDE.md`; packaging maps it to root-level
-  `RUFF_GUIDE.md` in exported repositories and the generated README links to it.
+  `template_repo_files/fixing-readability-issues.md`; packaging maps it to
+  root-level `fixing-readability-issues.md` in exported repositories and the
+  generated README links to it.
   Normal checker output is the header and task-grouped table only, without a
   footer or guide lookup. Readability labels omit physical cell numbers; the
   Exercise column identifies the task. Feedback wraps at the shared reporting
