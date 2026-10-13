@@ -44,7 +44,7 @@ For **each** batch, fill these eight statuses separately after work:
 
 | Batch | Red tests/baseline | Red review | Green implementation | Green review | Checks | Plan/ledger updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Pending | Pending |
+| A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Created | Complete |
 | B | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 | C | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
 
@@ -112,7 +112,10 @@ description and updated `SPEC.md` from the obsolete planning-only status; no
 predicate or runtime behavior changed.
 Final independent GREEN re-review is clean for all Batch A IDs. The reviewer
 confirmed both parser-preservation regressions and all documented adjudications.
-Commit/push evidence will be recorded after successful delivery, before Batch B.
+Batch A delivered on `feat/AddLinterRulesToSelfChecker`:
+`45915b58cecf9e89737902ed23ee54e2c8151314` —
+`Simplify readability parsing and preserve discovery contracts`.
+`git push` succeeded (`bef9667..45915b5`); the user-owned config was not staged.
 
 ### Batch B — orchestrator and public-behaviour tests (R3, R4, Y1–Y8, N7–N9)
 
