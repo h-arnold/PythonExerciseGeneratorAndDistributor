@@ -1,10 +1,8 @@
 # Final review findings: disposition ledger
 
-Batches A and B are reviewed clean, committed and pushed. Batch C baseline,
-implementation and checks are complete; substantive GREEN review is clean and
-independent re-review is pending only to confirm corrected status records. Commit
-and push remain pending the established delivery workflow. The user approved
-retaining the committed model changes (N15).
+All three batches are reviewed clean, committed and pushed. Final independent
+de-sloppification is in progress, followed by documentation sync.
+The user approved retaining the committed model changes (N15).
 Line references describe the original review baseline,
 not immutable positions. Each Batch A disposition below records implementation
 evidence; delivery details are recorded in `ACTION_PLAN.md`.

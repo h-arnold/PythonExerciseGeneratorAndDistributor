@@ -6,8 +6,8 @@ old `RUFF_GUIDE.md`, summaries, footer, syntax-FAIL and stage-5 no-commit
 instructions are superseded by the current `SPEC.md` section and the delivered
 `fixing-readability-issues.md`/table-only behaviour. Batches A and B are reviewed
 clean, committed and pushed. Batch C RED and GREEN reviews are clean;
-implementation, checks and plan/ledger updates are complete. Commit/push remain
-pending the established delivery workflow.
+implementation, checks, plan/ledger updates, commit and push are complete.
+Final independent de-sloppification is in progress; documentation sync is pending.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each of the three batches
@@ -46,7 +46,7 @@ For **each** batch, fill these eight statuses separately after work:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Created | Complete |
 | B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Created | Complete |
-| C | Complete (already-green packaged baseline; no artificial RED) | Clean | Complete (documentation and dispositions updated) | Clean | Passed: packaged 208; guide/package focused 24; solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/Pyright/format/lock/diff | Complete | Pending | Pending |
+| C | Complete (already-green packaged baseline; no artificial RED) | Clean | Complete (documentation and dispositions updated) | Clean | Passed: packaged 208; guide/package focused 24; solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/Pyright/format/lock/diff | Complete | Created | Complete |
 
 ### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
 
@@ -254,6 +254,11 @@ these status updates. Commit and push remain pending the established delivery
 workflow; no publication or deployment was performed.
 
 ## Final independent review and handoff
+
+Batch C delivered on `feat/AddLinterRulesToSelfChecker`:
+`f73f95746f01c8672fc6e6af2efb3080f5cc2ec0` —
+`Align readability documentation and exported fixture coverage`.
+`git push` succeeded (`d0c621c..f73f957`); user-owned config remained unstaged.
 
 After all three batches are genuinely clean and pushed, call De-Sloppification
 **read-only** on the complete resulting diff. If it finds actionable issues,
