@@ -25,11 +25,19 @@ source/checker edits. 385 support/reporting/CLI tests pass; full solution valida
 is 1,614 passed and one skipped. Ruff lint/format, scoped Pyright and diff checks
 pass. Actual sequence ex005 feedback starts `Expected`, `Explanation` and `Output`;
 `Alice` is preserved and readability remains nine OK rows and one NO row.
-Current phase: section commit/push, then cleanup and final documentation sync.
+Section commit/push succeeded: `3401e4ee189567e814a56d4bc23fe018f1db6901` —
+`Capitalise rendered self-check feedback` on `feat/AddLinterRulesToSelfChecker`.
+Direct cleanup self-review found no additional work: simple slicing handles empty
+messages without guards or a new helper. Ready for documentation sync; public
+rendering docstring and testing contract now describe the casing-only transformation.
+Final documentation self-review clean; 421 support/reporting/CLI/documentation
+tests pass after sync, with Ruff lint/format and diff checks clean. No deviations;
+untouched-starter handling remains deferred. Final docs commit/push evidence is
+recorded in the session delivery tracker.
 
 | Red tests | Red self-review | Green | Green self-review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| Added | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 
 ### Narrow-table follow-up (direct execution)
 

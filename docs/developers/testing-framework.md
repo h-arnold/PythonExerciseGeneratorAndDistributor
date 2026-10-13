@@ -176,6 +176,9 @@ footer. Feedback uses the reporting helper's default 40-character error width in
 both normal and tooling-error functional tables. Messages wrap onto as many lines
 as needed, without truncation. This is not a total table-width limit or viewport
 adaptation: the other columns still size to their contents.
+Rendering uppercases only the first feedback character after exercise-prefix
+removal, before wrapping. Remaining casing, quoted answers, identifiers and source
+result messages are preserved; this does not change readability eligibility.
 A missing/broken tool or invalid Ruff output remains an explicit tooling
 ERROR: available functional rows are shown first, then the specific error is printed
 and re-raised. It is not a student FAIL or a pass. The notebook API does not raise
