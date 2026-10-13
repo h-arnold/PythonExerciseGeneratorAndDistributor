@@ -151,9 +151,10 @@ The implementation source preserves each cell's source and passes it to Ruff
 through stdin without executing, rewriting, formatting or caching it. Full cell
 selection, subprocess and reporting invariants are maintained in
 [execution-model.md](execution-model.md) and the implementation tests.
-The analyser records physical cell indices as zero-based; the student-facing
-cell number is one-based. Ruff's line and column locations are already cell-local
-and one-based.
+The analyser retains zero-based physical cell indices internally. Student-facing
+rows are labelled `Readability`, without a physical cell number: the Exercise
+column identifies the task. Ruff's displayed line and column locations remain
+cell-local and one-based.
 
 The student policy uses Ruff **0.14.13** with four-space indentation, a
 100-character line limit, preview mode and an explicit selection of exactly
@@ -171,7 +172,11 @@ neither a readability pass nor a failure. Other cells are still analysed, and
 valid-syntax readability feedback does not depend on functional checks passing.
 Normal output contains only the self-check header and task-grouped table: no
 functional/readability summaries, overall result, save/guide reminder or teacher-marks
-footer. A missing/broken tool or invalid Ruff output remains an explicit tooling
+footer. Feedback uses the reporting helper's default 40-character error width in
+both normal and tooling-error functional tables. Messages wrap onto as many lines
+as needed, without truncation. This is not a total table-width limit or viewport
+adaptation: the other columns still size to their contents.
+A missing/broken tool or invalid Ruff output remains an explicit tooling
 ERROR: available functional rows are shown first, then the specific error is printed
 and re-raised. It is not a student FAIL or a pass. The notebook API does not raise
 a grading assertion merely for student failures.

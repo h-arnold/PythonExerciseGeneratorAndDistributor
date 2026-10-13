@@ -27,11 +27,19 @@ full solution validation is 1,605 passed and one skipped. Ruff lint/format, scop
 Pyright and diff checks pass. Actual sequence ex005 table width is 83 characters;
 both E226 findings wrap across four lines without truncation. Task grouping,
 functional failures and neutral syntax status remain unchanged.
-Current phase: section commit/push, followed by cleanup and final documentation sync.
+Section commit/push succeeded: `a2bdaf1d2dddbbacc3f24f027b09c265a0bbb71b` —
+`Narrow self-check tables and simplify readability labels` on
+`feat/AddLinterRulesToSelfChecker`. Direct cleanup self-review found no additional
+work: reuse the shared width instead of adding constants/configuration or responsive
+rendering. Branch state is ready for documentation sync. Guide and developer
+contracts now reflect task-only labels and unlimited 40-character feedback wrapping.
+Final documentation self-review clean; 412 support/reporting/CLI/documentation
+tests and repository Ruff pass after sync. No new follow-ups or scope deviations.
+Final documentation commit/push evidence is recorded in the session delivery tracker.
 
 | Red tests | Red self-review | Green | Green self-review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| Added | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 
 ### Compact-output follow-up (user-approved direct execution)
 

@@ -5,12 +5,14 @@ of readability rules. A task is complete only when its functional checks **and**
 its readability check pass. Readability failures are required fixes, not optional
 tips. Work through the individual results in the table; there is no overall summary.
 
-Save your notebook before checking. Read each result as **task**, physical
-notebook **cell**, then **line** and **column** within that cell (both start at
-1), followed by a rule code such as `E225`. Edit the saved cell, save again,
-and run the self-check again. Fix each reported readability issue. A clean
-readability result does not prove that code works, that names are meaningful,
-or that comments are useful. Teacher-side marks are unchanged by these checks.
+Save your notebook before checking. The **Exercise** number identifies the task;
+its **Readability** row refers to that task's code cell. Findings include a rule
+code such as `E225` and the **line** and **column** within that cell (both start at
+1). Long messages continue on extra table lines; they are not shortened or cut off.
+Edit the saved cell, save again, and run the self-check again. Fix each reported
+readability issue. A clean readability result does not prove that code works,
+that names are meaningful, or that comments are useful. Teacher-side marks are
+unchanged by these checks.
 
 ## Code index
 

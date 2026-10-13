@@ -105,7 +105,11 @@ See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule,
   `template_repo_files/RUFF_GUIDE.md`; packaging maps it to root-level
   `RUFF_GUIDE.md` in exported repositories and the generated README links to it.
   Normal checker output is the header and task-grouped table only, without a
-  footer or guide lookup. Syntax-blocked readability rows show neutral
+  footer or guide lookup. Readability labels omit physical cell numbers; the
+  Exercise column identifies the task. Feedback wraps at the shared reporting
+  default of 40 characters without truncation or a line-count limit; other columns
+  remain content-sized, rather than adapting to the viewport.
+  Syntax-blocked readability rows show neutral
   `⚪ NOT CHECKED` with `Not checked - make sure your code runs first`; valid-syntax
   cells are assessed independently of functional outcomes.
 
