@@ -465,6 +465,72 @@ def test_both_dispatch_paths_render_required_combined_task_rows(
     assert "PYTUTOR_ACTIVE_VARIANT" not in os.environ
 
 
+def test_public_fallback_discovers_string_tags_on_all_cell_types(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    notebook_path = tmp_path / "student.ipynb"
+    notebook_path.write_text(
+        json.dumps(
+            {
+                "cells": [
+                    {
+                        "cell_type": "markdown",
+                        "metadata": {"tags": "exercise2"},
+                        "source": "Task prompt",
+                    },
+                    {
+                        "cell_type": "code",
+                        "metadata": {"tags": "exercise1"},
+                        "source": "print('hello')",
+                    },
+                    {
+                        "cell_type": "markdown",
+                        "metadata": {"tags": "exercise²"},
+                        "source": "A tag that isdigit accepts but the established matcher rejects",
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    discovered: list[list[str]] = []
+
+    monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
+    monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(False))
+
+    def resolve(_key: str, *, variant: notebook_runtime.Variant) -> Path:
+        return notebook_path
+
+    def analyze(_path: Path) -> readability.NotebookAnalysis:
+        return readability.NotebookAnalysis(())
+
+    monkeypatch.setattr(
+        notebook_runtime,
+        "resolve_notebook_path",
+        resolve,
+    )
+    monkeypatch.setattr(notebook_runtime, "analyze_notebook", analyze)
+
+    def run_fallback(_path: Path, tags: list[str]) -> list[notebook_runtime.NotebookTagCheckResult]:
+        discovered.append(tags)
+        return [
+            notebook_runtime.NotebookTagCheckResult(tag=tag, passed=True, message="")
+            for tag in tags
+        ]
+
+    monkeypatch.setattr(notebook_runtime, "_run_notebook_checks", run_fallback)
+
+    notebook_runtime.run_notebook_checks("ex999_sequence_make_fallback")
+
+    assert discovered == [["exercise2", "exercise1"]]
+    output = capsys.readouterr().out
+    assert "Exercise 2" in output
+    assert "Exercise 1" in output
+    assert "exercise²" not in output
+
+
 @pytest.mark.parametrize("functional_only", [False, True])
 def test_notebook_tables_wrap_long_feedback_without_truncation(
     functional_only: bool,

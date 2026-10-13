@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import json
 import os
 import subprocess
@@ -33,9 +34,6 @@ _RULE_CASES = {
     "W291": ("value = 1 \n", "value = 1\n"),
     "W293": ("value = 1\n   \n", "value = 1\n\n"),
 }
-_SECOND_LINE = 2
-_OPERATOR_COLUMN = 6
-_TWO_CELLS = 2
 _POLICY_RULES = tuple(_RULE_CASES)
 _ROOT = Path(__file__).resolve().parents[2]
 
@@ -71,8 +69,6 @@ def test_each_selected_rule_fires_and_corrected_source_is_clean(
     good_results = readability.analyze_source(good, cell_index=0, task_tag="exercise1")
 
     if rule == "E101":
-        import ast
-
         ast.parse(bad)
         assert not bad_results.syntax_blocked
     assert rule in {finding.code for finding in bad_results.findings}
@@ -99,8 +95,7 @@ def test_analyser_preserves_source_and_physical_cell_and_task_identity(
     assert analyzed.cell_index == 1
     assert analyzed.task_tag == "exercise7"
     operator_finding = next(finding for finding in analyzed.findings if finding.code == "E225")
-    assert operator_finding.line == _SECOND_LINE
-    assert operator_finding.column == _OPERATOR_COLUMN
+    assert (operator_finding.line, operator_finding.column) == (2, 6)
     assert json.loads(path.read_text(encoding="utf-8")) == original
 
 
@@ -127,14 +122,13 @@ def test_selects_all_exact_task_tagged_code_cells_without_task_count_limit(
     assert [cell.cell_index for cell in result.cells] == list(range(task_count))
 
 
-def test_task_tag_can_be_string_and_markdown_task_tag_is_ignored(tmp_path: Path) -> None:
+def test_task_tag_can_use_legacy_string_representation(tmp_path: Path) -> None:
     path = tmp_path / "student.ipynb"
     path.write_text(
         json.dumps(
             _notebook(
                 [
                     {"cell_type": "code", "metadata": {"tags": "exercise4"}, "source": "value=1\n"},
-                    _cell("markdown", "exercise5", cell_type="markdown"),
                 ]
             )
         ),
@@ -144,6 +138,27 @@ def test_task_tag_can_be_string_and_markdown_task_tag_is_ignored(tmp_path: Path)
     result = readability.analyze_notebook(path)
 
     assert [(cell.cell_index, cell.task_tag) for cell in result.cells] == [(0, "exercise4")]
+
+
+def test_invalid_tag_item_preserves_existing_fail_fast_error(tmp_path: Path) -> None:
+    path = tmp_path / "student.ipynb"
+    path.write_text(
+        json.dumps(
+            _notebook(
+                [
+                    {
+                        "cell_type": "code",
+                        "metadata": {"tags": ["exercise1", 1]},
+                        "source": "value = 1\n",
+                    }
+                ]
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(AttributeError):
+        readability.analyze_notebook(path)
 
 
 @pytest.mark.parametrize("source", ["", "# unfinished task\n"])
@@ -205,7 +220,7 @@ def test_source_forms_reach_ruff_exactly_and_leave_notebook_bytes_unchanged(
     assert result.cells[0].cell_index == 0
     assert result.cells[0].task_tag == "exercise3"
     finding = next(finding for finding in result.cells[0].findings if finding.code == "E225")
-    assert (finding.line, finding.column) == (_SECOND_LINE, _OPERATOR_COLUMN)
+    assert (finding.line, finding.column) == (2, 6)
     assert path.read_bytes() == original_bytes
 
 
@@ -246,7 +261,7 @@ def test_runs_one_isolated_stdin_process_per_cell_and_continues_after_syntax_err
     monkeypatch.setattr(readability.subprocess, "run", fake_run)
     result = readability.analyze_notebook(path)
 
-    assert len(calls) == _TWO_CELLS
+    assert len(calls) == len(sources)
     assert [call["input"] for call in calls] == sources
     assert all(call["shell"] is False for call in calls)
     assert all(isinstance(call["args"][0], list) for call in calls)
@@ -388,18 +403,50 @@ def test_malformed_diagnostic_records_raise_tool_error(
         readability.analyze_source("value=1\n", cell_index=0, task_tag="exercise1")
 
 
-@pytest.mark.parametrize("exception", [FileNotFoundError("ruff"), ModuleNotFoundError("ruff")])
-def test_missing_ruff_is_a_tool_error(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, exception: Exception
+def test_missing_ruff_module_result_is_a_tool_error(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     path = tmp_path / "student.ipynb"
     path.write_text(json.dumps(_notebook([_cell("value = 1\n", "exercise1")])), encoding="utf-8")
 
-    def fail(*args: Any, **kwargs: Any) -> None:
-        raise exception
+    def missing_module_result(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args[0], 1, "", "/python: No module named ruff")
 
-    monkeypatch.setattr(readability.subprocess, "run", fail)
-    with pytest.raises(readability.ReadabilityToolError):
+    monkeypatch.setattr(readability.subprocess, "run", missing_module_result)
+    with pytest.raises(readability.ReadabilityToolError, match="No module named ruff"):
+        readability.analyze_notebook(path)
+
+
+def test_missing_interpreter_is_a_tool_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    def missing_interpreter(*args: Any, **kwargs: Any) -> None:
+        raise FileNotFoundError("python interpreter")
+
+    monkeypatch.setattr(readability.subprocess, "run", missing_interpreter)
+    with pytest.raises(readability.ReadabilityToolError, match="python interpreter"):
+        readability.analyze_source("value = 1\n", cell_index=0, task_tag="exercise1")
+
+
+def test_tool_error_uses_one_based_cell_reference(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    path = tmp_path / "student.ipynb"
+    path.write_text(
+        json.dumps(
+            _notebook(
+                [
+                    _cell("markdown", cell_type="markdown"),
+                    _cell("value = 1\n", "exercise1"),
+                ]
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    def tool_failure(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(args[0], 2, "", "invalid configuration")
+
+    monkeypatch.setattr(readability.subprocess, "run", tool_failure)
+    with pytest.raises(readability.ReadabilityToolError, match=r"cell 2"):
         readability.analyze_notebook(path)
 
 

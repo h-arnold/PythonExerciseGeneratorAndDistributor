@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 from pathlib import Path
 from typing import Any, TypedDict, TypeGuard, cast
 
@@ -23,6 +22,7 @@ from exercise_runtime_support.notebook_grader import (
     run_cell_with_input,
 )
 
+from ._notebook_cells import EXERCISE_TAG_PATTERN, is_exercise_tag, is_source
 from .checks import has_exercise_checks, run_exercise_checks
 from .models import ExerciseCheckResult, NotebookTagCheckResult
 from .readability import (
@@ -32,7 +32,6 @@ from .readability import (
     analyze_notebook,
 )
 
-_EXERCISE_TAG_PATTERN = re.compile(r"exercise(\d+)")
 _DEFAULT_INPUT_VALUE = "2"
 _MISSING_INPUT_ERROR_MESSAGE = "Test expected more input values"
 _MAX_AUTOMATED_INPUTS = 10
@@ -71,14 +70,7 @@ def _is_notebook_cell(value: object) -> TypeGuard[NotebookCell]:
 
 def _has_valid_source(cell: dict[str, object]) -> bool:
     source = cell.get("source")
-    if source is None:
-        return True
-    if isinstance(source, str):
-        return True
-    if isinstance(source, list):
-        items = cast(list[Any], source)
-        return all(isinstance(item, str) for item in items)
-    return False
+    return source is None or is_source(source)
 
 
 def _has_valid_metadata(cell: dict[str, object]) -> bool:
@@ -184,8 +176,7 @@ def _extract_tags_from_cell(cell: object) -> list[str]:
         candidates = raw_tags
     else:
         return []
-
-    return [tag for tag in candidates if _EXERCISE_TAG_PATTERN.fullmatch(tag)]
+    return [tag for tag in candidates if is_exercise_tag(tag)]
 
 
 def _collect_exercise_tags(path: Path) -> list[str]:
@@ -278,7 +269,7 @@ def _is_input_call(node: ast.AST) -> bool:
 
 
 def _format_tag_label(tag: str) -> str:
-    match = _EXERCISE_TAG_PATTERN.match(tag)
+    match = EXERCISE_TAG_PATTERN.match(tag)
     return f"Exercise {match.group(1)}" if match else tag
 
 

@@ -9,7 +9,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict, TypeGuard
 
+from ._notebook_cells import is_source, source_text
+
 _RULES = "E101,E111,E117,E225,E226,E227,E228,E231,E501,E741,N802,N803,N806,N816,W191,W291,W293"
+_INVALID_DIAGNOSTIC_JSON = "Ruff returned invalid diagnostic JSON"
 
 
 class ReadabilityToolError(RuntimeError):
@@ -83,21 +86,14 @@ def _is_diagnostic(value: object) -> TypeGuard[_RuffDiagnostic]:
     )
 
 
-def _is_source(value: object) -> TypeGuard[str | list[str]]:
-    if isinstance(value, str):
-        return True
-    if not _is_object_list(value):
-        return False
-    return all(isinstance(part, str) for part in value)
-
-
 def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalysis:
     """Analyse one task cell's source without executing or rewriting it.
 
     Args:
         source: Exact source text submitted to Ruff through standard input.
-        cell_index: Zero-based physical notebook cell index. Reporting converts
-            it to a one-based cell number for students.
+        cell_index: Zero-based physical notebook cell index. Tool-error messages
+            display it one-based; normal result rows identify the task without a
+            physical cell number.
         task_tag: The task tag identifying this cell, such as ``"exercise1"``.
 
     Returns:
@@ -138,25 +134,24 @@ def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalys
             check=False,
             shell=False,
         )
-    except (FileNotFoundError, ModuleNotFoundError) as error:
+    except FileNotFoundError as error:
         raise ReadabilityToolError(f"Could not run Ruff: {error}") from error
 
     if result.returncode not in (0, 1) or result.stderr:
         raise ReadabilityToolError(
-            f"Ruff failed for {task_tag} (cell {cell_index}): {result.stderr or result.stdout}"
+            f"Ruff failed for {task_tag} (cell {cell_index + 1}): {result.stderr or result.stdout}"
         )
     try:
         diagnostics: object = json.loads(result.stdout)
     except json.JSONDecodeError as error:
-        raise ReadabilityToolError("Ruff returned invalid diagnostic JSON") from error
+        raise ReadabilityToolError(_INVALID_DIAGNOSTIC_JSON) from error
     if not _is_object_list(diagnostics):
-        raise ReadabilityToolError("Ruff returned invalid diagnostic JSON")
+        raise ReadabilityToolError(_INVALID_DIAGNOSTIC_JSON)
     checked_diagnostics: list[_RuffDiagnostic] = []
     for item in diagnostics:
-        diagnostic: object = item
-        if not _is_diagnostic(diagnostic):
-            raise ReadabilityToolError("Ruff returned invalid diagnostic JSON")
-        checked_diagnostics.append(diagnostic)
+        if not _is_diagnostic(item):
+            raise ReadabilityToolError(_INVALID_DIAGNOSTIC_JSON)
+        checked_diagnostics.append(item)
 
     findings = tuple(
         Finding(
@@ -204,9 +199,9 @@ def analyze_notebook(path: Path) -> NotebookAnalysis:
         if not task_tags:
             continue
         source = cell["source"]
-        if not _is_source(source):
+        if not is_source(source):
             raise TypeError("Notebook cell source must be a string or list of strings")
-        if isinstance(source, list):
-            source = "".join(source)
-        cells.append(analyze_source(source, cell_index=cell_index, task_tag=task_tags[0]))
+        cells.append(
+            analyze_source(source_text(source), cell_index=cell_index, task_tag=task_tags[0])
+        )
     return NotebookAnalysis(cells=tuple(cells))

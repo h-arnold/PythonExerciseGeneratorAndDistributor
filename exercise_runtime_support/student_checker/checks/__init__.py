@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from exercise_runtime_support.execution_variant import (
-    active_variant_context,
-)
+from exercise_runtime_support.execution_variant import active_variant_context
 from exercise_runtime_support.exercise_test_support import (
     load_exercise_test_module,
     resolve_exercise_tests_dir,

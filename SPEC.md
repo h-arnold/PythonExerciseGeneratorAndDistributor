@@ -1,4 +1,68 @@
-# Per-task Ruff readability feedback
+# Current specification: resolve final review findings
+
+This section supersedes conflicting requirements in the **historical feature
+specification below**, which is retained as delivery evidence, not a new backlog.
+At branch `feat/AddLinterRulesToSelfChecker` HEAD `bef9667` (compared with
+`main` `63293d7`), the feature has already shipped on this branch. The current
+request tracks final code-review/de-sloppification findings. Batch A implementation
+is complete and awaits clean review and delivery; B and C remain pending. The
+authoritative per-item inventory, evidence, batch assignment and resolution
+criteria are in `REVIEW_FINDINGS.md`.
+
+## Current goal, scope and non-goals
+
+Resolve R1–R4, Y1–Y11 and N1–N17 individually with evidence and clean reviews,
+without changing self-check or grading behaviour. Scope: shared readability and
+student-checker runtime, infrastructure/export tests, student guide and developer
+contracts, `AGENTS.md`, and historical-plan accuracy. Exercise identity remains
+`exercises/<construct>/<exercise_key>/`; neither source notebooks nor
+exercise-local tests, `OrderOfTeaching.md`, scoring, dependencies, deployment or
+student answers are in scope. Test helpers belong under `tests/` and no legacy
+template paths or compatibility wrappers may be added.
+
+Maintain the shipped 17-rule Ruff 0.14.13 policy, source preservation,
+string-valued tag support, one row per discovered physical task cell, variant
+restoration, table-only feedback, neutral syntax-blocked `⚪ NOT CHECKED`, tool
+ERROR propagation, and separate teacher-side functional grading. The canonical
+guide is **`template_repo_files/fixing-readability-issues.md`**, exported at
+root `fixing-readability-issues.md`; no `RUFF_GUIDE.md` alias or footer is wanted.
+Retain failed readability on existing reference solutions as a known separate
+catalogue backlog; do not change catalogues to satisfy this clean-up.
+
+## Acceptance and evidence
+
+Every `REVIEW_FINDINGS.md` ID receives a verified resolution or a documented,
+reviewer-approved evidence-based decision not to change it. Targeted regressions
+and packaged offline self-checks pass without artificial red assertions for pure
+refactors/docs. Scoped pyright reports **zero errors** on touched implementation
+and tests, including old private-usage errors, without ignores/suppressions;
+repository Ruff, collection and explicit full solution validation pass. Explicit
+student runs retain expected unfinished-exercise failures. Three cohesive,
+sequential batches each follow Testing Specialist → Tidy RED review → Implementer
+→ Tidy GREEN review/repeat, checks, plan/ledger update and authorised commit/push.
+For already-green refactor/doc work, record that deviation and baseline tests
+instead of manufacturing a failure. After batches, perform independent read-only
+de-sloppification, address any real findings through implement/review, then final
+Docs accuracy review and review any edits. `ACTION_PLAN.md` records the gates.
+
+## Risks / decision gate
+
+One local user-owned dirty config file
+`.opencode/agents/tidy-code-reviewer.md` changes only its model and must not be
+modified or staged. A prior **committed** model-only edit (`16a2184`) to four
+`.opencode/agents/` files appears in the branch diff against `main`, so the old
+claim that user configuration was excluded is not wholly true. If N15 cannot
+be resolved safely without overwriting the dirty edit or rewriting history,
+pause for a user decision; no unilateral config edit or false clean claim.
+Accurate Python 3.14 runtime guidance must not be reverted merely because it
+differs from older `main` wording. Other findings can be worked locally up to
+this gate. Hypothesis: the remaining issues can be eliminated by modest
+source/test consolidation without changing outcomes. Cheap disconfirmation:
+compare current public-path output tests and scoped pyright before any refactor;
+if they disagree with the documented table/variant contract, investigate before
+planning a purely cosmetic change.
+
+## Historical feature specification (archival)
 
 ## Guide filename follow-up
 

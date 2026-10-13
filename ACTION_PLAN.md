@@ -1,4 +1,173 @@
-# Action plan: per-task Ruff readability feedback
+# Current action plan: final review clean-up
+
+The delivery tracker and numbered feature stages below are **historical
+evidence**, not the status or requirements of this clean-up. In particular their
+old `RUFF_GUIDE.md`, summaries, footer, syntax-FAIL and stage-5 no-commit
+instructions are superseded by the current `SPEC.md` section and the delivered
+`fixing-readability-issues.md`/table-only behaviour. Batch A is implemented and
+validated locally; B and C have not started.
+`REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
+
+## Shared sequence and gates for each of the three batches
+
+1. Testing Specialist captures existing behaviour and scoped pyright baseline;
+   writes/adjusts meaningful public-behaviour regressions where possible. For
+   cleanup/documentation that already passes, log an evidence-backed green
+   baseline and an explicit **no artificial RED** deviation. Do not create
+   malformed-topology tests or a fake missing-module subprocess exception.
+2. Tidy Code Reviewer reviews RED tests/baseline and every assigned ledger item;
+   repeat test/review until clean. Implementer makes the smallest change, not a
+   feature extension. Tidy reviews GREEN; send all significant findings back to
+   Implementer and repeat until clean. Testing Specialist verifies results.
+3. Checks: targeted pytest for changed surfaces, scoped pyright on touched Python
+   source **and tests** (zero errors, including old private-access baseline),
+   `uv run ruff check .`, scoped `uv run ruff format --check` and `git diff --check`.
+   Escalate to `uv run pytest --collect-only -q` and
+   `uv run python scripts/run_pytest_variant.py --variant solution -q`; run offline
+   packaged and representative explicit student variants at integration/final
+   boundary. Expected student failures must not be repaired. Preserve fixture
+   isolation and no template publication.
+4. Mark each ledger ID with outcome/evidence; update this plan and verify staged
+   diff excludes the user-owned dirty config. Commit `16a2184` changed the same
+   `.opencode/agents/tidy-code-reviewer.md` the user owns dirty, so an explicit
+   user decision must precede any revert or staging that would remove the entire
+   committed config diff; make no all-resolved claim while that gate is open. If
+   N15 requires any actual `.opencode/` edit, load the `customize-opencode` skill
+   first; never change the dirty reviewer config or history to bypass the gate.
+   Before commit inspect `git status`, `git diff`, `git log --oneline -10`; stage
+   only intended files. Per-batch commit and push follow the developer-orchestrated
+   batch workflow and the prior per-stage authorisation recorded in the delivery
+   tracker; record actual hash/push result only after success. Never amend/rewrite
+   history.
+
+For **each** batch, fill these eight statuses separately after work:
+
+| Batch | Red tests/baseline | Red review | Green implementation | Green review | Checks | Plan/ledger updated | Commit | Push |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Pending | Pending |
+| B | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+| C | Pending | Pending | Pending | Pending | Pending | Pending | Pending | Pending |
+
+### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
+
+**Objective:** consolidate source-preserving cell discovery and accurate tool
+errors without expanding notebook validation.
+**Surfaces:** `exercise_runtime_support/student_checker/{readability,notebook_runtime}.py`,
+`exercise_runtime_support/student_checker/checks/__init__.py` (N2 one-name import),
+focused tests under `tests/exercise_runtime_support/`; a tiny shared module only
+if justified by call sites. **Acceptance:** minimal shared saved-cell/tag/source
+primitives (or task-code iterator only where semantics match); fallback's cell-type
+scope and established string-tag support maintained, Ruff subprocess
+missing-module failure represented by child result, one-based error reference and
+accurate docstring; individually adjudicate wrapper and small nits in ledger.
+**Checks:** real Ruff rule/coordinates, stdin/source byte-preservation, string and
+list tags, current invalid JSON/tool ERROR regressions; scoped pyright/formatter,
+pytest support suite and shared ladder above. **Review point:** Tidy RED and GREEN
+gates, particularly no new structural checks or runtime compatibility shims.
+
+Batch A test baseline: `tests/exercise_runtime_support/test_student_checker_readability.py`
+has a single expected RED for one-based tool-error cell numbering (currently reports
+zero-based `cell 1` for physical cell 2); 89 other focused checker tests passed,
+including a new public fallback assertion that string tags are discovered across
+markdown and code cells. Missing Ruff is represented as a child result with
+returncode 1 and stderr, while `FileNotFoundError` remains the missing-interpreter
+case. Existing saved-notebook/source-preservation tests are green baselines rather
+than manufactured REDs. Scoped readability implementation/test Pyright is clean;
+the notebook-runtime target retains 23 pre-existing diagnostics (8 original and 15
+Batch B-owned), with no diagnostics introduced by this Batch A test.
+
+Batch A implementation evidence (clean review; delivery in progress): source
+validation and list-source joining now live in `student_checker/_notebook_cells.py`
+and are used by both saved-cell analysis and fallback tag discovery. Fallback tag discovery uses the shared anchored regex
+full-match predicate, preserving the previous `^exercise\d+$` decimal-digit
+semantics (Python regex `\d` includes Unicode decimal digits);
+readability keeps its original `startswith("exercise")`/`isdigit()` predicate and
+therefore its fail-fast `AttributeError` for a non-string tag item. The fallback
+validates tag container forms before applying shared matching; readability retains its previous
+fail-fast handling for malformed list items. The fallback still discovers tags on
+every valid cell type; readability still selects code cells only. Saved notebook
+loading remains at each consumer boundary because
+the fallback's established `NotebookGradingError` validation and readability's
+direct JSON fail-fast errors differ; centralising JSON loading would change those
+error contracts without removing meaningful parsing policy. GREEN implementation
+tests pass: the readability + notebook-runtime focused suites report 91 passed.
+Repository Ruff, scoped formatting, scoped Pyright (including the changed runtime),
+`uv lock --check`, collection and the full explicit solution runner also pass.
+The full support directory pytest suite passes. Pyright on the separately changed
+Batch B test file still reports its recorded 23 diagnostics (8 original and 15
+Batch B-owned). Its public fallback assertion belongs to Batch A; GREEN made no
+changes to the B-owned diagnostic regions.
+Disposition evidence for each finding is recorded in `REVIEW_FINDINGS.md`.
+
+Batch A corrective regression evidence: the initial shared `str.isdigit()` matcher
+broadened fallback discovery to Unicode digit tags such as `exercise²`, unlike the
+original regex full-match, which matches Unicode decimal digits but not superscript
+digits. The public fallback test includes that superscript tag beside valid
+string-valued markdown/code tags and asserts it is
+ignored. Restoring the regex predicate for fallback and keeping readability's
+consumer-local legacy predicate yields 91 focused tests passed. This correction is
+Batch A only; B and C remain pending, and the existing Batch B Pyright debt remains.
+Final green documentation review corrected the regex's Unicode decimal-digit
+description and updated `SPEC.md` from the obsolete planning-only status; no
+predicate or runtime behavior changed.
+Final independent GREEN re-review is clean for all Batch A IDs. The reviewer
+confirmed both parser-preservation regressions and all documented adjudications.
+Commit/push evidence will be recorded after successful delivery, before Batch B.
+
+### Batch B — orchestrator and public-behaviour tests (R3, R4, Y1–Y8, N7–N9)
+
+**Objective:** remove private-test coupling, pyright errors and row-construction
+duplication while keeping current output identical.
+**Surfaces:** `exercise_runtime_support/student_checker/{notebook_runtime,reporting}.py`,
+`exercise_runtime_support/exercise_framework/reporting.py` (N7 status owner and
+N8 public table docstring/`Iterable`),
+`tests/exercise_runtime_support/test_student_checker_{notebook_runtime,reporting}.py`,
+`tests/exercise_framework/test_reporting.py` (N9 casing duplicates),
+test-only row parser under `tests/` if justified, and
+`tests/template_repo_cli/test_packaged_readability.py` for count assertions.
+**Acceptance:** public-path tests cover fallback/local support, retries, errors,
+student/solution variant, table header/status, multi-check cell interleaving and
+no footer; no private-usage suppressions anywhere in scoped tests; scoped pyright
+clean including baseline eight and new 15 reported errors (re-measure). Distinct
+functional-only reporting remains distinct where necessary. **Checks:** support
+suite, offline export fixture, real solution/student exemplars, full validation
+ladder. **Review point:** Tidy RED and GREEN review confirms no tautological
+assertions, weakened evidence or unintended table changes.
+
+### Batch C — export fixture and documentation truth (Y9–Y11, N10–N17)
+
+**Objective:** prove hidden synthetic fixture exclusion and align live guidance
+and historical claims with the delivered feature.
+**Surfaces:** `tests/template_repo_cli/test_packaged_readability.py`,
+`docs/developers/{execution-model,testing-framework}.md`,
+`template_repo_files/{fixing-readability-issues.md,README.md.template}`,
+`AGENTS.md`, root `SPEC.md`, `ACTION_PLAN.md`, `REVIEW_FINDINGS.md`; inspect
+committed `.opencode/agents/` delta without touching user dirty file.
+**Acceptance:** a real test-only hidden fixture remains absent in export;
+anchor/example tests remain legitimate; README/guide avoid fictional overall
+footer and inaccurate code-cell/quote claims. Documentation keeps one canonical
+execution contract and focused testing details. N15 needs safe isolation of
+unrelated committed config delta or explicit pause/clarification; no claim of a
+fully clean branch until resolved. Accurate 3.14 guidance retained. **Checks:**
+offline export test and guide real-Ruff examples, doc/link review, full shared
+ladder and branch-vs-main diff audit. **Review point:** Tidy RED/GREEN, then
+reviewer sign-off on each adjudication, especially config preservation.
+
+## Final independent review and handoff
+
+After all three batches are genuinely clean and pushed, call De-Sloppification
+**read-only** on the complete resulting diff. If it finds actionable issues,
+route focused fixes through Testing Specialist/baseline → Tidy RED → Implementer
+→ Tidy GREEN repeat → checks → ledger/plan → authorised commit/push as an
+additional batch; do not silently dismiss them. Then Docs reviews changed
+contracts/`AGENTS.md` and handoff; any Docs edits get Tidy re-review and checks,
+with an explicit delivery record. Validate `git diff main...HEAD`, branch status,
+solution suite, scoped pyright, Ruff, collect-only and representative expected
+student failures; report any N15 user-decision blocker honestly. Do not deploy,
+publish templates, change scoring or author exercises. No separate layout/workflow
+spec is necessary: notebook layout and export mapping remain canonical.
+
+## Historical feature delivery tracker (archival)
 
 Implement the requirements in `SPEC.md` locally and sequentially. This handoff
 contains no runtime implementation or test code. No separate layout/workflow
