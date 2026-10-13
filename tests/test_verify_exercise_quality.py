@@ -2866,8 +2866,8 @@ class TestEx011ExpectationsModule:
 # Section 4 — Progression scan: executable constructs, not printed token text
 # ═══════════════════════════════════════════════════════════════════════════════
 #
-# Batch 3 policy (REMAINING_WORK.md, "Batch 3"), restated here as the contract the
-# scanner implements and the tests below hold it to.
+# Progression policy, restated here as the contract the scanner implements and
+# the tests below hold it to.
 #
 # 1. The scan reports a later construct only where it is *executable* in a
 #    tagged ``exerciseN`` code cell.  Token text inside comments, ordinary

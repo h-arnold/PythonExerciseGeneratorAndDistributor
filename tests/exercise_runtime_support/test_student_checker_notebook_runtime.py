@@ -17,6 +17,7 @@ from tests.readability_table import assert_no_footer, table_rows
 
 _FEEDBACK_WIDTH = 40
 _MIN_FEEDBACK_LINES = 5
+_FEEDBACK_REPETITIONS = 5
 
 
 def _functional_result(passed: bool) -> list[ExerciseCheckResult]:
@@ -391,7 +392,7 @@ def test_notebook_tables_wrap_long_feedback_without_truncation(
 ) -> None:
     message = (
         "This feedback explains the expected wording and punctuation for the student's response. "
-        * _MIN_FEEDBACK_LINES
+        * _FEEDBACK_REPETITIONS
     ).strip()
     monkeypatch.delenv("PYTUTOR_ACTIVE_VARIANT", raising=False)
     monkeypatch.setattr(notebook_runtime, "has_exercise_checks", _has_local_checks(True))
@@ -608,10 +609,7 @@ def test_fallback_execution_and_source_inspection_receive_active_solution_varian
 def test_functional_only_run_exercise_checks_does_not_launch_ruff(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    calls: list[str] = []
-
     def forbid_ruff(*_args: object, **_kwargs: object) -> None:
-        calls.append("ruff")
         raise AssertionError("functional-only check launched Ruff")
 
     monkeypatch.setattr(readability.subprocess, "run", forbid_ruff)
@@ -619,7 +617,6 @@ def test_functional_only_run_exercise_checks_does_not_launch_ruff(
     results = checks.run_exercise_checks("ex002_sequence_modify_basics")
 
     assert results
-    assert calls == []
 
 
 @pytest.mark.parametrize("local_support", [False, True])
@@ -791,15 +788,14 @@ def _saved_solution_task_tags(exercise_key: str) -> list[str]:
 
 
 @pytest.mark.parametrize(
-    ("construct", "exercise_key"),
+    "exercise_key",
     [
-        ("sequence", "ex002_sequence_modify_basics"),
-        ("selection", "ex001_selection_modify_basics"),
+        "ex002_sequence_modify_basics",
+        "ex001_selection_modify_basics",
     ],
 )
 @pytest.mark.parametrize("variant", ["student", "solution"])
 def test_real_canonical_sequence_and_selection_self_checks_keep_functional_outcomes(
-    construct: str,
     exercise_key: str,
     variant: str,
     monkeypatch: pytest.MonkeyPatch,

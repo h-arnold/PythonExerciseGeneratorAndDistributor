@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict, TypeGuard
 
-from ._notebook_cells import is_source, source_text
+from ._notebook_cells import is_source
 
 _RULES = "E101,E111,E117,E225,E226,E227,E228,E231,E501,E741,N802,N803,N806,N816,W191,W291,W293"
 _INVALID_DIAGNOSTIC_JSON = "Ruff returned invalid diagnostic JSON"
@@ -147,26 +147,23 @@ def analyze_source(source: str, *, cell_index: int, task_tag: str) -> CellAnalys
         raise ReadabilityToolError(_INVALID_DIAGNOSTIC_JSON) from error
     if not _is_object_list(diagnostics):
         raise ReadabilityToolError(_INVALID_DIAGNOSTIC_JSON)
-    checked_diagnostics: list[_RuffDiagnostic] = []
+    findings: list[Finding] = []
     for item in diagnostics:
         if not _is_diagnostic(item):
             raise ReadabilityToolError(_INVALID_DIAGNOSTIC_JSON)
-        checked_diagnostics.append(item)
-
-    findings = tuple(
-        Finding(
-            code=item["code"],
-            line=item["location"]["row"],
-            column=item["location"]["column"],
-            message=item["message"],
+        findings.append(
+            Finding(
+                code=item["code"],
+                line=item["location"]["row"],
+                column=item["location"]["column"],
+                message=item["message"],
+            )
         )
-        for item in checked_diagnostics
-    )
     return CellAnalysis(
         source=source,
         cell_index=cell_index,
         task_tag=task_tag,
-        findings=findings,
+        findings=tuple(findings),
         syntax_blocked=any(finding.code == "invalid-syntax" for finding in findings),
     )
 
@@ -202,6 +199,10 @@ def analyze_notebook(path: Path) -> NotebookAnalysis:
         if not is_source(source):
             raise TypeError("Notebook cell source must be a string or list of strings")
         cells.append(
-            analyze_source(source_text(source), cell_index=cell_index, task_tag=task_tags[0])
+            analyze_source(
+                source if isinstance(source, str) else "".join(source),
+                cell_index=cell_index,
+                task_tag=task_tags[0],
+            )
         )
     return NotebookAnalysis(cells=tuple(cells))

@@ -219,7 +219,6 @@ def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
         "def test_hidden_grading_fixture() -> None:\n    assert False\n",
         encoding="utf-8",
     )
-    assert test_file.is_file()
     exercise_files: ExerciseFiles = {
         "exercise_json": metadata,
         "exercise_json_export": Path("exercises/sequence") / key / "exercise.json",

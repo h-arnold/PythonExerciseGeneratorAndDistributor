@@ -7,7 +7,10 @@ instructions are superseded by the current `SPEC.md` section and the delivered
 `fixing-readability-issues.md`/table-only behaviour. Batches A and B are reviewed
 clean, committed and pushed. Batch C RED and GREEN reviews are clean;
 implementation, checks, plan/ledger updates, commit and push are complete.
-Final independent de-sloppification is in progress; documentation sync is pending.
+Final independent de-sloppification identified nine follow-up cleanups, tracked
+as Batch D below. Batch D implementation, validation and independent GREEN
+re-review are complete and clean; delivery is in progress before final cleanup
+confirmation and documentation sync.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each of the three batches
@@ -44,9 +47,10 @@ For **each** batch, fill these eight statuses separately after work:
 
 | Batch | Red tests/baseline | Red review | Green implementation | Green review | Checks | Plan/ledger updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed (B typing debt remains assigned) | Complete | Created | Complete |
+| A | Complete (numbering, fail-fast and tag-matching REDs) | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 | B | Complete (already-green public baseline; scoped Pyright 23 → 0; no artificial RED) | Clean | Complete | Clean | Passed: focused 186; full solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/format/lock/diff | Updated | Created | Complete |
 | C | Complete (already-green packaged baseline; no artificial RED) | Clean | Complete (documentation and dispositions updated) | Clean | Passed: packaged 208; guide/package focused 24; solution 1,618 passed/1 skipped; collect-only 1,619; Ruff/Pyright/format/lock/diff | Complete | Created | Complete |
+| D | Complete (green baseline; no artificial RED) | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
 
 ### Batch A — shared analyser and task discovery (R1, R2, Y5, N1–N6)
 
@@ -65,48 +69,54 @@ list tags, current invalid JSON/tool ERROR regressions; scoped pyright/formatter
 pytest support suite and shared ladder above. **Review point:** Tidy RED and GREEN
 gates, particularly no new structural checks or runtime compatibility shims.
 
-Batch A test baseline: `tests/exercise_runtime_support/test_student_checker_readability.py`
-has a single expected RED for one-based tool-error cell numbering (currently reports
+Batch A test baseline at that historical checkpoint: `tests/exercise_runtime_support/test_student_checker_readability.py`
+had a single expected RED for one-based tool-error cell numbering (it reported
 zero-based `cell 1` for physical cell 2); 89 other focused checker tests passed,
 including a new public fallback assertion that string tags are discovered across
 markdown and code cells. Missing Ruff is represented as a child result with
-returncode 1 and stderr, while `FileNotFoundError` remains the missing-interpreter
-case. Existing saved-notebook/source-preservation tests are green baselines rather
+returncode 1 and stderr, while `FileNotFoundError` remained the missing-interpreter
+case. Existing saved-notebook/source-preservation tests were green baselines rather
 than manufactured REDs. Scoped readability implementation/test Pyright is clean;
-the notebook-runtime target retains 23 pre-existing diagnostics (8 original and 15
+the notebook-runtime target had 23 diagnostics (8 original and 15
 Batch B-owned), with no diagnostics introduced by this Batch A test.
 
-Batch A implementation evidence (clean review; delivery in progress): source
-validation and list-source joining now live in `student_checker/_notebook_cells.py`
-and are used by both saved-cell analysis and fallback tag discovery. Fallback tag discovery uses the shared anchored regex
+Batch A implementation evidence (clean review; delivered): source
+validation and list-source joining then lived in `student_checker/_notebook_cells.py`
+and were used by both saved-cell analysis and fallback tag discovery. Fallback tag discovery used the shared anchored regex
 full-match predicate, preserving the previous `^exercise\d+$` decimal-digit
 semantics (Python regex `\d` includes Unicode decimal digits);
-readability keeps its original `startswith("exercise")`/`isdigit()` predicate and
+readability kept its original `startswith("exercise")`/`isdigit()` predicate and
 therefore its fail-fast `AttributeError` for a non-string tag item. The fallback
-validates tag container forms before applying shared matching; readability retains its previous
-fail-fast handling for malformed list items. The fallback still discovers tags on
-every valid cell type; readability still selects code cells only. Saved notebook
-loading remains at each consumer boundary because
+validated tag container forms before applying shared matching; readability retained its previous
+fail-fast handling for malformed list items. The fallback discovered tags on
+every valid cell type; readability selected code cells only. Saved notebook
+loading remained at each consumer boundary because
 the fallback's established `NotebookGradingError` validation and readability's
 direct JSON fail-fast errors differ; centralising JSON loading would change those
 error contracts without removing meaningful parsing policy. GREEN implementation
-tests pass: the readability + notebook-runtime focused suites report 91 passed.
+tests passed: the readability + notebook-runtime focused suites reported 91 passed.
 Repository Ruff, scoped formatting, scoped Pyright (including the changed runtime),
-`uv lock --check`, collection and the full explicit solution runner also pass.
-The full support directory pytest suite passes. Pyright on the separately changed
-Batch B test file still reports its recorded 23 diagnostics (8 original and 15
-Batch B-owned). Its public fallback assertion belongs to Batch A; GREEN made no
-changes to the B-owned diagnostic regions.
+`uv lock --check`, collection and the full explicit solution runner also passed.
+The full support directory pytest suite passed. At that historical checkpoint,
+Pyright on the separately changed Batch B test file still reported 23 diagnostics
+(8 original and 15 Batch B-owned). Its public fallback assertion belongs to Batch A;
+GREEN made no changes to the B-owned diagnostic regions.
 Disposition evidence for each finding is recorded in `REVIEW_FINDINGS.md`.
 
 Batch A corrective regression evidence: the initial shared `str.isdigit()` matcher
 broadened fallback discovery to Unicode digit tags such as `exercise²`, unlike the
 original regex full-match, which matches Unicode decimal digits but not superscript
 digits. The public fallback test includes that superscript tag beside valid
-string-valued markdown/code tags and asserts it is
+string-valued markdown/code tags and asserted it was
 ignored. Restoring the regex predicate for fallback and keeping readability's
-consumer-local legacy predicate yields 91 focused tests passed. This correction is
-Batch A only; B and C remain pending, and the existing Batch B Pyright debt remains.
+consumer-local legacy predicate yielded 91 focused tests passed. This correction was
+Batch A only; B and C were still pending at this historical checkpoint. Batch B
+subsequently resolved its Pyright debt, as recorded in its delivery evidence.
+
+Batch D narrows that helper module to the source type guard, which genuinely has
+two consumers. Runtime tag matching and readability list-source joining are now
+consumer-local; the above describes Batch A's delivered checkpoint, not the current
+helper API.
 Final green documentation review corrected the regex's Unicode decimal-digit
 description and updated `SPEC.md` from the obsolete planning-only status; no
 predicate or runtime behavior changed.
@@ -236,24 +246,64 @@ verified complete; the baseline test did not modify production packaging or
 scoring.
 
 Batch C implementation evidence (substantive GREEN review clean; status-only
-re-review pending): the execution model now links to
+re-review was pending at this historical checkpoint): the execution model linked to
 the testing framework for self-check presentation detail; the testing framework
 owns the detailed readability policy and explicitly permits substantive Ruff
 example and anchor/index parity checks while rejecting presence-only/vocabulary
-claims. The student guide describes rows as task-labelled, corrects trailing
-whitespace to occur after the closing parenthesis, and the README no longer claims
+claims. The student guide described rows as task-labelled, corrected trailing
+whitespace to occur after the closing parenthesis, and the README no longer claimed
 an unprinted overall result. `AGENTS.md` links the renamed guide. N15 retains the
-user-approved committed model deltas without touching `.opencode/`; N16 keeps
-Python 3.14 based on manifest/runtime-pin evidence; N17 adds one concise pointer.
-N11–N14 are implemented; the real-Ruff example and anchor/index-parity suite
-passes. The template CLI suite, full solution variant, collection, Ruff, scoped
-Pyright, formatting, lock and diff checks pass. Independent review found the source,
+user-approved committed model deltas without touching `.opencode/`; N16 retained
+Python 3.14 based on manifest/runtime-pin evidence; N17 added one concise pointer.
+N11–N14 were implemented; the real-Ruff example and anchor/index-parity suite
+passed. The template CLI suite, full solution variant, collection, Ruff, scoped
+Pyright, formatting, lock and diff checks passed. Independent review found the source,
 tests and documentation substantively clean; only the stale status record was
 actionable and has been corrected. The final independent re-review is limited to
-these status updates. Commit and push remain pending the established delivery
-workflow; no publication or deployment was performed.
+these status updates. Commit and push were pending at this historical checkpoint;
+they subsequently succeeded as recorded below. No publication or deployment was
+performed.
 
 ## Final independent review and handoff
+
+### Batch D — final audit follow-ups (F1–F9)
+
+Objective: resolve all nine final audit findings in `REVIEW_FINDINGS.md`, without
+changing runtime behavior or expanding catalogue scope. Keep shared source typing,
+but inline single-consumer tag/source helpers. Remove unused test parameters and
+redundant assertions; strengthen the footer-helper test with rejection coverage.
+Consolidate diagnostic decoding into one validated construction pass, preserving
+error classes, message text and ordering. Correct live delivery statements, remove
+the deleted-document comment reference, and separate long-message repetition from
+the wrapped-line threshold. No new dependencies, suppressions, config changes,
+notebook edits or grading changes.
+
+Sequence: Testing Specialist added footer-rejection coverage and recorded the
+already-green source/diagnostic baselines; Tidy reviewed RED/baseline; the
+Implementer addressed F1–F9. Independent GREEN review and validation were pending
+when this sequence was drafted. Validation is now complete; only independent GREEN
+review remains before a fresh independent cleanup review and final Docs sync. No
+commit or push is requested.
+
+Batch D baseline and implementation handoff: four focused test files were already
+green, so no artificial RED was introduced. The six footer-rejection cases are
+meaningful independent coverage. The source guard module now exposes only its
+two-consumer `is_source` TypeGuard; regex tag matching and source joining are
+consumer-local. Ruff diagnostics are validated and converted to findings in one
+ordered pass. The F1–F9 implementation dispositions await independent GREEN
+review; validation is complete as recorded below. The dirty reviewer-model file and
+committed model changes remain untouched.
+
+Batch D validation: the focused changed-file suite reports 239 passed; the wider
+support/reporting/export/quality slice reports 329 passed. Separate commands report
+159 passes for `tests/exercise_runtime_support/` and 137 for
+`tests/test_verify_exercise_quality.py` (these scopes are distinct, not additive to
+the wider overlapping slice). Scoped Pyright reports zero errors; repository Ruff,
+scoped format, `uv lock --check` and `git diff --check` pass. Collection reports
+1,625 tests; the full explicit solution run reports 1,624 passed and 1 skipped.
+Explicit student sequence and selection runs retain their expected 30 and 33
+failures. Independent GREEN review is the remaining gate; the review-agent request
+could not start because the environment's subagent depth limit was reached.
 
 Batch C delivered on `feat/AddLinterRulesToSelfChecker`:
 `f73f95746f01c8672fc6e6af2efb3080f5cc2ec0` —

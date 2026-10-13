@@ -1,7 +1,7 @@
 # Final review findings: disposition ledger
 
-All three batches are reviewed clean, committed and pushed. Final independent
-de-sloppification is in progress, followed by documentation sync.
+All three original batches are reviewed clean, committed and pushed. Final
+independent de-sloppification identified nine follow-up cleanups (Batch D).
 The user approved retaining the committed model changes (N15).
 Line references describe the original review baseline,
 not immutable positions. Each Batch A disposition below records implementation
@@ -27,21 +27,19 @@ evidence; delivery details are recorded in `ACTION_PLAN.md`.
   fabricated subprocess-exception case. Missing Ruff is exercised as a child
   result with exit code 1 and stderr; missing interpreter remains a
   `FileNotFoundError`. The focused readability suite passes.
-- **R2 — resolved:** `student_checker/_notebook_cells.py` owns source type narrowing
-  and direct joining of list-valued source. Fallback discovery retains the shared
-  anchored regex full-match predicate, equivalent to its former `^exercise\d+$`
-  behavior; readability retains its original `startswith("exercise")` plus
-  `isdigit()` predicate locally. Keeping those predicates consumer-local avoids
-  broadening fallback discovery to Unicode digit tags (for example `exercise²`).
-  Their tag-container handling remains consumer-specific: fallback validates
-  string/list-of-string tags and returns no tags for other forms, while readability
-  retains its previous fail-fast behaviour for a non-string list item. The fallback
-  still checks valid cell objects across all types; readability still filters to
-  code cells. Both retain string-valued tags. Notebook JSON loading remains
-  consumer-local: the fallback reports `NotebookGradingError` for validated
-  malformed/missing data while readability preserves direct JSON parsing
-  behaviour; one common loader would alter established failures without adding a
-  useful shared primitive. Existing source-preservation tests pass.
+- **R2 — resolved (Batch A snapshot; current helper boundary updated in Batch D):**
+  At Batch A delivery, `_notebook_cells.py` owned the shared source TypeGuard,
+  direct list-source joining and anchored regex matcher. The Batch D implementation
+  now leaves only the source TypeGuard in that module because both consumers use
+  it. Runtime keeps its `_EXERCISE_TAG_PATTERN.fullmatch()` locally, preserving the
+  former `^exercise\d+$` Unicode-decimal behaviour; readability joins list-valued
+  source inline and retains its distinct `startswith("exercise")`/`isdigit()`
+  predicate, including its fail-fast `AttributeError` for non-string list items.
+  Fallback tag-container validation and all-cell-type discovery remain distinct
+  from readability's code-cell-only selection; both continue to accept string tags.
+  Notebook JSON loading remains consumer-local because fallback's validated
+  `NotebookGradingError` contract differs from readability's direct JSON failures.
+  The existing source-preservation tests pass.
 - **Y5 — resolved:** tool failures label `cell_index + 1`; internal indices remain
   zero-based. `analyze_source` now documents that split explicitly: tool errors use
   one-based physical cell numbers, while normal rows omit cell numbers and identify
@@ -58,32 +56,37 @@ evidence; delivery details are recorded in `ACTION_PLAN.md`.
 - **N4 — resolved:** `_SECOND_LINE`, `_OPERATOR_COLUMN` and `_TWO_CELLS` are absent;
   the former one-off values are direct, contextual assertions.
 - **N5 — resolved:** `ast` is imported at test-module scope.
-- **N6 — resolved:** the string-valued tag regression uses a complete notebook
-  cell object. Shared tag extraction accepts this established representation;
-  fallback public-path coverage confirms tags on markdown and code cells, while
-  readability selection independently confirms markdown exclusion.
+- **N6 — resolved (Batch A test/discovery snapshot):** the string-valued tag
+  regression uses a complete notebook cell object and covers the fallback's
+  established string-tag support. At Batch A delivery, runtime discovery used the
+  then-shared matcher; in the current Batch D boundary, runtime owns its local
+  matcher. Fallback public-path coverage confirms tags on markdown and code cells,
+  while readability selection independently confirms markdown exclusion. See the
+  R2 disposition for the current helper/predicate ownership.
 - **GREEN review follow-up — resolved:** added regression
   `test_invalid_tag_item_preserves_existing_fail_fast_error` confirms readability
   still raises `AttributeError` for `metadata.tags == ["exercise1", 1]`.
 
-- **Batch A GREEN correction — resolved:** review of the fallback public-path
-  regression exposed that sharing readability's `str.isdigit()` predicate had
-  broadened the fallback's prior regex full-match behavior to superscript digits.
-  The regression now asserts `exercise²` is ignored while valid string-valued tags
-  on markdown and code cells are discovered. The fallback predicate is again the
-  shared anchored regex; readability's historical predicate remains local. Focused
-  readability and notebook-runtime tests pass (91 passed). This records only the
-  Batch A correction; it does not resolve or close any Batch B/C findings.
+- **Batch A GREEN correction — resolved (historical implementation):** review of
+  the fallback public-path regression exposed that sharing readability's
+  `str.isdigit()` predicate had broadened the fallback's prior regex full-match
+  behaviour to superscript digits. The regression asserted `exercise²` was ignored
+  while valid string-valued tags on markdown and code cells were discovered. At
+  Batch A delivery, fallback discovery used the then-shared anchored regex; the
+  current Batch D implementation keeps that pattern local to runtime and retains
+  readability's local predicate. Focused readability and notebook-runtime tests
+  passed (91 passed). This records only the Batch A correction; it does not resolve
+  or close any Batch B/C findings.
 
-Verification after implementation: focused readability and notebook-runtime
-tests pass (91 tests). The full `tests/exercise_runtime_support/` suite passes;
-scoped Pyright reports zero errors for the shared modules, readability tests and
-notebook runtime; scoped formatting, repository-wide Ruff, `uv lock --check`,
-collection, explicit solution validation and `git diff --check` pass. The separate
-Batch B notebook-runtime test file retains its recorded 23 Pyright diagnostics
-(8 original and 15 Batch B-owned). The Batch A public fallback assertion in that
-test file does not change those Batch B-owned diagnostics; GREEN did not edit those
-diagnostic regions.
+Verification at the Batch A implementation checkpoint: focused readability and
+notebook-runtime tests passed (91 tests). The full `tests/exercise_runtime_support/`
+suite passed; scoped Pyright reported zero errors for the shared modules,
+readability tests and notebook runtime; scoped formatting, repository-wide Ruff,
+`uv lock --check`, collection, explicit solution validation and `git diff --check`
+passed. At that checkpoint, the separate Batch B notebook-runtime test file had
+23 Pyright diagnostics (8 original and 15 Batch B-owned). Batch B subsequently
+resolved those diagnostics to zero, as recorded in its own disposition. The Batch A
+public fallback assertion in that file did not change the B-owned diagnostics.
 
 ## Batch B — integration, presentation and test quality
 
@@ -178,6 +181,63 @@ the delivery evidence.
 | N17 | `AGENTS.md` lacks concise discoverability for the readability self-check and renamed guide. | Add brief accurate pointers without duplicating the 17-rule policy or changing notebook guidance. |
 
 ## Execution evidence and constraints
+
+### Final independent audit follow-ups — Batch D
+
+| ID | Finding | Resolution criterion |
+| --- | --- | --- |
+| F1 | Live Batch A/C phase notes still say delivery/re-review is pending or that 23 typing errors remain. | Convert phase snapshots to explicit past tense; current completion and validation records must agree. |
+| F2 | `_notebook_cells.py` exports single-consumer tag/source helpers as if all primitives were shared. | Retain shared source guard; inline regex matching in runtime and source joining in readability, accurately name/document the remaining shared boundary. |
+| F3 | Runtime integration test retains unused `construct` parameter after tautology removal. | Parametrize only exercise keys, preserving all four variant cases. |
+| F4 | Footer helper is only tested with accepted output. | Add meaningful rejection coverage for forbidden footer text; retain useful clean-output coverage. |
+| F5 | Export fixture asserts existence immediately after writing its source file. | Remove redundant source-presence assertion; retain substantive export-exclusion assertions. |
+| F6 | Diagnostic decoding creates an intermediate list only to construct findings in a second pass. | Validate and append findings in one ordered pass, retaining malformed-result failure coverage. |
+| F7 | Quality-verifier test comment references deleted `REMAINING_WORK.md`. | Remove stale reference without changing the stated policy or exercise behavior. |
+| F8 | Functional-only Ruff-forbidden test records calls then immediately raises; its empty-list assertion is redundant. | Retain fail-on-launch behavior and remove unused bookkeeping. |
+| F9 | Long-feedback repetition count shares the minimum wrapped-line threshold constant. | Give message construction an independent clear repetition count while preserving exact reconstruction and wrapping checks. |
+
+Batch D implementation and validation are complete; independent GREEN review is
+pending. The dispositions below remain provisional until that gate is clean.
+
+### Batch D implementation dispositions (GREEN review pending)
+
+- **F1 — implemented:** current SPEC/ACTION_PLAN status now describes Batch D as
+  implementation- and validation-complete with GREEN review pending. Historical
+  Batch A/C checkpoints are explicitly framed as historical snapshots; subsequent
+  Batch B resolution of its 23 diagnostic baseline is recorded instead of implying
+  that debt remains.
+- **F2 — implemented:** `_notebook_cells.py` now contains only the source TypeGuard
+  used by both consumers. Runtime keeps `_EXERCISE_TAG_PATTERN` and its anchored
+  full-match semantics locally; readability joins list source inline. The
+  readability `startswith`/`isdigit` predicate remains local and unchanged.
+- **F3 — implemented in the existing tests-only baseline:** the variant regression
+  is parameterised by exercise key and variant only, preserving all four cases;
+  there is no unused construct parameter.
+- **F4 — implemented in the existing tests-only baseline:** six forbidden-footer
+  markers are independently rejected while table-only output acceptance remains.
+- **F5 — implemented in the existing tests-only baseline:** the immediate
+  `test_file.is_file()` check after writing it was removed; the exported exclusion
+  assertion remains.
+- **F6 — implemented:** validated diagnostics are converted to `Finding` objects
+  in the validation loop, preserving order and the existing error class/message.
+- **F7 — implemented in the existing tests-only baseline:** removed the deleted
+  `REMAINING_WORK.md` comment reference; policy assertions are unchanged.
+- **F8 — implemented in the existing tests-only baseline:** fail-on-launch remains
+  the functional-only Ruff guard; unused call-list bookkeeping and its redundant
+  empty-list assertion are gone.
+- **F9 — implemented in the existing tests-only baseline:** message construction
+  uses an independent repetition count from the minimum wrapped-line threshold;
+  the exact reconstruction and width checks remain.
+
+Baseline evidence: the four focused test files were already green, so no artificial
+RED was introduced. The six new F4 cases provide direct rejection coverage. Final
+validation passed: focused changed-file suite 239 passed; wider support/reporting/
+export/quality slice 329 passed; separate support suite 159 passed and quality suite
+137 passed. Scoped Pyright is zero; repository Ruff, scoped format, lock and diff
+checks pass. Collection is 1,625; full solution is 1,624 passed and 1 skipped.
+Student sequence/selection runs retain 30/33 expected failures. The Tidy GREEN
+review remains pending because the environment rejected the reviewer-agent request
+at its subagent depth limit.
 
 ### Batch C dispositions (implementation/checks complete; independent re-review clean)
 

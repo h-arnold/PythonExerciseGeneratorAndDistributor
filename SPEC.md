@@ -3,10 +3,9 @@
 This section supersedes conflicting requirements in the **historical feature
 specification below**, which is retained as delivery evidence, not a new backlog.
 At branch `feat/AddLinterRulesToSelfChecker`, the feature is already delivered.
-The current request tracks final review findings. Batches A and B are reviewed
-clean and delivered. Batch C's implementation, checks and independent GREEN
-re-review are clean and complete; its commit and push succeeded. Final independent
-de-sloppification is in progress, followed by documentation sync. The authoritative per-item
+The current request tracks final review findings. Batches A, B and C are reviewed
+clean and delivered. Batch D implementation and validation are complete; independent
+GREEN review is pending, followed by documentation sync. The authoritative per-item
 inventory, evidence, batch assignment and resolution
 criteria are in `REVIEW_FINDINGS.md`.
 
