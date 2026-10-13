@@ -103,9 +103,11 @@ See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule,
   states and teacher-grading boundary are specified in
   [testing-framework.md](testing-framework.md). The student guide source is
   `template_repo_files/RUFF_GUIDE.md`; packaging maps it to root-level
-  `RUFF_GUIDE.md` in exported repositories. Guide references are derived from
-  the shared runtime package root, not the current working directory, and
-  checking does not read or test for the guide's presence.
+  `RUFF_GUIDE.md` in exported repositories and the generated README links to it.
+  Normal checker output is the header and task-grouped table only, without a
+  footer or guide lookup. Syntax-blocked readability rows show neutral
+  `⚪ NOT CHECKED` with `Not checked - make sure your code runs first`; valid-syntax
+  cells are assessed independently of functional outcomes.
 
 **Construct-level resources**: When packaging, the CLI preserves construct-level `additional-resources/` directories (e.g. `exercises/sequence/additional-resources/`) in the exported output. These are optional reference materials for students and are not part of the grading contract.
 

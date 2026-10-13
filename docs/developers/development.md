@@ -140,9 +140,9 @@ readability feedback, independently of pytest grading. The policy, supported
 runtime, source/export guide mapping, error states and teacher-grading boundary
 are documented in [testing-framework.md](testing-framework.md), with execution
 and variant details in [execution-model.md](execution-model.md). Existing
-reference solutions may have readability FAIL and combined self-check FAIL
-until a separate correction pass; this does not invalidate functional solution
-tests or full-pass teacher-side grading.
+reference solutions may have failed readability rows alongside passing functional
+checks until a separate correction pass; this does not invalidate functional
+solution tests or full-pass teacher-side grading.
 
 ### Adding Features to the Grader
 

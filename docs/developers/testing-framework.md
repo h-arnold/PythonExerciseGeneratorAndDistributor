@@ -163,14 +163,18 @@ The Ruff invocation is isolated from project configuration, disables fixes and
 cache, and ignores `noqa` directives. The detailed rule index and examples live
 in the single student guide, not duplicated here.
 
-Every analysed cell has a required PASS/FAIL readability row. Ruff syntax
-diagnostics are a student readability FAIL and mark that cell syntax-blocked;
-other cells are still analysed. A missing/broken tool or invalid Ruff output is
-an explicit tooling ERROR: functional output is shown first, then the specific
-error is re-raised; no combined self-check result is printed for that failed
-analysis. It is not a student FAIL or a pass. The combined self-check passes only
-when all functional and readability rows pass. The notebook API does not raise a
-grading assertion merely for student failures.
+Every analysed cell with valid syntax has a required PASS/FAIL readability row.
+Syntax-blocked cells instead show the neutral status `⚪ NOT CHECKED` and the message
+`Not checked - make sure your code runs first`. The analyser retains its findings,
+but the table suppresses all diagnostics for that blocked cell. NOT CHECKED is
+neither a readability pass nor a failure. Other cells are still analysed, and
+valid-syntax readability feedback does not depend on functional checks passing.
+Normal output contains only the self-check header and task-grouped table: no
+functional/readability summaries, overall result, save/guide reminder or teacher-marks
+footer. A missing/broken tool or invalid Ruff output remains an explicit tooling
+ERROR: available functional rows are shown first, then the specific error is printed
+and re-raised. It is not a student FAIL or a pass. The notebook API does not raise
+a grading assertion merely for student failures.
 
 Ruff runs in the native managed Python environment used by Jupyter,
 Codespaces and the supplied devcontainer. The checker assumes the pinned tool is
@@ -179,10 +183,9 @@ disable flag. Browser-only Pyodide is not supported for this check.
 
 The guide source is `template_repo_files/RUFF_GUIDE.md` and packaging copies it
 to the exported repository root as `RUFF_GUIDE.md`; generated README links use
-that root-relative location. Runtime references are anchored to the shared
-runtime package root and map to the source guide or exported root guide without
-opening the Markdown file or checking its presence. Offline exported-runtime
-tests reuse the test runner's pinned Ruff environment and need no fixture
+that root-relative location. The self-check no longer prints a guide path or looks
+up the guide at runtime. Offline exported-runtime tests reuse the test runner's
+pinned Ruff environment and need no fixture
 installation. Do not add tests whose assertion is merely that the guide exists
 or that Markdown contains particular strings.
 
@@ -193,8 +196,8 @@ is deferred because the existing grader already has a separate functional
 pytest path; adding readability there would require Ruff installation in the
 grader, hidden-test adaptation/enumeration and score-total validation. This is
 deferred work, not an actively disabled feature or a new opt-out. Existing
-solution notebooks may therefore show readability FAIL and combined
-self-check FAIL. That known backlog does not invalidate their functional
+solution notebooks may therefore show failed readability rows even while their
+functional checks pass. That known backlog does not invalidate their functional
 solutions or block feature acceptance; ordinary functional solution
 validation and full-pass teacher grading remain unchanged. Correcting those
 notebooks is a separate future pass.

@@ -85,7 +85,7 @@ def render_grouped_table_with_errors(
     rows: Iterable[tuple[str, str, bool | None, str]],
     error_width: int = ERROR_COLUMN_WIDTH,
 ) -> str:
-    """Render a 4-column table with exercise, check, status, and error."""
+    """Render exercise, check, status and error; ``None`` means not checked."""
     data: list[list[str]] = []
     for exercise_label, title, passed, error in rows:
         status = format_status(passed)

@@ -25,12 +25,22 @@ Ruff analysis and functional execution remain untouched. 57 focused tests and
 374 support/reporting/CLI tests pass; full solution validation is 1,603 passed,
 one skipped. Ruff lint/format, scoped Pyright and diff checks pass. Lint findings
 in test parametrisation/counts were corrected without suppressions.
-Current phase: section commit/push, then self-cleanup and final documentation sync.
+Section pushed successfully: `09aa3859cf5b4c231a9e0540dfca4d812d7e603d` —
+`Simplify self-check output and defer syntax-blocked readability` on
+`feat/AddLinterRulesToSelfChecker`. Self-cleanup found no additional work: dead
+guide lookup and obsolete summary-only test helpers were already removed.
+Final documentation sync self-review is clean: guide and developer contracts
+describe neutral syntax-blocked rows and table-only output. Post-sync validation:
+410 support/reporting/CLI/documentation tests pass; Ruff lint/format and diff checks
+pass. The actual selection ex002 debug self-check has ten NOT CHECKED readability
+rows and ten readability passes, with no footer or Ruff syntax cascade; functional
+failures remain. Final documentation commit/push evidence is recorded in the session
+delivery tracker. No further scope deviations or new follow-ups.
 Preserve the two existing user-owned changes.
 
 | Red tests | Red self-review | Green | Green self-review | Checks | Plan updated | Commit | Push |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+| Added | Clean | Complete | Clean | Passed | Complete | Created | Complete |
 
 The user explicitly authorised per-stage commits and pushes. This supersedes the
 original local-only delivery note; template publication and assignment deployment

@@ -1,9 +1,9 @@
 # Making your Python easier to read
 
 When you run a notebook self-check, it checks both what your code does and a set
-of readability rules. A task passes only when its functional checks **and** its
-readability check pass. The whole self-check passes only when every task passes
-both kinds of check. Readability failures are required fixes, not optional tips.
+of readability rules. A task is complete only when its functional checks **and**
+its readability check pass. Readability failures are required fixes, not optional
+tips. Work through the individual results in the table; there is no overall summary.
 
 Save your notebook before checking. Read each result as **task**, physical
 notebook **cell**, then **line** and **column** within that cell (both start at
@@ -376,9 +376,12 @@ if True:
 
 That is different from the E101 example above: its tab-and-space indentation
 mix is inconsistent style, but that example parses and can receive an E101
-readability finding. A syntax error can block a complete readability assessment
-for its cell. Fix the syntax error first, save, then check again. Other cells may
-still be checked.
+readability finding. A syntax error blocks a complete readability assessment
+for its cell. Its readability row shows **⚪ NOT CHECKED** with the message
+“Not checked - make sure your code runs first” instead of a list of syntax
+diagnostics. This is not a readability pass. Fix the syntax error first, save,
+then check again. Other cells are still checked. Code with valid syntax receives
+readability feedback even if its functional checks fail.
 
 ## If the tool reports an error
 
@@ -390,8 +393,8 @@ result.
 
 ## A note for teachers and reference solutions
 
-Existing reference solutions may receive readability failures and therefore a
-failed combined self-check. That does not mean their code is functionally wrong.
+Existing reference solutions may receive readability failures even when their
+functional checks pass. That does not mean their code is functionally wrong.
 The future correction pass is separate; these checks do not change teacher-side
 marks in this implementation.
 
