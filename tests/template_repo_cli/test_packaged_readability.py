@@ -18,6 +18,7 @@ _EXERCISE_KEY = "ex002_sequence_modify_basics"
 _EXPORTED_FUNCTIONAL_PASSES = 14
 _EXPORTED_FUNCTIONAL_FAILURES = 16
 _EXPORTED_TASK_CELLS = 10
+_FEEDBACK_WIDTH = 40
 
 
 def _export_exercise(repo_root: Path, output: Path) -> tuple[TemplatePackager, Path]:
@@ -125,7 +126,10 @@ def _assert_exported_rows(text: str, *, readability_failures: int) -> None:
         and line.split("|")[1].strip() != "Exercise"
         and "Readability" not in line
     ]
-    readability_rows = [line for line in text.splitlines() if "Readability — cell" in line]
+    readability_rows = [line for line in text.splitlines() if "Readability" in line]
+    assert all(line.split("|")[2].strip() == "Readability" for line in readability_rows)
+    feedback = [line.split("|")[-2].strip() for line in text.splitlines() if line.startswith("|")]
+    assert all(len(line) <= _FEEDBACK_WIDTH for line in feedback)
     assert sum("🟢 OK" in line for line in functional_rows) == _EXPORTED_FUNCTIONAL_PASSES
     assert sum("🔴 NO" in line for line in functional_rows) == _EXPORTED_FUNCTIONAL_FAILURES
     assert len(readability_rows) == _EXPORTED_TASK_CELLS
@@ -227,10 +231,13 @@ def test_synthetic_export_reports_task_rows_without_shipping_fixture_tests(
     text = _run_exported_self_check(output, key)
 
     functional_row = next(line for line in text.splitlines() if "| exercise1 " in line)
-    readability_row = next(line for line in text.splitlines() if "Readability — cell" in line)
+    readability_row = next(line for line in text.splitlines() if "Readability" in line)
+    assert readability_row.split("|")[2].strip() == "Readability"
     assert functional_status in functional_row
     assert readability_status in readability_row
-    assert message in readability_row
+    feedback = [line.split("|")[-2].strip() for line in text.splitlines() if line.startswith("|")]
+    assert all(len(line) <= _FEEDBACK_WIDTH for line in feedback)
+    assert message in " ".join(feedback)
     assert "invalid-syntax" not in text
     exercise_dir = output / "exercises/sequence" / key
     assert (exercise_dir / "notebooks/student.ipynb").is_file()

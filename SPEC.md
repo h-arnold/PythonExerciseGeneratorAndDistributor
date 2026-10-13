@@ -13,6 +13,13 @@ errors still follow available functional rows and propagate. Teacher grading, gu
 packaging and all source/execution invariants are unchanged. Historical references
 to printed overall results or checker guide-path lookup below no longer apply.
 
+The narrow-table follow-up additionally supersedes physical-cell display requirements:
+the check label is simply `Readability`; the exercise identifies the task. Diagnostics
+retain their cell-local line/column coordinates. Both normal and tooling-error
+functional tables use the shared reporting default of 40 characters for feedback,
+wrapping without a line-count limit or truncation. This is not a fixed total table
+width or automatic viewport adaptation; other columns size to their contents.
+
 ## Goal and intended outcome
 
 Extend the notebook self-checker with required Ruff PASS/FAIL checks for each

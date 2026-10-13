@@ -14,6 +14,8 @@ from exercise_runtime_support.student_checker import checks, notebook_runtime, r
 from exercise_runtime_support.student_checker.models import ExerciseCheckResult
 
 _FUNCTIONAL_CHECK_COUNT = 30
+_FEEDBACK_WIDTH = 40
+_MIN_FEEDBACK_LINES = 5
 
 
 def _functional_result(passed: bool) -> list[ExerciseCheckResult]:
@@ -357,28 +359,35 @@ def _assert_task_rows(
         second_task_check = "exercise2"
     assert len(functional_rows) == _TASK_CELL_COUNT
     assert all(("🟢 OK" in line) is functional_passed for line in functional_rows)
-    assert output.index(first_task_check) < output.index("cell 6")
-    assert output.index("cell 6") < output.index(second_task_check) < output.index("cell 8")
+    readability_rows = [line for line in rows if "Readability" in line]
+    assert len(readability_rows) == _TASK_CELL_COUNT
+    assert all(line.split("|")[2].strip() == "Readability" for line in readability_rows)
+    assert output.index(first_task_check) < output.index(readability_rows[0])
+    assert (
+        output.index(readability_rows[0])
+        < output.index(second_task_check)
+        < output.index(readability_rows[1])
+    )
 
     if readability_passed:
-        readability_rows = [line for line in rows if "cell 6" in line or "cell 8" in line]
-        assert len(readability_rows) == _TASK_CELL_COUNT
         assert all("🟢 OK" in line for line in readability_rows)
         assert all("No selected readability issues found" in line for line in readability_rows)
     else:
-        cell_six_row = next(line for line in rows if "cell 6" in line)
-        cell_eight_row = next(line for line in rows if "cell 8" in line)
-        assert "🔴 NO" in cell_six_row
-        assert "🟢 OK" in cell_eight_row
-        assert "No selected readability issues found" in cell_eight_row
+        first_task_row, second_task_row = readability_rows
+        assert "🔴 NO" in first_task_row
+        assert "🟢 OK" in second_task_row
+        assert "No selected readability issues found" in second_task_row
 
 
 def _assert_readability_diagnostics(output: str, *, passed: bool) -> None:
     if not passed:
+        feedback = " ".join(
+            line.split("|")[-2].strip() for line in output.splitlines() if line.startswith("|")
+        )
         assert "line 2" in output and "column 6" in output and "column 10" in output
-        assert "E225" in output and "Missing whitespace around operator" in output
-        assert "W291" in output and "Trailing whitespace" in output
-        assert output.index("E225") < output.index("W291") < output.index("cell 8")
+        assert "E225" in output and "Missing whitespace around operator" in feedback
+        assert "W291" in output and "Trailing whitespace" in feedback
+        assert output.index("E225") < output.index("W291") < output.rindex("Readability")
 
 
 def _assert_no_footer(output: str) -> None:
@@ -456,6 +465,37 @@ def test_both_dispatch_paths_render_required_combined_task_rows(
     assert "PYTUTOR_ACTIVE_VARIANT" not in os.environ
 
 
+@pytest.mark.parametrize("functional_only", [False, True])
+def test_notebook_tables_wrap_long_feedback_without_truncation(
+    functional_only: bool,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    message = (
+        "This feedback explains the expected wording and punctuation for the student's response. "
+        * _MIN_FEEDBACK_LINES
+    ).strip()
+    results = [ExerciseCheckResult(1, "Static output", False, [message])]
+    if functional_only:
+        notebook_runtime._print_functional_only_results(results)
+    else:
+        notebook_runtime._print_integrated_results(
+            "ex003_sequence_modify_variables", "student", results, _readability_result(False)
+        )
+
+    lines = capsys.readouterr().out.splitlines()
+    first_row = next(index for index, line in enumerate(lines) if "| Exercise 1" in line)
+    row_lines = []
+    for line in lines[first_row:]:
+        if line.startswith("+"):
+            break
+        row_lines.append(line)
+    feedback = [line.split("|")[-2].strip() for line in row_lines]
+    assert len(feedback) >= _MIN_FEEDBACK_LINES
+    assert all(len(line) <= _FEEDBACK_WIDTH for line in feedback)
+    assert " ".join(feedback) == message
+    assert all(all(not cell.strip() for cell in line.split("|")[1:4]) for line in row_lines[1:])
+
+
 def test_readability_row_is_emitted_once_when_task_has_multiple_functional_checks(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -469,7 +509,8 @@ def test_readability_row_is_emitted_once_when_task_has_multiple_functional_check
     notebook_runtime.run_notebook_checks("ex003_sequence_modify_variables")
 
     output = capsys.readouterr().out
-    assert output.count("Readability — cell 6") == 1
+    assert output.count("Readability") == 1
+    assert "cell 6" not in output
     for title in ("First functional check", "Second functional check", "Third functional check"):
         assert output.count(title) == 1
     _assert_no_footer(output)
@@ -676,10 +717,15 @@ def test_syntax_blocked_cell_is_not_checked_without_cascading_diagnostics(
     notebook_runtime.run_notebook_checks("ex003_sequence_modify_variables")
 
     output = capsys.readouterr().out
-    assert "cell 4" in output and "cell 7" in output
-    blocked_row = next(line for line in output.splitlines() if "cell 4" in line)
+    assert "cell 4" not in output and "cell 7" not in output
+    blocked_row = next(
+        line for line in output.splitlines() if "Exercise 1" in line and "Readability" in line
+    )
     assert "⚪ NOT CHECKED" in blocked_row
-    assert "Not checked - make sure your code runs first" in blocked_row
+    feedback = " ".join(
+        line.split("|")[-2].strip() for line in output.splitlines() if line.startswith("|")
+    )
+    assert "Not checked - make sure your code runs first" in feedback
     assert "🟢 OK" not in blocked_row and "🔴 NO" not in blocked_row
     assert "invalid-syntax" not in output and "Expected ':'" not in output
     assert "W291" not in output and "Trailing whitespace in blocked cell" not in output
@@ -853,7 +899,7 @@ def test_real_solution_readability_backlog_keeps_failed_readability_rows(
     assert "Readability" in output
     assert "🔴 NO" in output
     assert "E501" in output
-    readability_rows = [line for line in output.splitlines() if "Readability — cell" in line]
+    readability_rows = [line for line in output.splitlines() if "Readability" in line]
     assert len(readability_rows) == _SOLUTION_BACKLOG_FUNCTIONAL_COUNT
     assert sum("🔴 NO" in line for line in readability_rows) == 1
     functional_rows = [

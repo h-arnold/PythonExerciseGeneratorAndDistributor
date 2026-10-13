@@ -286,7 +286,7 @@ def _print_functional_only_results(
     results: list[ExerciseCheckResult] | list[NotebookTagCheckResult],
 ) -> None:
     rows = _functional_rows(results)
-    print(render_grouped_table_with_errors(rows, error_width=120))
+    print(render_grouped_table_with_errors(rows))
 
 
 def _print_integrated_results(
@@ -319,12 +319,12 @@ def _print_integrated_results(
             rows.append(_readability_row(cell))
 
     print(f"Self-check: {exercise_key} ({variant})")
-    print(render_grouped_table_with_errors(rows, error_width=120))
+    print(render_grouped_table_with_errors(rows))
 
 
 def _readability_row(cell: CellAnalysis) -> tuple[str, str, bool | None, str]:
     exercise_label = _format_tag_label(cell.task_tag)
-    title = f"Readability — cell {cell.cell_index + 1}"
+    title = "Readability"
     if cell.syntax_blocked:
         return exercise_label, title, None, "Not checked - make sure your code runs first"
     message = _cell_findings(cell)

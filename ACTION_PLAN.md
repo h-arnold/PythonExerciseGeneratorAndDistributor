@@ -8,6 +8,31 @@ task-count or tag-topology validation, structural FAIL rows or malformed-exercis
 
 ## Delivery tracker
 
+### Narrow-table follow-up (direct execution)
+
+Scope: label readability rows `Readability`, without physical cell numbers, and
+remove both notebook checker overrides of the shared 40-character feedback width.
+Feedback wraps over as many lines as needed, without truncation. Task grouping,
+cell-local diagnostic coordinates, statuses, analysis and grading stay unchanged.
+No responsive browser/terminal sizing is added; other columns remain content-sized.
+Plan: RED regression updates and self-review; minimal GREEN presentation changes
+and checks/self-cleanup; documentation sync, commit and push. Preserve all existing
+user-owned config/notebook edits, including sequence ex005 saved output.
+RED complete: 17 expected label/width failures, 42 passes. Red self-review clean:
+both dispatch paths and exported runtime retain task/status assertions; long
+functional feedback is reconstructed exactly across more than four wrapped lines
+in normal and tooling-error presentation paths. GREEN complete and self-reviewed
+clean: only three presentation lines changed. 376 support/reporting/CLI tests pass;
+full solution validation is 1,605 passed and one skipped. Ruff lint/format, scoped
+Pyright and diff checks pass. Actual sequence ex005 table width is 83 characters;
+both E226 findings wrap across four lines without truncation. Task grouping,
+functional failures and neutral syntax status remain unchanged.
+Current phase: section commit/push, followed by cleanup and final documentation sync.
+
+| Red tests | Red self-review | Green | Green self-review | Checks | Plan updated | Commit | Push |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Added | Clean | Complete | Clean | Passed | Complete | Pending | Pending |
+
 ### Compact-output follow-up (user-approved direct execution)
 
 Short plan: update output regression tests; remove the footer and present
