@@ -11,7 +11,8 @@ Final independent de-sloppification identified nine follow-up cleanups, tracked
 as Batch D below. Batch D implementation, validation and independent GREEN
 re-review are complete and clean; commit and push succeeded. Final cleanup
 confirmation is clean with no actionable slop remaining. Documentation sync and
-final whole-branch review are clean; final documentation delivery is in progress.
+final whole-branch review are clean; final documentation is committed and pushed.
+All cleanup and review work is complete.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each batch
@@ -282,8 +283,12 @@ repository Ruff, scoped formatting, lock and diff checks pass. The exercise-qual
 verifier reports 18 exercises with zero errors or warnings. Explicit student
 sequence/selection tests retain their expected 30/33 failures.
 
-Final documentation commit/push evidence will be recorded after successful
-delivery. The user-approved committed model changes remain; the separate dirty
+Final documentation delivered on `feat/AddLinterRulesToSelfChecker`:
+`5ade6bdbb04efd67462c29c8ab5b9659aaa93adb` —
+`Document preserved notebook discovery contracts and final validation`.
+`git push` succeeded (`fcca9a0..5ade6bd`). All sections, cleanup confirmations
+and final documentation review are complete; no review findings remain open.
+The user-approved committed model changes remain; the separate dirty
 reviewer-model setting is untouched and unstaged. Human teacher review before
 guide publication and the separately deferred solution-readability correction
 pass remain outside this cleanup. No publication, deployment or notebook edits
@@ -292,7 +297,8 @@ were performed.
 Final independent de-sloppification is clean: F1–F9 were resolved in `37fc764`,
 and F10's count-independent plan wording passed both Tidy review and a fresh
 de-sloppification confirmation. No source/test changes followed that confirmation.
-The branch is ready for final documentation sync; the user-owned config remains
+At that checkpoint the branch was ready for documentation sync, now completed
+and reviewed clean as recorded above; the user-owned config remains
 untouched and unstaged.
 
 ### Batch D — final audit follow-ups (F1–F9)
