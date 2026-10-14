@@ -157,6 +157,16 @@ rows are labelled `Readability`, without a physical cell number: the Exercise
 column identifies the task. Ruff's displayed line and column locations remain
 cell-local and one-based.
 
+Cell-discovery predicates are intentionally consumer-local. The functional
+fallback accepts string or list-valued tags on every valid cell type and matches
+the anchored `exercise\d+` regular expression (Unicode decimal digits included).
+Readability accepts code cells only and retains its `startswith("exercise")`
+plus `str.isdigit()` predicate, which also accepts digit characters beyond
+Unicode decimal digits. Its existing malformed-list-item errors are not converted
+into the fallback's skip behaviour. Only the source type guard is shared; notebook
+JSON loading and tag validation remain separate because their error contracts
+differ.
+
 The student policy uses Ruff **0.14.13** with four-space indentation, a
 100-character line limit, preview mode and an explicit selection of exactly
 17 codes: `E101`, `E111`, `E117`, `E225`, `E226`, `E227`, `E228`, `E231`,

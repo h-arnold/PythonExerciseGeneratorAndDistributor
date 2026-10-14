@@ -10,8 +10,8 @@ implementation, checks, plan/ledger updates, commit and push are complete.
 Final independent de-sloppification identified nine follow-up cleanups, tracked
 as Batch D below. Batch D implementation, validation and independent GREEN
 re-review are complete and clean; commit and push succeeded. Final cleanup
-confirmation is clean with no actionable slop remaining. Documentation sync is
-in progress.
+confirmation is clean with no actionable slop remaining. Documentation sync and
+final whole-branch review are clean; final documentation delivery is in progress.
 `REVIEW_FINDINGS.md` is the complete individually trackable finding ledger.
 
 ## Shared sequence and gates for each batch
@@ -266,6 +266,28 @@ they subsequently succeeded as recorded below. No publication or deployment was
 performed.
 
 ## Final independent review and handoff
+
+### Final documentation and whole-branch review
+
+Docs added one clarification in `docs/developers/testing-framework.md`: tag
+discovery and loading remain consumer-local because the existing fallback and
+readability semantics differ; only the source type guard is shared. Independent
+Tidy review of that hunk and the complete branch diff is clean. All 42 ledger
+items (the original 32 plus F1–F10) have individually verified dispositions.
+
+Final reproduced validation: 1,624 solution tests passed and one skipped;
+1,625 tests collected; the wider support/reporting/export/quality slice passed
+329 tests. Pyright reports zero errors across all 17 branch-changed Python files;
+repository Ruff, scoped formatting, lock and diff checks pass. The exercise-quality
+verifier reports 18 exercises with zero errors or warnings. Explicit student
+sequence/selection tests retain their expected 30/33 failures.
+
+Final documentation commit/push evidence will be recorded after successful
+delivery. The user-approved committed model changes remain; the separate dirty
+reviewer-model setting is untouched and unstaged. Human teacher review before
+guide publication and the separately deferred solution-readability correction
+pass remain outside this cleanup. No publication, deployment or notebook edits
+were performed.
 
 Final independent de-sloppification is clean: F1–F9 were resolved in `37fc764`,
 and F10's count-independent plan wording passed both Tidy review and a fresh

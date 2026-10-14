@@ -6,9 +6,9 @@ At branch `feat/AddLinterRulesToSelfChecker`, the feature is already delivered.
 The current request tracks final review findings. Batches A, B and C are reviewed
 clean and delivered. Batch D implementation, validation and independent GREEN
 review are complete and clean; commit and push succeeded. Fresh cleanup confirmation
-is clean with no actionable slop remaining; documentation sync is in progress.
-The authoritative per-item
-inventory, evidence, batch assignment and resolution
+is clean with no actionable slop remaining. Documentation sync and final
+whole-branch review are clean; final documentation delivery is in progress.
+The authoritative per-item inventory, evidence, batch assignment and resolution
 criteria are in `REVIEW_FINDINGS.md`.
 
 ## Current goal, scope and non-goals
