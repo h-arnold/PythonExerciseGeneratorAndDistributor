@@ -187,6 +187,7 @@ class TemplatePackager:
             self.template_files_dir / "pyproject.toml",
             self.template_files_dir / "pytest.ini",
             self.template_files_dir / ".gitignore",
+            self.template_files_dir / "fixing-readability-issues.md",
         ]
         required_paths.extend(
             self.repo_root / "scripts" / script for script in self.REQUIRED_SCRIPTS
@@ -247,6 +248,10 @@ class TemplatePackager:
             (self.template_files_dir / "pyproject.toml", workspace / "pyproject.toml"),
             (self.template_files_dir / "pytest.ini", workspace / "pytest.ini"),
             (self.template_files_dir / ".gitignore", workspace / ".gitignore"),
+            (
+                self.template_files_dir / "fixing-readability-issues.md",
+                workspace / "fixing-readability-issues.md",
+            ),
         ]
         file_pairs.extend(self._required_script_copy_pairs(workspace))
 

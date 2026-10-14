@@ -55,7 +55,7 @@ def test_print_detailed_results_discards_success_message_when_failures(
     assert "| Static output" in output
     assert "🟢 OK" in output
     assert "🔴 NO" in output
-    assert "output does not match expectation." in output
+    assert "Output does not match expectation." in output
     assert "Great work! Everything that can be checked here looks good." not in output
 
 

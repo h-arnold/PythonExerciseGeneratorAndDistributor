@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 import textwrap
+from collections.abc import Iterable
 from typing import Final
 
 from tabulate import tabulate
@@ -12,11 +13,14 @@ PASS_STATUS_EMOJI: Final[str] = "🟢"
 FAIL_STATUS_EMOJI: Final[str] = "🔴"
 PASS_STATUS_TAG: Final[str] = "OK"
 FAIL_STATUS_TAG: Final[str] = "NO"
+NOT_CHECKED_STATUS: Final[str] = "⚪ NOT CHECKED"
 ERROR_COLUMN_WIDTH: Final[int] = 40
 
 
-def format_status(passed: bool) -> str:
-    """Format a status marker using emoji and a short tag."""
+def format_status(passed: bool | None) -> str:
+    """Format a pass/fail marker, or a neutral marker for an unchecked result."""
+    if passed is None:
+        return NOT_CHECKED_STATUS
     emoji = PASS_STATUS_EMOJI if passed else FAIL_STATUS_EMOJI
     tag = PASS_STATUS_TAG if passed else FAIL_STATUS_TAG
     return f"{emoji} {tag}"
@@ -79,14 +83,20 @@ def render_grouped_table(rows: list[tuple[str, str, bool]]) -> str:
 
 
 def render_grouped_table_with_errors(
-    rows: list[tuple[str, str, bool, str]],
+    rows: Iterable[tuple[str, str, bool | None, str]],
     error_width: int = ERROR_COLUMN_WIDTH,
 ) -> str:
-    """Render a 4-column table with exercise, check, status, and error."""
+    """Render the Exercise, Check, Status and Error columns.
+
+    Feedback initials are capitalised after removing exercise prefixes; the rest
+    of each message's casing is preserved. ``None`` means not checked. ``rows``
+    may be any iterable, including a generator.
+    """
     data: list[list[str]] = []
     for exercise_label, title, passed, error in rows:
         status = format_status(passed)
         trimmed_error = strip_exercise_prefix(error)
+        trimmed_error = trimmed_error[:1].upper() + trimmed_error[1:]
 
         if trimmed_error and len(trimmed_error) > error_width:
             wrapped_lines = _wrap_error_text(trimmed_error, error_width)

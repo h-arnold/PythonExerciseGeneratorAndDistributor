@@ -10,6 +10,12 @@ For details on **testing student notebooks**, see [Exercise Testing](../exercise
 
 > The generic teacher-side Classroom 50 grader and bundle builder are documented in [classroom50-autograder.md](classroom50-autograder.md).
 
+> Notebook readability self-checks are part of the student-facing notebook
+> orchestrator, not functional pytest grading or the exercise quality gates.
+> [execution-model.md](execution-model.md) is the canonical execution, variant
+> and source/export contract; detailed readability policy and grading boundary
+> are documented below.
+
 ## Overview
 
 The repository's infrastructure (scaffolding scripts, grader logic, CLI tools, and documentation) is tested using `pytest`. These tests ensure that:
@@ -37,6 +43,18 @@ Because raw `uv run pytest -q` exercises the default solution variant, the canon
 uv run pytest --collect-only -q
 uv run python scripts/run_pytest_variant.py --variant solution -q
 ```
+
+Raw pytest uses the repository orchestration default, which is the solution
+variant. To verify expected unfinished student work, use an explicit student
+variant and a canonical exercise-local test path, for example:
+
+```bash
+uv run python scripts/run_pytest_variant.py --variant student \
+  exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
+```
+
+Student-variant failures are expected classroom evidence; they are not defects
+to repair by changing the student notebook during infrastructure validation.
 
 ### Targeted Execution
 
@@ -120,6 +138,93 @@ Resolver identity contract:
 - The same file covers both invocation modes: the no-argument Classroom 50 run (checkout rooted at the working directory, bundle at the grader's own parent, `./result.json` in the checkout, identity from the documented runner environment with its `OWNER`/`USERNAME` and `REVIEW_URL` fallbacks, supported and unsupported assignment types, forced student variant), the local dry run (`--student-root`/`--result` as a pair, `--variant solution`, the documented non-uploadable identity), and the install boundary, which an offline `pip` test double observes so no repository test reaches the network. One real exercise set is built and graded in both variants to confirm the generic cycle end to end.
 - `tests/test_classroom50_autograder_docs.py` keeps [classroom50-autograder.md](classroom50-autograder.md) aligned with the generic contract: the scoring rule, the two invocation modes and their environment, the canonical result field names and row-derived totals, and the build, place, and commit deployment steps. It re-derives the Selection pilot counts and titles from canonical collection and `exercise.json`, and sweeps the contract guide, [`AGENTS.md`](../../AGENTS.md), [execution-model.md](execution-model.md), [development.md](development.md), and [project-structure.md](project-structure.md) for withdrawn requirements, superseded result fields, and unresolvable links.
 - `tests/test_runtime_python_version.py` asserts every grading-runtime pin (devcontainer images, both `requires-python` floors, in-scope docs, and any workflow `python-version` pins) resolves Python 3.14.
+
+### Notebook self-check readability policy
+
+The notebook-facing `run_notebook_checks('<exercise_key>')` API still returns
+`None`. It shows functional results and one readability result for each discovered
+physical code cell tagged with an exact `exerciseN` task tag. Task discovery has
+no fixed count and does not validate notebook structure. Analysis uses the
+saved canonical student or solution notebook selected by
+`PYTUTOR_ACTIVE_VARIANT`; the self-check defaults to `student` when unset,
+honours an explicit solution selection, and restores the prior environment value.
+The implementation source preserves each cell's source and passes it to Ruff
+through stdin without executing, rewriting, formatting or caching it. Full cell
+selection, subprocess and reporting invariants are maintained in
+[execution-model.md](execution-model.md) and the implementation tests.
+The analyser retains zero-based physical cell indices internally. Student-facing
+rows are labelled `Readability`, without a physical cell number: the Exercise
+column identifies the task. Ruff's displayed line and column locations remain
+cell-local and one-based.
+
+Cell-discovery predicates are intentionally consumer-local. The functional
+fallback accepts string or list-valued tags on every valid cell type and matches
+the anchored `exercise\d+` regular expression (Unicode decimal digits included).
+Readability accepts code cells only and retains its `startswith("exercise")`
+plus `str.isdigit()` predicate, which also accepts digit characters beyond
+Unicode decimal digits. Its existing malformed-list-item errors are not converted
+into the fallback's skip behaviour. Only the source type guard is shared; notebook
+JSON loading and tag validation remain separate because their error contracts
+differ.
+
+The student policy uses Ruff **0.14.13** with four-space indentation, a
+100-character line limit, preview mode and an explicit selection of exactly
+17 codes: `E101`, `E111`, `E117`, `E225`, `E226`, `E227`, `E228`, `E231`,
+`E501`, `E741`, `N802`, `N803`, `N806`, `N816`, `W191`, `W291` and `W293`.
+The Ruff invocation is isolated from project configuration, disables fixes and
+cache, and ignores `noqa` directives. The detailed rule index and examples live
+in the single student guide, not duplicated here.
+
+Every analysed cell with valid syntax has a required PASS/FAIL readability row.
+Syntax-blocked cells instead show the neutral status `⚪ NOT CHECKED` and the message
+`Not checked - make sure your code runs first`. The analyser retains its findings,
+but the table suppresses all diagnostics for that blocked cell. NOT CHECKED is
+neither a readability pass nor a failure. Other cells are still analysed, and
+valid-syntax readability feedback does not depend on functional checks passing.
+Normal output contains only the self-check header and task-grouped table: no
+functional/readability summaries, overall result, save/guide reminder or teacher-marks
+footer. Feedback uses the reporting helper's default 40-character error width in
+both normal and tooling-error functional tables. Messages wrap onto as many lines
+as needed, without truncation. This is not a total table-width limit or viewport
+adaptation: the other columns still size to their contents.
+Rendering uppercases only the first feedback character after exercise-prefix
+removal, before wrapping. Remaining casing, quoted answers, identifiers and source
+result messages are preserved; this does not change readability eligibility.
+A missing/broken tool or invalid Ruff output remains an explicit tooling
+ERROR: available functional rows are shown first, then the specific error is printed
+and re-raised. It is not a student FAIL or a pass. The notebook API does not raise
+a grading assertion merely for student failures.
+
+Ruff runs in the native managed Python environment used by Jupyter,
+Codespaces and the supplied devcontainer. The checker assumes the pinned tool is
+installed; it has no availability probe, auto-install, optional fallback or
+disable flag. Browser-only Pyodide is not supported for this check.
+
+The guide source is `template_repo_files/fixing-readability-issues.md` and packaging
+copies it to the exported repository root as `fixing-readability-issues.md`;
+generated README links use that root-relative location. The self-check no longer
+prints a guide path or looks up the guide at runtime. Offline exported-runtime tests
+reuse the test runner's pinned Ruff environment and need no fixture installation.
+Do not treat guide-file presence or isolated prose/vocabulary checks as proof of
+behaviour. Substantive guide checks are appropriate: real-Ruff example tests verify
+each example pair, and the guide test verifies that code-index links and rule
+anchors match.
+
+This feedback changes the notebook self-check, not teacher marks: functional
+`run_exercise_checks()`, exercise-local `CHECKS`, quality Gate I, and the
+Classroom 50 hidden-pytest path remain functional-only. Teacher-side inclusion
+is deferred because the existing grader already has a separate functional
+pytest path; adding readability there would require Ruff installation in the
+grader, hidden-test adaptation/enumeration and score-total validation. This is
+deferred work, not an actively disabled feature or a new opt-out. Existing
+solution notebooks may therefore show failed readability rows even while their
+functional checks pass. That known backlog does not invalidate their functional
+solutions or block feature acceptance; ordinary functional solution
+validation and full-pass teacher grading remain unchanged. Correcting those
+notebooks is a separate future pass.
+
+The guide still requires human teacher review before student-template publication;
+this documentation and validation work does not itself publish templates.
 
 ## Local Validation
 

@@ -129,8 +129,20 @@ uv run python scripts/run_pytest_variant.py --variant solution \
     exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
 
 # Only switch to student notebooks when validating the classroom experience
-uv run pytest exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
+uv run python scripts/run_pytest_variant.py --variant student \
+    exercises/sequence/ex002_sequence_modify_basics/tests/test_ex002_sequence_modify_basics.py -q
 ```
+
+The raw pytest command uses the repository's default solution variant; select
+`--variant student` explicitly when checking unfinished student work. Such
+failures are expected. Notebook self-checks also report required saved-cell
+readability feedback, independently of pytest grading. The policy, supported
+runtime, source/export guide mapping, error states and teacher-grading boundary
+are documented in [testing-framework.md](testing-framework.md), with execution
+and variant details in [execution-model.md](execution-model.md). Existing
+reference solutions may have failed readability rows alongside passing functional
+checks until a separate correction pass; this does not invalidate functional
+solution tests or full-pass teacher-side grading.
 
 ### Adding Features to the Grader
 

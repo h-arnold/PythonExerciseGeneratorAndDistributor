@@ -1,4 +1,4 @@
-# Copilot Custom Instructions — PythonExerciseGeneratorAndDistributor
+# PythonExerciseGeneratorAndDistributor
 
 You are assisting in a classroom repository of Python exercises for secondary school students (ages 14-18).
 
@@ -24,6 +24,9 @@ This repository provides notebook-based Python exercises with automated grading 
 - `docs/developers/project-structure.md` — project layout and file conventions
 - `docs/developers/execution-model.md` — source-of-truth contract for execution, discovery, runtime, variant, and export mapping behavior
 - `docs/developers/testing-framework.md` — how the grading and test system works
+- `template_repo_files/fixing-readability-issues.md` — student guide to required
+  notebook self-check readability feedback; detailed developer policy is in
+  `docs/developers/testing-framework.md`
 - `docs/developers/exercise-quality-verifier.md` — gate contract for `scripts/verify_exercise_quality.py` (progression scanning, expectations conventions, variant overrides)
 - `docs/developers/classroom50-autograder.md` — generic Classroom 50 grader/builder contract, CLI interfaces, and scoring
 - `docs/exercise-agents/exercise-generation-cli.md` — CLI for scaffolding new exercises
@@ -94,7 +97,7 @@ docs/                  # Project documentation
 
 ### Concise Standards
 
-- Python 3.11+; use modern type hints (e.g., `list[str]`).
+- Python 3.14+; use modern type hints (e.g., `list[str]`).
 - Fail Fast: **No defensive guards unless explicitly requested**. Better to find out something is broken than silently swallow errors!
 - Docstrings required for public functions.
 - Keep logic simple (KISS): low complexity, shallow nesting, short functions.
@@ -113,7 +116,7 @@ Student variant tests **must always** fail in this repo. Soltution variant noteb
 
 ### Python Style (for infrastructure code, not student exercises)
 
-- **Language**: Python 3.11+
+- **Language**: Python 3.14+
 - **Linting**: Ruff (configured in `pyproject.toml`)
 - **Type hints**: Use modern syntax (e.g., `list[str]` not `List[str]`)
 - **Docstrings**: Required for public functions

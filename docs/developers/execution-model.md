@@ -46,6 +46,14 @@ Contract:
 - Runtime propagation: orchestrators expose the active value through the `PYTUTOR_ACTIVE_VARIANT` environment variable for downstream runtime resolution.
 - Default variant is `solution` when no variant is provided to a repository orchestration script. The Classroom 50 bundle grader is the exception: it defaults to `student` in both of its modes, as §5 records.
 - The runtime helper `exercise_runtime_support.execution_variant::get_active_variant` defaults to `solution`, and `run_exercise_checks` (behind `run_notebook_checks`) deliberately overrides that default to `student` when the variable is unset. That override is why a student notebook self-check cell needs no explicit assignment, while a solution self-check cell must set `'solution'`. See [exercise-quality-verifier.md](exercise-quality-verifier.md) for the Gate H severities.
+- `active_variant_context()` defaults to `student`, unlike the standalone `get_active_variant()` helper. It temporarily sets the selected value and restores the prior environment value when the context exits.
+
+### Notebook self-check readability
+
+`run_notebook_checks('<exercise_key>')` combines functional and required
+readability results without changing functional-only grading APIs. Its variant,
+saved-notebook selection, visible statuses and output contract are described in
+[testing-framework.md](testing-framework.md).
 
 Deprecated note:
 
@@ -86,6 +94,13 @@ See [classroom50-autograder.md](classroom50-autograder.md) for the scoring rule,
 - **Teacher-side grading now**: a separately built bundle (generic `autograder.py` plus hidden test copies and a bundle-local `exercise_runtime_support/` copy) is the graded surface. Exported templates ship starter code only and contain no grading sources or hidden tests.
 - **Removed from the supported contract**: `legacy notebook-root override env var` must not be relied on for notebook selection.
 - **Template CLI contract**: The template CLI follows a canonical-only exercise-local contract with no legacy compatibility paths. Test-only helpers and fixtures belong under `tests/` and are not part of the runtime surface.
+- **Notebook readability self-check**: Ruff checks saved task-cell source in the
+  native managed Python/Jupyter environment. See
+  [testing-framework.md](testing-framework.md) for the self-check policy and
+  output contract. The student guide source is
+  `template_repo_files/fixing-readability-issues.md`; packaging maps it to
+  root-level `fixing-readability-issues.md` in exported repositories, linked
+  from the generated README.
 
 **Construct-level resources**: When packaging, the CLI preserves construct-level `additional-resources/` directories (e.g. `exercises/sequence/additional-resources/`) in the exported output. These are optional reference materials for students and are not part of the grading contract.
 

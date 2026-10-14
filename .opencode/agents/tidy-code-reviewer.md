@@ -1,7 +1,7 @@
 ---
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
 mode: all
-model: opencode-go/glm-5.3-flash
+model: openai/gpt-6.1-sol
 permission:
   read: allow
   edit: allow

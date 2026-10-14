@@ -1,7 +1,7 @@
 ---
 description: Verifies repository infrastructure tests, exercise-local tests, notebook grading, scaffolding, and template repo tooling
 mode: subagent
-model: opencode/space-bunny-free
+model: openai/gpt-6-luna
 permission:
   read: allow
   bash: allow
