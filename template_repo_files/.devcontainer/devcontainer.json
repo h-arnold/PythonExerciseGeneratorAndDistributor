@@ -103,12 +103,13 @@
   // binary without a matching importable module, so `python -m uv` fails
   // while the `uv` binary works.
   "postCreateCommand": "export PATH=$HOME/.local/bin:$PATH; command -v uv >/dev/null 2>&1 || python3 -m pip install --user uv==0.8.22; uv sync",
-  // The sync result and the pyproject.toml presence check are reported
-  // separately: a failed `uv sync` must not masquerade as a missing
-  // pyproject.toml (the previous `A && B || echo 'No pyproject...'` chain
-  // printed the missing-file warning whenever the sync itself failed,
-  // e.g. when `uv` was not on PATH).
-  "postStartCommand": "export PATH=$HOME/.local/bin:$PATH; if [ -f pyproject.toml ]; then uv sync || echo 'Warning: dependency sync failed. The environment may not be fully configured.'; else echo 'Warning: No pyproject.toml found. The environment may not be properly configured.'; fi; nohup uv run scripts/jupyter_watchdog.py > /dev/null 2>&1 &",
+  // Startup lives in a script rather than an inline shell chain: an inline
+  // `nohup ... &` reports success as soon as the shell forks, so a watchdog
+  // that died immediately was indistinguishable from a healthy one. The script
+  // syncs dependencies, warns without failing when that fails, and confirms the
+  // watchdog started. It is invoked via `bash` so the packaged template does
+  // not depend on an executable bit surviving a Git checkout.
+  "postStartCommand": "bash .devcontainer/post_start.sh",
   // Use the 'vscode' user which already exists in the base image
   "remoteUser": "vscode",
 

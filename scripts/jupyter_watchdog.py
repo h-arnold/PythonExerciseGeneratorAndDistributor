@@ -13,7 +13,9 @@ This watchdog:
   3. If a kernel fails to respond, kills the ipykernel_launcher process so
      VS Code detects the dead kernel and prompts/auto-restarts it.
 
-Logs to .devcontainer/jupyter_watchdog.log.
+Logs to $XDG_STATE_HOME/python-tutor/jupyter_watchdog.log (falling back to
+~/.local/state/python-tutor/jupyter_watchdog.log). The log deliberately lives
+outside the repository so it never appears in the student workspace.
 """
 
 from __future__ import annotations
@@ -25,22 +27,27 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import zmq
 
 # Configuration
-WATCHDOG_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOG_FILE = os.path.join(WATCHDOG_DIR, ".devcontainer", "jupyter_watchdog.log")
+STATE_DIR = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local" / "state")
+LOG_FILE = STATE_DIR / "python-tutor" / "jupyter_watchdog.log"
 RUNTIME_DIR = os.path.expanduser("~/.local/share/jupyter/runtime")
 INTERVAL_SECONDS = 30
 HEARTBEAT_TIMEOUT_MS = 5000
 SHUTDOWN_GRACE_SECONDS = 3
+# Logged as the first line of every run. The devcontainer startup script waits for
+# this banner to confirm the watchdog really started, so keep it in sync with
+# `watchdog_banner` in template_repo_files/.devcontainer/post_start.sh.
+START_BANNER = "Jupyter kernel watchdog started"
 
 
 def log(msg: str) -> None:
     """Append a timestamped message to the log file."""
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    with open(LOG_FILE, "a", encoding="utf-8") as fh:
+    with LOG_FILE.open("a", encoding="utf-8") as fh:
         fh.write(f"[{timestamp}] {msg}\n")
 
 
@@ -158,9 +165,9 @@ def kill_kernel(pid: str, runtime_file: str) -> None:
 
 
 def main() -> int:
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     log("=" * 60)
-    log("Jupyter kernel watchdog started")
+    log(START_BANNER)
     log(f"  Interval:        {INTERVAL_SECONDS}s")
     log(f"  Runtime dir:     {RUNTIME_DIR}")
     log(f"  Heartbeat time:  {HEARTBEAT_TIMEOUT_MS}ms")
