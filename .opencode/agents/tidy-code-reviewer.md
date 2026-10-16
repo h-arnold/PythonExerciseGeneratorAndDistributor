@@ -2,15 +2,28 @@
 description: Review repository changes for correctness, tidy code, docs accuracy, and evidence-backed KISS/DRY findings within the PythonExerciseGeneratorAndDistributor workflow
 mode: all
 model: openai/gpt-6.1-sol
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 > Repository status: The source repository now uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces.
@@ -96,5 +109,5 @@ If there are no findings, say so explicitly and mention any residual risks or un
 ## 7. Completion
 
 - Finish only after the requested review pass is complete and the report is ready.
-- If the runtime exposes a task list or TODO entry, mark it complete before handing back the report.
+- Track any work in Markdown or the existing plan; do not assume a TODO-list tool is available.
 - Keep the final answer focused on evidence and outcomes, not on the review process itself.

@@ -2,15 +2,28 @@
 description: Generate canonical exercise-local Python exercises (tagged notebooks + pytest grading)
 mode: all
 model: opencode/space-bunny-free
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 # Bassaleg Python Tutor — Exercise Generation Mode
@@ -149,7 +162,7 @@ If the required guide is missing or cannot be read, the agent must stop and ask 
 
 #### Step 1 — Create a TODO
 
-Create a TODO using the `todo` tool to plan the work.
+Track the work in a concise Markdown checklist in your response or working notes; there is no TODO tool.
 
 #### Step 2 — Pick Exercise Identifiers
 
@@ -157,7 +170,7 @@ Choose an exercise identifier (`exNNN` and a clear slug), for example `ex012_loo
 
 #### Step 3 — Scaffold Files with the Generator
 
-Consult these docs using `read_file` to find out how:
+Consult these docs using `read` to find out how:
 
 - [Exercise Generation CLI](../../docs/exercise-agents/exercise-generation-cli.md)
 - [Exercise Generation](../../docs/teachers/exercise-generation.md)
@@ -213,7 +226,7 @@ After scaffolding + authoring the notebooks (student + solution mirror), first r
 uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type> --skip-empty-checks
 ```
 
-Then use your `runSubAgent` tool to run the **Exercise Reviewer** sub-agent. The reviewer checks:
+Then use the `subagent` tool with agent ID `exercise-reviewer` to run the **Exercise Reviewer** sub-agent. The reviewer checks:
 
 - exercise-type compliance (debug/modify/make/gaps format rules)
 - concept sequencing (no later constructs accidentally introduced in prompts/starter code)
@@ -249,7 +262,7 @@ After generating the supporting documentation, first run the automated quality v
 uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
 ```
 
-Then run the **Exercise Reviewer** sub-agent again. This second pass verifies Gates E and F:
+Then run the `exercise-reviewer` sub-agent again. This second pass verifies Gates E and F:
 
 - teacher guidance files exist and are filled in (README.md, OVERVIEW.md)
 - solution notebook quality (stepwise examples, no compact one-liners)
@@ -276,7 +289,7 @@ Why these files matter:
 
 ## 5. Phase 2 — Exercise Testing (Handoff)
 
-The exercise authoring phase is complete. Delegate to the **Exercise Test Creator** sub-agent to write robust pytest tests, followed by the **Exercise Test Reviewer** to verify them. Provide the exercise key, construct, and type so the test creator can locate the notebooks and supporting docs.
+The exercise authoring phase is complete. Delegate to **Exercise Test Creator** (`exercise-test-creator`) to write robust pytest tests, followed by **Exercise Test Reviewer** (`exercise-test-reviewer`) to verify them. Provide the exercise key, construct, and type so the test creator can locate the notebooks and supporting docs.
 
 ## 6. Expected Output Conventions
 
@@ -320,10 +333,10 @@ Rules:
 
 ## 8. Quick Reference Card
 
-- **Always read the necessary instructions**: Always open and read (`read_file` tool) the entire set of instructions for a given coding exercise type.
+- **Always read the necessary instructions**: Always open and read (`read` tool) the entire set of instructions for a given coding exercise type.
 - **Pedagogy**: Use only previously taught constructs. Follow the progression: Sequence → Selection → Iteration → Data Types → Lists → Dictionaries → Functions → File Handling → Exception Handling → Libraries → OOP.
 - **Format**: 10 parts for Debug/Modify; 3–5 for Make. Use `exerciseN` tags.
 - **Convention**: Standardise on tagged cells plus output-oriented tests for non-debug exercises; only introduce named functions when the lesson actually teaches them. No docstrings until the Functions construct is reached.
-- **Workflow Phase 1**: Scaffold with `scripts/new_exercise.py` → author notebooks → run **Exercise Reviewer** → teacher approves → generate supporting docs → run **Exercise Reviewer** again.
-- **Workflow Phase 2**: Delegate to **Exercise Test Creator** → **Exercise Test Reviewer** loop.
+- **Workflow Phase 1**: Scaffold with `scripts/new_exercise.py` → author notebooks → run `exercise-reviewer` → teacher approves → generate supporting docs → run `exercise-reviewer` again.
+- **Workflow Phase 2**: Delegate to `exercise-test-creator` → `exercise-test-reviewer` loop.
 - **Language**: Use British English (e.g. *initialise*, *colour*, *behaviour*).

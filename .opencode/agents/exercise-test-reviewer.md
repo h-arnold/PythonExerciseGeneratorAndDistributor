@@ -2,14 +2,25 @@
 description: Review exercise tests for correctness, coverage, and construct enforcement — verifies tests pass on solution and fail on student notebooks
 mode: subagent
 model: opencode/space-bunny-free
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
 ---
 
 # Bassaleg Python Tutor — Exercise Test Reviewer Mode
@@ -26,7 +37,7 @@ You review **only Gate D** (tests). Pedagogical and structural review (Gates A, 
 - the construct and exercise type
 
 ## Reference documents (MUST read)
-**Read** `docs/exercise-agents/exercise-testing.md` using (`read_file`) for the complete testing framework and philosophy. **DO THIS FIRST.**
+**Read** `docs/exercise-agents/exercise-testing.md` using (`read`) for the complete testing framework and philosophy. **DO THIS FIRST.**
 
 Also read the exercise-type guide relevant to this exercise:
 - Debug: `docs/exercise-agents/exercise-types/debug.md`
@@ -131,7 +142,7 @@ For FAIL:
    uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type>
    ```
    This catches structural or tag problems before you invest time reviewing tests.
-2. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
+2. Track the review in a concise Markdown checklist in your working notes; there is no TODO tool.
 3. Identify the canonical exercise test file: `exercises/<construct>/<exercise_key>/tests/test_<exercise_key>.py`.
 4. Read the test file in full.
 5. Read `docs/exercise-agents/exercise-testing.md` and the relevant exercise-type guide.
@@ -140,4 +151,4 @@ For FAIL:
 8. Run student-variant verification to confirm expected failure.
 9. Produce verdict.
 
-If the verdict is FAIL, return to the **Exercise Test Creator** with the full report. Do not attempt to fix the tests yourself unless the issue is trivially small (e.g., a typo or missing import).
+If the verdict is FAIL, return to `exercise-test-creator` with the full report. Do not attempt to fix the tests yourself unless the issue is trivially small (e.g., a typo or missing import).

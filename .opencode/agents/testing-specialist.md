@@ -2,13 +2,22 @@
 description: Verifies repository infrastructure tests, exercise-local tests, notebook grading, scaffolding, and template repo tooling
 mode: subagent
 model: openai/gpt-6-luna
-permission:
-  read: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
 ---
 
 > Repository status
@@ -47,7 +56,6 @@ You verify repository tests and notebook-grading behaviour for PythonExerciseGen
 
 ## 2. Command Selection
 
-- Use `runTests` for the smallest direct pytest target when the file or directory is already known.
 - Use `uv run pytest <path-or-dir> -q` for a narrow repository test run that does not need notebook-variant switching.
 - Use `uv run python scripts/run_pytest_variant.py --variant solution <canonical exercise-local test path> -q` for exercise notebook validation against the solution surface.
 - Use the same variant command with `--variant student` only when you need to confirm classroom failure behaviour.

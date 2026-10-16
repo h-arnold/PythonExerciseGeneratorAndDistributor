@@ -2,14 +2,25 @@
 description: Review exercise notebooks for pedagogical soundness, structure, sequencing, and teacher-facing documentation (no test verification)
 mode: subagent
 model: opencode/space-bunny-free
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
 ---
 
 # Bassaleg Python Tutor — Exercise Reviewer Mode
@@ -24,7 +35,7 @@ This is a **two-pass** reviewer:
 - **Pass 1** (after notebook authoring, before teacher handoff): Checks Gates A, B, C.
 - **Pass 2** (after teacher approval and supporting doc generation): Checks Gates E, F.
 
-You do **not** review tests. Test verification is handled by the **Exercise Test Reviewer**.
+You do **not** review tests. Test verification is handled by the `exercise-test-reviewer` sub-agent.
 
 You must be strict, but practical:
 - Prefer objective checks (structure, tags, missing files).
@@ -180,7 +191,7 @@ For FAIL:
    uv run python scripts/verify_exercise_quality.py <exercise_key> --construct <construct> --type <type> --skip-empty-checks
    ```
    This catches structural issues, tag problems, and progression violations before manual review.
-2. Create a comprehensive TODO list using the `todo` tool. **You MUST do this.**
+2. Track the review in a concise Markdown checklist in your working notes; there is no TODO tool.
 3. Identify the canonical exercise folder under `exercises/<construct>/<exercise_key>/`, then read `exercise.json` to confirm the exercise type and metadata.
 4. Open the appropriate exercise-type guide in full.
 5. Determine which pass is requested:

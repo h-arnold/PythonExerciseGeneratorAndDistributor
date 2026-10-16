@@ -2,15 +2,28 @@
 description: Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy
 mode: all
 model: openai/gpt-6-luna
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 # Documentation Agent Instructions
@@ -178,7 +191,7 @@ After edits:
 
 1. Re-read changed docs and code to ensure consistency.
 2. Run targeted checks where practical, for example a markdown formatting or diagnostics check for the touched file.
-3. Use `get_errors` or the closest available diagnostic surface to catch obvious issues in changed files.
+3. Use an available diagnostic tool only if it is explicitly advertised; do not assume LSP diagnostics are available in V2. If the tool is exposed only through Code Mode, call it through `execute` using the exact advertised catalog, without assuming a namespace.
 4. Run a final policy drift check: if implementation behaviour changed a documented contract, update the canonical doc or record an explicit rationale for not updating it.
 
 Do not claim completion until documentation and JSDoc reflect the implemented code.

@@ -42,7 +42,7 @@ uv run python -V
 - `scripts/new_exercise.py`: Exercise scaffolding tool
 - `scripts/verify_solutions.sh`: Helper to test solutions via `--variant solution`
 - `scripts/verify_exercise_quality.py`: Structural and runtime self-checks for one `exercise_key`, or every discovered exercise with `--all`. Gate contract in [exercise-quality-verifier.md](exercise-quality-verifier.md).
-- `AGENTS.md`: Repo-wide Copilot context
+- `AGENTS.md`: Repo-wide project instructions, including OpenCode V2 ambient guidance
 - `.opencode/agents/exercise-generation.md`: Exercise generation custom agent
 - `.opencode/agents/exercise-reviewer.md`: Reviews exercise notebooks (pedagogy, structure, sequencing, docs)
 - `.opencode/agents/exercise-test-creator.md`: Creates pytest tests from approved notebooks

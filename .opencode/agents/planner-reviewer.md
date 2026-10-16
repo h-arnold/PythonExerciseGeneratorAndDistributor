@@ -2,14 +2,25 @@
 description: Reviews planner output for missing requirements, architecture mismatches, notebook and workflow ambiguities, and undersized or misordered action plans
 mode: subagent
 model: opencode-go/glm-5.3-flash
-permission:
-  read: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 # Planner Review Agent

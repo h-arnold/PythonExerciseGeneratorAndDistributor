@@ -250,31 +250,33 @@ See `docs/developers/classroom50-autograder.md` for the contract, CLI interfaces
 
 ## Calling Sub-Agents
 
-When you need to perform a task that falls under the expertise of a sub-agent, you should delegate to that agent rather than trying to handle it yourself. This ensures that the task is completed with the appropriate level of focus and expertise.
+Delegate focused work through OpenCode's `subagent` tool using the agent's exact, case-sensitive path-derived ID (not its display label or filename):
 
-The sub-agents you can call are (use these exact case-sensitive names):
+- `explore` — Read-only codebase exploration
+- `implementer` — Implements code
+- `tidy-code-reviewer` — Reviews code quality and bugs
+- `docs` — Updates developer documentation and JSDoc
+- `planner-reviewer` — Reviews plans
+- `planner` — Produces planning artefacts
+- `testing-specialist` — Creates and runs tests
+- `de-sloppifier` — Removes duplication and unnecessary complexity
+- `exercise-generation` — Creates exercise notebooks
+- `exercise-reviewer` — Reviews exercise notebooks
+- `exercise-test-creator` — Creates exercise tests
+- `exercise-test-reviewer` — Reviews exercise tests
 
-- `Explore` — Read-only subagent for codebase exploration
-- `Agent Orchestrator` — Orchestrates the other agents to implement an action plan
-- `Tidy Code Reviewer` — Reviews code for quality, standards adherence, and bugs
-- `Docs` — Reviews changed code and updates developer documentation, AGENTS guidance, and JSDoc accuracy
-- `Implementer` — Implements code for the orchestrator
-- `Planner Reviewer` — Reviews planner output for missing requirements, architecture mismatches, notebook and workflow ambiguities, and undersized or misordered action plans
-- `Planner` — Clarifies requirements and produces SPEC.md, optional frontend layout specs, and ACTION_PLAN.md before implementation starts
-- `Testing Specialist` — Creates, runs and debugs tests
-- `De-Sloppification` — Finds and removes AI-slop, duplication, and unnecessary complexity
-- `Exercise Reviewer` — Reviews notebooks for pedagogical soundness, structure, and sequencing (Gates A, B, C, E, F)
-- `Exercise Test Creator` — Creates robust pytest tests for approved exercise notebooks
-- `Exercise Test Reviewer` — Reviews exercise tests for correctness, coverage, and construct enforcement (Gate D)
+`agent-orchestrator` is configured as a primary-mode agent, not a callable subagent. Select it as the session's primary agent when orchestration is requested; do not pass its ID to the `subagent` tool.
+
+> **📖 Full reference:** OpenCode V2 tool and agent behaviour is documented at [Tools](https://opencode.ai/v2/docs/tools) and [Agents](https://opencode.ai/v2/docs/agents); repository-specific IDs are derived from `.opencode/agents/<id>.md`.
 
 ## Implementation Workflow
 
 For any significant code changes (defined as adding/modifying more than 1 function or class, or any non-trivial refactoring) that **IS NOT** related to student notebook, follow this workflow:
 
 1. **Consider the size of the task**: If it's a large task requiring many changes, split the task into smaller chunks and update your TODO list manually.
-2. **Delegate to the Implementer Agent**: Use the available sub-agent tool with the `Implementer` agent. Pass a detailed task description, including the scope of files to edit. If sub-agents are unavailable, complete the work directly. Prompt: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
-3. **Review with Tidy Code Reviewer**: Once the implementer agent finishes, you **MUST** call the `Tidy Code Reviewer` agent to verify the changes. If sub-agents are unavailable, perform a careful self-review. Prompt: "The implementer agent has completed task [X]. Please review the changes."
+2. **Delegate to the implementer**: Call the `subagent` tool with agent ID `implementer`. Pass a detailed task description, including the scope of files to edit. If subagents are unavailable, complete the work directly. Prompt: "Please implement [Feature X]. Relevant files: [A, B]. Criteria: [Z]."
+3. **Review with the tidy code reviewer**: Once implementation finishes, you **MUST** call the `subagent` tool with agent ID `tidy-code-reviewer`. If subagents are unavailable, perform a careful self-review. Prompt: "The implementation of [X] is complete. Please review the changes."
 4. If there are significant changes, pass the *full* report back to the implementer to address the issues raised. Add any commentary or additional context you feel is necessary. If the changes are minor and can be fixed with a simple edit, you can make the change directly without going back to the implementer.
-5. Repeat as many times as necessary to get a clear code review from the Tidy Code Reviewer.
+5. Repeat as many times as necessary to get a clear code review from `tidy-code-reviewer`.
 
 **ALWAYS** follow this process unless the user explicitly directs you otherwise.

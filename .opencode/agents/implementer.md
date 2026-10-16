@@ -2,15 +2,28 @@
 description: Implements complex coding tasks, adhering to strict project standards, running tests, and reporting changes
 mode: subagent
 model: openai/gpt-6-luna
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
-  webfetch: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
+  - action: webfetch
+    resource: "*"
+    effect: allow
 ---
 
 > Repository status: the source repository uses the canonical exercise-local layout. Packaging may still materialise derived compatibility surfaces, but those are not authoring surfaces. The template CLI follows a canonical-only contract with no legacy compatibility paths.
@@ -46,7 +59,7 @@ If any part is missing, gather the nearest relevant context first and ask only i
 ### Phase 2: Implementation
 
 1. Make the smallest change that satisfies the request.
-2. Use `apply_patch` for manual edits and keep each edit slice tight.
+2. Use `patch` for manual edits when it is advertised; if the model does not expose `patch`, use `edit` or `write` for the focused change. Keep each edit slice tight.
 3. Keep the code simple:
    - prefer KISS over abstraction
    - reuse existing helpers before inventing new ones

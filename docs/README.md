@@ -56,6 +56,7 @@ If you are new to this project, start with one of these two guides:
 | [Template Repo CLI Reference](developers/template_repo_cli.md) | Full CLI reference for `repoman` — all flags, options, and technical details. |
 | [Docker & Devcontainer Setup](developers/docker-devcontainer-setup.md) | Devcontainer configs, upstream base image, and Jupyter kernel watchdog. |
 | [Jupyter Kernel Watchdog](developers/jupyter-watchdog.md) | Kernel health monitor for VS Code devcontainers — detects and kills unresponsive Jupyter kernels so VS Code can restart them. |
+| [OpenCode V2 Repository Guidance](developers/opencode-v2.md) | OpenCode V2 tool naming, repository agent IDs, skill layout, and compatibility contract. |
 
 ---
 

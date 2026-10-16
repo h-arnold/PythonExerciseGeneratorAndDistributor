@@ -122,7 +122,7 @@ Holds the canonical files used when generating Classroom 50 template repositorie
 
 ### `.opencode/`
 
-Agent instruction files for the OpenCode workflow system:
+Project-local OpenCode V2 definitions. Agent files use path-derived IDs; invoke subagents through the V2 `subagent` tool with the exact ID. See [OpenCode V2 repository guidance](opencode-v2.md) for the callable IDs and primary-agent distinction.
 
 - `agents/exercise-generation.md`: Custom agent for exercise generation (Phase 1 — notebooks)
 - `agents/exercise-reviewer.md`: Reviews exercise notebooks for pedagogical soundness and structure
@@ -134,7 +134,7 @@ Agent instruction files for the OpenCode workflow system:
 - `pyproject.toml`: Defines project dependencies and tooling; `uv` uses this file to resolve and lock packages
 - `pytest.ini`: Shared pytest settings for grading and infrastructure tests
 - `README.md`: High-level project overview for contributors and students
-- `AGENTS.md`: Repo-wide custom instructions for GitHub Copilot
+- `AGENTS.md`: Repo-wide project instructions, including OpenCode V2 ambient guidance
 - `main.py`: Entry point used by distribution tooling and classic Python execution environments
 
 ## File Naming Conventions

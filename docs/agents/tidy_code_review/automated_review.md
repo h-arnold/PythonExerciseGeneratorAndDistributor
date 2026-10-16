@@ -52,8 +52,8 @@ For these, the automated review should generate a patch file with explanation an
 
 - `uv run ruff check` (with `SIM`, `PLR`, `C90x`, `E/F/W`) — primary lint, complexity, and simplification signals
 - `uv run --with pyright pyright [paths...]` — typing diagnostics. Run against the affected files (or the repo root when surface area is large) so pyright reports new issues.
-- Semantic search (`search`) for near-duplicate blocks when no dedicated duplication tool is available
-- `run_in_terminal` / `execute` to run these tools and capture machine-friendly output
+- Use the advertised `grep` tool for near-duplicate blocks when no dedicated duplication tool is available.
+- Use the advertised `shell` tool (or `execute` with its advertised catalog) to run checks and capture machine-friendly output.
 
 Prefer absolute paths when invoking tools or reporting file locations; include clickable links (PR URLs or GitHub file paths) in the report when available to make the output actionable.
 
@@ -70,7 +70,7 @@ Default thresholds used by automated checks:
 
 ## Automated Workflow (MUST do — automated steps)
 
-1. Create a TODO entry via `manage_todo_list`; mark one item `in-progress`.
+1. Track the review steps in a Markdown checklist; mark the current item in progress.
 2. Ensure the uv-managed environment is active. Run `uv sync` if dependencies changed, then either execute commands with `uv run ...` or activate the `.venv` created by uv via `source .venv/bin/activate`. **Do not run tools outside this environment.**
 3. Validate `change_summary`. If missing, reconstruct from git diff.
 4. Confirm the affected files by inspecting the diff or change list.
@@ -94,7 +94,7 @@ Default thresholds used by automated checks:
 ## When a tool is missing
 
 - Log which tools are unavailable and which analyses were skipped.
-- Fall back to grep/semantic search and any outstanding Pyright hints and annotate reduced confidence.
+- Fall back to the advertised `grep` tool and any outstanding Pyright hints; annotate reduced confidence.
 
 ## Output
 

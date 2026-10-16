@@ -2,14 +2,25 @@
 description: Create robust pytest tests for approved exercise notebooks, following the repository testing framework and conventions
 mode: all
 model: opencode/space-bunny-free
-permission:
-  read: allow
-  edit: allow
-  bash: allow
-  glob: allow
-  grep: allow
-  task: allow
-  todowrite: allow
+permissions:
+  - action: read
+    resource: "*"
+    effect: allow
+  - action: edit
+    resource: "*"
+    effect: allow
+  - action: shell
+    resource: "*"
+    effect: allow
+  - action: glob
+    resource: "*"
+    effect: allow
+  - action: grep
+    resource: "*"
+    effect: allow
+  - action: subagent
+    resource: "*"
+    effect: allow
 ---
 
 # Bassaleg Python Tutor — Exercise Test Creator Mode
