@@ -17,11 +17,8 @@ from exercise_runtime_support.exercise_framework import (
 )
 
 _EX007_EXERCISE_KEY = "ex007_sequence_debug_casting"
-construct_checks = load_exercise_test_module(
-    _EX007_EXERCISE_KEY, "construct_checks")
+construct_checks = load_exercise_test_module(_EX007_EXERCISE_KEY, "construct_checks")
 ex007 = load_exercise_test_module(_EX007_EXERCISE_KEY, "expectations")
-has_binop = construct_checks.has_binop
-has_call = construct_checks.has_call
 interactive_construct_issues = construct_checks.interactive_construct_issues
 _CACHE = RuntimeCache()
 
@@ -72,8 +69,7 @@ def _assert_interactive_constructs(exercise_no: int) -> None:
     rules = ex007.EX007_INTERACTIVE_CONSTRUCTS[exercise_no]
     issues = interactive_construct_issues(
         tree,
-        expected_input_count=len(
-            ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
+        expected_input_count=len(ex007.EX007_INPUT_CASES[exercise_no][0]["inputs"]),
         required_calls=rules.get("required_calls", ()),
         required_ops=rules.get("required_ops", ()),
         forbidden_ops=rules.get("forbidden_ops", ()),
@@ -85,20 +81,20 @@ def _assert_interactive_output(exercise_no: int) -> None:
     for case in ex007.EX007_INPUT_CASES[exercise_no]:
         output = _run_with_inputs(exercise_no, list(case["inputs"]))
         expected_output = case["expected_output"]
-        assert output == expected_output, (
+        assert ex007.outputs_match(output, expected_output), (
             f"Exercise {exercise_no}: expected exact output {expected_output!r} but got {output!r}."
         )
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_logic() -> None:
-    assert _run_static(1) == ex007.EX007_EXPECTED_STATIC_OUTPUTS[1]
+    assert ex007.outputs_match(_run_static(1), ex007.EX007_EXPECTED_STATIC_OUTPUTS[1])
 
 
 @pytest.mark.task(taskno=1)
 def test_exercise1_construct() -> None:
     tree = _exercise_ast(1)
-    assert has_call(tree, "str")
+    assert construct_checks.printed_output_has_call(tree, "str")
 
 
 @pytest.mark.task(taskno=1)
@@ -113,13 +109,13 @@ def test_exercise1_explanation() -> None:
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_logic() -> None:
-    assert _run_static(2) == ex007.EX007_EXPECTED_STATIC_OUTPUTS[2]
+    assert ex007.outputs_match(_run_static(2), ex007.EX007_EXPECTED_STATIC_OUTPUTS[2])
 
 
 @pytest.mark.task(taskno=2)
 def test_exercise2_construct() -> None:
     tree = _exercise_ast(2)
-    assert has_call(tree, "str")
+    assert construct_checks.printed_output_has_call(tree, "str")
 
 
 @pytest.mark.task(taskno=2)
@@ -154,14 +150,14 @@ def test_exercise3_explanation() -> None:
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_logic() -> None:
-    assert _run_static(4) == ex007.EX007_EXPECTED_STATIC_OUTPUTS[4]
+    assert ex007.outputs_match(_run_static(4), ex007.EX007_EXPECTED_STATIC_OUTPUTS[4])
 
 
 @pytest.mark.task(taskno=4)
 def test_exercise4_construct() -> None:
     tree = _exercise_ast(4)
-    assert has_binop(tree, ast.Div)
-    assert not has_binop(tree, ast.FloorDiv)
+    assert construct_checks.printed_output_has_source_operator(tree, ast.Div)
+    assert not construct_checks.printed_output_has_operator(tree, ast.FloorDiv)
 
 
 @pytest.mark.task(taskno=4)

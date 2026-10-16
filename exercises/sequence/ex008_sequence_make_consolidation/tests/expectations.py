@@ -6,7 +6,7 @@ from typing import Final, TypedDict
 
 
 class Ex008InteractiveCase(TypedDict):
-    """Expected transcript for an interactive exercise case."""
+    """Inputs and required result for an interactive exercise case."""
 
     inputs: list[str]
     expected_output: str
@@ -21,55 +21,35 @@ EX008_INTERACTIVE_CASES: Final[dict[int, list[Ex008InteractiveCase]]] = {
     3: [
         {
             "inputs": ["Aisha", "drawing"],
-            "expected_output": (
-                "Enter your name:\n"
-                "Enter your favourite hobby:\n"
-                "Hello Aisha! Your hobby is drawing."
-            ),
+            "expected_output": "Hello Aisha! Your hobby is drawing.",
         },
         {
             "inputs": ["Leo", "chess"],
-            "expected_output": (
-                "Enter your name:\n"
-                "Enter your favourite hobby:\n"
-                "Hello Leo! Your hobby is chess."
-            ),
+            "expected_output": "Hello Leo! Your hobby is chess.",
         },
     ],
     4: [
         {
             "inputs": ["6", "3"],
-            "expected_output": (
-                "Books read in one week:\n"
-                "Number of weeks:\n"
-                "Books read altogether: 18"
-            ),
+            "expected_output": "Books read altogether: 18",
         },
         {
             "inputs": ["0", "4"],
-            "expected_output": (
-                "Books read in one week:\n"
-                "Number of weeks:\n"
-                "Books read altogether: 0"
-            ),
+            "expected_output": "Books read altogether: 0",
+        },
+        {
+            "inputs": ["6", "4"],
+            "expected_output": "Books read altogether: 24",
         },
     ],
     5: [
         {
             "inputs": ["2.5", "3"],
-            "expected_output": (
-                "Distance for one walk in km:\n"
-                "Number of walks:\n"
-                "Total distance: 7.5 km"
-            ),
+            "expected_output": "Total distance: 7.5 km",
         },
         {
             "inputs": ["1.2", "4"],
-            "expected_output": (
-                "Distance for one walk in km:\n"
-                "Number of walks:\n"
-                "Total distance: 4.8 km"
-            ),
+            "expected_output": "Total distance: 4.8 km",
         },
     ],
 }

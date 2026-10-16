@@ -34,3 +34,29 @@ EX005_INPUT_PROMPTS: Final[dict[int, tuple[str, str]]] = {
     EX005_FULL_NAME_EXERCISE: ("Enter first name: ", "Enter last name: "),
     EX005_PROFILE_EXERCISE: ("Enter your age: ", "Enter your city: "),
 }
+EX005_ALTERNATE_INPUTS: Final[dict[int, list[str]]] = {
+    EX005_FULL_NAME_EXERCISE: ["Zara", "Khan"],
+    EX005_PROFILE_EXERCISE: ["42", "Cardiff"],
+}
+EX005_NUMERIC_PROBES: Final[dict[int, dict[str, int]]] = {
+    1: {"price": 7, "quantity": 3},
+    3: {"width": 7, "height": 3},
+    6: {"paid": 31, "cost": 12},
+    7: {"score1": 13, "score2": 8},
+    9: {"length": 7, "width": 3},
+}
+EX005_TEXT_PROBES: Final[dict[int, dict[str, str]]] = {
+    2: {"name": "Tariq"},
+    4: {"word1": "Goodbye", "word2": "Moon"},
+    8: {"word1": "We", "word2": "enjoy", "word3": "testing", "word4": "code"},
+}
+EX005_EXPECTED_PROBE_OUTPUTS: Final[dict[int, str]] = {
+    1: "21",
+    3: "21",
+    6: "19",
+    7: "10.5",
+    9: "20",
+    2: "Tariq",
+    4: "Goodbye Moon",
+    8: "We enjoy testing code",
+}
