@@ -30,7 +30,7 @@ def _check_static_output(exercise_no: int) -> list[str]:
         _EXERCISE_KEY,
         tag=exercise_tag(exercise_no),
     )
-    if output != expected:
+    if not ex007.outputs_match(output, expected):
         return [f"Exercise {exercise_no}: expected '{expected.strip()}'."]
     return []
 
@@ -43,7 +43,7 @@ def _check_prompt_flow(exercise_no: int) -> list[str]:
             tag=exercise_tag(exercise_no),
             inputs=list(case["inputs"]),
         )
-        if output != case["expected_output"]:
+        if not ex007.outputs_match(output, case["expected_output"]):
             errors.append(
                 f"Exercise {exercise_no} case {case_no}: output does not match the expected prompt flow."
             )
@@ -63,7 +63,7 @@ def _check_construct(exercise_no: int) -> list[str]:
     tree = _exercise_ast(exercise_no)
 
     if exercise_no in {1, 2}:
-        if construct_checks.has_call(tree, "str"):
+        if construct_checks.printed_output_has_call(tree, "str"):
             return []
         return [
             f"Exercise {exercise_no}: use str() so the number is turned into text before printing."
@@ -71,11 +71,11 @@ def _check_construct(exercise_no: int) -> list[str]:
 
     if exercise_no == _AVERAGE_DISTANCE_EXERCISE:
         errors: list[str] = []
-        if not construct_checks.has_binop(tree, ast.Div):
+        if not construct_checks.printed_output_has_source_operator(tree, ast.Div):
             errors.append(
-                f"Exercise {_AVERAGE_DISTANCE_EXERCISE}: use / for the average calculation."
+                f"Exercise {_AVERAGE_DISTANCE_EXERCISE}: use / to calculate the average per day."
             )
-        if construct_checks.has_binop(tree, ast.FloorDiv):
+        if construct_checks.printed_output_has_operator(tree, ast.FloorDiv):
             errors.append(
                 f"Exercise {_AVERAGE_DISTANCE_EXERCISE}: do not use // for the average calculation."
             )
@@ -109,11 +109,17 @@ def _build_checks() -> list[ExerciseCheckDefinition]:
     checks: list[ExerciseCheckDefinition] = []
     for exercise_no in range(1, 11):
         if exercise_no in ex007.EX007_EXPECTED_STATIC_OUTPUTS:
-            checks.append(build_exercise_check(exercise_no, "Static output", _check_static_output))
+            checks.append(
+                build_exercise_check(exercise_no, "Static output", _check_static_output)
+            )
         if exercise_no in ex007.EX007_INPUT_CASES:
-            checks.append(build_exercise_check(exercise_no, "Prompt flow", _check_prompt_flow))
+            checks.append(
+                build_exercise_check(exercise_no, "Prompt flow", _check_prompt_flow)
+            )
         checks.append(build_exercise_check(exercise_no, "Construct", _check_construct))
-        checks.append(build_exercise_check(exercise_no, "Explanation", _check_explanation))
+        checks.append(
+            build_exercise_check(exercise_no, "Explanation", _check_explanation)
+        )
     return checks
 
 

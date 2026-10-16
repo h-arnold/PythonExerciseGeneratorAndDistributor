@@ -1,7 +1,7 @@
 ---
 description: Create robust pytest tests for approved exercise notebooks, following the repository testing framework and conventions
 mode: all
-model: opencode/space-bunny-free
+model: opencode-go/deepseek-v4.1-flash
 permissions:
   - action: read
     resource: "*"

@@ -1,17 +1,15 @@
-"""Exercise-local expectations for ex006 sequence modify casting."""
+"""Canonical output and input expectations for ex006."""
 
 from __future__ import annotations
 
-from typing import Final, NotRequired, TypedDict
+from typing import Final, TypedDict
 
 
 class Ex006InputExpectation(TypedDict):
-    """Expectations for exercises that prompt for input in ex006."""
-
     inputs: list[str]
-    prompt_contains: str
-    output_contains: NotRequired[str]
-    last_line: NotRequired[str]
+    expected_segments: list[str]
+    alternate_inputs: list[str]
+    alternate_segments: list[str]
 
 
 EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
@@ -21,23 +19,26 @@ EX006_EXPECTED_OUTPUTS: Final[dict[int, str]] = {
     4: "Your score is 500",
     5: "25",
     8: "Area: 50",
-    9: "The Burger costs \u00a35.5",
+    9: "The Burger costs £5.5",
 }
 
 EX006_INPUT_EXPECTATIONS: Final[dict[int, Ex006InputExpectation]] = {
     6: {
         "inputs": ["6"],
-        "prompt_contains": "Enter number",
-        "last_line": "12",
+        "expected_segments": ["Enter number:", "12"],
+        "alternate_inputs": ["9"],
+        "alternate_segments": ["Enter number:", "18"],
     },
     7: {
         "inputs": ["1.5"],
-        "prompt_contains": "Enter price",
-        "output_contains": "Two items cost: 3.0",
+        "expected_segments": ["Enter price:", "Two items cost: 3.0"],
+        "alternate_inputs": ["2.25"],
+        "alternate_segments": ["Enter price:", "Two items cost: 4.5"],
     },
     10: {
         "inputs": ["10", "20"],
-        "prompt_contains": "Enter item",
-        "output_contains": "Total: 30.0",
+        "expected_segments": ["Enter item 1:", "Enter item 2:", "Total: 30.0"],
+        "alternate_inputs": ["4.25", "1.75"],
+        "alternate_segments": ["Enter item 1:", "Enter item 2:", "Total: 6.0"],
     },
 }

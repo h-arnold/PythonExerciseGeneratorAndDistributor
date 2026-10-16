@@ -1,70 +1,50 @@
-"""Exercise-local student checker definitions for ex006 sequence modify casting."""
+"""Student self-checks for ex006 sequence casting tasks."""
 
 from __future__ import annotations
 
 from exercise_runtime_support.exercise_test_support import load_exercise_test_module
 from exercise_runtime_support.notebook_grader import (
+    extract_tagged_code,
     run_cell_and_capture_output,
     run_cell_with_input,
 )
 from exercise_runtime_support.student_checker.checks.base import (
     ExerciseCheckDefinition,
     build_exercise_check,
-    exercise_tag,
 )
 
 _EXERCISE_KEY = "ex006_sequence_modify_casting"
-ex006 = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+_ex = load_exercise_test_module(_EXERCISE_KEY, "expectations")
+_checks = load_exercise_test_module(_EXERCISE_KEY, "checks")
 
 
-def _check_static_output(exercise_no: int) -> list[str]:
-    errors: list[str] = []
-    output = run_cell_and_capture_output(
-        _EXERCISE_KEY, tag=exercise_tag(exercise_no))
-    expected = ex006.EX006_EXPECTED_OUTPUTS[exercise_no]
-    if output != expected:
-        errors.append(
-            f"Exercise {exercise_no}: expected '{expected.strip()}'.")
-    return errors
+def _check_part(number: int) -> list[str]:
+    source = extract_tagged_code(_EXERCISE_KEY, tag=f"exercise{number}")
+    if number in _ex.EX006_EXPECTED_OUTPUTS:
+        output = run_cell_and_capture_output(_EXERCISE_KEY, tag=f"exercise{number}")
+        expected_segments = [_ex.EX006_EXPECTED_OUTPUTS[number]]
+    else:
+        case = _ex.EX006_INPUT_EXPECTATIONS[number]
+        output = ""
+        expected_segments = []
+        for inputs, segments in (
+            (case["inputs"], case["expected_segments"]),
+            (case["alternate_inputs"], case["alternate_segments"]),
+        ):
+            output = run_cell_with_input(_EXERCISE_KEY, tag=f"exercise{number}", inputs=inputs)
+            if not _checks.matches_segments(output, segments):
+                return [f"Expected ordered complete messages: {segments!r}."]
+        if not _checks.complete(number, source):
+            return ["Required conversions and calculation must reach the output."]
+        return []
+    if not _checks.matches_segments(output, expected_segments):
+        return [f"Expected complete output: {expected_segments!r}."]
+    if not _checks.complete(number, source):
+        return ["Required conversions and calculation must reach the output."]
+    return []
 
 
-def _check_input_flow(exercise_no: int) -> list[str]:
-    errors: list[str] = []
-    details = ex006.EX006_INPUT_EXPECTATIONS[exercise_no]
-    inputs = details["inputs"]
-    output = run_cell_with_input(
-        _EXERCISE_KEY, tag=exercise_tag(exercise_no), inputs=inputs)
-    prompt_contains = details["prompt_contains"]
-    output_contains = details.get("output_contains")
-    last_line = details.get("last_line")
-
-    if prompt_contains not in output:
-        errors.append(f"Exercise {exercise_no}: prompt text is missing.")
-    if output_contains is not None and output_contains not in output:
-        errors.append(f"Exercise {exercise_no}: expected message is missing.")
-    if last_line is not None:
-        if not output:
-            errors.append(f"Exercise {exercise_no}: no output was produced.")
-            return errors
-        last_output_line = output.splitlines()[-1]
-        if last_output_line != last_line:
-            errors.append(
-                f"Exercise {exercise_no}: expected last line '{last_line}'.")
-    return errors
-
-
-def _build_checks() -> list[ExerciseCheckDefinition]:
-    checks: list[ExerciseCheckDefinition] = []
-    exercise_numbers = sorted(
-        set(ex006.EX006_EXPECTED_OUTPUTS) | set(ex006.EX006_INPUT_EXPECTATIONS))
-    for exercise_no in exercise_numbers:
-        if exercise_no in ex006.EX006_EXPECTED_OUTPUTS:
-            checks.append(build_exercise_check(
-                exercise_no, "Static output", _check_static_output))
-        if exercise_no in ex006.EX006_INPUT_EXPECTATIONS:
-            checks.append(build_exercise_check(
-                exercise_no, "Prompt flow", _check_input_flow))
-    return checks
-
-
-CHECKS: list[ExerciseCheckDefinition] = _build_checks()
+CHECKS: list[ExerciseCheckDefinition] = [
+    build_exercise_check(number, "Output and required conversions", _check_part)
+    for number in range(1, 11)
+]
